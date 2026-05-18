@@ -77,56 +77,65 @@ impl ConfigDiscovery {
         vec![self.config_file_names.json, self.config_file_names.jsonc, self.config_file_names.js]
     }
 
-    /// Find the only supported config file directly inside `dir`.
+    /// Find the unique config file directly inside `dir` using a single `read_dir`.
     ///
-    /// Returns `Ok(None)` when no config file exists, and returns
-    /// [`ConfigConflict`] when multiple configs are found.
+    /// Issues one `read_dir()` and matches entry names in memory,
+    /// avoiding the per-candidate `stat` syscalls that a name-by-name probe would incur.
+    ///
+    /// When `follow_symlinks` is `true`,
+    /// symlink entries fall back to `Path::is_file()` so a symlinked config is still recognized.
+    /// When `false`, only regular files are considered;
+    /// symlinks, directories, and other entry types are skipped, matching walkers configured with `follow_links(false)`.
+    ///
+    /// Returns `Ok(None)` when `dir` is unreadable;
+    /// the caller can decide whether that warrants a diagnostic.
     ///
     /// # Errors
-    ///
-    /// Returns [`ConfigConflict`] when more than one supported config file is
-    /// found directly inside `dir`.
-    pub fn find_unique_config_in_directory(
+    /// Returns [`ConfigConflict`] when more than one supported config file is found directly inside `dir`.
+    pub fn find_unique_config_by_readdir(
         &self,
         dir: &Path,
+        follow_symlinks: bool,
     ) -> Result<Option<DiscoveredConfigFile>, ConfigConflict> {
-        let configs = self.find_configs_in_directory(dir);
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return Ok(None);
+        };
 
-        match configs.len() {
+        let names = &self.config_file_names;
+        let mut matches = Vec::new();
+        for entry in entries.flatten() {
+            let name = entry.file_name();
+            let name_supported = if self.vite_plus_mode {
+                name == names.vite
+            } else {
+                name == names.json || name == names.jsonc || name == names.js
+            };
+            if !name_supported {
+                continue;
+            }
+
+            // NOTE: `Path::is_file()` follows symlinks; `FileType::is_file()` does not.
+            let is_match = if follow_symlinks {
+                entry.path().is_file()
+            } else {
+                let Ok(file_type) = entry.file_type() else { continue };
+                #[expect(clippy::filetype_is_file)]
+                file_type.is_file()
+            };
+            if !is_match {
+                continue;
+            }
+
+            if let Some(config) = self.discover_config_file(&entry.path()) {
+                matches.push(config);
+            }
+        }
+
+        match matches.len() {
             0 => Ok(None),
-            1 => Ok(configs.into_iter().next()),
-            _ => Err(ConfigConflict::new(dir.to_path_buf(), configs)),
+            1 => Ok(matches.into_iter().next()),
+            _ => Err(ConfigConflict::new(dir.to_path_buf(), matches)),
         }
-    }
-
-    /// Find all supported config files directly inside `dir`.
-    ///
-    /// In Vite+ mode, only the configured Vite file name is recognized. In
-    /// regular mode, JSON, JSONC, and JavaScript/TypeScript config names are
-    /// returned in that order when they exist.
-    pub fn find_configs_in_directory(&self, dir: &Path) -> Vec<DiscoveredConfigFile> {
-        if self.vite_plus_mode {
-            let vite_path = dir.join(self.config_file_names.vite);
-            if vite_path.is_file() {
-                return self.discover_config_file(&vite_path).into_iter().collect();
-            }
-            return Vec::new();
-        }
-
-        let mut configs = Vec::new();
-        for path in [
-            dir.join(self.config_file_names.json),
-            dir.join(self.config_file_names.jsonc),
-            dir.join(self.config_file_names.js),
-        ] {
-            if path.is_file()
-                && let Some(config) = self.discover_config_file(&path)
-            {
-                configs.push(config);
-            }
-        }
-
-        configs
     }
 
     /// Convert `candidate` into a discovered config file when its file name is supported.
@@ -243,9 +252,24 @@ fn format_conflicting_config_names(config_names: &[String]) -> String {
 
 #[cfg(test)]
 mod test {
-    use std::path::Path;
+    use std::{fs, path::Path};
 
-    use super::is_js_config_path;
+    use super::{ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path};
+
+    const NAMES: ConfigFileNames = ConfigFileNames {
+        json: ".oxlintrc.json",
+        jsonc: ".oxlintrc.jsonc",
+        js: "oxlint.config.ts",
+        vite: "vite.config.ts",
+    };
+
+    fn discovery() -> ConfigDiscovery {
+        ConfigDiscovery::new(NAMES, false)
+    }
+
+    fn vite_discovery() -> ConfigDiscovery {
+        ConfigDiscovery::new(NAMES, true)
+    }
 
     #[test]
     fn test_is_js_config_path() {
@@ -256,5 +280,116 @@ mod test {
         assert!(is_js_config_path(Path::new("my-config.cts")));
         assert!(is_js_config_path(Path::new("my-config.mts")));
         assert!(!is_js_config_path(Path::new("oxlint.config.json")));
+    }
+
+    #[test]
+    fn readdir_returns_none_for_empty_dir() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        assert!(
+            discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap().is_none()
+        );
+    }
+
+    #[test]
+    fn readdir_returns_none_for_unreadable_dir() {
+        // Pointing at a path that doesn't exist mimics the "read_dir fails" case
+        // without relying on platform-specific permission setups.
+        let missing = std::path::PathBuf::from("/this/path/does/not/exist/__readdir_test__");
+        assert!(discovery().find_unique_config_by_readdir(&missing, false).unwrap().is_none());
+    }
+
+    #[test]
+    fn readdir_skips_unrelated_files() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("README.md"), "").unwrap();
+        fs::write(temp_dir.path().join("package.json"), "").unwrap();
+
+        assert!(
+            discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap().is_none()
+        );
+    }
+
+    #[test]
+    fn readdir_finds_unique_json_config() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let cfg_path = temp_dir.path().join(NAMES.json);
+        fs::write(&cfg_path, "{}").unwrap();
+
+        let found = discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap();
+        assert!(matches!(found, Some(DiscoveredConfigFile::Json(p)) if p == cfg_path));
+    }
+
+    #[test]
+    fn readdir_returns_conflict_for_multiple_configs() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join(NAMES.json), "{}").unwrap();
+        fs::write(temp_dir.path().join(NAMES.jsonc), "{}").unwrap();
+
+        assert!(discovery().find_unique_config_by_readdir(temp_dir.path(), false).is_err());
+    }
+
+    #[test]
+    fn readdir_skips_directory_named_like_config() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        // A directory whose name collides with a supported config must not be
+        // treated as a config file.
+        fs::create_dir(temp_dir.path().join(NAMES.json)).unwrap();
+
+        assert!(
+            discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap().is_none()
+        );
+    }
+
+    #[test]
+    fn readdir_vite_mode_only_recognizes_vite_name() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        // JSON config is ignored in Vite+ mode even though it exists.
+        fs::write(temp_dir.path().join(NAMES.json), "{}").unwrap();
+        fs::write(temp_dir.path().join(NAMES.vite), "").unwrap();
+
+        let found = vite_discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap();
+        assert!(
+            matches!(found, Some(DiscoveredConfigFile::Vite(p)) if p.file_name().unwrap() == NAMES.vite)
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn readdir_follow_symlinks_toggles_link_resolution() {
+        use std::os::unix::fs::symlink;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        // Target lives outside the scanned dir so the symlink is the only entry
+        // that could match.
+        let target_dir = tempfile::tempdir().unwrap();
+        let target = target_dir.path().join("real.json");
+        fs::write(&target, "{}").unwrap();
+
+        let link = temp_dir.path().join(NAMES.json);
+        symlink(&target, &link).unwrap();
+
+        // follow_symlinks=false: symlinked configs are ignored.
+        assert!(
+            discovery().find_unique_config_by_readdir(temp_dir.path(), false).unwrap().is_none()
+        );
+
+        // follow_symlinks=true: the symlink resolves to a file and matches.
+        let found = discovery().find_unique_config_by_readdir(temp_dir.path(), true).unwrap();
+        assert!(matches!(found, Some(DiscoveredConfigFile::Json(p)) if p == link));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn readdir_follow_symlinks_skips_dangling_links() {
+        use std::os::unix::fs::symlink;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        // Symlink target does not exist; even with follow_symlinks=true this
+        // must not be reported as a config file.
+        symlink("/nonexistent/target", temp_dir.path().join(NAMES.json)).unwrap();
+
+        assert!(
+            discovery().find_unique_config_by_readdir(temp_dir.path(), true).unwrap().is_none()
+        );
     }
 }

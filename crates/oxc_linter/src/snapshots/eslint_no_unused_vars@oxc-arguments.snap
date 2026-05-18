@@ -25,3 +25,27 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'a' is declared here
    ╰────
   help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'args' is declared but only used as a type. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ function foo(...args: typeof args) {} foo()
+   ·                 ──┬─
+   ·                   ╰── 'args' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'args' is declared but only used as a type. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ function foo(...args: unknown[]): args is string[] { return true } foo()
+   ·                 ──┬─
+   ·                   ╰── 'args' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'unused' is declared but never used. Unused parameters should match /^ignored/.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ function foo(...unused) {} foo()
+   ·                 ───┬──
+   ·                    ╰── 'unused' is declared here
+   ╰────
+  help: Consider removing this parameter.

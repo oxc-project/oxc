@@ -2,6 +2,8 @@ use std::hash::Hash;
 
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, BinaryExpression, Expression},
@@ -9,11 +11,13 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
-    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
+    utils::{
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, is_string_raw_member_expression,
+        parse_general_jest_fn_call,
+    },
 };
 
 fn title_must_be_string_diagnostic(span: Span) -> OxcDiagnostic {
@@ -229,6 +233,25 @@ impl ValidTitleConfig {
                     &jest_fn_call.name,
                     ctx,
                 );
+            }
+            // Handle String.raw`foo`
+            Argument::TaggedTemplateExpression(tagged_template) => {
+                if !is_string_raw_member_expression(&tagged_template.tag, ctx.scoping()) {
+                    if need_report_name {
+                        ctx.diagnostic(title_must_be_string_diagnostic(arg.span()));
+                    }
+                    return;
+                }
+
+                if let Some(quasi) = tagged_template.quasi.single_quasi() {
+                    validate_title(
+                        quasi.as_str(),
+                        tagged_template.span,
+                        config,
+                        &jest_fn_call.name,
+                        ctx,
+                    );
+                }
             }
             Argument::TemplateLiteral(template_literal) => {
                 if let Some(quasi) = template_literal.single_quasi() {

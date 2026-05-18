@@ -109,6 +109,8 @@ impl Walk {
         let has_vcs_boundary = all_paths_have_vcs_boundary(paths, cwd);
         let inner = configure_walk_builder(&mut inner, has_vcs_boundary)
             .follow_links(true)
+            // Use the same thread count as rayon (controlled by `--threads`)
+            .threads(rayon::current_num_threads())
             .build_parallel();
         Self { inner, extensions: Extensions::default() }
     }

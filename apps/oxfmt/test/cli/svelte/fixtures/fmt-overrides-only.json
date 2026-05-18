@@ -1,0 +1,10 @@
+{
+  "overrides": [
+    {
+      "files": ["**/*.svelte"],
+      "options": {
+        "svelte": {}
+      }
+    }
+  ]
+}

@@ -578,7 +578,6 @@ fn test() {
         ("!!foo", None),
         ("!!(foo + bar)", None),
         ("!!(foo + bar); var Boolean = null", None),
-        ("!!(foo + bar)", None),
         ("~foo.indexOf(1)", None),
         ("~foo.bar.indexOf(2)", None),
         ("~foo.lastIndexOf(1)", None),

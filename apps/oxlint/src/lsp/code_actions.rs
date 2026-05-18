@@ -169,9 +169,10 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
             continue;
         };
 
-        // Only safe fixes or suggestions are applied in "fix all" action/command.
-        if !FixKind::SafeFixOrSuggestion.can_apply(fixed_content.kind) {
-            debug!("Skipping unsafe fix for fix all action: {}", fixed_content.message);
+        // Only safe fixes are applied in "fix all" action/command.
+        // dangerous fixes should be applied by `source.fixAllDangerous.oxc` code action.
+        if fixed_content.kind != FixKind::SafeFix {
+            debug!("Skipping non-safe fix for fix all action: {}", fixed_content.message);
             continue;
         }
 
@@ -193,6 +194,12 @@ fn dangerous_fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) 
         }) else {
             continue;
         };
+
+        // Only fixes are applied in dangerous fix all. Suggestions remain quickfix-only.
+        if !matches!(fixed_content.kind, FixKind::SafeFix | FixKind::DangerousFix) {
+            debug!("Skipping non-fix for dangerous fix all action: {}", fixed_content.message);
+            continue;
+        }
 
         text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
     }
@@ -311,6 +318,38 @@ mod tests {
     fn test_fix_all_text_edit_includes_safe_fix() {
         let text_edits = fix_all_text_edit(std::iter::once(make_fix_kind_action(FixKind::SafeFix)));
         assert!(!text_edits.is_empty(), "safe fix should be included");
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_skips_suggestion() {
+        let text_edits =
+            fix_all_text_edit(std::iter::once(make_fix_kind_action(FixKind::Suggestion)));
+        assert!(text_edits.is_empty(), "suggestion should be skipped in safe fix-all");
+    }
+
+    #[test]
+    fn test_dangerous_fix_all_text_edit_includes_safe_and_dangerous_fix() {
+        let actions = vec![
+            make_fix_kind_action(FixKind::SafeFix),
+            make_fix_kind_action(FixKind::DangerousFix),
+        ];
+        let text_edits = dangerous_fix_all_text_edit(actions.into_iter());
+        assert_eq!(
+            text_edits.len(),
+            1,
+            "overlapping edits are deduplicated after both fixes are accepted"
+        );
+    }
+
+    #[test]
+    fn test_dangerous_fix_all_text_edit_skips_dangerous_suggestion() {
+        let text_edits = dangerous_fix_all_text_edit(std::iter::once(make_fix_kind_action(
+            FixKind::DangerousSuggestion,
+        )));
+        assert!(
+            text_edits.is_empty(),
+            "dangerous suggestion should be skipped in dangerous fix-all"
+        );
     }
 
     #[test]

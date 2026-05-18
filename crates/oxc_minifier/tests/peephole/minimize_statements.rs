@@ -1,5 +1,6 @@
-use crate::{test, test_same};
 use std::fmt::Write;
+
+use crate::{test, test_same};
 
 #[test]
 fn test_for_variable_declaration() {
@@ -78,6 +79,49 @@ fn test_max_conditional_depth_caps_return_ternary_chain() {
     output.push_str(" ? 599 : (a599, 600); }");
 
     test(&input, &output);
+}
+
+// https://github.com/oxc-project/monitor-oxc/actions/runs/25841541741/job/75927903765
+// `{ body }` and `{ body: body }` are observationally equivalent, so adjacent
+// jump statements returning either form should collapse into a single `if`.
+// The bug was that ObjectProperty's structural equality compares the `shorthand`
+// flag, leaving the trailing `{ body: body }` outside the merged chain on the
+// first pass.
+#[test]
+fn test_merge_adjacent_ifs_with_shorthand_object_property() {
+    test(
+        "function _(body) {
+            if (a) return { body };
+            if (b) return { body };
+            if (c) return { body };
+            if (d) return { body: body };
+        }",
+        "function _(body) { if (a || b || c || d) return { body }; }",
+    );
+    // String-literal key normalises to identifier first, then to shorthand —
+    // both transforms must land in a single Compressor::build call.
+    test(
+        "function _(body) {
+            if (a) return { body };
+            if (b) return { 'body': body };
+        }",
+        "function _(body) { if (a || b) return { body }; }",
+    );
+    test_same(
+        "function _(body, other) {
+            if (a) return { body };
+            if (b) return { other };
+        }",
+    );
+}
+
+// `{ __proto__: __proto__ }` sets `[[Prototype]]` via the Annex B.3.1 proto
+// setter, while `{ __proto__ }` is a plain shorthand that creates a regular
+// own data property. Normalising the former into the latter would change
+// observable behaviour, so it must be left alone.
+#[test]
+fn test_object_property_shorthand_normalisation_skips_proto_setter() {
+    test_same("function _(__proto__) { return { __proto__: __proto__ }; }");
 }
 
 #[test]

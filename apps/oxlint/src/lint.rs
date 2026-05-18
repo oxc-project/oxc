@@ -15,13 +15,15 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
-    LintServiceOptions, Linter, OxlintSuppressionFileAction, SuppressionManager,
+    LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
 use crate::js_config::JsConfigLoaderCb;
 use crate::{
-    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
+    cli::{
+        CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
+    },
     config_loader::{CliConfigLoadError, ConfigLoadError, ConfigLoader},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -69,6 +71,7 @@ impl CliRunner {
     /// # Panics
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
+        let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
         let output_formatter = OutputFormatter::new(format_str);
 
         let LintCommand {
@@ -469,7 +472,19 @@ impl CliRunner {
 
         let diff_manager = suppression_manager.build_diff();
 
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), &diff_manager) {
+        let rule_timing_store = debug_timings.then(RuleTimingStore::new);
+        let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
+            lint_runner.lint_files::<true>(
+                &files_to_lint,
+                tx_error.clone(),
+                &diff_manager,
+                Some(rule_timing_store),
+            )
+        } else {
+            lint_runner.lint_files::<false>(&files_to_lint, tx_error.clone(), &diff_manager, None)
+        };
+
+        match lint_result {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
@@ -503,6 +518,7 @@ impl CliRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
             oxlint_suppression_file_action,
+            rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -579,6 +595,7 @@ impl CliRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
+            rule_timings: None,
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -976,6 +993,21 @@ mod test {
     }
 
     #[test]
+    fn debug_timings() {
+        Tester::new().test_and_snapshot(&[
+            "--debug",
+            "timings",
+            "--threads",
+            "1",
+            "-A",
+            "all",
+            "-W",
+            "no-debugger",
+            "fixtures/cli/linter/debugger.js",
+        ]);
+    }
+
+    #[test]
     fn lint_vue_file() {
         let args = &["fixtures/cli/vue/debugger.vue"];
         Tester::new().test_and_snapshot(args);
@@ -1081,12 +1113,26 @@ mod test {
 
     #[test]
     fn test_fix() {
-        Tester::test_fix("fixtures/cli/fix_argument/fix.js", "debugger\n", "\n");
-        Tester::test_fix(
-            "fixtures/cli/fix_argument/fix.vue",
-            "<script>debugger;</script>\n<script>debugger;</script>\n",
-            "<script></script>\n<script></script>\n",
+        let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
+        tester.test_fix(
+            "fix.js",
+            "var x = new String('Hello world');\n",
+            "var x = 'Hello world';\n",
         );
+        tester.test_fix(
+            "fix.vue",
+            "<script>var x = new String('Hello world');</script>\n<script>var y = new String('Hello world');</script>\n",
+            "<script>var x = 'Hello world';</script>\n<script>var y = 'Hello world';</script>\n",
+        );
+    }
+
+    #[test]
+    fn test_fix_skip_suggestion() {
+        let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
+        let test_1 = "debugger\n";
+        tester.test_fix("skip_suggestion.js", test_1, test_1);
+        let test_2 = "<script>debugger;</script>\n<script>debugger;</script>\n";
+        tester.test_fix("skip_suggestion.vue", test_2, test_2);
     }
 
     #[test]
@@ -1132,6 +1178,12 @@ mod test {
         tester.test_and_snapshot(&["-c", ".oxlintrc.json", "test.js"]);
         tester.test_and_snapshot(&["-c", ".oxlintrc.json", "test.ts"]);
         tester.test_and_snapshot(&["-c", ".oxlintrc.json", "other.jsx"]);
+    }
+
+    #[test]
+    fn test_rule_count_includes_override_only_rules() {
+        let args = &["demo.ts"];
+        Tester::new().with_cwd("fixtures/issue_19891".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -1275,6 +1327,13 @@ mod test {
         Tester::new()
             .with_cwd("fixtures/cli/report_unused_directives_oxlint_only".into())
             .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_root_config_ancestor() {
+        Tester::new()
+            .with_cwd("fixtures/cli/root_config_ancestor/cwd".into())
+            .test_and_snapshot(&[]);
     }
 
     #[test]
@@ -1676,7 +1735,7 @@ mod test {
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_fix() {
-        Tester::test_fix_with_args(
+        Tester::new().test_fix_with_args(
             "fixtures/cli/tsgolint_fix/fix.ts",
             "// This file has a fixable tsgolint error: no-unnecessary-type-assertion
 // The type assertion `as string` is unnecessary because str is already a string

@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::JSXAttributeValue};
+use oxc_ast::{
+    AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -139,7 +142,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoNoninteractiveElementToInteractiveRoleConfig,
-    version = "next"
+    version = "1.64.0"
 );
 
 impl Rule for NoNoninteractiveElementToInteractiveRole {
@@ -153,7 +156,7 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
             return;
         };
 
-        let oxc_ast::ast::JSXAttributeItem::Attribute(role_attr) = role_attr_item else {
+        let JSXAttributeItem::Attribute(role_attr) = role_attr_item else {
             return;
         };
 

@@ -504,3 +504,16 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                      ────────────────
    ╰────
   help: Move `MockI18nProvider` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `usesImport` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:3:23]
+ 1 │ import { notifications } from 'some-module';
+ 2 │             export const Outer = () => {
+   ·                          ──┬──
+   ·                            ╰── Outer scope where this function is defined
+ 3 │                 const usesImport = () => {
+   ·                       ─────┬────
+   ·                            ╰── This function does not use any variables from the parent arrow function
+ 4 │                     notifications.show({ message: 'x' });
+   ╰────
+  help: Move `usesImport` to the outer scope to avoid recreating it on every call.
