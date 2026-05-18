@@ -30,11 +30,14 @@ fn replace_jsdoc_star_type(s: &str) -> Cow<'_, str> {
 }
 
 /// Strip the minimum common leading whitespace from all non-empty lines,
-/// preserving relative indentation. `base_indent` is the indent of context
-/// not included in `text` (e.g. 0 when there's inline text on the tag line).
-/// The minimum indent is clamped to at most `base_indent`, so that relative
-/// indentation (e.g. 4-space code blocks) is preserved.
-fn dedent_lines(text: &str, base_indent: usize) -> String {
+/// returning `Cow::Borrowed` when no stripping is needed. `base_indent` is
+/// chained into the minimum calculation so the strip amount is clamped
+/// (e.g. pass `0` to preserve all indentation relative to inline text,
+/// or `usize::MAX` to strip the full common indent).
+///
+/// Uses `str::get` for slicing to avoid panics when lines contain
+/// mixed-width Unicode leading whitespace.
+fn dedent_common_indent<'a>(text: &'a str, base_indent: usize) -> Cow<'a, str> {
     let min_indent = text
         .lines()
         .filter(|line| !line.trim().is_empty())
@@ -43,6 +46,10 @@ fn dedent_lines(text: &str, base_indent: usize) -> String {
         .min()
         .unwrap_or(0);
 
+    if min_indent == 0 {
+        return Cow::Borrowed(text);
+    }
+
     let mut result = String::with_capacity(text.len());
     for (i, line) in text.lines().enumerate() {
         if i > 0 {
@@ -50,16 +57,20 @@ fn dedent_lines(text: &str, base_indent: usize) -> String {
         }
         if line.trim().is_empty() {
             // Keep empty lines empty
-        } else if min_indent > 0 && line.len() >= min_indent {
-            result.push_str(&line[min_indent..]);
-        } else if min_indent == 0 {
-            // No common indent to strip — preserve original whitespace
-            result.push_str(line);
         } else {
-            result.push_str(line.trim_start());
+            result.push_str(line.get(min_indent..).unwrap_or_else(|| line.trim_start()));
         }
     }
-    result
+    Cow::Owned(result)
+}
+
+/// Strip the minimum common leading whitespace from all non-empty lines,
+/// preserving relative indentation. `base_indent` is the indent of context
+/// not included in `text` (e.g. 0 when there's inline text on the tag line).
+/// The minimum indent is clamped to at most `base_indent`, so that relative
+/// indentation (e.g. 4-space code blocks) is preserved.
+fn dedent_lines(text: &str, base_indent: usize) -> String {
+    dedent_common_indent(text, base_indent).into_owned()
 }
 
 impl JsdocFormatter<'_, '_> {
@@ -143,16 +154,29 @@ impl JsdocFormatter<'_, '_> {
         // Handle fenced blocks by stripping the markers, formatting just the
         // inner code, and re-adding the fences with proper indentation.
         if let Some((first_line, rest)) = code.split_once('\n')
-            && first_line.starts_with("```")
+            && first_line.trim_start().starts_with("```")
         {
-            if let Some(closing_pos) = rest.rfind("\n```") {
-                let inner_code = &rest[..closing_pos];
-                let closing_fence = rest[closing_pos + 1..].trim();
-                self.format_example_fenced_block(first_line, inner_code, closing_fence);
+            // Find the last line whose trimmed content is exactly ``` (the closing fence).
+            // We search from the end because backticks can appear inside the code
+            // (e.g. template literals). The closing fence line may have leading
+            // whitespace when `keepUnparsableExampleIndent` preserves indentation.
+            if let Some(closing_newline) = rest
+                .rmatch_indices('\n')
+                .find(|&(pos, _)| {
+                    rest[pos + 1..]
+                        .lines()
+                        .next()
+                        .is_some_and(|line| line.trim() == "```")
+                })
+                .map(|(pos, _)| pos)
+            {
+                let inner_code = &rest[..closing_newline];
+                let closing_fence = rest[closing_newline + 1..].trim();
+                self.format_example_fenced_block(first_line.trim_start(), inner_code, closing_fence);
                 return;
-            } else if rest.trim() == "```" {
+            } else if rest.lines().next().is_some_and(|line| line.trim() == "```") {
                 // Only two lines: opening + closing fence, no inner code
-                self.format_example_fenced_block(first_line, "", rest.trim());
+                self.format_example_fenced_block(first_line.trim_start(), "", rest.trim());
                 return;
             }
         }
@@ -203,10 +227,19 @@ impl JsdocFormatter<'_, '_> {
         }
 
         if !inner_code.is_empty() {
+            // Strip common leading whitespace from inner code to ensure
+            // idempotency. When `keepUnparsableExampleIndent` is enabled,
+            // `parsed_preserving_whitespace` retains the original indent from
+            // the source. Without stripping, each format pass would stack the
+            // code indent on top of the preserved indent, causing indentation
+            // to grow on every run.
+            let dedented = dedent_common_indent(inner_code, usize::MAX);
+            let code_ref = dedented.as_ref();
+
             let lang = lang_line[3..].trim();
             if is_js_ts_lang(lang) {
                 if let Some(formatted) = format_embedded_js(
-                    inner_code,
+                    code_ref,
                     effective_width,
                     self.format_options,
                     self.allocator,
@@ -214,11 +247,11 @@ impl JsdocFormatter<'_, '_> {
                     self.push_formatted_code_lines(&formatted, indent);
                 } else {
                     // Fallback for unparsable inner code
-                    self.push_raw_code_lines(inner_code, indent);
+                    self.push_raw_code_lines(code_ref, indent);
                 }
             } else {
                 // Non-JS/TS fenced code: preserve with continuation indent
-                self.push_raw_code_lines(inner_code, indent);
+                self.push_raw_code_lines(code_ref, indent);
             }
         }
 

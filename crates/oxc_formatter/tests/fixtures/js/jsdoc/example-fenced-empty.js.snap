@@ -1,0 +1,102 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Empty fenced code blocks (opening + closing fence only, no inner code)
+// should be preserved even with leading whitespace.
+
+/**
+ * Empty fence with language tag and leading whitespace.
+ *
+ * @example
+ *   ```js
+ *   ```
+ */
+function emptyFenceWithLanguage() {}
+
+/**
+ * Empty fence without language tag and leading whitespace.
+ *
+ * @example
+ *   ```
+ *   ```
+ */
+function emptyFenceWithoutLanguage() {}
+
+/**
+ * Empty fence with no leading whitespace.
+ *
+ * @example
+ * ```js
+ * ```
+ */
+function emptyFenceNoWhitespace() {}
+
+==================== Output ====================
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
+// Empty fenced code blocks (opening + closing fence only, no inner code)
+// should be preserved even with leading whitespace.
+
+/**
+ * Empty fence with language tag and leading whitespace.
+ *
+ * @example
+ *   ```js
+ *   ```
+ */
+function emptyFenceWithLanguage() {}
+
+/**
+ * Empty fence without language tag and leading whitespace.
+ *
+ * @example
+ *   ```
+ *   ```
+ */
+function emptyFenceWithoutLanguage() {}
+
+/**
+ * Empty fence with no leading whitespace.
+ *
+ * @example
+ *   ```js
+ *   ```
+ */
+function emptyFenceNoWhitespace() {}
+
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
+// Empty fenced code blocks (opening + closing fence only, no inner code)
+// should be preserved even with leading whitespace.
+
+/**
+ * Empty fence with language tag and leading whitespace.
+ *
+ * @example
+ *   ```js
+ *   ```
+ */
+function emptyFenceWithLanguage() {}
+
+/**
+ * Empty fence without language tag and leading whitespace.
+ *
+ * @example
+ *   ```
+ *   ```
+ */
+function emptyFenceWithoutLanguage() {}
+
+/**
+ * Empty fence with no leading whitespace.
+ *
+ * @example
+ *   ```js
+ *   ```
+ */
+function emptyFenceNoWhitespace() {}
+
+===================== End =====================
