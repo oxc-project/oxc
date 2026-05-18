@@ -1,0 +1,226 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:30]
+ 1 │ function a(err) { if (err) { callback (err); } }
+   ·                              ──────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:63]
+ 1 │ function a(callback) { if (typeof callback !== 'undefined') { callback(); } }
+   ·                                                               ──────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:61]
+ 1 │ function a(callback) { if (typeof callback !== 'undefined') callback();  }
+   ·                                                             ──────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:35]
+ 1 │ function a(callback) { if (err) { callback(); horse && horse(); } }
+   ·                                   ──────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:31]
+ 1 │ var x = (err) => { if (err) { callback (err); } }
+   ·                               ──────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:31]
+ 1 │ var x = { x(err) { if (err) { callback (err); } } }
+   ·                               ──────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:3:14]
+ 2 │              log();
+ 3 │              callback(err); } }
+   ·              ─────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:43]
+ 1 │ var x = { x(err) { if (err) { callback && callback (err); } } }
+   ·                                           ──────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:19]
+ 1 │ function a(err) { callback (err); callback(); }
+   ·                   ──────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:19]
+ 1 │ function a(err) { callback (err); horse(); }
+   ·                   ──────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:30]
+ 1 │ function a(err) { if (err) { callback (err); horse(); return; } }
+   ·                              ──────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:20]
+ 1 │ var a = (err) => { callback (err); callback(); }
+   ·                    ──────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:30]
+ 1 │ function a(err) { if (err) { callback (err); } else if (x) { callback(err); return; } }
+   ·                              ──────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:3:13]
+ 2 │             else if (abc) {
+ 3 │             callback(); }
+   ·             ──────────
+ 4 │             else {
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:32]
+ 1 │ class x { horse() { if (err) { callback(); } callback(); } } 
+   ·                                ──────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:30]
+ 1 │ function x(err) { if (err) { callback() } else { callback() } }
+   ·                              ──────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:50]
+ 1 │ function x(err) { if (err) { callback() } else { callback() } }
+   ·                                                  ──────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:52]
+ 1 │ function x(err) { if (err) return callback(); else callback(); }
+   ·                                                    ──────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:18]
+ 1 │ () => { if (x) { callback(); } }
+   ·                  ──────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:42]
+ 1 │ function b() { switch(x) { case 'horse': callback(); } }
+   ·                                          ──────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:42]
+ 1 │ function a() { switch(x) { case 'horse': move(); } }
+   ·                                          ──────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:33]
+ 1 │ var x = function() { while(x) { move(); } }
+   ·                                 ──────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:47]
+ 1 │ function x() { for (var i = 0; i < 10; i++) { move(); } }
+   ·                                               ──────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:51]
+ 1 │ var x = function() { for (var i = 0; i < 10; i++) move(); }
+   ·                                                   ──────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:30]
+ 1 │ function a(err) { if (err) { obj.method(err); } }
+   ·                              ───────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:30]
+ 1 │ function a(err) { if (err) { obj.prop.method(err); } }
+   ·                              ────────────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:30]
+ 1 │ function a(err) { if (err) { obj.prop.method(err); } otherObj.prop.method() }
+   ·                              ────────────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:41]
+ 1 │ function a(err) { if (err) { /*comment*/obj.method(err); } }
+   ·                                         ───────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:2:13]
+ 1 │ function a(err) { if (err) { //comment
+ 2 │             obj.method(err); } }
+   ·             ───────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:30]
+ 1 │ function a(err) { if (err) { obj.method(err); /*comment*/ } }
+   ·                              ───────────────
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
+
+  ⚠ node(callback-return): Expected return with your callback function.
+   ╭─[callback_return.tsx:1:30]
+ 1 │ function a(err) { if (err) { obj.method(err); //comment
+   ·                              ───────────────
+ 2 │              } }
+   ╰────
+  help: Return the callback call or add an explicit return immediately after it.
