@@ -43,7 +43,7 @@ pub struct NoUnderscoreDangleConfig {
     /// Whether to allow dangling underscores in function parameter names.
     allow_function_params: bool,
     /// Whether to allow dangling underscores in `using` and `await using` declarations.
-    allow_after_using: bool,
+    allow_in_using_declarations: bool,
     /// Whether to enforce dangling underscores in class field names.
     enforce_in_class_fields: bool,
     /// Whether to enforce dangling underscores in method names.
@@ -71,7 +71,7 @@ impl Default for NoUnderscoreDangleConfig {
             allow_in_array_destructuring: true,
             allow_in_object_destructuring: true,
             allow_function_params: true,
-            allow_after_using: false,
+            allow_in_using_declarations: false,
             enforce_in_class_fields: false,
             enforce_in_method_names: false,
         }
@@ -195,7 +195,7 @@ impl NoUnderscoreDangle {
             BindingContext::ArrayDestructure => self.allow_in_array_destructuring,
             BindingContext::ObjectDestructure => self.allow_in_object_destructuring,
             BindingContext::FunctionParam => self.allow_function_params,
-            BindingContext::Using => self.allow_after_using,
+            BindingContext::Using => self.allow_in_using_declarations,
             BindingContext::Plain => false,
             BindingContext::NotInteresting => return,
         };
@@ -398,11 +398,11 @@ fn test() {
         ("const o = { _foo: 'bar' }", Some(serde_json::json!([{ "enforceInMethodNames": true }]))), // { "ecmaVersion": 6 },
         (
             "using _guard = enterCriticalSection();",
-            Some(serde_json::json!([{ "allowAfterUsing": true }])),
+            Some(serde_json::json!([{ "allowInUsingDeclarations": true }])),
         ),
         (
             "async function foo() { await using _guard = enterCriticalSection(); }",
-            Some(serde_json::json!([{ "allowAfterUsing": true }])),
+            Some(serde_json::json!([{ "allowInUsingDeclarations": true }])),
         ),
         (
             "function foo([_bar]) {}",
@@ -535,7 +535,7 @@ fn test() {
         ("using _guard = enterCriticalSection();", None),
         (
             "using guard_ = enterCriticalSection();",
-            Some(serde_json::json!([{ "allowAfterUsing": false }])),
+            Some(serde_json::json!([{ "allowInUsingDeclarations": false }])),
         ),
     ];
 
