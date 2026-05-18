@@ -1,0 +1,913 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <main onClick={() => void 0} />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <li onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <img onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <iframe onClick={() => void 0} />
+   ·  ──────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <label onClick={() => void 0} />
+   ·  ─────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <section onClick={() => void 0} aria-label="Aardvark" />
+   ·  ───────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <section onClick={() => void 0} aria-labelledby="js_1" />
+   ·  ───────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="listitem" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onKeyDown={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onKeyPress={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onKeyUp={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role={"article"} onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="unknown article" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div contentEditable role="article" onKeyDown={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <Image onClick={() => void 0} />
+   ·  ─────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <main onClick />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <article contentEditable onClick={() => void 0} />
+   ·  ───────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <ul contentEditable="false" onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dialog onClick={() => void 0} />
+   ·  ──────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <main onFocus={() => void 0} />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onBlur={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onContextMenu={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <img onLoad={() => void 0} alt="" />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <main onClick={() => void 0} />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dialog onKeyDown={() => void 0} />
+   ·  ──────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <address onClick={() => void 0} />
+   ·  ───────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <article onClick={() => void 0} />
+   ·  ───────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <aside onClick={() => void 0} />
+   ·  ─────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <blockquote onClick={() => void 0} />
+   ·  ──────────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <br onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <caption onClick={() => void 0} />
+   ·  ───────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <code onClick={() => void 0} />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dd onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <del onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <details onClick={() => void 0} />
+   ·  ───────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dfn onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dir onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dl onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dt onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <em onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <fieldset onClick={() => void 0} />
+   ·  ────────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <figcaption onClick={() => void 0} />
+   ·  ──────────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <figure onClick={() => void 0} />
+   ·  ──────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <footer onClick={() => void 0} />
+   ·  ──────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <form onClick={() => void 0} />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <h1 onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <h2 onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <h3 onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <h4 onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <h5 onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <h6 onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <hr onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <html onClick={() => void 0} />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <ins onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <legend onClick={() => void 0} />
+   ·  ──────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <mark onClick={() => void 0} />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <marquee onClick={() => void 0} />
+   ·  ───────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <menu onClick={() => void 0} />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <meter onClick={() => void 0} />
+   ·  ─────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <nav onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <ol onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <optgroup onClick={() => void 0} />
+   ·  ────────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <output onClick={() => void 0} />
+   ·  ──────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <p onClick={() => void 0} />
+   ·  ─
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <pre onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <progress onClick={() => void 0} />
+   ·  ────────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <ruby onClick={() => void 0} />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <strong onClick={() => void 0} />
+   ·  ──────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <sub onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <sup onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <table onClick={() => void 0} />
+   ·  ─────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <tbody onClick={() => void 0} />
+   ·  ─────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <tfoot onClick={() => void 0} />
+   ·  ─────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <thead onClick={() => void 0} />
+   ·  ─────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <time onClick={() => void 0} />
+   ·  ────
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <ul onClick={() => void 0} />
+   ·  ──
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="alert" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="alertdialog" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="application" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="banner" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="cell" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="complementary" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="contentinfo" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="definition" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="dialog" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="directory" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="document" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="feed" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="figure" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="form" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="group" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="heading" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="img" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="list" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="log" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="main" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="marquee" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="math" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="navigation" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="note" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="progressbar" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="separator" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="region" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="rowgroup" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="search" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="status" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="table" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="tabpanel" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="term" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="timer" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="tooltip" onClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onError={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onLoad={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onMouseDown={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onMouseUp={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onDoubleClick={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onDrag={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onDragEnd={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onDragEnter={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onDragExit={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onDragLeave={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onDragOver={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onDragStart={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onDrop={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onMouseEnter={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onMouseLeave={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onMouseMove={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onMouseOut={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.
+
+  ⚠ jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role="article" onMouseOver={() => void 0} />
+   ·  ───
+   ╰────
+  help: Move the handler to an interactive element, or use an appropriate interactive role.

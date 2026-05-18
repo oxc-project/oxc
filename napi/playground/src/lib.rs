@@ -36,8 +36,8 @@ use oxc_formatter::{
     get_parse_options,
 };
 use oxc_linter::{
-    ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
-    ModuleRecord, Oxlintrc,
+    ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
+    LintOptions, Linter, ModuleRecord, Oxlintrc,
 };
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
 use oxc_transformer_plugins::{
@@ -417,7 +417,12 @@ impl Oxc {
             )
             .run(
                 path,
-                vec![ContextSubHost::new(semantic, Arc::clone(module_record), 0)],
+                vec![ContextSubHost::new(
+                    semantic,
+                    Arc::clone(module_record),
+                    0,
+                    ContextSubHostOptions::default(),
+                )],
                 allocator,
             );
             self.diagnostics.extend(linter_ret.into_iter().map(|e| e.error));

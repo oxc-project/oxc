@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ vitest(no-restricted-matchers): Use of `not.toBe` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).not.toBe(b)

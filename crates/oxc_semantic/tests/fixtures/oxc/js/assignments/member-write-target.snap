@@ -97,6 +97,71 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/member-write-t
             "scope_id": 0
           }
         ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 5,
+        "name": "key",
+        "node": "VariableDeclarator(key)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 7,
+            "name": "key",
+            "node_id": 71,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 8,
+            "name": "key",
+            "node_id": 77,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 9,
+            "name": "key",
+            "node_id": 83,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 11,
+            "name": "key",
+            "node_id": 92,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 13,
+            "name": "key",
+            "node_id": 98,
+            "scope_id": 0
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 6,
+        "name": "f",
+        "node": "VariableDeclarator(f)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
+            "id": 10,
+            "name": "f",
+            "node_id": 91,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
+            "id": 12,
+            "name": "f",
+            "node_id": 97,
+            "scope_id": 0
+          }
+        ]
       }
     ]
   }

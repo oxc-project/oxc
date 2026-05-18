@@ -684,6 +684,76 @@ fn test_fold_opt_chain() {
     fold("x = null?.[foo]", "x = void 0");
     fold("x = undefined?.()", "x = void 0");
     fold("x = null?.()", "x = void 0");
+    fold("x = (foo(), null)?.y", "x = (foo(), void 0)");
+    fold("x = (foo(), null)?.()", "x = (foo(), void 0)");
+
+    // Nested: nullish base short-circuits the entire chain even when the
+    // optional is not on the outermost element.
+    fold("x = null?.foo.bar", "x = void 0");
+    fold("x = ((null))?.foo", "x = void 0");
+    fold("x = null?.foo()", "x = void 0");
+    fold("x = null?.foo.bar.baz()", "x = void 0");
+    fold("x = (foo(), null)?.bar.baz", "x = (foo(), void 0)");
+}
+
+#[test]
+fn test_fold_opt_chain_non_nullish_base() {
+    // https://github.com/oxc-project/oxc/issues/21923
+    // Drop `?.` when the base is statically non-nullish.
+    fold(r#"x = ("")?.foo"#, r#"x = ("").foo"#);
+    fold("x = (1)?.foo", "x = (1).foo");
+    fold("x = (1n)?.foo", "x = (1n).foo");
+    fold("x = ({})?.foo", "x = ({}).foo");
+    fold("x = ([])?.foo", "x = ([]).foo");
+    fold("x = (() => 0)?.foo", "x = (() => 0).foo");
+    fold("x = (function () {})?.foo", "x = (function () {}).foo");
+    fold("x = (class {})?.foo", "x = (class {}).foo");
+    fold("x = /a/?.flags", "x = /a/.flags");
+    // Computed and optional-call forms.
+    fold(r#"x = ({})?.["foo"]"#, "x = ({}).foo");
+    // Fold chains with the IIFE inliner: (() => 0)?.() -> (() => 0)() -> 0
+    fold("x = (() => 0)?.()", "x = 0");
+
+    // Side effects on the base must be preserved.
+    fold("x = (foo(), {})?.bar", "x = (foo(), {}).bar");
+
+    // The outer `?.foo` cannot be dropped while the base still contains an
+    // unresolved optional. `Number` may be shadowed by a primitive, in which
+    // case `Number?.POSITIVE_INFINITY.foo` would throw.
+    fold_same("x = Number?.POSITIVE_INFINITY?.foo");
+    fold_same("x = Number?.NEGATIVE_INFINITY?.foo");
+    test(
+        "const Number = 1; x = Number?.POSITIVE_INFINITY?.foo",
+        "const Number = 1; x = 1 .POSITIVE_INFINITY?.foo",
+    );
+    test(
+        "const Number = 1; x = Number?.POSITIVE_INFINITY?.[foo()]",
+        "const Number = 1; x = 1 .POSITIVE_INFINITY?.[foo()]",
+    );
+    test(
+        "const Number = 1; x = Number?.POSITIVE_INFINITY?.(foo())",
+        "const Number = 1; x = 1 .POSITIVE_INFINITY?.(foo())",
+    );
+
+    // Unknown bases are left alone.
+    fold_same("x = b?.foo");
+    fold_same("x = foo()?.bar");
+    fold_same("x = new Foo()?.bar");
+
+    // Nested chains: drop the inner `?.` when its base is non-nullish, even
+    // when the outermost element is non-optional.
+    fold("x = []?.foo.bar", "x = [].foo.bar");
+    fold(r#"x = ("")?.foo.bar"#, r#"x = ("").foo.bar"#);
+    fold("x = ({})?.foo()", "x = ({}).foo()");
+    fold(r#"x = /a/?.test("a")"#, r#"x = /a/.test("a")"#);
+
+    // Inner `?.` flips, outer `?.` keeps the chain wrapped.
+    fold("x = ({})?.foo?.bar", "x = ({}).foo?.bar");
+    fold("x = (() => 0)?.foo?.()", "x = (() => 0).foo?.()");
+
+    // Nested ChainExpressions are flattened by a separate pass before this
+    // fold sees the inner optional on a later compression iteration.
+    fold("x = (({})?.foo)?.bar", "x = ({}).foo?.bar");
 }
 
 #[test]

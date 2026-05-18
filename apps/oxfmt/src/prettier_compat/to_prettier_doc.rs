@@ -18,25 +18,44 @@ use oxc_formatter::{
 /// This is used for js-in-xxx formatting (both full and fragment)
 /// where the IR must be returned to Prettier as an unresolved Doc (rather than a printed string)
 /// so that Prettier can handle line-wrapping in the parent context.
+///
+/// # Ref-based sharing
+///
+/// `oxc_formatter` IR uses [`FormatElement::Interned`] to share sub-trees by pointer.
+/// Naively cloning the converted JSON for each reference duplicates content,
+/// which explodes exponentially when nested inside [`FormatElement::BestFitting`] variants
+/// (each variant emits its own copy of the inner Interned content in the Prettier Doc's `expandedStates`).
+///
+/// To preserve sharing across the JSON boundary, every Interned slice is emitted once
+/// into a `refs` array and referenced via `{ "_REF": <index> }` placeholders.
+/// The uppercase, prefixed key avoids any chance of collision with valid Prettier
+/// Doc node keys (`type`, `contents`, `id`, etc.).
+/// The JS-side plugin resolves these back into shared object references before
+/// handing to Prettier as `Doc`, matching the original (memory-shared) structure exactly.
+/// Output is unchanged because Prettier identifies groups by `id`, not by JS object identity.
 pub fn format_elements_to_prettier_doc(
     elements: &[FormatElement],
     sorted_tailwind_classes: &[String],
 ) -> Result<Value, String> {
     let mut state = ConvertState::new(sorted_tailwind_classes);
     let children = convert_elements(elements, &mut state)?;
-    Ok(normalize_array(children))
+    let doc = normalize_array(children);
+    Ok(json!({ "doc": doc, "refs": Value::Array(state.refs) }))
 }
 
 type InternedCacheKey = (usize, usize);
 
 struct ConvertState<'a> {
     sorted_tailwind_classes: &'a [String],
-    interned_cache: FxHashMap<InternedCacheKey, Vec<Value>>,
+    /// Maps `Interned` slice pointer to its ref id in `refs`.
+    interned_to_ref: FxHashMap<InternedCacheKey, usize>,
+    /// Converted content per ref id (index = id).
+    refs: Vec<Value>,
 }
 
 impl<'a> ConvertState<'a> {
     fn new(sorted_tailwind_classes: &'a [String]) -> Self {
-        Self { sorted_tailwind_classes, interned_cache: FxHashMap::default() }
+        Self { sorted_tailwind_classes, interned_to_ref: FxHashMap::default(), refs: Vec::new() }
     }
 }
 
@@ -269,13 +288,20 @@ fn convert_elements(
                     printer.pending_space = false;
                 }
                 let key = interned_cache_key(interned);
-                if let Some(cached) = state.interned_cache.get(&key) {
-                    current_children_mut(&mut stack)?.extend(cached.iter().cloned());
+                let id = if let Some(&id) = state.interned_to_ref.get(&key) {
+                    id
                 } else {
+                    // Reserve the slot index now:
+                    // the recursive `convert_elements` call below may push more refs,
+                    // so `state.refs.len()` would no longer equal this Interned's slot when we go to fill it.
+                    let id = state.refs.len();
+                    state.refs.push(Value::Null);
+                    state.interned_to_ref.insert(key, id);
                     let converted = convert_elements(interned, state)?;
-                    state.interned_cache.insert(key, converted.clone());
-                    current_children_mut(&mut stack)?.extend(converted);
-                }
+                    state.refs[id] = normalize_array(converted);
+                    id
+                };
+                current_children_mut(&mut stack)?.push(json!({ "_REF": id }));
                 printer.last_was_hardline = false;
             }
             FormatElement::BestFitting(best_fitting) => {
@@ -508,21 +534,37 @@ fn convert_best_fitting(
         return Ok(json!({"type": "group", "contents": ""}));
     }
 
-    let first_contents = normalize_array(convert_elements(variants[0], state)?);
-
     if variants.len() == 1 {
+        let first_contents = normalize_array(convert_elements(variants[0], state)?);
         return Ok(json!({"type": "group", "contents": first_contents}));
     }
 
-    let expanded_states: Vec<Value> = variants
-        .iter()
-        .map(|v| convert_elements(v, state).map(normalize_array))
-        .collect::<Result<_, _>>()?;
+    // `variants[0]` is rendered twice in Prettier's Doc.
+    // - once as `contents` (the flat-mode candidate)
+    // - and once as `expandedStates[0]` (the first break-mode candidate)
+    // Convert it once and stash the result in `refs`,
+    // then reference it from both positions via `{ _REF: id }` placeholders.
+    // The JS-side resolver restores both to the same memory-shared object
+    // (identity unaffected — Prettier identifies groups by `id`).
+    //
+    // Reserve the slot before recursing so any nested Interned refs pushed during conversion
+    // get later ids; `state.refs[id]` is filled in after.
+    let first_id = state.refs.len();
+    state.refs.push(Value::Null);
+    let first_content = normalize_array(convert_elements(variants[0], state)?);
+    state.refs[first_id] = first_content;
+    let first_ref = json!({ "_REF": first_id });
+
+    let mut expanded_states: Vec<Value> = Vec::with_capacity(variants.len());
+    expanded_states.push(first_ref.clone());
+    for v in &variants[1..] {
+        expanded_states.push(normalize_array(convert_elements(v, state)?));
+    }
 
     Ok(json!({
         "type": "group",
-        "contents": first_contents,
-        "expandedStates": Value::Array(expanded_states)
+        "contents": first_ref,
+        "expandedStates": Value::Array(expanded_states),
     }))
 }
 

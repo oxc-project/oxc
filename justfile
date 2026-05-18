@@ -171,7 +171,10 @@ watch-oxlint-node *args='':
 # Create a new lint rule for any plugin
 new-rule name plugin='eslint':
   cargo run -p rulegen {{name}} {{plugin}}
+  just linter-schema-json
+  just linter-config-ts
   just fmt
+  cargo insta test -p website_linter --accept
 
 # Update test cases for an existing lint rule from upstream
 update-rule-tests name plugin='eslint':
@@ -279,6 +282,7 @@ website path:
   cargo run -p website_linter rules --rules-json {{path}}/.vitepress/data/rules.json --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD) --rule-count {{path}}/src/docs/guide/usage
   cargo run -p website_linter cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website_linter schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
+  cargo run -p website_linter schema-markdown-lsp > {{path}}/src/docs/guide/usage/linter/generated-lsp-config.md
   cargo run -p website_formatter cli > {{path}}/src/docs/guide/usage/formatter/generated-cli.md
   cargo run -p website_formatter schema-markdown > {{path}}/src/docs/guide/usage/formatter/generated-config.md
 

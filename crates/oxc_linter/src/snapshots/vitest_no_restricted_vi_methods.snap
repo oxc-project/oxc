@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ vitest(no-restricted-vi-methods): Use of `fn` is not allowed
    ╭─[no_restricted_vi_methods.tsx:1:4]
  1 │ vi.fn()

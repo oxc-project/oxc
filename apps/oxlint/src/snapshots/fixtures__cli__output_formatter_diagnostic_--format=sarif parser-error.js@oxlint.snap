@@ -1,0 +1,71 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=sarif parser-error.js
+working directory: fixtures/cli/output_formatter_diagnostic
+----------
+{
+  "version": "2.1.0",
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "oxlint",
+          "version": "<variable>",
+          "semanticVersion": "<variable>",
+          "informationUri": "https://oxc.rs/docs/guide/usage/linter.html",
+          "rules": [
+            {
+              "id": "OXL0001",
+              "name": "oxlint-diagnostic",
+              "shortDescription": {
+                "text": "Oxlint diagnostic"
+              },
+              "fullDescription": {
+                "text": "An oxlint diagnostic that is associated with an artifact but not with a lint rule."
+              }
+            }
+          ]
+        }
+      },
+      "artifacts": [
+        {
+          "location": {
+            "uri": "parser-error.js"
+          }
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "OXL0001",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Expected `;` but found `:`"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "parser-error.js",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 9,
+                  "endLine": 3,
+                  "endColumn": 10
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "unicodeCodePoints"
+    }
+  ]
+}----------
+CLI result: LintFoundErrors
+----------
