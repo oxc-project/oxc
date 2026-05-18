@@ -37,8 +37,33 @@ fn import_style_diagnostic(
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct ImportStyle(Box<ImportStyleConfig>);
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct ImportStyle {
+    styles: BTreeMap<String, ModuleStylesOverride>,
+    #[serde(default = "default_true")]
+    extend_default_styles: bool,
+    #[serde(default = "default_true")]
+    check_import: bool,
+    #[serde(default = "default_true")]
+    check_dynamic_import: bool,
+    check_export_from: bool,
+    #[serde(default = "default_true")]
+    check_require: bool,
+}
+
+impl Default for ImportStyle {
+    fn default() -> Self {
+        Self {
+            styles: BTreeMap::new(),
+            extend_default_styles: true,
+            check_import: true,
+            check_dynamic_import: true,
+            check_export_from: false,
+            check_require: true,
+        }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -66,23 +91,21 @@ declare_oxc_lint!(
     unicorn,
     restriction,
     none,
-    config = RawImportStyleConfig,
+    config = ImportStyle,
     version = "next",
 );
 
 impl Rule for ImportStyle {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let raw =
-            serde_json::from_value::<DefaultRuleConfig<RawImportStyleConfig>>(value)?.into_inner();
-        Ok(Self(Box::new(ImportStyleConfig::from_raw(raw))))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ImportDeclaration(import_decl) if self.0.check_import => {
+            AstKind::ImportDeclaration(import_decl) if self.check_import => {
                 self.check_import_declaration(import_decl, ctx);
             }
-            AstKind::ImportExpression(import_expr) if self.0.check_dynamic_import => {
+            AstKind::ImportExpression(import_expr) if self.check_dynamic_import => {
                 if is_assigned_dynamic_import(node, ctx) {
                     return;
                 }
@@ -95,13 +118,13 @@ impl Rule for ImportStyle {
                     ctx,
                 );
             }
-            AstKind::ExportAllDeclaration(export_decl) if self.0.check_export_from => {
+            AstKind::ExportAllDeclaration(export_decl) if self.check_export_from => {
                 self.check_export_all_declaration(export_decl, ctx);
             }
-            AstKind::ExportNamedDeclaration(export_decl) if self.0.check_export_from => {
+            AstKind::ExportNamedDeclaration(export_decl) if self.check_export_from => {
                 self.check_export_named_declaration(export_decl, ctx);
             }
-            AstKind::ExpressionStatement(statement) if self.0.check_require => {
+            AstKind::ExpressionStatement(statement) if self.check_require => {
                 let Expression::CallExpression(call_expr) = &statement.expression else { return };
                 let Some(source) = get_require_module_name(call_expr) else { return };
                 self.report_if_needed(
@@ -161,7 +184,7 @@ impl ImportStyle {
         declarator: &VariableDeclarator<'_>,
         ctx: &LintContext<'_>,
     ) {
-        if self.0.check_dynamic_import
+        if self.check_dynamic_import
             && let Some(Expression::AwaitExpression(await_expr)) = &declarator.init
             && let Expression::ImportExpression(import_expr) = &await_expr.argument
             && let Some(source) = get_module_name(&import_expr.source)
@@ -176,7 +199,7 @@ impl ImportStyle {
             return;
         }
 
-        if self.0.check_require
+        if self.check_require
             && let Some(Expression::CallExpression(call_expr)) = &declarator.init
             && let Some(source) = get_require_module_name(call_expr)
         {
@@ -198,16 +221,13 @@ impl ImportStyle {
         is_require: bool,
         ctx: &LintContext<'_>,
     ) {
-        let Some(allowed_styles) = self.0.styles.get(module_name) else { return };
-        if allowed_styles.is_empty() {
-            return;
-        }
+        let Some(allowed_styles) = self.allowed_styles(module_name) else { return };
 
         let allowed_styles =
             if is_require && allowed_styles.default_style && !allowed_styles.namespace {
                 allowed_styles.with_namespace()
             } else {
-                *allowed_styles
+                allowed_styles
             };
 
         if actual_styles.is_subset_of(allowed_styles) {
@@ -215,6 +235,23 @@ impl ImportStyle {
         }
 
         ctx.diagnostic(import_style_diagnostic(span, module_name, allowed_styles));
+    }
+
+    fn allowed_styles(&self, module_name: &str) -> Option<StyleSet> {
+        let override_styles = self.styles.get(module_name);
+        if matches!(override_styles, Some(ModuleStylesOverride::Disabled(_))) {
+            return None;
+        }
+
+        let base = self.extend_default_styles.then(|| default_style_for(module_name)).flatten();
+        let allowed_styles =
+            if let Some(ModuleStylesOverride::Styles(override_styles)) = override_styles {
+                override_styles.apply_to(base.unwrap_or_default())
+            } else {
+                base?
+            };
+
+        (!allowed_styles.is_empty()).then_some(allowed_styles)
     }
 }
 
@@ -337,80 +374,6 @@ fn is_assigned_dynamic_import(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool
         return false;
     };
     declarator.init.as_ref().is_some_and(|init| init.span() == await_expr.span)
-}
-
-#[derive(Debug, Clone)]
-struct ImportStyleConfig {
-    styles: BTreeMap<String, StyleSet>,
-    check_import: bool,
-    check_dynamic_import: bool,
-    check_export_from: bool,
-    check_require: bool,
-}
-
-impl Default for ImportStyleConfig {
-    fn default() -> Self {
-        Self::from_raw(RawImportStyleConfig::default())
-    }
-}
-
-impl ImportStyleConfig {
-    fn from_raw(raw: RawImportStyleConfig) -> Self {
-        let mut styles = if raw.extend_default_styles { default_styles() } else { BTreeMap::new() };
-
-        for (module_name, override_styles) in raw.styles {
-            match override_styles {
-                ModuleStylesOverride::Disabled(_) => {
-                    styles.insert(module_name, StyleSet::default());
-                }
-                ModuleStylesOverride::Styles(override_styles) => {
-                    let next = if raw.extend_default_styles {
-                        override_styles
-                            .apply_to(styles.get(&module_name).copied().unwrap_or_default())
-                    } else {
-                        override_styles.apply_to(StyleSet::default())
-                    };
-                    styles.insert(module_name, next);
-                }
-            }
-        }
-
-        Self {
-            styles,
-            check_import: raw.check_import,
-            check_dynamic_import: raw.check_dynamic_import,
-            check_export_from: raw.check_export_from,
-            check_require: raw.check_require,
-        }
-    }
-}
-
-impl Default for RawImportStyleConfig {
-    fn default() -> Self {
-        Self {
-            styles: BTreeMap::new(),
-            extend_default_styles: true,
-            check_import: true,
-            check_dynamic_import: true,
-            check_export_from: false,
-            check_require: true,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-pub struct RawImportStyleConfig {
-    styles: BTreeMap<String, ModuleStylesOverride>,
-    #[serde(default = "default_true")]
-    extend_default_styles: bool,
-    #[serde(default = "default_true")]
-    check_import: bool,
-    #[serde(default = "default_true")]
-    check_dynamic_import: bool,
-    check_export_from: bool,
-    #[serde(default = "default_true")]
-    check_require: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -550,14 +513,12 @@ impl StyleSet {
     }
 }
 
-fn default_styles() -> BTreeMap<String, StyleSet> {
-    BTreeMap::from([
-        ("chalk".to_string(), StyleSet::default_style()),
-        ("node:path".to_string(), StyleSet::default_style()),
-        ("node:util".to_string(), StyleSet::named()),
-        ("path".to_string(), StyleSet::default_style()),
-        ("util".to_string(), StyleSet::named()),
-    ])
+fn default_style_for(module_name: &str) -> Option<StyleSet> {
+    match module_name {
+        "chalk" | "node:path" | "path" => Some(StyleSet::default_style()),
+        "node:util" | "util" => Some(StyleSet::named()),
+        _ => None,
+    }
 }
 
 #[test]
