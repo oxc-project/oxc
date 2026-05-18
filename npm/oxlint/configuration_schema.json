@@ -2638,6 +2638,9 @@
         "vue/valid-define-emits": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/valid-define-options": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/valid-define-props": {
           "$ref": "#/definitions/DummyRule"
         },
