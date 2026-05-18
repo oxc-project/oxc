@@ -7,9 +7,9 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle,
-    Semicolons, TrailingCommas,
+    ArrayExpand, ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand,
+    FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition,
+    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -203,6 +203,14 @@ impl VisitMut<'_> for SpecParser {
                                             _ => s,
                                         },
                                     )
+                                    .unwrap_or_default();
+                                }
+                                "arrayWrap" => {
+                                    options.array_expand = ArrayExpand::from_str(match s {
+                                        "preserve" => "auto",
+                                        "collapse" => "never",
+                                        _ => s,
+                                    })
                                     .unwrap_or_default();
                                 }
                                 "arrowParens" => {
