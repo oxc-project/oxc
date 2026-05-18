@@ -842,6 +842,7 @@ export interface DummyRuleMap {
   "node/no-path-concat"?: DummyRule;
   "node/no-process-env"?: DummyRule;
   "object-shorthand"?: DummyRule;
+  "one-var"?: DummyRule;
   "operator-assignment"?: DummyRule;
   "oxc/approx-constant"?: DummyRule;
   "oxc/bad-array-method-on-arguments"?: DummyRule;

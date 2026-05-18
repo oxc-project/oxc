@@ -1,17 +1,13 @@
-use oxc_ast::ast::{
-    ArrowFunctionExpression, Declaration, ForInStatement, ForOfStatement, ForStatement,
-    ForStatementInit, ForStatementLeft, Function, FunctionBody, Program, Statement, StaticBlock,
-    SwitchStatement, TSGlobalDeclaration, TSModuleBlock, TSModuleDeclaration, VariableDeclaration,
-    VariableDeclarationKind,
-};
-use oxc_ast_visit::{
-    Visit,
-    walk::{
-        walk_arrow_function_expression, walk_expression, walk_for_statement_init,
-        walk_for_statement_left, walk_function, walk_statement, walk_ts_global_declaration,
-        walk_ts_module_declaration, walk_variable_declaration,
+use oxc_ast::{
+    AstKind, AstType,
+    ast::{
+        ArrowFunctionExpression, BlockStatement, Declaration, Expression, ForInStatement,
+        ForOfStatement, ForStatement, ForStatementInit, ForStatementLeft, Function, Statement,
+        StaticBlock, SwitchStatement, TSGlobalDeclaration, TSModuleDeclaration,
+        TSModuleDeclarationBody, VariableDeclaration, VariableDeclarationKind, VariableDeclarator,
     },
 };
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -27,8 +23,13 @@ use serde::{
 };
 use serde_json::Value;
 use smallvec::SmallVec;
+use std::borrow::Cow;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 fn one_var_diagnostic(
     span: Span,
@@ -261,7 +262,7 @@ impl JsonSchema for OneVarKindConfig {
         "OneVarKindConfig".to_string()
     }
 
-    fn schema_id() -> std::borrow::Cow<'static, str> {
+    fn schema_id() -> Cow<'static, str> {
         "OneVarKindConfig".into()
     }
 
@@ -294,7 +295,7 @@ impl JsonSchema for OneVarInitConfig {
         "OneVarInitConfig".to_string()
     }
 
-    fn schema_id() -> std::borrow::Cow<'static, str> {
+    fn schema_id() -> Cow<'static, str> {
         "OneVarInitConfig".into()
     }
 
@@ -378,19 +379,48 @@ declare_oxc_lint!(
     version = "next",
 );
 
+const VARIABLE_DECLARATION_NODE_TYPES: &AstTypesBitset =
+    &AstTypesBitset::from_types(&[AstType::VariableDeclaration]);
+
 impl Rule for OneVar {
     fn from_configuration(value: Value) -> Result<Self, serde_json::Error> {
         serde_json::from_value::<StrictOneVarConfig>(value).map(|config| Self(config.0))
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut visitor = OneVarVisitor {
-            ctx,
-            config: &self.0,
-            function_stack: SmallVec::new(),
-            block_stack: SmallVec::new(),
-        };
-        visitor.visit_program(ctx.nodes().program());
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        // `Program` is in NODE_TYPES, so preserve the cheap file-level skip for
+        // files without variable declarations.
+        ctx.semantic().nodes().contains_any(VARIABLE_DECLARATION_NODE_TYPES)
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // Each run checks one var-scope owner.
+        // Nested owners are handled by separate runner dispatches.
+        match node.kind() {
+            AstKind::Program(program) => {
+                OneVarScopeChecker::new(ctx, &self.0).check_scope(&program.body);
+            }
+            AstKind::Function(function) => {
+                if let Some(body) = &function.body {
+                    OneVarScopeChecker::new(ctx, &self.0).check_scope(&body.statements);
+                }
+            }
+            AstKind::ArrowFunctionExpression(arrow) => {
+                OneVarScopeChecker::new(ctx, &self.0).check_scope(&arrow.body.statements);
+            }
+            AstKind::StaticBlock(block) => {
+                OneVarScopeChecker::new(ctx, &self.0).check_scope(&block.body);
+            }
+            AstKind::TSModuleDeclaration(declaration) => {
+                if let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &declaration.body {
+                    OneVarScopeChecker::new(ctx, &self.0).check_scope(&block.body);
+                }
+            }
+            AstKind::TSGlobalDeclaration(declaration) => {
+                OneVarScopeChecker::new(ctx, &self.0).check_scope(&declaration.body.body);
+            }
+            _ => {}
+        }
     }
 }
 
@@ -466,22 +496,22 @@ struct PreviousDeclaration {
     summary: DeclSummary,
 }
 
-struct OneVarVisitor<'a, 'ctx> {
+struct OneVarScopeChecker<'a, 'ctx> {
     ctx: &'ctx LintContext<'a>,
     config: &'ctx OneVarRuntimeConfig,
-    function_stack: SmallVec<[SeenState; 8]>,
+    var_state: SeenState,
     block_stack: SmallVec<[BlockScopeState; 8]>,
 }
 
-impl<'a> OneVarVisitor<'a, '_> {
-    fn start_function(&mut self) {
-        self.function_stack.push(SeenState::default());
-        self.block_stack.push(BlockScopeState::default());
+impl<'a, 'ctx> OneVarScopeChecker<'a, 'ctx> {
+    fn new(ctx: &'ctx LintContext<'a>, config: &'ctx OneVarRuntimeConfig) -> Self {
+        let mut block_stack = SmallVec::new();
+        block_stack.push(BlockScopeState::default());
+        Self { ctx, config, var_state: SeenState::default(), block_stack }
     }
 
-    fn end_function(&mut self) {
-        self.function_stack.pop();
-        self.block_stack.pop();
+    fn check_scope(&mut self, statements: &[Statement<'a>]) {
+        self.visit_statement_list(statements);
     }
 
     fn start_block(&mut self) {
@@ -494,7 +524,7 @@ impl<'a> OneVarVisitor<'a, '_> {
 
     fn current_scope_state(&self, kind: VariableDeclarationKind) -> SeenState {
         match kind {
-            VariableDeclarationKind::Var => *self.function_stack.last().unwrap(),
+            VariableDeclarationKind::Var => self.var_state,
             VariableDeclarationKind::Let => self.block_stack.last().unwrap().let_,
             VariableDeclarationKind::Const => self.block_stack.last().unwrap().const_,
             VariableDeclarationKind::Using => self.block_stack.last().unwrap().using,
@@ -504,7 +534,7 @@ impl<'a> OneVarVisitor<'a, '_> {
 
     fn current_scope_mut(&mut self, kind: VariableDeclarationKind) -> &mut SeenState {
         match kind {
-            VariableDeclarationKind::Var => self.function_stack.last_mut().unwrap(),
+            VariableDeclarationKind::Var => &mut self.var_state,
             VariableDeclarationKind::Let => &mut self.block_stack.last_mut().unwrap().let_,
             VariableDeclarationKind::Const => &mut self.block_stack.last_mut().unwrap().const_,
             VariableDeclarationKind::Using => &mut self.block_stack.last_mut().unwrap().using,
@@ -566,13 +596,11 @@ impl<'a> OneVarVisitor<'a, '_> {
     ) -> DeclSummary {
         let policy = self.config.policy(decl.kind);
         if policy.initialized == RuntimeMode::Off && policy.uninitialized == RuntimeMode::Off {
-            walk_variable_declaration(self, decl);
             return DeclSummary::default();
         }
 
         let summary = summarize_declaration(decl, self.config.separate_requires);
         self.check_variable_declaration(decl, summary, policy, context, previous);
-        walk_variable_declaration(self, decl);
         summary
     }
 
@@ -789,55 +817,20 @@ impl<'a> OneVarVisitor<'a, '_> {
     }
 }
 
-impl<'a> Visit<'a> for OneVarVisitor<'a, '_> {
-    fn visit_program(&mut self, program: &Program<'a>) {
-        self.start_function();
-        self.visit_statement_list(&program.body);
-        self.end_function();
-    }
+impl<'a> Visit<'a> for OneVarScopeChecker<'a, '_> {
+    // This checker walks statement structure only.
+    // Variable declarations inside expression subtrees can only appear in nested scope owners,
+    // which the runner dispatches to separately.
+    fn visit_expression(&mut self, _expression: &Expression<'a>) {}
 
-    fn visit_function(&mut self, function: &Function<'a>, flags: ScopeFlags) {
-        self.start_function();
-        walk_function(self, function, flags);
-        self.end_function();
-    }
+    // Nested scope owners are checked by separate `run` dispatches.
+    fn visit_function(&mut self, _function: &Function<'a>, _flags: ScopeFlags) {}
+    fn visit_arrow_function_expression(&mut self, _arrow: &ArrowFunctionExpression<'a>) {}
+    fn visit_static_block(&mut self, _block: &StaticBlock<'a>) {}
+    fn visit_ts_module_declaration(&mut self, _declaration: &TSModuleDeclaration<'a>) {}
+    fn visit_ts_global_declaration(&mut self, _declaration: &TSGlobalDeclaration<'a>) {}
 
-    fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
-        self.start_function();
-        walk_arrow_function_expression(self, arrow);
-        self.end_function();
-    }
-
-    fn visit_function_body(&mut self, body: &FunctionBody<'a>) {
-        self.visit_statement_list(&body.statements);
-    }
-
-    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
-        self.start_function();
-        self.visit_statement_list(&block.body);
-        self.end_function();
-    }
-
-    fn visit_ts_module_declaration(&mut self, declaration: &TSModuleDeclaration<'a>) {
-        // TypeScript module/namespace declarations introduce a scope that groups
-        // `var` declarations separately from the outer program/function scope.
-        self.start_function();
-        walk_ts_module_declaration(self, declaration);
-        self.end_function();
-    }
-
-    fn visit_ts_global_declaration(&mut self, declaration: &TSGlobalDeclaration<'a>) {
-        self.start_function();
-        walk_ts_global_declaration(self, declaration);
-        self.end_function();
-    }
-
-    fn visit_ts_module_block(&mut self, block: &TSModuleBlock<'a>) {
-        self.visit_directives(&block.directives);
-        self.visit_statement_list(&block.body);
-    }
-
-    fn visit_block_statement(&mut self, block: &oxc_ast::ast::BlockStatement<'a>) {
+    fn visit_block_statement(&mut self, block: &BlockStatement<'a>) {
         self.start_block();
         self.visit_statement_list(&block.body);
         self.end_block();
@@ -845,11 +838,7 @@ impl<'a> Visit<'a> for OneVarVisitor<'a, '_> {
 
     fn visit_switch_statement(&mut self, switch: &SwitchStatement<'a>) {
         self.start_block();
-        walk_expression(self, &switch.discriminant);
         for case in &switch.cases {
-            if let Some(test) = &case.test {
-                walk_expression(self, test);
-            }
             self.visit_statement_list(&case.consequent);
         }
         self.end_block();
@@ -857,51 +846,28 @@ impl<'a> Visit<'a> for OneVarVisitor<'a, '_> {
 
     fn visit_for_statement(&mut self, statement: &ForStatement<'a>) {
         self.start_block();
-        if let Some(init) = &statement.init {
-            match init {
-                ForStatementInit::VariableDeclaration(decl) => {
-                    self.visit_variable_declaration_with_context(
-                        decl,
-                        VarDeclContext::ForInit,
-                        None,
-                    );
-                }
-                _ => walk_for_statement_init(self, init),
-            }
+        if let Some(ForStatementInit::VariableDeclaration(decl)) = &statement.init {
+            self.visit_variable_declaration_with_context(decl, VarDeclContext::ForInit, None);
         }
-        if let Some(test) = &statement.test {
-            walk_expression(self, test);
-        }
-        if let Some(update) = &statement.update {
-            walk_expression(self, update);
-        }
-        walk_statement(self, &statement.body);
+        self.visit_statement(&statement.body);
         self.end_block();
     }
 
     fn visit_for_in_statement(&mut self, statement: &ForInStatement<'a>) {
         self.start_block();
-        match &statement.left {
-            ForStatementLeft::VariableDeclaration(decl) => {
-                self.visit_variable_declaration_with_context(decl, VarDeclContext::ForInLeft, None);
-            }
-            _ => walk_for_statement_left(self, &statement.left),
+        if let ForStatementLeft::VariableDeclaration(decl) = &statement.left {
+            self.visit_variable_declaration_with_context(decl, VarDeclContext::ForInLeft, None);
         }
-        walk_expression(self, &statement.right);
-        walk_statement(self, &statement.body);
+        self.visit_statement(&statement.body);
         self.end_block();
     }
 
     fn visit_for_of_statement(&mut self, statement: &ForOfStatement<'a>) {
         self.start_block();
-        match &statement.left {
-            ForStatementLeft::VariableDeclaration(decl) => {
-                self.visit_variable_declaration_with_context(decl, VarDeclContext::ForOfLeft, None);
-            }
-            _ => walk_for_statement_left(self, &statement.left),
+        if let ForStatementLeft::VariableDeclaration(decl) = &statement.left {
+            self.visit_variable_declaration_with_context(decl, VarDeclContext::ForOfLeft, None);
         }
-        walk_expression(self, &statement.right);
-        walk_statement(self, &statement.body);
+        self.visit_statement(&statement.body);
         self.end_block();
     }
 
@@ -934,13 +900,13 @@ fn summarize_declaration(decl: &VariableDeclaration<'_>, track_requires: bool) -
     }
 }
 
-fn is_require_declarator(declarator: &oxc_ast::ast::VariableDeclarator<'_>) -> bool {
-    let Some(oxc_ast::ast::Expression::CallExpression(call)) = &declarator.init else {
+fn is_require_declarator(declarator: &VariableDeclarator<'_>) -> bool {
+    let Some(Expression::CallExpression(call)) = &declarator.init else {
         return false;
     };
     matches!(
         &call.callee,
-        oxc_ast::ast::Expression::Identifier(identifier) if identifier.name == "require"
+        Expression::Identifier(identifier) if identifier.name == "require"
     )
 }
 
