@@ -16,14 +16,23 @@ pub fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
     jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(&tag.kind.parsed()))
 }
 
-pub fn is_missing_special_tag(jsdoc_tags: &[&JSDocTag], resolved_tag_name: &str) -> bool {
-    jsdoc_tags.iter().all(|tag| tag.kind.parsed() != resolved_tag_name)
+pub fn is_missing_special_tag<'a, 'b>(
+    jsdoc_tags: impl IntoIterator<Item = &'b JSDocTag<'a>>,
+    resolved_tag_name: &str,
+) -> bool
+where
+    'a: 'b,
+{
+    jsdoc_tags.into_iter().all(|tag| tag.kind.parsed() != resolved_tag_name)
 }
 
-pub fn is_duplicated_special_tag(
-    jsdoc_tags: &Vec<&JSDocTag>,
+pub fn is_duplicated_special_tag<'a, 'b>(
+    jsdoc_tags: impl IntoIterator<Item = &'b JSDocTag<'a>>,
     resolved_returns_tag_name: &str,
-) -> Option<Span> {
+) -> Option<Span>
+where
+    'a: 'b,
+{
     let mut returns_found = false;
     for tag in jsdoc_tags {
         if tag.kind.parsed() == resolved_returns_tag_name {

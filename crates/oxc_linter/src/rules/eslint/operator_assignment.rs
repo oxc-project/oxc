@@ -296,7 +296,7 @@ fn can_be_fixed(target: &AssignmentTarget) -> bool {
 fn get_operator_span(init_span: Span, operator: &str, ctx: &LintContext) -> Span {
     let offset = init_span.source_text(ctx.source_text()).find(operator).unwrap_or(0) as u32;
     let start = init_span.start + offset;
-    Span::new(start, start + operator.len() as u32)
+    Span::sized(start, operator.len() as u32)
 }
 
 fn check_is_same_reference(left: &AssignmentTarget, right: &Expression, ctx: &LintContext) -> bool {

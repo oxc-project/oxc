@@ -24,6 +24,20 @@ file://<fixture>/format/test.json
 --------------------"
 `;
 
+exports[`LSP formatting > basic formatting > should handle format/test.svelte 1`] = `
+"--- URI -----------
+file://<fixture>/format/test.svelte
+--- BEFORE ---------
+<script>let   count=$state(0);</script>
+<button onclick={()=>count++}>{count}</button>
+
+--- AFTER ----------
+<script>let   count=$state(0);</script>
+<button onclick={()=>count++}>{count}</button>
+
+--------------------"
+`;
+
 exports[`LSP formatting > basic formatting > should handle format/test.toml 1`] = `
 "--- URI -----------
 file://<fixture>/format/test.toml
@@ -185,6 +199,23 @@ file://<fixture>/config-sort-tailwindcss/test.vue
 <template>
   <div class="m-2 flex p-4">Hello</div>
 </template>
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-svelte/test.svelte 1`] = `
+"--- URI -----------
+file://<fixture>/config-svelte/test.svelte
+--- BEFORE ---------
+<script>let   count=$state(0);</script>
+<button onclick={()=>count++}>{count}</button>
+
+--- AFTER ----------
+<script>
+  let count = $state(0);
+</script>
+
+<button onclick={() => count++}>{count}</button>
 
 --------------------"
 `;

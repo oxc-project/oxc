@@ -34,11 +34,10 @@ pub use crate::ir_transform::options::*;
 pub use crate::options::*;
 pub use crate::print::{FormatVueBindingParams, FormatVueScriptGeneric};
 pub use crate::service::*;
-use crate::{formatter::FormatContext, ir_transform::SortImportsTransform};
 #[cfg(feature = "detect_code_removal")]
 pub use detect_code_removal::detect_code_removal;
 
-use self::formatter::prelude::tag::Label;
+use self::formatter::{FormatContext, prelude::tag::Label};
 
 pub struct Formatter<'a> {
     allocator: &'a Allocator,
@@ -78,24 +77,10 @@ impl<'a> Formatter<'a> {
             external_callbacks,
         );
 
-        let mut formatted = formatter::format(
+        formatter::format(
             context,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
-        );
-
-        // Basic formatting and `document.propagate_expand()` are already done here.
-        // Now apply additional transforms if enabled.
-        if let Some(sort_imports_options) = &formatted.context().options().sort_imports
-            && let Some(transformed_elements) = SortImportsTransform::transform(
-                formatted.document(),
-                sort_imports_options,
-                self.allocator,
-            )
-        {
-            formatted.document_mut().replace_elements(transformed_elements);
-        }
-
-        formatted
+        )
     }
 
     /// Formats an arbitrary value that implements `Format` and returns the `Formatted` IR.
@@ -133,9 +118,10 @@ pub(crate) enum JsLabels {
     /// For `ir_transform/sort_imports`
     ImportDeclaration,
     /// For `ir_transform/sort_imports`
-    /// Marks `alignable_comment` (Block comment where each line starts with `*`)
-    /// to distinguish from other text content like template literals that may contain `/*`.
-    AlignableBlockComment,
+    /// Wraps a single emitted comment so the transform can identify it without
+    /// inspecting element shape (which varies by comment kind / `jsdoc` formatting).
+    /// Also suppresses internal line breaks for multi-line block comments.
+    Comment,
 }
 
 impl Label for JsLabels {
@@ -147,7 +133,7 @@ impl Label for JsLabels {
         match self {
             Self::MemberChain => "MemberChain",
             Self::ImportDeclaration => "ImportDeclaration",
-            Self::AlignableBlockComment => "AlignableBlockComment",
+            Self::Comment => "Comment",
         }
     }
 }

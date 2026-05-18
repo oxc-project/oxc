@@ -53,7 +53,7 @@ impl Context {
         );
 
         let normalized_plugin_name = get_normalized_plugin_name(plugin);
-        let title = full_rule_name(rule, normalized_plugin_name, true);
+        let rule_name = full_rule_name(rule, normalized_plugin_name, true);
 
         // Write frontmatter
         let default = if *turned_on_by_default { "true" } else { "false" };
@@ -67,7 +67,7 @@ impl Context {
 
         writeln!(
             self.page,
-            "---\ntitle: \"{title}\"\ncategory: \"{category}\"\nversion: \"{version}\"\ndefault: {default}\ntype_aware: {type_aware}\nfix: \"{fix}\"\n---\n"
+            "---\ntitle: \"{rule_name} | Oxlint\"\nrule: \"{rule_name}\"\ncategory: \"{category}\"\nversion: \"{version}\"\ndefault: {default}\ntype_aware: {type_aware}\nfix: \"{fix}\"\n---\n"
         )?;
 
         writeln!(

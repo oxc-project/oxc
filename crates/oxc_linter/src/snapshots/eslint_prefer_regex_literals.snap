@@ -1,0 +1,1237 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('abc');
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('abc');
+   · ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('abc', 'g');
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('abc', 'g');
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(`abc`);
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp(`abc`);
+   · ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(`abc`, `g`);
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp(`abc`, `g`);
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(String.raw`abc`);
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ ╭─▶ new RegExp(String.raw`abc
+ 2 │ ╰─▶             abc`);
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ ╭─▶ new RegExp(String.raw`  abc
+ 2 │ ╰─▶             abc`);
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp(String.raw`abc`);
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(String.raw`abc`, String.raw`g`);
+   · ──────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp(String.raw`abc`, String.raw`g`);
+   · ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(String['raw']`a`);
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('');
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('', '');
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(String.raw``);
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('a', `g`);
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp(`a`, 'g');
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp(String.raw`a`, 'g');
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(String.raw`\d`, `g`);
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(String.raw`\\d`, `g`);
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(String['raw']`\\d`, `g`);
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(String["raw"]`\\d`, `g`);
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('a', String.raw`g`);
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new globalThis.RegExp('a');
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ globalThis.RegExp('a');
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Regular expression literal is unnecessarily wrapped within a `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/);
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/, 'u');
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/g, '');
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/g, 'g');
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/ig, 'g');
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/g, 'ig');
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/i, 'g');
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/i, 'i');
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/, `u`);
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/, `gi`);
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('a');
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/, String.raw`u`);
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Regular expression literal is unnecessarily wrapped within a `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/ /* comment */);
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/, 'd');
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Regular expression literal is unnecessarily wrapped within a `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:13]
+ 1 │ (a)
+ 2 │             new RegExp(/b/);
+   ·             ───────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:13]
+ 1 │ (a)
+ 2 │             new RegExp(/b/, 'g');
+   ·             ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Regular expression literal is unnecessarily wrapped within a `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:3]
+ 1 │ a/RegExp(/foo/);
+   ·   ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Regular expression literal is unnecessarily wrapped within a `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp(/foo/)in a;
+   · ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp((String?.raw)`a`);
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('+');
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('*');
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('+');
+   · ───────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('*');
+   · ───────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('+', 'g');
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('*', 'g');
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('+', 'g');
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('*', 'g');
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('abc', 'u');
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('abc', 'd');
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('abc', 'd');
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\\\\', '');
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\n', '');
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\n\n', '');
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\t', '');
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\t\t', '');
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\r\n', '');
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\u1234', 'g')
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\u{1234}', 'g')
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\u{11111}', 'g')
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\v', '');
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\v\v', '');
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\f', '');
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\f\f', '');
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\\b', '');
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\\b\\b', '');
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('\\B\\b', '');
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\\w', '');
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new globalThis.RegExp('\\W', '');
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\\s', '');
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('\\S', '')
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ globalThis.RegExp('\\d', '');
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ globalThis.RegExp('\\D', '')
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ globalThis.RegExp('\\\\\\D', '')
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('\\D\\D', '')
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new globalThis.RegExp('\\0\\0', '');
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('\\0\\0', '');
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('\0\0', 'g');
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\\0\\0\\0', '')
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp('\\78\\126\\5934', '')
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new window['RegExp']('\\x56\\x78\\x45', '');
+   · ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:6]
+ 1 │ a in(RegExp('abc'))
+   ·      ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:25]
+ 1 │ x = y
+ 2 │                         RegExp("foo").test(x) ? bar() : baz()
+   ·                         ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:6]
+ 1 │ func(new RegExp(String.raw`\w{1, 2`, 'u'),new RegExp(String.raw`\w{1, 2`, 'u'))
+   ·      ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:43]
+ 1 │ func(new RegExp(String.raw`\w{1, 2`, 'u'),new RegExp(String.raw`\w{1, 2`, 'u'))
+   ·                                           ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:25]
+ 1 │ x = y;
+ 2 │                         RegExp("foo").test(x) ? bar() : baz()
+   ·                         ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:8]
+ 1 │ typeof RegExp("foo")
+   ·        ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp("foo") instanceof RegExp(String.raw`blahblah`, 'g') ? typeof new RegExp('(\\p{Emoji_Presentation})\\1', `ug`) : false
+   · ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:26]
+ 1 │ RegExp("foo") instanceof RegExp(String.raw`blahblah`, 'g') ? typeof new RegExp('(\\p{Emoji_Presentation})\\1', `ug`) : false
+   ·                          ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:69]
+ 1 │ RegExp("foo") instanceof RegExp(String.raw`blahblah`, 'g') ? typeof new RegExp('(\\p{Emoji_Presentation})\\1', `ug`) : false
+   ·                                                                     ────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:5]
+ 1 │ [   new RegExp(`someregular`)]
+   ·     ─────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:32]
+ 1 │ const totallyValidatesEmails = new RegExp("\\\\S+@(\\\\S+\\\\.)+\\\\S+")
+   ·                                ─────────────────────────────────────────
+ 2 │                         if (typeof totallyValidatesEmails === 'object') {
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:2]
+ 1 │ !new RegExp('^Hey, ', 'u') && new RegExp('jk$') && ~new RegExp('^Sup, ') || new RegExp('hi') + new RegExp('person') === -new RegExp('hi again') ? 5 * new RegExp('abc') : 'notregbutstring'
+   ·  ─────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:31]
+ 1 │ !new RegExp('^Hey, ', 'u') && new RegExp('jk$') && ~new RegExp('^Sup, ') || new RegExp('hi') + new RegExp('person') === -new RegExp('hi again') ? 5 * new RegExp('abc') : 'notregbutstring'
+   ·                               ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:53]
+ 1 │ !new RegExp('^Hey, ', 'u') && new RegExp('jk$') && ~new RegExp('^Sup, ') || new RegExp('hi') + new RegExp('person') === -new RegExp('hi again') ? 5 * new RegExp('abc') : 'notregbutstring'
+   ·                                                     ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:77]
+ 1 │ !new RegExp('^Hey, ', 'u') && new RegExp('jk$') && ~new RegExp('^Sup, ') || new RegExp('hi') + new RegExp('person') === -new RegExp('hi again') ? 5 * new RegExp('abc') : 'notregbutstring'
+   ·                                                                             ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:96]
+ 1 │ !new RegExp('^Hey, ', 'u') && new RegExp('jk$') && ~new RegExp('^Sup, ') || new RegExp('hi') + new RegExp('person') === -new RegExp('hi again') ? 5 * new RegExp('abc') : 'notregbutstring'
+   ·                                                                                                ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:122]
+ 1 │ !new RegExp('^Hey, ', 'u') && new RegExp('jk$') && ~new RegExp('^Sup, ') || new RegExp('hi') + new RegExp('person') === -new RegExp('hi again') ? 5 * new RegExp('abc') : 'notregbutstring'
+   ·                                                                                                                          ──────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:151]
+ 1 │ !new RegExp('^Hey, ', 'u') && new RegExp('jk$') && ~new RegExp('^Sup, ') || new RegExp('hi') + new RegExp('person') === -new RegExp('hi again') ? 5 * new RegExp('abc') : 'notregbutstring'
+   ·                                                                                                                                                       ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:25]
+ 1 │ #!/usr/bin/sh
+ 2 │                         RegExp("foo")
+   ·                         ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:28]
+ 1 │ async function abc(){await new RegExp("foo")}
+   ·                            ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:23]
+ 1 │ function* abc(){yield new RegExp("foo")}
+   ·                       ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:24]
+ 1 │ function* abc(){yield* new RegExp("foo")}
+   ·                        ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:18]
+ 1 │ console.log({ ...new RegExp('a') })
+   ·                  ───────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:8]
+ 1 │ delete RegExp('a');
+   ·        ───────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:6]
+ 1 │ void RegExp('a');
+   ·      ───────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp("\\S+@(\\S+\\.)+\\S+")**RegExp('a')
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:36]
+ 1 │ new RegExp("\\S+@(\\S+\\.)+\\S+")**RegExp('a')
+   ·                                    ───────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp("\\S+@(\\S+\\.)+\\S+")%RegExp('a')
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:35]
+ 1 │ new RegExp("\\S+@(\\S+\\.)+\\S+")%RegExp('a')
+   ·                                   ───────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:6]
+ 1 │ a in RegExp('abc')
+   ·      ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:34]
+ 1 │ 
+ 2 │                         /abc/ == new RegExp('cba');
+   ·                                  ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:35]
+ 1 │ 
+ 2 │                         /abc/ === new RegExp('cba');
+   ·                                   ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:34]
+ 1 │ 
+ 2 │                         /abc/ != new RegExp('cba');
+   ·                                  ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:35]
+ 1 │ 
+ 2 │                         /abc/ !== new RegExp('cba');
+   ·                                   ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         /abc/ > new RegExp('cba');
+   ·                                 ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         /abc/ < new RegExp('cba');
+   ·                                 ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:34]
+ 1 │ 
+ 2 │                         /abc/ >= new RegExp('cba');
+   ·                                  ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:34]
+ 1 │ 
+ 2 │                         /abc/ <= new RegExp('cba');
+   ·                                  ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:34]
+ 1 │ 
+ 2 │                         /abc/ << new RegExp('cba');
+   ·                                  ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:34]
+ 1 │ 
+ 2 │                         /abc/ >> new RegExp('cba');
+   ·                                  ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:35]
+ 1 │ 
+ 2 │                         /abc/ >>> new RegExp('cba');
+   ·                                   ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         /abc/ ^ new RegExp('cba');
+   ·                                 ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         /abc/ & new RegExp('cba');
+   ·                                 ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         /abc/ | new RegExp('cba');
+   ·                                 ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         null ?? new RegExp('blah')
+   ·                                 ──────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:32]
+ 1 │ 
+ 2 │                         abc *= new RegExp('blah')
+   ·                                ──────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:41]
+ 1 │ 
+ 2 │                         console.log({a: new RegExp('sup')})
+   ·                                         ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:44]
+ 1 │ 
+ 2 │                         console.log(() => {new RegExp('sup')})
+   ·                                            ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:41]
+ 1 │ 
+ 2 │                         function abc() {new RegExp('sup')}
+   ·                                         ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:48]
+ 1 │ 
+ 2 │                         function abc() {return new RegExp('sup')}
+   ·                                                ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         abc <<= new RegExp('cba');
+   ·                                 ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         abc >>= new RegExp('cba');
+   ·                                 ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:34]
+ 1 │ 
+ 2 │                         abc >>>= new RegExp('cba');
+   ·                                  ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:32]
+ 1 │ 
+ 2 │                         abc ^= new RegExp('cba');
+   ·                                ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:32]
+ 1 │ 
+ 2 │                         abc &= new RegExp('cba');
+   ·                                ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:32]
+ 1 │ 
+ 2 │                         abc |= new RegExp('cba');
+   ·                                ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         abc ??= new RegExp('cba');
+   ·                                 ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         abc &&= new RegExp('cba');
+   ·                                 ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         abc ||= new RegExp('cba');
+   ·                                 ─────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:33]
+ 1 │ 
+ 2 │                         abc **= new RegExp('blah')
+   ·                                 ──────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:32]
+ 1 │ 
+ 2 │                         abc /= new RegExp('blah')
+   ·                                ──────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:32]
+ 1 │ 
+ 2 │                         abc += new RegExp('blah')
+   ·                                ──────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:32]
+ 1 │ 
+ 2 │                         abc -= new RegExp('blah')
+   ·                                ──────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:32]
+ 1 │ 
+ 2 │                         abc %= new RegExp('blah')
+   ·                                ──────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:31]
+ 1 │ 
+ 2 │                         () => new RegExp('blah')
+   ·                               ──────────────────
+ 3 │                         
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:3]
+ 1 │ a/RegExp("foo")in b
+   ·   ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:3]
+ 1 │ a/RegExp("foo")instanceof b
+   ·   ─────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:4]
+ 1 │ do RegExp("foo")
+   ·    ─────────────
+ 2 │             while (true);
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:13]
+ 1 │ for(let i;i<5;i++) { break
+ 2 │             new RegExp('search')}
+   ·             ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:13]
+ 1 │ for(let i;i<5;i++) { continue
+ 2 │             new RegExp('search')}
+   ·             ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:5:34]
+ 4 │                                 console.log('possibility matched')
+ 5 │                             case RegExp('myReg').toString():
+   ·                                  ───────────────
+ 6 │                                 console.log('matches a regexp\' toString value')
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:7]
+ 1 │ throw new RegExp('abcdefg') // fail with a regular expression
+   ·       ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:15]
+ 1 │ for (value of new RegExp('something being searched')) { console.log(value) }
+   ·               ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:39]
+ 1 │ (async function(){for await (value of new RegExp('something being searched')) { console.log(value) }})()
+   ·                                       ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:15]
+ 1 │ for (value in new RegExp('something being searched')) { console.log(value) }
+   ·               ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:31]
+ 1 │ if (condition1 && condition2) new RegExp('avalue').test(str);
+   ·                               ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:2:13]
+ 1 │ debugger
+ 2 │             new RegExp('myReg')
+   ·             ───────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp("\\\n")
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp("\\\t")
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp("\\\f")
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp("\\\v")
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ RegExp("\\\r")
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp("    ")
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp("/")
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp("\.")
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp("\\.")
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp("\\\n\\\n")
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp("\\\n\\\f\\\n")
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp("\u000A\u000A");
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('mysafereg' /* comment explaining its safety */)
+   · ───────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('[[A--B]]', 'v')
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('[[A--B]]', 'v')
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('[[A&&&]]', 'v')
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('a', 'uv')
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/, 'v')
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/, 'v')
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/g, 'v')
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/[[A--B]]/v, 'g')
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/u, 'v')
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/a/v, 'u')
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use regular expression literal with flags instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp(/[[A--B]]/v, 'u')
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('(?i:foo)bar')
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:1]
+ 1 │ new RegExp('(?i:foo)bar')
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-regex-literals): Use a regular expression literal instead of the `RegExp` constructor.
+   ╭─[prefer_regex_literals.tsx:1:13]
+ 1 │ var regex = new RegExp('foo', 'u');
+   ·             ──────────────────────
+   ╰────

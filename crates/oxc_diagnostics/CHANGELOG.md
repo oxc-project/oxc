@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.131.0] - 2026-05-15
+
+### ⚡ Performance
+
+- 618bc76 diagnostics: Inline `OxcDiagnosticInner` to avoid heap allocation (#22406) (Boshen)
+
 ## [0.123.0] - 2026-03-30
 
 ### 🐛 Bug Fixes

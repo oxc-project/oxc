@@ -673,12 +673,6 @@ fn test() {
                 test(arg0);
             }
         ",
-        // Unused Argument in Recursion
-        r"
-            function test(arg0, arg1) {
-                test(arg0);
-            }
-        ",
         r"
             module.exports = function test(a) {
                 test(a)

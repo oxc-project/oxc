@@ -424,16 +424,6 @@ fn test() {
 
             var x = 2;
             }",
-            Some(serde_json::json!([{ "max": 6, "skipComments": false, "skipBlankLines": false }])),
-        ),
-        (
-            "function name() {
-            var x = 5;
-
-
-
-            var x = 2;
-            }",
             Some(serde_json::json!([{ "max": 6, "skipComments": true, "skipBlankLines": false }])),
         ),
         (

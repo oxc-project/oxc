@@ -129,13 +129,12 @@ impl Rule for AriaRole {
                     }
                 }
                 Some(JSXAttributeValue::StringLiteral(str)) => {
-                    let words_str = String::from(str.value.as_str());
-                    let words = words_str.split_whitespace();
-                    if words_str.trim().is_empty() {
+                    let value = str.value.as_str();
+                    if value.trim().is_empty() {
                         ctx.diagnostic(aria_role_diagnostic(str.span, ""));
-                    } else if let Some(error_prop) = words.into_iter().find(|word| {
+                    } else if let Some(error_prop) = value.split_whitespace().find(|word| {
                         !VALID_ARIA_ROLES.contains(word)
-                            && !self.allowed_invalid_roles.contains(&(*word).to_string())
+                            && !self.allowed_invalid_roles.iter().any(|s| s == word)
                     }) {
                         ctx.diagnostic(aria_role_diagnostic(
                             str.span,

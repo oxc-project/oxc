@@ -418,8 +418,16 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 
 impl<'a> Format<'a> for Comment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        // Wrap every emitted comment with `JsLabels::Comment` when `sort_imports` is enabled.
+        // So the IR transform can identify comments structurally (without textual prefix checks)
+        // and suppress any internal line breaks (e.g. multi-line block / JSDoc).
+        let wrap = f.options().sort_imports.is_some();
+        if wrap {
+            f.write_element(FormatElement::Tag(Tag::StartLabelled(LabelId::of(JsLabels::Comment))));
+        }
+
         // JSDoc formatting: if enabled, try to format JSDoc comments
-        if self.is_jsdoc()
+        let formatted_jsdoc = if self.is_jsdoc()
             && !self.is_legal()
             && let Some(jsdoc_options) = &f.options().jsdoc
         {
@@ -447,53 +455,45 @@ impl<'a> Format<'a> for Comment {
                     .sum::<usize>()
             };
             let available_width = line_width.saturating_sub(indent_chars);
-            if let Some(formatted) =
-                super::jsdoc::format_jsdoc_comment(self, jsdoc_options, source, available_width, f)
-            {
-                write!(f, [formatted]);
-                return;
+            super::jsdoc::format_jsdoc_comment(self, jsdoc_options, source, available_width, f)
+        } else {
+            None
+        };
+
+        if let Some(formatted) = formatted_jsdoc {
+            write!(f, [formatted]);
+        } else {
+            let content = f.source_text().text_for(&self.span);
+            if self.is_multiline_block() {
+                let mut lines = LineTerminatorSplitter::new(content);
+                if is_alignable_comment(content) {
+                    // `unwrap` is safe because `content` contains at least one line.
+                    let first_line = lines.next().unwrap();
+                    write!(f, [text(first_line.trim_end())]);
+
+                    // Indent the remaining lines by one space so that all `*` are aligned.
+                    for line in lines {
+                        write!(f, [hard_line_break(), " ", text(line.trim())]);
+                    }
+                } else {
+                    // Normalize line endings `\r\n` to `\n`
+                    let mut string = StringBuilder::with_capacity_in(content.len(), f.allocator());
+                    // `unwrap` is safe because `content` contains at least one line.
+                    string.push_str(lines.next().unwrap().trim_end());
+
+                    for str in lines {
+                        string.push('\n');
+                        string.push_str(str);
+                    }
+                    write!(f, [text(string.into_str())]);
+                }
+            } else {
+                write!(f, [text(content.trim_end())]);
             }
         }
 
-        let content = f.source_text().text_for(&self.span);
-        if self.is_multiline_block() {
-            let mut lines = LineTerminatorSplitter::new(content);
-            if is_alignable_comment(content) {
-                // Using `write_element` directly instead of `labelled()`
-                // to avoid allocating a `Vec` for `lines` iter
-                let sort_imports_enabled = f.options().sort_imports.is_some();
-                if sort_imports_enabled {
-                    f.write_element(FormatElement::Tag(Tag::StartLabelled(LabelId::of(
-                        JsLabels::AlignableBlockComment,
-                    ))));
-                }
-
-                // `unwrap` is safe because `content` contains at least one line.
-                let first_line = lines.next().unwrap();
-                write!(f, [text(first_line.trim_end())]);
-
-                // Indent the remaining lines by one space so that all `*` are aligned.
-                for line in lines {
-                    write!(f, [hard_line_break(), " ", text(line.trim())]);
-                }
-
-                if sort_imports_enabled {
-                    f.write_element(FormatElement::Tag(Tag::EndLabelled));
-                }
-            } else {
-                // Normalize line endings `\r\n` to `\n`
-                let mut string = StringBuilder::with_capacity_in(content.len(), f.allocator());
-                // `unwrap` is safe because `content` contains at least one line.
-                string.push_str(lines.next().unwrap().trim_end());
-
-                for str in lines {
-                    string.push('\n');
-                    string.push_str(str);
-                }
-                write!(f, [text(string.into_str())]);
-            }
-        } else {
-            write!(f, [text(content.trim_end())]);
+        if wrap {
+            f.write_element(FormatElement::Tag(Tag::EndLabelled));
         }
     }
 }

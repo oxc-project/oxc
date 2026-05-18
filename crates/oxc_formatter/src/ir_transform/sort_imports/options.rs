@@ -134,9 +134,9 @@ pub struct CustomGroupDefinition {
     pub modifiers: Vec<ImportModifier>,
 }
 
-/// Returns default prefixes for identifying internal imports: `["~/", "@/"]`.
+/// Returns default prefixes for identifying internal imports: `["~/", "@/", "#"]`.
 pub fn default_internal_patterns() -> Vec<String> {
-    ["~/", "@/"].iter().map(|s| (*s).to_string()).collect()
+    ["~/", "@/", "#"].iter().map(|s| (*s).to_string()).collect()
 }
 
 /// Returns default groups configuration for organizing imports.

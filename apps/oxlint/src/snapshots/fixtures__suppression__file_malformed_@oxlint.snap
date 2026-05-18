@@ -1,0 +1,40 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/suppression/file_malformed
+----------
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[test.js:1:1]
+ 1 | console.log();
+   : ^^^^^^^^^^^
+ 2 | console.log();
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[test.js:2:1]
+ 1 | console.log();
+ 2 | console.log();
+   : ^^^^^^^^^^^
+ 3 | console.log();
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[test.js:3:1]
+ 2 | console.log();
+ 3 | console.log();
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+Found 0 warnings and 3 errors.
+Failed to parse oxlint config oxlint-suppressions.json.
+trailing comma at line 5 column 5
+Finished in <variable>ms on 1 file with 58 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

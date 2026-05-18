@@ -10,11 +10,12 @@ mod code_actions;
 mod commands;
 mod error_with_position;
 mod lsp_file_system;
-mod options;
 mod server_linter;
 #[cfg(test)]
 mod tester;
 mod utils;
+
+pub mod options;
 
 /// Run the language server
 pub async fn run_lsp(

@@ -16,7 +16,7 @@ fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagno
     OxcDiagnostic::warn("Unnecessary `else` after `return`.")
         .with_labels([
             last_return.label("This consequent block always returns,"),
-            else_keyword.label("Making this `else` block unnecessary."),
+            else_keyword.primary_label("Making this `else` block unnecessary."),
         ])
         .with_help("Remove the `else` block, moving its contents outside of the `if` statement.")
 }
@@ -276,10 +276,10 @@ fn check_for_return_or_if(node: &Statement) -> Option<Span> {
         Statement::ReturnStatement(r) => Some(r.span),
         Statement::IfStatement(if_stmt) => {
             let alternate = if_stmt.alternate.as_ref()?;
-            if let (Some(_), Some(ret_span)) =
-                (naive_has_return(alternate), naive_has_return(&if_stmt.consequent))
+            if naive_has_return(alternate).is_some()
+                && naive_has_return(&if_stmt.consequent).is_some()
             {
-                Some(ret_span)
+                Some(if_stmt.span)
             } else {
                 None
             }
@@ -517,8 +517,6 @@ fn test() {
         ),
         ("function foo() { var a; if (bar) { return true; } else { var a; } }", None),
         ("function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }", None),
-        ("function foo() { var a; if (bar) { return true; } else { var a; } }", None), // { "ecmaVersion": 6 },
-        ("function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }", None), // { "ecmaVersion": 6 },
         ("function foo() { let a; if (bar) { return true; } else { let a; } }", None), // { "ecmaVersion": 6 },
         ("class foo { bar() { let a; if (baz) { return true; } else { let a; } } }", None), // { "ecmaVersion": 6 },
         ("function foo() { if (bar) { let a; if (baz) { return true; } else { let a; } } }", None), // { "ecmaVersion": 6 },
@@ -630,6 +628,24 @@ fn test() {
         ("function foo() { if (bar) { return true; } else function baz() {} };", None),
         ("if (foo) { return true; } else { let a; }", None), // { "ecmaVersion": 6, "sourceType": "commonjs" },
         ("let a; if (foo) { return true; } else { let a; }", None), // { "ecmaVersion": 6, "sourceType": "commonjs" }
+        (
+            "
+                function createReexports(meta, builder, value) {
+                    return meta.items.map(item => {
+                        if (value) {
+                            if (meta.has(item)) {
+                                return builder.computed(item);
+                            } else {
+                                return builder.constant(item);
+                            }
+                        } else {
+                            return builder.spec(item);
+                        }
+                    });
+                }
+            ",
+            None,
+        ),
     ];
 
     let fix = vec![

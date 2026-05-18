@@ -285,7 +285,6 @@ fn test() {
         ("pairs.notReduce(object => ({...object, key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {notEmpty});", None),
         ("pairs.reduce(object => ({...object, key}), []);", None),
-        ("pairs.reduce(object => ({...object, key}), {}, extraArgument);", None),
         ("pairs.reduce(...[(object => ({...object, key}))], {});", None),
         ("pairs.reduce(object => ({...object, key}), ...[{}]);", None),
         ("pairs.reduce(object => ({...object, key}), Object.create());", None),

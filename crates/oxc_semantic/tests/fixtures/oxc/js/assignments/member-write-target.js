@@ -16,3 +16,14 @@ let c = {};
 let d = {};
 let e = {};
 (true ? d : e).foo = 1;
+
+// No MemberWriteTarget: computed property key
+let key;
+this[key] = 1;
+this[key] += 1;
+delete this[key];
+
+// MemberWriteTarget: computed object
+let f = {};
+f[key] = 1;
+f[key] += 1;

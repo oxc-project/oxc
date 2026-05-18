@@ -30,4 +30,50 @@ describe("LSP code actions", () => {
       ).toMatchSnapshot();
     });
   });
+
+  describe("with code action only context", () => {
+    it.each([
+      ["quickfix"],
+      ["source.fixAll"],
+      ["source.fixAll.oxc"],
+      ["source.fixAllDangerous.oxc"],
+    ])("should handle %s", async (kind) => {
+      expect(
+        await fixFixture(
+          FIXTURES_DIR,
+          "context_only/test.ts",
+          "typescript",
+          // fix all dangerous needs a dangerous fix kind, otherwise it will return nothing.
+          kind === "source.fixAllDangerous.oxc" ? { fixKind: "dangerous_fix" } : undefined,
+          {
+            diagnostics: [],
+            only: [kind],
+          },
+        ),
+      ).toMatchSnapshot();
+    });
+  });
+
+  describe("rulesCustomization", () => {
+    it("should hide rule fix in `source.fixAll.oxc` when rulesCustomization disables this rule", async () => {
+      expect(
+        await fixFixture(
+          FIXTURES_DIR,
+          "rules_customization/test.ts",
+          "typescript",
+          {
+            rulesCustomization: {
+              "no-debugger": {
+                autofix: false,
+              },
+            },
+          },
+          {
+            diagnostics: [],
+            only: ["source.fixAll.oxc"],
+          },
+        ),
+      ).toMatchSnapshot();
+    });
+  });
 });

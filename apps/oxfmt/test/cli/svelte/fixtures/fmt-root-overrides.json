@@ -1,0 +1,15 @@
+{
+  "svelte": {
+    "sortOrder": "options-scripts-markup-styles"
+  },
+  "overrides": [
+    {
+      "files": ["legacy/**"],
+      "options": {
+        "svelte": {
+          "sortOrder": "styles-options-markup-scripts"
+        }
+      }
+    }
+  ]
+}

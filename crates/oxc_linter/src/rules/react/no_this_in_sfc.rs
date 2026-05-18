@@ -78,6 +78,10 @@ impl Rule for NoThisInSfc {
 
         let Some(component_node) = get_parent_function(node, ctx) else { return };
 
+        if !is_potential_react_component(component_node, ctx) {
+            return;
+        }
+
         if ctx
             .nodes()
             .ancestors(component_node.id())
@@ -87,10 +91,6 @@ impl Rule for NoThisInSfc {
         }
 
         if is_in_nested_this_context(node, component_node, ctx) {
-            return;
-        }
-
-        if !is_potential_react_component(component_node, ctx) {
             return;
         }
 
@@ -132,26 +132,21 @@ fn is_in_nested_this_context<'a>(
 }
 
 fn is_potential_react_component<'a>(function_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let function_name = get_function_name(function_node, ctx);
-
-    if let Some(name) = function_name
-        && is_react_component_name(&name)
-    {
-        return true;
-    }
-
-    false
+    get_function_name(function_node, ctx).is_some_and(is_react_component_name)
 }
 
-fn get_function_name<'a>(function_node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<String> {
+fn get_function_name<'a, 'b>(
+    function_node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+) -> Option<&'b str> {
     match function_node.kind() {
-        AstKind::Function(func) => func.id.as_ref().map(|id| id.name.to_string()),
+        AstKind::Function(func) => func.id.as_ref().map(|id| id.name.as_str()),
         AstKind::ArrowFunctionExpression(_) => {
             let parent = ctx.nodes().parent_node(function_node.id());
             if let AstKind::VariableDeclarator(declarator) = parent.kind()
                 && let BindingPattern::BindingIdentifier(ident) = &declarator.id
             {
-                return Some(ident.name.to_string());
+                return Some(ident.name.as_str());
             }
             None
         }

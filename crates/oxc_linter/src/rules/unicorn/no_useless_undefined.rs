@@ -543,7 +543,6 @@ fn test() {
         ),
         ("createContext<T>(undefined);", None),
         ("React.createContext<T>(undefined);", None),
-        ("const x = { a: undefined }", None),
         (
             "
             const y: any = {}

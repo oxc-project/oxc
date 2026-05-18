@@ -153,12 +153,10 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                             f,
                             [group(&format_args!(
                                 formatted_signature,
-                                group(&format_args!(
-                                    space(),
-                                    token("("),
-                                    soft_block_indent(&format_body),
-                                    token(")")
-                                ))
+                                space(),
+                                token("("),
+                                format_body,
+                                token(")")
                             ))]
                         );
                     };
@@ -625,14 +623,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                 {
                     write!(f, format_sequence);
                 } else {
-                    write!(
-                        f,
-                        [group(&format_args!(
-                            token("("),
-                            soft_block_indent(&format_tail_body),
-                            token(")")
-                        ))]
-                    );
+                    write!(f, [token("("), format_tail_body, token(")")]);
                 }
             } else {
                 let should_add_parens = tail.expression && should_add_parens(tail_body);

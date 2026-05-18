@@ -36,6 +36,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                 let scoping = SemanticBuilder::new()
                     // Estimate transformer will triple scopes, symbols, references
                     .with_excess_capacity(2.0)
+                    .with_enum_eval(true)
                     .build(&program)
                     .semantic
                     .into_scoping();

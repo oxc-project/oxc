@@ -191,13 +191,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace it with `Number.NaN`
 
   ⚠ unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:13]
- 1 │ const foo = Infinity;
-   ·             ────────
-   ╰────
-  help: Replace it with `Number.Infinity`
-
-  ⚠ unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:18]
  1 │ if (Number.isNaN(Infinity)) {}
    ·                  ────────
@@ -313,13 +306,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_number_properties.tsx:1:15]
  1 │ const foo = +-Infinity;
    ·               ────────
-   ╰────
-  help: Replace it with `Number.Infinity`
-
-  ⚠ unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:14]
- 1 │ const foo = -Infinity;
-   ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
 

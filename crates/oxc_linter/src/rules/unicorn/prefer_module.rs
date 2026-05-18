@@ -267,7 +267,6 @@ fn test() {
         (r#"const {foo} = require( (("foo")) );"#, None, None, None),
         (r#"const {foo} = ((require))("foo");"#, None, None, None),
         (r#"const {foo} = (( require("foo") ));"#, None, None, None),
-        (r#"const {foo} = (( require("foo") ));"#, None, None, None),
         (r#"const {foo: foo}=require("foo");"#, None, None, None),
         (
             r#"const {foo: foo}
@@ -281,7 +280,6 @@ fn test() {
         (r#"const {foo: foo} = require( (("foo")) );"#, None, None, None),
         (r#"const {foo: foo} = ((require))("foo");"#, None, None, None),
         (r#"const {foo: foo} = (( require("foo") ));"#, None, None, None),
-        (r#"const {foo: foo} = (( require("foo") ));"#, None, None, None),
         (r#"const {foo:bar}=require("foo");"#, None, None, None),
         (
             r#"const {foo:bar}
@@ -294,7 +292,6 @@ fn test() {
         (r#"const {foo:bar} = require("foo");"#, None, None, None),
         (r#"const {foo:bar} = require( (("foo")) );"#, None, None, None),
         (r#"const {foo:bar} = ((require))("foo");"#, None, None, None),
-        (r#"const {foo:bar} = (( require("foo") ));"#, None, None, None),
         (r#"const {foo:bar} = (( require("foo") ));"#, None, None, None),
         (r#"const {a   :foo, b:   bar, default   :   baz}=require("foo");"#, None, None, None),
         (
@@ -375,7 +372,6 @@ fn test() {
             None,
         ),
         (r#"const foo = require("foo"), bar = 1;"#, None, None, None),
-        (r#"const foo = require("foo"), bar = require("bar");"#, None, None, None),
         ("exports = foo;", None, None, None),
         ("module.exports = foo;", None, None, None),
         ("(( ((exports)) = ((foo)) ));", None, None, None),

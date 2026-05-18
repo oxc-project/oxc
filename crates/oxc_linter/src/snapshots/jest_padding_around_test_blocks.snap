@@ -34,6 +34,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Make sure there is an empty new line before the fit block
 
+  ⚠ jest(padding-around-test-blocks): Missing padding before test block
+   ╭─[padding_around_test_blocks.tsx:4:1]
+ 3 │ /* two */
+ 4 │ test('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the test block
+
   ⚠ jest(padding-around-test-blocks): Missing padding before it block
    ╭─[padding_around_test_blocks.tsx:4:1]
  3 │ const bar = 'baz';
@@ -44,11 +52,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Make sure there is an empty new line before the it block
 
   ⚠ jest(padding-around-test-blocks): Missing padding before it block
-    ╭─[padding_around_test_blocks.tsx:18:6]
- 17 │      });
+    ╭─[padding_around_test_blocks.tsx:19:6]
  18 │      // With a comment
-    ·      ▲
  19 │      it('is another bar w/ it', () => {
+    ·      ▲
+ 20 │      });
     ╰────
   help: Make sure there is an empty new line before the it block
 

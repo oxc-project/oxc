@@ -34,21 +34,23 @@ pub fn report_missing_padding_before_jest_block<'a>(
         return;
     };
 
-    let mut comments_range = ctx.comments_range(prev_statement_span.end..node.span().start);
+    let comments_range = ctx.comments_range(prev_statement_span.end..node.span().start);
     let mut span_between_start = prev_statement_span.end;
     let mut span_between_end = node.span().start;
-    if let Some(last_comment_span) = comments_range.next_back().map(|comment| comment.span) {
-        let space_after_last_comment =
-            ctx.source_range(Span::new(last_comment_span.end, node.span().start));
-        let space_before_last_comment =
-            ctx.source_range(Span::new(prev_statement_span.end, last_comment_span.start));
-        if space_after_last_comment.matches('\n').count() > 1
-            || space_before_last_comment.matches('\n').count() == 0
-        {
-            span_between_start = last_comment_span.end;
-        } else {
-            span_between_end = last_comment_span.start;
+    let mut next_attached_start = node.span().start;
+    for comment in comments_range.rev() {
+        let comment_span = comment.span;
+        let space_after = ctx.source_range(Span::new(comment_span.end, next_attached_start));
+        if space_after.matches('\n').count() > 1 {
+            break;
         }
+        let space_before = ctx.source_range(Span::new(prev_statement_span.end, comment_span.start));
+        if space_before.matches('\n').count() == 0 {
+            span_between_start = comment_span.end;
+            break;
+        }
+        span_between_end = comment_span.start;
+        next_attached_start = comment_span.start;
     }
 
     let span_between = Span::new(span_between_start, span_between_end);
@@ -56,7 +58,7 @@ pub fn report_missing_padding_before_jest_block<'a>(
     if content.matches('\n').count() < 2 {
         ctx.diagnostic_with_fix(
             padding_around_jest_block_diagnostic(
-                Span::new(span_between_end, span_between_end),
+                Span::new(node.span().start, node.span().start),
                 name,
             ),
             |fixer| {

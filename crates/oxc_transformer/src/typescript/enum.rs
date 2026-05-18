@@ -11,7 +11,7 @@ use oxc_syntax::{
     constant_value::ConstantValue,
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
-    reference::ReferenceFlags,
+    reference::{ReferenceFlags, ReferenceId},
     symbol::SymbolFlags,
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
@@ -102,28 +102,35 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
             return;
         }
 
-        let (value, object_ref_id) = match expr {
+        // Peek through TS-only wrappers and parens so `E.X as T`, `E.X satisfies T`,
+        // `E.X!`, `<T>E.X`, `E.X` (with `preserveParens`) all inline. `annotations.rs`
+        // strips these wrappers, but only after this hook returns — by then the outer
+        // node has been replaced and `enter_expression` is not re-invoked on it.
+        let inlined = match expr.get_inner_expression_mut() {
             Expression::StaticMemberExpression(member_expr) => {
-                let ref_id = member_expr
-                    .object
-                    .get_identifier_reference()
-                    .and_then(|i| i.reference_id.get());
-                (self.try_inline_enum_member(member_expr, ctx), ref_id)
+                self.try_inline_enum_member(member_expr, ctx)
             }
             Expression::ComputedMemberExpression(member_expr) => {
-                let ref_id = member_expr
-                    .object
-                    .get_identifier_reference()
-                    .and_then(|i| i.reference_id.get());
-                (self.try_inline_computed_enum_member(member_expr, ctx), ref_id)
+                self.try_inline_computed_enum_member(member_expr, ctx)
             }
+            // `c_num?.x` / `c_num?.['x']`: inline before es2020 lowers the chain.
+            // Otherwise lowering produces `c_num === null || c_num === void 0 ? void 0 : c_num.x`,
+            // and only the inner `c_num.x` reference gets deleted by the inline pass — leaving
+            // the test-condition references dangling once the enum declaration is removed.
+            Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
+                ChainElement::StaticMemberExpression(member_expr) if member_expr.optional => {
+                    self.try_inline_enum_member(member_expr, ctx)
+                }
+                ChainElement::ComputedMemberExpression(member_expr) if member_expr.optional => {
+                    self.try_inline_computed_enum_member(member_expr, ctx)
+                }
+                _ => return,
+            },
             _ => return,
         };
 
-        if let Some(value) = value {
-            if let Some(ref_id) = object_ref_id {
-                ctx.scoping_mut().delete_reference(ref_id);
-            }
+        if let Some((value, ref_id)) = inlined {
+            ctx.scoping_mut().delete_reference(ref_id);
             *expr = match value {
                 ConstantValue::Number(n) => Self::get_initializer_expr(n, ctx),
                 ConstantValue::String(s) => {
@@ -156,6 +163,17 @@ impl<'a> TypeScriptEnum {
         if decl.declare {
             return None;
         }
+
+        // Enum lowering relies on pre-computed member values stored in `Scoping`
+        // by `evaluate_enum_members` (only run when the semantic builder is configured
+        // with `enum_eval`). Without it, string-valued members are not recognized and
+        // the transform emits incorrect reverse mappings (see oxc#21667).
+        debug_assert!(
+            ctx.scoping().get_enum_body_scopes(decl.id.symbol_id()).is_some(),
+            "Transformer requires `Scoping` produced with `SemanticBuilder::with_enum_eval(true)` \
+             to correctly transform `enum {}`.",
+            decl.id.name,
+        );
 
         let ast = ctx.ast;
 
@@ -414,12 +432,21 @@ impl<'a> TypeScriptEnum {
     }
 
     /// Check if an enum declaration can be safely removed (post-inlining).
-    /// Const enums are always removed when `optimize_const_enums` is set.
-    /// Regular enums are removed only if all references were inlined away by `enter_expression`.
+    ///
+    /// The decl is removable when no value references (`Read`/`Write`) remain —
+    /// `enter_expression` inlines member accesses and deletes those references. Type
+    /// references (e.g. from `as E` / `: E`) are kept here and stripped later by
+    /// `annotations.rs`, so they don't block removal.
+    ///
+    /// If a non-inlinable value reference remains (e.g. `export default E`, `E.toString()`),
+    /// we emit the IIFE form so the binding still exists at runtime — matching tsc under
+    /// `--isolatedModules`. Babel drops the declaration in this case, leaving dangling
+    /// references; oxc diverges intentionally to preserve runtime correctness.
     fn can_remove_enum(&self, decl: &TSEnumDeclaration<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        self.may_remove_enum(decl, ctx)
-            && (decl.r#const
-                || ctx.scoping().get_resolved_reference_ids(decl.id.symbol_id()).is_empty())
+        if !self.may_remove_enum(decl, ctx) {
+            return false;
+        }
+        ctx.scoping().get_resolved_references(decl.id.symbol_id()).all(|r| !r.is_value())
     }
 
     /// Check if all members of an enum declaration have known constant values.
@@ -465,11 +492,13 @@ impl<'a> TypeScriptEnum {
     }
 
     /// Try to inline `Direction.Up` to its literal value.
+    /// Returns the constant and the `ReferenceId` of the enum identifier on the LHS,
+    /// so the caller can delete the now-unused reference.
     fn try_inline_enum_member(
         &self,
         expr: &StaticMemberExpression<'a>,
         ctx: &TraverseCtx<'a>,
-    ) -> Option<ConstantValue> {
+    ) -> Option<(ConstantValue, ReferenceId)> {
         let Expression::Identifier(ident) = &expr.object else { return None };
         self.resolve_enum_member(ident, expr.property.name.as_str(), ctx)
     }
@@ -479,7 +508,7 @@ impl<'a> TypeScriptEnum {
         &self,
         expr: &ComputedMemberExpression<'a>,
         ctx: &TraverseCtx<'a>,
-    ) -> Option<ConstantValue> {
+    ) -> Option<(ConstantValue, ReferenceId)> {
         let Expression::Identifier(ident) = &expr.object else { return None };
         let Expression::StringLiteral(prop) = &expr.expression else { return None };
         self.resolve_enum_member(ident, prop.value.as_str(), ctx)
@@ -493,7 +522,7 @@ impl<'a> TypeScriptEnum {
         ident: &IdentifierReference<'a>,
         property_name: &str,
         ctx: &TraverseCtx<'a>,
-    ) -> Option<ConstantValue> {
+    ) -> Option<(ConstantValue, ReferenceId)> {
         let ref_id = ident.reference_id.get()?;
         let symbol_id = ctx.scoping().get_reference(ref_id).symbol_id()?;
 
@@ -510,7 +539,7 @@ impl<'a> TypeScriptEnum {
                 ctx.scoping().get_binding(body_scope_id, property_name.into())
                 && let Some(value) = ctx.scoping().get_enum_member_value(member_symbol_id)
             {
-                return Some(value.clone());
+                return Some((value.clone(), ref_id));
             }
         }
         None

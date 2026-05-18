@@ -1,0 +1,18 @@
+{
+  "folder_a/test.js": {
+    "no-console": {
+      "count": 1
+    }
+  },
+  "folder_b/test.ts": {
+    "no-console": {
+      "count": 1
+    },
+    "typescript/array-type": {
+      "count": 1
+    },
+    "typescript/await-thenable": {
+      "count": 1
+    }
+  }
+}

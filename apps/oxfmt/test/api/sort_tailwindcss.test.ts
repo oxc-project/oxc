@@ -54,6 +54,16 @@ describe("Tailwind CSS Sorting", () => {
     expect(result.errors).toStrictEqual([]);
   });
 
+  // Regression test for https://github.com/oxc-project/oxc/pull/21919
+  it("should NOT sort Tailwind classes when sortTailwindcss is explicitly false", async () => {
+    const input = `const A = <div className="p-4 flex bg-red-500 text-white">Hello</div>;`;
+
+    const result = await format("test.tsx", input, { sortTailwindcss: false });
+
+    expect(result.code).toContain('className="p-4 flex bg-red-500 text-white"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
   it("should sort multiple className attributes", async () => {
     // Use classes that will definitely be reordered
     const input = `

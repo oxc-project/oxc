@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.
+   ╭─[prefer_expect_resolves.tsx:3:28]
+ 2 │                 it('passes', async () => {
+ 3 │                     expect(await someValue(),).toBe(true);
+   ·                            ─────────────────
+ 4 │                 });
+   ╰────
+  help: Use `await expect(...).resolves` instead
+
+  ⚠ vitest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.
+   ╭─[prefer_expect_resolves.tsx:4:28]
+ 3 │                     const myPromise = Promise.resolve(true);
+ 4 │                     expect(await myPromise).toBe(true);
+   ·                            ───────────────
+ 5 │                 });
+   ╰────
+  help: Use `await expect(...).resolves` instead
+
+  ⚠ vitest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.
+   ╭─[prefer_expect_resolves.tsx:6:34]
+ 5 │                     const myPromise = Promise.resolve(true);
+ 6 │                     pleaseExpect(await myPromise).toBe(true);
+   ·                                  ───────────────
+ 7 │                 });
+   ╰────
+  help: Use `await expect(...).resolves` instead

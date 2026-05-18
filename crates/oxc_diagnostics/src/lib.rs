@@ -72,13 +72,11 @@ pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSourc
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[must_use]
 pub struct OxcDiagnostic {
-    // `Box` the data to make `OxcDiagnostic` 8 bytes so that `Result` is small.
-    // This is required because rust does not performance return value optimization.
-    inner: Box<OxcDiagnosticInner>,
+    inner: OxcDiagnosticInner,
 }
 
 impl Deref for OxcDiagnostic {
-    type Target = Box<OxcDiagnosticInner>;
+    type Target = OxcDiagnosticInner;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
@@ -180,7 +178,7 @@ impl OxcDiagnostic {
     /// Create new an error-level [`OxcDiagnostic`].
     pub fn error<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self {
-            inner: Box::new(OxcDiagnosticInner {
+            inner: OxcDiagnosticInner {
                 message: message.into(),
                 labels: None,
                 note: None,
@@ -188,14 +186,14 @@ impl OxcDiagnostic {
                 severity: Severity::Error,
                 code: OxcCode::default(),
                 url: None,
-            }),
+            },
         }
     }
 
     /// Create new a warning-level [`OxcDiagnostic`].
     pub fn warn<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self {
-            inner: Box::new(OxcDiagnosticInner {
+            inner: OxcDiagnosticInner {
                 message: message.into(),
                 labels: None,
                 help: None,
@@ -203,7 +201,7 @@ impl OxcDiagnostic {
                 severity: Severity::Warning,
                 code: OxcCode::default(),
                 url: None,
-            }),
+            },
         }
     }
 
@@ -371,6 +369,6 @@ impl OxcDiagnostic {
 
     /// Consumes the diagnostic and returns the inner owned data.
     pub fn inner_owned(self) -> OxcDiagnosticInner {
-        *self.inner
+        self.inner
     }
 }

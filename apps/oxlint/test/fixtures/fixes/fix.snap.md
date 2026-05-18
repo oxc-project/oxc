@@ -51,6 +51,20 @@
   | File path: <fixture>/files/range_start_too_large.js
   | Invalid range: 0..0
 
+  x fixes-plugin(fixes): Replace "a" with "daddy"
+   ,-[files/bom_remove.js:1:4]
+ 1 | ﻿a = c;
+   : ^
+ 2 | d = b
+   `----
+
+  x fixes-plugin(fixes): Replace "a" with "daddy"
+   ,-[files/bom_remove2.js:1:4]
+ 1 | ﻿a = c;
+   : ^
+ 2 | d = b
+   `----
+
   x fixes-plugin(fixes): end negative
    ,-[files/range_end_negative.js:1:5]
  1 | let x;
@@ -123,7 +137,7 @@
    :     ^
    `----
 
-Found 0 warnings and 24 errors.
+Found 0 warnings and 26 errors.
 Finished in Xms on 12 files with 1 rules using X threads.
 ```
 
@@ -146,13 +160,13 @@ rage = abacus
 
 # File altered: files/bom_remove.js
 ```
-daddy = magic;
+a = magic;
 damned = abacus
 ```
 
 # File altered: files/bom_remove2.js
 ```
-daddy = magic;
+a = magic;
 damned = abacus
 ```
 
