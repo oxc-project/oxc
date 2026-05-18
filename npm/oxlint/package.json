@@ -29,6 +29,7 @@
     "configuration_schema.json",
     "dist",
     "README.md",
+    "THIRD-PARTY-LICENSE",
     "bin/oxlint"
   ],
   "type": "module",
@@ -44,6 +45,10 @@
       "default": "./dist/plugins-dev.js"
     },
     "./package.json": "./package.json"
+  },
+  "scripts": {
+    "prepack": "node ../../.github/scripts/sync-third-party-license.mjs .",
+    "postpack": "node ../../.github/scripts/sync-third-party-license.mjs --clean ."
   },
   "peerDependencies": {
     "oxlint-tsgolint": ">=0.22.1"

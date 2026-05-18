@@ -25,4 +25,5 @@ else
 fi
 rm -f "$npm_stderr"
 
+node .github/scripts/sync-third-party-license.mjs "${pkg_dir}"
 pnpm publish "${pkg_dir}/" "$@"
