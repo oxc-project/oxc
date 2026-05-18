@@ -9,7 +9,7 @@ use crate::{TraverseCtx, state::ObjectPropertyUsageState};
 
 use super::PeepholeOptimizations;
 
-type UsedProperties = FxHashMap<SymbolId, FxHashSet<CompactStr>>;
+type UsedProperties = FxHashMap<SymbolId, Vec<CompactStr>>;
 
 impl<'a> PeepholeOptimizations {
     pub(super) fn collect_object_property_candidate(
@@ -89,7 +89,9 @@ impl<'a> PeepholeOptimizations {
 
         if let Some(property_name) = property_name {
             let used_properties = usage.used_properties.entry(symbol_id).or_default();
-            used_properties.insert(CompactStr::new(property_name));
+            if !used_properties.iter().any(|used_property| used_property == property_name) {
+                used_properties.push(CompactStr::new(property_name));
+            }
             if u32::try_from(used_properties.len()).ok()
                 == usage.prunable_property_counts.get(&symbol_id).copied()
             {
@@ -212,7 +214,7 @@ impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
     fn should_keep_property(
         &self,
         property: &ObjectProperty<'a>,
-        used_properties: &FxHashSet<CompactStr>,
+        used_properties: &[CompactStr],
     ) -> bool {
         if property.kind != PropertyKind::Init || property.computed || property.shorthand {
             return true;
@@ -221,7 +223,7 @@ impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
         let Some(name) = property.key.static_name() else {
             return true;
         };
-        if used_properties.contains(name.as_ref()) {
+        if used_properties.iter().any(|used_property| used_property == name.as_ref()) {
             return true;
         }
 
