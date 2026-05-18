@@ -185,7 +185,7 @@ impl IdMatch {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let Some(regex) = self.regex() else { return };
+        let regex = self.regex().expect("regex should be present when should_run returns true");
         let name = ident.name.as_str();
         if regex.is_match(name) {
             return;
@@ -253,7 +253,7 @@ impl IdMatch {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let Some(regex) = self.regex() else { return };
+        let regex = self.regex().expect("regex should be present when should_run returns true");
         let name = ident.name.as_str();
         if regex.is_match(name) {
             return;
@@ -335,7 +335,7 @@ impl IdMatch {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let Some(regex) = self.regex() else { return };
+        let regex = self.regex().expect("regex should be present when should_run returns true");
         let name = ident.name.as_str();
         if regex.is_match(name) {
             return;
@@ -419,7 +419,7 @@ impl IdMatch {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let Some(regex) = self.regex() else { return };
+        let regex = self.regex().expect("regex should be present when should_run returns true");
         let name = ident.name.as_str();
         if regex.is_match(name) {
             return;
@@ -442,7 +442,7 @@ impl IdMatch {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let Some(regex) = self.regex() else { return };
+        let regex = self.regex().expect("regex should be present when should_run returns true");
         let name = ident.name.as_str();
         if regex.is_match(name) {
             return;
