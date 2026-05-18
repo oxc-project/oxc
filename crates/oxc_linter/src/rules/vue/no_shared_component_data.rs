@@ -65,10 +65,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoSharedComponentData {
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_extension().is_some_and(|ext| ext == "vue")
-    }
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ObjectProperty(prop) = node.kind() else { return };
 
@@ -88,8 +84,12 @@ impl Rule for NoSharedComponentData {
 
         let Some(grand) = ancestors.next() else { return };
         let in_vue_component = match grand.kind() {
-            AstKind::ExportDefaultDeclaration(_) => true,
-            AstKind::CallExpression(call) => is_vue_component_definition_call(call),
+            AstKind::ExportDefaultDeclaration(_) => {
+                ctx.file_extension().is_some_and(|ext| ext == "vue")
+            }
+            AstKind::CallExpression(call) => {
+                is_last_object_argument(parent, call) && is_vue_component_definition_call(call)
+            }
             _ => false,
         };
         if !in_vue_component {
@@ -98,6 +98,17 @@ impl Rule for NoSharedComponentData {
 
         ctx.diagnostic(no_shared_component_data_diagnostic(prop.span));
     }
+}
+
+fn is_last_object_argument(node: &AstNode<'_>, call: &CallExpression<'_>) -> bool {
+    let AstKind::ObjectExpression(object) = node.kind() else { return false };
+
+    call.arguments.last().and_then(|argument| argument.as_expression()).is_some_and(|argument| {
+        match argument.get_inner_expression() {
+            Expression::ObjectExpression(argument_object) => argument_object.span == object.span,
+            _ => false,
+        }
+    })
 }
 
 fn is_vue_component_definition_call(call: &CallExpression<'_>) -> bool {
@@ -126,67 +137,96 @@ fn is_vue_component_definition_call(call: &CallExpression<'_>) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         // `new Vue({...})` is excluded — instances don't share `data` across components.
         (
             "
-                <script>
                 new Vue({
                   data: {
                     foo: 'bar'
                   }
                 })
-                </script>
             ",
             None,
             None,
-            Some(PathBuf::from("test.vue")),
+            Some(PathBuf::from("test.js")),
         ),
         (
             "
-                <script>
                 new Vue({
                   data: function () {
                     return { foo: 'bar' }
                   }
                 })
-                </script>
             ",
             None,
             None,
-            Some(PathBuf::from("test.vue")),
+            Some(PathBuf::from("test.js")),
         ),
         (
             "
-                <script>
                 new Vue({
                   ...data,
                   data () {
                     return { foo: 'bar' }
                   }
                 })
-                </script>
             ",
             None,
             None,
-            Some(PathBuf::from("test.vue")),
+            Some(PathBuf::from("test.js")),
         ),
         (
             "
-                <script>
                 Vue.component('some-comp', {
                   data: function () {
                     return { foo: 'bar' }
                   }
                 })
-                </script>
             ",
             None,
             None,
-            Some(PathBuf::from("test.vue")),
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "
+                export default {
+                  data: {
+                    foo: 'bar'
+                  }
+                }
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "
+                Vue.component({
+                  data: {
+                    foo: 'bar'
+                  }
+                }, 'some-comp')
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "
+                Vue.component({
+                  data: {
+                    foo: 'bar'
+                  }
+                }, {})
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
         ),
         (
             "
@@ -250,36 +290,42 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-    ];
-
-    let fail = vec![
         (
             "
-                <script>
-                Vue.component('some-comp', {
-                  data: {
-                    foo: 'bar'
-                  }
-                })
-                </script>
+                <template>
+                  {{ Vue.component('some-comp', { data: { foo: 'bar' } }) }}
+                </template>
             ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
+    ];
+
+    let fail = vec![
         (
             "
-                <script>
+                Vue.component('some-comp', {
+                  data: {
+                    foo: 'bar'
+                  }
+                })
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "
                 app.component('some-comp', {
                   data: {
                     foo: 'bar'
                   }
                 })
-                </script>
             ",
             None,
             None,
-            Some(PathBuf::from("test.vue")),
+            Some(PathBuf::from("test.js")),
         ),
         (
             "
