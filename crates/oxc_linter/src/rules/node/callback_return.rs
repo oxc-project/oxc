@@ -241,7 +241,7 @@ fn is_callback_expression(call_expr: &CallExpression, parent_node: &Statement) -
         return false;
     };
 
-    if expr_stmt.expression.span() == call_expr.span {
+    if expr_stmt.expression.without_parentheses().span() == call_expr.span {
         return true;
     }
 
@@ -373,6 +373,8 @@ fn test() {
             "function x(err) { if (err) { process.nextTick(function(err) { callback(); }); } callback(); }",
             None,
         ),
+        ("function a(err) { (callback(err)); }", None),
+        ("function x(err) { if (err) { (callback()); return; } }", None),
     ];
 
     let fail = vec![
