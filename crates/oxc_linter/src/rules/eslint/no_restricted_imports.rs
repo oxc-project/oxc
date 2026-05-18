@@ -8,11 +8,14 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ImportOrExportKind, TSImportEqualsDeclaration, TSModuleReference},
+    ast::{
+        BindingPattern, BindingProperty, Expression, ImportExpression, ImportOrExportKind,
+        ObjectPattern, TSImportEqualsDeclaration, TSModuleReference,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 
 use crate::{
@@ -224,7 +227,7 @@ impl<'de> Deserialize<'de> for SerdeRegexWrapper<Regex> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum GlobResult {
     Found,
     Whitelist,
@@ -235,7 +238,9 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// This rule allows you to specify imports that you don’t want to use in your application.
-    /// It applies to static imports only, not dynamic ones.
+    /// It applies to static imports, as well as dynamic `import()` expressions with statically known sources.
+    /// Dynamic `import()` expressions with computed sources, such as `import(name)` or template literals with substitutions, are ignored.
+    /// Options that restrict specific import names apply to dynamic `import()` expressions only when the resulting module namespace is destructured.
     ///
     /// ### Why is this bad?
     ///
@@ -769,6 +774,14 @@ impl RestrictedPath {
             NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
         }
     }
+
+    fn is_dynamic_import_restricted(&self) -> bool {
+        self.import_names.is_none() && self.allow_import_names.is_none()
+    }
+
+    fn has_dynamic_import_name_restriction(&self) -> bool {
+        self.import_names.is_some() || self.allow_import_names.is_some()
+    }
 }
 
 impl RestrictedPattern {
@@ -875,6 +888,20 @@ impl RestrictedPattern {
         }
     }
 
+    fn is_dynamic_import_restricted(&self) -> bool {
+        self.import_names.is_none()
+            && self.import_name_pattern.is_none()
+            && self.allow_import_names.is_none()
+            && self.allow_import_name_pattern.is_none()
+    }
+
+    fn has_dynamic_import_name_restriction(&self) -> bool {
+        self.import_names.is_some()
+            || self.import_name_pattern.is_some()
+            || self.allow_import_names.is_some()
+            || self.allow_import_name_pattern.is_some()
+    }
+
     fn is_side_effect_import_allowed(&self) -> bool {
         let unused_name = CompactStr::from("__<>import_name_that_cant_be_used<>__");
         self.is_name_span_allowed(&unused_name) == NameSpanAllowedResult::Allowed
@@ -927,6 +954,60 @@ impl RestrictedPattern {
     fn get_allow_import_name_pattern_result(&self, name: &CompactStr) -> bool {
         self.allow_import_name_pattern.as_ref().is_some_and(|regex| regex.is_match(name))
     }
+}
+
+fn get_static_import_expression_source<'a>(
+    import_expr: &'a ImportExpression<'a>,
+) -> Option<&'a str> {
+    match import_expr.source.get_inner_expression() {
+        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+        Expression::TemplateLiteral(tpl) if tpl.expressions.is_empty() => {
+            Some(tpl.quasis.first()?.value.cooked.as_ref()?.as_str())
+        }
+        _ => None,
+    }
+}
+
+fn get_binding_property_import_name(property: &BindingProperty<'_>) -> Option<ImportImportName> {
+    if property.computed {
+        return None;
+    }
+
+    let name = property.key.static_name()?;
+    Some(ImportImportName::Name(NameSpan::new(
+        CompactStr::from(name.as_ref()),
+        property.key.span(),
+    )))
+}
+
+fn get_import_expression_destructure_pattern<'a>(
+    ctx: &LintContext<'a>,
+    node: &oxc_semantic::AstNode<'a>,
+) -> Option<&'a ObjectPattern<'a>> {
+    let mut has_await_ancestor = false;
+
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        match ancestor.kind() {
+            AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSInstantiationExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSTypeAssertion(_) => {}
+            AstKind::AwaitExpression(_) if !has_await_ancestor => {
+                has_await_ancestor = true;
+            }
+            AstKind::VariableDeclarator(declarator) if has_await_ancestor => {
+                let BindingPattern::ObjectPattern(object_pattern) = &declarator.id else {
+                    return None;
+                };
+                return Some(object_pattern);
+            }
+            _ => return None,
+        }
+    }
+
+    None
 }
 
 impl Rule for NoRestrictedImports {
@@ -988,29 +1069,18 @@ impl Rule for NoRestrictedImports {
                 self.report_ts_import_equals_declaration_allowed(ctx, declaration);
             }
             AstKind::ImportExpression(import_expr) => {
-                let source = import_expr.source.get_inner_expression();
-                match source {
-                    Expression::StringLiteral(lit) => {
-                        self.report_import_expression_allowed(
+                if let Some(source) = get_static_import_expression_source(import_expr) {
+                    self.report_import_expression_allowed(ctx, source, import_expr.span);
+
+                    if let Some(object_pattern) =
+                        get_import_expression_destructure_pattern(ctx, node)
+                    {
+                        self.report_import_expression_destructure_allowed(
                             ctx,
-                            &lit.value,
-                            lit.span,
-                            import_expr.span,
+                            source,
+                            object_pattern,
                         );
                     }
-                    Expression::TemplateLiteral(tpl) if tpl.expressions.is_empty() => {
-                        let Some(cooked) = tpl.quasis.first().and_then(|q| q.value.cooked.as_ref())
-                        else {
-                            return;
-                        };
-                        self.report_import_expression_allowed(
-                            ctx,
-                            cooked,
-                            tpl.span,
-                            import_expr.span,
-                        );
-                    }
-                    _ => {}
                 }
             }
             _ => {}
@@ -1308,7 +1378,6 @@ impl NoRestrictedImports {
         &self,
         ctx: &LintContext<'_>,
         source_value: &str,
-        source_span: Span,
         expr_span: Span,
     ) {
         for path in &self.paths {
@@ -1316,27 +1385,18 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            // Dynamic imports are never type-only
-            let result = &path.get_string_literal_result(source_value, source_span, false);
-
-            if *result == ImportNameResult::Allowed {
+            if !path.is_dynamic_import_restricted() {
                 continue;
             }
 
-            let diagnostic =
-                get_diagnostic_from_import_name_result_path(expr_span, source_value, result, path);
-
-            ctx.diagnostic(diagnostic);
+            ctx.diagnostic(diagnostic_path(expr_span, path.message.clone(), source_value));
         }
 
         let mut whitelist_found = false;
         let mut found_errors = vec![];
 
         for pattern in &self.patterns {
-            // Dynamic imports are never type-only
-            let result = &pattern.get_string_literal_result(source_value, source_span, false);
-
-            if *result == ImportNameResult::Allowed {
+            if !pattern.is_dynamic_import_restricted() {
                 continue;
             }
 
@@ -1346,25 +1406,107 @@ impl NoRestrictedImports {
                     break;
                 }
                 GlobResult::Found => {
-                    let diagnostic = get_diagnostic_from_import_name_result_pattern(
+                    found_errors.push(diagnostic_pattern(
                         expr_span,
+                        pattern.message.clone(),
                         source_value,
-                        result,
-                        pattern,
-                    );
-
-                    found_errors.push(diagnostic);
+                    ));
                 }
                 GlobResult::None => (),
             }
 
             if pattern.get_regex_result(source_value) {
-                ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
+                ctx.diagnostic(diagnostic_pattern(
                     expr_span,
+                    pattern.message.clone(),
+                    source_value,
+                ));
+            }
+        }
+
+        if !whitelist_found && !found_errors.is_empty() {
+            for diagnostic in found_errors {
+                ctx.diagnostic(diagnostic);
+            }
+        }
+    }
+
+    fn report_import_expression_destructure_allowed(
+        &self,
+        ctx: &LintContext<'_>,
+        source_value: &str,
+        object_pattern: &ObjectPattern<'_>,
+    ) {
+        for path in &self.paths {
+            if source_value != path.name.as_str() || !path.has_dynamic_import_name_restriction() {
+                continue;
+            }
+
+            for property in &object_pattern.properties {
+                let Some(import_name) = get_binding_property_import_name(property) else {
+                    continue;
+                };
+                let result = &path.get_import_name_result(&import_name, false);
+
+                if *result == ImportNameResult::Allowed {
+                    continue;
+                }
+
+                ctx.diagnostic(get_diagnostic_from_import_name_result_path(
+                    property.key.span(),
                     source_value,
                     result,
-                    pattern,
+                    path,
                 ));
+            }
+        }
+
+        let mut whitelist_found = false;
+        let mut found_errors = vec![];
+
+        for pattern in &self.patterns {
+            if !pattern.has_dynamic_import_name_restriction() {
+                continue;
+            }
+
+            let group_result = pattern.get_group_glob_result(source_value);
+            if group_result == GlobResult::Whitelist {
+                whitelist_found = true;
+                break;
+            }
+
+            let regex_found = pattern.get_regex_result(source_value);
+            if group_result == GlobResult::None && !regex_found {
+                continue;
+            }
+
+            for property in &object_pattern.properties {
+                let Some(import_name) = get_binding_property_import_name(property) else {
+                    continue;
+                };
+                let result = &pattern.get_import_name_result(&import_name, false);
+
+                if *result == ImportNameResult::Allowed {
+                    continue;
+                }
+
+                if group_result == GlobResult::Found {
+                    found_errors.push(get_diagnostic_from_import_name_result_pattern(
+                        property.key.span(),
+                        source_value,
+                        result,
+                        pattern,
+                    ));
+                }
+
+                if regex_found {
+                    ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
+                        property.key.span(),
+                        source_value,
+                        result,
+                        pattern,
+                    ));
+                }
             }
         }
 
@@ -3576,7 +3718,7 @@ fn test() {
         (r"import('bar')", Some(serde_json::json!(["foo"]))),
         // Non-string-literal argument (variable) should be ignored
         (r"import(variable)", Some(serde_json::json!(["foo"]))),
-        // importNames should NOT apply to dynamic imports
+        // importNames should NOT apply to bare dynamic imports
         (
             r"import('foo')",
             Some(serde_json::json!([{
@@ -3584,6 +3726,92 @@ fn test() {
                     "name": "foo",
                     "importNames": ["default"],
                     "message": "Use bar instead."
+                }]
+            }])),
+        ),
+        // allowImportNames should NOT apply to bare dynamic imports
+        (
+            r"import('foo')",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["allowed"]
+                }]
+            }])),
+        ),
+        // Named restrictions in patterns should NOT apply to bare dynamic imports
+        (
+            r"import('foo')",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNames": ["default"]
+                }]
+            }])),
+        ),
+        (
+            r"import('foo')",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^default$"
+                }]
+            }])),
+        ),
+        (
+            r"import('foo')",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNames": ["allowed"]
+                }]
+            }])),
+        ),
+        (
+            r"import('foo')",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNamePattern": "^allowed$"
+                }]
+            }])),
+        ),
+        // allowImportNames should allow known destructured dynamic import names
+        (
+            r"const { AllowedObject } = await import('foo')",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["AllowedObject"]
+                }]
+            }])),
+        ),
+        (
+            r"const { AllowedObject: renamed } = await import('foo')",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["AllowedObject"]
+                }]
+            }])),
+        ),
+        // Non-awaited dynamic imports are not treated as module namespace destructuring
+        (
+            r"const { DisallowedObject } = import('foo')",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "importNames": ["DisallowedObject"]
+                }]
+            }])),
+        ),
+        // Computed destructuring keys are not statically known
+        (
+            r"const { [key]: value } = await import('foo')",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "importNames": ["DisallowedObject"]
                 }]
             }])),
         ),
@@ -3619,6 +3847,53 @@ fn test() {
                 }]
             }])),
         ),
+        // Destructured dynamic imports expose statically known import names
+        (
+            r"const { DisallowedObject } = await import('foo')",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "importNames": ["DisallowedObject"]
+                }]
+            }])),
+        ),
+        (
+            r"const { DisallowedObject: renamed } = await import('foo')",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "importNames": ["DisallowedObject"]
+                }]
+            }])),
+        ),
+        (
+            r"const { default: foo } = await import('foo')",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "importNames": ["default"]
+                }]
+            }])),
+        ),
+        (
+            r"const { DisallowedObject } = await import('foo')",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["AllowedObject"]
+                }]
+            }])),
+        ),
+        // Dynamic imports are never type-only, so allowTypeImports does not exempt them
+        (
+            r"import('foo')",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowTypeImports": true
+                }]
+            }])),
+        ),
         // Pattern restriction
         (
             r"import('lodash/pick')",
@@ -3633,6 +3908,53 @@ fn test() {
                 "patterns": [{
                     "group": ["foo"],
                     "message": "No foo."
+                }]
+            }])),
+        ),
+        // Named restrictions in patterns apply to destructured dynamic imports
+        (
+            r"const { DisallowedObject } = await import('foo')",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNames": ["DisallowedObject"]
+                }]
+            }])),
+        ),
+        (
+            r"const { DisallowedObject } = await import('foo')",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNames": ["AllowedObject"]
+                }]
+            }])),
+        ),
+        (
+            r"const { useThing } = await import('foo')",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^use"
+                }]
+            }])),
+        ),
+        (
+            r"const { makeThing } = await import('foo')",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNamePattern": "^use"
+                }]
+            }])),
+        ),
+        // Dynamic imports are never type-only, so allowTypeImports does not exempt patterns
+        (
+            r"import('foo')",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowTypeImports": true
                 }]
             }])),
         ),

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
 
   ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
@@ -875,6 +874,36 @@ assertion_line: 444
    ╰────
   help: Use bar instead.
 
+  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted.
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ const { DisallowedObject } = await import('foo')
+   ·         ────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted.
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ const { DisallowedObject: renamed } = await import('foo')
+   ·         ────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'default' import from 'foo' is restricted.
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ const { default: foo } = await import('foo')
+   ·         ───────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted because only AllowedObject import(s) is/are allowed.
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ const { DisallowedObject } = await import('foo')
+   ·         ────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('foo')
+   · ─────────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import('lodash/pick')
@@ -887,6 +916,36 @@ assertion_line: 444
    · ─────────────
    ╰────
   help: No foo.
+
+  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ const { DisallowedObject } = await import('foo')
+   ·         ────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted because only AllowedObject import(s) is/are allowed.
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ const { DisallowedObject } = await import('foo')
+   ·         ────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'useThing' import from 'foo' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ const { useThing } = await import('foo')
+   ·         ────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'makeThing' import from 'foo' is restricted because only imports that match the pattern '^use' are allowed from 'foo'.
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ const { makeThing } = await import('foo')
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import('foo')
+   · ─────────────
+   ╰────
 
   ⚠ eslint(no-restricted-imports): '@app/api' import is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:1]
