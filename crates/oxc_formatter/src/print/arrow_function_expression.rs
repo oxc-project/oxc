@@ -193,20 +193,50 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         || (matches!(self.arrow.parent(), AstNodes::JSXExpressionContainer(container)
                             if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
 
+                    let format_body_content = format_with(|f| {
+                        if should_add_parens {
+                            write!(f, if_group_fits_on_line(&"("));
+                        }
+                        write!(f, format_body);
+                        if should_add_parens {
+                            write!(f, if_group_fits_on_line(&")"));
+                        }
+                    });
+
+                    // For a grouped last call argument whose body is wrapped
+                    // in optional parens (a ConditionalExpression), use an
+                    // explicit space followed by `indent(soft_line_break())`
+                    // instead of `soft_line_indent_or_space`. This ensures
+                    // the space after `=>` is accounted for in `BestFitting`
+                    // width measurement, matching Prettier's
+                    // `[" ", group([ifBreak("","("), indent([softline, body]), ...])]`
+                    // structure for the ConditionalExpression body shape and
+                    // forcing the most-expanded variant when `=>` lands at
+                    // the print width.
+                    //
+                    // Other body shapes (CallExpression, etc.) use Prettier's
+                    // `[indent([line, body]), ...]` shape, which we model with
+                    // `soft_line_indent_or_space`.
+                    let use_explicit_space_break = is_last_call_arg && should_add_parens;
                     write!(
                         f,
                         group(&format_args!(
-                            soft_line_indent_or_space(&format_with(|f| {
-                                if should_add_parens {
-                                    write!(f, if_group_fits_on_line(&"("));
+                            format_with(|f| {
+                                if use_explicit_space_break {
+                                    write!(
+                                        f,
+                                        [
+                                            space(),
+                                            indent(&format_args!(
+                                                soft_line_break(),
+                                                format_body_content
+                                            ))
+                                        ]
+                                    );
+                                } else {
+                                    write!(f, soft_line_indent_or_space(&format_body_content));
                                 }
-
-                                write!(f, format_body);
-
-                                if should_add_parens {
-                                    write!(f, if_group_fits_on_line(&")"));
-                                }
-                            })),
+                            }),
                             is_last_call_arg.then_some(&FormatTrailingCommas::All),
                             should_add_soft_line.then_some(soft_line_break())
                         ))
