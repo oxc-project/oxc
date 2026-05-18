@@ -6,6 +6,7 @@ use oxc_ecmascript::{
     side_effects::is_valid_regexp,
 };
 use oxc_semantic::IsGlobalReference;
+use oxc_span::GetSpanMut;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
@@ -86,7 +87,18 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
+            let outer_start = paren_expr.span.start;
+            let is_sequence = matches!(&paren_expr.expression, Expression::SequenceExpression(_));
             *expr = paren_expr.expression.take_in(ctx.ast);
+            // For `SequenceExpression`, the surrounding parens are syntactically required
+            // when re-emitted in expression context, so any comments attached to the outer
+            // `(` should remain reachable via the inner expression's span.
+            if is_sequence {
+                let span = expr.span_mut();
+                if outer_start < span.start {
+                    span.start = outer_start;
+                }
+            }
         }
         if let Some(e) = match expr {
             Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),

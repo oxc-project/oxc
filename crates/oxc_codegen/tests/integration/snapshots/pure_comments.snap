@@ -189,7 +189,9 @@ isFunction(options)
 : options
                 
 ----------
-isFunction(options) ? /* @__PURE__ */ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
+isFunction(options) ? 
+// by Rollup, so we have to wrap it in a pure-annotated IIFE.
+/* @__PURE__ */ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
 
 ########## 10
 isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;

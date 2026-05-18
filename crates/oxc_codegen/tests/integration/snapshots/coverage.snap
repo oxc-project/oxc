@@ -142,11 +142,16 @@ try {
 }
 
 ########## 23
+condition ? /* v8 ignore next */ uncovered() : coveredAlternate();
+----------
+condition ? /* v8 ignore next */ uncovered() : coveredAlternate();
+
+########## 24
 const a = Math.random() ? 1 : /* istanbul ignore next */ 2;
 ----------
 const a = Math.random() ? 1 : /* istanbul ignore next */ 2;
 
-########## 24
+########## 25
 switch (Math.random()) {
   case 0.5: break;
   /* istanbul ignore next */
