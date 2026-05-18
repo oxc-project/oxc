@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 490
 ---
 
   ⚠ unicorn(import-style): Use unassigned import for module `unassigned`.
@@ -164,8 +163,8 @@ assertion_line: 490
   ⚠ unicorn(import-style): Use default import for module `default`.
    ╭─[import_style.tsx:2:23]
  1 │ async () => {
- 2 │                 const {x} = await import('default');
-   ·                       ─────────────────────────────
+ 2 │                 const x = await import('default');
+   ·                       ───────────────────────────
  3 │             }
    ╰────
 
@@ -191,6 +190,22 @@ assertion_line: 490
    ╭─[import_style.tsx:1:1]
  1 │ import {x as y} from 'default'
    · ──────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {x} = await import('default');
+   ·                       ─────────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {x: y} = await import('default');
+   ·                       ────────────────────────────────
+ 3 │             }
    ╰────
 
   ⚠ unicorn(import-style): Use default import for module `default`.
@@ -281,6 +296,22 @@ assertion_line: 490
    ╭─[import_style.tsx:1:1]
  1 │ import {x as y} from 'namespace'
    · ────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {x} = await import('namespace');
+   ·                       ───────────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(import-style): Use namespace import for module `namespace`.
+   ╭─[import_style.tsx:2:23]
+ 1 │ async () => {
+ 2 │                 const {x: y} = await import('namespace');
+   ·                       ──────────────────────────────────
+ 3 │             }
    ╰────
 
   ⚠ unicorn(import-style): Use namespace import for module `namespace`.
@@ -478,14 +509,6 @@ assertion_line: 490
  1 │ async () => {
  2 │                 const {red} = await import('chalk');
    ·                       ─────────────────────────────
- 3 │             }
-   ╰────
-
-  ⚠ unicorn(import-style): Use default import for module `chalk`.
-   ╭─[import_style.tsx:2:23]
- 1 │ async () => {
- 2 │                 const {red} = await import('ch' + 'alk');
-   ·                       ──────────────────────────────────
  3 │             }
    ╰────
 

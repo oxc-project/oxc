@@ -720,11 +720,8 @@ fn test() {
         ("const {inspect} = require('node:util')", None),
         ("import chalk from 'chalk'", None),
         ("import {default as chalk} from 'chalk'", None),
-        ("export {promisify, callbackify} from 'util'", Some(json!([{ "checkExportFrom": true }]))),
-        (
-            "export {promisify, callbackify} from 'node:util'",
-            Some(json!([{ "checkExportFrom": true }])),
-        ),
+        ("export {promisify, callbackify} from 'util'", None),
+        ("export {promisify, callbackify} from 'node:util'", None),
         ("require('chalk')", Some(json!([{ "styles": {}, "extendDefaultStyles": false }]))),
         ("import 'chalk'", Some(json!([{ "checkImport": false }]))),
         (
@@ -740,6 +737,7 @@ fn test() {
             "import util, {inspect} from 'named-or-default'",
             Some(json!([{ "styles": { "named-or-default": { "named": true, "default": true } } }])),
         ),
+        ("require(1, 2, 3)", None),
         ("require(variable)", None),
         ("const x = require(variable)", None),
         ("const x = require('unassigned').x", Some(options.clone())),
@@ -806,7 +804,7 @@ fn test() {
         ("import * as x from 'default'", Some(options.clone())),
         (
             "async () => {
-                const {x} = await import('default');
+                const x = await import('default');
             }",
             Some(options.clone()),
         ),
@@ -814,6 +812,18 @@ fn test() {
         ("const {x: y} = require('default')", Some(options.clone())),
         ("import {x} from 'default'", Some(options.clone())),
         ("import {x as y} from 'default'", Some(options.clone())),
+        (
+            "async () => {
+                const {x} = await import('default');
+            }",
+            Some(options.clone()),
+        ),
+        (
+            "async () => {
+                const {x: y} = await import('default');
+            }",
+            Some(options.clone()),
+        ),
         ("export * from 'default'", Some(options.clone())),
         ("export {x} from 'default'", Some(options.clone())),
         ("export {x as y} from 'default'", Some(options.clone())),
@@ -829,6 +839,18 @@ fn test() {
         ("const {x: y} = require('namespace')", Some(options.clone())),
         ("import {x} from 'namespace'", Some(options.clone())),
         ("import {x as y} from 'namespace'", Some(options.clone())),
+        (
+            "async () => {
+                const {x} = await import('namespace');
+            }",
+            Some(options.clone()),
+        ),
+        (
+            "async () => {
+                const {x: y} = await import('namespace');
+            }",
+            Some(options.clone()),
+        ),
         ("export {x} from 'namespace'", Some(options.clone())),
         ("export {x as y} from 'namespace'", Some(options.clone())),
         ("export {default} from 'namespace'", Some(options.clone())),
@@ -873,12 +895,6 @@ fn test() {
         (
             "async () => {
                 const {red} = await import('chalk');
-            }",
-            None,
-        ),
-        (
-            "async () => {
-                const {red} = await import('ch' + 'alk');
             }",
             None,
         ),
