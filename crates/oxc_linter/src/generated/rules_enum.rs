@@ -23964,6 +23964,7 @@ impl RuleEnum {
         }
     }
     #[doc = r" Additional information about this rule."]
+    #[cfg(feature = "ruledocs")]
     pub fn info(&self) -> RuleInfo {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(_) => ImportConsistentTypeSpecifierStyle::INFO,
@@ -24879,6 +24880,7 @@ impl RuleEnum {
         }
     }
     #[doc = r" A short, one-line summary of what this rule does."]
+    #[cfg(feature = "ruledocs")]
     pub fn short_description(&self) -> &'static str {
         self.info().short_description
     }
