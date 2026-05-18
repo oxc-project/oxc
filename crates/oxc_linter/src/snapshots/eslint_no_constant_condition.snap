@@ -1081,3 +1081,179 @@ source: crates/oxc_linter/src/tester.rs
    ·         ╰── this expression will always evaluate to the same value
    ╰────
   help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:23]
+ 1 │ function* foo(){while(true){} yield 'foo';}
+   ·                       ──┬─
+   ·                         ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:23]
+ 1 │ function* foo(){while(true){} yield 'foo';}
+   ·                       ──┬─
+   ·                         ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:23]
+ 1 │ function* foo(){while(true){if (true) {yield 'foo';}}}
+   ·                       ──┬─
+   ·                         ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:33]
+ 1 │ function* foo(){while(true){if (true) {yield 'foo';}}}
+   ·                                 ──┬─
+   ·                                   ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:23]
+ 1 │ function* foo(){while(true){if (true) {yield 'foo';}}}
+   ·                       ──┬─
+   ·                         ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:33]
+ 1 │ function* foo(){while(true){if (true) {yield 'foo';}}}
+   ·                                 ──┬─
+   ·                                   ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:23]
+ 1 │ function* foo(){while(true){yield 'foo';} while(true) {}}
+   ·                       ──┬─
+   ·                         ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:49]
+ 1 │ function* foo(){while(true){yield 'foo';} while(true) {}}
+   ·                                                 ──┬─
+   ·                                                   ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:23]
+ 1 │ function* foo(){while(true){yield 'foo';} while(true) {}}
+   ·                       ──┬─
+   ·                         ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:49]
+ 1 │ function* foo(){while(true){yield 'foo';} while(true) {}}
+   ·                                                 ──┬─
+   ·                                                   ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:31]
+ 1 │ var a = function* foo(){while(true){} yield 'foo';}
+   ·                               ──┬─
+   ·                                 ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:31]
+ 1 │ var a = function* foo(){while(true){} yield 'foo';}
+   ·                               ──┬─
+   ·                                 ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:8]
+ 1 │ while (true) { function* foo() {yield;}}
+   ·        ──┬─
+   ·          ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:8]
+ 1 │ while (true) { function* foo() {yield;}}
+   ·        ──┬─
+   ·          ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:21]
+ 1 │ function* foo(){if (true) {yield 'foo';}}
+   ·                     ──┬─
+   ·                       ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:40]
+ 1 │ function* foo() {for (let foo = yield; true;) {}}
+   ·                                        ──┬─
+   ·                                          ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:36]
+ 1 │ function* foo() {for (foo = yield; true;) {}}
+   ·                                    ──┬─
+   ·                                      ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:24]
+ 1 │ function foo() {while (true) {function* bar() {while (true) {yield;}}}}
+   ·                        ──┬─
+   ·                          ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:55]
+ 1 │ function foo() {while (true) {function* bar() {while (true) {yield;}}}}
+   ·                                                       ──┬─
+   ·                                                         ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:24]
+ 1 │ function foo() {while (true) {const bar = function*() {while (true) {yield;}}}}
+   ·                        ──┬─
+   ·                          ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:63]
+ 1 │ function foo() {while (true) {const bar = function*() {while (true) {yield;}}}}
+   ·                                                               ──┬─
+   ·                                                                 ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:55]
+ 1 │ function* foo() { for (let foo = 1 + 2 + 3 + (yield); true; baz) {}}
+   ·                                                       ──┬─
+   ·                                                         ╰── this expression will always evaluate to the same value
+   ╰────
+  help: Update the condition to not be constant, or remove the condition entirely

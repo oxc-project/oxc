@@ -1,50 +1,60 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-/**
- * Total size of the transfer buffer in bytes (block size minus allocator metadata).
- */
-export const BUFFER_SIZE = 2147483616;
+// See `crates/oxc_allocator/src/pool/fixed_size.rs` for a diagram showing
+// how the constituent parts of the arena fit together.
 
 /**
- * Required alignment of the transfer buffer (4 GiB).
+ * Total size of the allocator block (including metadata and allocator `ChunkFooter`).
  */
-export const BUFFER_ALIGN = 4294967296;
+export const BLOCK_SIZE = 2147483632;
 
 /**
- * Size of the active data area in bytes (buffer size minus raw metadata and chunk footer).
+ * Required alignment of the allocator block (4 GiB).
  */
-export const ACTIVE_SIZE = 2147483552;
+export const BLOCK_ALIGN = 4294967296;
+
+/**
+ * Total size of the transfer buffer used on JS side, in bytes
+ * (`BLOCK_SIZE` minus `FixedSizeAllocatorMetadata` and `ChunkFooter`).
+ */
+export const BUFFER_SIZE = 2147483576;
+
+/**
+ * Size of the active data region in bytes - the region where source text and AST live
+ * (`BUFFER_SIZE` minus `RawTransferMetadata`).
+ */
+export const ACTIVE_SIZE = 2147483560;
 
 /**
  * Byte offset of the data pointer within the buffer, divided by 4 (for `Int32Array` indexing).
  */
-export const DATA_POINTER_POS_32 = 536870900;
+export const DATA_POINTER_POS_32 = 536870890;
 
 /**
  * Byte offset of the `is_ts` flag within the buffer.
  */
-export const IS_TS_FLAG_POS = 2147483612;
+export const IS_TS_FLAG_POS = 2147483572;
 
 /**
  * Byte offset of the `is_jsx` flag within the buffer.
  */
-export const IS_JSX_FLAG_POS = 2147483613;
+export const IS_JSX_FLAG_POS = 2147483573;
 
 /**
  * Byte offset of the `has_bom` flag within the buffer.
  */
-export const HAS_BOM_FLAG_POS = 2147483614;
+export const HAS_BOM_FLAG_POS = 2147483574;
 
 /**
  * Byte offset of the tokens offset within the buffer, divided by 4 (for `Int32Array` indexing).
  */
-export const TOKENS_OFFSET_POS_32 = 536870901;
+export const TOKENS_OFFSET_POS_32 = 536870891;
 
 /**
  * Byte offset of the tokens length within the buffer, divided by 4 (for `Int32Array` indexing).
  */
-export const TOKENS_LEN_POS_32 = 536870902;
+export const TOKENS_LEN_POS_32 = 536870892;
 
 /**
  * Byte offset of the `program` field, relative to start of `RawTransferData`.

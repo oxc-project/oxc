@@ -9,6 +9,11 @@ export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
 export type JsdocUserConfig = boolean | JsdocConfig;
 export type ObjectWrapConfig = "preserve" | "collapse";
+/**
+ * A set of glob patterns.
+ * Patterns are matched against paths relative to the configuration file's directory.
+ */
+export type GlobSet = string[];
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
 export type SortImportsUserConfig = boolean | SortImportsConfig;
@@ -16,6 +21,7 @@ export type SortGroupItemConfig = NewlinesBetweenMarker | string | string[];
 export type SortOrderConfig = "asc" | "desc";
 export type SortPackageJsonUserConfig = boolean | SortPackageJsonConfig;
 export type SortTailwindcssUserConfig = boolean | SortTailwindcssConfig;
+export type SvelteUserConfig = boolean | SvelteConfig;
 export type TrailingCommaConfig = "all" | "es5" | "none";
 
 /**
@@ -195,6 +201,20 @@ export interface Oxfmtrc {
    */
   sortTailwindcss?: SortTailwindcssUserConfig;
   /**
+   * Options for `prettier-plugin-svelte`.
+   *
+   * Pass `true` or an object to enable `.svelte` file formatting,
+   * or `false` (handy in overrides) / omit to disable.
+   * Setting `true` resets to defaults — any options inherited from a parent scope are dropped.
+   *
+   * NOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,
+   * but Oxfmt does NOT bundle or auto-install it.
+   * You must install `svelte` yourself in your project, formatting will fail at runtime otherwise.
+   *
+   * - Default: Disabled
+   */
+  svelte?: SvelteUserConfig;
+  /**
    * Specify the number of spaces per indentation-level.
    *
    * - Default: `2`
@@ -304,12 +324,11 @@ export interface OxfmtOverrideConfig {
   /**
    * Glob patterns to exclude from this override.
    */
-  excludeFiles?: string[];
+  excludeFiles?: GlobSet;
   /**
    * Glob patterns to match files for this override.
-   * All patterns are relative to the Oxfmt configuration file.
    */
-  files: string[];
+  files: GlobSet;
   /**
    * Format options to apply for matched files.
    */
@@ -473,6 +492,20 @@ export interface FormatConfig {
    */
   sortTailwindcss?: SortTailwindcssUserConfig;
   /**
+   * Options for `prettier-plugin-svelte`.
+   *
+   * Pass `true` or an object to enable `.svelte` file formatting,
+   * or `false` (handy in overrides) / omit to disable.
+   * Setting `true` resets to defaults — any options inherited from a parent scope are dropped.
+   *
+   * NOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,
+   * but Oxfmt does NOT bundle or auto-install it.
+   * You must install `svelte` yourself in your project, formatting will fail at runtime otherwise.
+   *
+   * - Default: Disabled
+   */
+  svelte?: SvelteUserConfig;
+  /**
    * Specify the number of spaces per indentation-level.
    *
    * - Default: `2`
@@ -582,7 +615,7 @@ export interface SortImportsConfig {
    *
    * This is useful for distinguishing your own modules from external dependencies.
    *
-   * - Default: `["~/", "@/"]`
+   * - Default: `["~/", "@/", "#"]`
    */
   internalPattern?: string[];
   /**
@@ -728,5 +761,28 @@ export interface SortTailwindcssConfig {
    * - Default: Installed Tailwind CSS's `theme.css`
    */
   stylesheet?: string;
+  [k: string]: unknown;
+}
+export interface SvelteConfig {
+  /**
+   * Whether to allow attribute shorthand if attribute name and expression are same.
+   *
+   * - Default: `true`
+   */
+  allowShorthand?: boolean;
+  /**
+   * Whether to indent code inside `<script>` and `<style>` tags.
+   *
+   * - Default: `true`
+   */
+  indentScriptAndStyle?: boolean;
+  /**
+   * The order in which Svelte component sections are printed.
+   * Format: join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want;
+   * or `none` if you don't want to reorder anything.
+   *
+   * - Default: `"options-scripts-markup-styles"`
+   */
+  sortOrder?: string;
   [k: string]: unknown;
 }

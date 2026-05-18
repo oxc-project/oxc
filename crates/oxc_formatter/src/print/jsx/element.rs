@@ -63,6 +63,16 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
             } else {
                 f.context().comments().end_of_line_comments_after(self.span().end)
             }
+        } else if matches!(
+            self.parent(),
+            AstNodes::TemplateLiteral(_) | AstNodes::TSTemplateLiteralType(_)
+        ) {
+            // For a JSX element inside `${...}`,
+            // the trailing comments must stop at the closing `}` of the interpolation.
+            // The default `get_trailing_comments` logic uses the next sibling's `span.start` as boundary,
+            // which can incorrectly pull in the next interpolation's leading comment
+            // when consecutive `${...}` chunks are present.
+            f.context().comments().comments_before_character(self.span().end, b'}')
         } else {
             // Fall back to default trailing comments behavior
             return match self {

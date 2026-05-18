@@ -55,8 +55,46 @@ impl TestCaseName {
 pub struct ConsistentTestItConfig {
     /// Decides whether to use `test` or `it` within a `describe` scope.
     /// If only `fn` is provided, this will default to the value of `fn`.
+    ///
+    /// Examples of **incorrect** code for `{ "withinDescribe": "test" }`:
+    /// ```javascript
+    /// describe('foo', function () {
+    ///     it('bar');
+    /// });
+    /// ```
+    ///
+    /// Examples of **correct** code for `{ "withinDescribe": "test" }`:
+    /// ```javascript
+    /// describe('foo', function () {
+    ///     test('bar');
+    /// });
+    /// ```
     within_describe: TestCaseName,
     /// Decides whether to use `test` or `it`.
+    ///
+    /// Examples of **incorrect** code for `{ "fn": "test" }`:
+    /// ```javascript
+    /// it('foo');
+    /// it.only('foo');
+    /// ```
+    ///
+    /// Examples of **correct** code for `{ "fn": "test" }`:
+    /// ```javascript
+    /// test('foo');
+    /// test.only('foo');
+    /// ```
+    ///
+    /// Examples of **incorrect** code for `{ "fn": "it" }`:
+    /// ```javascript
+    /// test('foo');
+    /// test.only('foo');
+    /// ```
+    ///
+    /// Examples of **correct** code for `{ "fn": "it" }`:
+    /// ```javascript
+    /// it('foo');
+    /// it.only('foo');
+    /// ```
     r#fn: TestCaseName,
 }
 
@@ -65,52 +103,6 @@ impl Default for ConsistentTestItConfig {
         Self { within_describe: TestCaseName::IT, r#fn: TestCaseName::Test }
     }
 }
-
-pub const DOCUMENTATION: &str = r#"
-### What it does
-
- Jest allows you to choose how you want to define your tests, using the `it` or
- the `test` keywords, with multiple permutations for each:
-
- - **it:** `it`, `xit`, `fit`, `it.only`, `it.skip`.
- - **test:** `test`, `xtest`, `test.only`, `test.skip`.
-
- ### Why is this bad?
-
- It's a good practice to be consistent in your test suite, so that all tests are written in the same way.
-
- ### Examples
-
- ```javascript
- /* jest/consistent-test-it: ["error", {"fn": "test"}] */
- test('foo'); // valid
- test.only('foo'); // valid
-
- it('foo'); // invalid
- it.only('foo'); // invalid
- ```
-
- ```javascript
- /* jest/consistent-test-it: ["error", {"fn": "it"}] */
- it('foo'); // valid
- it.only('foo'); // valid
- test('foo'); // invalid
- test.only('foo'); // invalid
- ```
-
- ```javascript
- /* jest/consistent-test-it: ["error", {"fn": "it", "withinDescribe": "test"}] */
- it('foo'); // valid
- describe('foo', function () {
-     test('bar'); // valid
- });
-
- test('foo'); // invalid
- describe('foo', function () {
-     it('bar'); // invalid
- });
- ```
-"#;
 
 impl ConsistentTestItConfig {
     #[expect(clippy::unnecessary_wraps)] // TODO: fail on serde error

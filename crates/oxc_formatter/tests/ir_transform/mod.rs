@@ -1,8 +1,8 @@
 mod sort_imports;
 
 use oxc_formatter::{
-    CustomGroupDefinition, FormatOptions, GroupEntry, ImportModifier, ImportSelector, QuoteStyle,
-    Semicolons, SortImportsOptions, SortOrder,
+    CustomGroupDefinition, FormatOptions, GroupEntry, ImportModifier, ImportSelector, JsdocOptions,
+    QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
 };
 use serde::Deserialize;
 
@@ -55,6 +55,7 @@ struct TestConfig {
     single_quote: Option<bool>,
     semi: Option<bool>,
     sort_imports: Option<TestSortImportsConfig>,
+    jsdoc: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -132,6 +133,9 @@ fn parse_test_config(json: &str) -> FormatOptions {
     }
     if let Some(semi) = config.semi {
         options.semicolons = if semi { Semicolons::Always } else { Semicolons::AsNeeded };
+    }
+    if config.jsdoc == Some(true) {
+        options.jsdoc = Some(JsdocOptions::default());
     }
     if let Some(sort_config) = config.sort_imports {
         let mut sort_imports = SortImportsOptions::default();

@@ -173,8 +173,11 @@ impl<'a> Binder<'a> for Function<'a> {
                 if let Some(var_scope_id) = var_scope_id
                     && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
                 {
-                    builder.scoping.move_binding(block_scope_id, var_scope_id, ident.name);
-                    builder.scoping.set_symbol_scope_id(symbol_id, var_scope_id);
+                    builder.scoping.move_binding_by_symbol_id(
+                        block_scope_id,
+                        var_scope_id,
+                        symbol_id,
+                    );
                     builder
                         .hoisting_variables
                         .entry(block_scope_id)

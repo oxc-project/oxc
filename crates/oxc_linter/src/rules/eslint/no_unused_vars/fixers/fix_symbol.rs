@@ -54,6 +54,25 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     pub(super) fn rename(&self, new_name: &CompactStr) -> RuleFix {
+        let Some(fixes) = self.rename_fixes(new_name) else { return Fix::empty().into() };
+        Self::finish_rename_fix(RuleFix::from(fixes), self.name(), new_name)
+    }
+
+    pub(super) fn rename_with_fixer(
+        &self,
+        fixer: RuleFixer<'_, 'a>,
+        new_name: &CompactStr,
+    ) -> RuleFix {
+        let Some(fixes) = self.rename_fixes(new_name) else { return fixer.noop() };
+        let mut fix = fixer.for_multifix().new_fix_with_capacity(fixes.len());
+        for replacement in fixes {
+            fix.push(replacement);
+        }
+
+        Self::finish_rename_fix(fix, self.name(), new_name)
+    }
+
+    fn rename_fixes(&self, new_name: &CompactStr) -> Option<Vec<Fix>> {
         let mut fixes: Vec<Fix> = vec![];
         let decl_span = self.span();
         fixes.push(Fix::new(new_name.clone(), decl_span));
@@ -68,11 +87,15 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 }
                 // we found a reference to an unknown node and we don't know how
                 // to replace it, so we abort the whole process
-                _ => return Fix::empty().into(),
+                _ => return None,
             }
         }
 
-        RuleFix::from(fixes).with_message(format!("Rename '{}' to '{new_name}'", self.name()))
+        Some(fixes)
+    }
+
+    fn finish_rename_fix(fix: RuleFix, name: &str, new_name: &CompactStr) -> RuleFix {
+        fix.with_message(format!("Rename '{name}' to '{new_name}'"))
     }
 
     /// - `true` if `pattern` is a destructuring pattern and only contains one symbol

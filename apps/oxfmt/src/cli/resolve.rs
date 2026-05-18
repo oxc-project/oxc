@@ -2,9 +2,7 @@ use std::path::{Path, PathBuf};
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
-#[cfg(feature = "napi")]
-use crate::core::JsConfigLoaderCb;
-use crate::core::{ConfigResolver, utils::normalize_relative_path};
+use crate::core::utils;
 
 /// Resolve ignore file paths from CLI args or defaults.
 ///
@@ -16,7 +14,7 @@ pub(super) fn resolve_ignore_paths(
     if !ignore_paths.is_empty() {
         let mut result = Vec::with_capacity(ignore_paths.len());
         for path in ignore_paths {
-            let path = normalize_relative_path(cwd, path);
+            let path = utils::normalize_relative_path(cwd, path);
             if !path.exists() {
                 return Err(format!("{}: File not found", path.display()));
             }
@@ -105,36 +103,4 @@ pub(super) fn is_ignored(
         }
     }
     false
-}
-
-/// Resolve the nearest config scope for a file target.
-/// Returns `None` if the file belongs to the root scope.
-pub(super) fn resolve_file_scope_config(
-    file: &Path,
-    root_config_dir: Option<&Path>,
-    editorconfig_path: Option<&Path>,
-    #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
-) -> Result<Option<ConfigResolver>, String> {
-    let Some(parent) = file.parent() else {
-        return Ok(None);
-    };
-
-    let mut resolver = ConfigResolver::from_config(
-        parent,
-        None,
-        editorconfig_path,
-        #[cfg(feature = "napi")]
-        js_config_loader,
-    )
-    .map_err(|err| format!("Failed to load config for {}: {err}", file.display()))?;
-
-    // No config found, or same as root → belongs to root scope
-    if resolver.config_dir().is_none() || resolver.config_dir() == root_config_dir {
-        return Ok(None);
-    }
-
-    resolver
-        .build_and_validate()
-        .map_err(|err| format!("Failed to parse config for {}: {err}", file.display()))?;
-    Ok(Some(resolver))
 }

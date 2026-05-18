@@ -292,7 +292,7 @@ fn is_defined_before_use(
     let defined_before_reference =
         ctx.scoping().symbol_span(symbol_id).end <= reference_node.kind().span().end;
     defined_before_reference
-        && !(reference.is_value() && is_in_initializer(symbol_id, reference, reference_node, ctx))
+        && !(reference.is_value() && is_in_initializer(symbol_id, reference_node, ctx))
 }
 
 fn unresolved_initializer_reference_declaration_span(
@@ -426,7 +426,6 @@ where
 
 fn is_in_initializer(
     symbol_id: SymbolId,
-    _reference: &Reference,
     reference_node: &AstNode<'_>,
     ctx: &LintContext<'_>,
 ) -> bool {

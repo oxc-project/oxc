@@ -119,7 +119,7 @@ impl BadBitwiseOperator {
             return fixer.noop();
         };
         let op_start = start + offset;
-        let op_span = Span::new(op_start, op_start + bad.len() as u32);
+        let op_span = Span::sized(op_start, bad.len() as u32);
         fixer.replace(op_span, good)
     }
 
@@ -132,7 +132,7 @@ impl BadBitwiseOperator {
             return fixer.noop();
         };
         let op_start = start + offset;
-        let op_span = Span::new(op_start, op_start + 2);
+        let op_span = Span::sized(op_start, 2);
         fixer.replace(op_span, "||=")
     }
 }

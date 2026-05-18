@@ -25,7 +25,6 @@ const NODE_BIN_PATH = process.execPath;
  *
  * Fixtures with an `options.json` file containing `"oxlint": false` are skipped.
  */
-// oxlint-disable-next-line valid-describe-callback
 describe("oxlint CLI", { concurrent: process.platform !== "win32" }, () => {
   const fixtures = getFixtures();
   for (const fixture of fixtures) {

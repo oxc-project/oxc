@@ -231,11 +231,12 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
                             let trailing_separator =
                                 FormatTrailingCommas::ES5.trailing_separator(f.options());
 
-                            f.join_with(soft_line_break()).entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                trailing_separator,
-                            );
+                            f.join_with(soft_line_break_or_space())
+                                .entries_with_trailing_separator(
+                                    self.iter(),
+                                    ",",
+                                    trailing_separator,
+                                );
                         },),
                         should_insert_space_around_brackets
                     )]

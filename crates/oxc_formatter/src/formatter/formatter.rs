@@ -295,4 +295,8 @@ impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
     fn state_mut(&mut self) -> &mut FormatState<'ast> {
         self.buffer.state_mut()
     }
+
+    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
+        self.buffer.replace_end(start, replacement);
+    }
 }

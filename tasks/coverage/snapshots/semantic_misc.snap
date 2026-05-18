@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 65/65 (100.00%)
-Positive Passed: 51/65 (78.46%)
+AST Parsed     : 66/66 (100.00%)
+Positive Passed: 52/66 (78.79%)
 semantic Error: tasks/coverage/misc/pass/conditional-arrow-alternate-return-type.ts
 Unresolved references mismatch:
 after transform: ["Pick", "Record"]
@@ -18,6 +18,9 @@ rebuilt        : ScopeId(5): Some(ScopeId(0))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(7): Some(ScopeId(0))
+Unresolved reference IDs mismatch for "String":
+after transform: [ReferenceId(11), ReferenceId(12)]
+rebuilt        : [ReferenceId(18)]
 
 semantic Error: tasks/coverage/misc/pass/oxc-1288.ts
 Bindings mismatch:

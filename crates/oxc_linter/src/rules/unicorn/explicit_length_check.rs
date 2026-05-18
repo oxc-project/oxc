@@ -364,7 +364,6 @@ fn test() {
         // (r#"const NON_NUMBER = "2"; const x = foo.length || NON_NUMBER"#, None),
         ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "not-equal"}]))),
         ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "greater-than"}]))),
-        ("const x = foo.length || bar()", None),
         ("() => foo.length && bar()", None),
         ("alert(foo.length && bar())", None),
         // Use of .size in conditional "test" position

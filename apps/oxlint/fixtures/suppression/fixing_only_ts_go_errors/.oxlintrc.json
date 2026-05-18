@@ -1,0 +1,7 @@
+{
+  "plugins": ["typescript"],
+  "rules": {
+    "typescript/await-thenable": "error"
+  },
+  "ignorePatterns": ["files/test-backup.ts"]
+}

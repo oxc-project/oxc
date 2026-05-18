@@ -1,0 +1,76 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
+ 2 │ //My comment
+ 3 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:2:1]
+ 1 │ import { afterAll } from 'vitest';
+ 2 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
+ 2 │ import { helper } from './helper';
+ 3 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:2:1]
+ 1 │ import './setup';
+ 2 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
+ 2 │ /* block comment */
+ 3 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:5:1]
+ 4 │  */
+ 5 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
+ 2 │ afterAll(() => {});
+ 3 │ afterAll(() => {});
+   · ▲
+ 4 │ });
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
+  ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:3:1]
+ 2 │ /* setup notes */
+ 3 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
