@@ -81,10 +81,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for ValidNextTick {
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_extension().is_some_and(|ext| ext == "vue")
-    }
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (next_tick_node, report_span) = match node.kind() {
             AstKind::StaticMemberExpression(m) => {
@@ -142,6 +138,10 @@ impl Rule for ValidNextTick {
                 });
             }
         }
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.file_extension().is_some_and(|ext| ext == "vue")
     }
 }
 
