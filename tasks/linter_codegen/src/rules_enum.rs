@@ -111,11 +111,13 @@ fn generate_imports() -> TokenStream {
     quote! {
         use crate::{
             context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleInfo, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
             timing::RuleTimingStat,
             utils::PossibleJestNode,
             AstNode
         };
+        #[cfg(feature = "ruledocs")]
+        use crate::rule::RuleInfo;
         use oxc_semantic::AstTypesBitset;
     }
 }
