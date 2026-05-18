@@ -111,11 +111,7 @@ fn dot_define_is_member_expr_postfix() {
         ("__OBJ__", r#"{"process":{"env":{"SOMEVAR":"foo"}}}"#),
         ("process.env.SOMEVAR", "\"SOMEVAR\""),
     ]);
-    test(
-        "console.log(__OBJ__.process.env.SOMEVAR)",
-        "console.log({ 'process': { 'env': { 'SOMEVAR': 'foo' } } }.process.env.SOMEVAR);\n",
-        &config,
-    );
+    test("console.log(__OBJ__.process.env.SOMEVAR)", "console.log('foo');\n", &config);
 }
 
 #[test]
