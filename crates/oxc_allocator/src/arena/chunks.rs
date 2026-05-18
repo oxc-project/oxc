@@ -283,7 +283,6 @@ impl<const MIN_ALIGN: usize> Iterator for ChunkRawIter<'_, MIN_ALIGN> {
             self.current_chunk_cursor_ptr.take().unwrap_or_else(|| footer.cursor_ptr.get());
         let end_ptr = footer_ptr.cast::<u8>();
 
-        debug_assert!(footer.start_ptr <= cursor_ptr);
         debug_assert!(cursor_ptr <= end_ptr);
 
         // SAFETY: `cursor_ptr` is always before or equal to `end_ptr`, and both are within the same allocation

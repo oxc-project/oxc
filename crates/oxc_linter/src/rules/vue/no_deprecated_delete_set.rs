@@ -60,7 +60,7 @@ declare_oxc_lint!(
     NoDeprecatedDeleteSet,
     vue,
     correctness,
-    version = "next",
+    version = "1.62.0",
 );
 
 impl Rule for NoDeprecatedDeleteSet {

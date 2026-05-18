@@ -1,6 +1,0 @@
-{
-  "plugins": [],
-  "rules": {
-    "eslint/no-negated-condition": "off"
-  }
-}

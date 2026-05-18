@@ -2,63 +2,63 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
+  ⚠ jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test('i need to write this test');
    · ────
    ╰────
   help: Insert `.todo`
 
-  ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
+  ⚠ jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test('i need to write this test',);
    · ────
    ╰────
   help: Insert `.todo`
 
-  ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
+  ⚠ jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test(`i need to write this test`);
    · ────
    ╰────
   help: Insert `.todo`
 
-  ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
+  ⚠ jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ it('foo', function () {})
    · ──
    ╰────
   help: Replace with `test.todo` or `it.todo`.
 
-  ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
+  ⚠ jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ it('foo', () => {})
    · ──
    ╰────
   help: Replace with `test.todo` or `it.todo`.
 
-  ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
+  ⚠ jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test.skip('i need to write this test', () => {});
    · ─────────
    ╰────
   help: Replace with `test.todo` or `it.todo`.
 
-  ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
+  ⚠ jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test.skip('i need to write this test', function() {});
    · ─────────
    ╰────
   help: Replace with `test.todo` or `it.todo`.
 
-  ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
+  ⚠ jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test["skip"]('i need to write this test', function() {});
    · ────────────
    ╰────
   help: Replace with `test.todo` or `it.todo`.
 
-  ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
+  ⚠ jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test[`skip`]('i need to write this test', function() {});
    · ────────────

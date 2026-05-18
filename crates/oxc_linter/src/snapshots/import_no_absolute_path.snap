@@ -2,84 +2,84 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:15]
  1 │ import _ from '/lodash'
    ·               ─────────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:15]
  1 │ import _ from '/lodash'
    ·               ─────────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:15]
  1 │ import f from '/foo/path'
    ·               ───────────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:15]
  1 │ import f from '/foo/bar/baz.js'
    ·               ─────────────────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:19]
  1 │ var foo = require('/foo')
    ·                   ──────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:17]
  1 │ var f = require('/foo/some')
    ·                 ───────────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:17]
  1 │ var f = require('/foo/some/add')
    ·                 ───────────────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:10]
  1 │ require(['/foo'], function(){})
    ·          ──────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:19]
  1 │ require(['./foo', '/boo'], function(){})
    ·                   ──────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:10]
  1 │ require(['/foo', '/boo'], function(){})
    ·          ──────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:18]
  1 │ require(['/foo', '/boo'], function(){})
    ·                  ──────
    ╰────
   help: Replace the absolute path with a relative path or a module alias.
 
-  ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:9]
  1 │ define(['/foo'], function(){})
    ·         ──────

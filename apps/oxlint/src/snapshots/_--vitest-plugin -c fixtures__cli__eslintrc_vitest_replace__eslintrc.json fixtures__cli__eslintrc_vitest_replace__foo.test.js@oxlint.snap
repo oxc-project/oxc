@@ -6,7 +6,7 @@ arguments: --vitest-plugin -c fixtures/cli/eslintrc_vitest_replace/eslintrc.json
 working directory: 
 ----------
 
-  x eslint-plugin-vitest(no-disabled-tests): Disabled test
+  x vitest(no-disabled-tests): Disabled test
    ,-[fixtures/cli/eslintrc_vitest_replace/foo.test.js:1:1]
  1 | test.skip('foo', () => {
    : ^^^^^^^^^

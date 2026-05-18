@@ -152,7 +152,8 @@ impl TryFrom<&str> for LintPlugins {
             "jsdoc" => Ok(LintPlugins::JSDOC),
             "jest" => Ok(LintPlugins::JEST),
             "vitest" => Ok(LintPlugins::VITEST),
-            "jsx-a11y" | "jsx_a11y" => Ok(LintPlugins::JSX_A11Y),
+            // jsx-a11y-x has the same rules but better maintained
+            "jsx-a11y" | "jsx_a11y" | "jsx-a11y-x" | "jsx_a11y-x" => Ok(LintPlugins::JSX_A11Y),
             "nextjs" => Ok(LintPlugins::NEXTJS),
             "react-perf" | "react_perf" => Ok(LintPlugins::REACT_PERF),
             "promise" => Ok(LintPlugins::PROMISE),

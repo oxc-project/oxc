@@ -6,7 +6,7 @@ arguments: -c eslintrc.json
 working directory: fixtures/cli/config_ignore_patterns/ignore_directory
 ----------
 
-  ! eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.
+  ! unicorn(no-empty-file): Empty files are not allowed.
    ,-[main.js:1:1]
  1 | 
    : ^

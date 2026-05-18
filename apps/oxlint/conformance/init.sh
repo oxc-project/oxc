@@ -40,7 +40,7 @@ cd submodules
 clone_repo eslint
 
 # Install dependencies
-pnpm install --ignore-workspace
+pnpm install --ignore-workspace --config.strict-dep-builds=false
 
 # Return to `submodules` directory
 cd ..
@@ -86,7 +86,7 @@ clone_repo stylistic
 
 # Install dependencies.
 # No `--ignore-workspace` because `eslint-stylistic` has its own `pnpm-workspace.yaml`.
-pnpm install
+pnpm install --config.strict-dep-builds=false
 
 # Patch `package.json` files to add Node.js subpath imports.
 # ESLint Stylistic uses TypeScript `paths` in `tsconfig.base.json` (e.g. `#test`),
@@ -144,7 +144,7 @@ cd ..
 clone_repo sonarjs
 
 # Install dependencies
-pnpm install --ignore-workspace
+pnpm install --ignore-workspace --config.strict-dep-builds=false
 
 # Build
 # (ignore errors, it's just typecheck fail)
@@ -190,7 +190,7 @@ cd ..
 clone_repo e18e
 
 # Install dependencies
-pnpm install --ignore-workspace
+pnpm install --ignore-workspace --config.strict-dep-builds=false
 
 # Return to `submodules` directory
 cd ..
@@ -203,7 +203,7 @@ cd ..
 clone_repo testing_library
 
 # Install dependencies
-pnpm install --ignore-workspace
+pnpm install --ignore-workspace --config.strict-dep-builds=false
 
 # Return to `submodules` directory
 cd ..

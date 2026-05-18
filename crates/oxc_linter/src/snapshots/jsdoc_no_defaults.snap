@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+  ⚠ jsdoc(no-defaults): Defaults are not permitted.
    ╭─[no_defaults.tsx:3:33]
  2 │                       /**
  3 │                        * @param {number} [foo="7"]
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Defaults are not permitted on `@param` tag.
 
-  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+  ⚠ jsdoc(no-defaults): Defaults are not permitted.
    ╭─[no_defaults.tsx:4:33]
  3 │                        * @param {number} foo
  4 │                        * @param {number} [bar = 1]
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Defaults are not permitted on `@param` tag.
 
-  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+  ⚠ jsdoc(no-defaults): Defaults are not permitted.
    ╭─[no_defaults.tsx:4:33]
  3 │                       /**
  4 │                        * @param {number} [foo="7"]
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Defaults are not permitted on `@param` tag.
 
-  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+  ⚠ jsdoc(no-defaults): Defaults are not permitted.
    ╭─[no_defaults.tsx:3:33]
  2 │                       /**
  3 │                        * @param {number} [foo="7"]
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Optional param names are not permitted on `@param` tag.
 
-  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+  ⚠ jsdoc(no-defaults): Defaults are not permitted.
    ╭─[no_defaults.tsx:3:33]
  2 │                       /**
  3 │                        * @param {number} [foo]
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Optional param names are not permitted on `@param` tag.
 
-  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+  ⚠ jsdoc(no-defaults): Defaults are not permitted.
    ╭─[no_defaults.tsx:3:31]
  2 │                       /**
  3 │                        * @arg {number} [foo="7"]

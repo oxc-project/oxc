@@ -2,21 +2,29 @@ use oxc_macros::declare_oxc_lint;
 use serde::Deserialize;
 
 use crate::{
-    context::LintContext,
-    rule::Rule,
-    rules::shared::consistent_test_it::{ConsistentTestItConfig, DOCUMENTATION},
+    context::LintContext, rule::Rule, rules::shared::consistent_test_it::ConsistentTestItConfig,
 };
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ConsistentTestIt(Box<ConsistentTestItConfig>);
 
 declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Vitest allows you to choose how you want to define your tests, using the `it`
+    /// or the `test` keywords, with multiple permutations for each:
+    ///
+    /// - **it:** `it`, `it.only`, `it.skip`, `it.concurrent`, `it.each`.
+    /// - **test:** `test`, `test.only`, `test.skip`, `test.concurrent`, `test.each`.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// It's a good practice to be consistent in your test suite, so that all tests are written in the same way.
     ConsistentTestIt,
     vitest,
     style,
     fix,
     config = ConsistentTestItConfig,
-    docs = DOCUMENTATION,
     version = "0.5.3",
 );
 

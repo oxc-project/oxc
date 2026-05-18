@@ -2,8 +2,15 @@ use oxc_ast::{AstKind, ast::FormalParameters};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_promise,
+};
 
 fn no_promise_in_callback_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid using promises inside of callbacks.")
@@ -11,8 +18,15 @@ fn no_promise_in_callback_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoPromiseInCallback;
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct NoPromiseInCallbackConfig {
+    /// Whether or not to exempt function declarations. Defaults to `false`.
+    exempt_declarations: bool,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct NoPromiseInCallback(NoPromiseInCallbackConfig);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -46,10 +60,15 @@ declare_oxc_lint!(
     NoPromiseInCallback,
     promise,
     suspicious,
+    config = NoPromiseInCallback,
     version = "0.13.1",
 );
 
 impl Rule for NoPromiseInCallback {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -67,13 +86,17 @@ impl Rule for NoPromiseInCallback {
         }
 
         let mut ancestors = ctx.nodes().ancestors(node.id());
-        if ancestors.any(|node| is_callback_function(node, ctx)) {
+        if ancestors.any(|node| is_callback_function(node, ctx, self.0.exempt_declarations)) {
             ctx.diagnostic(no_promise_in_callback_diagnostic(call_expr.callee.span()));
         }
     }
 }
 
-fn is_callback_function<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn is_callback_function<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    exempt_declarations: bool,
+) -> bool {
     if !node.kind().is_function_like() {
         return false;
     }
@@ -83,7 +106,13 @@ fn is_callback_function<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     }
 
     match node.kind() {
-        AstKind::Function(function) => is_error_first_callback(&function.params),
+        AstKind::Function(function) => {
+            if exempt_declarations && function.is_function_declaration() {
+                return false;
+            }
+
+            is_error_first_callback(&function.params)
+        }
         AstKind::ArrowFunctionExpression(arrow_function) => {
             is_error_first_callback(&arrow_function.params)
         }
@@ -133,38 +162,46 @@ fn test() {
     // Copyright (c) 2020, Jamund Ferguson
     // https://github.com/eslint-community/eslint-plugin-promise/blob/266ddbb03076c05c362a6daecb9382b80cdd7108/__tests__/no-promise-in-callback.js
     let pass = vec![
-        "go(function() { return Promise.resolve(4) })",
-        "go(function() { return a.then(b) })",
-        "go(function() { b.catch(c) })",
-        "go(function() { b.then(c, d) })",
-        "go(() => Promise.resolve(4))",
-        "go((errrr) => a.then(b))",
-        "go((helpers) => { b.catch(c) })",
-        "go((e) => { b.then(c, d) })",
-        "a.catch((err) => { b.then(c, d) })",
-        "var x = function() { return Promise.resolve(4) }",
-        "function y() { return Promise.resolve(4) }",
-        "function then() { return Promise.reject() }",
-        "doThing(function(x) { return Promise.reject(x) })",
-        "doThing().then(function() { return Promise.all([a,b,c]) })",
-        "doThing().then(function() { return Promise.resolve(4) })",
-        "doThing().then(() => Promise.resolve(4))",
-        "doThing().then(() => Promise.all([a]))",
-        "a(function(err) { return doThing().then(a) })",
+        ("go(function() { return Promise.resolve(4) })", None),
+        ("go(function() { return a.then(b) })", None),
+        ("go(function() { b.catch(c) })", None),
+        ("go(function() { b.then(c, d) })", None),
+        ("go(() => Promise.resolve(4))", None),
+        ("go((errrr) => a.then(b))", None),
+        ("go((helpers) => { b.catch(c) })", None),
+        ("go((e) => { b.then(c, d) })", None),
+        ("a.catch((err) => { b.then(c, d) })", None),
+        ("var x = function() { return Promise.resolve(4) }", None),
+        ("function y() { return Promise.resolve(4) }", None),
+        ("function then() { return Promise.reject() }", None),
+        ("doThing(function(x) { return Promise.reject(x) })", None),
+        ("doThing().then(function() { return Promise.all([a,b,c]) })", None),
+        ("doThing().then(function() { return Promise.resolve(4) })", None),
+        ("doThing().then(() => Promise.resolve(4))", None),
+        ("doThing().then(() => Promise.all([a]))", None),
+        ("a(function(err) { return doThing().then(a) })", None),
+        (
+            "
+                    function fn(err) {
+                      return { promise: Promise.resolve(err) };
+                    }
+                  ",
+            Some(serde_json::json!([ { "exemptDeclarations": true, }, ])),
+        ),
     ];
 
     let fail = vec![
-        "a(function(err) { doThing().then(a) })",
-        "a(function(error, zup, supa) { doThing().then(a) })",
-        "a(function(error) { doThing().then(a) })",
-        "a((error) => { doThing().then(a) })",
-        "a((error) => doThing().then(a))",
-        "a((err, data) => { doThing().then(a) })",
-        "a((err, data) => doThing().then(a))",
-        "function x(err) { Promise.all() }",
-        "function x(err) { Promise.allSettled() }",
-        "function x(err) { Promise.any() }",
-        "let x = (err) => doThingWith(err).then(a)",
+        ("a(function(err) { doThing().then(a) })", None),
+        ("a(function(error, zup, supa) { doThing().then(a) })", None),
+        ("a(function(error) { doThing().then(a) })", None),
+        ("a((error) => { doThing().then(a) })", None),
+        ("a((error) => doThing().then(a))", None),
+        ("a((err, data) => { doThing().then(a) })", None),
+        ("a((err, data) => doThing().then(a))", None),
+        ("function x(err) { Promise.all() }", None),
+        ("function x(err) { Promise.allSettled() }", None),
+        ("function x(err) { Promise.any() }", None),
+        ("let x = (err) => doThingWith(err).then(a)", None),
     ];
 
     Tester::new(NoPromiseInCallback::NAME, NoPromiseInCallback::PLUGIN, pass, fail)

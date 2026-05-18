@@ -1,0 +1,1 @@
+import "./side-effect.js";

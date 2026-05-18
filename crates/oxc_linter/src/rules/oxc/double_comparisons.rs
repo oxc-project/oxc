@@ -132,7 +132,6 @@ fn test() {
         "x > y && x >= y",
         "x >= y && x > y",
         "x >= y && x >= y",
-        "x >= y && x >= y",
         "x == y || fs < y",
         "x < y || ab == y",
         "x == y || qr > y",

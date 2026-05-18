@@ -25,6 +25,11 @@ fn test_remove_unused_expression() {
 }
 
 #[test]
+fn test_remove_unused_optional_chain_keeps_base_side_effects() {
+    test("let log = []; (log.push('base'), null)?.x;", "[].push('base')");
+}
+
+#[test]
 fn test_remove_unused_this() {
     // In a derived class constructor, `this` before `super()` throws a ReferenceError,
     // so it must be kept (https://github.com/oxc-project/oxc/issues/21364).
@@ -421,7 +426,7 @@ fn test_fold_iife() {
     );
     test(
         "function foo(x) { if (x) { return /* @__PURE__ */ (() => bar())() } return x }",
-        "function foo(x) { return x && bar() }",
+        "function foo(x) { return x && /* @__PURE__ */ bar() }",
     );
     test(
         "function foo(x) { if (x) { return /* @__PURE__ */ (() => { return 42 })() } return x }",

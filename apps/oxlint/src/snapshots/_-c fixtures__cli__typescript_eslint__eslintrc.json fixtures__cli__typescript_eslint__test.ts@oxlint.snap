@@ -6,7 +6,7 @@ arguments: -c fixtures/cli/typescript_eslint/eslintrc.json fixtures/cli/typescri
 working directory: 
 ----------
 
-  ! typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
+  ! typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
    ,-[fixtures/cli/typescript_eslint/test.ts:1:1]
  1 | namespace X {
    : ^^^^^^^^^

@@ -43,7 +43,7 @@ declare_oxc_lint!(
     style,
     docs = DOCUMENTATION,
     suggestion,
-    version = "next",
+    version = "1.62.0",
     config = PreferExpectAssertionsConfig
 );
 

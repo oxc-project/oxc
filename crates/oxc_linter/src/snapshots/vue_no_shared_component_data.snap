@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-vue(no-shared-component-data): `data` property in component must be a function.
+
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
  3 │                     Vue.component('some-comp', {
  4 │ ╭─▶                   data: {
@@ -10,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-shared-component-data): `data` property in component must be a function.
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
  3 │                     app.component('some-comp', {
  4 │ ╭─▶                   data: {
@@ -19,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-shared-component-data): `data` property in component must be a function.
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
  3 │                     export default {
  4 │ ╭─▶                   data: {
@@ -28,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-shared-component-data): `data` property in component must be a function.
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
  3 │                     export default {
  4 │ ╭─▶                   data: /*a*/ (/*b*/{
@@ -37,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-shared-component-data): `data` property in component must be a function.
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
  3 │                 Vue.extend({
  4 │                   data: { foo: 'bar' }
@@ -45,7 +46,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-shared-component-data): `data` property in component must be a function.
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
  3 │                 createApp({
  4 │                   data: { foo: 'bar' }
@@ -53,7 +54,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-shared-component-data): `data` property in component must be a function.
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
    ╭─[no_shared_component_data.tsx:4:19]
  3 │                 defineComponent({
  4 │                   data: { foo: 'bar' }

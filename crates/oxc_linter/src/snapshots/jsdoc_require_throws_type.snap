@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsdoc(require-throws-type): Missing JSDoc `@throws` type.
+   ╭─[require_throws_type.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @throws
+   ·                        ───────
+ 4 │                      */
+   ╰────
+  help: Add {type} to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-type): Missing JSDoc `@throws` type.
+   ╭─[require_throws_type.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @exception
+   ·                        ──────────
+ 4 │                      */
+   ╰────
+  help: Add {type} to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-type): Missing JSDoc `@throws` type.
+   ╭─[require_throws_type.tsx:3:25]
+ 2 │                      /**
+ 3 │                       * @throws Foo.
+   ·                         ───────
+ 4 │                       */
+   ╰────
+  help: Add {type} to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-type): Missing JSDoc `@throws` type.
+   ╭─[require_throws_type.tsx:3:25]
+ 2 │                      /**
+ 3 │                       * @exception Foo.
+   ·                         ──────────
+ 4 │                       */
+   ╰────
+  help: Add {type} to `@throws` tag.

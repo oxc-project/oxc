@@ -1,3 +1,4 @@
+mod enum_eval;
 mod es_target;
 mod helper_call;
 mod targets;

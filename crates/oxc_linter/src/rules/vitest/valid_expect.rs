@@ -6,8 +6,14 @@ use crate::{
     rules::shared::valid_expect::{DOCUMENTATION, ValidExpectConfig},
 };
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ValidExpect(Box<ValidExpectConfig>);
+
+impl Default for ValidExpect {
+    fn default() -> Self {
+        Self(Box::new(ValidExpectConfig::default().allow_string_message_arg()))
+    }
+}
 
 declare_oxc_lint!(
     ValidExpect,
@@ -21,7 +27,7 @@ declare_oxc_lint!(
 
 impl Rule for ValidExpect {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(ValidExpectConfig::from_configuration(&value))))
+        Ok(Self(Box::new(ValidExpectConfig::from_configuration(&value).allow_string_message_arg())))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -140,6 +146,9 @@ fn test() {
         ),
         ("expect(1).toBe(2);", Some(serde_json::json!([{ "maxArgs": 2 }]))),
         ("expect(1, \"1 !== 2\").toBe(2);", Some(serde_json::json!([{ "maxArgs": 2 }]))),
+        ("expect(1, \"sum is incorrect\").toBe(1);", None),
+        ("test(\"valid-expect\", () => { expect(1 + 2, \"sum is incorrect\").toBe(3); });", None),
+        ("test(\"valid-expect\", () => { expect(1 + 2, `sum is ${label}`).toBe(3); });", None),
         (
             "test(\"valid-expect\", () => { expect(2).not.toBe(2); });",
             Some(serde_json::json!([{ "asyncMatchers": ["toRejectWith"] }])),
@@ -162,12 +171,12 @@ fn test() {
         ("expect().toBe(2);", Some(serde_json::json!([{ "minArgs": "undefined", "maxArgs": "undefined" }]))),
         ("expect().toBe(true);", None),
         ("expect().toEqual(\"something\");", None),
-        ("expect(\"something\", \"else\").toEqual(\"something\");", None),
         ("expect(\"something\", \"else\", \"entirely\").toEqual(\"something\");", Some(serde_json::json!([{ "maxArgs": 2 }]))),
         ("expect(\"something\", \"else\", \"entirely\").toEqual(\"something\");", Some(serde_json::json!([{ "maxArgs": 2, "minArgs": 2 }]))),
         ("expect(\"something\", \"else\", \"entirely\").toEqual(\"something\");", Some(serde_json::json!([{ "maxArgs": 2, "minArgs": 1 }]))),
         ("expect(\"something\").toEqual(\"something\");", Some(serde_json::json!([{ "minArgs": 2 }]))),
         ("expect(\"something\", \"else\").toEqual(\"something\");", Some(serde_json::json!([{ "maxArgs": 1, "minArgs": 3 }]))),
+        ("expect(1, message).toBe(1);", None),
         ("expect(\"something\");", None),
         ("expect();", None),
         ("expect(true).toBeDefined;", None),

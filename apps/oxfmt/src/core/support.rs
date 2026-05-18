@@ -1,72 +1,37 @@
-use std::path::{Path, PathBuf};
+use std::{path::Path, sync::Arc};
 
 use phf::phf_set;
 
 use oxc_span::SourceType;
 
-pub enum FormatStrategy {
-    OxcFormatter {
-        path: PathBuf,
-        source_type: SourceType,
-    },
-    /// TOML files formatted by taplo (Pure Rust).
-    OxfmtToml {
-        path: PathBuf,
-    },
-    ExternalFormatter {
-        path: PathBuf,
-        parser_name: &'static str,
-    },
-    /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
-    ExternalFormatterPackageJson {
-        path: PathBuf,
-        parser_name: &'static str,
-    },
-}
+#[cfg(feature = "napi")]
+use super::oxfmtrc::FormatConfig;
 
-/// Builder for creating [`FormatStrategy`] from file paths.
+/// Classify a file path into a [`FileKind`].
 ///
-/// Carries per-scope configuration (e.g. experimental language flags)
-/// that influences which files are supported and how they are formatted.
-///
-/// Created from [`super::ConfigResolver::strategy_builder()`] for CLI/LSP paths,
-/// or via [`FormatStrategyBuilder::default()`] for the NAPI API path.
-#[derive(Debug, Default)]
-pub struct FormatStrategyBuilder {
-    // Future: experimental_svelte, experimental_astro, etc.
-    _private: (),
-}
+/// Returns `None` when the file type is not a formatting target.
+pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
+    if let Some(source_type) = get_oxc_formatter_source_type(&path) {
+        return Some(FileKind::OxcFormatter { path, source_type });
+    }
 
-impl FormatStrategyBuilder {
-    /// Build a [`FormatStrategy`] from a file path.
-    ///
-    /// Returns `Ok` if the file type is supported, `Err(())` otherwise.
-    #[expect(clippy::unused_self)] // Will use `self` when experimental flags are added
-    pub fn build(&self, path: PathBuf) -> Result<FormatStrategy, ()> {
-        // Check JS/TS files first
-        if let Some(source_type) = get_oxc_formatter_source_type(&path) {
-            return Ok(FormatStrategy::OxcFormatter { path, source_type });
-        }
+    let file_name = path.file_name().and_then(|f| f.to_str())?;
 
-        // Extract file_name and extension once for all subsequent checks
-        let Some(file_name) = path.file_name().and_then(|f| f.to_str()) else {
-            return Err(());
-        };
+    // Excluded files like lock files
+    if EXCLUDE_FILENAMES.contains(file_name) {
+        return None;
+    }
 
-        // Excluded files like lock files
-        if EXCLUDE_FILENAMES.contains(file_name) {
-            return Err(());
-        }
+    if is_toml_file(file_name) {
+        return Some(FileKind::OxfmtToml { path });
+    }
 
-        // Then TOML files
-        if is_toml_file(file_name) {
-            return Ok(FormatStrategy::OxfmtToml { path });
-        }
-
-        // Then external formatter files
+    // External formatter files are only supported with the `napi` feature
+    #[cfg(feature = "napi")]
+    {
         // `package.json` is special: sorted then formatted
         if file_name == "package.json" {
-            return Ok(FormatStrategy::ExternalFormatterPackageJson {
+            return Some(FileKind::ExternalFormatterPackageJson {
                 path,
                 parser_name: "json-stringify",
             });
@@ -74,47 +39,81 @@ impl FormatStrategyBuilder {
 
         let extension = path.extension().and_then(|ext| ext.to_str());
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
-            return Ok(FormatStrategy::ExternalFormatter { path, parser_name });
+            let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
+            let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
+            let supports_svelte = SVELTE_PARSERS.contains(parser_name);
+            return Some(FileKind::ExternalFormatter {
+                path,
+                parser_name,
+                supports_tailwind,
+                supports_oxfmt,
+                supports_svelte,
+            });
         }
-
-        Err(())
     }
+
+    None
 }
 
-impl FormatStrategy {
-    #[cfg(not(feature = "napi"))]
-    pub fn can_format_without_external(&self) -> bool {
-        matches!(self, Self::OxcFormatter { .. } | Self::OxfmtToml { .. })
-    }
+/// Internal classification of a file: which formatter handles it, plus minimal metadata.
+///
+/// This is a transient type produced by [`classify_file_kind`] and consumed by the
+/// resolver to construct a public [`super::FormatStrategy`] (with options).
+pub enum FileKind {
+    /// JS/TS files formatted by `oxc_formatter`.
+    /// `supports_tailwind` is not needed, always enabled for JS/TS files.
+    OxcFormatter { path: Arc<Path>, source_type: SourceType },
+    /// TOML files formatted by taplo (Pure Rust).
+    OxfmtToml { path: Arc<Path> },
+    /// Files formatted by external formatter (Prettier).
+    ///
+    /// `supports_tailwind` / `supports_oxfmt` / `supports_svelte` are capability
+    /// flags that say "this file kind CAN use the corresponding plugin".
+    /// Whether the plugin is actually activated is decided at the format step by resolved config.
+    /// Only available with the `napi` feature; without it, the classifier rejects such files.
+    #[cfg(feature = "napi")]
+    ExternalFormatter {
+        path: Arc<Path>,
+        parser_name: &'static str,
+        supports_tailwind: bool,
+        supports_oxfmt: bool,
+        supports_svelte: bool,
+    },
+    /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
+    /// Only available with the `napi` feature; without it, the classifier rejects such files.
+    #[cfg(feature = "napi")]
+    ExternalFormatterPackageJson { path: Arc<Path>, parser_name: &'static str },
+}
 
+impl FileKind {
     pub fn path(&self) -> &Path {
         match self {
-            Self::OxcFormatter { path, .. }
-            | Self::OxfmtToml { path }
-            | Self::ExternalFormatter { path, .. }
+            Self::OxcFormatter { path, .. } | Self::OxfmtToml { path } => path,
+            #[cfg(feature = "napi")]
+            Self::ExternalFormatter { path, .. }
             | Self::ExternalFormatterPackageJson { path, .. } => path,
         }
     }
 
-    /// Returns `true` if this strategy supports the Tailwind CSS sorting plugin.
-    pub fn needs_tailwind_plugin(&self) -> bool {
-        match self {
-            Self::OxcFormatter { .. } => true,
-            #[cfg(feature = "napi")]
-            Self::ExternalFormatter { parser_name, .. } => TAILWIND_PARSERS.contains(parser_name),
-            _ => false,
-        }
-    }
-
-    /// Returns `true` if this strategy supports the `prettier-plugin-oxfmt` (js-in-xxx).
+    /// Returns the config key (e.g. `"svelte"`) of an opt-in Prettier plugin
+    /// that this file's parser requires but the resolved config did NOT enable.
+    ///
+    /// `.svelte` files cannot be formatted without `prettier-plugin-svelte`,
+    /// which is gated behind the `svelte` config key. The plugin is considered
+    /// disabled when the field is unset or `false`; the resolver bails out with
+    /// [`super::ResolveOutcome::MissingPlugin`] in that case.
     #[cfg(feature = "napi")]
-    pub fn needs_oxfmt_plugin(&self) -> bool {
-        matches!(
-            self,
-            Self::ExternalFormatter { parser_name, .. } if OXFMT_PARSERS.contains(parser_name)
-        )
+    pub fn requires_plugin(&self, config: &FormatConfig) -> Option<&'static str> {
+        if let Self::ExternalFormatter { parser_name: "svelte", .. } = self
+            && !config.is_svelte_enabled()
+        {
+            return Some("svelte");
+        }
+        None
     }
 }
+
+// ---
 
 /// Parsers(files) that benefit from Tailwind plugin.
 #[cfg(feature = "napi")]
@@ -126,6 +125,7 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf_set! {
     "css",
     "scss",
     "less",
+    "svelte",
 };
 
 /// Parsers(files) that can embed JS/TS code and benefit from oxfmt plugin.
@@ -135,8 +135,18 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf_set! {
 static OXFMT_PARSERS: phf::Set<&'static str> = phf_set! {
     // "html",
     "vue",
+    "svelte",
     // "markdown",
     // "mdx",
+};
+
+/// Parsers(files) that benefit from `prettier-plugin-svelte`.
+/// `.svelte` is the primary target; `markdown`/`mdx` allow ` ```svelte ` code blocks.
+#[cfg(feature = "napi")]
+static SVELTE_PARSERS: phf::Set<&'static str> = phf_set! {
+    "svelte",
+    "markdown",
+    "mdx",
 };
 
 static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
@@ -185,9 +195,10 @@ static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
 
 /// Returns parser name for external formatter, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
+#[cfg(feature = "napi")]
 fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
     // JSON and variants
-    // NOTE: `package.json` is handled separately in `FormatStrategyBuilder::build()`
+    // NOTE: `package.json` is handled separately in `classify_file_kind`
     if file_name == "composer.json" || extension == Some("importmap") {
         return Some("json-stringify");
     }
@@ -244,6 +255,12 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     if extension == Some("vue") {
         return Some("vue");
     }
+    // NOTE: `.svelte` files are recognized here, but actual formatting is gated by
+    // `ResolveOutcome::MissingPlugin` (requires `svelte: {}` in resolved config).
+    // We classify here (not skip) so that user-friendly errors/skips can be surfaced per caller.
+    if extension == Some("svelte") {
+        return Some("svelte");
+    }
     if extension == Some("mjml") {
         return Some("mjml");
     }
@@ -278,6 +295,7 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     None
 }
 
+#[cfg(feature = "napi")]
 static JSON_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "json",
     "4DForm",
@@ -301,6 +319,7 @@ static JSON_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "yyp",
 };
 
+#[cfg(feature = "napi")]
 static JSON_FILENAMES: phf::Set<&'static str> = phf_set! {
     ".all-contributorsrc",
     ".arcconfig",
@@ -319,6 +338,7 @@ static JSON_FILENAMES: phf::Set<&'static str> = phf_set! {
     ".swcrc",
 };
 
+#[cfg(feature = "napi")]
 static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "jsonc",
     "code-snippets",
@@ -339,6 +359,7 @@ static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "sublime_session",
 };
 
+#[cfg(feature = "napi")]
 static HTML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "html",
     "hta",
@@ -348,6 +369,7 @@ static HTML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "xhtml",
 };
 
+#[cfg(feature = "napi")]
 static CSS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "css",
     "wxss",
@@ -355,22 +377,26 @@ static CSS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "postcss",
 };
 
+#[cfg(feature = "napi")]
 static GRAPHQL_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "graphql",
     "gql",
     "graphqls",
 };
 
+#[cfg(feature = "napi")]
 static HANDLEBARS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "handlebars",
     "hbs",
 };
 
+#[cfg(feature = "napi")]
 static MARKDOWN_FILENAMES: phf::Set<&'static str> = phf_set! {
     "contents.lr",
     "README",
 };
 
+#[cfg(feature = "napi")]
 static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "md",
     "livemd",
@@ -385,6 +411,7 @@ static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "workbook",
 };
 
+#[cfg(feature = "napi")]
 static YAML_FILENAMES: phf::Set<&'static str> = phf_set! {
     ".clang-format",
     ".clang-tidy",
@@ -398,6 +425,7 @@ static YAML_FILENAMES: phf::Set<&'static str> = phf_set! {
     ".lintstagedrc",
 };
 
+#[cfg(feature = "napi")]
 static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "yml",
     "mir",
@@ -484,6 +512,7 @@ fn get_oxc_formatter_source_type(path: &Path) -> Option<SourceType> {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "napi")]
     fn get_parser_name(file_name: &str) -> Option<&'static str> {
         let path = Path::new(file_name);
         let extension = path.extension().and_then(|ext| ext.to_str());
@@ -491,9 +520,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "napi")]
     fn test_get_external_parser_name() {
         let test_cases = vec![
-            // JSON (NOTE: `package.json` is handled in FormatStrategyBuilder::build, not here)
+            // JSON (NOTE: `package.json` is handled in classify_file_kind, not here)
             ("config.importmap", Some("json-stringify")),
             ("data.json", Some("json")),
             ("schema.avsc", Some("json")),
@@ -549,13 +579,13 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "napi")]
     fn test_package_json_is_special() {
-        let source = FormatStrategyBuilder::default().build(PathBuf::from("package.json")).unwrap();
-        assert!(matches!(source, FormatStrategy::ExternalFormatterPackageJson { .. }));
+        let kind = classify_file_kind(Arc::from(Path::new("package.json"))).unwrap();
+        assert!(matches!(kind, FileKind::ExternalFormatterPackageJson { .. }));
 
-        let source =
-            FormatStrategyBuilder::default().build(PathBuf::from("composer.json")).unwrap();
-        assert!(matches!(source, FormatStrategy::ExternalFormatter { .. }));
+        let kind = classify_file_kind(Arc::from(Path::new("composer.json"))).unwrap();
+        assert!(matches!(kind, FileKind::ExternalFormatter { .. }));
     }
 
     #[test]
@@ -571,9 +601,9 @@ mod tests {
         ];
 
         for file_name in toml_files {
-            let result = FormatStrategyBuilder::default().build(PathBuf::from(file_name));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Ok(FormatStrategy::OxfmtToml { .. })),
+                matches!(result, Some(FileKind::OxfmtToml { .. })),
                 "`{file_name}` should be detected as TOML"
             );
         }
@@ -582,8 +612,8 @@ mod tests {
         let excluded_files = vec!["Cargo.lock", "poetry.lock", "pdm.lock", "uv.lock", "Gopkg.lock"];
 
         for file_name in excluded_files {
-            let result = FormatStrategyBuilder::default().build(PathBuf::from(file_name));
-            assert!(result.is_err(), "`{file_name}` should be excluded (lock file)");
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(result.is_none(), "`{file_name}` should be excluded (lock file)");
         }
     }
 }

@@ -1,7 +1,5 @@
-commit: 2b2ecead
+commit: ccaac100
 
 transformer_test262 Summary:
-AST Parsed     : 47086/47086 (100.00%)
-Positive Passed: 47085/47086 (100.00%)
-Mismatch: tasks/coverage/test262/test/language/statements/class/static-init-expr-new-target.js
-
+AST Parsed     : 47115/47115 (100.00%)
+Positive Passed: 47115/47115 (100.00%)

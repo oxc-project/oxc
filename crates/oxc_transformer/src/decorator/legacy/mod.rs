@@ -48,7 +48,9 @@ mod metadata;
 use std::borrow::Cow;
 use std::mem;
 
-use oxc_allocator::{Address, CloneIn, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec};
+use oxc_allocator::{
+    Address, Box as ArenaBox, CloneIn, GetAddress, TakeIn, UnstableAddress, Vec as ArenaVec,
+};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{Visit, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
@@ -359,6 +361,10 @@ impl<'a> LegacyDecorator<'a> {
 
             // Transfer decorators to the getter so legacy decorator transform can process them.
             let decorators = std::mem::replace(&mut accessor.decorators, ctx.ast.vec());
+            // Transfer the type annotation to the getter's return type so that
+            // `emitDecoratorMetadata` can derive `design:type` from it. Without this,
+            // the lowered getter is untyped and `design:type` falls through to `Object`.
+            let type_annotation = accessor.type_annotation.take();
 
             // For computed keys, duplicate the key expression so getter and setter
             // each get their own reference:
@@ -426,6 +432,7 @@ impl<'a> LegacyDecorator<'a> {
                 storage_name,
                 object_binding,
                 class_scope_id,
+                type_annotation,
                 ctx,
             ));
 
@@ -439,6 +446,7 @@ impl<'a> LegacyDecorator<'a> {
                 storage_name,
                 object_binding,
                 class_scope_id,
+                None,
                 ctx,
             ));
         }
@@ -467,6 +475,7 @@ impl<'a> LegacyDecorator<'a> {
         storage_name: Str<'a>,
         object_binding: Option<&BoundIdentifier<'a>>,
         class_scope_id: ScopeId,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ClassElement<'a> {
         let is_getter = kind == MethodDefinitionKind::Get;
@@ -544,6 +553,7 @@ impl<'a> LegacyDecorator<'a> {
             key,
             kind,
             params,
+            return_type,
             ctx.ast.vec1(body_stmt),
             computed,
             is_static,

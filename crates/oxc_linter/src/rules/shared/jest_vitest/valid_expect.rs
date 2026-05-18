@@ -60,6 +60,9 @@ pub struct ValidExpectConfig {
     min_args: usize,
     /// Maximum number of arguments `expect` should be called with.
     max_args: usize,
+    /// When `true`, allow a string or template literal second argument as a custom message.
+    #[serde(skip)]
+    allow_string_message_arg: bool,
     /// When `true`, async assertions must be awaited in all contexts (not just return statements).
     always_await: bool,
 }
@@ -70,6 +73,7 @@ impl Default for ValidExpectConfig {
             async_matchers: vec![String::from("toResolve"), String::from("toReject")],
             min_args: 1,
             max_args: 1,
+            allow_string_message_arg: false,
             always_await: false,
         }
     }
@@ -103,7 +107,12 @@ impl ValidExpectConfig {
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self { async_matchers, min_args, max_args, always_await }
+        Self { async_matchers, min_args, max_args, allow_string_message_arg: false, always_await }
+    }
+
+    pub fn allow_string_message_arg(mut self) -> Self {
+        self.allow_string_message_arg = true;
+        self
     }
 
     pub fn run_once(&self, ctx: &LintContext) {
@@ -158,7 +167,13 @@ impl ValidExpectConfig {
             return;
         };
 
-        if call_expr.arguments.len() > self.max_args {
+        let allow_message_arg = self.allow_string_message_arg
+            && call_expr.arguments.len() == 2
+            && call_expr.arguments.get(1).and_then(|arg| arg.as_expression()).is_some_and(|expr| {
+                matches!(expr, Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
+            });
+
+        if call_expr.arguments.len() > self.max_args && !allow_message_arg {
             let error = format!(
                 "Expect takes at most {} argument{} ",
                 self.max_args,
