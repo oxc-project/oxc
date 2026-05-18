@@ -2635,6 +2635,9 @@
         "vue/require-default-export": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/require-slots-as-functions": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/require-typed-ref": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -2642,6 +2645,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "vue/valid-define-emits": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/valid-define-options": {
           "$ref": "#/definitions/DummyRule"
         },
         "vue/valid-define-props": {
