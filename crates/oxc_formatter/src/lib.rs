@@ -92,7 +92,7 @@ impl<'a> Formatter<'a> {
     /// - etc...
     ///
     /// `SortImportsTransform` is skipped since it only applies to whole `Program` formatting.
-    pub fn format_node<F: formatter::Format<'a>>(
+    pub fn format_node<F: formatter::Format<'a, JsFormatContext<'a>>>(
         self,
         node: &F,
         source_text: &'a str,

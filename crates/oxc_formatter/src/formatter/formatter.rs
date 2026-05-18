@@ -8,6 +8,7 @@ use crate::options::JsFormatOptions;
 use super::{
     Arguments, Buffer, Comments, FormatState, GroupId, JsFormatContext, SourceText, VecBuffer,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
+    core_traits::FormatContext,
     prelude::*,
 };
 
@@ -15,48 +16,20 @@ use super::{
 ///
 /// The formatter is passed to the [Format] implementation of every node in the CST so that they
 /// can use it to format their children.
-pub struct Formatter<'buf, 'ast> {
-    pub(super) buffer: &'buf mut dyn Buffer<'ast>,
+pub struct Formatter<'buf, 'ast, C> {
+    pub(super) buffer: &'buf mut dyn Buffer<'ast, C>,
 }
 
-impl<'buf, 'ast> Formatter<'buf, 'ast> {
+// --- Generic impl (no bounds on C) ---
+
+impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     /// Creates a new context that uses the given formatter context
-    pub fn new(buffer: &'buf mut (dyn Buffer<'ast> + 'buf)) -> Self {
+    pub fn new(buffer: &'buf mut (dyn Buffer<'ast, C> + 'buf)) -> Self {
         Self { buffer }
     }
 
     pub fn allocator(&self) -> &'ast Allocator {
-        self.context().allocator()
-    }
-
-    /// Returns the format options
-    #[inline]
-    pub fn options(&self) -> &JsFormatOptions {
-        self.context().options()
-    }
-
-    /// Returns the Context specifying how to format the current CST
-    #[inline]
-    pub fn context(&self) -> &JsFormatContext<'ast> {
-        self.state().context()
-    }
-
-    /// Returns a mutable reference to the context.
-    #[inline]
-    pub fn context_mut(&mut self) -> &mut JsFormatContext<'ast> {
-        self.state_mut().context_mut()
-    }
-
-    /// Returns the source text wrapper.
-    #[inline]
-    pub fn source_text(&self) -> SourceText<'ast> {
-        self.context().source_text()
-    }
-
-    /// Returns the comments from the context.
-    #[inline]
-    pub fn comments(&self) -> &Comments<'_> {
-        self.context().comments()
+        self.state().allocator()
     }
 
     /// Creates a new group id that is unique to this document. The passed debug name is used in the
@@ -73,182 +46,43 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         self.state().group_id_builder()
     }
 
+    /// Returns the Context specifying how to format the current CST
+    #[inline]
+    pub fn context(&self) -> &C {
+        self.state().context()
+    }
+
+    /// Returns a mutable reference to the context.
+    #[inline]
+    pub fn context_mut(&mut self) -> &mut C {
+        self.state_mut().context_mut()
+    }
+
     /// Joins multiple [Format] together without any separator
-    ///
-    /// ## Examples
-    ///
-    /// ```text
-    /// use biome_formatter::format;
-    /// use biome_formatter::prelude::*;
-    ///
-    /// # fn main()  {
-    /// let formatted = format!(SimpleFormatContext::default(), [format_with(|f| {
-    ///     f.join()
-    ///         .entry(&token("a"))
-    ///         .entry(&space())
-    ///         .entry(&token("+"))
-    ///         .entry(&space())
-    ///         .entry(&token("b"))
-    ///         .finish()
-    /// })])?;
-    ///
-    /// assert_eq!(
-    ///     "a + b",
-    ///     formatted.print()?.as_code()
-    /// );
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn join<'fmt>(&'fmt mut self) -> JoinBuilder<'fmt, 'buf, 'ast, ()> {
+    pub fn join<'fmt>(&'fmt mut self) -> JoinBuilder<'fmt, 'buf, 'ast, C, ()> {
         JoinBuilder::new(self)
     }
 
     /// Joins the objects by placing the specified separator between every two items.
-    ///
-    /// ## Examples
-    ///
-    /// Joining different tokens by separating them with a comma and a space.
-    ///
-    /// ```text
-    /// use biome_formatter::{format, format_args};
-    /// use biome_formatter::prelude::*;
-    ///
-    /// # fn main()  {
-    /// let formatted = format!(SimpleFormatContext::default(), [format_with(|f| {
-    ///     f.join_with(&format_args!(token(","), space()))
-    ///         .entry(&token("1"))
-    ///         .entry(&token("2"))
-    ///         .entry(&token("3"))
-    ///         .entry(&token("4"))
-    ///         .finish()
-    /// })])?;
-    ///
-    /// assert_eq!(
-    ///     "1, 2, 3, 4",
-    ///     formatted.print()?.as_code()
-    /// );
-    /// # Ok(())
-    /// # }
-    /// ```
     pub fn join_with<'fmt, Joiner>(
         &'fmt mut self,
         joiner: Joiner,
-    ) -> JoinBuilder<'fmt, 'buf, 'ast, Joiner>
+    ) -> JoinBuilder<'fmt, 'buf, 'ast, C, Joiner>
     where
-        Joiner: Format<'ast>,
+        Joiner: Format<'ast, C>,
     {
         JoinBuilder::with_separator(self, joiner)
-    }
-
-    /// Specialized version of [crate::Formatter::join_with] for joining SyntaxNodes separated by a space, soft
-    /// line break or empty line depending on the input file.
-    ///
-    /// This function inspects the input source and separates consecutive elements with either
-    /// a [crate::builders::soft_line_break_or_space] or [crate::builders::empty_line] depending on how many line breaks were
-    /// separating the elements in the original file.
-    pub fn join_nodes_with_soft_line<'fmt>(
-        &'fmt mut self,
-    ) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line> {
-        JoinNodesBuilder::new(soft_line_break_or_space(), self)
-    }
-
-    /// Specialized version of [crate::Formatter::join_with] for joining SyntaxNodes separated by one or more
-    /// line breaks depending on the input file.
-    ///
-    /// This function inspects the input source and separates consecutive elements with either
-    /// a [crate::builders::hard_line_break] or [crate::builders::empty_line] depending on how many line breaks were separating the
-    /// elements in the original file.
-    pub fn join_nodes_with_hardline<'fmt>(
-        &'fmt mut self,
-    ) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line> {
-        JoinNodesBuilder::new(hard_line_break(), self)
-    }
-
-    /// Specialized version of [crate::Formatter::join_with] for joining SyntaxNodes separated by a simple space.
-    ///
-    /// This function *disregards* the input source and always separates consecutive elements with a plain
-    /// [crate::builders::space], forcing a flat layout regardless of any line breaks or spaces were separating
-    /// the elements in the original file.
-    ///
-    /// This function should likely only be used in a `best_fitting!` context, where one variant attempts to
-    /// force a list of nodes onto a single line without any possible breaks, then falls back to a broken
-    /// out variant if the content does not fit.
-    pub fn join_nodes_with_space<'fmt>(
-        &'fmt mut self,
-    ) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Space> {
-        JoinNodesBuilder::new(space(), self)
     }
 
     /// Concatenates a list of [crate::Format] objects with spaces and line breaks to fit
     /// them on as few lines as possible. Each element introduces a conceptual group. The printer
     /// first tries to print the item in flat mode but then prints it in expanded mode if it doesn't fit.
-    ///
-    /// ## Examples
-    ///
-    /// ```text
-    /// use biome_formatter::prelude::*;
-    /// use biome_formatter::{format, format_args};
-    ///
-    /// # fn main()  {
-    /// let formatted = format!(SimpleFormatContext::default(), [format_with(|f| {
-    ///     f.fill()
-    ///         .entry(&soft_line_break_or_space(), &token("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
-    ///         .entry(&soft_line_break_or_space(), &token("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"))
-    ///         .entry(&soft_line_break_or_space(), &token("cccccccccccccccccccccccccccccc"))
-    ///         .entry(&soft_line_break_or_space(), &token("dddddddddddddddddddddddddddddd"))
-    ///         .finish()
-    /// })])?;
-    ///
-    /// assert_eq!(
-    ///     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\ncccccccccccccccccccccccccccccc dddddddddddddddddddddddddddddd",
-    ///     formatted.print()?.as_code()
-    /// );
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
-    /// ```text
-    /// use biome_formatter::prelude::*;
-    /// use biome_formatter::{format, format_args};
-    ///
-    /// # fn main()  {
-    /// let entries = vec![
-    ///     token("<b>Important: </b>"),
-    ///     token("Please do not commit memory bugs such as segfaults, buffer overflows, etc. otherwise you "),
-    ///     token("<em>will</em>"),
-    ///     token(" be reprimanded")
-    /// ];
-    ///
-    /// let formatted = format!(SimpleFormatContext::default(), [format_with(|f| {
-    ///     f.fill().entries(&soft_line_break(), entries.iter()).finish()
-    /// })])?;
-    ///
-    /// assert_eq!(
-    ///     &std::format!("<b>Important: </b>\nPlease do not commit memory bugs such as segfaults, buffer overflows, etc. otherwise you \n<em>will</em> be reprimanded"),
-    ///     formatted.print()?.as_code()
-    /// );
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn fill<'fmt>(&'fmt mut self) -> FillBuilder<'fmt, 'buf, 'ast> {
+    pub fn fill<'fmt>(&'fmt mut self) -> FillBuilder<'fmt, 'buf, 'ast, C> {
         FillBuilder::new(self)
     }
 
-    /// Speculatively formats `content` and returns whether the result would break across lines.
-    ///
-    /// This snapshots and restores the comment state so that the speculative formatting
-    /// doesn't permanently advance the comment cursor. Comments before the content's span
-    /// are skipped so they don't get incorrectly included as leading comments.
-    pub fn speculate_will_break(&mut self, content: &(impl Format<'ast> + GetSpan)) -> bool {
-        let snapshot = self.context().comments().snapshot();
-        self.context_mut().comments_mut().skip_comments_before(content.span().start);
-        let will_break = self.intern(content).is_some_and(|e| e.will_break());
-        self.context_mut().comments_mut().restore(snapshot);
-        will_break
-    }
-
     /// Formats `content` into an interned element without writing it to the formatter's buffer.
-    pub fn intern(&mut self, content: &dyn Format<'ast>) -> Option<FormatElement<'ast>> {
+    pub fn intern(&mut self, content: &dyn Format<'ast, C>) -> Option<FormatElement<'ast>> {
         let mut buffer = VecBuffer::new(self.state_mut());
         crate::write!(&mut buffer, [content]);
         let elements = buffer.into_vec();
@@ -271,7 +105,96 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 }
 
-impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
+// --- FormatContext-bounded impl ---
+
+impl<C: FormatContext> Formatter<'_, '_, C> {
+    /// Returns the format options
+    #[inline]
+    pub fn options(&self) -> &C::Options {
+        self.context().options()
+    }
+}
+
+// --- JS-specific impl ---
+
+impl<'buf, 'ast> Formatter<'buf, 'ast, JsFormatContext<'ast>> {
+    /// Returns the JS format options
+    #[inline]
+    pub fn js_options(&self) -> &JsFormatOptions {
+        self.context().options()
+    }
+
+    /// Returns the source text wrapper.
+    #[inline]
+    pub fn source_text(&self) -> SourceText<'ast> {
+        self.context().source_text()
+    }
+
+    /// Returns the comments from the context.
+    #[inline]
+    pub fn comments(&self) -> &Comments<'_> {
+        self.context().comments()
+    }
+
+    /// Specialized version of [crate::Formatter::join_with] for joining SyntaxNodes separated by a space, soft
+    /// line break or empty line depending on the input file.
+    ///
+    /// This function inspects the input source and separates consecutive elements with either
+    /// a [crate::builders::soft_line_break_or_space] or [crate::builders::empty_line] depending on how many line breaks were
+    /// separating the elements in the original file.
+    pub fn join_nodes_with_soft_line<'fmt>(
+        &'fmt mut self,
+    ) -> JoinNodesBuilder<'fmt, 'buf, 'ast, JsFormatContext<'ast>, Line> {
+        JoinNodesBuilder::new(soft_line_break_or_space(), self)
+    }
+
+    /// Specialized version of [crate::Formatter::join_with] for joining SyntaxNodes separated by one or more
+    /// line breaks depending on the input file.
+    ///
+    /// This function inspects the input source and separates consecutive elements with either
+    /// a [crate::builders::hard_line_break] or [crate::builders::empty_line] depending on how many line breaks were separating the
+    /// elements in the original file.
+    pub fn join_nodes_with_hardline<'fmt>(
+        &'fmt mut self,
+    ) -> JoinNodesBuilder<'fmt, 'buf, 'ast, JsFormatContext<'ast>, Line> {
+        JoinNodesBuilder::new(hard_line_break(), self)
+    }
+
+    /// Specialized version of [crate::Formatter::join_with] for joining SyntaxNodes separated by a simple space.
+    ///
+    /// This function *disregards* the input source and always separates consecutive elements with a plain
+    /// [crate::builders::space], forcing a flat layout regardless of any line breaks or spaces were separating
+    /// the elements in the original file.
+    ///
+    /// This function should likely only be used in a `best_fitting!` context, where one variant attempts to
+    /// force a list of nodes onto a single line without any possible breaks, then falls back to a broken
+    /// out variant if the content does not fit.
+    pub fn join_nodes_with_space<'fmt>(
+        &'fmt mut self,
+    ) -> JoinNodesBuilder<'fmt, 'buf, 'ast, JsFormatContext<'ast>, Space> {
+        JoinNodesBuilder::new(space(), self)
+    }
+
+    /// Speculatively formats `content` and returns whether the result would break across lines.
+    ///
+    /// This snapshots and restores the comment state so that the speculative formatting
+    /// doesn't permanently advance the comment cursor. Comments before the content's span
+    /// are skipped so they don't get incorrectly included as leading comments.
+    pub fn speculate_will_break(
+        &mut self,
+        content: &(impl Format<'ast, JsFormatContext<'ast>> + GetSpan),
+    ) -> bool {
+        let snapshot = self.context().comments().snapshot();
+        self.context_mut().comments_mut().skip_comments_before(content.span().start);
+        let will_break = self.intern(content).is_some_and(|e| e.will_break());
+        self.context_mut().comments_mut().restore(snapshot);
+        will_break
+    }
+}
+
+// --- Buffer implementation ---
+
+impl<'ast, C> Buffer<'ast, C> for Formatter<'_, 'ast, C> {
     #[inline(always)]
     fn write_element(&mut self, element: FormatElement<'ast>) {
         self.buffer.write_element(element);
@@ -282,17 +205,17 @@ impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
     }
 
     #[inline(always)]
-    fn write_fmt(&mut self, arguments: Arguments<'_, 'ast>) {
+    fn write_fmt(&mut self, arguments: Arguments<'_, 'ast, C>) {
         for argument in arguments.items() {
             argument.format(self);
         }
     }
 
-    fn state(&self) -> &FormatState<'ast> {
+    fn state(&self) -> &FormatState<'ast, C> {
         self.buffer.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast> {
+    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
         self.buffer.state_mut()
     }
 

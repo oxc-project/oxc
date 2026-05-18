@@ -59,6 +59,11 @@ pub use self::{
 };
 use self::{format_element::document::Document, prelude::TagKind};
 
+/// Type alias for JS/TS-specific Formatter.
+/// Ties the JsFormatContext lifetime to the Formatter's 'ast lifetime,
+/// so `JsFormatter<'_, '_>` can be used ergonomically like the old `Formatter<'_, '_>`.
+pub type JsFormatter<'buf, 'ast> = Formatter<'buf, 'ast, JsFormatContext<'ast>>;
+
 #[derive(Debug)]
 pub struct Formatted<'a> {
     document: Document<'a>,
@@ -185,60 +190,53 @@ pub type FormatResult<F> = Result<F, FormatError>;
 /// # Ok(())
 /// # }
 /// ```
-pub trait Format<'ast, T = ()> {
+pub trait Format<'ast, C = ()> {
     /// Formats the object using the given formatter.
-    /// # Errors
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>);
-
-    /// Formats the object using the given formatter with additional options.
-    /// # Errors
-    fn fmt_with_options(&self, _options: T, _f: &mut Formatter<'_, 'ast>) {
-        unreachable!("Please implement it first.")
-    }
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>);
 }
 
-impl<'ast, T> Format<'ast> for &T
+impl<'ast, C, T> Format<'ast, C> for &T
 where
-    T: ?Sized + Format<'ast>,
+    T: ?Sized + Format<'ast, C>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         Format::fmt(&**self, f);
     }
 }
 
-impl<'ast, T> Format<'ast> for &mut T
+impl<'ast, C, T> Format<'ast, C> for &mut T
 where
-    T: ?Sized + Format<'ast>,
+    T: ?Sized + Format<'ast, C>,
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         Format::fmt(&**self, f);
     }
 }
 
-impl<'ast, T> Format<'ast> for Option<T>
+impl<'ast, C, T> Format<'ast, C> for Option<T>
 where
-    T: Format<'ast>,
+    T: Format<'ast, C>,
 {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         if let Some(value) = self {
             value.fmt(f);
         }
     }
 }
 
-impl Format<'_> for () {
+impl<C> Format<'_, C> for () {
     #[inline]
-    fn fmt(&self, _: &mut Formatter) {
+    fn fmt(&self, _: &mut Formatter<'_, '_, C>) {
         // Intentionally left empty
     }
 }
 
-impl Format<'_> for &'static str {
+impl<'a> Format<'a, JsFormatContext<'a>> for &'static str {
     #[inline]
-    fn fmt(&self, f: &mut Formatter) {
-        crate::write!(f, builders::token(self));
+    fn fmt(&self, f: &mut Formatter<'_, 'a, JsFormatContext<'a>>) {
+        crate::write!(f, [builders::token(self)]);
     }
 }
 
@@ -285,7 +283,7 @@ impl Format<'_> for &'static str {
 /// ```
 ///
 #[inline(always)]
-pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) {
+pub fn write<'ast, C>(output: &mut dyn Buffer<'ast, C>, args: Arguments<'_, 'ast, C>) {
     Formatter::new(output).write_fmt(args);
 }
 
@@ -322,15 +320,16 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) {
 /// ```
 pub fn format<'ast>(
     context: JsFormatContext<'ast>,
-    arguments: Arguments<'_, 'ast>,
+    arguments: Arguments<'_, 'ast, JsFormatContext<'ast>>,
 ) -> Formatted<'ast> {
     // Pre-allocate buffer at 40% of source length (source_len * 2 / 5).
     // Analysis of 4,891 VSCode files shows FormatElement buffer length is typically 19% of source (median),
     // with 95th percentile at 30-38% across all file sizes. This 0.4x multiplier avoids
     // reallocation for 95%+ of files.
     let capacity = (context.source_text().len() * 2) / 5;
+    let allocator = context.allocator();
 
-    let mut state = FormatState::new(context);
+    let mut state = FormatState::new(context, allocator);
     let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
     buffer.write_fmt(arguments);

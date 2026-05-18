@@ -6,7 +6,7 @@ use crate::{
     ast_nodes::AstNode,
     external_formatter::EmbeddedDocResult,
     format_args,
-    formatter::{FormatElement, Formatter, prelude::*},
+    formatter::{FormatElement, prelude::*},
     write,
 };
 
@@ -21,7 +21,7 @@ const PLACEHOLDER_SUFFIX: &str = "-id";
 /// then replaces placeholder occurrences in the resulting IR with `${expr}` Docs.
 pub(super) fn format_css_doc<'a>(
     quasi: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;
     let expressions: Vec<_> = quasi.expressions().iter().collect();
@@ -47,7 +47,7 @@ pub(super) fn format_css_doc<'a>(
             return false;
         };
 
-        write!(f, ["`", block_indent(&format_once(|f| f.write_elements(ir))), "`"]);
+        write!(f, ["`", block_indent(&js_format_once(|f| f.write_elements(ir))), "`"]);
         return true;
     }
 
@@ -91,7 +91,7 @@ pub(super) fn format_css_doc<'a>(
 
     // Phase 3: Replace placeholders in IR with expressions
     let indent_width = f.options().indent_width;
-    let format_content = format_once(move |f: &mut Formatter<'_, 'a>| {
+    let format_content = js_format_once(move |f: &mut JsFormatter<'_, 'a>| {
         for element in ir {
             match &element {
                 FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
@@ -124,7 +124,7 @@ pub(super) fn format_css_doc<'a>(
                                 !leading.is_empty() || !trailing.is_empty()
                             };
 
-                            let format_expr = format_with(|f| {
+                            let format_expr = js_format_with(|f| {
                                 if has_comment {
                                     write!(
                                         f,

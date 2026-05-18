@@ -1,10 +1,11 @@
+use crate::formatter::{JsFormatContext, JsFormatter};
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{Format, Formatter},
+    formatter::Format,
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
@@ -22,8 +23,8 @@ impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
     }
 }
 
-impl<'a> Format<'a> for AssignmentTargetPropertyListNode<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentTargetPropertyListNode<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             AssignmentTargetPropertyListNode::Property(property) => property.fmt(f),
             AssignmentTargetPropertyListNode::Rest(rest) => rest.fmt(f),
@@ -62,8 +63,8 @@ impl<'a, 'b> AssignmentTargetPropertyList<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for AssignmentTargetPropertyList<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentTargetPropertyList<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let has_trailing_rest = self.rest.is_some();
         let trailing_separator = if has_trailing_rest {
             TrailingSeparator::Disallowed

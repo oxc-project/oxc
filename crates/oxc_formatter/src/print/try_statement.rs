@@ -4,7 +4,6 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::AstNode,
     formatter::{
-        Formatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
@@ -14,7 +13,7 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let block = self.block();
         let handler = self.handler();
         let finalizer = self.finalizer();
@@ -43,7 +42,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments();
         let leading_comments = comments.comments_before(self.span.start);
         let has_line_comment = leading_comments.iter().any(|comment| comment.has_newlines_around());
@@ -77,7 +76,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "(");
 
         let span = self.pattern.span();
@@ -96,7 +95,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
         if leading_comment_with_break || trailing_comment_with_break {
             write!(
                 f,
-                soft_block_indent(&format_with(|f| {
+                soft_block_indent(&js_format_with(|f| {
                     write!(f, [FormatLeadingComments::Comments(leading_comments)]);
                     let printed_len_before_pattern =
                         f.context().comments().printed_comments().len();

@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap;
 use super::super::prelude::*;
 use super::tag::Tag;
 use crate::formatter::prelude::tag::{DedentMode, GroupMode};
-use crate::{Format, formatter::Formatter, formatter::JsFormatContext};
+use crate::{Format, formatter::JsFormatContext};
 
 use crate::{format, write};
 
@@ -178,8 +178,8 @@ impl std::fmt::Display for Document<'_> {
     }
 }
 
-impl<'a> Format<'a> for &[FormatElement<'a>] {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
             EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
@@ -560,8 +560,8 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
 
 struct ContentArrayStart;
 
-impl<'a> Format<'a> for ContentArrayStart {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for ContentArrayStart {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         use Tag::{StartGroup, StartIndent};
 
         write!(f, [token("[")]);
@@ -576,8 +576,8 @@ impl<'a> Format<'a> for ContentArrayStart {
 
 struct ContentArrayEnd;
 
-impl<'a> Format<'a> for ContentArrayEnd {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for ContentArrayEnd {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         use Tag::{EndGroup, EndIndent};
         f.write_elements([
             FormatElement::Tag(EndIndent),

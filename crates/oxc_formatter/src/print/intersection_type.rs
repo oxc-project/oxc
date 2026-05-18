@@ -3,17 +3,13 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::AstNode,
-    formatter::{Formatter, prelude::*},
-    parentheses::NeedsParentheses,
-    print::FormatWrite,
-    utils::typescript::is_object_like_type,
-    write,
+    ast_nodes::AstNode, formatter::prelude::*, parentheses::NeedsParentheses, print::FormatWrite,
+    utils::typescript::is_object_like_type, write,
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let content = format_with(|f| format_intersection_types(self.types(), f));
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        let content = js_format_with(|f| format_intersection_types(self.types(), f));
         write!(f, [group(&content)]);
     }
 }
@@ -21,7 +17,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
 // [Prettier applies]: https://github.com/prettier/prettier/blob/cd3e530c2e51fb8296c0fb7738a9afdd3a3a4410/src/language-js/print/type-annotation.js#L93-L120
 fn format_intersection_types<'a>(
     node: &AstNode<'a, Vec<'a, TSType<'a>>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     let last_index = node.len().saturating_sub(1);
     let mut is_prev_object_like = false;
@@ -38,7 +34,7 @@ fn format_intersection_types<'a>(
             if !(is_prev_object_like || is_object_like)
                 || f.comments().has_leading_own_line_comment(item.span().start)
             {
-                let content = format_with(|f| {
+                let content = js_format_with(|f| {
                     if item.needs_parentheses(f) {
                         write!(f, format_leading_comments(item.span()));
                     }
