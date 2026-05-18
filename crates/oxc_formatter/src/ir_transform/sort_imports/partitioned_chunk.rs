@@ -26,8 +26,8 @@ pub enum PartitionedChunk<'a> {
     /// and possibly leading/trailing comments or empty lines.
     Imports(Vec<SourceLine<'a>>),
     /// A boundary chunk.
-    /// Always contains `SourceLine::Others`,
-    /// or optionally `SourceLine::Empty|CommentOnly` depending on partition options.
+    /// Contains `SourceLine::Empty` (when `partition_by_newline` is true)
+    /// or `SourceLine::CommentOnly` (when `partition_by_comment` is true).
     Boundary(SourceLine<'a>),
 }
 
@@ -39,11 +39,6 @@ impl Default for PartitionedChunk<'_> {
 
 impl<'a> PartitionedChunk<'a> {
     pub fn add_imports_line(&mut self, line: SourceLine<'a>) {
-        debug_assert!(
-            !matches!(line, SourceLine::Others(..)),
-            "`line` must not be of type `SourceLine::Others`."
-        );
-
         match self {
             Self::Imports(lines) => lines.push(line),
             Self::Boundary(_) => {
@@ -57,27 +52,31 @@ impl<'a> PartitionedChunk<'a> {
     }
 
     /// Convert this import chunk into `SortableImport` units with `OrphanContent`.
-    /// Returns a tuple of `(sortable_imports, orphan_contents, trailing_lines)`.
+    /// Returns a tuple of `(sortable_imports, orphan_contents, trailing_lines, slot_had_leading_blank)`.
     ///
     /// - `sortable_imports`: Import statements with their attached leading lines.
     ///   - `leading_lines`: Comments directly before this import (no empty line between).
     /// - `orphan_contents`: Orphan comments (separated by empty line from next import) with their slot positions.
     ///   - `after_slot: None` = before first import, `Some(n)` = after slot n
     /// - `trailing_lines`: Lines at the end of the chunk after all imports.
+    /// - `slot_had_leading_blank`: For each slot index, whether the original input had
+    ///   at least one blank line before that slot. Indexed by slot position
+    ///   (which is preserved across sorting), not by the import currently at that slot.
     #[must_use]
     pub fn into_sorted_import_units(
         self,
         group_matcher: &GroupMatcher,
         options: &SortImportsOptions,
-    ) -> (Vec<SortableImport<'a>>, Vec<OrphanContent<'a>>, Vec<SourceLine<'a>>) {
+    ) -> (Vec<SortableImport<'a>>, Vec<OrphanContent<'a>>, Vec<SourceLine<'a>>, Vec<bool>) {
         let Self::Imports(lines) = self else {
             unreachable!(
                 "`into_import_units()` must be called on `PartitionedChunk::Imports` only."
             );
         };
 
-        let mut sortable_imports: Vec<SortableImport<'a>> = vec![];
+        let mut sortable_imports: Vec<SortableImport<'a>> = Vec::with_capacity(lines.len());
         let mut orphan_contents: Vec<OrphanContent<'a>> = vec![];
+        let mut slot_had_leading_blank: Vec<bool> = Vec::with_capacity(lines.len());
 
         // Comments separated from the next import by empty line.
         // These stay at their slot position, not attached to any import.
@@ -89,6 +88,11 @@ impl<'a> PartitionedChunk<'a> {
         for line in lines {
             match line {
                 SourceLine::Import(_, ref metadata) => {
+                    // A blank line in the original source ends up in `orphan_pending`,
+                    // so its presence there marks this slot as having a leading blank.
+                    slot_had_leading_blank
+                        .push(orphan_pending.iter().any(|l| matches!(l, SourceLine::Empty)));
+
                     // Handle orphan content (separated by empty line from this import)
                     // These stay at their original slot position, not attached to any import.
                     if !orphan_pending.is_empty() {
@@ -141,11 +145,6 @@ impl<'a> PartitionedChunk<'a> {
                 SourceLine::CommentOnly(..) => {
                     current_pending.push(line);
                 }
-                SourceLine::Others(..) => {
-                    unreachable!(
-                        "`PartitionedChunk::Imports` must not contain `SourceLine::Others`."
-                    );
-                }
             }
         }
 
@@ -157,6 +156,6 @@ impl<'a> PartitionedChunk<'a> {
         // Let's sort this chunk!
         sortable_imports.sort(options);
 
-        (sortable_imports, orphan_contents, trailing_lines)
+        (sortable_imports, orphan_contents, trailing_lines, slot_had_leading_blank)
     }
 }

@@ -157,6 +157,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     config = ConsistentFunctionScoping,
+    version = "0.8.0",
 );
 
 impl Rule for ConsistentFunctionScoping {
@@ -279,6 +280,9 @@ impl Rule for ConsistentFunctionScoping {
         for reference_id in function_body_var_references {
             let reference = ctx.scoping().get_reference(reference_id);
             let Some(symbol_id) = reference.symbol_id() else { continue };
+            if ctx.scoping().symbol_flags(symbol_id).is_import() {
+                continue;
+            }
             let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
             if parent_scope_ids.contains(&scope_id) && symbol_id != function_declaration_symbol_id {
                 return;
@@ -1001,14 +1005,9 @@ fn test() {
             "const outer = () => { function inner() {} }",
             Some(serde_json::json!([{ "checkArrowFunctions": false }])),
         ),
-        ("function foo() { function bar() {} }", None),
-        ("function foo() { async function bar() {} }", None),
         ("function foo() { function * bar() {} }", None),
         ("function foo() { async function * bar() {} }", None),
-        ("function foo() { const bar = () => {} }", None),
         // ("const doFoo = () => bar => bar;", None),
-        ("function foo() { const bar = async () => {} }", None),
-        ("function doFoo() { const doBar = function(bar) { return bar; }; }", None),
         ("function outer() { const inner = function inner() {}; }", None),
         (
             "export namespace Foo { export function outer() { const inner = function inner() {}; } }",
@@ -1016,6 +1015,17 @@ fn test() {
         ),
         (
             "jest.mock('@kbn/i18n-react', () => { return { I18nProvider: function MockI18nProvider() { }, }; });",
+            None,
+        ),
+        (
+            "import { notifications } from 'some-module';
+            export const Outer = () => {
+                const usesImport = () => {
+                    notifications.show({ message: 'x' });
+                };
+
+                return usesImport;
+            };",
             None,
         ),
     ];

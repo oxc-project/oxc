@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/typescript/issue_19245/balanceSweepDetailsManager.ts:1:40]
  1 │ import { installmentLoanManager } from './installmentLoanManager';
    ·                                        ──────────────────────────

@@ -52,7 +52,8 @@ declare_oxc_lint!(
     PreferBigintLiterals,
     unicorn,
     style,
-    fix
+    fix,
+    version = "1.30.0",
 );
 
 impl Rule for PreferBigintLiterals {

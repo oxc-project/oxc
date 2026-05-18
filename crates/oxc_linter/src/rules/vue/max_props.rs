@@ -83,6 +83,7 @@ declare_oxc_lint!(
     vue,
     restriction,
     config = MaxProps,
+    version = "1.19.0",
 );
 
 impl Rule for MaxProps {

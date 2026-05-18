@@ -63,7 +63,7 @@ impl LayoutCalculator<'_> {
     fn calculate(schema: &mut Schema) {
         let span_type_id = schema.type_names["Span"];
         let node_id_cell_type_id =
-            schema.type_by_name("NodeId").as_primitive().unwrap().containers.cell_id.unwrap();
+            schema.type_by_name("NodeId").as_struct().unwrap().containers.cell_id.unwrap();
 
         let mut calculator = LayoutCalculator { schema, span_type_id, node_id_cell_type_id };
 
@@ -596,8 +596,6 @@ impl LayoutCalculator<'_> {
                 layout_64: PlatformLayout::from_size_align(0, 8),
                 layout_32: PlatformLayout::from_size_align(0, 4),
             },
-            // `NodeId` is a `NonMaxU32` wrapper with a niche for max value
-            "NodeId" => Layout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
             name => panic!("Unknown primitive type: {name}"),
         }
     }
@@ -693,7 +691,7 @@ fn generate_layout_assertions_for_struct<'s>(
 
     // Sort fields in memory layout order
     let mut fields = struct_def.fields.iter().collect_vec();
-    fields.sort_by(|f1, f2| f1.offset.layout_index.cmp(&f2.offset.layout_index));
+    fields.sort_by_key(|f1| f1.offset.layout_index);
 
     let (assertions_64, assertions_32) =
         assertions.entry(struct_def.file(schema).krate()).or_default();
@@ -747,7 +745,7 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
             use nonmax::NonMaxU32;
 
             ///@@line_break
-            use crate::{comment_node::*, module_record::*, number::*, operator::*, reference::*, scope::*, symbol::*};
+            use crate::{module_record::*, node::*, number::*, operator::*, reference::*, scope::*, symbol::*};
         },
         "napi/parser" => quote! {
             use crate::raw_transfer_types::*;

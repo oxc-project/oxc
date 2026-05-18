@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                              */
  5 │                             function * quux (foo) { yield foo; }
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux (foo) {
@@ -23,7 +23,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux (foo) {
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux (foo) {
@@ -44,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux() {
@@ -54,7 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux() {
@@ -64,7 +64,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:42]
  4 │                                  */
  5 │ ╭─▶                             const quux = async function * () {
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:30]
  4 │                                   */
  5 │ ╭─▶                              async function * quux () {
@@ -84,7 +84,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -94,7 +94,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:6:25]
  5 │                              */
  6 │                         function*d() {}
@@ -103,7 +103,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Duplicate `@yields` tags.
+  ⚠ jsdoc(require-yields): Duplicate `@yields` tags.
    ╭─[require_yields.tsx:4:32]
  3 │                              * @yields {undefined}
  4 │                              * @yields {void}
@@ -112,7 +112,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove redundant `@yields` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux (foo) {
@@ -122,7 +122,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:25]
  4 │                              */
  5 │ ╭─▶                         async function * foo(a) {
@@ -132,7 +132,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:25]
  4 │                              */
  5 │ ╭─▶                         async function * foo(a) {
@@ -142,7 +142,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:6:34]
  5 │                                */
  6 │ ╭─▶                           * quux () {
@@ -152,7 +152,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:25]
  4 │                              */
  5 │ ╭─▶                         async function * foo(a) {
@@ -162,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -175,7 +175,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -187,7 +187,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -197,7 +197,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -211,7 +211,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -225,7 +225,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -239,7 +239,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -254,7 +254,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -268,7 +268,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -282,7 +282,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -295,7 +295,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -307,7 +307,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -319,7 +319,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -331,7 +331,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -344,7 +344,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -356,7 +356,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -369,7 +369,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -384,7 +384,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -397,7 +397,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -407,7 +407,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -417,7 +417,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -427,7 +427,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -437,7 +437,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -447,7 +447,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -457,7 +457,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -469,7 +469,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -481,7 +481,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -494,7 +494,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
     ╭─[require_yields.tsx:5:29]
   4 │                                  */
   5 │ ╭─▶                             function * quux () {
@@ -506,7 +506,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -516,7 +516,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -526,7 +526,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -536,7 +536,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -546,7 +546,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -556,7 +556,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -566,7 +566,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -576,7 +576,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:29]
  4 │                                  */
  5 │ ╭─▶                             function * quux () {
@@ -586,7 +586,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): `@yields` tag is required when using `@generator` tag.
+  ⚠ jsdoc(require-yields): `@yields` tag is required when using `@generator` tag.
    ╭─[require_yields.tsx:4:34]
  3 │                                * fail(`@generator`+missing `@yields`, with config)
  4 │                                * @generator

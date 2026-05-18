@@ -53,7 +53,8 @@ declare_oxc_lint!(
     PreferNativeCoercionFunctions,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "0.0.19",
 );
 
 impl Rule for PreferNativeCoercionFunctions {

@@ -78,6 +78,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     config = NoUselessUndefined,
+    version = "0.6.1",
 );
 
 // Create a static set for all function names
@@ -542,7 +543,6 @@ fn test() {
         ),
         ("createContext<T>(undefined);", None),
         ("React.createContext<T>(undefined);", None),
-        ("const x = { a: undefined }", None),
         (
             "
             const y: any = {}

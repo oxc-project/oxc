@@ -62,6 +62,7 @@ declare_oxc_lint!(
     node,
     restriction,
     config = NoProcessEnvConfig,
+    version = "1.23.0",
 );
 
 fn is_process_global_object(object_expr: &oxc_ast::ast::Expression, ctx: &LintContext) -> bool {

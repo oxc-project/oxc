@@ -4,11 +4,14 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     utils::is_promise,
 };
-use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, CallExpression, Expression, FunctionBody, Statement},
+    ast::{
+        ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
+        ReturnStatement, Statement,
+    },
 };
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -133,6 +136,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = NoReturnWrap,
+    version = "0.15.14",
 );
 
 impl Rule for NoReturnWrap {
@@ -163,7 +167,7 @@ impl Rule for NoReturnWrap {
                     let Some(func_body) = &func_expr.body else {
                         continue;
                     };
-                    check_first_return_statement(ctx, func_body, self.allow_reject);
+                    check_function_body(ctx, self.allow_reject, func_body);
                 }
                 Expression::CallExpression(call) => {
                     let Expression::StaticMemberExpression(static_memb_expr) =
@@ -217,95 +221,52 @@ fn check_arrow_cb_arg<'a>(
     allow_reject: bool,
     arrow_expr: &ArrowFunctionExpression<'a>,
 ) {
-    if arrow_expr.body.statements.len() == 1 {
-        let Some(only_stmt) = &arrow_expr.body.statements.first() else {
-            return;
-        };
-
-        if let Statement::BlockStatement(_) = only_stmt {
-            check_first_return_statement(ctx, &arrow_expr.body, allow_reject);
-        }
-
-        if let Statement::ReturnStatement(r) = only_stmt
-            && let Some(Expression::CallExpression(returned_call_expr)) = &r.argument
+    if arrow_expr.expression {
+        if let Some(Statement::ExpressionStatement(expr_stmt)) = arrow_expr.body.statements.first()
+            && let Expression::CallExpression(call_expr) = &expr_stmt.expression
         {
-            check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
+            check_for_resolve_reject(ctx, allow_reject, call_expr);
         }
-
-        let Statement::ExpressionStatement(expr_stmt) = only_stmt else {
-            return;
-        };
-
-        let Expression::CallExpression(ref returned_call_expr) = expr_stmt.expression else {
-            return;
-        };
-        check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
     } else {
-        check_first_return_statement(ctx, &arrow_expr.body, allow_reject);
+        check_function_body(ctx, allow_reject, &arrow_expr.body);
     }
 }
 
 fn check_callback_fn<'a>(ctx: &LintContext<'a>, allow_reject: bool, expr: &Expression<'a>) {
     match expr {
         Expression::ArrowFunctionExpression(arrow_expr) => {
-            check_first_return_statement(ctx, &arrow_expr.body, allow_reject);
+            check_arrow_cb_arg(ctx, allow_reject, arrow_expr);
         }
         Expression::FunctionExpression(func_expr) => {
             let Some(func_body) = &func_expr.body else {
                 return;
             };
-            check_first_return_statement(ctx, func_body, allow_reject);
+            check_function_body(ctx, allow_reject, func_body);
         }
         _ => (),
     }
 }
 
-/// Checks for `return` at top level statements and
-/// will look inside if no return is found as a top level statement in the function body.
-fn check_first_return_statement<'a>(
-    ctx: &LintContext<'a>,
-    func_body: &OBox<'_, FunctionBody<'a>>,
+fn check_function_body<'a>(ctx: &LintContext<'a>, allow_reject: bool, body: &FunctionBody<'a>) {
+    let mut finder = ReturnWrapFinder { ctx, allow_reject };
+    finder.visit_function_body(body);
+}
+
+struct ReturnWrapFinder<'a, 'b> {
+    ctx: &'b LintContext<'a>,
     allow_reject: bool,
-) {
-    let top_level_statements = func_body
-        .statements
-        .iter()
-        .find(|stmt| matches!(stmt, Statement::ReturnStatement(_) | Statement::IfStatement(_)));
+}
 
-    let maybe_return_stmt = match top_level_statements {
-        Some(Statement::ReturnStatement(r)) => Some(r),
-        Some(Statement::IfStatement(if_stmt)) => match &if_stmt.consequent {
-            Statement::BlockStatement(block_stmt) => {
-                // Find first return statement in `if { // here } else { }`
-                let res = block_stmt.body.iter().find_map(|stmt| {
-                    if let Statement::ReturnStatement(r) = stmt { Some(r) } else { None }
-                });
+impl<'a> Visit<'a> for ReturnWrapFinder<'a, '_> {
+    fn visit_return_statement(&mut self, it: &ReturnStatement<'a>) {
+        if let Some(Expression::CallExpression(call_expr)) = &it.argument {
+            check_for_resolve_reject(self.ctx, self.allow_reject, call_expr);
+        }
+    }
 
-                match res {
-                    None => {
-                        // No return found so now look `if {  } else { // here }`
-                        block_stmt.body.iter().find_map(|stmt| {
-                            if let Statement::ReturnStatement(r) = stmt { Some(r) } else { None }
-                        })
-                    }
-                    res => res,
-                }
-            }
-            Statement::ReturnStatement(r) => Some(r),
-            _ => None,
-        },
-        _ => None,
-    };
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
-    let Some(return_stmt) = maybe_return_stmt else {
-        return;
-    };
-
-    let Some(Expression::CallExpression(returned_call_expr)) = &return_stmt.argument else {
-        return;
-    };
-
-    check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
+    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
 }
 
 /// Checks for `return Promise.resolve()` or `return Promise.reject()`
@@ -397,6 +358,11 @@ fn test() {
             "class Promise { constructor(){} resolve(){} };
              doThing().then(function() { return Promise.resolve(4) })",
             None,
+        ),
+        // allowReject in else branch
+        (
+            "doThing().then(function(val) { if (val) { return val } else { return Promise.reject('err') } })",
+            Some(serde_json::json!([{ "allowReject": true }])),
         ),
     ];
 
@@ -523,6 +489,45 @@ fn test() {
 			     })
 			   }).bind(this)
 			 }))",
+            None,
+        ),
+        // else branch
+        (
+            "doThing().then(function(val) { if (val) { return val } else { return Promise.resolve(val) } })",
+            None,
+        ),
+        (
+            "doThing().then(function(val) { if (val) { return val } else { return Promise.reject('err') } })",
+            None,
+        ),
+        // if has no return, else has Promise.resolve
+        (
+            "doThing().then(function(val) { if (val) { console.log('hi') } else { return Promise.resolve(val) } })",
+            None,
+        ),
+        // nested if
+        (
+            "doThing().then(function(val) { if (val > 10) { if (val > 20) { return Promise.resolve(val) } } })",
+            None,
+        ),
+        // else-if chain
+        (
+            "doThing().then(function(val) { if (val > 10) { return val } else if (val > 5) { return Promise.resolve(val) } })",
+            None,
+        ),
+        // arrow block body with else branch
+        (
+            "doThing().then((val) => { if (val) { return val } else { return Promise.resolve(val) } })",
+            None,
+        ),
+        // switch statement
+        (
+            "doThing().then(function(val) { switch(val) { case 1: return Promise.resolve(val); default: return val } })",
+            None,
+        ),
+        // try/catch
+        (
+            "doThing().then(function(val) { try { return Promise.resolve(val) } catch(e) { return val } })",
             None,
         ),
     ];

@@ -49,7 +49,8 @@ declare_oxc_lint!(
     NoVar,
     eslint,
     restriction,
-    conditional_fix
+    conditional_fix,
+    version = "0.1.1",
 );
 
 impl Rule for NoVar {

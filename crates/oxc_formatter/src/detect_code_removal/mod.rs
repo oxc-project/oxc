@@ -54,8 +54,7 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
             let after_count = after.get(key).copied().unwrap_or(0);
 
             if before_count != after_count {
-                errors
-                    .push(format!("Count mismatch for '{key}': {before_count} -> {after_count}",));
+                errors.push(format!("Count mismatch for '{key}': {before_count} -> {after_count}"));
             }
         }
 
@@ -208,6 +207,8 @@ impl StatsCollector {
         if matches!(
             parent_kind,
             AstKind::ObjectProperty(_)
+                | AstKind::BindingProperty(_)
+                | AstKind::AssignmentTargetPropertyProperty(_)
                 | AstKind::MethodDefinition(_)
                 | AstKind::PropertyDefinition(_)
                 | AstKind::ImportAttribute(_)
@@ -335,6 +336,8 @@ mod tests {
             ("for ((let.a) of foo);", "for ((let).a of foo);"),
             ("for ((let[a]) of foo);", "for ((let)[a] of foo);"),
             ("for ((let.a) in foo);", "for (let.a in foo);"),
+            (r#"const { index, "0": code } = match;"#, r"const { index, 0: code } = match;"),
+            (r#"({ "0": code } = match);"#, r"({ 0: code } = match);"),
             ("<div>{' '}</div>", "<div> </div>"),
             ("type T = | A;", "type T = A;"),
             ("type T = & A;", "type T = A;"),

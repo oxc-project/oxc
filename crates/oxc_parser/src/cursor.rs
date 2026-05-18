@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     error_handler::FatalError,
-    lexer::{Kind, LexerCheckpoint, LexerContext, Token},
+    lexer::{Kind, LexerCheckpoint, Token},
 };
 
 #[derive(Clone)]
@@ -219,12 +219,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.advance_for_jsx_child();
     }
 
-    /// Expect the next next token to be a `JsxString` or any other token
-    /// # Errors
-    pub(crate) fn expect_jsx_attribute_value(&mut self, kind: Kind) {
-        self.lexer.set_context(LexerContext::JsxAttributeValue);
-        self.expect(kind);
-        self.lexer.set_context(LexerContext::Regular);
+    /// Move to the next token, lexing it as a JSX attribute value.
+    pub(crate) fn advance_for_jsx_attribute_value(&mut self) {
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_jsx_attribute_value();
     }
 
     /// Tell lexer to read a regex
@@ -323,22 +321,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_pos);
         self.fatal_error = fatal_error;
-    }
-
-    pub(crate) fn try_parse<T>(
-        &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a, C>) -> T,
-    ) -> Option<T> {
-        let checkpoint = self.checkpoint_with_error_recovery();
-        let ctx = self.ctx;
-        let node = func(self);
-        if self.fatal_error.is_none() {
-            Some(node)
-        } else {
-            self.ctx = ctx;
-            self.rewind(checkpoint);
-            None
-        }
     }
 
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {

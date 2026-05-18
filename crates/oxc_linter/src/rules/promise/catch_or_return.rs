@@ -83,6 +83,7 @@ declare_oxc_lint!(
     promise,
     restriction,
     config = CatchOrReturnConfig,
+    version = "0.9.2",
 );
 
 impl Rule for CatchOrReturn {

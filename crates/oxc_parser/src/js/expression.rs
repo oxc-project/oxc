@@ -874,9 +874,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
 
                 if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
-                    if let Some(arguments) =
-                        self.try_parse(Self::parse_type_arguments_in_expression)
-                    {
+                    if let Some(arguments) = self.parse_type_arguments_in_expression() {
                         lhs = self.ast.expression_ts_instantiation(
                             self.end_span(lhs_span),
                             lhs,
@@ -1035,7 +1033,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let mut type_arguments = None;
             if question_dot {
                 if self.is_ts {
-                    if let Some(args) = self.try_parse(Self::parse_type_arguments_in_expression) {
+                    if let Some(args) = self.parse_type_arguments_in_expression() {
                         type_arguments = Some(args);
                     } else {
                         // `re_lex_as_typescript_l_angle` may have popped the original token
@@ -1507,7 +1505,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         first_expression: Expression<'a>,
     ) -> Expression<'a> {
-        let mut expressions = self.ast.vec1(first_expression);
+        let mut expressions = self.ast.vec_with_capacity(2);
+        expressions.push(first_expression);
         while self.eat(Kind::Comma) {
             let expression = self.parse_assignment_expression_or_higher();
             expressions.push(expression);

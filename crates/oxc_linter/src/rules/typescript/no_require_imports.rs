@@ -116,6 +116,7 @@ declare_oxc_lint!(
     restriction,
     pending,  // TODO: fixer (change require to import)
     config = NoRequireImportsConfig,
+    version = "0.13.0",
 );
 
 fn match_argument_value_with_regex(allow: &[CompactStr], argument_value: &str) -> bool {
@@ -156,10 +157,13 @@ impl Rule for NoRequireImports {
                                 return;
                             }
                         }
-                        Argument::StringLiteral(string_literal) => {
-                            if match_argument_value_with_regex(&self.allow, &string_literal.value) {
-                                return;
-                            }
+                        Argument::StringLiteral(string_literal)
+                            if match_argument_value_with_regex(
+                                &self.allow,
+                                &string_literal.value,
+                            ) =>
+                        {
+                            return;
                         }
                         _ => {}
                     }

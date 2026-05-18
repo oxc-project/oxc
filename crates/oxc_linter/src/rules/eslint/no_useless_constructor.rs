@@ -101,7 +101,8 @@ declare_oxc_lint!(
     NoUselessConstructor,
     eslint,
     suspicious,
-    suggestion
+    suggestion,
+    version = "0.4.4",
 );
 
 impl Rule for NoUselessConstructor {

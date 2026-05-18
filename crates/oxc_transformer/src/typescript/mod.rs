@@ -43,7 +43,7 @@ use rewrite_extensions::TypeScriptRewriteExtensions;
 /// Out: `const x = 0;`
 pub struct TypeScript<'a> {
     annotations: TypeScriptAnnotations<'a>,
-    r#enum: TypeScriptEnum<'a>,
+    r#enum: TypeScriptEnum,
     namespace: TypeScriptNamespace,
     module: TypeScriptModule,
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
@@ -58,7 +58,7 @@ impl<'a> TypeScript<'a> {
     pub fn new(options: &TypeScriptOptions, state: &TransformState<'a>) -> Self {
         Self {
             annotations: TypeScriptAnnotations::new(options),
-            r#enum: TypeScriptEnum::new(),
+            r#enum: TypeScriptEnum::new(options.optimize_const_enums, options.optimize_enums),
             namespace: TypeScriptNamespace::new(options),
             module: TypeScriptModule::new(options.only_remove_type_imports, state.module),
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
@@ -120,8 +120,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
 
         // Avoid converting class fields when class-properties plugin is enabled, that plugin has covered all
         // this transformation does.
-        if !self.is_class_properties_plugin_enabled && self.set_public_class_fields {
-            self.transform_class_fields(class, ctx);
+        if !self.is_class_properties_plugin_enabled {
+            if self.set_public_class_fields {
+                self.transform_class_fields(class, ctx);
+            } else {
+                // Default oxc behavior matches `useDefineForClassFields: true`. Emit an uninitialized
+                // field declaration for each constructor parameter property so downstream `[[Define]]`
+                // semantics see the property, matching TypeScript's output.
+                Self::add_parameter_property_fields(class, ctx);
+            }
         }
     }
 
@@ -136,6 +143,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.r#enum.enter_expression(expr, ctx);
         self.annotations.enter_expression(expr, ctx);
     }
 
@@ -217,6 +225,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.r#enum.enter_statement(stmt, ctx);
         self.module.enter_statement(stmt, ctx);
+    }
+
+    fn exit_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.r#enum.exit_statements(stmts, ctx);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {

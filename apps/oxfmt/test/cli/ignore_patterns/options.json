@@ -1,0 +1,6 @@
+[
+  { "args": ["--check"] },
+  { "args": ["--check", "--ignore-path", "gitignore.txt"] },
+  { "args": ["--check", "--ignore-path", "gitignore.txt", "--ignore-path", ".prettierignore"] },
+  { "args": ["--check", "--ignore-path", "nonexistent.ignore"] }
+]

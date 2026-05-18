@@ -92,7 +92,8 @@ declare_oxc_lint!(
     IframeMissingSandbox,
     react,
     suspicious,
-    pending
+    pending,
+    version = "0.10.0",
 );
 
 impl Rule for IframeMissingSandbox {
@@ -116,53 +117,51 @@ impl Rule for IframeMissingSandbox {
                     },
                 );
             }
-            AstKind::CallExpression(call_expr) => {
-                if is_create_element_call(call_expr) {
-                    let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
-                        return;
-                    };
+            AstKind::CallExpression(call_expr) if is_create_element_call(call_expr) => {
+                let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
+                    return;
+                };
 
-                    if str.value != "iframe" {
-                        return;
-                    }
+                if str.value != "iframe" {
+                    return;
+                }
 
-                    // ignore document.createElement, since sandbox attributes
-                    // cannot be set here.
-                    // NOTE: should come after cheaper checks
-                    if is_method_call(
-                        call_expr,
-                        Some(&["document"]),
-                        Some(&["createElement"]),
-                        Some(1), // (el, options?)
-                        Some(2),
-                    ) {
-                        return;
-                    }
+                // ignore document.createElement, since sandbox attributes
+                // cannot be set here.
+                // NOTE: should come after cheaper checks
+                if is_method_call(
+                    call_expr,
+                    Some(&["document"]),
+                    Some(&["createElement"]),
+                    Some(1), // (el, options?)
+                    Some(2),
+                ) {
+                    return;
+                }
 
-                    if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
-                        obj_expr
-                            .properties
-                            .iter()
-                            .find_map(|prop| {
-                                if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                                    && prop.key.is_specific_static_name("sandbox")
-                                {
-                                    return Some(prop);
-                                }
+                if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
+                    obj_expr
+                        .properties
+                        .iter()
+                        .find_map(|prop| {
+                            if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                                && prop.key.is_specific_static_name("sandbox")
+                            {
+                                return Some(prop);
+                            }
 
-                                None
-                            })
-                            .map_or_else(
-                                || {
-                                    ctx.diagnostic(missing_sandbox_prop(obj_expr.span));
-                                },
-                                |sandbox_prop| {
-                                    validate_sandbox_property(sandbox_prop, ctx);
-                                },
-                            );
-                    } else {
-                        ctx.diagnostic(missing_sandbox_prop(call_expr.span));
-                    }
+                            None
+                        })
+                        .map_or_else(
+                            || {
+                                ctx.diagnostic(missing_sandbox_prop(obj_expr.span));
+                            },
+                            |sandbox_prop| {
+                                validate_sandbox_property(sandbox_prop, ctx);
+                            },
+                        );
+                } else {
+                    ctx.diagnostic(missing_sandbox_prop(call_expr.span));
                 }
             }
             _ => {}

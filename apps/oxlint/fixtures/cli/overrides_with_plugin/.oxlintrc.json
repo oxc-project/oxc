@@ -5,9 +5,9 @@
         "plugins": ["jest", "vitest"],
         "rules": {
           "jest/valid-title": "deny",
+          "vitest/valid-title": "deny",
           "no-unused-vars": "off"
         }
       }
     ]
   }
-  

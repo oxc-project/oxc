@@ -24,7 +24,7 @@ jobs:
       pull-requests: write
       contents: read
     steps:
-      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         id: prepare
         with:
           script: |
@@ -48,11 +48,19 @@ jobs:
             core.setOutput('ref', `refs/pull/${context.issue.number}/head`);
             core.setOutput('comment-id', comment.id);
 
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: oxc-project
+          repositories: oxc-ecosystem-ci
+
       - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/oxc-ecosystem-ci
           workflow: oxfmt-ci.yml
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: >-
             {

@@ -171,6 +171,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         loop {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher();
+            if self.fatal_error.is_some() {
+                break;
+            }
             let type_argument;
             if let Expression::TSInstantiationExpression(expr) = extend {
                 let expr = expr.unbox();
@@ -493,14 +496,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let ident = self.parse_identifier_name();
             return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
         }
-        if self.at(Kind::Str) && self.lexer.peek_token().kind() == Kind::LParen {
-            return self.try_parse(|p| {
-                let string_literal = p.parse_literal_string();
-                if string_literal.value != "constructor" {
-                    return p.unexpected();
-                }
-                PropertyKey::StringLiteral(p.alloc(string_literal))
-            });
+        if self.at(Kind::Str)
+            && self.cur_string() == "constructor"
+            && self.lexer.peek_token().kind() == Kind::LParen
+        {
+            let string_literal = self.parse_literal_string();
+            return Some(PropertyKey::StringLiteral(self.alloc(string_literal)));
         }
         None
     }

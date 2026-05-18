@@ -65,6 +65,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     fix,
+    version = "0.2.10",
 );
 
 impl Rule for NoNewWrappers {

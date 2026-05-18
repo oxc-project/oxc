@@ -96,6 +96,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     fix,
+    version = "1.59.0",
 );
 
 impl Rule for PreferImportMetaProperties {

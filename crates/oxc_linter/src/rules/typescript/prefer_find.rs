@@ -29,6 +29,7 @@ declare_oxc_lint!(
     PreferFind(tsgolint),
     typescript,
     style,
+    version = "1.49.0",
 );
 
 impl Rule for PreferFind {}

@@ -40,7 +40,8 @@ declare_oxc_lint!(
     PreferArrayFlatMap,
     unicorn,
     perf,
-    fix
+    fix,
+    version = "0.0.14",
 );
 
 // skip React.Children because we are only looking at `StaticMemberExpression.property` and not its object

@@ -253,15 +253,24 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
                 self.replace_this_with_temp_var(expr, span);
                 return;
             }
+            // `new.target` is always `undefined` in class static blocks. Replace it before moving
+            // the block body outside the class.
+            Expression::MetaProperty(meta_property)
+                if self.this_depth == 0
+                    && meta_property.meta.name == "new"
+                    && meta_property.property.name == "target" =>
+            {
+                *expr = self.ctx.ast.void_0(meta_property.span);
+                return;
+            }
             // `delete this`
-            Expression::UnaryExpression(unary_expr) => {
+            Expression::UnaryExpression(unary_expr)
                 if unary_expr.operator == UnaryOperator::Delete
-                    && matches!(&unary_expr.argument, Expression::ThisExpression(_))
-                {
-                    let span = unary_expr.span;
-                    self.replace_delete_this_with_true(expr, span);
-                    return;
-                }
+                    && matches!(&unary_expr.argument, Expression::ThisExpression(_)) =>
+            {
+                let span = unary_expr.span;
+                self.replace_delete_this_with_true(expr, span);
+                return;
             }
             // `super.prop`
             Expression::StaticMemberExpression(_) if self.this_depth == 0 => {

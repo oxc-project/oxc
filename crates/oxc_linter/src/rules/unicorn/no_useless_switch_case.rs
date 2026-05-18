@@ -49,7 +49,8 @@ declare_oxc_lint!(
     NoUselessSwitchCase,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "0.0.18",
 );
 
 impl Rule for NoUselessSwitchCase {

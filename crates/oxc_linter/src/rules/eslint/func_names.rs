@@ -220,6 +220,7 @@ declare_oxc_lint!(
     style,
     conditional_fix_suggestion,
     config = FuncNames,
+    version = "0.7.0",
 );
 
 impl Rule for FuncNames {

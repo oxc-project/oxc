@@ -45,7 +45,8 @@ declare_oxc_lint!(
     /// ```
     NoAmd,
     import,
-    restriction
+    restriction,
+    version = "0.0.16",
 );
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-amd.md>

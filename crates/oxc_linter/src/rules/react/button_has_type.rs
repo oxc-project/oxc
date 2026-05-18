@@ -76,6 +76,7 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ButtonHasType,
+    version = "0.1.1",
 );
 
 impl Rule for ButtonHasType {
@@ -110,47 +111,44 @@ impl Rule for ButtonHasType {
                     },
                 );
             }
-            AstKind::CallExpression(call_expr) => {
-                if is_create_element_call(call_expr) {
-                    let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
-                        return;
-                    };
+            AstKind::CallExpression(call_expr) if is_create_element_call(call_expr) => {
+                let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
+                    return;
+                };
 
-                    if str.value.as_str() != "button" {
-                        return;
-                    }
+                if str.value.as_str() != "button" {
+                    return;
+                }
 
-                    if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
-                        obj_expr
-                            .properties
-                            .iter()
-                            .find_map(|prop| {
-                                if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                                    && prop.key.is_specific_static_name("type")
-                                {
-                                    return Some(prop);
+                if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
+                    obj_expr
+                        .properties
+                        .iter()
+                        .find_map(|prop| {
+                            if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                                && prop.key.is_specific_static_name("type")
+                            {
+                                return Some(prop);
+                            }
+
+                            None
+                        })
+                        .map_or_else(
+                            || {
+                                ctx.diagnostic(missing_type_prop(obj_expr.span));
+                            },
+                            |type_prop| {
+                                if !self.is_valid_button_type_prop_expression(&type_prop.value) {
+                                    let allowed_types = self.allowed_types_message();
+                                    ctx.diagnostic(invalid_type_prop(
+                                        type_prop.span,
+                                        &allowed_types,
+                                    ));
                                 }
-
-                                None
-                            })
-                            .map_or_else(
-                                || {
-                                    ctx.diagnostic(missing_type_prop(obj_expr.span));
-                                },
-                                |type_prop| {
-                                    if !self.is_valid_button_type_prop_expression(&type_prop.value)
-                                    {
-                                        let allowed_types = self.allowed_types_message();
-                                        ctx.diagnostic(invalid_type_prop(
-                                            type_prop.span,
-                                            &allowed_types,
-                                        ));
-                                    }
-                                },
-                            );
-                    } else {
-                        ctx.diagnostic(missing_type_prop(call_expr.span));
-                    }
+                            },
+                        );
+                } else {
+                    ctx.diagnostic(missing_type_prop(call_expr.span));
                 }
             }
             _ => {}

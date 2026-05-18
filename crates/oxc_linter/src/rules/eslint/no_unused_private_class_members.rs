@@ -87,7 +87,8 @@ declare_oxc_lint!(
     /// ```
     NoUnusedPrivateClassMembers,
     eslint,
-    correctness
+    correctness,
+    version = "0.1.1",
 );
 
 impl Rule for NoUnusedPrivateClassMembers {

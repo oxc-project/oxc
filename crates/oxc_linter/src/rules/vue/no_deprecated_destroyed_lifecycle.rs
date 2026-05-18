@@ -62,7 +62,8 @@ declare_oxc_lint!(
     NoDeprecatedDestroyedLifecycle,
     vue,
     correctness,
-    fix
+    fix,
+    version = "1.35.0",
 );
 
 impl Rule for NoDeprecatedDestroyedLifecycle {

@@ -163,3 +163,47 @@ switch (Math.random()) {
 	/* istanbul ignore next */
 	default: break;
 }
+
+########## 26
+const obj = {
+  a: () => 1,
+  /* v8 ignore next */
+  b: () => 2,
+}
+----------
+const obj = {
+	a: () => 1,
+	/* v8 ignore next */
+	b: () => 2
+};
+
+########## 27
+const obj = { /* v8 ignore next */ a: () => 1 }
+----------
+const obj = { /* v8 ignore next */ a: () => 1 };
+
+########## 28
+const obj = {
+  /* v8 ignore next */
+  a: () => 1,
+  b: () => 2,
+}
+----------
+const obj = {
+	/* v8 ignore next */
+	a: () => 1,
+	b: () => 2
+};
+
+########## 29
+const obj = {
+  a: 1,
+  /* v8 ignore next */
+  ...rest,
+}
+----------
+const obj = {
+	a: 1,
+	/* v8 ignore next */
+	...rest
+};

@@ -155,7 +155,8 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
-    config = ObjectShorthandTupleConfig
+    config = ObjectShorthandTupleConfig,
+    version = "1.59.0",
 );
 
 impl Rule for ObjectShorthand {

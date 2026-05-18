@@ -598,7 +598,7 @@ impl CompositeFix {
             return Ok(fixes.pop().unwrap());
         }
 
-        fixes.sort_unstable_by(|a, b| a.span.cmp(&b.span));
+        fixes.sort_unstable_by_key(|a| a.span);
 
         // safe, as fixes.len() > 1
         let start = fixes[0].span.start;

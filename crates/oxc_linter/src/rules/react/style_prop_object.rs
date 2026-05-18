@@ -84,6 +84,7 @@ declare_oxc_lint!(
     react,
     suspicious,
     config = StylePropObjectConfig,
+    version = "0.11.0",
 );
 
 fn is_invalid_type(ty: &TSType) -> bool {

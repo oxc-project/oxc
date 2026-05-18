@@ -13,7 +13,7 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -29,16 +29,35 @@ fn missing_super_some(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn duplicate_super(span: Span) -> OxcDiagnostic {
+fn duplicate_super(span: Span, first_super_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected duplicate `super()`.")
         .with_help("Remove the duplicate `super()` call")
-        .with_label(span)
+        .with_labels([
+            span.primary_label("This path may call `super()` after it was already called."),
+            first_super_span.label("`super()` was first called here."),
+        ])
 }
 
-fn bad_super(span: Span) -> OxcDiagnostic {
+#[derive(Clone, Copy)]
+struct SuperClassContext {
+    span: Span,
+    label: &'static str,
+}
+
+fn bad_super(span: Span, super_class_context: Option<SuperClassContext>) -> OxcDiagnostic {
+    let mut labels = vec![span.primary_label("This `super()` call is invalid here.")];
+    if let Some(context) = super_class_context {
+        labels.push(context.span.label(context.label));
+    }
+
     OxcDiagnostic::warn("Unexpected `super()` because `super` is not a constructor.")
-        .with_help("Remove the `super()` call or check the class declaration")
-        .with_label(span)
+        .with_help(
+            "Remove the `super()` call or change the `extends` clause to a constructable superclass.",
+        )
+        .with_note(
+            "`super()` calls the constructor of the superclass, but this class does not extend a constructable value.",
+        )
+        .with_labels(labels)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -113,6 +132,7 @@ declare_oxc_lint!(
     ConstructorSuper,
     eslint,
     correctness,
+    version = "0.0.3",
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -200,6 +220,8 @@ impl Rule for ConstructorSuper {
         let AstKind::Class(class) = node.kind() else { return };
 
         let super_class_type = Self::classify_super_class(class.super_class.as_ref());
+        let super_class_context =
+            Self::super_class_context(super_class_type, class.super_class.as_ref());
 
         let Some(constructor) = class.body.body.iter().find_map(|elem| {
             if let ClassElement::MethodDefinition(method) = elem
@@ -224,7 +246,7 @@ impl Rule for ConstructorSuper {
         match super_class_type {
             SuperClassType::None | SuperClassType::Invalid => {
                 for &span in &super_call_spans {
-                    ctx.diagnostic(bad_super(span));
+                    ctx.diagnostic(bad_super(span, super_class_context));
                 }
             }
             SuperClassType::Null => {
@@ -236,7 +258,7 @@ impl Rule for ConstructorSuper {
                     }
                 } else {
                     for &span in &super_call_spans {
-                        ctx.diagnostic(bad_super(span));
+                        ctx.diagnostic(bad_super(span, super_class_context));
                     }
                 }
             }
@@ -254,9 +276,10 @@ impl Rule for ConstructorSuper {
                     if super_call_spans.len() > 1 {
                         let mut sorted_spans = super_call_spans;
                         sorted_spans.sort_by_key(|s| s.start);
+                        let first_super_span = sorted_spans[0];
 
                         for &span in sorted_spans.iter().skip(1) {
-                            ctx.diagnostic(duplicate_super(span));
+                            ctx.diagnostic(duplicate_super(span, first_super_span));
                         }
                     }
                 } else {
@@ -288,9 +311,10 @@ impl Rule for ConstructorSuper {
                     if has_duplicate && super_call_spans.len() > 1 {
                         let mut sorted_spans = super_call_spans;
                         sorted_spans.sort_by_key(|s| s.start);
+                        let first_super_span = sorted_spans[0];
 
                         for &span in sorted_spans.iter().skip(1) {
-                            ctx.diagnostic(duplicate_super(span));
+                            ctx.diagnostic(duplicate_super(span, first_super_span));
                         }
                     }
                 }
@@ -307,6 +331,25 @@ impl ConstructorSuper {
             Some(Expression::NullLiteral(_)) => SuperClassType::Null,
             Some(expr) if Self::is_invalid_super_class(expr) => SuperClassType::Invalid,
             Some(_) => SuperClassType::Valid,
+        }
+    }
+
+    fn super_class_context(
+        super_class_type: SuperClassType,
+        super_class: Option<&Expression>,
+    ) -> Option<SuperClassContext> {
+        let super_class = super_class?;
+
+        match super_class_type {
+            SuperClassType::Null => Some(SuperClassContext {
+                span: super_class.span(),
+                label: "`null` does not provide a constructor to call.",
+            }),
+            SuperClassType::Invalid => Some(SuperClassContext {
+                span: super_class.span(),
+                label: "This superclass expression is not constructable.",
+            }),
+            SuperClassType::None | SuperClassType::Valid => None,
         }
     }
 
@@ -394,13 +437,13 @@ impl ConstructorSuper {
                                     record_super(span);
                                 }
                             }
-                            // Special case: `super() || super()` - report both as duplicate.
+                            // Special case: `super() || super()` - report the RHS as duplicate.
                             //
                             // Technically, `super()` returns the constructed instance (truthy),
                             // so the RHS of `||` won't execute at runtime. However:
-                            // 1. ESLint reports this as duplicate for compatibility
+                            // 1. ESLint reports the RHS as a duplicate for compatibility
                             // 2. This code pattern is almost certainly a mistake
-                            // 3. The CFG doesn't catch this because it sees only LHS as reachable
+                            // 3. The CFG records the reachable LHS, but not the short-circuited RHS
                             //
                             // We intentionally match ESLint's behavior here.
                             Expression::LogicalExpression(logical)
@@ -419,14 +462,13 @@ impl ConstructorSuper {
                                 let left_span = check_super(&logical.left);
                                 let right_span = check_super(&logical.right);
 
-                                // Report both super() calls as duplicates if both exist
-                                if left_span.is_some() && right_span.is_some() {
-                                    if let Some(span) = left_span {
-                                        record_super(span);
-                                    }
-                                    if let Some(span) = right_span {
-                                        record_super(span);
-                                    }
+                                // The CFG records the reachable left `super()` call. Add the
+                                // right call so `super() || super()` still matches ESLint's
+                                // duplicate-super behavior.
+                                if left_span.is_some()
+                                    && let Some(span) = right_span
+                                {
+                                    record_super(span);
                                 }
                             }
                             _ => {}

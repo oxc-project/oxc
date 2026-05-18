@@ -117,6 +117,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     config = JsxFilenameExtensionConfig,
+    version = "0.15.14",
 );
 
 impl Rule for JsxFilenameExtension {

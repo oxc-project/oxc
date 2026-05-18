@@ -1,4 +1,8 @@
 class Foo {
+  foo;
+  bar;
+  zoo;
+  bang;
   boom;
   constructor(foo, bar, zoo, bang, too) {
     this.foo = foo;
@@ -8,8 +12,12 @@ class Foo {
     console.log(this.foo, this.bar, this.zoo, this.bang);
   }
 }
-
 class Bar extends Foo {
+  foo;
+  bar;
+  zoo;
+  bang;
+  boom;
   constructor(foo, bar, zoo, bang, boom, too) {
     super(foo, bar, zoo, bang, too);
     this.foo = foo;
@@ -19,8 +27,12 @@ class Bar extends Foo {
     this.boom = boom;
   }
 }
-
 class Baz extends Bar {
+  foo;
+  bar;
+  zoo;
+  bang;
+  boom;
   constructor(foo, bar, zoo, bang, boom, too) {
     this.foo = foo;
     this.bar = bar;

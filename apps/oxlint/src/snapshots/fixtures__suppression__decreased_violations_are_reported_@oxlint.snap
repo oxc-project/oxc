@@ -1,0 +1,16 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/suppression/decreased_violations_are_reported
+----------
+
+  x There are suppressions that do not occur anymore.
+  help: Run `oxlint --prune-suppressions` to remove unused suppressions.
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 58 rules using 1 threads.
+----------
+CLI result: LintUnprunedSuppressions
+----------

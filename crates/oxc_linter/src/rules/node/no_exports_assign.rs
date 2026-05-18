@@ -75,7 +75,8 @@ declare_oxc_lint!(
     NoExportsAssign,
     node,
     style,
-    fix
+    fix,
+    version = "0.9.3",
 );
 
 impl Rule for NoExportsAssign {

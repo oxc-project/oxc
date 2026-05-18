@@ -95,6 +95,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = CatchErrorNameConfig,
+    version = "0.0.14",
 );
 
 impl Rule for CatchErrorName {

@@ -1,0 +1,6 @@
+[
+  { "cwd": "basic", "args": ["--check", "test.ts"] },
+  { "cwd": "basic/child", "args": ["--check", "test.ts"] },
+  { "cwd": "monorepo/packages/app", "args": ["--check", "--config", "vite.config.ts", "test.ts"] },
+  { "cwd": "monorepo/packages/app", "args": ["--check", "test.ts"] }
+]

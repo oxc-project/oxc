@@ -336,12 +336,10 @@ pub fn jsx_split_children<'a, 'b>(
                 }
             }
 
-            JSXChild::ExpressionContainer(container) => {
-                if is_whitespace_jsx_expression(container.as_ref(), comments) {
-                    builder.entry(JsxChild::Whitespace);
-                } else {
-                    builder.entry(JsxChild::NonText(child));
-                }
+            JSXChild::ExpressionContainer(container)
+                if is_whitespace_jsx_expression(container.as_ref(), comments) =>
+            {
+                builder.entry(JsxChild::Whitespace);
             }
             _ => {
                 builder.entry(JsxChild::NonText(child));

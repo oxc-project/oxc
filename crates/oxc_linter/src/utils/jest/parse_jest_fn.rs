@@ -13,8 +13,10 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    utils::jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode},
-    utils::valid_vitest_fn::is_valid_vitest_call,
+    utils::{
+        jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode},
+        valid_vitest_fn::{is_extend_fixture, is_valid_vitest_call},
+    },
 };
 
 pub fn parse_jest_fn_call<'a>(
@@ -125,6 +127,14 @@ pub fn parse_jest_fn_call<'a>(
             (false, false) => {}
         }
 
+        if ctx.frameworks().is_vitest() && is_extend_fixture(&call_chains[1..]) {
+            return Some(ParsedJestFnCall::Fixture(ParsedGeneralJestFnCall {
+                kind: JestFnKind::VitestFixture,
+                members,
+                name: Cow::Borrowed(name),
+                local: Cow::Borrowed(resolved.local),
+            }));
+        }
         return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
             kind,
             members,
@@ -361,12 +371,13 @@ pub enum ParsedJestFnCall<'a> {
     GeneralJest(ParsedGeneralJestFnCall<'a>),
     Expect(ParsedExpectFnCall<'a>),
     ExpectTypeOf(ParsedExpectFnCall<'a>),
+    Fixture(ParsedGeneralJestFnCall<'a>),
 }
 
 impl ParsedJestFnCall<'_> {
     pub fn kind(&self) -> JestFnKind {
         match self {
-            Self::GeneralJest(call) => call.kind,
+            Self::GeneralJest(call) | Self::Fixture(call) => call.kind,
             Self::Expect(call) | Self::ExpectTypeOf(call) => call.kind,
         }
     }
@@ -385,7 +396,6 @@ pub struct ParsedGeneralJestFnCall<'a> {
 pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
-    #[expect(unused)]
     pub name: Cow<'a, str>,
     pub local: Cow<'a, str>,
     pub head: KnownMemberExpressionProperty<'a>,

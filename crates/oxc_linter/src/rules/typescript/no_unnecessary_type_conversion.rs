@@ -29,6 +29,7 @@ declare_oxc_lint!(
     NoUnnecessaryTypeConversion(tsgolint),
     typescript,
     suspicious,
+    version = "1.49.0",
 );
 
 impl Rule for NoUnnecessaryTypeConversion {}

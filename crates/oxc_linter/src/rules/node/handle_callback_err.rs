@@ -130,6 +130,7 @@ declare_oxc_lint!(
     node,
     restriction,
     config = HandleCallbackErrConfig,
+    version = "1.56.0",
 );
 
 impl Rule for HandleCallbackErr {

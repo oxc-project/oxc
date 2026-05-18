@@ -2,451 +2,451 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute('data-unicorn', '🦄');
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute('data-unicorn', '🦄')` with `element.dataset.unicorn = '🦄'`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute('data-🦄', '🦄');
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute('data-🦄', '🦄')` with `element.dataset["🦄"] = '🦄'`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute('data-ゆ', 'ゆ');
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute('data-ゆ', 'ゆ')` with `element.dataset.ゆ = 'ゆ'`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute('data-foo2', '🦄');
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute('data-foo2', '🦄')` with `element.dataset.foo2 = '🦄'`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute('data-foo:bar', 'zaz');
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute('data-foo:bar', 'zaz')` with `element.dataset["foo:bar"] = 'zaz'`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute("data-foo:bar", "zaz");
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute("data-foo:bar", "zaz")` with `element.dataset["foo:bar"] = "zaz"`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute('data-foo.bar', 'zaz');
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute('data-foo.bar', 'zaz')` with `element.dataset["foo.bar"] = 'zaz'`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute('data-foo-bar', 'zaz');
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute('data-foo-bar', 'zaz')` with `element.dataset.fooBar = 'zaz'`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute('data-foo', /* comment */ 'bar');
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute('data-foo', /* comment */ 'bar')` with `element.dataset.foo = 'bar'`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:36]
  1 │ element.querySelector('#selector').setAttribute('data-AllowAccess', true);
    ·                                    ────────────
    ╰────
   help: Replace `element.querySelector('#selector').setAttribute('data-AllowAccess', true)` with `element.querySelector('#selector').dataset.allowaccess = true`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute("data-", "🦄");
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute("data-", "🦄")` with `element.dataset[""] = "🦄"`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute("data--foo", "🦄");
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute("data--foo", "🦄")` with `element.dataset.Foo = "🦄"`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute("DATA--FOO", "🦄");
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute("DATA--FOO", "🦄")` with `element.dataset.Foo = "🦄"`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute("DATA- ", "🦄");
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute("DATA- ", "🦄")` with `element.dataset[" "] = "🦄"`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute("DATA-Foo-bar", "🦄");
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute("DATA-Foo-bar", "🦄")` with `element.dataset.fooBar = "🦄"`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute('data-a"b', "zaz");
    ·         ────────────
    ╰────
   help: Replace `element.setAttribute('data-a"b', "zaz")` with `element.dataset["a\"b"] = "zaz"`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:19]
  1 │ optional?.element.setAttribute("data-unicorn", "🦄");
    ·                   ────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:21]
  1 │ console.log(element.setAttribute("data-unicorn", "🦄"))
    ·                     ────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute('data-unicorn');
    ·                         ──────────────
    ╰────
   help: Replace `element.removeAttribute('data-unicorn')` with `delete element.dataset.unicorn`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-unicorn");
    ·                         ──────────────
    ╰────
   help: Replace `element.removeAttribute("data-unicorn")` with `delete element.dataset.unicorn`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-unicorn",);
    ·                         ──────────────
    ╰────
   help: Replace `element.removeAttribute("data-unicorn",)` with `delete element.dataset.unicorn`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-🦄");
    ·                         ─────────
    ╰────
   help: Replace `element.removeAttribute("data-🦄")` with `delete element.dataset["🦄"]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-ゆ");
    ·                         ─────────
    ╰────
   help: Replace `element.removeAttribute("data-ゆ")` with `delete element.dataset.ゆ`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-foo2");
    ·                         ───────────
    ╰────
   help: Replace `element.removeAttribute("data-foo2")` with `delete element.dataset.foo2`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-foo:bar");
    ·                         ──────────────
    ╰────
   help: Replace `element.removeAttribute("data-foo:bar")` with `delete element.dataset["foo:bar"]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-foo:bar");
    ·                         ──────────────
    ╰────
   help: Replace `element.removeAttribute("data-foo:bar")` with `delete element.dataset["foo:bar"]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-foo.bar");
    ·                         ──────────────
    ╰────
   help: Replace `element.removeAttribute("data-foo.bar")` with `delete element.dataset["foo.bar"]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-foo-bar");
    ·                         ──────────────
    ╰────
   help: Replace `element.removeAttribute("data-foo-bar")` with `delete element.dataset.fooBar`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-foo");
    ·                         ──────────
    ╰────
   help: Replace `element.removeAttribute("data-foo")` with `delete element.dataset.foo`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute('data-a"b');
    ·                         ──────────
    ╰────
   help: Replace `element.removeAttribute('data-a"b')` with `delete element.dataset["a\"b"]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:52]
  1 │ element.querySelector("#selector").removeAttribute("data-AllowAccess");
    ·                                                    ──────────────────
    ╰────
   help: Replace `element.querySelector("#selector").removeAttribute("data-AllowAccess")` with `delete element.querySelector("#selector").dataset.allowaccess`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-");
    ·                         ───────
    ╰────
   help: Replace `element.removeAttribute("data-")` with `delete element.dataset[""]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:35]
  1 │ optional?.element.removeAttribute("data-unicorn");
    ·                                   ──────────────
    ╰────
   help: Replace `optional?.element.removeAttribute("data-unicorn")` with `delete optional?.element.dataset.unicorn`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-unicorn")?.property
    ·                         ──────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute('data-unicorn');
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute('data-unicorn')` with `Object.hasOwn(element.dataset, "unicorn")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-unicorn");
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-unicorn")` with `Object.hasOwn(element.dataset, "unicorn")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-unicorn",);
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-unicorn",)` with `Object.hasOwn(element.dataset, "unicorn")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-🦄");
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-🦄")` with `Object.hasOwn(element.dataset, "🦄")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-ゆ");
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-ゆ")` with `Object.hasOwn(element.dataset, "ゆ")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-foo2");
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-foo2")` with `Object.hasOwn(element.dataset, "foo2")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-foo:bar");
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-foo:bar")` with `Object.hasOwn(element.dataset, "foo:bar")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-foo:bar");
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-foo:bar")` with `Object.hasOwn(element.dataset, "foo:bar")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-foo.bar");
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-foo.bar")` with `Object.hasOwn(element.dataset, "foo.bar")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-foo-bar");
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-foo-bar")` with `Object.hasOwn(element.dataset, "fooBar")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-foo");
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-foo")` with `Object.hasOwn(element.dataset, "foo")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:36]
  1 │ element.querySelector("#selector").hasAttribute("data-AllowAccess");
    ·                                    ────────────
    ╰────
   help: Replace `element.querySelector("#selector").hasAttribute("data-AllowAccess")` with `Object.hasOwn(element.querySelector("#selector").dataset, "allowaccess")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute('data-a"b');
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute('data-a"b')` with `Object.hasOwn(element.dataset, "a\"b")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:19]
  1 │ optional?.element.hasAttribute("data-unicorn");
    ·                   ────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.hasAttribute("data-unicorn").toString()
    ·         ────────────
    ╰────
   help: Replace `element.hasAttribute("data-unicorn")` with `Object.hasOwn(element.dataset, "unicorn")`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute('data-unicorn');
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute('data-unicorn')` with `element.dataset.unicorn`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-unicorn");
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-unicorn")` with `element.dataset.unicorn`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-unicorn",);
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-unicorn",)` with `element.dataset.unicorn`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-🦄");
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-🦄")` with `element.dataset["🦄"]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-ゆ");
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-ゆ")` with `element.dataset.ゆ`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-foo2");
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-foo2")` with `element.dataset.foo2`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-foo:bar");
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-foo:bar")` with `element.dataset["foo:bar"]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-foo:bar");
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-foo:bar")` with `element.dataset["foo:bar"]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-foo.bar");
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-foo.bar")` with `element.dataset["foo.bar"]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-foo-bar");
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-foo-bar")` with `element.dataset.fooBar`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-foo");
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-foo")` with `element.dataset.foo`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:36]
  1 │ element.querySelector("#selector").getAttribute("data-AllowAccess");
    ·                                    ────────────
    ╰────
   help: Replace `element.querySelector("#selector").getAttribute("data-AllowAccess")` with `element.querySelector("#selector").dataset.allowaccess`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute('data-a"b');
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute('data-a"b')` with `element.dataset["a\"b"]`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:19]
  1 │ optional?.element.getAttribute("data-unicorn");
    ·                   ────────────
    ╰────
   help: Replace `optional?.element.getAttribute("data-unicorn")` with `optional?.element.dataset.unicorn`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.getAttribute("data-unicorn").toString()
    ·         ────────────
    ╰────
   help: Replace `element.getAttribute("data-unicorn")` with `element.dataset.unicorn`.
 
-  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:17]
  1 │ (await promise).getAttribute("data-foo")
    ·                 ────────────

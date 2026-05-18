@@ -4,6 +4,64 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.66.0] - 2026-05-18
+
+### 🚀 Features
+
+- 0440b0f linter/eslint: Implement `id-match` rule (#22379) (Vladislav Sayapin)
+- 65bf119 linter: Implement react no-object-type-as-default-prop (#22481) (uhyo)
+- 2a6ddce linter/eslint: Implement `no-implied-eval` rule (#22391) (Vladislav Sayapin)
+- 625758a linter/vitest: Implement padding-around-after-all-blocks rule (#21788) (kapobajza)
+- 37680b0 linter: Implement react no-unstable-nested-components (#22248) (Jovi De Croock)
+- d8d9c74 linter: Implement import/newline-after-import rule (#19142) (Ryuya Yanagi)
+
+## [1.65.0] - 2026-05-15
+
+### 🚀 Features
+
+- 5478fb5 linter/jsdoc: Implement `require-throws-description` rule (#22386) (Mikhail Baev)
+- c73225e linter/eslint: Implement `prefer-arrow-callback` rule (#22312) (박천(Cheon Park))
+- de82b59 linter: Add support for `eslint-plugin-jsx-a11y-x` (#22356) (mehm8128)
+- f44b6c8 linter: Fill schemas `DummyRuleMap` with built-in rules (#22288) (Sysix)
+
+## [1.64.0] - 2026-05-11
+
+### 🚀 Features
+
+- fbb8f22 linter: Support `ignores` in overrides (#22148) (camc314)
+
+### 🐛 Bug Fixes
+
+- 25b7017 linter: Undocument override `ignores` option (#22213) (camc314)
+
+## [1.63.0] - 2026-05-05
+
+### 📚 Documentation
+
+- cacbc4a linter: Fix jest settings docs. (#22127) (connorshea)
+
+## [1.62.0] - 2026-04-27
+
+### 🚀 Features
+
+- 348f46c linter: Add `respectEslintDisableDirectives` option (#21384) (Christian Vuerings)
+
+### 🐛 Bug Fixes
+
+- 8c425db linter: Allow string for jest version in config schema (#21649) (camc314)
+
+## [1.61.0] - 2026-04-20
+
+### 🚀 Features
+
+- 38d8090 linter/jest: Implemented jest `version` settings in config file. (#21522) (Said Atrahouch)
+
+## [1.60.0] - 2026-04-13
+
+### 📚 Documentation
+
+- cfd8a4f linter: Don't rely on old eslint doc for available globals (#21334) (Nicolas Le Cam)
+
 ## [1.59.0] - 2026-04-06
 
 ### 🐛 Bug Fixes

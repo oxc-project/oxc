@@ -364,7 +364,10 @@ impl<'a> AssignmentLike<'a, '_> {
                 };
                 if let Some(span) = type_span {
                     let comments = f.context().comments().comments_before(span.start);
-                    if comments.len() == 1 {
+                    // Only relocate inline comments (not own-line comments).
+                    // Own-line comments (e.g. JSDoc on its own line before the union)
+                    // must stay as leading comments of the union type so they get proper indentation.
+                    if comments.len() == 1 && !comments[0].preceded_by_newline() {
                         write!(f, [FormatTrailingComments::Comments(comments)]);
                     }
                 }
@@ -844,7 +847,24 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
                         );
                     }
                     AssignmentLikeLayout::BreakAfterOperator => {
-                        write!(f, [group(&soft_line_indent_or_space(&right))]);
+                        // Preserve the original order of trailing line comments after `=`
+                        // by flushing them via `line_suffix_boundary()`.
+                        // Otherwise the line comment gets pushed past the right-hand side,
+                        // changing which token the comment semantically attaches to.
+                        //
+                        // NOTE: Currently scoped to non-conditional `TSTypeAliasDeclaration`.
+                        // Expanding the condition would preserve the order in other nodes too.
+                        // (e.g. `VariableDeclarator`) But for those we follow Prettier's current behavior.
+                        // See also https://github.com/prettier/prettier/issues/14617
+                        if matches!(
+                            self,
+                            AssignmentLike::TSTypeAliasDeclaration(decl)
+                                if !matches!(decl.type_annotation, TSType::TSConditionalType(_))
+                        ) {
+                            write!(f, [line_suffix_boundary(), soft_line_indent_or_space(&right)]);
+                        } else {
+                            write!(f, [group(&soft_line_indent_or_space(&right))]);
+                        }
                     }
                     AssignmentLikeLayout::NeverBreakAfterOperator => {
                         write!(f, [space(), right]);

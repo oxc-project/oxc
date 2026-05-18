@@ -25,7 +25,7 @@ impl<'a> Document<'a> {
         elements: ArenaVec<'a, FormatElement<'a>>,
         sorted_tailwind_classes: Vec<String>,
     ) -> Self {
-        Self { elements: elements.into_bump_slice(), sorted_tailwind_classes }
+        Self { elements: elements.into_arena_slice(), sorted_tailwind_classes }
     }
 
     /// Consumes the document and returns its elements and sorted Tailwind CSS classes.
@@ -38,7 +38,7 @@ impl<'a> Document<'a> {
     /// If you have modified the elements and want to update the document,
     /// use this method to set the new elements.
     pub fn replace_elements(&mut self, elements: ArenaVec<'a, FormatElement<'a>>) {
-        self.elements = elements.into_bump_slice();
+        self.elements = elements.into_arena_slice();
     }
 }
 
@@ -604,10 +604,8 @@ impl FormatElements for [FormatElement<'_>] {
                 FormatElement::Tag(EndLineSuffix) => {
                     ignore_depth -= 1;
                 }
-                FormatElement::Interned(interned) if ignore_depth == 0 => {
-                    if interned.will_break() {
-                        return true;
-                    }
+                FormatElement::Interned(interned) if ignore_depth == 0 && interned.will_break() => {
+                    return true;
                 }
                 FormatElement::Line(line) if line.will_break() => {
                     return true;
@@ -638,10 +636,10 @@ impl FormatElements for [FormatElement<'_>] {
                 FormatElement::Tag(EndLineSuffix) => {
                     ignore_depth -= 1;
                 }
-                FormatElement::Interned(interned) if ignore_depth == 0 => {
-                    if interned.may_directly_break() {
-                        return true;
-                    }
+                FormatElement::Interned(interned)
+                    if ignore_depth == 0 && interned.may_directly_break() =>
+                {
+                    return true;
                 }
 
                 element if ignore_depth == 0 && element.may_directly_break() => {

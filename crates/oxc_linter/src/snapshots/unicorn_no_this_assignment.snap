@@ -2,28 +2,28 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(no-this-assignment): Do not assign `this` to `foo`
+  ⚠ unicorn(no-this-assignment): Do not assign `this` to `foo`
    ╭─[no_this_assignment.tsx:1:7]
  1 │ const foo = this;
    ·       ──────────
    ╰────
   help: Reference `this` directly instead of assigning it to a variable.
 
-  ⚠ eslint-plugin-unicorn(no-this-assignment): Do not assign `this` to `foo`
+  ⚠ unicorn(no-this-assignment): Do not assign `this` to `foo`
    ╭─[no_this_assignment.tsx:1:9]
  1 │ let foo;foo = this;
    ·         ──────────
    ╰────
   help: Reference `this` directly instead of assigning it to a variable.
 
-  ⚠ eslint-plugin-unicorn(no-this-assignment): Do not assign `this` to `baz`
+  ⚠ unicorn(no-this-assignment): Do not assign `this` to `baz`
    ╭─[no_this_assignment.tsx:1:16]
  1 │ var foo = bar, baz = this;
    ·                ──────────
    ╰────
   help: Reference `this` directly instead of assigning it to a variable.
 
-  ⚠ eslint-plugin-unicorn(no-this-assignment): Do not assign `this` to `baz`
+  ⚠ unicorn(no-this-assignment): Do not assign `this` to `baz`
    ╭─[no_this_assignment.tsx:1:18]
  1 │ var foo = (bar), baz = (this);
    ·                  ────────────

@@ -105,6 +105,7 @@ declare_oxc_lint!(
     react,
     style,
     config = JsxHandlerNamesConfig,
+    version = "1.13.0",
 );
 
 fn build_event_handler_regex(handler_prefix: &str, handler_prop_prefix: &str) -> Option<Regex> {

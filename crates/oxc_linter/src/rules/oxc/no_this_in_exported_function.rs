@@ -1,17 +1,13 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        Declaration, ExportDefaultDeclarationKind, Expression, Function, ModuleExportName,
-        PropertyDefinition, StaticBlock, ThisExpression,
-    },
+    ast::{Declaration, ExportDefaultDeclarationKind, Expression, Function, ModuleExportName},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::ThisExpressionFinder};
 
 fn no_this_in_exported_function_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`this` should not be used in exported functions")
@@ -64,7 +60,8 @@ declare_oxc_lint!(
     /// ```
     NoThisInExportedFunction,
     oxc,
-    suspicious
+    suspicious,
+    version = "1.33.0",
 );
 
 impl Rule for NoThisInExportedFunction {
@@ -112,39 +109,14 @@ impl Rule for NoThisInExportedFunction {
     }
 }
 
-// Visitor to find `this` expressions within a function body
-struct ThisFinder {
-    found_this_expressions: Vec<Span>,
-}
-
-impl ThisFinder {
-    fn new() -> Self {
-        Self { found_this_expressions: Vec::new() }
-    }
-}
-
-impl<'a> Visit<'a> for ThisFinder {
-    fn visit_this_expression(&mut self, expr: &ThisExpression) {
-        self.found_this_expressions.push(expr.span);
-    }
-    // Don't traverse into nested function declarations - they have their own `this` context
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
-    // Don't traverse into static blocks - `this` refers to the class itself
-    fn visit_static_block(&mut self, _block: &StaticBlock<'a>) {}
-    // For property definitions, only visit the key (for computed properties)
-    // but skip the value since `this` in values refers to the class/instance
-    fn visit_property_definition(&mut self, prop: &PropertyDefinition<'a>) {
-        self.visit_property_key(&prop.key);
-    }
-}
-
 fn check_function_for_this(func: &Function, ctx: &LintContext) {
     let Some(body) = &func.body else { return };
 
-    let mut finder = ThisFinder::new();
+    let mut finder =
+        ThisExpressionFinder::new().skip_static_blocks().skip_property_definition_values();
     finder.visit_function_body(body);
 
-    for span in finder.found_this_expressions {
+    for span in finder.into_spans() {
         ctx.diagnostic(no_this_in_exported_function_diagnostic(span));
     }
 }

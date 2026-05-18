@@ -74,7 +74,7 @@ fn main() -> Result<(), String> {
     }
 
     println!("=======================");
-    println!("Formatted with {sort_imports_options:#?}",);
+    println!("Formatted with {sort_imports_options:#?}");
 
     Ok(())
 }

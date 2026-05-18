@@ -76,6 +76,7 @@ declare_oxc_lint!(
     JsxNoConstructedContextValues,
     react,
     perf,
+    version = "1.48.0",
 );
 
 impl Rule for JsxNoConstructedContextValues {

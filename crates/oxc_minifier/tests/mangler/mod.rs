@@ -219,6 +219,63 @@ fn private_member_mangling() {
     });
 }
 
+/// A named function expression whose name is shadowed by a same-named declaration in its
+/// body must receive the same mangled name as the shadowing symbol; otherwise the emitted
+/// fn-expr name collides with whichever unrelated outer-scope variable happens to own slot 0.
+#[test]
+fn function_expression_name_shadowed() {
+    let options = MangleOptions::default();
+
+    // `var` shadow.
+    test(
+        "function _() { var x; var f = function foo() { var foo = x; } }",
+        "function _() { var e; var t = function t() { var t = e; } }",
+        options,
+    );
+
+    // Parameter shadow.
+    test(
+        "function _() { var x; (function foo(foo) { foo + x })() }",
+        "function _() { var e; (function t(t) { t + e; })(); }",
+        options,
+    );
+
+    // `var` inside an `else` block — still hoists through the block scope to the fn-expr scope.
+    test(
+        "function _() { var x; var f = function foo() { if (x) {} else { var foo = x; } } }",
+        "function _() { var e; var t = function t() { if (e) {} else { var t = e; } } }",
+        options,
+    );
+}
+
+/// Re-mangling a mangled output must be a fixed point.
+#[test]
+fn shadowed_fn_expr_mangle_is_idempotent() {
+    let options = MangleOptions::default();
+
+    let cases = [
+        // Basic `var` shadow (sanity).
+        "function _() { var x; var f = function foo() { var foo = x; } }",
+        // Two shadowed fn-exprs in the same scope — unique coverage beyond `_shadowed` test.
+        "
+        (function() {
+            var a = 1;
+            var b = function foo() { var foo = a; };
+            var c = function bar() { var bar = a; };
+        })();
+        ",
+    ];
+
+    for case in cases {
+        let pass1 = mangle(case, options);
+        let pass2 = mangle(&pass1, options);
+        assert_eq!(
+            pass1, pass2,
+            "\nIdempotency failure for:\n{case}\nPass 1:\n{pass1}\nPass 2:\n{pass2}"
+        );
+    }
+}
+
 /// Annex B.3.2.1: In sloppy mode, function declarations inside blocks have var-like hoisting.
 /// The mangler must not assign the same name to such a function and an outer `var` binding.
 #[test]

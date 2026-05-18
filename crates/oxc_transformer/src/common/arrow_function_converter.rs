@@ -402,12 +402,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             match_member_expression!(Expression) => {
                 self.transform_member_expression_for_super(expr, None, ctx)
             }
-            Expression::ArrowFunctionExpression(arrow) => {
+            Expression::ArrowFunctionExpression(arrow)
                 // TODO: If the async arrow function without `this` or `super` usage, we can skip this step.
                 if self.is_async_only()
                     && arrow.r#async
                     && Self::in_class_property_definition_value(ctx)
-                {
+                => {
                     // Inside class property definition value, since async arrow function will be
                     // converted to a generator function by `AsyncToGenerator` plugin, ensure
                     // `_this = this` and `super` methods are inserted correctly. We need to
@@ -423,10 +423,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                     // }
                     // ```
                     Some(wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast), ctx))
-                } else {
-                    return;
                 }
-            }
             _ => return,
         };
 
@@ -879,8 +876,11 @@ impl<'a> ArrowFunctionConverter<'a> {
     ) {
         let original_scope_id = ctx.scoping().symbol_scope_id(binding.symbol_id);
         if target_scope_id != original_scope_id {
-            ctx.scoping_mut().set_symbol_scope_id(binding.symbol_id, target_scope_id);
-            ctx.scoping_mut().move_binding(original_scope_id, target_scope_id, binding.name);
+            ctx.scoping_mut().move_binding_by_symbol_id(
+                original_scope_id,
+                target_scope_id,
+                binding.symbol_id,
+            );
         }
     }
 

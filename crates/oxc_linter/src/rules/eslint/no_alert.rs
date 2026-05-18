@@ -53,6 +53,7 @@ declare_oxc_lint!(
     NoAlert,
     eslint,
     restriction,
+    version = "0.9.3",
 );
 
 const GLOBAL_THIS: &str = "globalThis";

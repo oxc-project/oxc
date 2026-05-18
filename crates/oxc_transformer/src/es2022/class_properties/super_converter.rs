@@ -551,7 +551,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
     ///  `_superPropGet(_Class, prop, _Class, 2)`
     fn create_super_prop_get(
         &mut self,
-        span: Span,
+        _span: Span,
         property: Expression<'a>,
         is_callee: bool,
         ctx: &mut TraverseCtx<'a>,
@@ -569,13 +569,13 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         };
 
         // `_superPropGet(_Class, prop, _Class)` or `_superPropGet(_Class, prop, _Class, 2)`
-        helper_call_expr(Helper::SuperPropGet, span, arguments, ctx)
+        helper_call_expr(Helper::SuperPropGet, arguments, ctx)
     }
 
     /// `_superPropSet(_Class, prop, value, _Class, 1)`
     fn create_super_prop_set(
         &mut self,
-        span: Span,
+        _span: Span,
         property: Expression<'a>,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -593,7 +593,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
                 NumberBase::Decimal,
             )),
         ]);
-        helper_call_expr(Helper::SuperPropSet, span, arguments, ctx)
+        helper_call_expr(Helper::SuperPropSet, arguments, ctx)
     }
 
     /// * [`ClassPropertiesSuperConverterMode::Static`]

@@ -4,7 +4,6 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::JSDoc;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
@@ -96,6 +95,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     config = RequireReturnsConfig,
+    version = "0.4.0",
 );
 
 impl Rule for RequireReturns {
@@ -178,21 +178,17 @@ impl Rule for RequireReturns {
                 continue;
             };
             // If no JSDoc is found, skip
-            let Some(jsdocs) = ctx.jsdoc().get_all_by_node(ctx.nodes(), func_def_node) else {
+            let Some(jsdoc) = ctx.jsdoc().get_one_by_node(ctx.nodes(), func_def_node) else {
                 continue;
             };
 
             let config = &self.0;
             let settings = &ctx.settings().jsdoc;
             // If JSDoc is found but safely ignored, skip
-            if jsdocs
-                .iter()
-                .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
-                .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &config.exempted_by))
-                .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
-                .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
-                .count()
-                == 0
+            if should_ignore_as_custom_skip(&jsdoc)
+                || should_ignore_as_avoid(&jsdoc, settings, &config.exempted_by)
+                || should_ignore_as_private(&jsdoc, settings)
+                || should_ignore_as_internal(&jsdoc, settings)
             {
                 continue;
             }
@@ -200,15 +196,11 @@ impl Rule for RequireReturns {
             // If config disabled checking, skip
             if let AstKind::MethodDefinition(method_def) = func_def_node.kind() {
                 match method_def.kind {
-                    MethodDefinitionKind::Get => {
-                        if !config.check_getters {
-                            continue;
-                        }
+                    MethodDefinitionKind::Get if !config.check_getters => {
+                        continue;
                     }
-                    MethodDefinitionKind::Constructor => {
-                        if !config.check_constructors {
-                            continue;
-                        }
+                    MethodDefinitionKind::Constructor if !config.check_constructors => {
+                        continue;
                     }
                     _ => {}
                 }
@@ -227,15 +219,14 @@ impl Rule for RequireReturns {
                 continue;
             }
 
-            let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
             let resolved_returns_tag_name = settings.resolve_tag_name("returns");
 
-            if is_missing_special_tag(&jsdoc_tags, resolved_returns_tag_name) {
+            if is_missing_special_tag(jsdoc.tags(), resolved_returns_tag_name) {
                 ctx.diagnostic(missing_returns_diagnostic(*func_span));
                 continue;
             }
 
-            if let Some(span) = is_duplicated_special_tag(&jsdoc_tags, resolved_returns_tag_name) {
+            if let Some(span) = is_duplicated_special_tag(jsdoc.tags(), resolved_returns_tag_name) {
                 ctx.diagnostic(duplicate_returns_diagnostic(span));
             }
         }
@@ -809,6 +800,50 @@ fn test() {
         ),
         (
             "
+                      /**
+                       * Callback to get the order index of a property name based on compiled regex patterns.
+                       * @callback OrderIndexGetter
+                       * @param {string} propName Property name to check.
+                       * @returns {number} Order index based on matching pattern, or length of patterns if no match.
+                       */
+
+                      /**
+                       * Create a function that returns the order index of a property name based on
+                       * compiled regex patterns. Returns pattern array length if no match found.
+                       * @param {RegExp[]} compiledOrder - Compiled regex patterns in priority order.
+                       * @returns {OrderIndexGetter} Function that takes a property name and returns its order index.
+                       */
+                      const createOrderIndexGetter = (compiledOrder) => (propName) => {
+                        for (let i = 0; i < compiledOrder.length; i += 1) {
+                          if (compiledOrder[i].test(propName)) {
+                            return i;
+                          }
+                        }
+                        return compiledOrder.length;
+                      };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                      /**
+                       * Earlier doc.
+                       * @returns {number} earlier
+                       */
+
+                      /**
+                       * Function doc.
+                       * @returns {number} actual
+                       */
+                      function quux () {
+                        return 1;
+                      }",
+            None,
+            None,
+        ),
+        (
+            "
 			          /**
 			           * @callback
 			           */
@@ -1161,6 +1196,22 @@ fn test() {
 			            return foo;
 			          }
 			      ",
+            None,
+            None,
+        ),
+        (
+            "
+                      /**
+                       * @callback Getter
+                       * @returns {number} callback return
+                       */
+
+                      /**
+                       * Function doc missing returns.
+                       */
+                      function quux () {
+                        return 1;
+                      }",
             None,
             None,
         ),

@@ -5,7 +5,7 @@ source: apps/oxlint/src/tester.rs
 arguments: --no-error-on-unmatched-pattern foo.asdf
 working directory: 
 ----------
-Finished in <variable>ms on 0 files with 93 rules using 1 threads.
+Finished in <variable>ms on 0 files with 95 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
