@@ -2627,6 +2627,9 @@ expression: json
         "vue/no-required-prop-with-default": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/no-shared-component-data": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/no-this-in-before-route-enter": {
           "$ref": "#/definitions/DummyRule"
         },
