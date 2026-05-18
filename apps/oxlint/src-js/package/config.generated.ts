@@ -1096,6 +1096,7 @@ export interface DummyRuleMap {
   "unicorn/escape-case"?: DummyRule;
   "unicorn/explicit-length-check"?: DummyRule;
   "unicorn/filename-case"?: DummyRule;
+  "unicorn/import-style"?: DummyRule;
   "unicorn/new-for-builtins"?: DummyRule;
   "unicorn/no-abusive-eslint-disable"?: DummyRule;
   "unicorn/no-accessor-recursion"?: DummyRule;
