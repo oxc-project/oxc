@@ -461,6 +461,7 @@ impl CliRunner {
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
             .with_type_check_only(type_check_only)
+            .with_timings(debug_timings)
             .build()
         {
             Ok(runner) => runner,
