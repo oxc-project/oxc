@@ -23,7 +23,25 @@ use crate::{
     side_effects::MayHaveSideEffects,
 };
 
-use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
+use super::{
+    ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, expr_may_have_lone_surrogates,
+    get_side_free_string_value_without_lone_surrogates, str_has_lone_surrogate_encoding,
+};
+
+/// Unwrap `expr` to its `StringLiteral` only when it doesn't carry the lone-surrogate encoding.
+///
+/// String-method folds that read the literal's bytes (index, slice, compare, emit) would read
+/// escape bytes rather than runtime code units when the flag is set, and any literal they
+/// produce would drop the flag via `value_to_expr`. Each caller's comment explains the
+/// site-specific bail reason; this helper just collapses the repeated pattern.
+fn string_literal_without_lone_surrogates<'a, 'b>(
+    expr: &'b Expression<'a>,
+) -> Option<&'b StringLiteral<'a>> {
+    match expr {
+        Expression::StringLiteral(s) if !s.lone_surrogates => Some(s),
+        _ => None,
+    }
+}
 
 fn try_fold_global_functions<'a>(
     ident: &IdentifierReference<'a>,
@@ -107,13 +125,23 @@ fn try_fold_string_casing<'a>(
         return None;
     }
 
+    // Bail on lone-surrogate inputs; the folded literal would default to `lone_surrogates: false`.
+    // The flag / byte scan lives inline to avoid a second `get_constant_value_for_reference_id`
+    // lookup for identifiers.
     let value = match object {
+        Expression::StringLiteral(s) if s.lone_surrogates => return None,
         Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
-        Expression::Identifier(ident) => ident
-            .reference_id
-            .get()
-            .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
-            .and_then(ConstantValue::into_string)?,
+        Expression::Identifier(ident) => {
+            let cow = ident
+                .reference_id
+                .get()
+                .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
+                .and_then(ConstantValue::into_string)?;
+            if str_has_lone_surrogate_encoding(&cow) {
+                return None;
+            }
+            cow
+        }
         _ => return None,
     };
 
@@ -137,11 +165,12 @@ fn try_fold_string_index_of<'a>(
     if args.len() >= 3 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    // `indexOf`/`lastIndexOf` index by JS code unit, not bytes of the encoded form.
+    let s = string_literal_without_lone_surrogates(object)?;
     let search_value = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
-            Some(arg.to_expression().get_side_free_string_value(ctx)?)
+            Some(get_side_free_string_value_without_lone_surrogates(arg.to_expression(), ctx)?)
         }
         None => None,
     };
@@ -171,7 +200,9 @@ fn try_fold_string_substring_or_slice<'a>(
     if args.len() > 2 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    // Slicing by JS code unit against the encoding (5 chars per surrogate) would split a
+    // `�XXXX` run, yielding bytes codegen can't re-encode.
+    let s = string_literal_without_lone_surrogates(object)?;
     let start_idx = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -208,7 +239,9 @@ fn try_fold_string_char_at<'a>(
     if args.len() > 1 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    // `charAt` indexes by JS code unit; against the 5-chars-per-surrogate encoding it would return
+    // a fragment of the escape (e.g. `�`) rather than the single code unit the source represents.
+    let s = string_literal_without_lone_surrogates(object)?;
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -230,7 +263,9 @@ fn try_fold_string_char_code_at<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    let Expression::StringLiteral(s) = object else { return None };
+    // Indexing into the encoded form would return the code of an escape char, not the runtime
+    // code unit.
+    let s = string_literal_without_lone_surrogates(object)?;
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -252,7 +287,11 @@ fn try_fold_starts_with<'a>(
         return None;
     }
     let Argument::StringLiteral(arg) = args.first().unwrap() else { return None };
-    let Expression::StringLiteral(s) = object else { return None };
+    // Either side carrying the encoding would make this a compare of escape bytes.
+    if arg.lone_surrogates {
+        return None;
+    }
+    let s = string_literal_without_lone_surrogates(object)?;
     Some(ConstantValue::Boolean(s.value.starts_with(arg.value.as_str())))
 }
 
@@ -265,13 +304,20 @@ fn try_fold_string_replace<'a>(
     if args.len() != 2 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    // Any operand carrying the encoding could split a `�XXXX` run or splice escape bytes into
+    // a result that gets emitted without the flag.
+    let s = string_literal_without_lone_surrogates(object)?;
     let search_value = args.first().unwrap();
     let search_value = match search_value {
         Argument::SpreadElement(_) => return None,
         match_expression!(Argument) => {
             let value = search_value.to_expression();
             if value.may_have_side_effects(ctx) {
+                return None;
+            }
+            // Pre-filter: `evaluate_value` below resolves identifiers to the encoded bytes of
+            // their `ConstantValue::String` but discards the flag.
+            if expr_may_have_lone_surrogates(value, ctx) {
                 return None;
             }
             value.evaluate_value(ctx)?.into_string()?
@@ -281,7 +327,7 @@ fn try_fold_string_replace<'a>(
     let replace_value = match replace_value {
         Argument::SpreadElement(_) => return None,
         match_expression!(Argument) => {
-            replace_value.to_expression().get_side_free_string_value(ctx)?
+            get_side_free_string_value_without_lone_surrogates(replace_value.to_expression(), ctx)?
         }
     };
     if replace_value.contains('$') {
@@ -363,11 +409,17 @@ fn try_fold_to_string<'a>(
         Expression::RegExpLiteral(lit) if args.is_empty() => {
             lit.to_js_string(ctx).map(ConstantValue::String)
         }
-        e if args.is_empty() => e
-            .evaluate_value(ctx)
-            // `null` and `undefined` returns type errors
-            .filter(|v| !v.is_undefined() && !v.is_null())
-            .and_then(|v| v.to_js_string(ctx).map(ConstantValue::String)),
+        e if args.is_empty() => {
+            // `'\uDC00'.toString()` would otherwise route the encoded bytes through
+            // `value_to_expr` without the flag.
+            if expr_may_have_lone_surrogates(e, ctx) {
+                return None;
+            }
+            e.evaluate_value(ctx)
+                // `null` and `undefined` returns type errors
+                .filter(|v| !v.is_undefined() && !v.is_null())
+                .and_then(|v| v.to_js_string(ctx).map(ConstantValue::String))
+        }
         _ => None,
     }
 }
@@ -550,7 +602,10 @@ fn try_fold_encode_uri<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    // `encodeURI('\uD800')` throws `URIError` at runtime; our stored value is the encoded form,
+    // which the `%`-encoder would happily turn into `%EF%BF%BDd800`. Bail via the safe helper
+    // rather than diverge. The same reasoning applies to the other three URI folds below.
+    let string_value = get_side_free_string_value_without_lone_surrogates(expr, ctx)?;
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -579,7 +634,7 @@ fn try_fold_encode_uri_component<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let string_value = get_side_free_string_value_without_lone_surrogates(expr, ctx)?;
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -604,7 +659,7 @@ fn try_fold_decode_uri<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let string_value = get_side_free_string_value_without_lone_surrogates(expr, ctx)?;
 
     let decoded = decode_uri_chars(
         string_value,
@@ -626,7 +681,7 @@ fn try_fold_decode_uri_component<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let string_value = get_side_free_string_value_without_lone_surrogates(expr, ctx)?;
 
     // decodeURIComponent decodes all percent-encoded sequences
     let decoded = decode_uri_chars(

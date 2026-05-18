@@ -33,6 +33,15 @@ fn test_string_index_of() {
     test("x = 'abcnulldef'.indexOf(null)", "x = 3");
     test("x = 'abctruedef'.indexOf(true)", "x = 3");
 
+    // Identifier bound to a non-string constant stringifies the same as the literal does.
+    // Using a large integer keeps `n` out of the multi-ref integer inliner (`-99..=999`) so the
+    // fold site sees an Identifier rather than a pre-inlined numeric literal; once the fold
+    // consumes that reference, the trailing `y = n` single-ref-inlines to `y = 12345`.
+    test(
+        "const n = 12345; x = 'abc12345def'.indexOf(n), y = n",
+        "const n = 12345; x = 3, y = 12345",
+    );
+
     test_same("x = 1 .indexOf('bcd');");
     test_same("x = NaN.indexOf('bcd')");
     test("x = undefined.indexOf('bcd')", "x = (void 0).indexOf('bcd')");
@@ -161,6 +170,14 @@ fn test_fold_string_replace() {
     test_same("'PreXyzPost'.replace('Xyz', '$\\'')"); // would fold to  'PrePostPost'
     test_same("'PreXyzPostXyz'.replace('Xyz', '$\\'')"); // would fold to 'PrePostXyzPostXyz'
     test_same("'123'.replace('2', '$`')"); // would fold to '113'
+
+    // Identifier bound to a non-string constant stringifies for the replace arg. A large
+    // integer keeps `n` out of the multi-ref integer inliner (`-99..=999`) so the fold site
+    // sees an Identifier; the trailing `y = n` single-ref-inlines after the fold.
+    test(
+        "const n = 12345; x = 'xtail'.replace('x', n), y = n",
+        "const n = 12345; x = '12345tail', y = 12345",
+    );
 }
 
 #[test]
@@ -435,6 +452,91 @@ fn test_fold_string_trim() {
     test("x = '  abc  '.trimEnd()", "x = '  abc'");
     test("x = 'abc'.trimEnd()", "x = 'abc'");
     test_same("x = 'abc'.trimEnd(1)");
+}
+
+/// Every string-method fold (`substring`/`slice`/`charAt`/`charCodeAt`/`indexOf`/`startsWith`/
+/// `replace*`/`toLowerCase`/`toUpperCase`/`trim*`/`encodeURI*`/`decodeURI*`/`String`/`toString`/
+/// `concat`) must bail on lone-surrogate inputs; locking that in.
+#[test]
+fn test_lone_surrogate_bailouts() {
+    // Code-unit indexing would cut through a `�XXXX` run.
+    test_same("x = '[\\uDC00]'.substring(0, 1)");
+    test_same("x = '[\\uDC00]'.substring(1)");
+    test_same("x = '[\\uDC00]'.slice(0, 1)");
+    test_same("x = '[\\uDC00]'.slice(1)");
+    test_same("x = '[\\uDC00]'.charAt(0)");
+    test_same("x = '\\uDC00'.charAt(0)");
+    test_same("x = '\\uDC00'.charCodeAt(0)");
+    test_same("x = '[\\uDC00]'.indexOf('[')");
+    test_same("x = 'abc'.indexOf('\\uDC00')");
+    test_same("x = '\\uDC00'.startsWith('a')");
+    test_same("x = 'abc'.startsWith('\\uDC00')");
+
+    // `replace`/`replaceAll`: any operand could split or splice escape bytes.
+    test_same("x = '[\\uDC00]'.replace('[', '(')");
+    test_same("x = '[\\uDC00]'.replaceAll('[', '(')");
+    test_same("x = 'abc'.replace('\\uDC00', 'x')");
+    test_same("x = 'abc'.replace('b', '\\uDC00')");
+
+    // Case-folding and trimming bail for uniformity — the result would lack the flag.
+    test_same("x = '\\uDC00'.toLowerCase()");
+    test_same("x = '\\uDC00'.toUpperCase()");
+    test_same("x = '[\\uDC00]'.toUpperCase()");
+    test_same("x = '\\uDC00'.trim()");
+    test_same("x = '  \\uDC00  '.trim()");
+
+    // `encodeURI('\uD800')` throws at runtime; folding the encoded form would diverge.
+    test_same("x = encodeURI('\\uDC00')");
+    test_same("x = encodeURIComponent('\\uDC00')");
+    test_same("x = decodeURI('\\uDC00')");
+    test_same("x = decodeURIComponent('\\uDC00')");
+
+    // `String()` / `.toString()` would route encoded bytes through `value_to_expr`.
+    test_same("x = String('\\uDC00')");
+    test_same("x = '\\uDC00'.toString()");
+    // `String(identifier)` / `identifier.toString()` exercise the Identifier arm of
+    // `expr_may_have_lone_surrogates`'s byte-scan. Trailing `y = a` keeps `a` out of the
+    // single-reference inliner so the fold site actually sees an Identifier.
+    test_same("const a = '\\uDC00'; x = String(a), y = a");
+    test_same("const a = '\\uDC00'; x = a.toString(), y = a");
+
+    // `.concat`: both the all-string merge and the template-literal rewrite bail.
+    test_same("x = ''.concat('[\\uDC00]')");
+    test_same("x = '[\\uDC00]'.concat(a)");
+    test_same("x = 'a'.concat(b, '[\\uDC00]')");
+
+    // Identifier arg resolving to a lone-surrogate constant survives the concat → template rewrite
+    // as `${a}`; downstream template-level folds then bail via template_may_have_lone_surrogates.
+    test(
+        "const a = '\\uDC00'; x = ''.concat(a, b); y = a",
+        "const a = '\\uDC00'; x = `${a}${b}`, y = a",
+    );
+
+    // Control cases: plain U+FFFD (not the encoding) still folds.
+    test("x = '\\uFFFD'.toLowerCase()", "x = '\\uFFFD'");
+    test("x = '\\uFFFD'.trim()", "x = '\\uFFFD'");
+    test("x = ''.concat('\\uFFFD')", "x = '\\uFFFD'");
+
+    // Real U+FFFD followed by ASCII `dc00` has the same bytes as the lone-surrogate encoding
+    // of `\uDC00`, but at runtime it's a 5-code-unit string; `encodeURI` %-encodes the U+FFFD
+    // and leaves the ASCII alone. The fold must handle this without a byte-scan tripping up on
+    // the ambiguous bytes. (`\u{FFFD}` self-escape is `�fffd`, so `'�fffd'` is
+    // excluded from this class — that one is genuinely indistinguishable from the encoding.)
+    test("x = encodeURI('\\uFFFDdc00')", "x = '%EF%BF%BDdc00'");
+
+    // `parseFloat` / `parseInt` need no dedicated bail: they produce `Number`, and the non-
+    // numeric prefix handling behaves the same on the runtime string and on the stored
+    // encoded bytes (neither `\uDC00` nor `�dc00` starts with a numeric prefix). Pin
+    // that convergence so a future "conservative bail on any lone-surrogate input" doesn't
+    // regress a legitimate fold.
+    test("x = parseFloat('\\uDC00')", "x = NaN");
+    test("x = parseInt('\\uDC00')", "x = NaN");
+    test("x = parseInt('\\uDC00', 16)", "x = NaN");
+    // Numeric prefix before a lone surrogate still folds, on both the flagged operand and
+    // its real-U+FFFD byte-twin.
+    test("x = parseFloat('42\\uDC00')", "x = 42");
+    test("x = parseInt('a\\uDC00', 16)", "x = 10");
+    test("x = parseFloat('42\\uFFFDdc00')", "x = 42");
 }
 
 #[test]
@@ -1115,6 +1217,11 @@ fn test_fold_encode_uri() {
 
     test_same("x = encodeURI('a', 'b')");
     test_same("x = encodeURI(x)");
+
+    // Identifier bound to a non-string constant stringifies for the encoder input. A large
+    // integer keeps `n` out of the multi-ref integer inliner (`-99..=999`) so the fold site
+    // sees an Identifier; the trailing `y = n` single-ref-inlines after the fold.
+    test("const n = 12345; x = encodeURI(n), y = n", "const n = 12345; x = '12345', y = 12345");
 }
 
 #[test]

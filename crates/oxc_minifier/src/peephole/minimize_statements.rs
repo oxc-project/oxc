@@ -1293,7 +1293,14 @@ impl<'a> PeepholeOptimizations {
         changed
     }
 
-    /// Returns new length
+    /// Returns new length.
+    ///
+    /// This path moves the declarator's init AST node verbatim into the use site
+    /// (via `take_in`), so lone-surrogate `StringLiteral`s and `TemplateElement`s
+    /// ride along with their flags intact. Unlike `inline_identifier_reference`,
+    /// which has to bail on flagged strings because it reconstructs a literal
+    /// from a flagless `ConstantValue::String`, this inliner is structurally safe
+    /// without a dedicated guard.
     fn substitute_single_use_symbol_in_expression_from_declarators(
         target_expr: &mut Expression<'a>,
         declarators: &mut [VariableDeclarator<'a>],
