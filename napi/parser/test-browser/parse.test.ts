@@ -1,5 +1,8 @@
 import { expect, test } from "vitest";
-import { parse, parseSync } from "../src-js/wasm.js";
+
+// Note this points directly to `dist/wasm.js` rather than using `#oxc-parser` because
+// browser tests should exercise the published browser entry point.
+import { parse, parseSync } from "../dist/wasm.js";
 
 test("parseSync", () => {
   const result = parseSync("test.mjs", "ok");
