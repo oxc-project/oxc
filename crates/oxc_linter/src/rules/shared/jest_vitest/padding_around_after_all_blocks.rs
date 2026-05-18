@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub const DOCUMENTATION: &str = r"### What it does
-    
+
 This rule enforces a line of padding before and after 1 or more
 `afterAll` statements.
 
@@ -33,6 +33,7 @@ Examples of **correct** code for this rule:
 const thing = 123;
 
 afterAll(() => {});
+```
 ";
 
 pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
