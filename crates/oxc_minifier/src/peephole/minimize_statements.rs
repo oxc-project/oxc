@@ -565,11 +565,11 @@ impl<'a> PeepholeOptimizations {
     ) -> bool {
         elements.iter().any(|e| match e {
             ArrayExpressionElement::SpreadElement(e) => {
-                Self::expression_has_reference_to_symbol_ids(&e.argument, &symbol_ids, ctx)
+                Self::expression_has_reference_to_symbol_ids(&e.argument, symbol_ids, ctx)
             }
             ArrayExpressionElement::Elision(_) => false,
             _ => e.as_expression().is_none_or(|expr| {
-                Self::expression_has_reference_to_symbol_ids(expr, &symbol_ids, ctx)
+                Self::expression_has_reference_to_symbol_ids(expr, symbol_ids, ctx)
             }),
         })
     }
@@ -594,7 +594,7 @@ impl<'a> PeepholeOptimizations {
             Expression::ArrayExpression(array_expr) => {
                 Self::array_elements_have_reference_to_symbol_ids(
                     &array_expr.elements,
-                    &symbol_ids,
+                    symbol_ids,
                     ctx,
                 )
             }
