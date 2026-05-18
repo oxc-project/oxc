@@ -836,6 +836,7 @@ export interface DummyRuleMap {
   "no-void"?: DummyRule;
   "no-warning-comments"?: DummyRule;
   "no-with"?: DummyRule;
+  "node/callback-return"?: DummyRule;
   "node/global-require"?: DummyRule;
   "node/handle-callback-err"?: DummyRule;
   "node/no-exports-assign"?: DummyRule;

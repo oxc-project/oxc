@@ -1219,6 +1219,9 @@
         "no-with": {
           "$ref": "#/definitions/DummyRule"
         },
+        "node/callback-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "node/global-require": {
           "$ref": "#/definitions/DummyRule"
         },
