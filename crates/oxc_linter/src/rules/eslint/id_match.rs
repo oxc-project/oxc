@@ -23,20 +23,8 @@ use crate::{
     config::GlobalValue,
     context::{ContextHost, LintContext},
     rule::{Rule, TupleRuleConfig},
+    utils::deserialize_required_regex_option,
 };
-
-fn deserialize_id_match_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::de::Error;
-
-    // Unlike generic optional regex fields, the first id-match tuple element
-    // is optional only when omitted. If present, it must be a string pattern;
-    // `[null]` should be rejected instead of silently disabling the rule.
-    let pattern = String::deserialize(deserializer)?;
-    Regex::new(&pattern).map(Some).map_err(D::Error::custom)
-}
 
 fn id_match_diagnostic(span: Span, name: &str, pattern: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Identifier '{name}' does not match the pattern '{pattern}'."))
@@ -62,7 +50,7 @@ impl Deref for IdMatch {
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct IdMatchConfig(
-    #[serde(default, deserialize_with = "deserialize_id_match_pattern")] Option<Regex>,
+    #[serde(default, deserialize_with = "deserialize_required_regex_option")] Option<Regex>,
     IdMatchOptions,
 );
 
