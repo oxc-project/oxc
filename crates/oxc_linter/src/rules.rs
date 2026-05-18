@@ -116,6 +116,7 @@ pub(crate) mod eslint {
     pub mod no_global_assign;
     pub mod no_implicit_coercion;
     pub mod no_implicit_globals;
+    pub mod no_implied_eval;
     pub mod no_import_assign;
     pub mod no_inline_comments;
     pub mod no_inner_declarations;
@@ -440,6 +441,7 @@ pub(crate) mod react {
     pub mod no_is_mounted;
     pub mod no_multi_comp;
     pub mod no_namespace;
+    pub mod no_object_type_as_default_prop;
     pub mod no_react_children;
     pub mod no_redundant_should_component_update;
     pub mod no_render_return_value;
@@ -769,6 +771,7 @@ pub(crate) mod vitest {
     pub mod no_test_prefixes;
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
+    pub mod padding_around_after_all_blocks;
     pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;
     pub mod prefer_called_times;

@@ -979,6 +979,9 @@
         "no-implicit-globals": {
           "$ref": "#/definitions/DummyRule"
         },
+        "no-implied-eval": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "no-import-assign": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -1535,6 +1538,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "react/no-namespace": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-object-type-as-default-prop": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/no-react-children": {
@@ -2435,6 +2441,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/no-unneeded-async-expect-function": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/prefer-called-exactly-once-with": {

@@ -28,6 +28,7 @@
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
     "@napi-rs/cli": "catalog:",
+    "@oxapps/shared": "workspace:*",
     "@types/node": "catalog:",
     "degit": "^2.8.4",
     "diff": "^9.0.0",

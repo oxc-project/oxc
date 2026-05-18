@@ -20,6 +20,7 @@ pub mod no_standalone_expect;
 pub mod no_test_prefixes;
 pub mod no_test_return_statement;
 pub mod no_unneeded_async_expect_function;
+pub mod padding_around_after_all_blocks;
 pub mod prefer_called_with;
 pub mod prefer_comparison_matcher;
 pub mod prefer_each;

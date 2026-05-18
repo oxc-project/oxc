@@ -343,6 +343,8 @@ impl FromStr for DebugOptions {
 fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
     if cfg!(debug_assertions) {
         Ok(OutputFormat::Default)
+    } else if !cfg!(test) && crate::agent_detection::is_agent() {
+        Ok(OutputFormat::Agent)
     } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
         Ok(OutputFormat::Github)
     } else {
@@ -496,11 +498,6 @@ impl EnablePlugins {
         self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
         self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
         self.vue_plugin.inspect(|yes| plugins.set(LintPlugins::VUE, yes));
-
-        // Without this, jest plugins adapted to vitest will not be enabled.
-        if self.vitest_plugin.is_enabled() && self.jest_plugin.is_not_set() {
-            plugins.set(LintPlugins::JEST, true);
-        }
     }
 }
 
@@ -569,7 +566,7 @@ mod plugins {
         let mut plugins = LintPlugins::default();
         let enable =
             EnablePlugins { vitest_plugin: OverrideToggle::Enable, ..EnablePlugins::default() };
-        let expected = LintPlugins::default() | LintPlugins::VITEST | LintPlugins::JEST;
+        let expected = LintPlugins::default() | LintPlugins::VITEST;
 
         enable.apply_overrides(&mut plugins);
         assert_eq!(plugins, expected);
