@@ -603,3 +603,31 @@ fn fold_optional_chain_on_undefined_let_binding() {
         "let slot; export function setSlot(v) { slot = v } export function call() { slot?.() }",
     );
 }
+
+#[test]
+fn fold_optional_chain_on_null_const_binding() {
+    // A `const` initialized to `null` resolves to `ValueType::Null`, so the
+    // optional chain folds the same way the `undefined` case does.
+    test("const slot = null; export function call() { slot?.() }", "export function call() {}");
+    test("const slot = null; export function call() { slot?.foo }", "export function call() {}");
+}
+
+#[test]
+fn fold_coalesce_on_tracked_non_nullish_binding() {
+    // The new value_type lookup also resolves non-nullish constants, so the
+    // right-hand side of `??` can be dropped.
+    //
+    // Two reads + a string the inliner skips (length > 3) prevents
+    // `inline_identifier_reference` from short-circuiting the test by
+    // substituting the literal value before the coalesce fold runs.
+    test(
+        "let s = 'hello'; export function a() { return s ?? other() } export function b() { return s ?? other() }",
+        "let s = 'hello'; export function a() { return s } export function b() { return s }",
+    );
+    // BigInt is never inlined, so a single read is enough to exercise the
+    // value-type path here.
+    test(
+        "let n = 5n; export function a() { return n ?? other() } export function b() { return n ?? other() }",
+        "let n = 5n; export function a() { return n } export function b() { return n }",
+    );
+}

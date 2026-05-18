@@ -1,7 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use super::value::ConstantValue;
 use crate::{GlobalContext, to_numeric::ToNumeric, to_primitive::ToPrimitive};
 
 /// JavaScript Language Type
@@ -53,17 +52,6 @@ impl ValueType {
     }
 }
 
-fn constant_value_type(value: &ConstantValue<'_>) -> ValueType {
-    match value {
-        ConstantValue::Number(_) => ValueType::Number,
-        ConstantValue::BigInt(_) => ValueType::BigInt,
-        ConstantValue::String(_) => ValueType::String,
-        ConstantValue::Boolean(_) => ValueType::Boolean,
-        ConstantValue::Undefined => ValueType::Undefined,
-        ConstantValue::Null => ValueType::Null,
-    }
-}
-
 /// Based on `get_known_value_type` in closure compiler
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/NodeUtil.java#L1517>
 ///
@@ -103,14 +91,12 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
                         "NaN" | "Infinity" => ValueType::Number,
                         _ => ValueType::Undetermined,
                     }
-                } else if let Some(value) = ident
-                    .reference_id
-                    .get()
-                    .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
-                {
-                    constant_value_type(&value)
                 } else {
-                    ValueType::Undetermined
+                    ident
+                        .reference_id
+                        .get()
+                        .and_then(|reference_id| ctx.value_type_for_reference_id(reference_id))
+                        .unwrap_or(ValueType::Undetermined)
                 }
             }
             Expression::UnaryExpression(e) => e.value_type(ctx),
