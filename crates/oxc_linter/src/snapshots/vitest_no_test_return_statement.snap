@@ -1,0 +1,143 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:20]
+ 2 │                 test('one', () => {
+ 3 │                    return expect(1).toBe(1);
+   ·                    ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it.skip('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it.skip('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it.each``('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it.each``('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it.each()('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it.each()('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it.only.each``('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it.only.each``('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it.only.each()('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:3:21]
+ 2 │                 it.only.each()('one', function () {
+ 3 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 4 │                 });
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.
+
+  ⚠ vitest(no-test-return-statement): Jest tests should not return a value
+   ╭─[no_test_return_statement.tsx:4:21]
+ 3 │                 function myTest () {
+ 4 │                     return expect(1).toBe(1);
+   ·                     ──────
+ 5 │                 }
+   ╰────
+  help: Use `await` for async assertions or remove the return statement.
+  note: Jest ignores returned values from tests.

@@ -115,8 +115,7 @@ impl Rule for RelativeUrlStyle {
                         if can_remove_dot_slash(raw, new_expr) {
                             ctx.diagnostic_with_fix(never_diagnostic(str_lit.span), |fixer| {
                                 let dot_slash_start = str_lit.span.start + 1;
-                                let dot_slash_span =
-                                    Span::new(dot_slash_start, dot_slash_start + 2);
+                                let dot_slash_span = Span::sized(dot_slash_start, 2);
                                 fixer
                                     .delete_range(dot_slash_span)
                                     .with_message("Remove leading `./`")
@@ -148,7 +147,7 @@ impl Rule for RelativeUrlStyle {
                 if first_quasi.value.raw.starts_with(DOT_SLASH) {
                     ctx.diagnostic_with_suggestion(never_diagnostic(template_lit.span), |fixer| {
                         let dot_slash_start = template_lit.span.start + 1;
-                        let dot_slash_span = Span::new(dot_slash_start, dot_slash_start + 2);
+                        let dot_slash_span = Span::sized(dot_slash_start, 2);
                         fixer.delete_range(dot_slash_span).with_message("Remove leading `./`")
                     });
                 }

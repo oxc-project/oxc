@@ -4,7 +4,9 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    module_record::{ExportExportName, ExportImportName, ImportImportName, ModuleRecord},
+    module_record::{
+        ExportEntry, ExportExportName, ExportImportName, ImportImportName, ModuleRecord,
+    },
     rule::Rule,
 };
 
@@ -90,7 +92,7 @@ impl Rule for NoNamedAsDefault {
                 continue;
             }
 
-            if default_and_named_are_same_reexport(&remote_module_record, import_name) {
+            if default_and_named_are_same_export(&remote_module_record, import_name) {
                 continue;
             }
 
@@ -101,6 +103,47 @@ impl Rule for NoNamedAsDefault {
             ));
         }
     }
+}
+
+fn export_name_is(export_entry: &ExportEntry, name: &str) -> bool {
+    match &export_entry.export_name {
+        ExportExportName::Name(n) => n.name() == name,
+        ExportExportName::Default(_) => name == "default",
+        ExportExportName::Null => false,
+    }
+}
+
+fn default_and_named_are_same_export(remote_module_record: &ModuleRecord, name: &str) -> bool {
+    default_and_named_are_same_local_export(remote_module_record, name)
+        || default_and_named_are_same_reexport(remote_module_record, name)
+}
+
+/// Check if the remote module exports both default and the given named export from the same local
+/// binding.
+fn default_and_named_are_same_local_export(
+    remote_module_record: &ModuleRecord,
+    name: &str,
+) -> bool {
+    let Some(default_entry) = remote_module_record
+        .local_export_entries
+        .iter()
+        .find(|entry| export_name_is(entry, "default"))
+    else {
+        return false;
+    };
+
+    let Some(named_entry) =
+        remote_module_record.local_export_entries.iter().find(|entry| export_name_is(entry, name))
+    else {
+        return false;
+    };
+
+    default_entry.local_name.name().is_some_and(|default_local_name| {
+        named_entry
+            .local_name
+            .name()
+            .is_some_and(|named_local_name| default_local_name == named_local_name)
+    })
 }
 
 /// Check if the remote module re-exports both the default and the given named export
@@ -114,9 +157,11 @@ impl Rule for NoNamedAsDefault {
 fn default_and_named_are_same_reexport(remote_module_record: &ModuleRecord, name: &str) -> bool {
     // Find the default re-export entry.
     // Only re-exports like `export { foo as default }` are found here.
-    let Some(default_entry) = remote_module_record.indirect_export_entries.iter().find(
-        |entry| matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == "default"),
-    ) else {
+    let Some(default_entry) = remote_module_record
+        .indirect_export_entries
+        .iter()
+        .find(|entry| export_name_is(entry, "default"))
+    else {
         return false;
     };
 
@@ -124,7 +169,7 @@ fn default_and_named_are_same_reexport(remote_module_record: &ModuleRecord, name
     let Some(named_entry) = remote_module_record
         .indirect_export_entries
         .iter()
-        .find(|entry| matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == name))
+        .find(|entry| export_name_is(entry, name))
     else {
         return false;
     };
@@ -187,6 +232,9 @@ fn test() {
         // Import-then-export of the same named binding as both default and named.
         // Both refer to the same source binding, so this is allowed.
         r#"import userEvent from "./re-export-default-and-named-import-then-export""#,
+        // Bundled packages can export the same local binding as both default and named.
+        r#"import Hls, { CMCDController } from "hls-default-class""#,
+        r#"import LocalHls from "./local-default-class-and-named""#,
     ];
 
     let fail = vec![
@@ -212,4 +260,17 @@ fn test() {
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_type_import() {
+    use crate::tester::Tester;
+
+    let pass = vec![r#"import type Hls from "hls-default-class""#];
+    let fail: Vec<&str> = vec![];
+
+    Tester::new(NoNamedAsDefault::NAME, NoNamedAsDefault::PLUGIN, pass, fail)
+        .change_rule_path("index.ts")
+        .with_import_plugin(true)
+        .test();
 }

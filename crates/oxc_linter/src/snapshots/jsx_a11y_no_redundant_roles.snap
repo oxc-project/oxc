@@ -58,13 +58,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the redundant role `button` from the element `button`.
 
-  ⚠ jsx-a11y(no-redundant-roles): The `body` element has an implicit role of `document`. Defining this explicitly is redundant and should be avoided.
-   ╭─[no_redundant_roles.tsx:1:7]
- 1 │ <body role='document' />
-   ·       ───────────────
-   ╰────
-  help: Remove the redundant role `document` from the element `body`.
-
   ⚠ jsx-a11y(no-redundant-roles): The `nav` element has an implicit role of `navigation`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:6]
  1 │ <nav role='navigation' />
@@ -78,3 +71,199 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
   help: Remove the redundant role `button` from the element `button`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `article` element has an implicit role of `article`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:10]
+ 1 │ <article role="article" />
+   ·          ──────────────
+   ╰────
+  help: Remove the redundant role `article` from the element `article`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `aside` element has an implicit role of `complementary`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:8]
+ 1 │ <aside role="complementary" />
+   ·        ────────────────────
+   ╰────
+  help: Remove the redundant role `complementary` from the element `aside`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `footer` element has an implicit role of `contentinfo`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <footer role="contentinfo" />
+   ·         ──────────────────
+   ╰────
+  help: Remove the redundant role `contentinfo` from the element `footer`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `form` element has an implicit role of `form`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:7]
+ 1 │ <form role="form" />
+   ·       ───────────
+   ╰────
+  help: Remove the redundant role `form` from the element `form`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `h1` element has an implicit role of `heading`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <h1 role="heading" />
+   ·     ──────────────
+   ╰────
+  help: Remove the redundant role `heading` from the element `h1`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `h2` element has an implicit role of `heading`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <h2 role="heading" />
+   ·     ──────────────
+   ╰────
+  help: Remove the redundant role `heading` from the element `h2`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `header` element has an implicit role of `banner`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <header role="banner" />
+   ·         ─────────────
+   ╰────
+  help: Remove the redundant role `banner` from the element `header`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `hr` element has an implicit role of `separator`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <hr role="separator" />
+   ·     ────────────────
+   ╰────
+  help: Remove the redundant role `separator` from the element `hr`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `img` element has an implicit role of `img`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:6]
+ 1 │ <img role="img" />
+   ·      ──────────
+   ╰────
+  help: Remove the redundant role `img` from the element `img`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `li` element has an implicit role of `listitem`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <li role="listitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the redundant role `listitem` from the element `li`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `main` element has an implicit role of `main`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:7]
+ 1 │ <main role="main" />
+   ·       ───────────
+   ╰────
+  help: Remove the redundant role `main` from the element `main`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `ol` element has an implicit role of `list`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <ol role="list" />
+   ·     ───────────
+   ╰────
+  help: Remove the redundant role `list` from the element `ol`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `ul` element has an implicit role of `list`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <ul role="list" />
+   ·     ───────────
+   ╰────
+  help: Remove the redundant role `list` from the element `ul`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="combobox" />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `listbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="listbox" />
+   ·         ──────────────
+   ╰────
+  help: Remove the redundant role `listbox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `table` element has an implicit role of `table`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:8]
+ 1 │ <table role="table" />
+   ·        ────────────
+   ╰────
+  help: Remove the redundant role `table` from the element `table`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `tbody` element has an implicit role of `rowgroup`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:8]
+ 1 │ <tbody role="rowgroup" />
+   ·        ───────────────
+   ╰────
+  help: Remove the redundant role `rowgroup` from the element `tbody`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `td` element has an implicit role of `cell`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <td role="cell" />
+   ·     ───────────
+   ╰────
+  help: Remove the redundant role `cell` from the element `td`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `textarea` element has an implicit role of `textbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:11]
+ 1 │ <textarea role="textbox" />
+   ·           ──────────────
+   ╰────
+  help: Remove the redundant role `textbox` from the element `textarea`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `section` element has an implicit role of `region`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:10]
+ 1 │ <section role="region" />
+   ·          ─────────────
+   ╰────
+  help: Remove the redundant role `region` from the element `section`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `dialog` element has an implicit role of `dialog`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <dialog role="dialog" />
+   ·         ─────────────
+   ╰────
+  help: Remove the redundant role `dialog` from the element `dialog`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `fieldset` element has an implicit role of `group`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:11]
+ 1 │ <fieldset role="group" />
+   ·           ────────────
+   ╰────
+  help: Remove the redundant role `group` from the element `fieldset`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `figure` element has an implicit role of `figure`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <figure role="figure" />
+   ·         ─────────────
+   ╰────
+  help: Remove the redundant role `figure` from the element `figure`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `meter` element has an implicit role of `meter`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:8]
+ 1 │ <meter role="meter" />
+   ·        ────────────
+   ╰────
+  help: Remove the redundant role `meter` from the element `meter`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `output` element has an implicit role of `status`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <output role="status" />
+   ·         ─────────────
+   ╰────
+  help: Remove the redundant role `status` from the element `output`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `p` element has an implicit role of `paragraph`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:4]
+ 1 │ <p role="paragraph" />
+   ·    ────────────────
+   ╰────
+  help: Remove the redundant role `paragraph` from the element `p`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `progress` element has an implicit role of `progressbar`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:11]
+ 1 │ <progress role="progressbar" />
+   ·           ──────────────────
+   ╰────
+  help: Remove the redundant role `progressbar` from the element `progress`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `tr` element has an implicit role of `row`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <tr role="row" />
+   ·     ──────────
+   ╰────
+  help: Remove the redundant role `row` from the element `tr`.

@@ -167,10 +167,8 @@ fn test() {
         ("export default async function () {}"),
         ("export default async function * () {}"),
         ("export default async () => {}"),
-        ("export default class {}"),
         ("export default class extends class {} {}"),
         ("export default class{}"),
-        ("export default class {}"),
         ("let Foo, Foo_, foo, foo_
             export default class {}"),
         ("let Foo, Foo_, foo, foo_
@@ -179,7 +177,6 @@ fn test() {
         ("let Exports, Exports_, exports, exports_
             exports = class {}"),
         ("module.exports = class {}"),
-        ("export default function () {}"),
         ("export default function* () {}"),
         ("export default async function* () {}"),
         ("export default async function*() {}"),
@@ -195,8 +192,6 @@ fn test() {
         ("let Exports, Exports_, exports, exports_
             exports = function() {}"),
         ("module.exports = function() {}"),
-        ("export default () => {}"),
-        ("export default async () => {}"),
         ("export default () => {};"),
         ("export default() => {}"),
         ("export default foo => {}"),

@@ -51,12 +51,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
-   ╭─[no_optional_chaining.tsx:1:9]
- 1 │ var x = '?.'?.['?.']
-   ·         ────────────
-   ╰────
-
-  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
    ╭─[no_optional_chaining.tsx:1:1]
  1 │ a?.c?.b<c>
    · ───────
