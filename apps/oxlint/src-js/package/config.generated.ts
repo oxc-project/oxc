@@ -1306,6 +1306,7 @@ export interface DummyRuleMap {
   "vue/no-required-prop-with-default"?: DummyRule;
   "vue/no-shared-component-data"?: DummyRule;
   "vue/no-this-in-before-route-enter"?: DummyRule;
+  "vue/no-watch-after-await"?: DummyRule;
   "vue/prefer-import-from-vue"?: DummyRule;
   "vue/require-default-export"?: DummyRule;
   "vue/require-slots-as-functions"?: DummyRule;
