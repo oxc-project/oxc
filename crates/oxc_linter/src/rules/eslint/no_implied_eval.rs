@@ -55,7 +55,7 @@ declare_oxc_lint!(
     NoImpliedEval,
     eslint,
     suspicious,
-    version = "next",
+    version = "1.66.0",
 );
 
 impl Rule for NoImpliedEval {

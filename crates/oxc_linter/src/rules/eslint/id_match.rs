@@ -153,7 +153,7 @@ declare_oxc_lint!(
     style,
     none,
     config = IdMatchConfig,
-    version = "next",
+    version = "1.66.0",
 );
 
 impl Rule for IdMatch {
