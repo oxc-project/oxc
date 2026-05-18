@@ -1313,6 +1313,7 @@ export interface DummyRuleMap {
   "vue/require-slots-as-functions"?: DummyRule;
   "vue/require-typed-ref"?: DummyRule;
   "vue/return-in-computed-property"?: DummyRule;
+  "vue/return-in-emits-validator"?: DummyRule;
   "vue/valid-define-emits"?: DummyRule;
   "vue/valid-define-options"?: DummyRule;
   "vue/valid-define-props"?: DummyRule;
