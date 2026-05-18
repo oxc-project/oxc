@@ -124,6 +124,10 @@ impl Tester {
         let output_string = &String::from_utf8(output).unwrap();
         let regex = Regex::new(r"\d+(?:\.\d+)?s|\d+ms").unwrap();
         let output_string = regex.replace_all(output_string, "<variable>ms").into_owned();
+        let regex = Regex::new(r"\b\d+\.\d{3}\b").unwrap();
+        let output_string = regex.replace_all(&output_string, "<variable>").into_owned();
+        let regex = Regex::new(r"\b\d+\.\d%").unwrap();
+        let output_string = regex.replace_all(&output_string, "<variable>%").into_owned();
         let regex = Regex::new(r#""start_time": \d+\.\d+"#).unwrap();
         let output_string = regex.replace_all(&output_string, r#""start_time": <variable>"#);
         // Censor the oxlint version in SARIF output so snapshots survive version bumps.

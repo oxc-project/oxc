@@ -2,6 +2,13 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ vitest(valid-title): Title must be a string
+   ╭─[valid_title.tsx:1:41]
+ 1 │ const String = { raw: () => 'foo' }; it(String.raw`foo`, () => {})
+   ·                                         ───────────────
+   ╰────
+  help: Replace your title with a string
+
   ⚠ vitest(valid-title): correct is not allowed in test title
    ╭─[valid_title.tsx:1:6]
  1 │ test('the correct way to properly handle all things', () => {});

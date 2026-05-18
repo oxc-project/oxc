@@ -2,18 +2,22 @@ use std::hash::Hash;
 
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BinaryExpression, Expression, TaggedTemplateExpression},
+    ast::{Argument, BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
-    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
+    utils::{
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, is_string_raw_member_expression,
+        parse_general_jest_fn_call,
+    },
 };
 
 fn title_must_be_string_diagnostic(span: Span) -> OxcDiagnostic {
@@ -232,7 +236,7 @@ impl ValidTitleConfig {
             }
             // Handle String.raw`foo`
             Argument::TaggedTemplateExpression(tagged_template) => {
-                if !is_string_raw_tagged_template(tagged_template) {
+                if !is_string_raw_member_expression(&tagged_template.tag, ctx.scoping()) {
                     if need_report_name {
                         ctx.diagnostic(title_must_be_string_diagnostic(arg.span()));
                     }
@@ -483,19 +487,4 @@ fn does_binary_expression_contain_string_node(expr: &BinaryExpression) -> bool {
         Expression::BinaryExpression(left) => does_binary_expression_contain_string_node(left),
         _ => false,
     }
-}
-
-fn is_string_raw_tagged_template(tagged_template: &TaggedTemplateExpression) -> bool {
-    let Expression::StaticMemberExpression(static_member) =
-        tagged_template.tag.get_inner_expression()
-    else {
-        return false;
-    };
-    if static_member.property.name != "raw" {
-        return false;
-    }
-    let Some(identifier) = static_member.object.get_identifier_reference() else {
-        return false;
-    };
-    identifier.name == "String"
 }

@@ -4,7 +4,8 @@ expression: snapshot
 ---
 --- eslint/no-unused-vars.md ---
 ---
-title: "eslint/no-unused-vars"
+title: "eslint/no-unused-vars | Oxlint"
+rule: "eslint/no-unused-vars"
 category: "Correctness"
 version: "0.7.0"
 default: true
@@ -622,7 +623,8 @@ This rule was added in v0.7.0.
 
 --- import/namespace.md ---
 ---
-title: "import/namespace"
+title: "import/namespace | Oxlint"
+rule: "import/namespace"
 category: "Correctness"
 version: "0.2.11"
 default: false
@@ -718,7 +720,8 @@ This rule was added in v0.2.11.
 
 --- jest/expect-expect.md ---
 ---
-title: "jest/expect-expect"
+title: "jest/expect-expect | Oxlint"
+rule: "jest/expect-expect"
 category: "Correctness"
 version: "0.0.12"
 default: false
@@ -794,7 +797,8 @@ This rule was added in v0.0.12.
 
 --- nextjs/no-duplicate-head.md ---
 ---
-title: "nextjs/no-duplicate-head"
+title: "nextjs/no-duplicate-head | Oxlint"
+rule: "nextjs/no-duplicate-head"
 category: "Correctness"
 version: "0.3.3"
 default: false
@@ -877,7 +881,8 @@ This rule was added in v0.3.3.
 
 --- promise/no-callback-in-promise.md ---
 ---
-title: "promise/no-callback-in-promise"
+title: "promise/no-callback-in-promise | Oxlint"
+rule: "promise/no-callback-in-promise"
 category: "Correctness"
 version: "0.10.0"
 default: false
@@ -974,7 +979,8 @@ This rule was added in v0.10.0.
 
 --- react/no-will-update-set-state.md ---
 ---
-title: "react/no-will-update-set-state"
+title: "react/no-will-update-set-state | Oxlint"
+rule: "react/no-will-update-set-state"
 category: "Correctness"
 version: "1.37.0"
 default: false
@@ -1062,7 +1068,8 @@ This rule was added in v1.37.0.
 
 --- typescript/no-floating-promises.md ---
 ---
-title: "typescript/no-floating-promises"
+title: "typescript/no-floating-promises | Oxlint"
+rule: "typescript/no-floating-promises"
 category: "Correctness"
 version: "1.11.0"
 default: true
@@ -1348,7 +1355,8 @@ This rule was added in v1.11.0.
 
 --- vue/no-lifecycle-after-await.md ---
 ---
-title: "vue/no-lifecycle-after-await"
+title: "vue/no-lifecycle-after-await | Oxlint"
+rule: "vue/no-lifecycle-after-await"
 category: "Correctness"
 version: "1.39.0"
 default: false
@@ -1416,7 +1424,8 @@ This rule was added in v1.39.0.
 
 --- unicorn/prefer-array-find.md ---
 ---
-title: "unicorn/prefer-array-find"
+title: "unicorn/prefer-array-find | Oxlint"
+rule: "unicorn/prefer-array-find"
 category: "Perf"
 version: "0.16.12"
 default: false
@@ -1471,7 +1480,8 @@ This rule was added in v0.16.12.
 
 --- oxc/no-barrel-file.md ---
 ---
-title: "oxc/no-barrel-file"
+title: "oxc/no-barrel-file | Oxlint"
+rule: "oxc/no-barrel-file"
 category: "Restriction"
 version: "0.3.0"
 default: false
@@ -1553,7 +1563,8 @@ This rule was added in v0.3.0.
 
 --- react/forbid-dom-props.md ---
 ---
-title: "react/forbid-dom-props"
+title: "react/forbid-dom-props | Oxlint"
+rule: "react/forbid-dom-props"
 category: "Restriction"
 version: "1.24.0"
 default: false
@@ -1672,7 +1683,8 @@ This rule was added in v1.24.0.
 
 --- typescript/no-explicit-any.md ---
 ---
-title: "typescript/no-explicit-any"
+title: "typescript/no-explicit-any | Oxlint"
+rule: "typescript/no-explicit-any"
 category: "Restriction"
 version: "0.0.13"
 default: false
@@ -1769,7 +1781,8 @@ This rule was added in v0.0.13.
 
 --- jsdoc/require-returns.md ---
 ---
-title: "jsdoc/require-returns"
+title: "jsdoc/require-returns | Oxlint"
+rule: "jsdoc/require-returns"
 category: "Pedantic"
 version: "0.4.0"
 default: false
@@ -1880,7 +1893,8 @@ This rule was added in v0.4.0.
 
 --- react/rules-of-hooks.md ---
 ---
-title: "react/rules-of-hooks"
+title: "react/rules-of-hooks | Oxlint"
+rule: "react/rules-of-hooks"
 category: "Pedantic"
 version: "0.3.3"
 default: false
@@ -1968,7 +1982,8 @@ This rule was added in v0.3.3.
 
 --- jest/require-top-level-describe.md ---
 ---
-title: "jest/require-top-level-describe"
+title: "jest/require-top-level-describe | Oxlint"
+rule: "jest/require-top-level-describe"
 category: "Style"
 version: "0.4.2"
 default: false
@@ -2065,7 +2080,8 @@ This rule was added in v0.4.2.
 
 --- typescript/class-literal-property-style.md ---
 ---
-title: "typescript/class-literal-property-style"
+title: "typescript/class-literal-property-style | Oxlint"
+rule: "typescript/class-literal-property-style"
 category: "Style"
 version: "1.47.0"
 default: false

@@ -215,6 +215,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     pub fn codegen(self) -> Codegen<'a> {
         Codegen::new()
             .with_source_text(self.source_text())
+            .with_source_type(*self.ctx.source_type())
             .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
     }
 

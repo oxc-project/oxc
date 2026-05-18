@@ -426,7 +426,7 @@ fn test_fold_iife() {
     );
     test(
         "function foo(x) { if (x) { return /* @__PURE__ */ (() => bar())() } return x }",
-        "function foo(x) { return x && bar() }",
+        "function foo(x) { return x && /* @__PURE__ */ bar() }",
     );
     test(
         "function foo(x) { if (x) { return /* @__PURE__ */ (() => { return 42 })() } return x }",

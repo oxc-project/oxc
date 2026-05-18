@@ -60,9 +60,10 @@ impl LintIgnoreMatcher {
                     .is_some_and(|gi| gi.matched_path_or_any_parents(path, false).is_ignore());
             }
         }
-        self.base
-            .as_ref()
-            .is_some_and(|base| base.matched_path_or_any_parents(path, false).is_ignore())
+        self.base.as_ref().is_some_and(|base| {
+            path.starts_with(base.path())
+                && base.matched_path_or_any_parents(path, false).is_ignore()
+        })
     }
 }
 
@@ -99,5 +100,16 @@ mod tests {
         // Path outside any nested config, only base applies
         assert!(matcher.should_ignore(Path::new("/repo/file.js")));
         assert!(!matcher.should_ignore(Path::new("/repo/file.ts")));
+    }
+
+    #[test]
+    fn test_lint_file_outside_root() {
+        let base_patterns = vec!["pattern".to_string()];
+        let base_root = Path::new("/repo1");
+
+        let matcher = LintIgnoreMatcher::new(&base_patterns, base_root, vec![]);
+
+        // Test that path outside root shouldn't be ignored.
+        assert!(!matcher.should_ignore(Path::new("/repo2/pattern/file.ts")));
     }
 }

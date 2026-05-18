@@ -227,6 +227,7 @@ fn test() {
     ];
 
     let fail = vec![
+        ("const String = { raw: () => 'foo' }; it(String.raw`foo`, () => {})", None),
         (
             "test('the correct way to properly handle all things', () => {});",
             Some(serde_json::json!([{ "disallowedWords": ["correct", "properly", "all"] }])),

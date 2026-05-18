@@ -1,0 +1,143 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an object literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:24]
+ 1 │ function Foo({ items = {} }) { return <div /> }
+   ·                        ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:24]
+ 1 │ function Foo({ items = [] }) { return <div /> }
+   ·                        ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use a function expression as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:26]
+ 1 │ function Foo({ onClick = () => {} }) { return <div /> }
+   ·                          ────────
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use a function expression as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:26]
+ 1 │ function Foo({ onClick = function () {} }) { return <div /> }
+   ·                          ──────────────
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use a class expression as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:24]
+ 1 │ function Foo({ Klass = class {} }) { return <div /> }
+   ·                        ────────
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use a `new` expression as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:24]
+ 1 │ function Foo({ items = new Set() }) { return <div /> }
+   ·                        ─────────
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use a `new` expression as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:24]
+ 1 │ function Foo({ items = new Map() }) { return <div /> }
+   ·                        ─────────
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use a regular expression literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:26]
+ 1 │ function Foo({ pattern = /abc/ }) { return <div /> }
+   ·                          ─────
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use a JSX element as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:23]
+ 1 │ function Foo({ icon = <span /> }) { return <div /> }
+   ·                       ────────
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use a JSX element as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:23]
+ 1 │ function Foo({ icon = <></> }) { return <div /> }
+   ·                       ─────
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:24]
+ 1 │ const Foo = ({ items = [] }) => <div />;
+   ·                        ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:36]
+ 1 │ const Foo = function Foo({ items = [] }) { return <div />; };
+   ·                                    ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:41]
+ 1 │ const Foo = React.forwardRef(({ items = [] }, ref) => <div ref={ref} />);
+   ·                                         ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:29]
+ 1 │ const Foo = memo(({ items = [] }) => <div />);
+   ·                             ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:32]
+ 1 │ function Foo({ data: { items = [] } }) { return <div /> }
+   ·                                ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an object literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:23]
+ 1 │ function Foo({ data = {}, ...rest }) { return <div /> }
+   ·                       ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:31]
+ 1 │ function Foo({ data: [first = []] }) { return <div /> }
+   ·                               ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:20]
+ 1 │ function Foo({ a = [], b = {} }) { return <div /> }
+   ·                    ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an object literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:28]
+ 1 │ function Foo({ a = [], b = {} }) { return <div /> }
+   ·                            ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+
+  ⚠ react(no-object-type-as-default-prop): Do not use an object literal as default prop value. Use a stable reference instead.
+   ╭─[no_object_type_as_default_prop.tsx:1:25]
+ 1 │ function Foo({ items = ({}) }) { return <div /> }
+   ·                         ──
+   ╰────
+  help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
