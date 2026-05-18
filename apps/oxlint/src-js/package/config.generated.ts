@@ -624,6 +624,7 @@ export interface DummyRuleMap {
   "jest/valid-describe-callback"?: DummyRule;
   "jest/valid-expect"?: DummyRule;
   "jest/valid-expect-in-promise"?: DummyRule;
+  "jest/valid-mock-module-path"?: DummyRule;
   "jest/valid-title"?: DummyRule;
   "jsdoc/check-access"?: DummyRule;
   "jsdoc/check-property-names"?: DummyRule;
