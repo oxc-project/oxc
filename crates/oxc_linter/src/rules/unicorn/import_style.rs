@@ -174,6 +174,100 @@ impl std::ops::DerefMut for ImportStyle {
     }
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(untagged)]
+pub enum ModuleStylesOverride {
+    Disabled(bool),
+    Styles(RawStyleSet),
+}
+
+impl<'de> Deserialize<'de> for ModuleStylesOverride {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum RawModuleStylesOverride {
+            Disabled(bool),
+            Styles(RawStyleSet),
+        }
+
+        match RawModuleStylesOverride::deserialize(deserializer)? {
+            RawModuleStylesOverride::Disabled(false) => Ok(Self::Disabled(false)),
+            RawModuleStylesOverride::Disabled(true) => {
+                Err(de::Error::custom("module style override boolean must be `false`"))
+            }
+            RawModuleStylesOverride::Styles(styles) => Ok(Self::Styles(styles)),
+        }
+    }
+}
+
+impl JsonSchema for ModuleStylesOverride {
+    fn schema_name() -> String {
+        "ModuleStylesOverride".to_string()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        "ModuleStylesOverride".into()
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        let mut false_schema = <bool as JsonSchema>::json_schema(r#gen).into_object();
+        false_schema.enum_values = Some(vec![false.into()]);
+
+        let mut schema = SchemaObject::default();
+        schema.subschemas().one_of =
+            Some(vec![false_schema.into(), <RawStyleSet as JsonSchema>::json_schema(r#gen)]);
+        schema.into()
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema, Default)]
+#[serde(default, deny_unknown_fields)]
+pub struct RawStyleSet {
+    /// Whether named imports or destructured `require()` calls are allowed for this module.
+    ///
+    /// With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
+    /// ```js
+    /// import {promisify} from "node:util";
+    /// ```
+    named: Option<bool>,
+    /// Whether namespace imports or whole-module `require()` assignments are allowed for this module.
+    ///
+    /// With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
+    /// ```js
+    /// import * as fs from "node:fs";
+    /// ```
+    namespace: Option<bool>,
+    /// Whether default imports or whole-module `require()` assignments are allowed for this module.
+    ///
+    /// With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
+    /// ```js
+    /// import chalk from "chalk";
+    /// ```
+    #[serde(rename = "default")]
+    default_style: Option<bool>,
+    /// Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
+    ///
+    /// With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
+    /// ```js
+    /// import "polyfill";
+    /// ```
+    unassigned: Option<bool>,
+}
+
+impl RawStyleSet {
+    fn apply_to(self, base: StyleSet) -> StyleSet {
+        StyleSet {
+            named: self.named.unwrap_or(base.named),
+            namespace: self.namespace.unwrap_or(base.namespace),
+            default_style: self.default_style.unwrap_or(base.default_style),
+            unassigned: self.unassigned.unwrap_or(base.unassigned),
+        }
+    }
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -497,100 +591,6 @@ fn is_assigned_dynamic_import(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool
 enum SourceKind {
     ModuleSyntax,
     Require,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(untagged)]
-pub enum ModuleStylesOverride {
-    Disabled(bool),
-    Styles(RawStyleSet),
-}
-
-impl<'de> Deserialize<'de> for ModuleStylesOverride {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum RawModuleStylesOverride {
-            Disabled(bool),
-            Styles(RawStyleSet),
-        }
-
-        match RawModuleStylesOverride::deserialize(deserializer)? {
-            RawModuleStylesOverride::Disabled(false) => Ok(Self::Disabled(false)),
-            RawModuleStylesOverride::Disabled(true) => {
-                Err(de::Error::custom("module style override boolean must be `false`"))
-            }
-            RawModuleStylesOverride::Styles(styles) => Ok(Self::Styles(styles)),
-        }
-    }
-}
-
-impl JsonSchema for ModuleStylesOverride {
-    fn schema_name() -> String {
-        "ModuleStylesOverride".to_string()
-    }
-
-    fn schema_id() -> Cow<'static, str> {
-        "ModuleStylesOverride".into()
-    }
-
-    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
-        let mut false_schema = <bool as JsonSchema>::json_schema(r#gen).into_object();
-        false_schema.enum_values = Some(vec![false.into()]);
-
-        let mut schema = SchemaObject::default();
-        schema.subschemas().one_of =
-            Some(vec![false_schema.into(), <RawStyleSet as JsonSchema>::json_schema(r#gen)]);
-        schema.into()
-    }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(default, deny_unknown_fields)]
-pub struct RawStyleSet {
-    /// Whether named imports or destructured `require()` calls are allowed for this module.
-    ///
-    /// With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
-    /// ```js
-    /// import {promisify} from "node:util";
-    /// ```
-    named: Option<bool>,
-    /// Whether namespace imports or whole-module `require()` assignments are allowed for this module.
-    ///
-    /// With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
-    /// ```js
-    /// import * as fs from "node:fs";
-    /// ```
-    namespace: Option<bool>,
-    /// Whether default imports or whole-module `require()` assignments are allowed for this module.
-    ///
-    /// With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
-    /// ```js
-    /// import chalk from "chalk";
-    /// ```
-    #[serde(rename = "default")]
-    default_style: Option<bool>,
-    /// Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
-    ///
-    /// With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
-    /// ```js
-    /// import "polyfill";
-    /// ```
-    unassigned: Option<bool>,
-}
-
-impl RawStyleSet {
-    fn apply_to(self, base: StyleSet) -> StyleSet {
-        StyleSet {
-            named: self.named.unwrap_or(base.named),
-            namespace: self.namespace.unwrap_or(base.namespace),
-            default_style: self.default_style.unwrap_or(base.default_style),
-            unassigned: self.unassigned.unwrap_or(base.unassigned),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
