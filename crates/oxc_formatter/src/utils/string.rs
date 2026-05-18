@@ -81,7 +81,7 @@ impl CleanedStringLiteralText<'_> {
 
 impl<'a> Format<'a> for CleanedStringLiteralText<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        text(f.context().allocator().alloc_str(&self.text)).fmt(f);
+        text(f.allocator().alloc_str(&self.text)).fmt(f);
     }
 }
 

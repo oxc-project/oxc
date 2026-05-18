@@ -225,7 +225,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                                 FormatElement::Text { text, width: _ } => {
                                     let text = text.cow_replace('"', "\\\"");
                                     FormatElement::Text {
-                                        text: f.context().allocator().alloc_str(&text),
+                                        text: f.allocator().alloc_str(&text),
                                         width: TextWidth::from_text(
                                             &text,
                                             f.options().indent_width,
@@ -396,7 +396,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                                 f,
                                 [
                                     token("align("),
-                                    text(f.context().allocator().alloc_str(&count.to_string()),),
+                                    text(f.allocator().alloc_str(&count.to_string()),),
                                     token(","),
                                     space(),
                                 ]
@@ -523,13 +523,13 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                 FormatElement::TailwindClass(index) => {
                     let class = f.context().get_tailwind_class(*index);
                     if let Some(class) = class {
-                        write!(f, [text(f.context().allocator().alloc_str(class))]);
+                        write!(f, [text(f.allocator().alloc_str(class))]);
                     } else {
                         write!(
                             f,
                             [
                                 token("<UNKNOWN_TAILWIND_CLASS_INDEX<"),
-                                text(f.context().allocator().alloc_str(&std::format!("{index}"))),
+                                text(f.allocator().alloc_str(&std::format!("{index}"))),
                                 token(">>"),
                             ]
                         );

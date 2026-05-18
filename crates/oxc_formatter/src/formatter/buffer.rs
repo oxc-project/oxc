@@ -120,7 +120,7 @@ pub struct VecBuffer<'buf, 'ast> {
 
 impl<'buf, 'ast> VecBuffer<'buf, 'ast> {
     pub fn new(state: &'buf mut FormatState<'ast>) -> Self {
-        Self::new_with_vec(state, ArenaVec::new_in(state.context().allocator()))
+        Self::new_with_vec(state, ArenaVec::new_in(state.allocator()))
     }
 
     pub fn new_with_vec(
@@ -132,7 +132,7 @@ impl<'buf, 'ast> VecBuffer<'buf, 'ast> {
 
     /// Creates a buffer with the specified capacity
     pub fn with_capacity(capacity: usize, state: &'buf mut FormatState<'ast>) -> Self {
-        let elements = ArenaVec::with_capacity_in(capacity, state.context().allocator());
+        let elements = ArenaVec::with_capacity_in(capacity, state.allocator());
         Self { state, elements }
     }
 
@@ -143,7 +143,7 @@ impl<'buf, 'ast> VecBuffer<'buf, 'ast> {
 
     /// Takes the elements without consuming self
     pub fn take_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
-        self.elements.take_in(self.state.context().allocator())
+        self.elements.take_in(self.state.allocator())
     }
 }
 
@@ -409,7 +409,7 @@ impl<'buf, 'ast> RemoveSoftLinesBuffer<'buf, 'ast> {
             interned,
             &mut self.interned_cache,
             &mut self.conditional_content_stack,
-            self.inner.state().context().allocator(),
+            self.inner.state().allocator(),
         )
     }
 

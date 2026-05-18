@@ -23,7 +23,7 @@ pub(super) fn try_embed_markdown<'a>(
         return true;
     }
 
-    let allocator = f.context().allocator();
+    let allocator = f.allocator();
 
     // Phase 1: Unescape backticks (= `raw.replaceAll(/((?:\\\\)*)\\`/g, ...)`)
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L11-L14

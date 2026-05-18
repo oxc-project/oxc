@@ -347,7 +347,7 @@ fn format_js_in_html_as_fallback<'a>(
 
     // Write line by line, same as `format_embedded_template()`
     let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
-        let content = f.context().allocator().alloc_str(&result);
+        let content = f.allocator().alloc_str(&result);
         for line in LineTerminatorSplitter::new(content) {
             if line.is_empty() {
                 write!(f, [empty_line()]);

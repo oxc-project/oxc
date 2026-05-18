@@ -673,7 +673,7 @@ impl<'a> EachTemplateTable<'a> {
 
         for column in header_text.split_terminator('|') {
             let trimmed = column.trim();
-            let text = f.context().allocator().alloc_str(trimmed);
+            let text = f.allocator().alloc_str(trimmed);
             let column = EachTemplateColumn::new(text, false);
             builder.entry(EachTemplateElement::Column(column));
         }
@@ -706,7 +706,7 @@ impl<'a> EachTemplateTable<'a> {
             let print_options = f.options().as_print_options();
             // TODO: if `unwrap()` panics here, it's a internal error
             let printed = Printer::new(print_options, &[]).print(&root).unwrap();
-            let text = f.context().allocator().alloc_str(&printed.into_code());
+            let text = f.allocator().alloc_str(&printed.into_code());
             let will_break = text.contains('\n');
 
             let column = EachTemplateColumn::new(text, will_break);
@@ -747,12 +747,9 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
                         let mut content = if current_column != 0
                             && (!is_last_in_row || !column.text.is_empty())
                         {
-                            StringBuilder::from_strs_array_in(
-                                [" ", column.text],
-                                f.context().allocator(),
-                            )
+                            StringBuilder::from_strs_array_in([" ", column.text], f.allocator())
                         } else {
-                            StringBuilder::from_str_in(column.text, f.context().allocator())
+                            StringBuilder::from_str_in(column.text, f.allocator())
                         };
 
                         // align the column based on the maximum column width in the table

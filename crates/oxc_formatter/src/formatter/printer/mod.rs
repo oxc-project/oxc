@@ -1589,7 +1589,7 @@ two lines`,
     #[test]
     fn test_fill_breaks() {
         let allocator = Allocator::default();
-        let mut state = FormatState::new(JsFormatContext::dummy(&allocator));
+        let mut state = FormatState::new(JsFormatContext::dummy(&allocator), &allocator);
         let mut buffer = VecBuffer::new(&mut state);
         let mut formatter = Formatter::new(&mut buffer);
 

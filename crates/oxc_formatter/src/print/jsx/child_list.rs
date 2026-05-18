@@ -47,8 +47,8 @@ impl FormatJsxChildList {
         };
 
         let mut force_multiline = layout.is_multiline();
-        let mut flat = FlatBuilder::new(force_multiline, f.context().allocator());
-        let mut multiline = MultilineBuilder::new(multiline_layout, f.context().allocator());
+        let mut flat = FlatBuilder::new(force_multiline, f.allocator());
+        let mut multiline = MultilineBuilder::new(multiline_layout, f.allocator());
 
         let mut children = jsx_split_children(children, f.context().comments());
 
@@ -588,8 +588,7 @@ impl<'a> MultilineBuilder<'a> {
         separator: Option<&dyn Format<'a>>,
         f: &mut Formatter<'_, 'a>,
     ) {
-        let elements =
-            std::mem::replace(&mut self.result, ArenaVec::new_in(f.context().allocator()));
+        let elements = std::mem::replace(&mut self.result, ArenaVec::new_in(f.allocator()));
 
         self.result = {
             let mut buffer = VecBuffer::new_with_vec(f.state_mut(), elements);
@@ -642,8 +641,7 @@ pub struct FormatMultilineChildren<'a> {
 impl<'a> Format<'a> for FormatMultilineChildren<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let format_inner = format_with(|f| {
-            if let Some(elements) =
-                f.intern_vec(self.elements.borrow_mut().take_in(f.context().allocator()))
+            if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f.allocator()))
             {
                 match self.layout {
                     MultilineLayout::Fill => f.write_elements([
@@ -704,7 +702,7 @@ impl<'a> FlatBuilder<'a> {
             return;
         }
 
-        let result = std::mem::replace(&mut self.result, ArenaVec::new_in(f.context().allocator()));
+        let result = std::mem::replace(&mut self.result, ArenaVec::new_in(f.allocator()));
 
         self.result = {
             let elements = result;
@@ -737,9 +735,7 @@ pub struct FormatFlatChildren<'a> {
 
 impl<'a> Format<'a> for FormatFlatChildren<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        if let Some(elements) =
-            f.intern_vec(self.elements.borrow_mut().take_in(f.context().allocator()))
-        {
+        if let Some(elements) = f.intern_vec(self.elements.borrow_mut().take_in(f.allocator())) {
             f.write_element(elements);
         }
     }

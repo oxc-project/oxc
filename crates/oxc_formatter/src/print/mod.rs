@@ -1032,10 +1032,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
 
             if should_quote {
                 let quote_str = f.options().quote_style.as_str();
-                write!(
-                    f,
-                    [quote_str, text(f.context().allocator().alloc_str(&formatted)), quote_str]
-                );
+                write!(f, [quote_str, text(f.allocator().alloc_str(&formatted)), quote_str]);
                 return;
             }
         }
@@ -1066,10 +1063,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(
-            f,
-            text(f.context().allocator().alloc_str(&self.raw().unwrap().cow_to_ascii_lowercase()))
-        );
+        write!(f, text(f.allocator().alloc_str(&self.raw().unwrap().cow_to_ascii_lowercase())));
     }
 }
 
@@ -1088,7 +1082,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
         flags_buf[..len].copy_from_slice(flags.as_bytes());
         flags_buf[..len].sort_unstable();
         let flags = str::from_utf8(&flags_buf[..len]).unwrap();
-        let s = f.context().allocator().alloc_concat_strs_array([pattern, "/", flags]);
+        let s = f.allocator().alloc_concat_strs_array([pattern, "/", flags]);
         write!(f, text(s));
     }
 }

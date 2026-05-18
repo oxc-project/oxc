@@ -2386,8 +2386,7 @@ impl<'ast> Format<'ast> for BestFitting<'_, 'ast> {
             formatted_variants.push(buffer.take_vec().into_arena_slice());
         }
 
-        let formatted_variants =
-            ArenaVec::from_iter_in(formatted_variants, f.context().allocator());
+        let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f.allocator());
 
         // SAFETY: The constructor guarantees that there are always at least two variants. It's, therefore,
         // safe to call into the unsafe `from_vec_unchecked` function

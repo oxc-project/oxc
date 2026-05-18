@@ -329,8 +329,9 @@ pub fn format<'ast>(
     // with 95th percentile at 30-38% across all file sizes. This 0.4x multiplier avoids
     // reallocation for 95%+ of files.
     let capacity = (context.source_text().len() * 2) / 5;
+    let allocator = context.allocator();
 
-    let mut state = FormatState::new(context);
+    let mut state = FormatState::new(context, allocator);
     let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
     buffer.write_fmt(arguments);

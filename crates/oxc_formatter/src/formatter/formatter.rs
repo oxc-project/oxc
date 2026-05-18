@@ -26,7 +26,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 
     pub fn allocator(&self) -> &'ast Allocator {
-        self.context().allocator()
+        self.state().allocator()
     }
 
     /// Returns the format options

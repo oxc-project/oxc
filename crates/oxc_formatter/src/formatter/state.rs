@@ -1,3 +1,4 @@
+use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 
 use super::{GroupId, JsFormatContext, UniqueGroupIdBuilder, prelude::Interned};
@@ -9,6 +10,7 @@ use super::{GroupId, JsFormatContext, UniqueGroupIdBuilder, prelude::Interned};
 /// for the whole process of formatting a root with [crate::format!].
 pub struct FormatState<'ast> {
     context: JsFormatContext<'ast>,
+    allocator: &'ast Allocator,
     group_id_builder: UniqueGroupIdBuilder,
     // For the document IR printing process
     /// The interned elements that have been printed to this point
@@ -23,12 +25,18 @@ impl std::fmt::Debug for FormatState<'_> {
 
 impl<'ast> FormatState<'ast> {
     /// Creates a new state with the given language specific context
-    pub fn new(context: JsFormatContext<'ast>) -> Self {
+    pub fn new(context: JsFormatContext<'ast>, allocator: &'ast Allocator) -> Self {
         Self {
             context,
+            allocator,
             group_id_builder: UniqueGroupIdBuilder::default(),
             printed_interned_elements: FxHashMap::default(),
         }
+    }
+
+    /// Returns the allocator used for arena-allocating format elements.
+    pub fn allocator(&self) -> &'ast Allocator {
+        self.allocator
     }
 
     pub fn into_context(self) -> JsFormatContext<'ast> {

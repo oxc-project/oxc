@@ -53,7 +53,7 @@ pub(super) fn format_css_doc<'a>(
 
     // Phase 1: Build joined text
     // quasis[0].raw + "@prettier-placeholder-0-id" + quasis[1].raw + ...
-    let allocator = f.context().allocator();
+    let allocator = f.allocator();
     let joined = {
         let mut sb = StringBuilder::new_in(allocator);
         for (idx, quasi_elem) in quasis.iter().enumerate() {

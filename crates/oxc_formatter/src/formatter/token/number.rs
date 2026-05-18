@@ -37,7 +37,7 @@ pub struct CleanedNumberLiteralText<'a> {
 impl<'a> Format<'a> for CleanedNumberLiteralText<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let text = format_trimmed_number(self.text, self.options);
-        text_without_whitespace(f.context().allocator().alloc_str(&text)).fmt(f);
+        text_without_whitespace(f.allocator().alloc_str(&text)).fmt(f);
     }
 }
 
