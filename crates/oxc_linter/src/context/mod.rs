@@ -1,6 +1,6 @@
 #![expect(rustdoc::private_intra_doc_links)] // useful for intellisense
 
-use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
+use std::{borrow::Cow, ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
 use javascript_globals::{GLOBALS, GLOBALS_BUILTIN, GLOBALS_ES2026};
 
@@ -17,7 +17,7 @@ use crate::{
     WEBSITE_BASE_RULES_URL,
     config::GlobalValue,
     disable_directives::DisableDirectives,
-    fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
+    fixer::{Fix, FixKind, Message, MessageRule, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
 };
 
@@ -314,6 +314,10 @@ impl<'a> LintContext<'a> {
         if message.error.severity != self.severity {
             message.error = message.error.with_severity(self.severity);
         }
+        message.rule = Some(MessageRule {
+            plugin_name: Cow::Borrowed(self.current_plugin_name),
+            rule_name: Cow::Borrowed(self.current_rule_name),
+        });
 
         self.parent.push_diagnostic(message);
     }

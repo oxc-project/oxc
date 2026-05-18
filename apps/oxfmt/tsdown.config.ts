@@ -1,4 +1,7 @@
+import { createRequire } from "node:module";
 import { defineConfig } from "tsdown";
+
+const require = createRequire(import.meta.url);
 
 export default defineConfig({
   // Build all entry points together to share Prettier chunks
@@ -25,18 +28,21 @@ export default defineConfig({
       "@zackad/prettier-plugin-twig",
       "prettier-plugin-astro",
       "prettier-plugin-marko",
-      "prettier-plugin-svelte",
+      // prettier-plugin-svelte's peer dependency; must be installed by the user
+      "svelte/compiler",
     ],
     alwaysBundle: [
       // Bundle it to control version
       "prettier",
+      // Plugins are using these internally, so we need to bundle them to avoid duplicates.
+      "prettier/doc",
+      /^prettier\/plugins\//,
 
       // Need to bundle plugins, since they depend on Prettier,
       // and must be resolved to the same instance of Prettier at runtime.
       "prettier-plugin-tailwindcss",
       "prettier-plugin-tailwindcss/sorter",
-      // Also, it internally loads plugins dynamically, so they also must be bundled
-      /^prettier\/plugins\//,
+      "prettier-plugin-svelte",
 
       // Cannot bundle: `cli-worker.js` runs in separate thread and can't resolve bundled chunks
       // Be sure to add it to "dependencies" in `npm/oxfmt/package.json`!
@@ -45,5 +51,17 @@ export default defineConfig({
     // tsdown warns about final bundled modules by `alwaysBundle`.
     // But we know what we are doing, just suppress the warnings.
     onlyBundle: false,
+  },
+  inputOptions: {
+    resolve: {
+      alias: {
+        // NOTE: `prettier-plugin-svelte` is written in CJS,
+        // and tsdown(rolldown) does not deduplicate CJS imports with the ESM imports.
+        // So we need to alias it to the ESM version to avoid duplicates.
+        prettier: require.resolve("prettier").replace("index.cjs", "index.mjs"),
+        "prettier/doc": require.resolve("prettier/doc").replace(".js", ".mjs"),
+        "prettier/plugins/babel": require.resolve("prettier/plugins/babel").replace(".js", ".mjs"),
+      },
+    },
   },
 });

@@ -90,7 +90,7 @@
    `----
 
 Found 0 warnings and 6 errors.
-Finished in Xms on 6 files with 0 rules using X threads.
+Finished in Xms on 6 files with 5 rules using X threads.
 ```
 
 # stderr

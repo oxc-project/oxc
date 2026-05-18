@@ -4,6 +4,9 @@ use phf::phf_set;
 
 use oxc_span::SourceType;
 
+#[cfg(feature = "napi")]
+use super::oxfmtrc::FormatConfig;
+
 /// Classify a file path into a [`FileKind`].
 ///
 /// Returns `None` when the file type is not a formatting target.
@@ -38,11 +41,13 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
             let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
             let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
+            let supports_svelte = SVELTE_PARSERS.contains(parser_name);
             return Some(FileKind::ExternalFormatter {
                 path,
                 parser_name,
                 supports_tailwind,
                 supports_oxfmt,
+                supports_svelte,
             });
         }
     }
@@ -62,8 +67,8 @@ pub enum FileKind {
     OxfmtToml { path: Arc<Path> },
     /// Files formatted by external formatter (Prettier).
     ///
-    /// `supports_tailwind` and `supports_oxfmt` are capability flags that say
-    /// "this file kind CAN use the corresponding plugin".
+    /// `supports_tailwind` / `supports_oxfmt` / `supports_svelte` are capability
+    /// flags that say "this file kind CAN use the corresponding plugin".
     /// Whether the plugin is actually activated is decided at the format step by resolved config.
     /// Only available with the `napi` feature; without it, the classifier rejects such files.
     #[cfg(feature = "napi")]
@@ -72,6 +77,7 @@ pub enum FileKind {
         parser_name: &'static str,
         supports_tailwind: bool,
         supports_oxfmt: bool,
+        supports_svelte: bool,
     },
     /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
     /// Only available with the `napi` feature; without it, the classifier rejects such files.
@@ -88,6 +94,23 @@ impl FileKind {
             | Self::ExternalFormatterPackageJson { path, .. } => path,
         }
     }
+
+    /// Returns the config key (e.g. `"svelte"`) of an opt-in Prettier plugin
+    /// that this file's parser requires but the resolved config did NOT enable.
+    ///
+    /// `.svelte` files cannot be formatted without `prettier-plugin-svelte`,
+    /// which is gated behind the `svelte` config key. The plugin is considered
+    /// disabled when the field is unset or `false`; the resolver bails out with
+    /// [`super::ResolveOutcome::MissingPlugin`] in that case.
+    #[cfg(feature = "napi")]
+    pub fn requires_plugin(&self, config: &FormatConfig) -> Option<&'static str> {
+        if let Self::ExternalFormatter { parser_name: "svelte", .. } = self
+            && !config.is_svelte_enabled()
+        {
+            return Some("svelte");
+        }
+        None
+    }
 }
 
 // ---
@@ -102,6 +125,7 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf_set! {
     "css",
     "scss",
     "less",
+    "svelte",
 };
 
 /// Parsers(files) that can embed JS/TS code and benefit from oxfmt plugin.
@@ -111,8 +135,18 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf_set! {
 static OXFMT_PARSERS: phf::Set<&'static str> = phf_set! {
     // "html",
     "vue",
+    "svelte",
     // "markdown",
     // "mdx",
+};
+
+/// Parsers(files) that benefit from `prettier-plugin-svelte`.
+/// `.svelte` is the primary target; `markdown`/`mdx` allow ` ```svelte ` code blocks.
+#[cfg(feature = "napi")]
+static SVELTE_PARSERS: phf::Set<&'static str> = phf_set! {
+    "svelte",
+    "markdown",
+    "mdx",
 };
 
 static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
@@ -220,6 +254,12 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     }
     if extension == Some("vue") {
         return Some("vue");
+    }
+    // NOTE: `.svelte` files are recognized here, but actual formatting is gated by
+    // `ResolveOutcome::MissingPlugin` (requires `svelte: {}` in resolved config).
+    // We classify here (not skip) so that user-friendly errors/skips can be surfaced per caller.
+    if extension == Some("svelte") {
+        return Some("svelte");
     }
     if extension == Some("mjml") {
         return Some("mjml");

@@ -6,7 +6,7 @@ let uint8,
   float64,
   sourceText,
   sourceTextLatin,
-  sourceEndPos = 0,
+  sourceStartPos = 0,
   firstNonAsciiPos = 0,
   parent = null;
 
@@ -15,24 +15,35 @@ const { fromCharCode } = String,
   stringDecodeArrays = Array(65).fill(null);
 for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
 
-export function deserialize(buffer, sourceText, sourceByteLen) {
-  sourceEndPos = sourceByteLen;
-  return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
+export function deserialize(buffer, sourceText, sourceStartPos, sourceByteLen) {
+  return deserializeWith(
+    buffer,
+    sourceText,
+    sourceStartPos,
+    sourceByteLen,
+    deserializeRawTransferData,
+  );
 }
 
-function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {
+function deserializeWith(buffer, sourceTextInput, sourceStartPosInput, sourceByteLen, deserialize) {
   uint8 = buffer;
   int32 = buffer.int32;
   float64 = buffer.float64;
   sourceText = sourceTextInput;
+  sourceStartPos = sourceStartPosInput;
+  // Find first non-ASCII byte in source region.
+  // `sourceText.substr()` can be used for strings which are within source text and ending before
+  // this position, since byte offsets equal char offsets in the all-ASCII prefix.
+  // Also decode source text as Latin-1 (or reuse `sourceText` if it's all ASCII).
   if (sourceText.length === sourceByteLen) {
-    firstNonAsciiPos = sourceByteLen;
+    firstNonAsciiPos = sourceStartPos + sourceByteLen;
     sourceTextLatin = sourceText;
   } else {
-    let i = 0;
-    for (; i < sourceByteLen && uint8[i] < 128; i++);
+    let i = sourceStartPos,
+      sourceEndPos = sourceStartPos + sourceByteLen;
+    for (; i < sourceEndPos && uint8[i] < 128; i++);
     firstNonAsciiPos = i;
-    sourceTextLatin = latin1Slice.call(uint8, 0, sourceByteLen);
+    sourceTextLatin = latin1Slice.call(uint8, sourceStartPos, sourceEndPos);
   }
   let data = deserialize(int32[536870890]);
   resetBuffer();
@@ -5907,15 +5918,18 @@ function deserializeStr(pos) {
     len = int32[pos32 + 2];
   if (len === 0) return "";
   pos = int32[pos32];
-  let end = pos + len;
-  if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+  let end = pos + len,
+    isInSourceRegion = pos >= sourceStartPos;
+  if (isInSourceRegion && end <= firstNonAsciiPos)
+    return sourceTextLatin.substr(pos - sourceStartPos, len);
   // Use `utf8Slice` for strings longer than 64 bytes
   if (len > 64) return utf8Slice.call(uint8, pos, end);
-  if (pos < sourceEndPos) {
+  // If string is in source region, use slice of `sourceTextLatin` if all ASCII
+  if (isInSourceRegion) {
     // Check if all bytes are ASCII, use `utf8Slice` if not
     for (let i = pos; i < end; i++) if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
     // String is all ASCII, so slice from `sourceTextLatin`
-    return sourceTextLatin.substr(pos, len);
+    return sourceTextLatin.substr(pos - sourceStartPos, len);
   }
   // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
   // Copy bytes into temp array.

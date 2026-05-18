@@ -136,7 +136,7 @@ impl JsonSchema for ExternalPluginEntry {
                          - jsdoc\n\
                          - jest\n\
                          - vitest\n\
-                         - jsx-a11y\n\
+                         - jsx-a11y (includes jsx-a11y-x)\n\
                          - nextjs\n\
                          - react-perf\n\
                          - promise\n\

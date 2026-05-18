@@ -1,0 +1,40 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-implicit-globals): Unexpected assignment to read-only global variable.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ foo = 1;
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-implicit-globals): Unexpected assignment to read-only global variable.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ for (foo in {});
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(no-implicit-globals): Unexpected redeclaration of read-only global variable.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ var foo = 1;
+   ·     ───
+   ╰────
+
+  ⚠ eslint(no-implicit-globals): Unexpected redeclaration of read-only global variable.
+   ╭─[no_implicit_globals.tsx:1:10]
+ 1 │ function foo() {}
+   ·          ───
+   ╰────
+
+  ⚠ eslint(no-implicit-globals): Unexpected redeclaration of read-only global variable.
+   ╭─[no_implicit_globals.tsx:1:7]
+ 1 │ const foo = 1;
+   ·       ───
+   ╰────
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ foo = 1;
+   · ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.

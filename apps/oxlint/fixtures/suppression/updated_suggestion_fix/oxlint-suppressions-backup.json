@@ -1,0 +1,10 @@
+{
+  "files/test.ts": {
+    "no-compare-neg-zero": {
+      "count": 1
+    },
+    "typescript/await-thenable": {
+      "count": 1
+    }
+  }
+}

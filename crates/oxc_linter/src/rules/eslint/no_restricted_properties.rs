@@ -213,7 +213,7 @@ declare_oxc_lint!(
     restriction,
     none,
     config = PropertyDetailsList,
-    version = "next",
+    version = "1.63.0",
 );
 
 impl Rule for NoRestrictedProperties {
