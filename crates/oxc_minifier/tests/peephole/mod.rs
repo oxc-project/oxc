@@ -21,6 +21,7 @@ mod real_world_patterns;
 mod remove_dead_code;
 mod remove_unused_declaration;
 mod remove_unused_expression;
+mod remove_unused_object_properties;
 mod remove_unused_private_members;
 mod replace_known_methods;
 mod statement_fusion;
