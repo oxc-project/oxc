@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 use crate::options::JsFormatOptions;
 
 use super::{
-    Arguments, Buffer, Comments, FormatState, GroupId, JsFormatContext, SourceText, VecBuffer,
+    Arguments, Buffer, Comments, GroupId, JsFormatContext, JsFormatState, SourceText, VecBuffer,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
     prelude::*,
 };
@@ -288,11 +288,11 @@ impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
         }
     }
 
-    fn state(&self) -> &FormatState<'ast> {
+    fn state(&self) -> &JsFormatState<'ast> {
         self.buffer.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast> {
+    fn state_mut(&mut self) -> &mut JsFormatState<'ast> {
         self.buffer.state_mut()
     }
 

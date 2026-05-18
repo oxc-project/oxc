@@ -54,7 +54,7 @@ pub use self::{
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
     source_text::SourceText,
-    state::FormatState,
+    state::{FormatState, JsFormatState},
     text_range::TextRange,
 };
 use self::{format_element::document::Document, prelude::TagKind};

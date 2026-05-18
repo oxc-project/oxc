@@ -9,7 +9,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
 
 use super::{
-    Arguments, Format, FormatElement, FormatState,
+    Arguments, Format, FormatElement, JsFormatState,
     format_element::Interned,
     prelude::{LineMode, PrintMode, Tag, tag::Condition},
 };
@@ -67,10 +67,10 @@ pub trait Buffer<'ast> {
     }
 
     /// Returns the formatting state relevant for this formatting session.
-    fn state(&self) -> &FormatState<'ast>;
+    fn state(&self) -> &JsFormatState<'ast>;
 
     /// Returns the mutable formatting state relevant for this formatting session.
-    fn state_mut(&mut self) -> &mut FormatState<'ast>;
+    fn state_mut(&mut self) -> &mut JsFormatState<'ast>;
 
     /// Replaces the elements starting at `start` with `replacement`.
     ///
@@ -96,11 +96,11 @@ impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
         (**self).write_fmt(args);
     }
 
-    fn state(&self) -> &FormatState<'ast> {
+    fn state(&self) -> &JsFormatState<'ast> {
         (**self).state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast> {
+    fn state_mut(&mut self) -> &mut JsFormatState<'ast> {
         (**self).state_mut()
     }
 
@@ -114,24 +114,24 @@ impl<'ast, W: Buffer<'ast> + ?Sized> Buffer<'ast> for &mut W {
 /// The buffer writes all elements into the internal elements buffer.
 #[derive(Debug)]
 pub struct VecBuffer<'buf, 'ast> {
-    state: &'buf mut FormatState<'ast>,
+    state: &'buf mut JsFormatState<'ast>,
     elements: ArenaVec<'ast, FormatElement<'ast>>,
 }
 
 impl<'buf, 'ast> VecBuffer<'buf, 'ast> {
-    pub fn new(state: &'buf mut FormatState<'ast>) -> Self {
+    pub fn new(state: &'buf mut JsFormatState<'ast>) -> Self {
         Self::new_with_vec(state, ArenaVec::new_in(state.allocator()))
     }
 
     pub fn new_with_vec(
-        state: &'buf mut FormatState<'ast>,
+        state: &'buf mut JsFormatState<'ast>,
         elements: ArenaVec<'ast, FormatElement<'ast>>,
     ) -> Self {
         Self { state, elements }
     }
 
     /// Creates a buffer with the specified capacity
-    pub fn with_capacity(capacity: usize, state: &'buf mut FormatState<'ast>) -> Self {
+    pub fn with_capacity(capacity: usize, state: &'buf mut JsFormatState<'ast>) -> Self {
         let elements = ArenaVec::with_capacity_in(capacity, state.allocator());
         Self { state, elements }
     }
@@ -170,11 +170,11 @@ impl<'ast> Buffer<'ast> for VecBuffer<'_, 'ast> {
         self
     }
 
-    fn state(&self) -> &FormatState<'ast> {
+    fn state(&self) -> &JsFormatState<'ast> {
         self.state
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast> {
+    fn state_mut(&mut self) -> &mut JsFormatState<'ast> {
         self.state
     }
 
@@ -285,11 +285,11 @@ where
         self.inner.elements()
     }
 
-    fn state(&self) -> &FormatState<'ast> {
+    fn state(&self) -> &JsFormatState<'ast> {
         self.inner.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast> {
+    fn state_mut(&mut self) -> &mut JsFormatState<'ast> {
         self.inner.state_mut()
     }
 
@@ -323,11 +323,11 @@ where
         self.inner.elements()
     }
 
-    fn state(&self) -> &FormatState<'a> {
+    fn state(&self) -> &JsFormatState<'a> {
         self.inner.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'a> {
+    fn state_mut(&mut self) -> &mut JsFormatState<'a> {
         self.inner.state_mut()
     }
 
@@ -553,11 +553,11 @@ impl<'ast> Buffer<'ast> for RemoveSoftLinesBuffer<'_, 'ast> {
         self.inner.elements()
     }
 
-    fn state(&self) -> &FormatState<'ast> {
+    fn state(&self) -> &JsFormatState<'ast> {
         self.inner.state()
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast> {
+    fn state_mut(&mut self) -> &mut JsFormatState<'ast> {
         self.inner.state_mut()
     }
 
