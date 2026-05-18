@@ -6,13 +6,13 @@ use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
-use oxc_str::Ident;
+use oxc_str::{CompactStr, Ident};
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     reference::{ReferenceFlags, ReferenceId},
-    symbol::SymbolFlags,
+    symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -21,11 +21,26 @@ use crate::{context::TraverseCtx, state::TransformState};
 pub struct TypeScriptEnum {
     optimize_const_enums: bool,
     optimize_enums: bool,
+    /// Drained per-scope in `exit_statements`. Deferred because the inliner reads the
+    /// enum's symbol flags (`is_const_enum` / `RegularEnum`) for every sibling `E.X`
+    /// it considers; rewriting them eagerly would break inlining for later statements.
+    pending_scoping_updates: Vec<PendingScopingUpdate>,
+}
+
+struct PendingScopingUpdate {
+    /// Scope of the enum decl. References to it can only live here or in descendants,
+    /// so this scope's `exit_statements` is the earliest safe point to apply the update.
+    enclosing_scope_id: ScopeId,
+    enum_symbol_id: SymbolId,
+    func_scope_id: ScopeId,
+    /// `None` for enum-merge redeclarations — they reuse the outer binding, so the
+    /// existing symbol flags stay.
+    new_symbol_flags: Option<SymbolFlags>,
 }
 
 impl TypeScriptEnum {
     pub fn new(optimize_const_enums: bool, optimize_enums: bool) -> Self {
-        Self { optimize_const_enums, optimize_enums }
+        Self { optimize_const_enums, optimize_enums, pending_scoping_updates: Vec::new() }
     }
 }
 
@@ -38,14 +53,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
                 if self.may_remove_enum(decl, ctx) {
                     return;
                 }
-                if let Some(new_stmt) = Self::transform_ts_enum(decl, None, ctx) {
+                if let Some(new_stmt) = self.transform_ts_enum(decl, None, ctx) {
                     *stmt = new_stmt;
                 }
             }
             Statement::ExportNamedDeclaration(export_decl) => {
                 let span = export_decl.span;
                 if let Some(Declaration::TSEnumDeclaration(decl)) = &mut export_decl.declaration
-                    && let Some(new_stmt) = Self::transform_ts_enum(decl, Some(span), ctx)
+                    && let Some(new_stmt) = self.transform_ts_enum(decl, Some(span), ctx)
                 {
                     *stmt = new_stmt;
                 }
@@ -59,25 +74,27 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.optimize_const_enums && !self.optimize_enums {
-            return;
-        }
-
         let parent_scope_id = ctx.current_scope_id();
-        let mut has_removable_enum = false;
 
-        // Transform or remove deferred enum declarations.
-        for stmt in stmts.iter_mut() {
-            let Statement::TSEnumDeclaration(decl) = stmt else { continue };
-            if self.can_remove_enum(decl, ctx) {
-                has_removable_enum = true;
-                continue;
-            }
-            // Not removable after all (still has value references) — transform now.
-            if let Some(new_stmt) = Self::transform_ts_enum(decl, None, ctx) {
-                *stmt = new_stmt;
+        let mut has_removable_enum = false;
+        if self.optimize_const_enums || self.optimize_enums {
+            for stmt in stmts.iter_mut() {
+                let Statement::TSEnumDeclaration(decl) = stmt else { continue };
+                if self.can_remove_enum(decl, ctx) {
+                    has_removable_enum = true;
+                    continue;
+                }
+                // Not removable after all (still has value references) — transform now.
+                if let Some(new_stmt) = self.transform_ts_enum(decl, None, ctx) {
+                    *stmt = new_stmt;
+                }
             }
         }
+
+        // Flush unconditionally: exported enums are lowered regardless of the optimize
+        // flags, so the queue may have entries for this scope even when `optimize_*`
+        // are off.
+        self.flush_pending_scoping_updates(parent_scope_id, ctx);
 
         if !has_removable_enum {
             return;
@@ -102,10 +119,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
             return;
         }
 
-        // Peek through TS-only wrappers and parens so `E.X as T`, `E.X satisfies T`,
-        // `E.X!`, `<T>E.X`, `E.X` (with `preserveParens`) all inline. `annotations.rs`
-        // strips these wrappers, but only after this hook returns — by then the outer
-        // node has been replaced and `enter_expression` is not re-invoked on it.
+        // Peek through TS wrappers and parens (`E.X as T`, `<T>E.X`, `E.X!`, …):
+        // `annotations.rs` strips them only after this hook returns, and the walker
+        // doesn't re-invoke `enter_expression` on the replacement.
         let inlined = match expr.get_inner_expression_mut() {
             Expression::StaticMemberExpression(member_expr) => {
                 self.try_inline_enum_member(member_expr, ctx)
@@ -142,6 +158,45 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
 }
 
 impl<'a> TypeScriptEnum {
+    /// Apply queued scoping updates whose `enclosing_scope_id` matches `scope_id`.
+    ///
+    /// Enum members are matched by their `EnumMember` symbol flag, not by name —
+    /// naturally handles `enum y { y = 123 }`, where the IIFE param's binding has
+    /// overwritten the member's entry under the shared name.
+    fn flush_pending_scoping_updates(&mut self, scope_id: ScopeId, ctx: &mut TraverseCtx<'a>) {
+        let mut i = 0;
+        while i < self.pending_scoping_updates.len() {
+            if self.pending_scoping_updates[i].enclosing_scope_id != scope_id {
+                i += 1;
+                continue;
+            }
+            let update = self.pending_scoping_updates.swap_remove(i);
+            let scoping = ctx.scoping_mut();
+
+            *scoping.scope_flags_mut(update.func_scope_id) |= ScopeFlags::Function;
+
+            // Detach into `CompactStr` so the immutable `get_bindings` borrow ends
+            // before the mutable `remove_binding` calls below.
+            let member_names: Vec<CompactStr> = scoping
+                .get_bindings(update.func_scope_id)
+                .iter()
+                .filter_map(|(&name, &sym_id)| {
+                    scoping
+                        .symbol_flags(sym_id)
+                        .contains(SymbolFlags::EnumMember)
+                        .then(|| name.into())
+                })
+                .collect();
+            for name in &member_names {
+                scoping.remove_binding(update.func_scope_id, Ident::from(name.as_str()));
+            }
+
+            if let Some(new_flags) = update.new_symbol_flags {
+                *scoping.symbol_flags_mut(update.enum_symbol_id) = new_flags;
+            }
+        }
+    }
+
     /// ```TypeScript
     /// enum Foo {
     ///   X = 1,
@@ -156,6 +211,7 @@ impl<'a> TypeScriptEnum {
     /// })(Foo || {});
     /// ```
     fn transform_ts_enum(
+        &mut self,
         decl: &mut TSEnumDeclaration<'a>,
         export_span: Option<Span>,
         ctx: &mut TraverseCtx<'a>,
@@ -178,7 +234,8 @@ impl<'a> TypeScriptEnum {
         let ast = ctx.ast;
 
         let is_export = export_span.is_some();
-        let is_not_top_scope = !ctx.scoping().scope_flags(ctx.current_scope_id()).is_top();
+        let enclosing_scope_id = ctx.current_scope_id();
+        let is_not_top_scope = !ctx.scoping().scope_flags(enclosing_scope_id).is_top();
 
         let enum_name: Ident = decl.id.name;
         let func_scope_id = decl.body.scope_id();
@@ -263,6 +320,20 @@ impl<'a> TypeScriptEnum {
             false,
             !has_potential_side_effect,
         );
+
+        let new_symbol_flags = (!is_already_declared).then(|| {
+            if is_export || is_not_top_scope {
+                SymbolFlags::BlockScopedVariable
+            } else {
+                SymbolFlags::FunctionScopedVariable
+            }
+        });
+        self.pending_scoping_updates.push(PendingScopingUpdate {
+            enclosing_scope_id,
+            enum_symbol_id,
+            func_scope_id,
+            new_symbol_flags,
+        });
 
         if is_already_declared {
             let op = AssignmentOperator::Assign;
