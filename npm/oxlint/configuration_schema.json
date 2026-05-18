@@ -2632,6 +2632,9 @@
         "vue/require-default-export": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/require-slots-as-functions": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/require-typed-ref": {
           "$ref": "#/definitions/DummyRule"
         },
