@@ -90,7 +90,7 @@ impl<'a> PeepholeOptimizations {
         if let Some(property_name) = property_name {
             let used_properties = usage.used_properties.entry(symbol_id).or_default();
             used_properties.insert(CompactStr::new(property_name));
-            if Some(used_properties.len() as u32)
+            if u32::try_from(used_properties.len()).ok()
                 == usage.prunable_property_counts.get(&symbol_id).copied()
             {
                 usage.candidate_symbols.remove(&symbol_id);
@@ -190,7 +190,9 @@ impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
         let Some(used_properties) = self.used_properties.get(&symbol_id) else {
             return;
         };
-        if used_properties.len() as u32 >= prunable_property_count {
+        if u32::try_from(used_properties.len())
+            .is_ok_and(|used_property_count| used_property_count >= prunable_property_count)
+        {
             return;
         }
 
