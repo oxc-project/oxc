@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus />
@@ -89,5 +90,33 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_autofocus.tsx:1:9]
  1 │ <Button autoFocus />
    ·         ─────────
+   ╰────
+  help: Remove the `autoFocus` attribute.
+
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+   ╭─[no_autofocus.tsx:1:9]
+ 1 │ <dialog autoFocus />
+   ·         ─────────
+   ╰────
+  help: Remove the `autoFocus` attribute.
+
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+   ╭─[no_autofocus.tsx:1:20]
+ 1 │ <div role="dialog" autoFocus />
+   ·                    ─────────
+   ╰────
+  help: Remove the `autoFocus` attribute.
+
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+   ╭─[no_autofocus.tsx:1:14]
+ 1 │ <div popover autoFocus />
+   ·              ─────────
+   ╰────
+  help: Remove the `autoFocus` attribute.
+
+  ⚠ jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
+   ╭─[no_autofocus.tsx:1:21]
+ 1 │ <div popover="auto" autoFocus />
+   ·                     ─────────
    ╰────
   help: Remove the `autoFocus` attribute.

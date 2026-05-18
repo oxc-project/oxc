@@ -207,6 +207,8 @@ impl StatsCollector {
         if matches!(
             parent_kind,
             AstKind::ObjectProperty(_)
+                | AstKind::BindingProperty(_)
+                | AstKind::AssignmentTargetPropertyProperty(_)
                 | AstKind::MethodDefinition(_)
                 | AstKind::PropertyDefinition(_)
                 | AstKind::ImportAttribute(_)
@@ -334,6 +336,8 @@ mod tests {
             ("for ((let.a) of foo);", "for ((let).a of foo);"),
             ("for ((let[a]) of foo);", "for ((let)[a] of foo);"),
             ("for ((let.a) in foo);", "for (let.a in foo);"),
+            (r#"const { index, "0": code } = match;"#, r"const { index, 0: code } = match;"),
+            (r#"({ "0": code } = match);"#, r"({ 0: code } = match);"),
             ("<div>{' '}</div>", "<div> </div>"),
             ("type T = | A;", "type T = A;"),
             ("type T = & A;", "type T = A;"),

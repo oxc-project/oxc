@@ -63,9 +63,13 @@ declare_oxc_lint!(
 
 impl Rule for BadArrayMethodOnArguments {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !node.kind().is_specific_id_reference("arguments") {
+        let AstKind::IdentifierReference(ident) = node.kind() else {
+            return;
+        };
+        if ident.name != "arguments" {
             return;
         }
+
         let parent = ctx.nodes().parent_node(node.id());
         let Some(member_expr) = parent.kind().as_member_expression_kind() else {
             return;

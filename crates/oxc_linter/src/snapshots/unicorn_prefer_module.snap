@@ -215,13 +215,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-module): Do not use "require".
    ╭─[prefer_module.tsx:1:18]
- 1 │ const {foo} = (( require("foo") ));
-   ·                  ───────
-   ╰────
-  help: Prefer ES modules over CommonJS globals.
-
-  ⚠ unicorn(prefer-module): Do not use "require".
-   ╭─[prefer_module.tsx:1:18]
  1 │ const {foo: foo}=require("foo");
    ·                  ───────
    ╰────
@@ -253,13 +246,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_module.tsx:1:22]
  1 │ const {foo: foo} = ((require))("foo");
    ·                      ───────
-   ╰────
-  help: Prefer ES modules over CommonJS globals.
-
-  ⚠ unicorn(prefer-module): Do not use "require".
-   ╭─[prefer_module.tsx:1:23]
- 1 │ const {foo: foo} = (( require("foo") ));
-   ·                       ───────
    ╰────
   help: Prefer ES modules over CommonJS globals.
 
@@ -303,13 +289,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_module.tsx:1:21]
  1 │ const {foo:bar} = ((require))("foo");
    ·                     ───────
-   ╰────
-  help: Prefer ES modules over CommonJS globals.
-
-  ⚠ unicorn(prefer-module): Do not use "require".
-   ╭─[prefer_module.tsx:1:22]
- 1 │ const {foo:bar} = (( require("foo") ));
-   ·                      ───────
    ╰────
   help: Prefer ES modules over CommonJS globals.
 
@@ -519,20 +498,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_module.tsx:1:13]
  1 │ const foo = require("foo"), bar = 1;
    ·             ───────
-   ╰────
-  help: Prefer ES modules over CommonJS globals.
-
-  ⚠ unicorn(prefer-module): Do not use "require".
-   ╭─[prefer_module.tsx:1:13]
- 1 │ const foo = require("foo"), bar = require("bar");
-   ·             ───────
-   ╰────
-  help: Prefer ES modules over CommonJS globals.
-
-  ⚠ unicorn(prefer-module): Do not use "require".
-   ╭─[prefer_module.tsx:1:35]
- 1 │ const foo = require("foo"), bar = require("bar");
-   ·                                   ───────
    ╰────
   help: Prefer ES modules over CommonJS globals.
 

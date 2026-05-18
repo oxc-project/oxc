@@ -476,3 +476,12 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.mts:3:27]
+ 2 │         async function run() {
+ 3 │             await Promise.all([
+   ·                           ───
+ 4 │                 new Promise((resolve) => resolve(true)),
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.

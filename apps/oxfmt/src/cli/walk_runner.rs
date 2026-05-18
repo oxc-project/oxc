@@ -103,24 +103,17 @@ impl WalkRunner {
 
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
-        match tokio::task::block_in_place(|| {
+        if let Err(err) = tokio::task::block_in_place(|| {
             self.external_formatter
                 .as_ref()
                 .expect("External formatter must be set when `napi` feature is enabled")
                 .init(num_of_threads)
         }) {
-            // TODO: Plugins support
-            // - Parse returned `languages`
-            // - Allow its `extensions` and `filenames` in `walk.rs`
-            // - Pass `parser` to `SourceFormatter`
-            Ok(_) => {}
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to setup external formatter.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
+            utils::print_and_flush(
+                stderr,
+                &format!("Failed to setup external formatter.\n{err}\n"),
+            );
+            return CliRunResult::InvalidOptionConfig;
         }
 
         // Resolve ignore paths early to validate before walk starts
@@ -148,31 +141,28 @@ impl WalkRunner {
             utils::print_and_flush(stdout, "\n");
         }
 
-        let scoped_walker = ScopedWalker::new(cwd.clone(), &paths);
-
         // Create `SourceFormatter` instance
         let source_formatter = SourceFormatter::new(num_of_threads);
         #[cfg(feature = "napi")]
         let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
+        let cwd_for_format = cwd.clone();
         // Clone `tx_error` so both the walk threads and the format service can report errors
         let tx_error_for_format = tx_error.clone();
 
         // Spawn formatting service on a dedicated thread so it doesn't occupy the rayon pool.
         // It just blocks on `rx_entry` waiting for entries; `par_bridge()` inside still uses rayon.
         std::thread::spawn(move || {
-            let format_service = FormatService::new(cwd, format_mode, source_formatter);
+            let format_service = FormatService::new(cwd_for_format, format_mode, source_formatter);
             format_service.run_streaming(rx_entry, &tx_error_for_format, &tx_success);
         });
 
         // Run scoped walks (root + nested) sends entries to `tx_entry` and errors to `tx_error`.
         // Manually drop after the walk to signal the formatting service that no more entries will be sent.
-        let any_config_found = match scoped_walker.run(
+        let any_config_found = match ScopedWalker::new(cwd, &paths).run(
             root_config_resolver,
             &resolved_ignore_paths,
             ignore_options.with_node_modules,
-            // Nested config detection is disabled when `--config` is explicitly specified
-            // or when `--disable-nested-config` is set
             config_options.config.is_none() && !config_options.disable_nested_config,
             editorconfig_path.as_deref(),
             #[cfg(feature = "napi")]
@@ -188,7 +178,15 @@ impl WalkRunner {
             Err(err) => {
                 drop(tx_entry);
                 drop(tx_error);
-                utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
+                let mut msg = format!("Failed to parse configuration.\n{err}\n");
+                // Nested configs are loaded lazily during the walk,
+                // so by the time a load failure surfaces some files in unaffected scopes may already have been written.
+                if matches!(format_mode, OutputMode::Write) {
+                    msg.push_str(
+                        "Files in unaffected scopes may have already been written; re-run after fixing the config.\n",
+                    );
+                }
+                utils::print_and_flush(stderr, &msg);
                 return CliRunResult::InvalidOptionConfig;
             }
         };

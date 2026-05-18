@@ -1,5 +1,6 @@
 use std::{borrow::Cow, fmt};
 
+use cow_utils::CowUtils;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use schemars::{
@@ -235,7 +236,6 @@ fn transform_rule_and_plugin_name<'a>(
     plugin_name: &'a str,
 ) -> (&'a str, &'a str) {
     let plugin_name = match plugin_name {
-        "unicorn" if rule_name == "no-negated-condition" => "eslint",
         "typescript" if is_eslint_rule_adapted_to_typescript(rule_name) => "eslint",
         _ => plugin_name,
     };
@@ -293,11 +293,53 @@ impl JsonSchema for OxlintRules {
         }
 
         #[expect(unused)]
-        #[derive(Debug, JsonSchema)]
-        #[schemars(
-            description = "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
-        )]
+        #[derive(Debug)]
         struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
+
+        impl JsonSchema for DummyRuleMap {
+            fn schema_name() -> String {
+                "DummyRuleMap".to_string()
+            }
+
+            fn schema_id() -> Cow<'static, str> {
+                "DummyRuleMap".into()
+            }
+
+            fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+                let rules_enum = RULES.iter().map(|r| {
+                    if r.plugin_name() == "eslint" {
+                        r.name().to_string()
+                    } else {
+                        format!(
+                            "{}/{}",
+                            // replace `jsx_a11y` with `jsx-a11y`, `react_perf` with `react-perf`.
+                            r.plugin_name().cow_replace('_', "-"),
+                            r.name()
+                        )
+                    }
+                });
+
+                SchemaObject {
+                    metadata: Some(Box::new(schemars::schema::Metadata {
+                        description: Some(
+                            "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
+                                .to_string(),
+                        ),
+                        ..Default::default()
+                    })),
+                    instance_type: Some(InstanceType::Object.into()),
+                    object: Some(Box::new(schemars::schema::ObjectValidation {
+                        additional_properties: Some(Box::new(r#gen.subschema_for::<DummyRule>())),
+                        properties: rules_enum
+                            .map(|rule_name| (rule_name, r#gen.subschema_for::<DummyRule>()))
+                            .collect(),
+                        ..Default::default()
+                    })),
+                    ..Default::default()
+                }
+                .into()
+            }
+        }
 
         r#gen.subschema_for::<DummyRuleMap>()
     }
@@ -390,7 +432,8 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
         "@typescript-eslint" => ("typescript", rule_name),
         // import-x has the same rules but better performance
         "import-x" => ("import", rule_name),
-        "jsx-a11y" => ("jsx_a11y", rule_name),
+        // jsx-a11y-x has the same rules but better maintained
+        "jsx-a11y" | "jsx-a11y-x" | "jsx_a11y-x" => ("jsx_a11y", rule_name),
         "react-perf" => ("react_perf", rule_name),
         // e.g. "@next/google-font-display", "@next/next/google-font-display"
         "@next" | "@next/next" => ("nextjs", rule_name),

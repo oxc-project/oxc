@@ -546,3 +546,88 @@ fn remove_pure_function_calls() {
     test("var foo = function() {}; foo()", "");
     test_same("function foo() { bar() } foo()");
 }
+
+#[test]
+fn preserve_pure_iife_in_used_position_for_downstream_treeshake() {
+    // https://github.com/oxc-project/oxc/issues/17480
+    //
+    // In DCE-only mode the IIFE inliner refuses to inline a
+    // `@__PURE__`-annotated IIFE when the body can't carry a `pure` flag,
+    // so the outer call's annotation stays visible to rolldown's
+    // side-effect detector.
+
+    test_same("export const exec = /* @__PURE__ */ (() => _M.exec)();");
+    test_same("export const x = /* @__PURE__ */ (() => foo()?.bar())();");
+    test_same("export const x = /* @__PURE__ */ (() => foo`tpl`)();");
+    test_same("export const x = /* @__PURE__ */ (() => (a(), b()))();");
+    test_same("export const x = /* @__PURE__ */ (() => c ? a() : b())();");
+    // Bare-identifier conditional — unknown global reads count as side
+    // effects in DCE mode, so the IIFE wrapper stays.
+    test_same("export const x = /* @__PURE__ */ (() => a ? b : c)();");
+
+    test_same("export const x = /* @__PURE__ */ (() => foo())();");
+    test_same("export const x = /* @__PURE__ */ (() => new Foo())();");
+    // Effectful arg inside the body call — the original IIFE could be dropped
+    // wholesale; the inlined form would expose `bar()` as a surviving side
+    // effect of the outer call.
+    test_same("export const x = /* @__PURE__ */ (() => foo(bar()))();");
+    test_same("export const x = /* @__PURE__ */ (() => new Foo(bar()))();");
+
+    test("export const x = /* @__PURE__ */ (() => 42)();", "export const x = 42;");
+}
+
+#[test]
+fn drop_optional_chain_on_non_nullish_base() {
+    // https://github.com/oxc-project/oxc/issues/21923
+    // ObjectExpression at statement start needs to stay parenthesised; codegen
+    // already handles that, so the fold is safe in statement position.
+    test("({})?.foo;", "({}).foo;");
+    // Side effects on the base are preserved when the `?.` is dropped.
+    test("export const v = (foo(), {})?.bar", "export const v = (foo(), {}).bar");
+    // Nested: the optional is on the inner access, the outer access is
+    // non-optional. Both folds (collapse + drop) reach the deepest `?.`.
+    test("export const v = null?.foo.bar", "export const v = void 0");
+    test("export const v = []?.foo.bar", "export const v = [].foo.bar");
+}
+
+#[test]
+fn fold_optional_chain_on_undefined_let_binding() {
+    // https://github.com/rolldown/rolldown/issues/9281
+    // A `let` binding with no writes is statically known to be `undefined`,
+    // so optional calls / member accesses on it should fold to `void 0`.
+    test("let slot; export function call() { slot?.() }", "export function call() {}");
+    test("let slot; export function call() { slot?.foo }", "export function call() {}");
+    test("let slot; export function call() { slot?.[foo()] }", "export function call() {}");
+    // A binding that is written somewhere is not nullish-known: leave it alone.
+    test_same(
+        "let slot; export function setSlot(v) { slot = v } export function call() { slot?.() }",
+    );
+}
+
+#[test]
+fn fold_optional_chain_on_null_const_binding() {
+    // A `const` initialized to `null` resolves to `ValueType::Null`, so the
+    // optional chain folds the same way the `undefined` case does.
+    test("const slot = null; export function call() { slot?.() }", "export function call() {}");
+    test("const slot = null; export function call() { slot?.foo }", "export function call() {}");
+}
+
+#[test]
+fn fold_coalesce_on_tracked_non_nullish_binding() {
+    // The new value_type lookup also resolves non-nullish constants, so the
+    // right-hand side of `??` can be dropped.
+    //
+    // Two reads + a string the inliner skips (length > 3) prevents
+    // `inline_identifier_reference` from short-circuiting the test by
+    // substituting the literal value before the coalesce fold runs.
+    test(
+        "let s = 'hello'; export function a() { return s ?? other() } export function b() { return s ?? other() }",
+        "let s = 'hello'; export function a() { return s } export function b() { return s }",
+    );
+    // BigInt is never inlined, so a single read is enough to exercise the
+    // value-type path here.
+    test(
+        "let n = 5n; export function a() { return n ?? other() } export function b() { return n ?? other() }",
+        "let n = 5n; export function a() { return n } export function b() { return n }",
+    );
+}

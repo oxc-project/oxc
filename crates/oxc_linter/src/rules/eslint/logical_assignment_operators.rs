@@ -185,7 +185,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = LogicalAssignmentOperators,
-    version = "next",
+    version = "1.63.0",
 );
 
 impl Rule for LogicalAssignmentOperators {

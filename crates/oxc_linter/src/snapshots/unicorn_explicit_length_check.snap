@@ -45,13 +45,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `.length` with `.length > 0`.
 
   ⚠ unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
-   ╭─[explicit_length_check.tsx:1:11]
- 1 │ const x = foo.length || bar()
-   ·           ──────────
-   ╰────
-  help: Replace `.length` with `.length > 0`.
-
-  ⚠ unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
    ╭─[explicit_length_check.tsx:1:7]
  1 │ () => foo.length && bar()
    ·       ──────────

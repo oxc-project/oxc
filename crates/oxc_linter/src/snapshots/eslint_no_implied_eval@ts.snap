@@ -1,0 +1,87 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ setTimeout('x' as string);
+   · ─────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ setTimeout(<string>'x');
+   · ───────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ setTimeout('x' satisfies string);
+   · ────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ setTimeout(('x')!);
+   · ──────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ setTimeout<string>('x');
+   · ───────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ (setTimeout as typeof setTimeout)('x');
+   · ──────────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ window.setTimeout('x' as string);
+   · ────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ (window as Window).setTimeout('x');
+   · ──────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ (window.setTimeout as Window['setTimeout'])('x');
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:29]
+ 1 │ const code = 'x' as string; setTimeout(code);
+   ·                             ────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ setTimeout(String(foo as string));
+   · ─────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.ts:1:1]
+ 1 │ setTimeout(typeof (foo as string));
+   · ──────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.

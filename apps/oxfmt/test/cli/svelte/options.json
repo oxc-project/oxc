@@ -1,0 +1,8 @@
+[
+  { "args": ["--check", "--config", "./fmt-simple.json"] },
+  { "args": ["--check", "--config", "./fmt-no-svelte.json"] },
+  { "args": ["--check", "--config", "./fmt-root-overrides.json"] },
+  { "args": ["--check", "--config", "./fmt-overrides-only.json"] },
+  { "args": ["--check", "--config", "./fmt-md-only.json"] },
+  { "args": ["--check", "--config", "./fmt-bool-disable.json"] }
+]
