@@ -1,0 +1,85 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(expiring-todo-comments): There is a TODO that is past due date: 2000-01-01. too old
+   ╭─[expiring_todo_comments.tsx:1:1]
+ 1 │ // TODO [2000-01-01]: too old
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): There is a TODO that is past due date: 2000-01-01. too old
+   ╭─[expiring_todo_comments.tsx:1:1]
+ 1 │ // fixme [2000-01-01]: too old
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): There is a TODO that is past due date: 2000-01-01. too old
+   ╭─[expiring_todo_comments.tsx:1:1]
+ 1 │ // xxx [2000-01-01]: too old
+   · ────────────────────────────
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): There is a TODO that is past due date: 2000-01-01. too old
+   ╭─[expiring_todo_comments.tsx:1:1]
+ 1 │ // ToDo [2000-01-01]: too old
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): There is a TODO that is past due date: 2000-01-01. too old
+   ╭─[expiring_todo_comments.tsx:1:1]
+ 1 │ // fIxME [2000-01-01]: too old
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): There is a TODO that is past due date: 2019-12-31. yesterday is expired
+   ╭─[expiring_todo_comments.tsx:1:1]
+ 1 │ // TODO [2019-12-31]: yesterday is expired
+   · ──────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): Avoid using multiple expiration dates in TODO: 2200-12-12, 2200-12-12. multiple dates
+   ╭─[expiring_todo_comments.tsx:1:1]
+ 1 │ // TODO [2200-12-12, 2200-12-12]: multiple dates
+   · ────────────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): Avoid using multiple expiration dates in TODO: 2200-12-12, 2300-01-01. multiple dates
+   ╭─[expiring_todo_comments.tsx:1:1]
+ 1 │ // TODO [2200-12-12, 2300-01-01]: multiple dates
+   · ────────────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): Unexpected 'TODO' comment without any conditions: 'TODO'.
+   ╭─[expiring_todo_comments.tsx:1:1]
+ 1 │ // TODO
+   · ───────
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): Unexpected 'TODO' comment without any conditions: 'TODO [no meaning at all]'.
+   ╭─[expiring_todo_comments.tsx:1:1]
+ 1 │ // TODO [no meaning at all]
+   · ───────────────────────────
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): There is a TODO that is past due date: 2000-01-01. line one
+   ╭─[expiring_todo_comments.tsx:1:4]
+ 1 │ /* TODO [2000-01-01]: line one
+   ·    ───────────────────────────
+ 2 │  * TODO [2000-01-01]: line two
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): There is a TODO that is past due date: 2000-01-01. line two
+   ╭─[expiring_todo_comments.tsx:2:4]
+ 1 │ /* TODO [2000-01-01]: line one
+ 2 │  * TODO [2000-01-01]: line two
+   ·    ───────────────────────────
+ 3 │  * TODO [2000-01-01] line three */
+   ╰────
+
+  ⚠ unicorn(expiring-todo-comments): There is a TODO that is past due date: 2000-01-01. line three
+   ╭─[expiring_todo_comments.tsx:3:4]
+ 2 │  * TODO [2000-01-01]: line two
+ 3 │  * TODO [2000-01-01] line three */
+   ·    ────────────────────────────
+   ╰────
