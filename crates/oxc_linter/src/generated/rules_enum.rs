@@ -796,6 +796,7 @@ pub use crate::rules::vue::no_deprecated_delete_set::NoDeprecatedDeleteSet as Vu
 pub use crate::rules::vue::no_deprecated_destroyed_lifecycle::NoDeprecatedDestroyedLifecycle as VueNoDeprecatedDestroyedLifecycle;
 pub use crate::rules::vue::no_deprecated_events_api::NoDeprecatedEventsApi as VueNoDeprecatedEventsApi;
 pub use crate::rules::vue::no_deprecated_model_definition::NoDeprecatedModelDefinition as VueNoDeprecatedModelDefinition;
+pub use crate::rules::vue::no_deprecated_props_default_this::NoDeprecatedPropsDefaultThis as VueNoDeprecatedPropsDefaultThis;
 pub use crate::rules::vue::no_deprecated_vue_config_keycodes::NoDeprecatedVueConfigKeycodes as VueNoDeprecatedVueConfigKeycodes;
 pub use crate::rules::vue::no_export_in_script_setup::NoExportInScriptSetup as VueNoExportInScriptSetup;
 pub use crate::rules::vue::no_import_compiler_macros::NoImportCompilerMacros as VueNoImportCompilerMacros;
@@ -1615,6 +1616,7 @@ pub enum RuleEnum {
     VueNoDeprecatedDestroyedLifecycle(VueNoDeprecatedDestroyedLifecycle),
     VueNoDeprecatedEventsApi(VueNoDeprecatedEventsApi),
     VueNoDeprecatedModelDefinition(VueNoDeprecatedModelDefinition),
+    VueNoDeprecatedPropsDefaultThis(VueNoDeprecatedPropsDefaultThis),
     VueNoDeprecatedVueConfigKeycodes(VueNoDeprecatedVueConfigKeycodes),
     VueNoExportInScriptSetup(VueNoExportInScriptSetup),
     VueNoImportCompilerMacros(VueNoImportCompilerMacros),
@@ -2517,8 +2519,10 @@ const VUE_NO_DEPRECATED_DELETE_SET_ID: usize =
 const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = VUE_NO_DEPRECATED_DELETE_SET_ID + 1usize;
 const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID + 1usize;
 const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = VUE_NO_DEPRECATED_EVENTS_API_ID + 1usize;
-const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize =
+const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize =
     VUE_NO_DEPRECATED_MODEL_DEFINITION_ID + 1usize;
+const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize =
+    VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID + 1usize;
 const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID + 1usize;
 const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID + 1usize;
 const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = VUE_NO_IMPORT_COMPILER_MACROS_ID + 1usize;
@@ -3448,6 +3452,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID,
             Self::VueNoDeprecatedEventsApi(_) => VUE_NO_DEPRECATED_EVENTS_API_ID,
             Self::VueNoDeprecatedModelDefinition(_) => VUE_NO_DEPRECATED_MODEL_DEFINITION_ID,
+            Self::VueNoDeprecatedPropsDefaultThis(_) => VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID,
             Self::VueNoExportInScriptSetup(_) => VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID,
             Self::VueNoImportCompilerMacros(_) => VUE_NO_IMPORT_COMPILER_MACROS_ID,
@@ -4363,6 +4368,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VueNoDeprecatedDestroyedLifecycle::NAME,
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::NAME,
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::NAME,
+            Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::NAME,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::NAME,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::NAME,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::NAME,
@@ -5336,6 +5342,7 @@ impl RuleEnum {
             }
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::CATEGORY,
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::CATEGORY,
+            Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::CATEGORY,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::CATEGORY,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::CATEGORY,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::CATEGORY,
@@ -6252,6 +6259,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VueNoDeprecatedDestroyedLifecycle::FIX,
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::FIX,
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::FIX,
+            Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::FIX,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::FIX,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::FIX,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::FIX,
@@ -7413,6 +7421,9 @@ impl RuleEnum {
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::documentation(),
             Self::VueNoDeprecatedModelDefinition(_) => {
                 VueNoDeprecatedModelDefinition::documentation()
+            }
+            Self::VueNoDeprecatedPropsDefaultThis(_) => {
+                VueNoDeprecatedPropsDefaultThis::documentation()
             }
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::documentation()
@@ -9702,6 +9713,10 @@ impl RuleEnum {
                 VueNoDeprecatedModelDefinition::config_schema(generator)
                     .or_else(|| VueNoDeprecatedModelDefinition::schema(generator))
             }
+            Self::VueNoDeprecatedPropsDefaultThis(_) => {
+                VueNoDeprecatedPropsDefaultThis::config_schema(generator)
+                    .or_else(|| VueNoDeprecatedPropsDefaultThis::schema(generator))
+            }
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::config_schema(generator)
                     .or_else(|| VueNoDeprecatedVueConfigKeycodes::schema(generator))
@@ -10530,6 +10545,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => "vue",
             Self::VueNoDeprecatedEventsApi(_) => "vue",
             Self::VueNoDeprecatedModelDefinition(_) => "vue",
+            Self::VueNoDeprecatedPropsDefaultThis(_) => "vue",
             Self::VueNoDeprecatedVueConfigKeycodes(_) => "vue",
             Self::VueNoExportInScriptSetup(_) => "vue",
             Self::VueNoImportCompilerMacros(_) => "vue",
@@ -13092,6 +13108,9 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => Ok(Self::VueNoDeprecatedModelDefinition(
                 VueNoDeprecatedModelDefinition::from_configuration(value)?,
             )),
+            Self::VueNoDeprecatedPropsDefaultThis(_) => Ok(Self::VueNoDeprecatedPropsDefaultThis(
+                VueNoDeprecatedPropsDefaultThis::from_configuration(value)?,
+            )),
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 Ok(Self::VueNoDeprecatedVueConfigKeycodes(
                     VueNoDeprecatedVueConfigKeycodes::from_configuration(value)?,
@@ -13929,6 +13948,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedEventsApi(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedModelDefinition(rule) => rule.to_configuration(),
+            Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.to_configuration(),
             Self::VueNoExportInScriptSetup(rule) => rule.to_configuration(),
             Self::VueNoImportCompilerMacros(rule) => rule.to_configuration(),
@@ -14744,6 +14764,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedEventsApi(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run(node, ctx),
+                Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run(node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run(node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
@@ -15552,6 +15573,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedEventsApi(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run(node, ctx),
+                Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run(node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run(node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
@@ -16367,6 +16389,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedEventsApi(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run_once(ctx),
+                Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_once(ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_once(ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
@@ -17175,6 +17198,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedEventsApi(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run_once(ctx),
+                Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_once(ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_once(ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
@@ -18241,6 +18265,9 @@ impl RuleEnum {
                 }
                 Self::VueNoDeprecatedEventsApi(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoDeprecatedPropsDefaultThis(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
@@ -19301,6 +19328,9 @@ impl RuleEnum {
                 }
                 Self::VueNoDeprecatedEventsApi(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoDeprecatedPropsDefaultThis(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
@@ -20109,6 +20139,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedEventsApi(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedModelDefinition(rule) => rule.should_run(ctx),
+            Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.should_run(ctx),
             Self::VueNoExportInScriptSetup(rule) => rule.should_run(ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.should_run(ctx),
@@ -21270,6 +21301,9 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => {
                 VueNoDeprecatedModelDefinition::IS_TSGOLINT_RULE
             }
+            Self::VueNoDeprecatedPropsDefaultThis(_) => {
+                VueNoDeprecatedPropsDefaultThis::IS_TSGOLINT_RULE
+            }
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::IS_TSGOLINT_RULE
             }
@@ -22247,6 +22281,7 @@ impl RuleEnum {
             }
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::VERSION,
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::VERSION,
+            Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::VERSION,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::VERSION,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::VERSION,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::VERSION,
@@ -23255,6 +23290,7 @@ impl RuleEnum {
             }
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::HAS_CONFIG,
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::HAS_CONFIG,
+            Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::HAS_CONFIG,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::HAS_CONFIG
             }
@@ -24062,6 +24098,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.types_info(),
             Self::VueNoDeprecatedEventsApi(rule) => rule.types_info(),
             Self::VueNoDeprecatedModelDefinition(rule) => rule.types_info(),
+            Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.types_info(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.types_info(),
             Self::VueNoExportInScriptSetup(rule) => rule.types_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.types_info(),
@@ -24867,6 +24904,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_info(),
             Self::VueNoDeprecatedEventsApi(rule) => rule.run_info(),
             Self::VueNoDeprecatedModelDefinition(rule) => rule.run_info(),
+            Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_info(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_info(),
             Self::VueNoExportInScriptSetup(rule) => rule.run_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.run_info(),
@@ -25804,6 +25842,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueNoDeprecatedDestroyedLifecycle(VueNoDeprecatedDestroyedLifecycle::default()),
         RuleEnum::VueNoDeprecatedEventsApi(VueNoDeprecatedEventsApi::default()),
         RuleEnum::VueNoDeprecatedModelDefinition(VueNoDeprecatedModelDefinition::default()),
+        RuleEnum::VueNoDeprecatedPropsDefaultThis(VueNoDeprecatedPropsDefaultThis::default()),
         RuleEnum::VueNoDeprecatedVueConfigKeycodes(VueNoDeprecatedVueConfigKeycodes::default()),
         RuleEnum::VueNoExportInScriptSetup(VueNoExportInScriptSetup::default()),
         RuleEnum::VueNoImportCompilerMacros(VueNoImportCompilerMacros::default()),
