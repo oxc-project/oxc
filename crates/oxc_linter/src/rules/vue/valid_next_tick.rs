@@ -378,8 +378,9 @@ fn is_legacy_vue_options_object(object_node: &AstNode<'_>, ctx: &LintContext<'_>
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("", None, None, Some(PathBuf::from("test.vue"))),
