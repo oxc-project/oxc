@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
-use oxc_str::CompactStr;
+use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -9,7 +9,7 @@ use crate::{TraverseCtx, state::ObjectPropertyUsageState};
 
 use super::PeepholeOptimizations;
 
-type UsedProperties = FxHashMap<SymbolId, Vec<CompactStr>>;
+type UsedProperties<'a> = FxHashMap<SymbolId, Vec<Str<'a>>>;
 
 impl<'a> PeepholeOptimizations {
     pub(super) fn collect_object_property_candidate(
@@ -28,14 +28,11 @@ impl<'a> PeepholeOptimizations {
         };
 
         if Self::can_prune_symbol(symbol_id, ctx) {
-            let reference_ids = ctx.scoping().get_resolved_reference_ids(symbol_id).to_vec();
-            let usage = &mut ctx.state.object_property_usage;
-            if usage.candidate_symbols.insert(symbol_id) {
-                for reference_id in reference_ids {
-                    usage.candidate_reference_symbols.insert(reference_id, symbol_id);
-                }
-            }
-            usage.prunable_property_counts.insert(symbol_id, prunable_property_count);
+            ctx.state.object_property_usage.candidate_symbols.insert(symbol_id);
+            ctx.state
+                .object_property_usage
+                .prunable_property_counts
+                .insert(symbol_id, prunable_property_count);
         }
     }
 
@@ -73,7 +70,7 @@ impl<'a> PeepholeOptimizations {
 
     pub(super) fn record_object_property_member_access(
         object: &Expression<'a>,
-        property_name: Option<&str>,
+        property_name: Option<Str<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<SymbolId> {
         if ctx.state.object_property_usage.candidate_symbols.is_empty() {
@@ -82,10 +79,8 @@ impl<'a> PeepholeOptimizations {
 
         let Expression::Identifier(ident) = object.without_parentheses() else { return None };
         let reference_id = ident.reference_id();
+        let symbol_id = ctx.scoping().get_reference(reference_id).symbol_id()?;
         let usage = &mut ctx.state.object_property_usage;
-        let Some(symbol_id) = usage.candidate_reference_symbols.get(&reference_id).copied() else {
-            return None;
-        };
         if !usage.candidate_symbols.contains(&symbol_id) {
             return None;
         }
@@ -94,8 +89,8 @@ impl<'a> PeepholeOptimizations {
 
         if let Some(property_name) = property_name {
             let used_properties = usage.used_properties.entry(symbol_id).or_default();
-            if !used_properties.iter().any(|used_property| used_property == property_name) {
-                used_properties.push(CompactStr::new(property_name));
+            if !used_properties.contains(&property_name) {
+                used_properties.push(property_name);
             }
             if u32::try_from(used_properties.len()).ok()
                 == usage.prunable_property_counts.get(&symbol_id).copied()
@@ -121,7 +116,7 @@ impl<'a> PeepholeOptimizations {
             Expression::StaticMemberExpression(member_expr) => {
                 if let Some(symbol_id) = Self::record_object_property_member_access(
                     &member_expr.object,
-                    Some(member_expr.property.name.as_str()),
+                    Some(member_expr.property.name.into()),
                     ctx,
                 ) {
                     ctx.state.object_property_usage.escaped_or_unknown_symbols.insert(symbol_id);
@@ -132,7 +127,7 @@ impl<'a> PeepholeOptimizations {
                 let property_name = member_expr.static_property_name();
                 if let Some(symbol_id) = Self::record_object_property_member_access(
                     &member_expr.object,
-                    property_name.as_deref(),
+                    property_name,
                     ctx,
                 ) {
                     ctx.state.object_property_usage.escaped_or_unknown_symbols.insert(symbol_id);
@@ -162,7 +157,7 @@ impl<'a> PeepholeOptimizations {
 
 struct UnusedObjectPropertyPruner<'ctx, 'a> {
     ctx: &'ctx TraverseCtx<'a>,
-    used_properties: &'ctx UsedProperties,
+    used_properties: &'ctx UsedProperties<'a>,
     escaped_or_unknown_symbols: &'ctx FxHashSet<SymbolId>,
     changed: bool,
 }
@@ -219,7 +214,7 @@ impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
     fn should_keep_property(
         &self,
         property: &ObjectProperty<'a>,
-        used_properties: &[CompactStr],
+        used_properties: &[Str<'a>],
     ) -> bool {
         if property.kind != PropertyKind::Init || property.computed || property.shorthand {
             return true;
@@ -228,7 +223,7 @@ impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
         let Some(name) = property.key.static_name() else {
             return true;
         };
-        if used_properties.iter().any(|used_property| used_property == name.as_ref()) {
+        if used_properties.iter().any(|used_property| used_property.as_str() == name.as_ref()) {
             return true;
         }
 

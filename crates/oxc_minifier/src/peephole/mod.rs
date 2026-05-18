@@ -530,17 +530,13 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             MemberExpression::StaticMemberExpression(member_expr) => {
                 Self::record_object_property_member_access(
                     &member_expr.object,
-                    Some(member_expr.property.name.as_str()),
+                    Some(member_expr.property.name.into()),
                     ctx,
                 );
             }
             MemberExpression::ComputedMemberExpression(member_expr) => {
                 let property_name = member_expr.static_property_name();
-                Self::record_object_property_member_access(
-                    &member_expr.object,
-                    property_name.as_deref(),
-                    ctx,
-                );
+                Self::record_object_property_member_access(&member_expr.object, property_name, ctx);
             }
             MemberExpression::PrivateFieldExpression(_) => {}
         }

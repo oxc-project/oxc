@@ -5,7 +5,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
-use oxc_str::{CompactStr, Str};
+use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
@@ -31,7 +31,7 @@ pub struct MinifierState<'a> {
     /// setters that make subsequent property writes side-effectful.
     pub proto_write_symbols: FxHashSet<SymbolId>,
 
-    pub object_property_usage: ObjectPropertyUsageState,
+    pub object_property_usage: ObjectPropertyUsageState<'a>,
 
     pub changed: bool,
 }
@@ -58,11 +58,10 @@ impl MinifierState<'_> {
 }
 
 #[derive(Default)]
-pub struct ObjectPropertyUsageState {
+pub struct ObjectPropertyUsageState<'a> {
     pub candidate_symbols: FxHashSet<SymbolId>,
-    pub candidate_reference_symbols: FxHashMap<ReferenceId, SymbolId>,
     pub prunable_property_counts: FxHashMap<SymbolId, u32>,
-    pub used_properties: FxHashMap<SymbolId, Vec<CompactStr>>,
+    pub used_properties: FxHashMap<SymbolId, Vec<Str<'a>>>,
     pub escaped_or_unknown_symbols: FxHashSet<SymbolId>,
     pub member_object_references: FxHashSet<ReferenceId>,
 }
