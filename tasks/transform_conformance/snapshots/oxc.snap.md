@@ -1,6 +1,6 @@
 commit: 4079bcda
 
-Passed: 235/382
+Passed: 236/384
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -63,7 +63,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (22/56)
+# babel-plugin-transform-typescript (23/58)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -525,6 +525,20 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "B":
 after transform: SymbolId(2): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
+* optimize-enums/type-cast/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["Direction", "Down", "Up"]
+rebuilt        : ScopeId(1): ["Direction"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Direction":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "Direction":
+after transform: SymbolId(0): [ReferenceId(5), ReferenceId(1), ReferenceId(7), ReferenceId(3), ReferenceId(14)]
+rebuilt        : SymbolId(0): [ReferenceId(5)]
 
 * optimize-enums/typeof-kept/input.ts
 Bindings mismatch:

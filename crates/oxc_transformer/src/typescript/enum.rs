@@ -102,7 +102,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
             return;
         }
 
-        let inlined = match expr {
+        // Peek through TS-only wrappers and parens so `E.X as T`, `E.X satisfies T`,
+        // `E.X!`, `<T>E.X`, `E.X` (with `preserveParens`) all inline. `annotations.rs`
+        // strips these wrappers, but only after this hook returns — by then the outer
+        // node has been replaced and `enter_expression` is not re-invoked on it.
+        let inlined = match expr.get_inner_expression_mut() {
             Expression::StaticMemberExpression(member_expr) => {
                 self.try_inline_enum_member(member_expr, ctx)
             }
