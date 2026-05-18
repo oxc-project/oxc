@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use oxc_ast::{
     AstKind,
     ast::{
@@ -11,6 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToJsString, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashMap;
 use schemars::{
     JsonSchema, SchemaGenerator,
     schema::{Schema, SchemaObject},
@@ -40,7 +39,7 @@ fn import_style_diagnostic(
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ImportStyle {
-    styles: BTreeMap<String, ModuleStylesOverride>,
+    styles: FxHashMap<String, ModuleStylesOverride>,
     #[serde(default = "default_true")]
     extend_default_styles: bool,
     #[serde(default = "default_true")]
@@ -55,7 +54,7 @@ pub struct ImportStyle {
 impl Default for ImportStyle {
     fn default() -> Self {
         Self {
-            styles: BTreeMap::new(),
+            styles: FxHashMap::default(),
             extend_default_styles: true,
             check_import: true,
             check_dynamic_import: true,
