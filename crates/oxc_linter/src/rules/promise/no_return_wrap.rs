@@ -6,7 +6,10 @@ use crate::{
 };
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, CallExpression, Expression, Statement},
+    ast::{
+        ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
+        ReturnStatement, Statement,
+    },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -245,11 +248,7 @@ fn check_callback_fn<'a>(ctx: &LintContext<'a>, allow_reject: bool, expr: &Expre
     }
 }
 
-fn check_function_body<'a>(
-    ctx: &LintContext<'a>,
-    allow_reject: bool,
-    body: &oxc_ast::ast::FunctionBody<'a>,
-) {
+fn check_function_body<'a>(ctx: &LintContext<'a>, allow_reject: bool, body: &FunctionBody<'a>) {
     let mut finder = ReturnWrapFinder { ctx, allow_reject };
     finder.visit_function_body(body);
 }
@@ -260,18 +259,13 @@ struct ReturnWrapFinder<'a, 'b> {
 }
 
 impl<'a> Visit<'a> for ReturnWrapFinder<'a, '_> {
-    fn visit_return_statement(&mut self, it: &oxc_ast::ast::ReturnStatement<'a>) {
+    fn visit_return_statement(&mut self, it: &ReturnStatement<'a>) {
         if let Some(Expression::CallExpression(call_expr)) = &it.argument {
             check_for_resolve_reject(self.ctx, self.allow_reject, call_expr);
         }
     }
 
-    fn visit_function(
-        &mut self,
-        _it: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
 }
