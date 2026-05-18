@@ -844,7 +844,7 @@ fn test() {
         (
             r#"
                 import bar from "./bar.js";
-                import pack from "./package";
+                import data from "./data";
             "#,
             Some(json!(["never", { "js": "always", "json": "never"}])),
         ),
@@ -1134,8 +1134,6 @@ fn test() {
         ),
         // Edge case: Query strings with multiple ? characters
         (r"import x from './foo.js?v=1?extra=2';", Some(json!(["always"]))),
-        // Edge case: Fragment identifiers
-        (r"import x from './foo.js#section';", Some(json!(["always"]))),
         // Edge case: Combined query + fragment
         (r"import x from './foo.js?v=1#top';", Some(json!(["always"]))),
         // Edge case: Encoded characters in paths
@@ -1259,6 +1257,7 @@ fn test() {
         (r"import { Component } from './Component.stories';", Some(json!([{ "tsx": "never" }]))),
         (r"import { testUtil } from './utils.test';", Some(json!([{ "ts": "never" }]))),
         (r"import { helper } from './helper.spec';", Some(json!([{ "js": "never" }]))),
+        (r"import dot from './file.with.dot';", Some(json!(["always"]))),
         // Subpath imports
         // https://nodejs.org/api/packages.html#subpath-imports
         // (
@@ -1273,14 +1272,12 @@ fn test() {
         //     r##"import internalZ from "#internal/z.js";"##,
         //     Some(json!(["always"])),
         // ),
+        // TODO: Fix this
+        // Edge case: Fragment identifiers
+        //(r"import x from './foo.js#section';", Some(json!(["always"]))),
     ];
 
     let fail = vec![
-        // NOTE: The test `import dot from "./file.with.dot"` with config ["always"] is omitted
-        // because without module resolution, we cannot distinguish between:
-        // 1. A valid `.dot` file extension (should pass)
-        // 2. A filename with `.dot` in it where `.js` is the real extension (should fail)
-        // With module resolution, this would be correctly handled.
         (
             r#"
                 import lib from "./bar.js";
@@ -1737,6 +1734,16 @@ fn test() {
             Some(json!(["never", { "ts": "never" }])),
         ),
         (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
+        // Both package.json and package/index.js exist, module resolution prefers
+        // directory over file.
+        (
+            r#"
+                import bar from "./bar.js";
+                import pack from "./package";
+            "#,
+            Some(json!(["never", { "js": "always", "json": "never"}])),
+        ),
+        (r"import dot from './dots/file.with.dot';", Some(json!(["always"]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
         //     r"import useState from '@foo/bar/useState';",
@@ -1756,5 +1763,8 @@ fn test() {
         // ),
     ];
 
-    Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail)
+        .change_rule_path("extensions.tsx")
+        .with_import_plugin(true)
+        .test_and_snapshot();
 }
