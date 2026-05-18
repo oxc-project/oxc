@@ -202,7 +202,7 @@ impl Rule for ImportStyle {
                     import_expr.span,
                     source.as_ref(),
                     StyleSet::unassigned(),
-                    false,
+                    SourceKind::ModuleSyntax,
                     ctx,
                 );
             }
@@ -219,7 +219,7 @@ impl Rule for ImportStyle {
                     call_expr.span,
                     source.as_ref(),
                     StyleSet::unassigned(),
-                    true,
+                    SourceKind::Require,
                     ctx,
                 );
             }
@@ -238,7 +238,7 @@ impl ImportStyle {
             import_decl.span,
             import_decl.source.value.as_str(),
             actual_styles,
-            false,
+            SourceKind::ModuleSyntax,
             ctx,
         );
     }
@@ -252,7 +252,7 @@ impl ImportStyle {
             export_decl.span,
             export_decl.source.value.as_str(),
             StyleSet::namespace(),
-            false,
+            SourceKind::ModuleSyntax,
             ctx,
         );
     }
@@ -264,7 +264,13 @@ impl ImportStyle {
     ) {
         let Some(source) = &export_decl.source else { return };
         let actual_styles = get_actual_export_declaration_styles(export_decl);
-        self.report_if_needed(export_decl.span, source.value.as_str(), actual_styles, false, ctx);
+        self.report_if_needed(
+            export_decl.span,
+            source.value.as_str(),
+            actual_styles,
+            SourceKind::ModuleSyntax,
+            ctx,
+        );
     }
 
     fn check_variable_declarator(
@@ -281,7 +287,7 @@ impl ImportStyle {
                 declarator.span,
                 source.as_ref(),
                 get_actual_assignment_target_styles(&declarator.id),
-                false,
+                SourceKind::ModuleSyntax,
                 ctx,
             );
             return;
@@ -295,7 +301,7 @@ impl ImportStyle {
                 declarator.span,
                 source.as_ref(),
                 get_actual_assignment_target_styles(&declarator.id),
-                true,
+                SourceKind::Require,
                 ctx,
             );
         }
@@ -306,17 +312,21 @@ impl ImportStyle {
         span: Span,
         module_name: &str,
         actual_styles: StyleSet,
-        is_require: bool,
+        source_kind: SourceKind,
         ctx: &LintContext<'_>,
     ) {
         let Some(allowed_styles) = self.allowed_styles(module_name) else { return };
 
-        let allowed_styles =
-            if is_require && allowed_styles.default_style && !allowed_styles.namespace {
-                allowed_styles.with_namespace()
-            } else {
-                allowed_styles
-            };
+        let allowed_styles = if source_kind == SourceKind::Require
+            && allowed_styles.default_style
+            && !allowed_styles.namespace
+        {
+            // `const path = require("path")` is represented as a whole-module assignment, but it
+            // is the CommonJS equivalent of a default import.
+            allowed_styles.with_namespace()
+        } else {
+            allowed_styles
+        };
 
         if actual_styles.is_subset_of(allowed_styles) {
             return;
@@ -333,8 +343,8 @@ impl ImportStyle {
 
         let base = self.extend_default_styles.then(|| default_style_for(module_name)).flatten();
         let allowed_styles =
-            if let Some(ModuleStylesOverride::Styles(override_styles)) = override_styles {
-                override_styles.apply_to(base.unwrap_or_default())
+            if let Some(ModuleStylesOverride::Styles(style_override)) = override_styles {
+                style_override.apply_to(base.unwrap_or_default())
             } else {
                 base?
             };
@@ -462,6 +472,12 @@ fn is_assigned_dynamic_import(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool
         return false;
     };
     declarator.init.as_ref().is_some_and(|init| init.span() == await_expr.span)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SourceKind {
+    ModuleSyntax,
+    Require,
 }
 
 #[derive(Debug, Clone, Serialize)]
