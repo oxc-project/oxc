@@ -230,10 +230,7 @@ fn binding_context(ctx: &LintContext, id: NodeId) -> BindingContext {
                 };
             }
             AstKind::VariableDeclarator(declarator) => {
-                return if matches!(
-                    declarator.kind,
-                    VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
-                ) {
+                return if declarator.kind.is_using() {
                     BindingContext::Using
                 } else {
                     destructure_context.unwrap_or(BindingContext::Plain)
