@@ -30,6 +30,27 @@ struct Aligned64([u8; 64]);
 const BASE54_CHARS: Aligned64 =
     Aligned64(*b"etnriaoscludfpmhg_vybxSCwTEDOkAjMNPFILRzBVHUWGKqJYXZQ$1024368579");
 
+/// The upper-case letters from `BASE54_CHARS`, in their frequency order.
+/// Used as the first-character set for `base54_upper_first()`.
+const BASE54_UPPER_CHARS: [u8; 26] = *b"SCTEDOAMNPFILRBVHUWGKJYXZQ";
+
+// Compile-time check that BASE54_UPPER_CHARS matches the upper-case letters in BASE54_CHARS.
+const _: () = {
+    let (src, expected) = (BASE54_CHARS.0, BASE54_UPPER_CHARS);
+    let (mut i, mut num_upper) = (0, 0);
+    while i < src.len() {
+        if src[i].is_ascii_uppercase() {
+            assert!(
+                src[i] == expected[num_upper],
+                "BASE54_UPPER_CHARS out of sync with BASE54_CHARS"
+            );
+            num_upper += 1;
+        }
+        i += 1;
+    }
+    assert!(num_upper == 26);
+};
+
 /// Get the shortest mangled name for a given n.
 /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
 //
@@ -66,9 +87,38 @@ pub fn base54(n: u32) -> InlineString<7, u8> {
     str
 }
 
+/// Like `base54`, but the first character is always upper-case.
+///
+/// JSX components must start with an upper-case letter; a lower-case tag like `<e />`
+/// is treated as an HTML element. This function uses `BASE54_UPPER_CHARS` (base 26)
+/// for the first character and `BASE54_CHARS` (base 64) for the rest.
+#[expect(clippy::items_after_statements)]
+pub fn base54_upper_first(n: u32) -> InlineString<7, u8> {
+    let mut str = InlineString::new();
+
+    let mut num = n as usize;
+
+    const FIRST_BASE: usize = 26;
+    let byte = BASE54_UPPER_CHARS[num % FIRST_BASE];
+    // SAFETY: All `BASE54_UPPER_CHARS` are ASCII. First byte, can't be out of bounds.
+    unsafe { str.push_unchecked(byte) };
+    num /= FIRST_BASE;
+
+    const REST_BASE: usize = 64;
+    while num > 0 {
+        num -= 1;
+        let byte = BASE54_CHARS.0[num % REST_BASE];
+        // SAFETY: All `BASE54_CHARS` are ASCII. Max length is well within CAPACITY.
+        unsafe { str.push_unchecked(byte) };
+        num /= REST_BASE;
+    }
+
+    str
+}
+
 #[cfg(test)]
 mod test {
-    use super::base54;
+    use super::{base54, base54_upper_first};
 
     #[test]
     fn test_base54() {
@@ -78,5 +128,26 @@ mod test {
         assert_eq!(&*base54(54), "ee");
         assert_eq!(&*base54(55), "te");
         assert_eq!(&*base54(u32::MAX), "xKrTKr");
+    }
+
+    #[test]
+    fn test_base54_upper_first() {
+        // First 26 names are single upper-case letters in frequency order
+        assert_eq!(&*base54_upper_first(0), "S");
+        assert_eq!(&*base54_upper_first(1), "C");
+        assert_eq!(&*base54_upper_first(2), "T");
+        assert_eq!(&*base54_upper_first(25), "Q");
+        // After 26 we get two-character names starting with upper-case
+        assert_eq!(&*base54_upper_first(26), "Se");
+        assert_eq!(&*base54_upper_first(27), "Ce");
+        // All names start with upper-case
+        for i in 0..200 {
+            let name = base54_upper_first(i);
+            assert!(
+                name.as_str().starts_with(|c: char| c.is_ascii_uppercase()),
+                "base54_upper_first({i}) = {:?} should start with upper case",
+                name.as_str()
+            );
+        }
     }
 }

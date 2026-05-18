@@ -72,6 +72,13 @@ bitflags! {
         // access it in the Transformer.
         // https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/types.ts#L819-L820
         const Ambient                 = 1 << 16;
+        /// The symbol has at least one reference used as a JSX element tag name.
+        ///
+        /// Set during reference resolution when a reference with
+        /// [`ReferenceFlags::JSXTag`] is resolved to this symbol. Used by the
+        /// mangler to produce uppercase-first names for JSX component symbols
+        /// without scanning all references at mangling time.
+        const JSXTag                  = 1 << 17;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
@@ -195,6 +202,12 @@ impl SymbolFlags {
     #[inline]
     pub fn is_ambient(self) -> bool {
         self.contains(Self::Ambient)
+    }
+
+    /// Returns `true` if this symbol is used as a JSX element tag name.
+    #[inline]
+    pub fn is_jsx_tag(self) -> bool {
+        self.contains(Self::JSXTag)
     }
 
     #[inline]

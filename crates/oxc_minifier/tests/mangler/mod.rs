@@ -27,6 +27,10 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
     mangle_with_source_type(source_text, options, SourceType::mjs().with_unambiguous(true))
 }
 
+fn mangle_jsx(source_text: &str, options: MangleOptions) -> String {
+    mangle_with_source_type(source_text, options, SourceType::jsx().with_unambiguous(true))
+}
+
 fn mangle_script(source_text: &str, options: MangleOptions) -> String {
     mangle_with_source_type(source_text, options, SourceType::script())
 }
@@ -310,5 +314,288 @@ fn annex_b_block_scoped_function() {
 
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
+    });
+}
+
+/// Assert that every simple identifier JSX tag (opening and closing) in `mangled` starts with
+/// an upper-case letter. Returns the list of tag names found (may contain duplicates).
+fn assert_jsx_tags_upper_case(mangled: &str) -> Vec<String> {
+    // split('<') yields [text_before_first_<, text_after_each_<, ...]; skip the first.
+    let mut tags = Vec::new();
+    for segment in mangled.split('<').skip(1) {
+        let trimmed = segment.trim();
+        if trimmed.starts_with('!') {
+            continue;
+        }
+        let trimmed = trimmed.strip_prefix('/').unwrap_or(trimmed);
+        let tag: String =
+            trimmed.chars().take_while(|c| c.is_alphanumeric() || *c == '_' || *c == '.').collect();
+        if tag.is_empty() || tag.contains('.') {
+            continue;
+        }
+        assert!(
+            tag.starts_with(|c: char| c.is_ascii_uppercase()),
+            "JSX component tag should start with upper-case, got: {tag}\nfull output: {mangled}"
+        );
+        tags.push(tag);
+    }
+    tags
+}
+
+#[test]
+fn jsx_component_mangling() {
+    let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
+
+    // Component tag names must start with upper-case after mangling
+    let mangled =
+        mangle_jsx("function MyComponent() { return null; } let x = <MyComponent />;", options);
+    let tags = assert_jsx_tags_upper_case(&mangled);
+    assert!(!tags.is_empty(), "Expected to find at least one JSX tag in: {mangled}");
+
+    // Regular variables (not used as JSX tags) should still get lower-case-first names
+    let mangled = mangle_jsx(
+        "function MyComponent() { return null; } let regularVar = 1; let x = <MyComponent />;",
+        options,
+    );
+    assert!(!mangled.contains("regularVar"), "regularVar should be mangled: {mangled}");
+
+    // Member expressions don't need upper-case: <foo.bar /> is always a component
+    let mangled =
+        mangle_jsx("let foo = { bar: function() { return null; } }; let x = <foo.bar />;", options);
+    assert!(
+        mangled.contains(".bar"),
+        "Member expression JSX should preserve member access: {mangled}"
+    );
+
+    // Component with closing tag: opening tag must be upper-case (closing tag follows automatically)
+    let mangled =
+        mangle_jsx("function Comp() { return null; } let x = <Comp>child</Comp>;", options);
+    let tags = assert_jsx_tags_upper_case(&mangled);
+    assert!(!tags.is_empty(), "Expected at least one JSX tag in: {mangled}");
+
+    // Nested scope with default top_level (not Some(true)): symbols inside functions
+    // are always mangled regardless of top_level setting
+    let mangled = mangle_jsx(
+        "function wrapper() { function Comp() { return null; } let x = <Comp />; }",
+        MangleOptions::default(),
+    );
+    let tags = assert_jsx_tags_upper_case(&mangled);
+    assert!(!tags.is_empty(), "Nested JSX component should be mangled: {mangled}");
+
+    // Collision avoidance: create enough symbols that the regular pool claims both
+    // 'S' and 'C' (the first two upper-case base54 names). The JSX fixup must skip
+    // both and use 'T' (the next base54_upper_first name) instead.
+    let mangled = mangle_jsx(
+        "
+        function Comp() { return null; }
+        let v0, v1, v2, v3, v4, v5, v6, v7, v8, v9;
+        let v10, v11, v12, v13, v14, v15, v16, v17, v18, v19;
+        let v20, v21;
+        console.log(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9);
+        console.log(v10, v11, v12, v13, v14, v15, v16, v17, v18, v19);
+        console.log(v20, v21);
+        let x = <Comp />;
+        ",
+        options,
+    );
+    let tags = assert_jsx_tags_upper_case(&mangled);
+    // With 24 slots total, the regular pool claims base54 indices 0-23, which includes
+    // 'S' (index 21) and 'C' (index 22). The JSX fixup skips both and assigns 'T'.
+    assert!(
+        mangled.contains("let S") || mangled.contains(", S"),
+        "Expected regular pool to claim 'S': {mangled}"
+    );
+    assert_eq!(tags, ["T"], "Expected JSX component to get 'T' (skipping 'S' and 'C'): {mangled}");
+
+    // TSX (TypeScript + JSX) should also produce upper-case component names
+    let tsx_mangled = mangle_with_source_type(
+        "function Comp() { return null; } let x = <Comp />;",
+        options,
+        SourceType::tsx().with_unambiguous(true),
+    );
+    let tags = assert_jsx_tags_upper_case(&tsx_mangled);
+    assert_eq!(tags, ["S"], "TSX component should be mangled to upper-case: {tsx_mangled}");
+}
+
+#[test]
+fn jsx_component_mangling_debug_mode() {
+    let options = MangleOptions { top_level: Some(true), debug: true, ..MangleOptions::default() };
+
+    // In debug mode, JSX component symbols get "Slot_N" (capital S) via fixup.
+    // All slots initially get "slot_N", then JSX slots are replaced.
+    let mangled = mangle_jsx(
+        "function Comp() { return null; } let regularVar = 1; let x = <Comp />;",
+        options,
+    );
+    // Comp is a JSX component → initially slot_0, fixed up to Slot_0.
+    // regularVar and x are regular → slot_1, slot_2.
+    assert!(mangled.contains("Slot_0"), "JSX component should get Slot_0: {mangled}");
+    assert!(mangled.contains("slot_1"), "Regular var should get slot_1: {mangled}");
+}
+
+#[test]
+fn non_jsx_source_gets_full_base54_names() {
+    // Non-JSX source types (.js, .mjs, .ts) should produce identical output regardless of
+    // upper-case-named symbols in source.
+    let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
+    let mangled = mangle("function Comp() { return null; } let regularVar = 1;", options);
+    assert!(
+        mangled.starts_with("function e("),
+        "Non-JSX source should mangle with names from full base54 set: {mangled}"
+    );
+}
+
+#[test]
+fn jsx_component_mangling_respects_keep_names() {
+    // A component whose function name is preserved by keep_names should not enter the JSX pool
+    // (it's filtered before slot assignment and keeps its original name).
+    let options = MangleOptions {
+        top_level: Some(true),
+        keep_names: MangleOptionsKeepNames::all_true(),
+        ..MangleOptions::default()
+    };
+    let mangled = mangle_jsx(
+        "function Comp() { return null; } let regularVar = 1; let x = <Comp />;",
+        options,
+    );
+    // With keep_names, function name "Comp" is preserved
+    assert!(
+        mangled.contains("function Comp("),
+        "keep_names should preserve function name: {mangled}"
+    );
+    // The JSX tag should still use the preserved name
+    assert!(mangled.contains("<Comp"), "JSX tag should use preserved name: {mangled}");
+}
+
+#[test]
+fn jsx_many_components() {
+    // With >26 JSX components, multi-character base54_upper_first names are generated
+    // (e.g. "Se", "Ce"). All must still start with upper-case.
+    let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
+
+    // Generate 30 component functions + JSX usage
+    let mut source = String::new();
+    for i in 0..30 {
+        write!(source, "function Comp{i}() {{ return null; }} ").unwrap();
+    }
+    for i in 0..30 {
+        write!(source, "let x{i} = <Comp{i} />; ").unwrap();
+    }
+
+    let mangled = mangle_jsx(&source, options);
+    let tags = assert_jsx_tags_upper_case(&mangled);
+    assert!(tags.len() >= 30, "Expected at least 30 JSX tags, got {}: {mangled}", tags.len());
+    // With 30 components, some names must be 2+ characters (only 26 single-char upper-case names)
+    assert!(
+        tags.iter().any(|t| t.len() > 1),
+        "Expected some multi-character upper-case names with 30 components: {mangled}"
+    );
+}
+
+#[test]
+fn jsx_component_in_eval_scope() {
+    // A component declared in a scope with eval() should keep its original name
+    // and not enter any mangling pool.
+    let options = MangleOptions::default();
+    let mangled = mangle_jsx(
+        "function wrapper() { function Comp() { return null; } let x = <Comp />; eval(''); }",
+        options,
+    );
+    // The eval scope keeps original names
+    assert!(
+        mangled.contains("function Comp("),
+        "Component in eval scope should keep its name: {mangled}"
+    );
+    assert!(
+        mangled.contains("<Comp"),
+        "JSX tag in eval scope should keep original name: {mangled}"
+    );
+}
+
+#[test]
+fn jsx_slot_sharing_between_jsx_and_regular() {
+    // When a JSX component and a regular variable are in sibling (non-conflicting) scopes,
+    // the slot assignment can place them in the same slot. Since one symbol in the slot is
+    // a JSX component, the whole slot goes to the JSX pool, giving the regular variable an
+    // upper-case name too. This is correct (upper-case is always a valid JS identifier).
+    let options = MangleOptions::default();
+    let mangled = mangle_jsx(
+        "function outer() { { function Comp() { return null; } let x = <Comp />; } { let y = 1; console.log(y); } }",
+        options,
+    );
+    // Both Comp and y land in the same slot (sibling scopes) and that slot is JSX,
+    // so both get the upper-case name "S". x is in a separate slot → "e".
+    let tags = assert_jsx_tags_upper_case(&mangled);
+    assert_eq!(tags, ["S"], "Expected exactly one JSX tag 'S': {mangled}");
+    assert!(mangled.contains("function S("), "Comp should be mangled to S: {mangled}");
+    assert!(mangled.contains("let S = 1"), "y should share slot with Comp and become S: {mangled}");
+}
+
+#[test]
+fn jsx_component_declared_but_never_used_as_tag() {
+    // A function with an upper-case name that is never used in a JSX tag position should
+    // stay in the regular pool and can get a lower-case name.
+    let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
+    let mangled = mangle_jsx("function Comp() { return null; } let x = Comp;", options);
+    // Comp is never in a <Comp /> position, so it's a regular symbol
+    assert!(!mangled.contains("Comp"), "Comp should be mangled: {mangled}");
+    // It should get a lower-case-first name from the regular pool
+    assert!(
+        mangled.starts_with("function e("),
+        "Unused-as-tag component should get a regular (lower-case-first) name: {mangled}"
+    );
+}
+
+#[test]
+fn jsx_intrinsic_html_tags_unchanged() {
+    // Intrinsic HTML tags like <div>, <br />, <h1> are not identifiers bound to symbols.
+    // They must pass through the mangler unchanged and remain lower-case.
+    let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
+
+    let mangled = mangle_jsx(
+        r"function Comp() { return <div><h1>hello</h1><br /><span>world</span></div>; } let x = <Comp />;",
+        options,
+    );
+    // HTML tags must survive verbatim
+    for tag in ["div", "h1", "br", "span"] {
+        assert!(
+            mangled.contains(&format!("<{tag}")),
+            "Intrinsic HTML tag <{tag}> should be preserved: {mangled}"
+        );
+    }
+    // The component must be mangled to an upper-case name (not one of the HTML tags)
+    assert!(
+        mangled.contains("<S ") || mangled.contains("<S>"),
+        "Component should be mangled to upper-case name: {mangled}"
+    );
+}
+
+#[test]
+fn jsx_mangler() {
+    let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
+
+    let cases = [
+        // Basic component
+        "function Comp() { return null; } let x = <Comp />;",
+        // Component mixed with regular vars
+        "function Comp() { return null; } let a = 1; let b = 2; let x = <Comp />;",
+        // Member expression (foo doesn't need upper-case)
+        "let ns = { Bar: function() { return null; } }; let x = <ns.Bar />;",
+        // Multiple components
+        "function A() { return null; } function B() { return null; } let x = <A />; let y = <B />;",
+        // Component also used as a regular value
+        "function Comp() { return null; } let x = <Comp />; let y = Comp;",
+        // Component with closing tag
+        "function Comp() { return null; } let x = <Comp>child</Comp>;",
+    ];
+
+    let mut snapshot = String::new();
+    cases.into_iter().fold(&mut snapshot, |w, case| {
+        write!(w, "{case}\n{}\n", mangle_jsx(case, options)).unwrap();
+        w
+    });
+
+    insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
+        insta::assert_snapshot!("jsx_mangler", snapshot);
     });
 }
