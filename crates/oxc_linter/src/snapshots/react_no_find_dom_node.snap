@@ -46,3 +46,12 @@ source: crates/oxc_linter/src/tester.rs
  5 │               }
    ╰────
   help: Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives.
+
+  ⚠ react(no-find-dom-node): Unexpected call to `findDOMNode`.
+   ╭─[no_find_dom_node.tsx:5:26]
+ 4 │               foo() {
+ 5 │                 ReactDOM.findDOMNode(this);
+   ·                          ───────────
+ 6 │               }
+   ╰────
+  help: Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives.

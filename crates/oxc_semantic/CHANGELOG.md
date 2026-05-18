@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.130.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- a7c3e22 semantic: Clear member write target for computed keys (#22302) (camc314)
+
 ## [0.125.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES

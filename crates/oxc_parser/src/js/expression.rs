@@ -1505,7 +1505,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         first_expression: Expression<'a>,
     ) -> Expression<'a> {
-        let mut expressions = self.ast.vec1(first_expression);
+        let mut expressions = self.ast.vec_with_capacity(2);
+        expressions.push(first_expression);
         while self.eat(Kind::Comma) {
             let expression = self.parse_assignment_expression_or_higher();
             expressions.push(expression);

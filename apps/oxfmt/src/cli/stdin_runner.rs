@@ -7,13 +7,12 @@ use std::{
 
 use super::{
     CliRunResult, FormatCommand, Mode,
-    resolve::{
-        build_global_ignore_matchers, is_ignored, resolve_file_scope_config, resolve_ignore_paths,
-    },
+    resolve::{build_global_ignore_matchers, is_ignored, resolve_ignore_paths},
 };
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
-    classify_file_kind, resolve_editorconfig_path, utils,
+    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
+    ResolveOutcome, SourceFormatter, classify_file_kind, resolve_editorconfig_path,
+    resolve_file_scope_config, utils,
 };
 
 pub struct StdinRunner {
@@ -96,31 +95,31 @@ impl StdinRunner {
             }
         }
 
-        // Resolve filepath to absolute for nested config resolution
+        // Resolve filepath to absolute for nested config resolution and ignore check
         let filepath = utils::normalize_relative_path(&cwd, &filepath);
 
-        // Resolve nested config based on filepath's parent directory
-        // (same as CLI direct file path behavior)
-        let detect_nested =
-            config_options.config.is_none() && !config_options.disable_nested_config;
-        if detect_nested {
-            match resolve_file_scope_config(
-                &filepath,
-                config_resolver.config_dir(),
-                editorconfig_path.as_deref(),
-                Some(&self.js_config_loader),
-            ) {
-                Ok(Some(nested)) => config_resolver = nested,
-                Ok(None) => {} // No nested config or same as root — use root
-                Err(err) => {
-                    utils::print_and_flush(
-                        stderr,
-                        &format!("Failed to load configuration file.\n{err}\n"),
-                    );
-                    return CliRunResult::InvalidOptionConfig;
-                }
+        // Follow the same logic as `walk_runner` to resolve `config_resolver`.
+        let nested_ctx = (config_options.config.is_none() && !config_options.disable_nested_config)
+            .then(|| {
+                NestedConfigCtx::new(
+                    editorconfig_path.as_deref().map(Arc::from),
+                    Some(Arc::clone(&self.js_config_loader)),
+                )
+            });
+        let config_resolver = match resolve_file_scope_config(
+            &filepath,
+            &Arc::new(config_resolver),
+            nested_ctx.as_ref(),
+        ) {
+            Ok(resolved) => resolved,
+            Err(err) => {
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to load configuration file.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
             }
-        }
+        };
 
         // Check if the file is ignored by global ignores or config's `ignorePatterns`
         let global_matchers = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path)
@@ -144,7 +143,11 @@ impl StdinRunner {
             return CliRunResult::InvalidOptionConfig;
         };
         let strategy = match config_resolver.resolve(kind) {
-            Ok(strategy) => strategy,
+            Ok(ResolveOutcome::Format(strategy)) => strategy,
+            Ok(ResolveOutcome::MissingPlugin(_)) => {
+                utils::print_and_flush(stdout, &source_text);
+                return CliRunResult::FormatSucceeded;
+            }
             Err(err) => {
                 utils::print_and_flush(stderr, &format!("{err}\n"));
                 return CliRunResult::InvalidOptionConfig;

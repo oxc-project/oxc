@@ -152,7 +152,10 @@ jobs:
         run: ${{ matrix.build }}
         shell: bash
         env:
-          TARGET_CC: clang # for mimalloc
+          # `clang` lacks the `__ldar64`/`__stlr64` MSVC intrinsics that mimalloc's
+          # atomic.h uses on the ARM64 MSVC C path, so leave TARGET_CC unset on
+          # `*-pc-windows-msvc` targets and let cc-rs pick `cl.exe`.
+          TARGET_CC: ${{ !contains(matrix.target, 'pc-windows-msvc') && 'clang' || '' }} # for mimalloc
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

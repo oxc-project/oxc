@@ -18,7 +18,7 @@ use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
-use oxc_linter::OxlintSuppressionFileAction;
+use oxc_linter::{OxlintSuppressionFileAction, RuleTimingRecord};
 use rustc_hash::FxHashSet;
 use sarif::SarifOutputFormatter;
 use stylish::StylishOutputFormatter;
@@ -78,6 +78,8 @@ pub struct LintCommandInfo {
     pub start_time: Duration,
     /// At least in default mode we want to notify if oxlint-suppressions.json was created or updated.
     pub oxlint_suppression_file_action: OxlintSuppressionFileAction,
+    /// Optional per-rule timing records for debug timing output.
+    pub rule_timings: Option<Vec<RuleTimingRecord>>,
 }
 
 impl LintCommandInfo {

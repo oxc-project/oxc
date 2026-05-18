@@ -299,6 +299,8 @@ fn test() {
             Some(serde_json::json!([{ "allowExpressionValues": false }])),
             None,
         ),
+        (r"<div tabIndex={props.isTabbable ? 1 : 0} />", None, None),
+        (r"<div tabIndex={props.isTabbable ? '1' : '0'} />", None, None),
     ];
 
     Tester::new(NoNoninteractiveTabindex::NAME, NoNoninteractiveTabindex::PLUGIN, pass, fail)

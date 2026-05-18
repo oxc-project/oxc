@@ -104,7 +104,13 @@ impl Codegen<'_> {
                 comments.remove(&k);
             }
         }
-        if !legals.is_empty() {
+        if let Some(last) = legals.last_mut() {
+            // Orphans aren't in their original position, so the source's
+            // `followed_by_newline` hint no longer applies. Force it on so
+            // `print_comments` emits a trailing newline instead of setting
+            // `print_next_indent_as_space` — otherwise the next indent (often
+            // before `}`) collapses to a space and pass 2 stops matching.
+            last.set_followed_by_newline(true);
             self.print_comments(&legals);
         }
     }

@@ -1,0 +1,364 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'var' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ var foo = 1;
+   ·     ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected function declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:10]
+ 1 │ function foo() {}
+   ·          ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected function declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:11]
+ 1 │ function *foo() {}
+   ·           ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected function declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:16]
+ 1 │ async function foo() {}
+   ·                ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected function declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:17]
+ 1 │ async function *foo() {}
+   ·                 ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'var' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ var foo = function() {};
+   ·     ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'var' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ var foo = function foo() {};
+   ·     ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'var' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ var foo = function*() {};
+   ·     ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'var' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ var foo = function *foo() {};
+   ·     ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'var' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:14]
+ 1 │ var foo = 1, bar = 2;
+   ·              ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'var' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ var foo = 1, bar = 2;
+   ·     ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'const' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:7]
+ 1 │ const a = 1;
+   ·       ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'let' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ let a;
+   ·     ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'let' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ let a = 1;
+   ·     ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected class declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:7]
+ 1 │ class A {}
+   ·       ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'const' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:20]
+ 1 │ const a = 1; const b = 2;
+   ·                    ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'const' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:7]
+ 1 │ const a = 1; const b = 2;
+   ·       ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'const' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:14]
+ 1 │ const a = 1, b = 2;
+   ·              ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'const' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:7]
+ 1 │ const a = 1, b = 2;
+   ·       ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'let' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:8]
+ 1 │ let a, b = 1;
+   ·        ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'let' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ let a, b = 1;
+   ·     ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected class declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:27]
+ 1 │ const a = 1; let b; class C {}
+   ·                           ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'let' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:18]
+ 1 │ const a = 1; let b; class C {}
+   ·                  ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'const' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:7]
+ 1 │ const a = 1; let b; class C {}
+   ·       ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'const' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:17]
+ 1 │ const [a, b, ...c] = [];
+   ·                 ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'const' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:11]
+ 1 │ const [a, b, ...c] = [];
+   ·           ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'const' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:8]
+ 1 │ const [a, b, ...c] = [];
+   ·        ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'let' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:25]
+ 1 │ let { a, foo: b, bar: { c } } = {};
+   ·                         ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'let' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:15]
+ 1 │ let { a, foo: b, bar: { c } } = {};
+   ·               ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'let' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:7]
+ 1 │ let { a, foo: b, bar: { c } } = {};
+   ·       ─
+   ╰────
+  help: Wrap it in a block or in an IIFE.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ foo = 1
+   · ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ foo = function() {};
+   · ───────────────────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ foo = function*() {};
+   · ────────────────────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:27]
+ 1 │ window.foo = function() { bar = 1; }
+   ·                           ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:16]
+ 1 │ (function() {}(foo = 1));
+   ·                ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ for (foo in {});
+   · ────────────────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ for (foo of []);
+   · ────────────────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:24]
+ 1 │ window.foo = { bar() { foo = 1 } }
+   ·                        ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:10]
+ 1 │ foo = 1, bar = 2;
+   ·          ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ foo = 1, bar = 2;
+   · ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:7]
+ 1 │ foo = bar = 1
+   ·       ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ foo = bar = 1
+   · ─────────────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'var' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:14]
+ 1 │ foo = 1; var bar;
+   ·              ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ foo = 1; var bar;
+   · ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Unexpected 'var' declaration in the global scope.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ var foo = bar = 1;
+   ·     ───
+   ╰────
+  help: Wrap it in an IIFE for a local variable, or assign it as a global property for a global variable.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:11]
+ 1 │ var foo = bar = 1;
+   ·           ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ [foo, bar] = [];
+   · ───────────────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ [foo, bar] = [];
+   · ───────────────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Unexpected assignment to read-only global variable.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ Array = 1
+   · ─────────
+   ╰────
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ window = 1;
+   · ──────────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Unexpected redeclaration of read-only global variable.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ var Array = 1
+   ·     ─────
+   ╰────
+
+  ⚠ eslint(no-implicit-globals): Unexpected redeclaration of read-only global variable.
+   ╭─[no_implicit_globals.tsx:1:5]
+ 1 │ var Array = 1; Array = 2;
+   ·     ─────
+   ╰────

@@ -517,8 +517,6 @@ fn test() {
         ),
         ("function foo() { var a; if (bar) { return true; } else { var a; } }", None),
         ("function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }", None),
-        ("function foo() { var a; if (bar) { return true; } else { var a; } }", None), // { "ecmaVersion": 6 },
-        ("function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }", None), // { "ecmaVersion": 6 },
         ("function foo() { let a; if (bar) { return true; } else { let a; } }", None), // { "ecmaVersion": 6 },
         ("class foo { bar() { let a; if (baz) { return true; } else { let a; } } }", None), // { "ecmaVersion": 6 },
         ("function foo() { if (bar) { let a; if (baz) { return true; } else { let a; } } }", None), // { "ecmaVersion": 6 },

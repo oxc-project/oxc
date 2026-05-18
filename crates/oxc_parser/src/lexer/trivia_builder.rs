@@ -105,19 +105,27 @@ impl<'a> TriviaBuilder<'a> {
         self.saw_newline_for_comment = true;
     }
 
+    #[inline]
     pub fn handle_token(&mut self, token: Token) {
-        let len = self.comments.len();
         self.previous_kind = token.kind();
-        if self.processed < len {
-            // All unprocessed preceding comments are leading comments attached to this token start.
-            for comment in &mut self.comments[self.processed..] {
-                comment.position = CommentPosition::Leading;
-                comment.attached_to = token.start();
-            }
-            self.processed = len;
-        }
         self.saw_newline = false;
         self.saw_newline_for_comment = false;
+        // Cold path: any unprocessed comments since the last token become leading comments
+        // of this one. For files with no comments (or once all comments are consumed)
+        // `processed == comments.len()`, so this branch is skipped.
+        let len = self.comments.len();
+        if self.processed < len {
+            self.attach_pending_leading_comments(token.start(), len);
+        }
+    }
+
+    #[cold]
+    fn attach_pending_leading_comments(&mut self, attached_to: u32, len: usize) {
+        for comment in &mut self.comments[self.processed..] {
+            comment.position = CommentPosition::Leading;
+            comment.attached_to = attached_to;
+        }
+        self.processed = len;
     }
 
     /// Determines if the current line comment should be treated as a trailing comment.

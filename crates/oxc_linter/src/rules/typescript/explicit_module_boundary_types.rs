@@ -9,10 +9,10 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 use oxc_str::{CompactStr, Ident};
 use oxc_syntax::node::NodeId;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
@@ -324,7 +324,11 @@ struct ExplicitTypesChecker<'a, 'c> {
     /// [`Address`]es of those functions.
     fn_returns: FxHashMap<Address, SmallVec<[&'a ReturnStatement<'a>; 2]>>,
     scope_flags: ScopeFlags,
+    /// Spans of methods that have overload signatures in the current class.
+    /// Pre-computed in `visit_class` to avoid storing a reference to `ClassBody`.
+    overloaded_methods: FxHashSet<Span>,
 }
+
 impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     fn new(rule: &'c ExplicitModuleBoundaryTypes, ctx: &'c LintContext<'a>) -> Self {
         Self {
@@ -334,6 +338,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             fns: smallvec::smallvec![],
             fn_returns: FxHashMap::default(),
             scope_flags: ScopeFlags::empty(),
+            overloaded_methods: FxHashSet::default(),
         }
     }
     // fn target_span(&self) -> Option<Span> {
@@ -384,10 +389,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             target_span.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
         let is_allowed = || self.rule.is_some_allowed_name(func.name().or(target_name));
 
-        // When allow_overload_functions is enabled, skip return type checking for all functions
-        // This is a simplified implementation - a proper implementation would only skip
-        // functions that are actually part of an overload set
-        if self.rule.allow_overload_functions {
+        if self.rule.allow_overload_functions && self.function_has_overload_signatures(func) {
             return;
         }
 
@@ -411,6 +413,77 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         let is_hof = self.is_higher_order_function(func.unstable_address());
         if !is_hof && !is_allowed() {
             self.ctx.diagnostic(func_missing_return_type(span));
+        }
+    }
+
+    fn function_has_overload_signatures(&self, func: &Function<'a>) -> bool {
+        if let Some(id) = &func.id {
+            return self.ctx.scoping().symbol_declarations(id.symbol_id()).any(|declaration| {
+                let AstKind::Function(candidate) = self.ctx.nodes().get_node(declaration).kind()
+                else {
+                    return false;
+                };
+
+                candidate.span != func.span && candidate.is_typescript_syntax()
+            });
+        }
+
+        self.has_unnamed_default_overload_signature(func)
+    }
+
+    fn has_unnamed_default_overload_signature(&self, func: &Function<'a>) -> bool {
+        self.ctx.nodes().program().body.iter().any(|statement| {
+            let match_module_declaration!(Statement) = statement else {
+                return false;
+            };
+            let ModuleDeclaration::ExportDefaultDeclaration(default) =
+                statement.to_module_declaration()
+            else {
+                return false;
+            };
+            let ExportDefaultDeclarationKind::FunctionDeclaration(candidate) = &default.declaration
+            else {
+                return false;
+            };
+            let candidate = candidate.as_ref();
+
+            candidate.span != func.span
+                && candidate.id.is_none()
+                && candidate.is_typescript_syntax()
+        })
+    }
+
+    /// Pre-computes which methods in `class_body` have overload signatures,
+    /// populating `self.overloaded_methods` with their spans.
+    fn collect_overloaded_methods(&mut self, class_body: &ClassBody<'a>) {
+        self.overloaded_methods.clear();
+        let mut overload_keys = FxHashSet::default();
+
+        for element in &class_body.body {
+            let ClassElement::MethodDefinition(method) = element else {
+                continue;
+            };
+            let Some(method_name) = method.key.static_name() else {
+                continue;
+            };
+            if method.value.is_typescript_syntax() {
+                overload_keys.insert((method.r#static, CompactStr::from(method_name.as_ref())));
+            }
+        }
+
+        for element in &class_body.body {
+            let ClassElement::MethodDefinition(method) = element else {
+                continue;
+            };
+            if method.value.is_typescript_syntax() {
+                continue;
+            }
+            let Some(method_name) = method.key.static_name() else {
+                continue;
+            };
+            if overload_keys.contains(&(method.r#static, CompactStr::from(method_name.as_ref()))) {
+                self.overloaded_methods.insert(method.span);
+            }
         }
     }
 
@@ -553,7 +626,9 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             return;
         }
         let Some(init) = &var.init else {
-            return; // TODO: what do we do here?
+            // Variable declarators without initializers (e.g., `let x;`) have
+            // no expression to check, so we skip them.
+            return;
         };
         let Some(binding) = var.id.get_binding_identifier() else {
             return;
@@ -596,7 +671,14 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
     fn visit_class(&mut self, class: &Class<'a>) {
         let had_id = self.with_target_binding(class.id.as_ref());
-        walk::walk_class_body(self, class.body.as_ref());
+        if self.rule.allow_overload_functions {
+            let prev_overloaded = std::mem::take(&mut self.overloaded_methods);
+            self.collect_overloaded_methods(class.body.as_ref());
+            walk::walk_class_body(self, class.body.as_ref());
+            self.overloaded_methods = prev_overloaded;
+        } else {
+            walk::walk_class_body(self, class.body.as_ref());
+        }
         self.reset_target(had_id);
     }
 
@@ -636,11 +718,24 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
     fn visit_method_definition(&mut self, m: &MethodDefinition<'a>) {
         match m.kind {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Set => {
-                // skip return type
-                // TODO: adjust target_symbol
+                // skip return type, but set target_symbol so diagnostics
+                // point to the method name
+                let had_name = self.with_target_property(Some(&m.key));
                 self.visit_formal_parameters(m.value.as_ref().params.as_ref());
+                self.reset_target(had_name);
             }
-            _ => walk::walk_method_definition(self, m),
+            MethodDefinitionKind::Method | MethodDefinitionKind::Get => {
+                // For methods with allowOverloadFunctions, check if this
+                // method has overload signatures in the same class body.
+                if self.rule.allow_overload_functions && self.overloaded_methods.contains(&m.span) {
+                    // Only check parameters, skip return type.
+                    let had_name = self.with_target_property(Some(&m.key));
+                    self.visit_formal_parameters(m.value.as_ref().params.as_ref());
+                    self.reset_target(had_name);
+                    return;
+                }
+                walk::walk_method_definition(self, m);
+            }
         }
     }
 
@@ -772,28 +867,6 @@ mod test {
             let actual = ExplicitModuleBoundaryTypes::from_configuration(value).unwrap();
             assert_eq!(*actual, expected);
         }
-    }
-
-    #[test]
-    fn debug_test() {
-        let pass: Vec<(&'static str, Option<Value>)> = vec![
-            //
-        ];
-        let fail: Vec<(&'static str, Option<Value>)> = vec![
-            // line break
-            // ("export default () => (true ? () => {} : (): void => {});", None),
-            // (
-            //     "export default () => () => () => 1",
-            //     Some(json!([{ "allowHigherOrderFunctions": true }])),
-            // ),
-        ];
-        Tester::new(
-            ExplicitModuleBoundaryTypes::NAME,
-            ExplicitModuleBoundaryTypes::PLUGIN,
-            pass,
-            fail,
-        )
-        .test();
     }
 
     #[test]
@@ -2062,6 +2135,14 @@ mod test {
             };
             ",
                 Some(json!([{ "allowedNames": [],        },      ])),
+            ),
+            (
+                "
+            export function add(a: number, b: number) {
+              return a + b;
+            }
+            ",
+                Some(json!([{ "allowOverloadFunctions": true, }])),
             ),
             (
                 "

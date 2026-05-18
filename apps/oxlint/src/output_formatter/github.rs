@@ -121,6 +121,7 @@ mod test {
             threads_count: 12,
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: oxc_linter::OxlintSuppressionFileAction::None,
+            rule_timings: None,
         });
 
         assert_eq!(
@@ -138,6 +139,7 @@ mod test {
             threads_count: 12,
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: oxc_linter::OxlintSuppressionFileAction::None,
+            rule_timings: None,
         });
 
         assert_eq!(result.unwrap(), "Finished in 1.0s on 5 files using 12 threads.\n");

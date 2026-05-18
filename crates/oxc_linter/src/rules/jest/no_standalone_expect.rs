@@ -157,6 +157,34 @@ fn test() {
                 };",
             None,
         ),
+        (
+            r"describe('additionalTestBlockFunctions reproduction', () => {
+                beforeEach(() => {
+                    expect(true).toBe(true);
+                });
+
+                describe('nested describe', () => {
+                    afterEach(() => {
+                        expect(true).toBe(true);
+                    });
+                });
+
+                it('should always pass', () => {
+                    expect(true).toBe(true);
+                });
+            });",
+            Some(
+                serde_json::json!([{ "additionalTestBlockFunctions": ["beforeEach", "afterEach"] }]),
+            ),
+        ),
+        (
+            r"customTest('a custom block', () => { expect(1).toBe(1); });",
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["customTest"] }])),
+        ),
+        (
+            r"setup.beforeEach(() => { expect(1).toBe(1); });",
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["setup.beforeEach"] }])),
+        ),
     ];
 
     let fail = vec![
@@ -248,6 +276,20 @@ fn test() {
                 beforeEach(() => pleaseExpect.hasAssertions());
             ",
             None,
+        ),
+        // Without `additionalTestBlockFunctions`, hook callbacks are still flagged.
+        (
+            r"describe('a test', () => {
+                beforeEach(() => { expect(1).toBe(1); });
+            });",
+            None,
+        ),
+        // The allowlist is precise: `beforeEach` is allowed, but `beforeAll` is not.
+        (
+            r"describe('a test', () => {
+                beforeAll(() => { expect(1).toBe(1); });
+            });",
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["beforeEach"] }])),
         ),
     ];
 

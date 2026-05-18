@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::VariableDeclarationKind};
+use oxc_ast::{AstKind, AstType, ast::VariableDeclarationKind};
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
     graph::{
@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::ContextHost, context::LintContext, rule::Rule};
 
 fn no_unreachable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unreachable code.")
@@ -22,6 +22,22 @@ fn no_unreachable_diagnostic(span: Span) -> OxcDiagnostic {
 /// <https://github.com/eslint/eslint/blob/069aa680c78b8516b9a1b568519f1d01e74fb2a2/lib/rules/no-unreachable.js#L196>
 #[derive(Debug, Default, Clone)]
 pub struct NoUnreachable;
+
+const NEEDED_NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+    AstType::ReturnStatement,
+    AstType::ThrowStatement,
+    AstType::BreakStatement,
+    AstType::ContinueStatement,
+    AstType::WhileStatement,
+    AstType::DoWhileStatement,
+    AstType::ForStatement,
+]);
+
+const LOOP_NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+    AstType::WhileStatement,
+    AstType::DoWhileStatement,
+    AstType::ForStatement,
+]);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -59,11 +75,29 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnreachable {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(NEEDED_NODE_TYPES)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let nodes = ctx.nodes();
         let root = nodes.get_node(NodeId::ROOT);
         let cfg = ctx.cfg();
         let graph = cfg.graph();
+        let mut unreachable_statement_ids = Vec::new();
+
+        if !nodes.contains_any(LOOP_NODE_TYPES) {
+            for node in graph.node_indices() {
+                if cfg.basic_block(node).is_unreachable() {
+                    unreachable_statement_ids.extend(
+                        cfg.basic_block(node).instructions().iter().filter_map(statement_node_id),
+                    );
+                }
+            }
+
+            report_unreachable_statements(ctx, unreachable_statement_ids);
+            return;
+        }
 
         // A pre-allocated vector containing the reachability status of all the basic blocks.
         // We initialize this vector with all nodes set to `unreachable` since if we don't visit a
@@ -154,32 +188,66 @@ impl Rule for NoUnreachable {
                 _ => Control::Continue,
             });
         }
-        let mut reported = vec![false; nodes.len()];
 
-        for node in ctx.nodes() {
-            let node_id = node.id();
-            let kind = node.kind();
-
-            if !kind.is_statement()
-                || should_skip_unreachable_statement(kind)
-                || !unreachables[nodes.cfg_id(node_id).index()]
-            {
+        for node in graph.node_indices() {
+            if !unreachables[node.index()] {
                 continue;
             }
 
-            if has_reported_unreachable_ancestor(nodes, &reported, node_id) {
-                continue;
-            }
-
-            reported[node_id.index()] = true;
-            ctx.diagnostic(no_unreachable_diagnostic(node.kind().span()));
+            unreachable_statement_ids
+                .extend(cfg.basic_block(node).instructions().iter().filter_map(statement_node_id));
         }
+
+        report_unreachable_statements(ctx, unreachable_statement_ids);
+    }
+}
+
+fn statement_node_id(instruction: &Instruction) -> Option<NodeId> {
+    if matches!(
+        instruction.kind,
+        InstructionKind::Statement
+            | InstructionKind::Return(_)
+            | InstructionKind::Break(_)
+            | InstructionKind::Continue(_)
+            | InstructionKind::Throw
+    ) {
+        instruction.node_id
+    } else {
+        None
+    }
+}
+
+fn report_unreachable_statements(ctx: &LintContext, mut unreachable_statement_ids: Vec<NodeId>) {
+    let nodes = ctx.nodes();
+
+    if unreachable_statement_ids.is_empty() {
+        return;
+    }
+
+    unreachable_statement_ids.sort_unstable_by_key(|node_id| node_id.index());
+    unreachable_statement_ids.dedup();
+
+    let mut reported_statement_ids = Vec::new();
+
+    for node_id in unreachable_statement_ids {
+        let kind = nodes.kind(node_id);
+
+        if !kind.is_statement() || should_skip_unreachable_statement(kind) {
+            continue;
+        }
+
+        if has_reported_unreachable_ancestor(nodes, &reported_statement_ids, node_id) {
+            continue;
+        }
+
+        reported_statement_ids.push(node_id);
+        ctx.diagnostic(no_unreachable_diagnostic(kind.span()));
     }
 }
 
 fn has_reported_unreachable_ancestor(
     nodes: &oxc_semantic::AstNodes<'_>,
-    reported: &[bool],
+    reported_statement_ids: &[NodeId],
     node_id: NodeId,
 ) -> bool {
     for ancestor_id in nodes.ancestor_ids(node_id) {
@@ -192,7 +260,10 @@ fn has_reported_unreachable_ancestor(
             return false;
         }
 
-        if reported[ancestor_id.index()] {
+        if reported_statement_ids
+            .binary_search_by_key(&ancestor_id.index(), |reported_id| reported_id.index())
+            .is_ok()
+        {
             return true;
         }
     }

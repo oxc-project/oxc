@@ -75,6 +75,9 @@ Output
     -f, --format=ARG          Use a specific output format. Possible values: `checkstyle`,
                               `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`,
                               `stylish`, `unix`
+        --debug=OPTIONS       Enable debug output options. Options are comma-separated. Possible
+                              values:
+                               * `timings` - Enable per-rule timing information.
 
 Miscellaneous
         --silent              Do not display any diagnostics
@@ -102,7 +105,5 @@ Available options:
         --type-aware          Enable rules that require type information
         --type-check          Enable experimental type checking (includes TypeScript compiler
                               diagnostics)
-        --suppress-all        Generate suppressions for all current violations
-        --prune-suppressions  Remove entries for violations that no longer exist
     -h, --help                Prints help information
     -V, --version             Prints version information

@@ -171,7 +171,10 @@ watch-oxlint-node *args='':
 # Create a new lint rule for any plugin
 new-rule name plugin='eslint':
   cargo run -p rulegen {{name}} {{plugin}}
+  just linter-schema-json
+  just linter-config-ts
   just fmt
+  cargo insta test -p website_linter --accept
 
 # Update test cases for an existing lint rule from upstream
 update-rule-tests name plugin='eslint':

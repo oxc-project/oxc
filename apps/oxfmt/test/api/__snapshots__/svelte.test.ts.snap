@@ -1,0 +1,80 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Svelte support > Basic > should accept all \`svelte.*\` options together 1`] = `
+"<style>
+input {
+  color: red;
+}
+</style>
+
+<input bind:value={value} />
+
+<script>
+let value = $state("x");
+</script>
+"
+`;
+
+exports[`Svelte support > Basic > should format \`.svelte\` with \`svelte: {}\` (defaults) 1`] = `
+"<script>
+  let count = $state(0);
+</script>
+
+<button onclick={() => count++}>clicks: {count}</button>
+
+<style>
+  button {
+    color: red;
+  }
+</style>
+"
+`;
+
+exports[`Svelte support > Basic > should respect \`svelte.sortOrder\` 1`] = `
+"<style>
+  button {
+    color: red;
+  }
+</style>
+
+<button onclick={() => count++}>{count}</button>
+
+<script>
+  let count = $state(0);
+</script>
+"
+`;
+
+exports[`Svelte support > Script section (JS) > should respect \`oxfmt-ignore\` inside \`<script>\` 1`] = `
+"<script>
+  // oxfmt-ignore
+  const x   =   { a:1,b:2 };
+  const y = { c: 3, d: 4 };
+</script>
+
+<p>{x.a + y.c}</p>
+"
+`;
+
+exports[`Svelte support > Script section (JS) > should sort imports inside \`<script lang="ts">\` 1`] = `
+"<script lang="ts">
+  import { a } from "ant";
+  import type { A } from "ant";
+  import type { Z } from "zoo";
+  let n: number = $state(0);
+</script>
+
+<p>{n}</p>
+"
+`;
+
+exports[`Svelte support > Template section > should sort Tailwind classes in template attributes (within \`{#each}\` block) 1`] = `
+"<script>
+  let items = $state([1, 2, 3]);
+</script>
+
+{#each items as n}
+  <div class="flex bg-red-500 p-4 text-white">{n}</div>
+{/each}
+"
+`;

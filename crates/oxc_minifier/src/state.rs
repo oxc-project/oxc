@@ -2,6 +2,7 @@ use oxc_ecmascript::constant_evaluation::ConstantValue;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_data_structures::stack::NonEmptyStack;
+use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
@@ -33,13 +34,18 @@ pub struct MinifierState<'a> {
 }
 
 impl MinifierState<'_> {
-    pub fn new(source_type: SourceType, options: CompressOptions, dce: bool) -> Self {
+    pub fn new(
+        source_type: SourceType,
+        options: CompressOptions,
+        dce: bool,
+        scoping: &Scoping,
+    ) -> Self {
         Self {
             source_type,
             options,
             dce,
             pure_functions: FxHashMap::default(),
-            symbol_values: SymbolValues::default(),
+            symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
             changed: false,

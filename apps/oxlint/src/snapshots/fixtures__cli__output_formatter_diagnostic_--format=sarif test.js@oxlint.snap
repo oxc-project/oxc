@@ -24,7 +24,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
               "properties": {
                 "category": "correctness",
                 "plugin": "eslint",
-                "fix": "fixable_fix"
+                "fix": "fixable_suggestion"
               }
             },
             {

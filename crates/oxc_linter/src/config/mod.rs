@@ -5,7 +5,6 @@ mod config_builder;
 mod config_store;
 mod env;
 mod external_plugins;
-mod glob_set;
 mod globals;
 mod ignore_matcher;
 mod overrides;
@@ -16,7 +15,6 @@ mod settings;
 pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
 pub use config_store::{Config, ConfigStore, ResolvedLinterState};
 pub use env::OxlintEnv;
-pub use glob_set::GlobSet;
 pub use globals::{GlobalValue, OxlintGlobals};
 pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
@@ -24,6 +22,8 @@ pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
+
+pub use oxc_config::GlobSet;
 
 use crate::config::oxlintrc::OxlintOptions;
 

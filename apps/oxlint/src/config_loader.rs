@@ -6,7 +6,7 @@ use std::{
 
 use ignore::DirEntry;
 
-use oxc_config_discovery::{
+use oxc_config::{
     ConfigConflict, ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -56,12 +56,18 @@ pub fn config_file_names() -> Vec<&'static str> {
 /// - Returns paths to matching config files found
 ///
 /// In Vite+ mode, only `vite.config.ts` is discovered.
+///
+/// Conflicts (multiple configs in the same dir) are returned in the second
+/// tuple element so callers can surface them as load errors alongside other
+/// parse/build failures.
 pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
     files: &[P],
     base_config_path: &Path,
-) -> impl IntoIterator<Item = DiscoveredConfigFile> {
+) -> (FxHashSet<DiscoveredConfigFile>, Vec<ConfigConflict>) {
+    let discovery = config_discovery();
     let mut config_paths = FxHashSet::<DiscoveredConfigFile>::default();
     let mut visited_dirs = FxHashSet::default();
+    let mut conflicts = Vec::new();
 
     for file in files {
         let path = file.as_ref();
@@ -79,18 +85,22 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
             if !inserted {
                 break;
             }
-            for config in find_configs_in_directory(dir) {
-                if config.path() == base_config_path {
-                    base_config_found = true;
-                    break;
+            match discovery.find_unique_config_by_readdir(dir, true) {
+                Ok(Some(config)) => {
+                    if config.path() == base_config_path {
+                        base_config_found = true;
+                    } else {
+                        config_paths.insert(config);
+                    }
                 }
-                config_paths.insert(config);
+                Ok(None) => {}
+                Err(conflict) => conflicts.push(conflict),
             }
             current = dir.parent();
         }
     }
 
-    config_paths
+    (config_paths, conflicts)
 }
 
 /// Discover config files by walking DOWN from a root directory.
@@ -118,11 +128,6 @@ pub fn discover_configs_in_tree(
     drop(builder);
 
     receiver.into_iter().flatten()
-}
-
-/// Check if a directory contains an oxlint config file.
-fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfigFile> {
-    config_discovery().find_configs_in_directory(dir)
 }
 
 // Helper types for parallel directory walking
@@ -232,6 +237,7 @@ impl ConfigLoadError {
 ///
 /// This groups together failures related to the root configuration file
 /// and to any nested configuration files discovered during loading.
+#[derive(Debug)]
 pub enum CliConfigLoadError {
     /// An error that occurred while loading or parsing the root configuration.
     RootConfig(OxcDiagnostic),
@@ -346,6 +352,10 @@ impl<'a> ConfigLoader<'a> {
         let mut configs = Vec::new();
         let mut errors = Vec::new();
 
+        // Group by parent dir to catch multiple configs in the same directory.
+        // NOTE: CLI path (`discover_configs_in_ancestors`) already enforces uniqueness,
+        // so this only fires for the LSP path (`discover_configs_in_tree`)
+        // where the walker streams entries without grouping.
         let mut by_dir = FxHashMap::<PathBuf, Vec<DiscoveredConfigFile>>::default();
 
         for config in paths {
@@ -491,9 +501,13 @@ impl<'a> ConfigLoader<'a> {
     /// Otherwise: checks for `.oxlintrc.json`, `.oxlintrc.jsonc`, and `oxlint.config.ts`.
     ///
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
-    fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
+    fn try_load_config_from_dir(
+        &self,
+        discovery: &ConfigDiscovery,
+        dir: &Path,
+    ) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
         let config_file =
-            config_discovery().find_unique_config_in_directory(dir).map_err(OxcDiagnostic::from)?;
+            discovery.find_unique_config_by_readdir(dir, true).map_err(OxcDiagnostic::from)?;
 
         match config_file {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
@@ -509,24 +523,8 @@ impl<'a> ConfigLoader<'a> {
         }
     }
 
-    pub(crate) fn load_root_config(
-        &self,
-        cwd: &Path,
-        config_path: Option<&PathBuf>,
-    ) -> Result<Oxlintrc, OxcDiagnostic> {
-        if let Some(config_path) = config_path {
-            return self.load_explicit_config(cwd, config_path);
-        }
-
-        match self.try_load_config_from_dir(cwd)? {
-            Some(config) => Ok(config),
-            None => Ok(Oxlintrc::default()),
-        }
-    }
-
     /// Load root config by searching up parent directories.
     ///
-    /// This is used by the LSP when a workspace folder is nested (e.g., `apps/app1`).
     /// It searches from the current directory up to parent directories to find a config file.
     ///
     /// # Arguments
@@ -535,7 +533,7 @@ impl<'a> ConfigLoader<'a> {
     ///
     /// # Returns
     /// The first config found when searching up the directory tree, or default if none found.
-    pub(crate) fn load_root_config_with_ancestor_search(
+    pub(crate) fn load_root_config(
         &self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
@@ -548,7 +546,7 @@ impl<'a> ConfigLoader<'a> {
         // Search up the directory tree for a config file
         let mut current = Some(cwd);
         while let Some(dir) = current {
-            if let Some(config) = self.try_load_config_from_dir(dir)? {
+            if let Some(config) = self.try_load_config_from_dir(&config_discovery(), dir)? {
                 return Ok(config);
             }
             // Move to parent directory
@@ -640,9 +638,15 @@ impl<'a> ConfigLoader<'a> {
         // Discover config files by walking up from each file's directory
         let config_paths: Vec<_> =
             paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
-        let discovered_configs = discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
+        let (discovered_configs, conflicts) =
+            discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
 
-        let (configs, errors) = self.load_many(discovered_configs, Some(cwd));
+        let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
+
+        // Propagate upstream conflicts as load errors alongside parse/build failures.
+        for conflict in conflicts {
+            errors.push(ConfigLoadError::Diagnostic(conflict.into()));
+        }
 
         // Fail if any config failed (CLI requires all configs to be valid)
         if !errors.is_empty() {
@@ -751,7 +755,7 @@ mod test {
     use super::{ConfigLoadError, ConfigLoader};
     #[cfg(feature = "napi")]
     use crate::js_config::{JsConfigLoaderCb, JsConfigResult};
-    use oxc_config_discovery::DiscoveredConfigFile;
+    use oxc_config::DiscoveredConfigFile;
 
     #[cfg(feature = "napi")]
     fn make_js_loader<F>(f: F) -> JsConfigLoaderCb
@@ -835,7 +839,7 @@ mod test {
         // Uses fixture: ancestor_search/apps/app1 -> should find ancestor_search/.oxlintrc.json
         let nested_dir = cwd.join("apps/oxlint/fixtures/cli/ancestor_search/apps/app1");
         if nested_dir.exists() {
-            let result = loader.load_root_config_with_ancestor_search(&nested_dir, None);
+            let result = loader.load_root_config(&nested_dir, None);
             assert!(result.is_ok(), "Expected ancestor search to find config or return default");
 
             // Verify the config was actually found (not just default)
@@ -852,13 +856,13 @@ mod test {
         // Uses dedicated fixture with .oxlintrc.json
         let valid_config =
             PathBuf::from("fixtures/cli/ancestor_search_explicit_config/.oxlintrc.json");
-        let result = loader.load_root_config_with_ancestor_search(&cwd, Some(&valid_config));
+        let result = loader.load_root_config(&cwd, Some(&valid_config));
         assert!(result.is_ok(), "Expected config lookup to succeed with explicit path");
 
         // Test case 3: When no config exists in any ancestor, should return default
         let temp_dir = std::env::temp_dir().join("oxc_test_no_config");
         std::fs::create_dir_all(&temp_dir).expect("Failed to create temporary test directory");
-        let result = loader.load_root_config_with_ancestor_search(&temp_dir, None);
+        let result = loader.load_root_config(&temp_dir, None);
         assert!(result.is_ok(), "Expected default config when no config found");
         std::fs::remove_dir_all(&temp_dir).expect("Failed to cleanup temporary test directory");
     }

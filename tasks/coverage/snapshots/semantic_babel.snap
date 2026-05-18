@@ -1,8 +1,8 @@
-commit: c543b031
+commit: 4079bcda
 
 semantic_babel Summary:
-AST Parsed     : 2232/2232 (100.00%)
-Positive Passed: 2030/2232 (90.95%)
+AST Parsed     : 2236/2236 (100.00%)
+Positive Passed: 2035/2236 (91.01%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -87,29 +87,6 @@ Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-using-comments/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "_usingCtx3", "_usingCtx4"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_usingCtx", "_usingCtx3", "_usingCtx4"]
-Bindings mismatch:
-after transform: ScopeId(7): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(16): []
-Symbol scope ID mismatch for "_iteratorAbruptCompletion":
-after transform: SymbolId(14): ScopeId(7)
-rebuilt        : SymbolId(13): ScopeId(3)
-Symbol scope ID mismatch for "_didIteratorError":
-after transform: SymbolId(13): ScopeId(7)
-rebuilt        : SymbolId(14): ScopeId(3)
-Symbol scope ID mismatch for "_iteratorError":
-after transform: SymbolId(15): ScopeId(7)
-rebuilt        : SymbolId(15): ScopeId(3)
-Symbol scope ID mismatch for "_iterator":
-after transform: SymbolId(16): ScopeId(7)
-rebuilt        : SymbolId(16): ScopeId(3)
-Symbol scope ID mismatch for "_step":
-after transform: SymbolId(11): ScopeId(7)
-rebuilt        : SymbolId(17): ScopeId(3)
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-for-using-binding-of-of/input.js
 Symbol reference IDs mismatch for "of":
 after transform: SymbolId(1): [ReferenceId(0)]
@@ -126,50 +103,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "of", "require"]
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-basic/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "basic"]
-rebuilt        : ScopeId(3): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(4): ["basic"]
-Symbol scope ID mismatch for "basic":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-escaped/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "ab"]
-rebuilt        : ScopeId(3): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(4): ["ab"]
-Symbol scope ID mismatch for "ab":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-non-bmp/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "𠮷"]
-rebuilt        : ScopeId(3): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(4): ["𠮷"]
-Symbol scope ID mismatch for "𠮷":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-using/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "_usingCtx3", "using"]
-rebuilt        : ScopeId(3): ["_usingCtx", "_usingCtx3"]
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(4): ["using"]
-Symbol scope ID mismatch for "using":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.
@@ -705,6 +638,30 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Bindings mismatch:
 after transform: ScopeId(0): ["N"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["N", "x"]
+rebuilt        : ScopeId(0): ["x"]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named-declaration/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["N"]
+rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-export-named-declaration/input.ts
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-import-equals-internal/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["N"]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["N"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested/input.ts
 Bindings mismatch:

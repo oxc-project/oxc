@@ -45,14 +45,15 @@ declare_oxc_lint!(
     NoDebugger,
     eslint,
     correctness,
-    fix,
+    suggestion,
     version = "0.0.3",
 );
 
 impl Rule for NoDebugger {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::DebuggerStatement(stmt) = node.kind() {
-            ctx.diagnostic_with_fix(no_debugger_diagnostic(stmt.span), |fixer| {
+            // mark the fix as a suggestion, so that it won't be applied automatically by the editor auto-fix on save feature
+            ctx.diagnostic_with_suggestion(no_debugger_diagnostic(stmt.span), |fixer| {
                 let Some(parent) = ctx
                     .nodes()
                     .ancestors(node.id())
