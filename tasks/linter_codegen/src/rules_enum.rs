@@ -431,6 +431,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             }
 
             /// Additional information about this rule.
+            #[cfg(feature = "ruledocs")]
             pub fn info(&self) -> RuleInfo {
                 match self {
                     #(#info_arms),*
@@ -438,6 +439,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             }
 
             /// A short, one-line summary of what this rule does.
+            #[cfg(feature = "ruledocs")]
             pub fn short_description(&self) -> &'static str {
                 self.info().short_description
             }
