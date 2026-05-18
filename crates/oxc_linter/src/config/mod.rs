@@ -23,6 +23,8 @@ pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
+pub use oxc_config::GlobSet;
+
 use crate::config::oxlintrc::OxlintOptions;
 
 #[derive(Debug, Default, Clone)]
@@ -163,6 +165,6 @@ mod test {
 
         let (rule, _) = set.into_iter().next().unwrap();
         assert_eq!(rule.name(), "valid-expect");
-        assert_eq!(rule.plugin_name(), "jest");
+        assert_eq!(rule.plugin_name(), "vitest");
     }
 }

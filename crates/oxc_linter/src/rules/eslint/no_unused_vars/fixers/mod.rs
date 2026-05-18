@@ -1,4 +1,6 @@
+mod fix_conflicts;
 mod fix_imports;
+mod fix_params;
 mod fix_symbol;
 mod fix_vars;
 

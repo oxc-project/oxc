@@ -898,6 +898,25 @@ import "./side-effect2";
 "#,
     );
 
+    // No blank line should be inserted on a "decreasing" group transition
+    // (e.g. ignored `style` side-effect → `internal` import) to align with
+    // the perfectionist plugin behavior.
+    assert_format(
+        r#"
+import { z } from "@/z";
+
+import "./style.css";
+import { a } from "@/a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import { a } from "@/a";
+
+import "./style.css";
+import { z } from "@/z";
+"#,
+    );
+
     assert_format(
         r#"
 import y from "y";
@@ -1053,6 +1072,29 @@ import { Z } from "Z";
 import { a } from "a";
 import { z } from "z";
 "#,
+    );
+}
+
+// ---
+
+#[test]
+fn should_treat_subpath_imports_as_internal_by_default() {
+    assert_format(
+        r##"
+import foo from "#utils";
+import bar from "react";
+import baz from "~/local";
+import qux from "node:fs";
+"##,
+        r#"{ "sortImports": {} }"#,
+        r##"
+import qux from "node:fs";
+
+import bar from "react";
+
+import foo from "#utils";
+import baz from "~/local";
+"##,
     );
 }
 
@@ -1308,6 +1350,159 @@ import {
 } from "a";
 import b from "b";
 import c from "c";
+"#,
+    );
+}
+
+// ---
+
+#[test]
+fn should_preserve_imports_with_ignore_directive() {
+    // An import marked with a leading `// oxfmt-ignore` keeps its original
+    // text (extra spaces are not normalized) and its original position.
+    // Surrounding imports are sorted independently on each side of the ignored line.
+    assert_format(
+        r#"
+import b from "b";
+// oxfmt-ignore
+import   a from "a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import b from "b";
+// oxfmt-ignore
+import   a from "a";
+"#,
+    );
+
+    // Imports before and after a leading ignore directive are sorted in
+    // separate chunks and do not cross the ignored line.
+    assert_format(
+        r#"
+import d from "d";
+import c from "c";
+// oxfmt-ignore
+import   b from "b";
+import a from "a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import c from "c";
+import d from "d";
+// oxfmt-ignore
+import   b from "b";
+import a from "a";
+"#,
+    );
+
+    // A leading ignore directive at the top of a run leaves the first import
+    // verbatim and sorts the rest.
+    assert_format(
+        r#"
+// oxfmt-ignore
+import   c from "c";
+import b from "b";
+import a from "a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+// oxfmt-ignore
+import   c from "c";
+import a from "a";
+import b from "b";
+"#,
+    );
+
+    // A trailing `// oxfmt-ignore` works the same way as a leading one.
+    assert_format(
+        r#"
+import b from "b";
+import   a from "a"; // oxfmt-ignore
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import b from "b";
+import   a from "a"; // oxfmt-ignore
+"#,
+    );
+
+    // Trailing ignore in the middle of a run also forms a boundary.
+    assert_format(
+        r#"
+import d from "d";
+import   c from "c"; // oxfmt-ignore
+import b from "b";
+import a from "a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import d from "d";
+import   c from "c"; // oxfmt-ignore
+import a from "a";
+import b from "b";
+"#,
+    );
+}
+
+// ---
+
+#[test]
+fn issue_22486() {
+    // Should not panic w/ jsdoc formatting enabled.
+    //
+    // Single-line JSDoc.
+    assert_format(
+        r#"
+/** jsdoc */
+
+import * as React from "react";
+import { foo } from "bar";
+"#,
+        r#"{ "sortImports": {}, "jsdoc": true }"#,
+        r#"
+/** Jsdoc */
+
+import { foo } from "bar";
+import * as React from "react";
+"#,
+    );
+    // Multi-line JSDoc.
+    assert_format(
+        r#"
+/**
+ * jsdoc
+ * @see https://example.com
+ */
+
+import * as React from "react";
+import { foo } from "bar";
+"#,
+        r#"{ "sortImports": {}, "jsdoc": true }"#,
+        r#"
+/**
+ * Jsdoc
+ *
+ * @see https://example.com
+ */
+
+import { foo } from "bar";
+import * as React from "react";
+"#,
+    );
+
+    assert_format(
+        r#"
+import "./side-effect-b.js";
+import "./side-effect-a.js";
+
+// trailing comment after the import block triggers the panic
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import "./side-effect-b.js";
+import "./side-effect-a.js";
+
+// trailing comment after the import block triggers the panic
 "#,
     );
 }

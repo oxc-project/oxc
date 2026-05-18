@@ -53,7 +53,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     pending, // fixer will be implemented later
-    version = "next",
+    version = "1.62.0",
 );
 
 impl Rule for NoDeprecatedDataObjectDeclaration {

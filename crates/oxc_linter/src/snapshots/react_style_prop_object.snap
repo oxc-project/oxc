@@ -2,25 +2,25 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:1:12]
  1 │ <div style="color: 'red'" />
    ·            ──────────────
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:1:14]
  1 │ <Hello style="color: 'green'" />
    ·              ────────────────
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:1:12]
  1 │ <div style={true} />
    ·            ──────
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:4:35]
  3 │               function redDiv2() {
  4 │                 return <div style={styles} />;
@@ -28,7 +28,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │               }
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:4:35]
  3 │               function redDiv2() {
  4 │                 return <div style={styles} />;
@@ -36,7 +36,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │               }
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:4:37]
  3 │               function redDiv2() {
  4 │                 return <Hello style={styles} />;
@@ -44,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │               }
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:4:35]
  3 │               function redDiv() {
  4 │                 return <div style={styles} />;
@@ -52,19 +52,19 @@ source: crates/oxc_linter/src/tester.rs
  5 │               }
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:1:20]
  1 │ <MyComponent style="myStyle" />
    ·                    ─────────
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:1:44]
  1 │ React.createElement(MyComponent2, { style: "mySpecialStyle" })
    ·                                            ────────────────
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:3:31]
  2 │             let styles: string | undefined
  3 │             return <div style={styles} />
@@ -72,7 +72,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │           
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:3:31]
  2 │             let styles: number | undefined
  3 │             return <div style={styles} />
@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │           
    ╰────
 
-  ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
+  ⚠ react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:3:31]
  2 │             let styles: boolean | undefined
  3 │             return <div style={styles} />

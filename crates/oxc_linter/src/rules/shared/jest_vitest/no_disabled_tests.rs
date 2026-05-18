@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-pub const DOCUMENTATION: &str = r#"### What it does
+pub const DOCUMENTATION: &str = r"### What it does
 
 This rule raises a warning about disabled tests.
 
@@ -43,18 +43,7 @@ it('foo', () => {
   pending();
 });
 ```
-
-This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-disabled-tests.md),
-to use it, add the following configuration to your `.oxlintrc.json`:
-
-```json
-{
-  "rules": {
-     "vitest/no-disabled-tests": "error"
-  }
-}
-```
-"#;
+";
 
 fn no_disabled_tests_diagnostic(x1: &'static str, x2: &'static str, span3: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(x1).with_help(x2).with_label(span3)

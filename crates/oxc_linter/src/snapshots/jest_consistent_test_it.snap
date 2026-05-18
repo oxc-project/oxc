@@ -2,14 +2,14 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ it("foo")
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:17]
  3 │ 
  4 │                 it("foo")
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:17]
  3 │ 
  4 │                 testThisThing("foo")
@@ -27,70 +27,70 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ xit("foo")
    · ───
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ fit("foo")
    · ───
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ it.skip("foo")
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ it.concurrent("foo")
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ it.only("foo")
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ it.each([])("foo")
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ it.each``("foo")
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:32]
  1 │ describe.each``("foo", () => { it.each``("bar") })
    ·                                ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:32]
  1 │ describe.each``("foo", () => { test.each``("bar") })
    ·                                ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:3:21]
  2 │                 describe.each()("%s", () => {
  3 │                     test("is valid, but should not be", () => {});
@@ -99,7 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:3:21]
  2 │                 describe.only.each()("%s", () => {
  3 │                     test("is valid, but should not be", () => {});
@@ -108,98 +108,98 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { it("foo") })
    ·                           ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ test("foo")
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ xtest("foo")
    · ─────
    ╰────
   help: Prefer using "it" instead of "test"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ test.skip("foo")
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ test.concurrent("foo")
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ test.only("foo")
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ test.each([])("foo")
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:32]
  1 │ describe.each``("foo", () => { test.each``("bar") })
    ·                                ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ test.each``("foo")
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test.only("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { xtest("foo") })
    ·                           ─────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:43]
  3 │ 
  4 │                 describe("suite", () => { dontTestThis("foo") });
@@ -208,7 +208,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:42]
  3 │ 
  4 │                 context("suite", () => { dontTestThis("foo") });
@@ -217,42 +217,42 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test.skip("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test.concurrent("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test.only("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { xtest("foo") })
    ·                           ─────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:43]
  3 │ 
  4 │                 describe("suite", () => { dontTestThis("foo") });
@@ -261,7 +261,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:38]
  3 │ 
  4 │             context("suite", () => { dontTestThis("foo") });
@@ -270,77 +270,77 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test.skip("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test.concurrent("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { it("foo") })
    ·                           ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ it("foo")
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ test("foo")
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ it("foo")
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { test("foo") })
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
  1 │ it("foo")
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
 
-  ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
+  ⚠ jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
  1 │ describe("suite", () => { it("foo") })
    ·                           ──

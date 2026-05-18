@@ -1,0 +1,30 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: demo.ts
+working directory: fixtures/issue_19891
+----------
+
+  x typescript(no-non-null-assertion): Forbidden non-null assertion.
+   ,-[demo.ts:1:13]
+ 1 | const foo = undefined!;
+   :             ^^^^^^^^^^
+ 2 | debugger;
+   `----
+  note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[demo.ts:2:1]
+ 1 | const foo = undefined!;
+ 2 | debugger;
+   : ^^^^^^^^^
+ 3 | 
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

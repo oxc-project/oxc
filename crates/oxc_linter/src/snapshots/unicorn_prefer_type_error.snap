@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (!isFinite(foo)) {
  3 │                 throw new Error();
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (isNaN(foo) === false) {
  3 │                 throw new Error();
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (Array.isArray(foo)) {
  3 │                 throw new Error('foo is an Array');
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (foo instanceof bar) {
  3 │                 throw new Error(foobar);
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (_.isElement(foo)) {
  3 │                 throw new Error();
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (_.isElement(foo)) {
  3 │                 throw new Error;
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (wrapper._.isElement(foo)) {
  3 │                 throw new Error;
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (typeof foo == 'Foo' || 'Foo' === typeof foo) {
  3 │                 throw new Error();
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) {
  3 │                 throw new Error();
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (wrapper.n.isFinite(foo) && wrapper.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
  3 │                 throw new Error();
@@ -92,7 +92,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (wrapper.f.g.n.isFinite(foo) && wrapper.g.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
  3 │                 throw new Error();
@@ -101,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:28]
  2 │             if (_.isElement(foo)) {
  3 │                 throw (new Error());

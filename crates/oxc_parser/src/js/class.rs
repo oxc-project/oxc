@@ -171,6 +171,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         loop {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher();
+            if self.fatal_error.is_some() {
+                break;
+            }
             let type_argument;
             if let Expression::TSInstantiationExpression(expr) = extend {
                 let expr = expr.unbox();

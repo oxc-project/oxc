@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
+  ⚠ vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
    ╭─[require_typed_ref.tsx:3:35]
  2 │                     import { ref } from 'vue'
  3 │                     const count = ref()
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide an explicit type parameter or an initial value.
 
-  ⚠ eslint-plugin-vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
+  ⚠ vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
    ╭─[require_typed_ref.tsx:3:35]
  2 │                     import { ref } from 'vue'
  3 │                     const count = ref(null)
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide an explicit type parameter or an initial value.
 
-  ⚠ eslint-plugin-vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
+  ⚠ vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
    ╭─[require_typed_ref.tsx:3:35]
  2 │                     import { ref } from 'vue'
  3 │                     const count = ref(undefined)
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide an explicit type parameter or an initial value.
 
-  ⚠ eslint-plugin-vue(require-typed-ref): Specify type parameter for `shallowRef` function, otherwise created variable will not be typechecked.
+  ⚠ vue(require-typed-ref): Specify type parameter for `shallowRef` function, otherwise created variable will not be typechecked.
    ╭─[require_typed_ref.tsx:3:35]
  2 │                     import { shallowRef } from 'vue'
  3 │                     const count = shallowRef()
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide an explicit type parameter or an initial value.
 
-  ⚠ eslint-plugin-vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
+  ⚠ vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
    ╭─[require_typed_ref.tsx:4:37]
  3 │                     function useCount() {
  4 │                       const count = ref()
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide an explicit type parameter or an initial value.
 
-  ⚠ eslint-plugin-vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
+  ⚠ vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
    ╭─[require_typed_ref.tsx:5:32]
  4 │                       return {
  5 │                         count: ref()
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide an explicit type parameter or an initial value.
 
-  ⚠ eslint-plugin-vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
+  ⚠ vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
    ╭─[require_typed_ref.tsx:4:37]
  3 │                       import { ref } from 'vue'
  4 │                       const count = ref()
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide an explicit type parameter or an initial value.
 
-  ⚠ eslint-plugin-vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
+  ⚠ vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
    ╭─[require_typed_ref.tsx:6:41]
  5 │                         setup() {
  6 │                           const count = ref()
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Provide an explicit type parameter or an initial value.
 
-  ⚠ eslint-plugin-vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
+  ⚠ vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
    ╭─[require_typed_ref.tsx:5:39]
  4 │                       setup() {
  5 │                         const count = ref()

@@ -3,14 +3,12 @@ use serde::Deserialize;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::ScopeId;
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
-        is_type_of_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, collect_possible_jest_call_node, is_type_of_jest_fn_call,
     },
 };
 
@@ -121,43 +119,37 @@ impl Default for MaxNestedDescribeConfig {
 
 impl MaxNestedDescribeConfig {
     pub fn run_once(&self, ctx: &LintContext) {
-        let mut describes_hooks_depth: Vec<ScopeId> = vec![];
-        let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
-        possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
+        let mut describe_call_spans = collect_possible_jest_call_node(ctx)
+            .into_iter()
+            .filter_map(|possible_jest_node| {
+                let AstKind::CallExpression(call_expr) = possible_jest_node.node.kind() else {
+                    return None;
+                };
 
-        for possible_jest_node in &possibles_jest_nodes {
-            self.run(possible_jest_node, &mut describes_hooks_depth, ctx);
-        }
-    }
+                is_type_of_jest_fn_call(
+                    call_expr,
+                    &possible_jest_node,
+                    ctx,
+                    &[JestFnKind::General(JestGeneralFnKind::Describe)],
+                )
+                .then_some(call_expr.span)
+            })
+            .collect::<Vec<_>>();
 
-    fn run<'a>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, '_>,
-        describes_hooks_depth: &mut Vec<ScopeId>,
-        ctx: &LintContext<'a>,
-    ) {
-        let node = possible_jest_node.node;
-        let scope_id = node.scope_id();
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let is_describe_call = is_type_of_jest_fn_call(
-            call_expr,
-            possible_jest_node,
-            ctx,
-            &[JestFnKind::General(JestGeneralFnKind::Describe)],
-        );
+        describe_call_spans
+            .sort_unstable_by(|a, b| a.start.cmp(&b.start).then_with(|| b.end.cmp(&a.end)));
 
-        if is_describe_call && !describes_hooks_depth.contains(&scope_id) {
-            describes_hooks_depth.push(scope_id);
-        }
+        let mut active_describes: Vec<Span> = Vec::new();
+        for span in describe_call_spans {
+            while active_describes.last().is_some_and(|parent| !parent.contains_inclusive(span)) {
+                active_describes.pop();
+            }
+            active_describes.push(span);
 
-        if is_describe_call && describes_hooks_depth.len() > self.max {
-            ctx.diagnostic(exceeded_max_depth(
-                describes_hooks_depth.len(),
-                self.max,
-                call_expr.span,
-            ));
+            let current_depth = active_describes.len();
+            if current_depth > self.max {
+                ctx.diagnostic(exceeded_max_depth(current_depth, self.max, span));
+            }
         }
     }
 }

@@ -2,7 +2,6 @@
 
 import { format as napiFormat, jsTextToDoc as napiJsTextToDoc } from "./bindings";
 import {
-  resolvePlugins,
   formatFile,
   formatEmbeddedCode,
   formatEmbeddedDoc,
@@ -74,7 +73,6 @@ export async function format(fileName: string, sourceText: string, options?: For
     fileName,
     sourceText,
     options ?? {},
-    resolvePlugins,
     (options, code) => formatFile({ options, code }),
     (options, code) => formatEmbeddedCode({ options, code }),
     (options, texts) => formatEmbeddedDoc({ options, texts }),
@@ -96,7 +94,6 @@ export async function jsTextToDoc(
     sourceText,
     oxfmtPluginOptionsJson,
     parentContext,
-    resolvePlugins,
     (_options, _code) => Promise.reject(/* Unreachable */),
     (options, code) => formatEmbeddedCode({ options, code }),
     (options, texts) => formatEmbeddedDoc({ options, texts }),

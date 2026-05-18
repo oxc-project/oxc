@@ -1,0 +1,7 @@
+{
+  "files/test.ts": {
+    "typescript/await-thenable": {
+      "count": 1
+    }
+  }
+}

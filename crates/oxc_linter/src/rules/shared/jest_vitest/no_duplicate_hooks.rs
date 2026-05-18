@@ -18,7 +18,7 @@ fn no_duplicate_hooks_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub const DOCUMENTATION: &str = r#"### What it does
+pub const DOCUMENTATION: &str = r"### What it does
 
 Disallows duplicate hooks in describe blocks.
 
@@ -94,18 +94,7 @@ describe('foo', () => {
     });
 });
 ```
-
-This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-duplicate-hooks.md),
-to use it, add the following configuration to your `.oxlintrc.json`:
-
-```json
-{
-  "rules": {
-     "vitest/no-duplicate-hooks": "error"
-  }
-}
-```
-"#;
+";
 
 pub fn run_once(ctx: &LintContext) {
     let mut hook_contexts: FxHashMap<NodeId, Vec<FxHashMap<String, i32>>> = FxHashMap::default();
