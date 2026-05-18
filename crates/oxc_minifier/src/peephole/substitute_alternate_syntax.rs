@@ -1711,9 +1711,10 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::LogicalExpression(logical_expr) = expr else { return };
-        let Expression::SequenceExpression(sequence_expr) = &mut logical_expr.left else { return };
 
-        if let Some(last_expr) = sequence_expr.expressions.pop() {
+        if let Expression::SequenceExpression(sequence_expr) = &mut logical_expr.left
+            && let Some(last_expr) = sequence_expr.expressions.pop()
+        {
             let mut seq_expr = sequence_expr.take_in_box(ctx.ast);
             logical_expr.left = last_expr;
             seq_expr.expressions.push(expr.take_in(ctx.ast));
@@ -1725,11 +1726,9 @@ impl<'a> PeepholeOptimizations {
     pub fn fold_sequence_in_unary_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::UnaryExpression(unary_expr) = expr else { return };
 
-        if unary_expr.operator.is_keyword() {
-            return;
-        }
-
-        if let Expression::SequenceExpression(argument) = &mut unary_expr.argument
+        if !unary_expr.operator.is_keyword()
+            && !unary_expr.operator.is_not()
+            && let Expression::SequenceExpression(argument) = &mut unary_expr.argument
             && argument.expressions.len() > 1
         {
             let mut seq_expr = argument.take_in_box(ctx.ast);

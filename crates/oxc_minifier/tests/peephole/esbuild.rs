@@ -1386,8 +1386,8 @@ fn test_flatten_values() {
     test("return !a === !b", "return !a == !b;");
     test("return !a !== !b", "return !a != !b;");
     test("return !a !== !b", "return !a != !b;");
-    // test("return (a, -1n) !== -1", "return a, -1n !== -1;");
-    // test("return (a, ~1n) !== -1", "return a, ~1n !== -1;");
+    test("return (a, -1n) !== -1", "return a, !0;");
+    test("return (a, ~1n) !== -1", "return a, !0;");
     test("return (a -= 1n) !== -1", "return (a -= 1n) !== -1;");
     test("return (a *= 1n) !== -1", "return (a *= 1n) !== -1;");
     test("return (a **= 1n) !== -1", "return (a **= 1n) !== -1;");
@@ -1400,7 +1400,7 @@ fn test_flatten_values() {
     test("return +(a, b)", "return a, +b;");
     test("return ~(a, b)", "return a, ~b;");
     test("return !(a, b)", "return a, !b;");
-    // test("return void (a, b)", "return a, void b;");
+    test("return void (a, b)", "a, b; return;");
     test("return typeof (a, b)", "return typeof (a, b);");
     test("return delete (a, b)", "return delete (a, b);");
     test("return (a, b) && c", "return a, b && c;");
