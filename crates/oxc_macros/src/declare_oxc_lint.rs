@@ -46,24 +46,17 @@ impl Parse for RuleInfoMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let content;
         syn::braced!(content in input);
-        let mut info = RuleInfoMeta::default();
+        let mut info = Self::default();
         while !content.is_empty() {
             let field: Ident = content.parse()?;
-            content.parse::<Token!(=)>()?;
+            content.parse::<Token![=]>()?;
+            let value: LitStr = content.parse()?;
             match field.to_string().as_str() {
-                "short_description" => {
-                    if info.short_description.is_some() {
-                        return Err(Error::new_spanned(
-                            field,
-                            "duplicate `short_description` in info",
-                        ));
-                    }
-                    info.short_description.replace(content.parse()?);
-                }
+                "short_description" => info.short_description = Some(value),
                 _ => return Err(Error::new_spanned(field, "unknown info field")),
             }
             if !content.is_empty() {
-                content.parse::<Token!(,)>()?;
+                content.parse::<Token![,]>()?;
             }
         }
         Ok(info)
