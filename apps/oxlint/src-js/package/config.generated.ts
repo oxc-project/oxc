@@ -1314,6 +1314,7 @@ export interface DummyRuleMap {
   "vue/valid-define-emits"?: DummyRule;
   "vue/valid-define-options"?: DummyRule;
   "vue/valid-define-props"?: DummyRule;
+  "vue/valid-next-tick"?: DummyRule;
   yoda?: DummyRule;
   [k: string]: DummyRule;
 }
