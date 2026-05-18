@@ -2650,6 +2650,9 @@
         "vue/return-in-computed-property": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/return-in-emits-validator": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/valid-define-emits": {
           "$ref": "#/definitions/DummyRule"
         },
