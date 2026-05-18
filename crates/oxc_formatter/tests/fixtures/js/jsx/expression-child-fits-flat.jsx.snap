@@ -1,0 +1,47 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+const App = () => {
+  return (
+    <O>
+      <I>
+        <x />
+        {f(xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx).y} (
+        {label})
+      </I>
+    </O>
+  );
+};
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+const App = () => {
+  return (
+    <O>
+      <I>
+        <x />
+        {f(xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx).y} (
+        {label})
+      </I>
+    </O>
+  );
+};
+
+-------------------
+{ printWidth: 100 }
+-------------------
+const App = () => {
+  return (
+    <O>
+      <I>
+        <x />
+        {f(xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx).y} ({label})
+      </I>
+    </O>
+  );
+};
+
+===================== End =====================

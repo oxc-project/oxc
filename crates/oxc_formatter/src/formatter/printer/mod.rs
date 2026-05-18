@@ -162,7 +162,9 @@ impl<'a> Printer<'a> {
             FormatElement::Tag(StartGroup(group)) => {
                 let group_mode = if group.mode().is_flat() {
                     match args.mode() {
-                        PrintMode::Flat if self.state.measured_group_fits => {
+                        PrintMode::Flat
+                            if self.state.measured_group_fits || self.state.in_flat_fill_item =>
+                        {
                             // A parent group has already verified that this group fits on a single line
                             // Thus, just continue in flat mode
                             PrintMode::Flat
@@ -532,6 +534,23 @@ impl<'a> Printer<'a> {
         indent_stack: &mut PrintIndentStack,
         args: PrintElementArgs,
     ) -> PrintResult<()> {
+        // When the fill has determined this entry fits in flat mode, inner
+        // groups should also print in flat mode without re-measuring. The
+        // re-measurement uses [`AllPredicate`], which walks past the entry
+        // boundary into subsequent fill entries and frequently overshoots
+        // the print width, causing inner groups to needlessly expand.
+        //
+        // This is scoped to regular groups; [`BestFitting`] still goes
+        // through its variant selection so that elements with both flat
+        // and expanded variants (e.g. JSX child lists) can pick the
+        // appropriate form when the surrounding context is too wide for
+        // the flat variant.
+        if args.mode().is_flat() {
+            let previous = std::mem::replace(&mut self.state.in_flat_fill_item, true);
+            let result = self.print_entry(queue, stack, indent_stack, args);
+            self.state.in_flat_fill_item = previous;
+            return result;
+        }
         self.print_entry(queue, stack, indent_stack, args)
     }
 
@@ -703,6 +722,10 @@ struct PrinterState<'a> {
     pending_indent: Indention,
     pending_space: bool,
     measured_group_fits: bool,
+    /// Set while printing a fill item that the surrounding fill has already
+    /// verified fits in flat mode. Tells inner groups they don't need to
+    /// re-measure their fit, which would walk past the entry boundary.
+    in_flat_fill_item: bool,
     line_width: usize,
     has_empty_line: bool,
     line_suffixes: LineSuffixes<'a>,
