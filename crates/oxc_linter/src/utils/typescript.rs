@@ -1,7 +1,10 @@
 //! Shared TypeScript utilities and types for linter rules
 
+use oxc_ast::AstKind;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::{AstNode, context::LintContext};
 
 /// Type or value specifier for matching specific declarations
 ///
@@ -106,4 +109,15 @@ pub enum NameSpecifier {
     Single(String),
     /// Multiple names
     Multiple(Vec<String>),
+}
+
+/// Returns `true` when `node` has a TypeScript ambient declaration ancestor
+/// such as `declare module`, `declare namespace`, or `declare global`,
+/// including `global {}` nested inside ambient modules or namespaces.
+pub fn has_ambient_typescript_ancestor(node: &AstNode, ctx: &LintContext) -> bool {
+    ctx.nodes().ancestors(node.id()).any(|ancestor| match ancestor.kind() {
+        AstKind::TSModuleDeclaration(module) => module.declare,
+        AstKind::TSGlobalDeclaration(global) => global.declare,
+        _ => false,
+    })
 }
