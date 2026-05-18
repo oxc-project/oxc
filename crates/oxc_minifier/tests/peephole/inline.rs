@@ -39,4 +39,9 @@ fn small_value() {
         r#"console.log('<p autocapitalize="words" contenteditable="false"/>');"#,
         &options,
     );
+
+    // U+FFFD followed by surrogate-range hex is NOT a lone surrogate when
+    // the source StringLiteral has lone_surrogates: false.
+    // Inlining must preserve the original flag, not re-scan the bytes.
+    test_options("const x = '\\uFFFDdc00'; log(x)", "log('\\uFFFDdc00')", &options);
 }

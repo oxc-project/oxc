@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 
 use crate::TraverseCtx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, correct_lone_surrogates_flag, expr_has_lone_surrogates};
 
 impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -19,7 +19,8 @@ impl<'a> PeepholeOptimizations {
             decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
         };
         let is_fresh_value = decl.init.as_ref().is_some_and(Self::is_fresh_value_expression);
-        ctx.init_value(symbol_id, value, is_fresh_value);
+        let lone_surrogates = decl.init.as_ref().is_some_and(|e| expr_has_lone_surrogates(e, ctx));
+        ctx.init_value(symbol_id, value, is_fresh_value, lone_surrogates);
     }
 
     /// Check if an expression creates a fresh value that cannot alias another binding
@@ -106,7 +107,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Some(id) = id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        ctx.init_value(symbol_id, None, true);
+        ctx.init_value(symbol_id, None, true, false);
     }
 
     /// Initialize symbol value for class declarations.
@@ -116,7 +117,7 @@ impl<'a> PeepholeOptimizations {
         let Some(id) = &class.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
         let is_fresh = !Self::class_may_have_property_side_effects(class);
-        ctx.init_value(symbol_id, None, is_fresh);
+        ctx.init_value(symbol_id, None, is_fresh, false);
     }
 
     fn is_for_statement_init(ctx: &TraverseCtx<'a>) -> bool {
@@ -143,7 +144,9 @@ impl<'a> PeepholeOptimizations {
                 ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
             }
         {
-            *expr = ctx.value_to_expr(expr.span(), cv.clone());
+            let mut result = ctx.value_to_expr(expr.span(), cv.clone());
+            correct_lone_surrogates_flag(&mut result, || symbol_value.lone_surrogates);
+            *expr = result;
             ctx.state.changed = true;
         }
     }

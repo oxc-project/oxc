@@ -18,7 +18,7 @@ use oxc_span::SPAN;
 
 use crate::TraverseCtx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, correct_lone_surrogates_flag, expr_has_lone_surrogates};
 
 type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
 
@@ -29,9 +29,12 @@ impl<'a> PeepholeOptimizations {
         let Expression::CallExpression(ce) = node else { return };
 
         // Use constant evaluation for known method calls
+        let span = ce.span;
         if let Some(constant_value) = ce.evaluate_value(ctx) {
             ctx.state.changed = true;
-            *node = ctx.value_to_expr(ce.span, constant_value);
+            let mut result = ctx.value_to_expr(span, constant_value);
+            correct_lone_surrogates_flag(&mut result, || expr_has_lone_surrogates(node, ctx));
+            *node = result;
             return;
         }
 
@@ -279,6 +282,20 @@ impl<'a> PeepholeOptimizations {
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
                 let string_count = args.len() - expression_count;
 
+                // Encoded lone surrogates can't go into template raw values.
+                // Only StringLiteral args are checked here; non-string args become
+                // `${}` expressions (not quasis), so their content doesn't enter
+                // the template's raw/cooked strings.
+                if expression_count > 0 {
+                    let has_lone_surrogates = base_str.lone_surrogates
+                        || args.iter().any(
+                            |arg| matches!(arg, Argument::StringLiteral(s) if s.lone_surrogates),
+                        );
+                    if has_lone_surrogates {
+                        return None;
+                    }
+                }
+
                 // whether it is shorter to use `String::concat`
                 if ".concat()".len() + args.len() + "''".len() * string_count
                     < "${}".len() * expression_count
@@ -288,10 +305,12 @@ impl<'a> PeepholeOptimizations {
 
                 let mut quasi_strs: Vec<Cow<'a, str>> =
                     vec![Cow::Borrowed(base_str.value.as_str())];
+                let mut lone_surrogates = base_str.lone_surrogates;
                 let mut expressions = ctx.ast.vec_with_capacity(expression_count);
                 let mut pushed_quasi = true;
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
+                        lone_surrogates |= str_lit.lone_surrogates;
                         if pushed_quasi {
                             let last_quasi = quasi_strs
                                 .last_mut()
@@ -317,10 +336,11 @@ impl<'a> PeepholeOptimizations {
 
                 if expressions.is_empty() {
                     debug_assert_eq!(quasi_strs.len(), 1);
-                    return Some(ctx.ast.expression_string_literal(
+                    return Some(ctx.ast.expression_string_literal_with_lone_surrogates(
                         span,
                         ctx.ast.str_from_cow(&quasi_strs.pop().unwrap()),
                         None,
+                        lone_surrogates,
                     ));
                 }
 

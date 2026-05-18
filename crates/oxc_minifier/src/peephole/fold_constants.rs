@@ -12,6 +12,142 @@ use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
+/// Scan a string for the lone surrogate encoding pattern `\u{FFFD}XXXX` where
+/// XXXX is in the surrogate range (d800–dfff) or the self-escape "fffd".
+///
+/// **Warning:** This can produce false positives if the string naturally contains
+/// U+FFFD followed by 4 hex chars that happen to be in the surrogate range or "fffd".
+/// Prefer [`expr_has_lone_surrogates`] when the source AST node is available, since
+/// that checks the `lone_surrogates` flag directly without false positives.
+///
+/// This function is the fallback for paths where only the string value is available
+/// (e.g. `value_to_expr` receiving a `ConstantValue::String` with no origin info).
+///
+/// See [`StringLiteral::lone_surrogates`] for the encoding scheme.
+pub fn scan_for_lone_surrogate_encoding(s: &str) -> bool {
+    let bytes = s.as_bytes();
+    // 0xEF is the leading byte of U+FFFD's UTF-8 encoding (0xEF 0xBF 0xBD) and
+    // is rare in typical JS strings. Skip the windowed scan entirely if absent.
+    if !bytes.contains(&0xEF) {
+        return false;
+    }
+    // Need 7 bytes: 3 for U+FFFD + 4 hex chars.
+    bytes.windows(7).any(|w| w[..3] == [0xEF, 0xBF, 0xBD] && is_lone_surrogate_suffix(&w[3..]))
+}
+
+/// Check if 4 bytes are a valid lone surrogate encoding suffix:
+/// either a surrogate code point (d800–dfff) or the U+FFFD self-escape (fffd).
+fn is_lone_surrogate_suffix(b: &[u8]) -> bool {
+    debug_assert_eq!(b.len(), 4);
+    // Surrogate range d800–dfff: first char 'd', second '8'–'f', rest hex.
+    (b[0] == b'd'
+        && matches!(b[1], b'8'..=b'9' | b'a'..=b'f')
+        && matches!(b[2], b'0'..=b'9' | b'a'..=b'f')
+        && matches!(b[3], b'0'..=b'9' | b'a'..=b'f'))
+        || b == b"fffd"
+}
+
+/// Check if an expression's string value may contain lone surrogates.
+///
+/// Based on AST node flags, so not prone to the false positives that
+/// [`scan_for_lone_surrogate_encoding`] can produce. For identifiers, looks
+/// up the symbol table to check the initializer's flag.
+///
+/// Called on source subexpressions of a string-producing fold. Must cover
+/// every kind whose `to_js_string` / `evaluate_value_to_string` result can
+/// contain the lone-surrogate encoding bytes:
+///
+/// - `StringLiteral` — flag on the node.
+/// - `TemplateLiteral` — flags on quasis, recurse on expressions.
+/// - `Identifier` — resolve through the symbol table.
+/// - `BinaryExpression(+)` — recurse on both sides.
+/// - `ArrayExpression` — recurse on element expressions (`array_join`
+///   concatenates element `to_js_string` values, so a lone-surrogate element
+///   ends up in `String([...])` and `` `${[...]}` `` results).
+/// - `CallExpression` — conservative: recurse on callee's object (for method
+///   calls) and arguments. False positives are harmless because
+///   `correct_lone_surrogates_flag` only acts when the byte scan also flagged
+///   the result.
+///
+/// Other `to_js_string` producers are safe-by-shape — their result is a
+/// fixed ASCII string (`"undefined"`, `"true"`, `"false"`, `"null"`,
+/// `"[object Object]"`) or a number/BigInt/regex-source representation — and
+/// return `false` trivially.
+///
+/// `LogicalExpression`, `ConditionalExpression`, `SequenceExpression`, and
+/// `Static/ComputedMemberExpression` also yield `false` here. That is safe
+/// by traversal order: exit-order peephole folds any foldable
+/// string-yielding child into a literal before its parent reaches this
+/// helper's call sites, so they never arrive here with a string value. See
+/// `test_lone_surrogate_through_non_literal_subexprs`.
+///
+/// If either invariant breaks — a newly string-producing kind is added to
+/// `to_js_string`, or a parent is folded before its children — the byte
+/// scan in `value_to_expr` would flag the result and
+/// `correct_lone_surrogates_flag` would silently clear it back, producing
+/// wrong codegen.
+pub fn expr_has_lone_surrogates(expr: &Expression, ctx: &TraverseCtx) -> bool {
+    match expr {
+        Expression::StringLiteral(s) => s.lone_surrogates,
+        Expression::TemplateLiteral(t) => {
+            t.quasis.iter().any(|q| q.lone_surrogates)
+                || t.expressions.iter().any(|e| expr_has_lone_surrogates(e, ctx))
+        }
+        Expression::BinaryExpression(e) if e.operator == BinaryOperator::Addition => {
+            expr_has_lone_surrogates(&e.left, ctx) || expr_has_lone_surrogates(&e.right, ctx)
+        }
+        Expression::ArrayExpression(arr) => arr
+            .elements
+            .iter()
+            .any(|el| el.as_expression().is_some_and(|e| expr_has_lone_surrogates(e, ctx))),
+        Expression::Identifier(ident) => ident
+            .reference_id
+            .get()
+            .and_then(|rid| ctx.scoping().get_reference(rid).symbol_id())
+            .and_then(|sid| ctx.state.symbol_values.get_symbol_value(sid))
+            .is_some_and(|sv| sv.lone_surrogates),
+        Expression::CallExpression(call) => {
+            // Conservatively true if the receiver or any argument carries
+            // lone surrogates, even when the callee doesn't actually reflect
+            // them into its return value (e.g. `arr.find('\uDC00')`). False
+            // positives here are harmless: `correct_lone_surrogates_flag` only
+            // acts when the byte scan also flagged the result.
+            let object_has = match &call.callee {
+                Expression::StaticMemberExpression(m) => expr_has_lone_surrogates(&m.object, ctx),
+                Expression::ComputedMemberExpression(m) => expr_has_lone_surrogates(&m.object, ctx),
+                _ => false,
+            };
+            object_has
+                || call
+                    .arguments
+                    .iter()
+                    .any(|a| a.as_expression().is_some_and(|e| expr_has_lone_surrogates(e, ctx)))
+        }
+        _ => false,
+    }
+}
+
+/// Correct the `lone_surrogates` flag on a [`TraverseCtx::value_to_expr`] result.
+///
+/// `value_to_expr` uses [`scan_for_lone_surrogate_encoding`] which can yield
+/// false positives when U+FFFD naturally appears before surrogate-range hex
+/// chars. When the authoritative answer is available (from AST flags or the
+/// symbol table), call this to override the scan's false positive.
+///
+/// `lone_surrogates` is a closure so the (potentially expensive)
+/// [`expr_has_lone_surrogates`] AST walk only runs in the rare case where
+/// the byte scan flagged the result.
+pub fn correct_lone_surrogates_flag(
+    result: &mut Expression,
+    lone_surrogates: impl FnOnce() -> bool,
+) {
+    if let Expression::StringLiteral(lit) = result
+        && lit.lone_surrogates
+    {
+        lit.lone_surrogates = lone_surrogates();
+    }
+}
+
 /// Constant Folding
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
@@ -357,7 +493,11 @@ impl<'a> PeepholeOptimizations {
         if !e.may_have_side_effects(ctx)
             && let Some(v) = e.evaluate_value(ctx)
         {
-            return Some(ctx.value_to_expr(e.span, v));
+            let mut result = ctx.value_to_expr(e.span, v);
+            correct_lone_surrogates_flag(&mut result, || {
+                expr_has_lone_surrogates(&e.left, ctx) || expr_has_lone_surrogates(&e.right, ctx)
+            });
+            return Some(result);
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);
 
@@ -379,7 +519,14 @@ impl<'a> PeepholeOptimizations {
                     .merge_within(e.right.span(), e.span)
                     .unwrap_or(SPAN);
                 let value = ctx.ast.str_from_strs_array([&left_str, &right_str]);
-                let right = ctx.ast.expression_string_literal(span, value, None);
+                let lone_surrogates = expr_has_lone_surrogates(&left_binary_expr.right, ctx)
+                    || expr_has_lone_surrogates(&e.right, ctx);
+                let right = ctx.ast.expression_string_literal_with_lone_surrogates(
+                    span,
+                    value,
+                    None,
+                    lone_surrogates,
+                );
                 let left = left_binary_expr.left.take_in(ctx.ast);
                 return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
             }
@@ -423,6 +570,8 @@ impl<'a> PeepholeOptimizations {
                     None
                 };
                 left_last_quasi.value.cooked = new_cooked;
+                left_last_quasi.lone_surrogates =
+                    left_last_quasi.lone_surrogates || right_first_quasi.lone_surrogates;
                 if !right.quasis.is_empty() {
                     left_last_quasi.tail = false;
                 }
@@ -433,6 +582,10 @@ impl<'a> PeepholeOptimizations {
 
             // "`${x}y` + 'z'" => "`${x}yz`"
             if let Some(right_str) = right_expr.get_side_free_string_value(ctx) {
+                // Encoded lone surrogates can't go into template raw values.
+                if expr_has_lone_surrogates(right_expr, ctx) {
+                    return None;
+                }
                 left.span = left.span.merge_within(right_expr.span(), parent_span).unwrap_or(SPAN);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
@@ -449,6 +602,10 @@ impl<'a> PeepholeOptimizations {
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
             if let Some(left_str) = left_expr.get_side_free_string_value(ctx) {
+                // Encoded lone surrogates can't go into template raw values.
+                if expr_has_lone_surrogates(left_expr, ctx) {
+                    return None;
+                }
                 right.span = right.span.merge_within(left_expr.span(), parent_span).unwrap_or(SPAN);
                 let first_quasi = right
                     .quasis
@@ -550,7 +707,12 @@ impl<'a> PeepholeOptimizations {
                     *expr = ctx.ast.expression_unary(
                         e.span,
                         UnaryOperator::UnaryPlus,
-                        ctx.ast.expression_string_literal(n.span, n.value, n.raw),
+                        ctx.ast.expression_string_literal_with_lone_surrogates(
+                            n.span,
+                            n.value,
+                            n.raw,
+                            n.lone_surrogates,
+                        ),
                     );
                     ctx.state.changed = true;
                     return;
@@ -718,6 +880,10 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
     pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Pre-check: cheap skip when no expression is foldable. The main loop
+        // below also rejects lone-surrogate expressions, so don't repeat that
+        // check here — false positives just lead to a no-op walk in the main
+        // loop, which is fine.
         let has_expr_to_inline = t
             .expressions
             .iter()
@@ -732,6 +898,10 @@ impl<'a> PeepholeOptimizations {
                 if expr.may_have_side_effects(ctx) {
                     Some(expr)
                 } else if let Some(str) = expr.to_js_string(ctx) {
+                    // Encoded lone surrogates can't go into template raw values.
+                    if expr_has_lone_surrogates(&expr, ctx) {
+                        return Some(expr);
+                    }
                     inline_exprs.push((idx, str));
                     None
                 } else {
@@ -739,6 +909,15 @@ impl<'a> PeepholeOptimizations {
                 }
             }));
         t.expressions = new_exprs;
+
+        // The pre-check is a fast over-approximation that doesn't reject
+        // lone-surrogate expressions — if every foldable expression had lone
+        // surrogates, `inline_exprs` is empty and there's nothing to do.
+        // (Without this guard, `ctx.state.changed = true` below would loop the
+        // compressor.)
+        if inline_exprs.is_empty() {
+            return;
+        }
 
         // inline the extracted inline-able expressions into quasis
         // "current_quasis + extracted_value + next_quasis"
@@ -759,6 +938,9 @@ impl<'a> PeepholeOptimizations {
                 None
             };
             quasi.value.cooked = new_cooked;
+            if next_quasi.as_ref().is_some_and(|q| q.lone_surrogates) {
+                quasi.lone_surrogates = true;
+            }
             if next_quasi.is_some_and(|q| q.tail) {
                 quasi.tail = true;
             }

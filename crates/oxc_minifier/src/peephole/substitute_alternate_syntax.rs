@@ -19,7 +19,7 @@ use oxc_syntax::{
 
 use crate::TraverseCtx;
 
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, correct_lone_surrogates_flag, expr_has_lone_surrogates};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
@@ -1057,7 +1057,13 @@ impl<'a> PeepholeOptimizations {
                     Some(arg) => arg
                         .evaluate_value_to_string(ctx)
                         .filter(|_| !arg.may_have_side_effects(ctx))
-                        .map(|s| ctx.value_to_expr(e.span, ConstantValue::String(s))),
+                        .map(|s| {
+                            let mut result = ctx.value_to_expr(span, ConstantValue::String(s));
+                            correct_lone_surrogates_flag(&mut result, || {
+                                expr_has_lone_surrogates(arg, ctx)
+                            });
+                            result
+                        }),
                 }
             }
             "Number" => Some(ctx.ast.expression_numeric_literal(
@@ -1316,7 +1322,16 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
-        *expr = ctx.ast.expression_string_literal(t.span(), ctx.ast.str_from_cow(&val), None);
+        let lone_surrogates = t.quasis.iter().any(|q| q.lone_surrogates)
+            || t.expressions.iter().any(|e| expr_has_lone_surrogates(e, ctx));
+        let span = t.span();
+        let value = ctx.ast.str_from_cow(&val);
+        *expr = ctx.ast.expression_string_literal_with_lone_surrogates(
+            span,
+            value,
+            None,
+            lone_surrogates,
+        );
         ctx.state.changed = true;
     }
 
@@ -1662,6 +1677,11 @@ impl<'a> PeepholeOptimizations {
         });
         let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
 
+        let lone_surrogates = array.elements.iter().any(|element| {
+            let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
+            str.lone_surrogates
+        });
+
         let concatenated_string = strings.collect::<std::vec::Vec<_>>().join(delimiter);
 
         // "str1,str2".split(',')
@@ -1669,10 +1689,11 @@ impl<'a> PeepholeOptimizations {
             expr.span(),
             Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                 expr.span(),
-                ctx.ast.expression_string_literal(
+                ctx.ast.expression_string_literal_with_lone_surrogates(
                     expr.span(),
                     ctx.ast.str(&concatenated_string),
                     None,
+                    lone_surrogates,
                 ),
                 ctx.ast.identifier_name(expr.span(), "split"),
                 false,
