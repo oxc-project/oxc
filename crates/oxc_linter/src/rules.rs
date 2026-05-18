@@ -817,6 +817,7 @@ pub(crate) mod vitest {
 }
 
 pub(crate) mod node {
+    pub mod callback_return;
     pub mod global_require;
     pub mod handle_callback_err;
     pub mod no_exports_assign;
