@@ -1307,6 +1307,7 @@ export interface DummyRuleMap {
   "vue/no-this-in-before-route-enter"?: DummyRule;
   "vue/prefer-import-from-vue"?: DummyRule;
   "vue/require-default-export"?: DummyRule;
+  "vue/require-slots-as-functions"?: DummyRule;
   "vue/require-typed-ref"?: DummyRule;
   "vue/return-in-computed-property"?: DummyRule;
   "vue/valid-define-emits"?: DummyRule;
