@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, Statement},
@@ -6,8 +9,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -269,7 +270,7 @@ fn test() {
         ),
         ("function x(err) { if (err) { callback(); return; } }", None),
         (
-            "function x(err) { if (err) { 
+            "function x(err) { if (err) {
              log();
              callback(); return; } }",
             None,
