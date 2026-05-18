@@ -64,11 +64,8 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```jsx
     /// <div />
-    /// <dialog autoFocus />
     /// <dialog><input autoFocus /></dialog>
-    /// <div role="dialog" autoFocus />
     /// <div role="dialog"><input autoFocus /></div>
-    /// <div popover autoFocus />
     /// <div popover><input autoFocus /></div>
     /// ```
     NoAutofocus,
