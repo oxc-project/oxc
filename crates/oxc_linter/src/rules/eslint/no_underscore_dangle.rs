@@ -5,7 +5,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingIdentifier, Expression, FunctionType, PrivateFieldExpression, PropertyKey,
-        StaticMemberExpression, VariableDeclarationKind,
+        StaticMemberExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
