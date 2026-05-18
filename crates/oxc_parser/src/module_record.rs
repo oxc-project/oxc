@@ -13,6 +13,10 @@ pub struct ModuleRecordBuilder<'a> {
     module_record: ModuleRecord<'a>,
     export_entries: Vec<'a, ExportEntry<'a>>,
     exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
+    /// When set, `visit_*` calls are ignored. Used while reparsing top-level
+    /// `await` statements in unambiguous mode: the first pass already recorded
+    /// the module record, and reparsing only patches AST nodes.
+    suppressed: bool,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
@@ -23,7 +27,12 @@ impl<'a> ModuleRecordBuilder<'a> {
             module_record: ModuleRecord::new(allocator),
             export_entries: Vec::new_in(allocator),
             exported_bindings_duplicated: Vec::new_in(allocator),
+            suppressed: false,
         }
+    }
+
+    pub(crate) fn set_suppressed(&mut self, suppressed: bool) {
+        self.suppressed = suppressed;
     }
 
     pub fn build(mut self) -> (ModuleRecord<'a>, std::vec::Vec<OxcDiagnostic>) {
@@ -189,17 +198,26 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_import_expression(&mut self, e: &ImportExpression<'a>) {
+        if self.suppressed {
+            return;
+        }
         self.module_record
             .dynamic_imports
             .push(DynamicImport { span: e.span, module_request: e.source.span() });
     }
 
     pub fn visit_import_meta(&mut self, span: Span) {
+        if self.suppressed {
+            return;
+        }
         self.module_record.has_module_syntax = true;
         self.module_record.import_metas.push(span);
     }
 
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
+        if self.suppressed {
+            return;
+        }
         let module_request = NameSpan::new(decl.source.value, decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
@@ -246,6 +264,9 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
+        if self.suppressed {
+            return;
+        }
         let module_request = NameSpan::new(decl.source.value, decl.source.span);
         let export_entry = ExportEntry {
             statement_span: decl.span,
@@ -282,6 +303,9 @@ impl<'a> ModuleRecordBuilder<'a> {
         decl: &ExportDefaultDeclaration<'a>,
         default_keyword_span: Span,
     ) {
+        if self.suppressed {
+            return;
+        }
         let local_name = match &decl.declaration {
             ExportDefaultDeclarationKind::Identifier(ident) => {
                 ExportLocalName::Default(NameSpan::new(ident.name.into(), ident.span))
@@ -315,6 +339,9 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
+        if self.suppressed {
+            return;
+        }
         let module_request =
             decl.source.as_ref().map(|source| NameSpan::new(source.value, source.span));
 
