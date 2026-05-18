@@ -60,6 +60,7 @@ impl MinifierState<'_> {
 #[derive(Default)]
 pub struct ObjectPropertyUsageState {
     pub candidate_symbols: FxHashSet<SymbolId>,
+    pub prunable_property_counts: FxHashMap<SymbolId, u32>,
     pub used_properties: FxHashMap<SymbolId, FxHashSet<CompactStr>>,
     pub escaped_or_unknown_symbols: FxHashSet<SymbolId>,
     pub member_object_references: FxHashSet<ReferenceId>,

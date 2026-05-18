@@ -22,12 +22,17 @@ impl<'a> PeepholeOptimizations {
         let BindingPattern::BindingIdentifier(binding) = &decl.id else { return };
         let Some(symbol_id) = binding.symbol_id.get() else { return };
         let Some(Expression::ObjectExpression(object_expr)) = &decl.init else { return };
-        if !Self::is_object_property_pruning_candidate(object_expr) {
+        let Some(prunable_property_count) = Self::count_prunable_object_properties(object_expr)
+        else {
             return;
-        }
+        };
 
         if Self::can_prune_symbol(symbol_id, ctx) {
             ctx.state.object_property_usage.candidate_symbols.insert(symbol_id);
+            ctx.state
+                .object_property_usage
+                .prunable_property_counts
+                .insert(symbol_id, prunable_property_count);
         }
     }
 
@@ -42,21 +47,25 @@ impl<'a> PeepholeOptimizations {
             && !ctx.scoping().scope_flags(symbol_value.scope_id).contains_direct_eval()
     }
 
-    fn is_object_property_pruning_candidate(object_expr: &ObjectExpression<'a>) -> bool {
-        if object_expr.properties.len() < 2 {
-            return false;
+    fn count_prunable_object_properties(object_expr: &ObjectExpression<'a>) -> Option<u32> {
+        if object_expr.properties.len() < 3 {
+            return None;
         }
-        let mut has_init_prop = false;
+        let mut prunable_property_count = 0_u32;
         for property in &object_expr.properties {
             if property.is_spread() {
-                return false;
+                return None;
             }
-            let ObjectPropertyKind::ObjectProperty(property) = property else { continue };
-            if property.kind == PropertyKind::Init && !property.computed && !property.shorthand {
-                has_init_prop = true;
+            let ObjectPropertyKind::ObjectProperty(property) = property else { return None };
+            if property.kind != PropertyKind::Init {
+                return None;
             }
+            if property.computed || property.shorthand {
+                continue;
+            }
+            prunable_property_count += 1;
         }
-        has_init_prop
+        (prunable_property_count >= 2).then_some(prunable_property_count)
     }
 
     pub(super) fn record_object_property_member_access(
@@ -79,13 +88,16 @@ impl<'a> PeepholeOptimizations {
         usage.member_object_references.insert(reference_id);
 
         if let Some(property_name) = property_name {
-            usage
-                .used_properties
-                .entry(symbol_id)
-                .or_default()
-                .insert(CompactStr::new(property_name));
+            let used_properties = usage.used_properties.entry(symbol_id).or_default();
+            used_properties.insert(CompactStr::new(property_name));
+            if Some(used_properties.len() as u32)
+                == usage.prunable_property_counts.get(&symbol_id).copied()
+            {
+                usage.candidate_symbols.remove(&symbol_id);
+            }
         } else {
             usage.escaped_or_unknown_symbols.insert(symbol_id);
+            usage.candidate_symbols.remove(&symbol_id);
         }
 
         Some(symbol_id)
@@ -106,6 +118,7 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 ) {
                     ctx.state.object_property_usage.escaped_or_unknown_symbols.insert(symbol_id);
+                    ctx.state.object_property_usage.candidate_symbols.remove(&symbol_id);
                 }
             }
             Expression::ComputedMemberExpression(member_expr) => {
@@ -116,6 +129,7 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 ) {
                     ctx.state.object_property_usage.escaped_or_unknown_symbols.insert(symbol_id);
+                    ctx.state.object_property_usage.candidate_symbols.remove(&symbol_id);
                 }
             }
             _ => {}
@@ -131,6 +145,7 @@ impl<'a> PeepholeOptimizations {
                         && !usage.member_object_references.contains(&reference_id))
                 {
                     usage.escaped_or_unknown_symbols.insert(symbol_id);
+                    usage.candidate_symbols.remove(&symbol_id);
                     break;
                 }
             }
@@ -166,14 +181,16 @@ impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
         }
 
         let Some(Expression::ObjectExpression(object_expr)) = &mut decl.init else { return };
-        if !PeepholeOptimizations::is_object_property_pruning_candidate(object_expr) {
+        let Some(prunable_property_count) =
+            PeepholeOptimizations::count_prunable_object_properties(object_expr)
+        else {
             return;
-        }
+        };
 
         let Some(used_properties) = self.used_properties.get(&symbol_id) else {
             return;
         };
-        if used_properties.len() >= object_expr.properties.len() {
+        if used_properties.len() as u32 >= prunable_property_count {
             return;
         }
 
