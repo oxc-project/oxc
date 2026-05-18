@@ -1,1 +1,1 @@
-export { getUnsupportedTypeScriptModuleLoadHintForError } from "./node_version.ts";
+export { importJsConfig } from "./js_config.ts";
