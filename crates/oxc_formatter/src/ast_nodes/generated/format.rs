@@ -2420,7 +2420,7 @@ impl<'a> Format<'a> for AstNode<'a, BindingRestElement<'a>> {
     }
 }
 
-impl<'a> Format<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Function<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
@@ -2441,8 +2441,10 @@ impl<'a> Format<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
         }
         self.format_trailing_comments(f);
     }
+}
 
-    fn fmt_with_options(&self, options: FormatFunctionOptions, f: &mut Formatter<'_, 'a>) {
+impl<'a> AstNode<'a, Function<'a>> {
+    pub fn fmt_with_options(&self, options: FormatFunctionOptions, f: &mut Formatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
@@ -2516,9 +2518,7 @@ impl<'a> Format<'a> for AstNode<'a, FunctionBody<'a>> {
     }
 }
 
-impl<'a> Format<'a, FormatJsArrowFunctionExpressionOptions>
-    for AstNode<'a, ArrowFunctionExpression<'a>>
-{
+impl<'a> Format<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
@@ -2539,8 +2539,10 @@ impl<'a> Format<'a, FormatJsArrowFunctionExpressionOptions>
         }
         self.format_trailing_comments(f);
     }
+}
 
-    fn fmt_with_options(
+impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
+    pub fn fmt_with_options(
         &self,
         options: FormatJsArrowFunctionExpressionOptions,
         f: &mut Formatter<'_, 'a>,

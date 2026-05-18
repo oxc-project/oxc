@@ -185,16 +185,10 @@ pub type FormatResult<F> = Result<F, FormatError>;
 /// # Ok(())
 /// # }
 /// ```
-pub trait Format<'ast, T = ()> {
+pub trait Format<'ast> {
     /// Formats the object using the given formatter.
     /// # Errors
     fn fmt(&self, f: &mut Formatter<'_, 'ast>);
-
-    /// Formats the object using the given formatter with additional options.
-    /// # Errors
-    fn fmt_with_options(&self, _options: T, _f: &mut Formatter<'_, 'ast>) {
-        unreachable!("Please implement it first.")
-    }
 }
 
 impl<'ast, T> Format<'ast> for &T

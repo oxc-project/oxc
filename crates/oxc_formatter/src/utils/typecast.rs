@@ -93,8 +93,8 @@ pub fn is_type_cast_node<'a>(node: &impl GetSpan, f: &Formatter<'_, 'a>) -> Opti
 ///
 /// Returns `Ok(true)` if the node was formatted as a type cast, `Ok(false)` otherwise.
 /// This allows callers to know whether they need to apply their own formatting.
-pub fn format_type_cast_comment_node<'a, T>(
-    node: &(impl Format<'a, T> + GetSpan),
+pub fn format_type_cast_comment_node<'a>(
+    node: &(impl Format<'a> + GetSpan),
     is_object_or_array_expression: bool,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {

@@ -235,29 +235,29 @@ fn generate_struct_implementation(
     let fmt_implementation = generate_fmt_implementation(false);
     let fmt_options =
         NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.get(struct_name).map(|str| format_ident!("{}", str));
-    let fmt_with_options_implementation = if let Some(ref fmt_options) = fmt_options {
+    let fmt_with_options_inherent = if let Some(ref fmt_options) = fmt_options {
         let implementation = generate_fmt_implementation(true);
         quote! {
             ///@@line_break
-            fn fmt_with_options(&self, options: #fmt_options, f: &mut Formatter<'_, 'a>) {
-                #implementation
+            impl<'a> #type_ty {
+                pub fn fmt_with_options(&self, options: #fmt_options, f: &mut Formatter<'_, 'a>) {
+                    #implementation
+                }
             }
         }
     } else {
         quote! {}
     };
 
-    let option_type = fmt_options.map_or_else(|| quote! {}, |ident| quote! {, #ident});
-
     quote! {
         ///@@line_break
-        impl<'a> Format<'a #option_type> for #type_ty {
+        impl<'a> Format<'a> for #type_ty {
             fn fmt(&self, f: &mut Formatter<'_, 'a>) {
                 #fmt_implementation
             }
-
-            #fmt_with_options_implementation
         }
+
+        #fmt_with_options_inherent
     }
 }
 
