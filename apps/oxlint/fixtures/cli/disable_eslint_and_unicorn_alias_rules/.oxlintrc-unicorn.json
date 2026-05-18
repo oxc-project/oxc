@@ -1,8 +1,0 @@
-{
-  "plugins": [
-    "unicorn"
-  ],
-  "rules": {
-    "unicorn/no-negated-condition": "off"
-  }
-}

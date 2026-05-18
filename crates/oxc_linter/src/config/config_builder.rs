@@ -255,7 +255,7 @@ impl ConfigStoreBuilder {
         let mut categories = oxlintrc.categories.clone();
 
         if !start_empty {
-            categories.insert(RuleCategory::Correctness, AllowWarnDeny::Warn);
+            categories.entry(RuleCategory::Correctness).or_insert(AllowWarnDeny::Warn);
         }
 
         let config = LintConfig {
@@ -418,7 +418,7 @@ impl ConfigStoreBuilder {
     }
 
     fn get_all_rules_for_plugins(&self, override_plugins: Option<LintPlugins>) -> Vec<RuleEnum> {
-        let mut builtin_plugins = if let Some(override_plugins) = override_plugins {
+        let builtin_plugins = if let Some(override_plugins) = override_plugins {
             self.config.plugins | override_plugins
         } else {
             self.config.plugins
@@ -427,11 +427,6 @@ impl ConfigStoreBuilder {
         if builtin_plugins.is_all() {
             RULES.clone()
         } else {
-            // we need to include some jest rules when vitest is enabled, see [`VITEST_COMPATIBLE_JEST_RULES`]
-            if builtin_plugins.contains(LintPlugins::VITEST) {
-                builtin_plugins |= LintPlugins::JEST;
-            }
-
             RULES
                 .iter()
                 .filter(|rule| {
@@ -475,12 +470,7 @@ impl ConfigStoreBuilder {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
         // to be taken out.
-        let mut plugins = self.plugins();
-
-        // Apply the same Vitest->Jest logic as in get_all_rules()
-        if plugins.contains(LintPlugins::VITEST) {
-            plugins |= LintPlugins::JEST;
-        }
+        let plugins = self.plugins();
 
         let overrides = std::mem::take(&mut self.overrides);
         let resolved_overrides = self.resolve_overrides(overrides, external_plugin_store)?;
@@ -540,6 +530,7 @@ impl ConfigStoreBuilder {
 
                 Ok::<_, Vec<OverrideRulesError>>(ResolvedOxlintOverride {
                     files: override_config.files,
+                    exclude_files: override_config.exclude_files,
                     env: override_config.env,
                     globals: override_config.globals,
                     plugins: override_config.plugins,
@@ -553,10 +544,7 @@ impl ConfigStoreBuilder {
     }
 
     /// Warn for all correctness rules in the given set of plugins.
-    fn warn_correctness(mut plugins: LintPlugins) -> FxHashMap<RuleEnum, AllowWarnDeny> {
-        if plugins.contains(LintPlugins::VITEST) {
-            plugins |= LintPlugins::JEST;
-        }
+    fn warn_correctness(plugins: LintPlugins) -> FxHashMap<RuleEnum, AllowWarnDeny> {
         RULES
             .iter()
             .filter(|rule| {
@@ -597,6 +585,12 @@ impl ConfigStoreBuilder {
             })
             .collect();
 
+        oxlintrc.plugins = Some(self.config.plugins);
+        oxlintrc.settings.clone_from(&self.config.settings);
+        oxlintrc.env.clone_from(&self.config.env);
+        oxlintrc.globals.clone_from(&self.config.globals);
+        oxlintrc.overrides.clone_from(&self.overrides);
+        oxlintrc.options = self.config.options.clone();
         oxlintrc.rules = OxlintRules::new(new_rules);
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
@@ -1150,6 +1144,50 @@ mod test {
     }
 
     #[test]
+    // https://github.com/oxc-project/oxc/issues/19409
+    fn test_correctness_category_off_applies_to_override_plugins() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "plugins": ["typescript"],
+                "categories": { "correctness": "off" },
+                "overrides": [
+                    {
+                        "files": ["subdir/**/*.ts"],
+                        "plugins": ["promise"],
+                        "rules": { "typescript/no-inferrable-types": "error" }
+                    }
+                ]
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap();
+        let config = builder.build(&mut external_plugin_store).unwrap();
+
+        let resolved = config.apply_overrides(Path::new("subdir/foo.ts"));
+
+        assert!(
+            resolved.config.plugins.contains(LintPlugins::PROMISE),
+            "override should enable the promise plugin"
+        );
+        assert!(resolved.rules.len() == 1, "only rules from the override should be applied");
+        let (rule, severity) = &resolved.rules[0];
+        assert_eq!(rule.plugin_name(), "typescript");
+        assert_eq!(rule.name(), "no-inferrable-types");
+        assert_eq!(*severity, AllowWarnDeny::Deny);
+    }
+
+    #[test]
     fn test_extends_rules_single() {
         let base_config = config_store_from_path("fixtures/extends_config/rules_config.json");
         let derived_config = config_store_from_str(
@@ -1454,6 +1492,15 @@ mod test {
             config.base.config.options.report_unused_disable_directives,
             Some(AllowWarnDeny::Deny)
         );
+
+        let config =
+            config_store_from_str(r#"{ "options": {"respectEslintDisableDirectives": false } }"#);
+        assert_eq!(config.base.config.options.respect_eslint_disable_directives, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/respect_eslint_disable_directives_false.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.respect_eslint_disable_directives, Some(false));
 
         let config = config_store_from_str(
             r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_true.json"] }"#,

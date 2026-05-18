@@ -5,12 +5,11 @@ use oxc_ast::Comment;
 use oxc_jsdoc::JSDoc;
 use oxc_span::Span;
 
-use crate::FormatOptions;
 use crate::external_formatter::ExternalCallbacks;
 use crate::formatter::Formatter;
 use crate::formatter::prelude::*;
 use crate::options::{JsdocOptions, QuoteStyle};
-use crate::write;
+use crate::{FormatOptions, write};
 
 use super::{
     imports::process_import_tags, line_buffer::LineBuffer,

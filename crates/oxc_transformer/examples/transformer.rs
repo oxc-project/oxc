@@ -70,6 +70,7 @@ fn main() {
     let ret = SemanticBuilder::new()
         // Estimate transformer will triple scopes, symbols, references
         .with_excess_capacity(2.0)
+        .with_enum_eval(true)
         .build(&program);
 
     if !ret.errors.is_empty() {

@@ -1,6 +1,5 @@
 /// A redefinition/wrapper macro of `quickcheck::quickcheck!` that supports
-/// limiting the number of test iterations to one when we are running under
-/// MIRI.
+/// limiting the number of test iterations to one when we are running under MIRI.
 #[macro_export]
 macro_rules! quickcheck {
     (
@@ -21,13 +20,11 @@ macro_rules! quickcheck {
 
                 let mut qc = ::quickcheck::QuickCheck::new();
 
-                // Use the `QUICKCHECK_TESTS` environment variable from
-                // compiletime to avoid violating MIRI's isolation by looking at
-                // the runtime environment variable.
+                // Use the `QUICKCHECK_TESTS` environment variable from compile time to avoid violating MIRI's isolation
+                // by looking at the runtime environment variable
                 let tests = option_env!("QUICKCHECK_TESTS").and_then(|s| s.parse().ok());
 
-                // Limit quickcheck tests to a single iteration under MIRI,
-                // since they are otherwise super slow.
+                // Limit quickcheck tests to a single iteration under MIRI, since they are otherwise super slow
                 #[cfg(miri)]
                 let tests = tests.or(Some(1));
 

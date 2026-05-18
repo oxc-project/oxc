@@ -14,15 +14,15 @@ use oxc_formatter::{
     TailwindCallback,
 };
 
-use crate::prettier_compat::from_prettier_doc;
+use crate::{core::options::inject_parser, prettier_compat::from_prettier_doc};
 
 /// Type alias for the init external formatter callback function signature.
-/// Takes num_threads as argument and returns plugin languages.
+/// Takes num_threads as argument; signals JS to perform any one-time setup before formatting.
 pub type JsInitExternalFormatterCb = ThreadsafeFunction<
     // Input arguments
     FnArgs<(u32,)>, // (num_threads,)
     // Return type (what JS function returns)
-    Promise<Vec<String>>,
+    Promise<()>,
     // Arguments (repeated)
     FnArgs<(u32,)>,
     // Error status
@@ -117,9 +117,8 @@ impl TsfnHandles {
 }
 
 /// Callback function type for init external formatter.
-/// Takes num_threads and returns plugin languages.
-type InitExternalFormatterCallback =
-    Arc<dyn Fn(usize) -> Result<Vec<String>, String> + Send + Sync>;
+/// Takes num_threads.
+type InitExternalFormatterCallback = Arc<dyn Fn(usize) -> Result<(), String> + Send + Sync>;
 
 /// Callback function type for formatting files with config.
 /// Takes (options, code) and returns formatted code or an error.
@@ -174,14 +173,13 @@ impl ExternalFormatter {
     /// explicit cleanup via the `cleanup()` method. This prevents use-after-free
     /// crashes on Node.js exit when V8 cleans up global handles.
     pub fn new(
-        init_cb: JsInitExternalFormatterCb,
         format_file_cb: JsFormatFileCb,
         format_embedded_cb: JsFormatEmbeddedCb,
         format_embedded_doc_cb: JsFormatEmbeddedDocCb,
         sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
     ) -> Self {
         // Wrap TSFNs in Arc<RwLock<Option<...>>> so they can be explicitly dropped
-        let init_handle = Arc::new(RwLock::new(Some(init_cb)));
+        let init_handle = Arc::new(RwLock::new(None));
         let format_file_handle = Arc::new(RwLock::new(Some(format_file_cb)));
         let format_embedded_handle = Arc::new(RwLock::new(Some(format_embedded_cb)));
         let format_embedded_doc_handle = Arc::new(RwLock::new(Some(format_embedded_doc_cb)));
@@ -211,6 +209,13 @@ impl ExternalFormatter {
         }
     }
 
+    /// Attach the init callback. Only paths that own a JS-side worker pool (CLI/LSP/Stdin) need this;
+    /// the Node.js API path constructs without it and never calls [`Self::init`].
+    pub fn with_init_cb(self, init_cb: JsInitExternalFormatterCb) -> Self {
+        *self.handles.init.write().unwrap() = Some(init_cb);
+        self
+    }
+
     /// Explicitly drop all ThreadsafeFunctions to prevent use-after-free
     /// during V8 cleanup on Node.js exit.
     ///
@@ -221,7 +226,7 @@ impl ExternalFormatter {
     }
 
     /// Initialize external formatter using the JS callback.
-    pub fn init(&self, num_threads: usize) -> Result<Vec<String>, String> {
+    pub fn init(&self, num_threads: usize) -> Result<(), String> {
         debug_span!("oxfmt::external::init", num_threads = num_threads)
             .in_scope(|| (self.init)(num_threads))
     }
@@ -254,12 +259,7 @@ impl ExternalFormatter {
                         // `clone()` is unavoidable here,
                         // because there may be multiple embedded sections in one JS/TS file.
                         let mut options = options_for_embedded.clone();
-                        if let Value::Object(ref mut map) = options {
-                            map.insert(
-                                "parser".to_string(),
-                                Value::String(parser_name.to_string()),
-                            );
-                        }
+                        inject_parser(&mut options, parser_name);
                         (format_embedded)(options, code)
                             .map(|mut code| {
                                 // Remove trailing newline added by Prettier without allocation
@@ -288,12 +288,7 @@ impl ExternalFormatter {
                 debug_span!("oxfmt::external::format_embedded_doc", parser = parser_name)
                     .in_scope(|| {
                         let mut options = options_for_doc.clone();
-                        if let Value::Object(ref mut map) = options {
-                            map.insert(
-                                "parser".to_string(),
-                                Value::String(parser_name.to_string()),
-                            );
-                        }
+                        inject_parser(&mut options, parser_name);
                         let doc_json_strs =
                             (format_embedded_doc)(options, texts).map_err(|err| {
                                 format!(
@@ -422,7 +417,7 @@ fn wrap_init_external_formatter(
             let status = cb.call_async(FnArgs::from((num_threads as u32,))).await;
             match status {
                 Ok(promise) => match promise.await {
-                    Ok(languages) => Ok(languages),
+                    Ok(()) => Ok(()),
                     Err(err) => Err(err.reason.clone()),
                 },
                 Err(err) => Err(err.reason.clone()),

@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
+  ⚠ next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
    ╭─[no_html_link_for_pages.tsx:1:1]
  1 │ <a href='/about'>About</a>
    · ────────┬────────
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `<Link />` from `next/link` instead for internal navigation. See https://nextjs.org/docs/messages/no-html-link-for-pages
 
-  ⚠ eslint-plugin-next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
+  ⚠ next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
    ╭─[no_html_link_for_pages.tsx:1:1]
  1 │ <a href='/contact/us'>Contact Us</a>
    · ───────────┬──────────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `<Link />` from `next/link` instead for internal navigation. See https://nextjs.org/docs/messages/no-html-link-for-pages
 
-  ⚠ eslint-plugin-next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
+  ⚠ next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
    ╭─[no_html_link_for_pages.tsx:1:1]
  1 │ <a href='about'>About</a>
    · ────────┬───────
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `<Link />` from `next/link` instead for internal navigation. See https://nextjs.org/docs/messages/no-html-link-for-pages
 
-  ⚠ eslint-plugin-next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
+  ⚠ next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
    ╭─[no_html_link_for_pages.tsx:1:1]
  1 │ <a href='../contact'>Contact</a>
    · ──────────┬──────────
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `<Link />` from `next/link` instead for internal navigation. See https://nextjs.org/docs/messages/no-html-link-for-pages
 
-  ⚠ eslint-plugin-next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
+  ⚠ next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
    ╭─[no_html_link_for_pages.tsx:1:1]
  1 │ <a href='./about'>About</a>
    · ─────────┬────────
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `<Link />` from `next/link` instead for internal navigation. See https://nextjs.org/docs/messages/no-html-link-for-pages
 
-  ⚠ eslint-plugin-next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
+  ⚠ next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
    ╭─[no_html_link_for_pages.tsx:1:1]
  1 │ <a href='/'>Home</a>
    · ──────┬─────

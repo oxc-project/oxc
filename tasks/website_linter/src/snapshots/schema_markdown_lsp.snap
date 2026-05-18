@@ -1,0 +1,128 @@
+---
+source: tasks/website_linter/src/json_schema.rs
+expression: snapshot
+---
+---
+search: false
+---
+
+
+These options can be defined for each workspace folder separately.
+File references in the options (e.g. `configPath`, `tsConfigPath`) are resolved relative to the workspace folder.
+
+They can be sent by the client in `initialize` or `workspace/didChangeConfiguration` requests.
+If the client supports `workspace/configuration`, the server will request the options from the client.
+
+Example of `initialize` request:
+```json
+{
+  "processId": 123,
+  "rootUri": null,
+  "workspaceFolders": [],
+  "capabilities": {},
+  "initializationOptions": [
+    {
+      "workspaceUri": "file:///home/user/project",
+      "options": {
+        "unusedDisableDirectives": "deny",
+        "typeAware": true
+      }
+    }
+  ]
+}
+```
+
+Example of `workspace/didChangeConfiguration` request:
+```json
+{
+  "settings": [
+    {
+      "workspaceUri": "file:///home/user/project",
+      "options": {
+        "unusedDisableDirectives": "deny",
+        "disableNestedConfig": true
+      }
+    }
+  ]
+}
+```
+
+
+## configPath
+
+type: `string`
+
+
+Path to the config file. Similar to `--config` CLI option.
+If set, it disables searching for config files.
+
+
+## disableNestedConfig
+
+type: `boolean`
+
+
+Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
+It gets automatically enabled when `configPath` is set.
+
+
+## fixKind
+
+type: `"safe_fix" | "safe_fix_or_suggestion" | "dangerous_fix" | "dangerous_fix_or_suggestion" | "none" | "all"`
+
+
+What kind of fixes to generate for code actions.
+
+
+## rulesCustomization
+
+type: `Record<string, object>`
+
+
+Customization for individual rules, allows to override the linter's diagnostics and autofix.
+Example of lowering the severity of "no-unused-vars" rule to "hint" and disabling autofix for it:
+```json
+{
+  "rulesCustomization": {
+    "no-unused-vars": {
+      "severity": "hint",
+      "autofix": false
+    }
+  }
+}
+```
+
+
+## run
+
+type: `"onSave" | "onType"`
+
+
+If your editor does not support `textDocument/diagnostic`,
+this option handles when diagnostics are sent to the client.
+
+
+## tsConfigPath
+
+type: `string`
+
+
+Path to the tsconfig file. Similar to `--tsconfig` CLI option.
+If set, it disables auto discovery for tsconfig files.
+
+
+## typeAware
+
+type: `boolean`
+
+
+Whether to enable/disable type-aware linting.
+It will override the root config's `typeAware` option if set.
+
+
+## unusedDisableDirectives
+
+type: `"allow" | "warn" | "deny"`
+
+
+How to handle unused disable directives. By default, they are allowed and ignored.

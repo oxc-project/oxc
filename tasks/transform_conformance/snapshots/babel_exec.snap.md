@@ -1,8 +1,8 @@
-commit: c543b031
+commit: 4079bcda
 
 node: v24.14.0
 
-Passed: 324 of 413 (78.45%)
+Passed: 325 of 413 (78.69%)
 
 Failures:
 
@@ -55,8 +55,8 @@ TypeError: e.has is not a function
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js
 AssertionError: expected [Function] to throw error including '@@toPrimitive must return a primitive…' but got 'Cannot convert object to primitive va…'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.4/node_modules/@vitest/expect/dist/index.js:1552:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.4/node_modules/@vitest/expect/dist/index.js:1156:15)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.6/node_modules/@vitest/expect/dist/index.js:1552:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.6/node_modules/@vitest/expect/dist/index.js:1156:15)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js:37:5
 
@@ -77,10 +77,6 @@ TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./npm/runtime/src/helpers/classPrivateFieldLooseBase.js:2:44)
     at getFoo (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-loose-private-methods-access-exec.test.js:12:17)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-loose-private-methods-access-exec.test.js:13:9
-
-./fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-new-target-exec.test.js
-AssertionError: expected [Function Base] to be undefined // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-new-target-exec.test.js:10:29
 
 ./fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js
 Parse failure: 'import', and 'export' cannot be used outside of module code
@@ -436,8 +432,8 @@ ReferenceError: _Foo_brand is not defined
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js
 AssertionError: expected [Function] to throw error including 'right-hand side of \'in\' should be a…' but got '_Class_brand is not defined'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.4/node_modules/@vitest/expect/dist/index.js:1552:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.4/node_modules/@vitest/expect/dist/index.js:1156:15)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.6/node_modules/@vitest/expect/dist/index.js:1552:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.6/node_modules/@vitest/expect/dist/index.js:1156:15)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js:176:5
 
@@ -459,8 +455,8 @@ AssertionError: expected 2 to be 5 // Object.is equality
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.4/node_modules/@vitest/expect/dist/index.js:1552:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.4/node_modules/@vitest/expect/dist/index.js:1156:15)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.6/node_modules/@vitest/expect/dist/index.js:1552:16)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.6/node_modules/@vitest/expect/dist/index.js:1156:15)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js:6:9
 

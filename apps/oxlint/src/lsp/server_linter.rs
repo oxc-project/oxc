@@ -29,7 +29,9 @@ use oxc_language_server::{
 };
 
 use crate::{
-    config_loader::{ConfigLoader, build_nested_configs, discover_configs_in_tree},
+    config_loader::{
+        ConfigLoader, build_nested_configs, config_file_names, discover_configs_in_tree,
+    },
     lsp::{
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
@@ -42,7 +44,9 @@ use crate::{
             generate_inverted_diagnostics, message_to_lsp_diagnostic,
         },
         lsp_file_system::LspFileSystem,
-        options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
+        options::{
+            LintOptions as LSPLintOptions, RulesCustomization, Run, UnusedDisableDirectives,
+        },
         utils::{normalize_path, range_overlaps},
     },
 };
@@ -101,14 +105,13 @@ impl ServerLinterBuilder {
         #[cfg(feature = "napi")]
         let loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
 
-        let oxlintrc =
-            match loader.load_root_config_with_ancestor_search(&root_path, config_path.as_ref()) {
-                Ok(config) => config,
-                Err(e) => {
-                    warn!("Failed to load config: {e}");
-                    Oxlintrc::default()
-                }
-            };
+        let oxlintrc = match loader.load_root_config(&root_path, config_path.as_ref()) {
+            Ok(config) => config,
+            Err(e) => {
+                warn!("Failed to load config: {e}");
+                Oxlintrc::default()
+            }
+        };
 
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
@@ -230,6 +233,7 @@ impl ServerLinterBuilder {
             runner,
             fix_kind,
             lint_options.report_unused_directive,
+            options.rules_customization,
         )
     }
 }
@@ -385,6 +389,7 @@ pub struct ServerLinter {
     runner: LintRunner,
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
+    rules_customization: Option<RulesCustomization>,
 }
 
 impl Tool for ServerLinter {
@@ -451,28 +456,14 @@ impl Tool for ServerLinter {
         };
         let mut watchers = match options.config_path.as_deref() {
             Some("") | None => {
-                // Watch both JSON/JSONC and TS config files
-                #[cfg(feature = "napi")]
-                if crate::vp_version().is_some() {
-                    vec!["**/vite.config.ts".to_string()]
-                } else {
-                    vec![
-                        "**/.oxlintrc.json".to_string(),
-                        "**/.oxlintrc.jsonc".to_string(),
-                        "**/oxlint.config.ts".to_string(),
-                    ]
-                }
-                #[cfg(not(feature = "napi"))]
-                vec!["**/.oxlintrc.json".to_string(), "**/.oxlintrc.jsonc".to_string()]
+                config_file_names().into_iter().map(|name| format!("**/{name}")).collect()
             }
             Some(v) => vec![v.to_string()],
         };
 
         for path in &self.extended_paths {
-            // ignore .oxlintrc.json and oxlint.config.ts files when using nested configs
-            if (path.ends_with(".oxlintrc.json")
-                || path.ends_with(".oxlintrc.jsonc")
-                || path.ends_with("oxlint.config.ts"))
+            // Ignore known config files when nested config discovery handles them.
+            if config_file_names().iter().any(|name| path.ends_with(name))
                 && options.use_nested_configs()
             {
                 continue;
@@ -544,6 +535,10 @@ impl Tool for ServerLinter {
 
         let text_edits = fix_all_text_edit(actions.into_iter());
 
+        if text_edits.is_empty() {
+            return Ok(None);
+        }
+
         Ok(Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
             changes: Some(std::collections::HashMap::from([(uri, text_edits)])),
@@ -609,7 +604,11 @@ impl Tool for ServerLinter {
         for kind in applying_kinds {
             // `CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC` was filtered out by `applying_kinds`, so we don't need to check it here.
             if kind == CodeActionKind::SOURCE_FIX_ALL {
-                let Some(fix_all) = apply_all_fix_code_action(actions.clone(), uri.clone()) else {
+                let Some(fix_all) = apply_all_fix_code_action(
+                    actions.clone(),
+                    uri.clone(),
+                    self.rules_customization.as_ref(),
+                ) else {
                     continue;
                 };
                 code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
@@ -620,8 +619,11 @@ impl Tool for ServerLinter {
                     );
                     continue;
                 }
-                let Some(fix_all) = apply_dangerous_fix_code_action(actions.clone(), uri.clone())
-                else {
+                let Some(fix_all) = apply_dangerous_fix_code_action(
+                    actions.clone(),
+                    uri.clone(),
+                    self.rules_customization.as_ref(),
+                ) else {
                     continue;
                 };
                 code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
@@ -680,6 +682,7 @@ impl ServerLinter {
         runner: LintRunner,
         fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
+        rules_customization: Option<RulesCustomization>,
     ) -> Self {
         Self {
             run,
@@ -691,6 +694,7 @@ impl ServerLinter {
             runner,
             fix_kind,
             unused_directives_severity,
+            rules_customization,
         }
     }
 
@@ -800,7 +804,15 @@ impl ServerLinter {
             match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
                 Ok(results) => results
                     .into_iter()
-                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
+                    .filter_map(|message| {
+                        message_to_lsp_diagnostic(
+                            message,
+                            uri,
+                            source_text,
+                            rope,
+                            self.rules_customization.as_ref(),
+                        )
+                    })
                     .collect(),
                 Err(e) => {
                     // clear disable directives on error to prevent stale directives
@@ -1187,7 +1199,7 @@ mod test {
         let linter = tester.create_linter();
         let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
         let uri = tester.get_file_uri("quickfix.js");
-        let _ = linter.run_file(&uri, Some("debugger;")).unwrap();
+        let _ = linter.run_file(&uri, Some("if (foo == NaN) {}")).unwrap();
         let code_actions =
             linter.get_code_actions_or_commands(&uri, &range, &CodeActionContext::default());
         assert_eq!(
@@ -1462,5 +1474,38 @@ mod test {
             }),
         );
         tester.test_and_snapshot_single_file("foo-bar.astro");
+    }
+
+    #[test]
+    fn test_rules_customization_severity() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/severity",
+            json!({
+                "rulesCustomization": {
+                    "no-debugger": {
+                        "severity": "warn"
+                    },
+                    "no-console": {
+                        "severity": "off"
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
+    fn test_rules_customization_autofix() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/autofix",
+            json!({
+                "rulesCustomization": {
+                    "no-debugger": {
+                        "autofix": false
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
     }
 }

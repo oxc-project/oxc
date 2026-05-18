@@ -1,5 +1,9 @@
 import { defineConfig } from "#oxlint";
 
-throw new Error("This is a test error");
+function throwError() {
+  throw new Error("This is a test error");
+}
+
+throwError();
 
 export default defineConfig({});

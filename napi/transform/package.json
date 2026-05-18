@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform",
-  "version": "0.127.0",
+  "version": "0.132.0",
   "description": "Oxc Transformer Node API",
   "keywords": [
     "babel",
@@ -48,6 +48,8 @@
     "test": "vitest run --dir ./test"
   },
   "devDependencies": {
+    "@emnapi/core": "catalog:",
+    "@emnapi/runtime": "catalog:",
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
     "publint": "catalog:",

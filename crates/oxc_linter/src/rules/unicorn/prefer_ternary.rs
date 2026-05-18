@@ -1332,16 +1332,6 @@ fn test() {
                 /* comment cause wrong indention */ const error = test ? a : b;
              throw error;
             }", None),
-("function unicorn() {
-                                                    if (test) {
-                                                        throw a;
-                                                    } else {
-                                                        throw b;
-                                                    }
-            }", "function unicorn() {
-                                                    const error = test ? a : b;
-                                                    throw error;
-            }", None),
 ("async function unicorn() {
                 if (test) {
                     throw await a;

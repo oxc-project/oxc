@@ -1,5 +1,7 @@
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
-use oxc_ast::ast::*;
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
 use oxc_str::Ident;
@@ -25,9 +27,11 @@ impl<'a> TypeScript<'a> {
     ///    after the super call in the constructor body.
     ///
     /// Same as `Self::convert_constructor_params` does, the reason why we still need that method because
-    /// this method only calls when `set_public_class_fields` is `true` and `class_properties` plugin is
-    /// disabled, otherwise the `convert_constructor_params` method will be called. Merging them together
-    /// will increase unnecessary check when only transform constructor parameters.
+    /// this method only runs when `set_public_class_fields` is `true` and the `class_properties` plugin
+    /// is disabled. The other branches (`class_properties` enabled, or `set_public_class_fields: false`
+    /// — see [`Self::add_parameter_property_fields`]) reach the parameter-property assignments via
+    /// `convert_constructor_params` directly. Merging them together would add unnecessary checks for
+    /// the param-only paths.
     ///
     /// 2. Convert class fields to `this` assignments in the constructor body.
     ///
@@ -229,6 +233,128 @@ impl<'a> TypeScript<'a> {
         } else if let Some(element) = computed_key_assignment_static_block {
             class.body.body.insert(0, element);
         }
+    }
+
+    /// Insert an uninitialized class field declaration for each constructor parameter property.
+    ///
+    /// Aligns with TypeScript's output under `useDefineForClassFields: true`, which is the
+    /// default since TypeScript 4.0. Runs when [`crate::CompilerAssumptions::set_public_class_fields`]
+    /// is `false` (the inverse of the `useDefineForClassFields: false` mapping).
+    ///
+    /// Input:
+    /// ```ts
+    /// class C {
+    ///   constructor(public x = 1) {}
+    /// }
+    /// ```
+    ///
+    /// Output:
+    /// ```js
+    /// class C {
+    ///   x;
+    ///   constructor(x = 1) {
+    ///     this.x = x;
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Skips parameter properties whose name matches an existing instance field declaration on
+    /// the same class (matching TypeScript's dedup). Only static-identifier instance fields
+    /// count — static, private, computed, and `declare`-only fields don't suppress the new field.
+    pub(super) fn add_parameter_property_fields(class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
+        let Some(params) = Self::find_constructor_params(class) else { return };
+
+        // Bail before allocating when there are no parameter properties to emit.
+        // Parameter properties are TS-specific and uncommon, so most classes hit this path.
+        if !params.iter().any(FormalParameter::has_modifier) {
+            return;
+        }
+
+        let mut declared_names = Self::collect_instance_field_names(class);
+        let fields = ctx.ast.vec_from_iter(
+            params
+                .iter()
+                .filter(|param| param.has_modifier())
+                .filter_map(|param| param.pattern.get_binding_identifier())
+                .filter(|id| declared_names.insert(id.name))
+                .map(|id| Self::build_uninitialized_field(id, ctx)),
+        );
+
+        class.body.body.splice(0..0, fields);
+    }
+
+    /// Returns the body-bearing constructor's parameter list, or `None` if the class has none.
+    fn find_constructor_params<'b>(
+        class: &'b Class<'a>,
+    ) -> Option<&'b ArenaVec<'a, FormalParameter<'a>>> {
+        class.body.body.iter().find_map(|element| {
+            if let ClassElement::MethodDefinition(method) = element
+                && method.kind.is_constructor()
+                && method.value.body.is_some()
+            {
+                Some(&method.value.params.items)
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Collect names of instance field declarations keyed by a static identifier.
+    ///
+    /// Static, private, computed, and `declare`-only fields don't suppress a parameter-property
+    /// field — they're different bindings or erased before emit. Plain instance-field collisions
+    /// are a TS `Duplicate identifier` error, so this dedup is mostly defensive.
+    fn collect_instance_field_names(class: &Class<'a>) -> FxHashSet<Ident<'a>> {
+        class
+            .body
+            .body
+            .iter()
+            .filter_map(|element| match element {
+                ClassElement::PropertyDefinition(prop)
+                    if !prop.r#static
+                        && !prop.declare
+                        && let PropertyKey::StaticIdentifier(ident) = &prop.key =>
+                {
+                    Some(ident.name)
+                }
+                ClassElement::AccessorProperty(prop)
+                    if !prop.r#static
+                        && let PropertyKey::StaticIdentifier(ident) = &prop.key =>
+                {
+                    Some(ident.name)
+                }
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// Build `<id.name>;` — an uninitialized public class field declaration.
+    ///
+    /// Safe to read `id.name` directly here — `add_parameter_property_fields` is gated on
+    /// `!is_class_properties_plugin_enabled`, so no rename has happened.
+    /// `convert_constructor_params` uses the span trick because it also runs alongside
+    /// class-properties.
+    fn build_uninitialized_field(
+        id: &BindingIdentifier<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> ClassElement<'a> {
+        let key = ctx.ast.property_key_static_identifier(id.span, id.name);
+        ctx.ast.class_element_property_definition(
+            id.span,
+            PropertyDefinitionType::PropertyDefinition,
+            ctx.ast.vec(),
+            key,
+            NONE,
+            None,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            None,
+        )
     }
 
     pub(super) fn transform_class_on_exit(&self, class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {

@@ -4,6 +4,61 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.131.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- 4ab57eb allocator: Fixed-size allocators use `VirtualAlloc` on Windows (#22124) (overlookmotel)
+- 66d77eb allocator: Fix segfault on Linux MUSL with fixed-size allocators (#22388) (overlookmotel)
+
+### ⚡ Performance
+
+- 73a9043 allocator/bitset: Avoid temp heap `String` allocation (#22403) (camc314)
+
+## [0.129.0] - 2026-05-05
+
+### 💥 BREAKING CHANGES
+
+- 0ffbe0d allocator: [**BREAKING**] Remove `Allocator::end_ptr` method (#21871) (overlookmotel)
+
+### ⚡ Performance
+
+- 0bf0cb9 allocator: Per-platform `Arena::new_fixed_size` implementations (#22088) (overlookmotel)
+
+### 📚 Documentation
+
+- 62ec410 allocator: Correct doc comment for `Allocator::from_raw_parts` (#22093) (overlookmotel)
+- 3e152c6 allocator: Correct typos in comments (#22092) (overlookmotel)
+- e220855 allocator: Correct doc comment for `Allocator::set_cursor_ptr` (#21866) (overlookmotel)
+
+## [0.128.0] - 2026-04-27
+
+### 🚀 Features
+
+- b738a39 allocator: Add `Allocator::cursor_ptr` method (#21773) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 674dfac allocator: `Arena` retry allocation when chunk size approaches maximum (#21777) (overlookmotel)
+- f130cc0 allocator: Fix arithmetic overflow in `Arena::new_chunk_memory_details` (#21745) (overlookmotel)
+- b9bf239 allocator: Fix UB in `Arena::grow_zeroed` (#21739) (overlookmotel)
+- d2b9389 allocator: Clippy warning when building without `testing` feature (#21681) (camc314)
+
+### ⚡ Performance
+
+- 0044392 allocator: Reduce branches when allocating new chunk (#21776) (overlookmotel)
+- 7896bd0 allocator: `Allocator::used_bytes` do not use chunk iterator (#21771) (overlookmotel)
+- a5c562f allocator: Remove check in `Arena::new_chunk_memory_details` (#21750) (overlookmotel)
+- 35bbe1f allocator: `Arena` use unchecked size round up where guaranteed no overflow (#21743) (overlookmotel)
+- ffe229b allocator: Remove unnecessary check from `Arena::try_alloc_layout_slow_impl` (#21732) (overlookmotel)
+- 72fece5 allocator: Use `NonNull::offset_from_unsigned` in `Arena::chunk_capacity` (#21731) (overlookmotel)
+- 1b58029 allocator: Move code into cold path in `Arena::alloc_layout` (#21622) (overlookmotel)
+- 3cf7cef allocator: Reduce instructions on allocation hot path (#21510) (overlookmotel)
+
+### 📚 Documentation
+
+- 93b7dbd allocator: Improve doc comments for `ChunkFooter` (#21733) (overlookmotel)
+
 ## [0.127.0] - 2026-04-20
 
 ### ⚡ Performance
