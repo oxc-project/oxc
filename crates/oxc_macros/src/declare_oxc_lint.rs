@@ -339,9 +339,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     };
 
     let info_const = info.map(|info| {
-        let short_description = info
-            .short_description
-            .map_or_else(|| quote! { "" }, |lit| quote! { #lit });
+        let short_description =
+            info.short_description.map_or_else(|| quote! { "" }, |lit| quote! { #lit });
         quote! {
             const INFO: RuleInfo = RuleInfo {
                 short_description: #short_description,
