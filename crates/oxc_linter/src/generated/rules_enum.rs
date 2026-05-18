@@ -8,6 +8,8 @@
     clippy::missing_errors_doc,
     clippy::match_same_arms
 )]
+#[cfg(feature = "ruledocs")]
+use crate::rule::RuleInfo;
 pub use crate::rules::eslint::accessor_pairs::AccessorPairs as EslintAccessorPairs;
 pub use crate::rules::eslint::array_callback_return::ArrayCallbackReturn as EslintArrayCallbackReturn;
 pub use crate::rules::eslint::arrow_body_style::ArrowBodyStyle as EslintArrowBodyStyle;
@@ -811,10 +813,7 @@ pub use crate::rules::vue::valid_define_props::ValidDefineProps as VueValidDefin
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::{
-        Rule, RuleCategory, RuleFixMeta, RuleInfo, RuleMeta, RuleRunFunctionsImplemented,
-        RuleRunner,
-    },
+    rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     timing::RuleTimingStat,
     utils::PossibleJestNode,
 };
