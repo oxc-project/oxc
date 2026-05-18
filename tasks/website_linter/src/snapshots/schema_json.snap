@@ -266,6 +266,9 @@ expression: json
         "complexity": {
           "$ref": "#/definitions/DummyRule"
         },
+        "consistent-this": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "constructor-super": {
           "$ref": "#/definitions/DummyRule"
         },

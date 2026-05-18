@@ -267,6 +267,14 @@ impl RuleRunner for crate::rules::eslint::complexity::Complexity {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::eslint::consistent_this::ConsistentThis {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::VariableDeclarator,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner for crate::rules::eslint::constructor_super::ConstructorSuper {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::Class]));

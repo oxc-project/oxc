@@ -15,6 +15,7 @@ pub use crate::rules::eslint::block_scoped_var::BlockScopedVar as EslintBlockSco
 pub use crate::rules::eslint::capitalized_comments::CapitalizedComments as EslintCapitalizedComments;
 pub use crate::rules::eslint::class_methods_use_this::ClassMethodsUseThis as EslintClassMethodsUseThis;
 pub use crate::rules::eslint::complexity::Complexity as EslintComplexity;
+pub use crate::rules::eslint::consistent_this::ConsistentThis as EslintConsistentThis;
 pub use crate::rules::eslint::constructor_super::ConstructorSuper as EslintConstructorSuper;
 pub use crate::rules::eslint::curly::Curly as EslintCurly;
 pub use crate::rules::eslint::default_case::DefaultCase as EslintDefaultCase;
@@ -858,6 +859,7 @@ pub enum RuleEnum {
     EslintCapitalizedComments(EslintCapitalizedComments),
     EslintClassMethodsUseThis(EslintClassMethodsUseThis),
     EslintComplexity(EslintComplexity),
+    EslintConsistentThis(EslintConsistentThis),
     EslintConstructorSuper(EslintConstructorSuper),
     EslintCurly(EslintCurly),
     EslintDefaultCase(EslintDefaultCase),
@@ -1667,7 +1669,8 @@ const ESLINT_BLOCK_SCOPED_VAR_ID: usize = ESLINT_ARROW_BODY_STYLE_ID + 1usize;
 const ESLINT_CAPITALIZED_COMMENTS_ID: usize = ESLINT_BLOCK_SCOPED_VAR_ID + 1usize;
 const ESLINT_CLASS_METHODS_USE_THIS_ID: usize = ESLINT_CAPITALIZED_COMMENTS_ID + 1usize;
 const ESLINT_COMPLEXITY_ID: usize = ESLINT_CLASS_METHODS_USE_THIS_ID + 1usize;
-const ESLINT_CONSTRUCTOR_SUPER_ID: usize = ESLINT_COMPLEXITY_ID + 1usize;
+const ESLINT_CONSISTENT_THIS_ID: usize = ESLINT_COMPLEXITY_ID + 1usize;
+const ESLINT_CONSTRUCTOR_SUPER_ID: usize = ESLINT_CONSISTENT_THIS_ID + 1usize;
 const ESLINT_CURLY_ID: usize = ESLINT_CONSTRUCTOR_SUPER_ID + 1usize;
 const ESLINT_DEFAULT_CASE_ID: usize = ESLINT_CURLY_ID + 1usize;
 const ESLINT_DEFAULT_CASE_LAST_ID: usize = ESLINT_DEFAULT_CASE_ID + 1usize;
@@ -2573,6 +2576,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(_) => ESLINT_CAPITALIZED_COMMENTS_ID,
             Self::EslintClassMethodsUseThis(_) => ESLINT_CLASS_METHODS_USE_THIS_ID,
             Self::EslintComplexity(_) => ESLINT_COMPLEXITY_ID,
+            Self::EslintConsistentThis(_) => ESLINT_CONSISTENT_THIS_ID,
             Self::EslintConstructorSuper(_) => ESLINT_CONSTRUCTOR_SUPER_ID,
             Self::EslintCurly(_) => ESLINT_CURLY_ID,
             Self::EslintDefaultCase(_) => ESLINT_DEFAULT_CASE_ID,
@@ -3501,6 +3505,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::NAME,
             Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::NAME,
             Self::EslintComplexity(_) => EslintComplexity::NAME,
+            Self::EslintConsistentThis(_) => EslintConsistentThis::NAME,
             Self::EslintConstructorSuper(_) => EslintConstructorSuper::NAME,
             Self::EslintCurly(_) => EslintCurly::NAME,
             Self::EslintDefaultCase(_) => EslintDefaultCase::NAME,
@@ -4417,6 +4422,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::CATEGORY,
             Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::CATEGORY,
             Self::EslintComplexity(_) => EslintComplexity::CATEGORY,
+            Self::EslintConsistentThis(_) => EslintConsistentThis::CATEGORY,
             Self::EslintConstructorSuper(_) => EslintConstructorSuper::CATEGORY,
             Self::EslintCurly(_) => EslintCurly::CATEGORY,
             Self::EslintDefaultCase(_) => EslintDefaultCase::CATEGORY,
@@ -5388,6 +5394,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::FIX,
             Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::FIX,
             Self::EslintComplexity(_) => EslintComplexity::FIX,
+            Self::EslintConsistentThis(_) => EslintConsistentThis::FIX,
             Self::EslintConstructorSuper(_) => EslintConstructorSuper::FIX,
             Self::EslintCurly(_) => EslintCurly::FIX,
             Self::EslintDefaultCase(_) => EslintDefaultCase::FIX,
@@ -6309,6 +6316,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::documentation(),
             Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::documentation(),
             Self::EslintComplexity(_) => EslintComplexity::documentation(),
+            Self::EslintConsistentThis(_) => EslintConsistentThis::documentation(),
             Self::EslintConstructorSuper(_) => EslintConstructorSuper::documentation(),
             Self::EslintCurly(_) => EslintCurly::documentation(),
             Self::EslintDefaultCase(_) => EslintDefaultCase::documentation(),
@@ -7533,6 +7541,8 @@ impl RuleEnum {
             }
             Self::EslintComplexity(_) => EslintComplexity::config_schema(generator)
                 .or_else(|| EslintComplexity::schema(generator)),
+            Self::EslintConsistentThis(_) => EslintConsistentThis::config_schema(generator)
+                .or_else(|| EslintConsistentThis::schema(generator)),
             Self::EslintConstructorSuper(_) => EslintConstructorSuper::config_schema(generator)
                 .or_else(|| EslintConstructorSuper::schema(generator)),
             Self::EslintCurly(_) => {
@@ -9771,6 +9781,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(_) => "eslint",
             Self::EslintClassMethodsUseThis(_) => "eslint",
             Self::EslintComplexity(_) => "eslint",
+            Self::EslintConsistentThis(_) => "eslint",
             Self::EslintConstructorSuper(_) => "eslint",
             Self::EslintCurly(_) => "eslint",
             Self::EslintDefaultCase(_) => "eslint",
@@ -10653,6 +10664,9 @@ impl RuleEnum {
             )),
             Self::EslintComplexity(_) => {
                 Ok(Self::EslintComplexity(EslintComplexity::from_configuration(value)?))
+            }
+            Self::EslintConsistentThis(_) => {
+                Ok(Self::EslintConsistentThis(EslintConsistentThis::from_configuration(value)?))
             }
             Self::EslintConstructorSuper(_) => {
                 Ok(Self::EslintConstructorSuper(EslintConstructorSuper::from_configuration(value)?))
@@ -13162,6 +13176,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(rule) => rule.to_configuration(),
             Self::EslintClassMethodsUseThis(rule) => rule.to_configuration(),
             Self::EslintComplexity(rule) => rule.to_configuration(),
+            Self::EslintConsistentThis(rule) => rule.to_configuration(),
             Self::EslintConstructorSuper(rule) => rule.to_configuration(),
             Self::EslintCurly(rule) => rule.to_configuration(),
             Self::EslintDefaultCase(rule) => rule.to_configuration(),
@@ -13976,6 +13991,7 @@ impl RuleEnum {
                 Self::EslintCapitalizedComments(rule) => rule.run(node, ctx),
                 Self::EslintClassMethodsUseThis(rule) => rule.run(node, ctx),
                 Self::EslintComplexity(rule) => rule.run(node, ctx),
+                Self::EslintConsistentThis(rule) => rule.run(node, ctx),
                 Self::EslintConstructorSuper(rule) => rule.run(node, ctx),
                 Self::EslintCurly(rule) => rule.run(node, ctx),
                 Self::EslintDefaultCase(rule) => rule.run(node, ctx),
@@ -14783,6 +14799,7 @@ impl RuleEnum {
                 Self::EslintCapitalizedComments(rule) => rule.run(node, ctx),
                 Self::EslintClassMethodsUseThis(rule) => rule.run(node, ctx),
                 Self::EslintComplexity(rule) => rule.run(node, ctx),
+                Self::EslintConsistentThis(rule) => rule.run(node, ctx),
                 Self::EslintConstructorSuper(rule) => rule.run(node, ctx),
                 Self::EslintCurly(rule) => rule.run(node, ctx),
                 Self::EslintDefaultCase(rule) => rule.run(node, ctx),
@@ -15597,6 +15614,7 @@ impl RuleEnum {
                 Self::EslintCapitalizedComments(rule) => rule.run_once(ctx),
                 Self::EslintClassMethodsUseThis(rule) => rule.run_once(ctx),
                 Self::EslintComplexity(rule) => rule.run_once(ctx),
+                Self::EslintConsistentThis(rule) => rule.run_once(ctx),
                 Self::EslintConstructorSuper(rule) => rule.run_once(ctx),
                 Self::EslintCurly(rule) => rule.run_once(ctx),
                 Self::EslintDefaultCase(rule) => rule.run_once(ctx),
@@ -16404,6 +16422,7 @@ impl RuleEnum {
                 Self::EslintCapitalizedComments(rule) => rule.run_once(ctx),
                 Self::EslintClassMethodsUseThis(rule) => rule.run_once(ctx),
                 Self::EslintComplexity(rule) => rule.run_once(ctx),
+                Self::EslintConsistentThis(rule) => rule.run_once(ctx),
                 Self::EslintConstructorSuper(rule) => rule.run_once(ctx),
                 Self::EslintCurly(rule) => rule.run_once(ctx),
                 Self::EslintDefaultCase(rule) => rule.run_once(ctx),
@@ -17221,6 +17240,7 @@ impl RuleEnum {
                 Self::EslintCapitalizedComments(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintClassMethodsUseThis(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintComplexity(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::EslintConsistentThis(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintConstructorSuper(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintCurly(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintDefaultCase(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18280,6 +18300,7 @@ impl RuleEnum {
                 Self::EslintCapitalizedComments(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintClassMethodsUseThis(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintComplexity(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::EslintConsistentThis(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintConstructorSuper(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintCurly(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintDefaultCase(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19339,6 +19360,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(rule) => rule.should_run(ctx),
             Self::EslintClassMethodsUseThis(rule) => rule.should_run(ctx),
             Self::EslintComplexity(rule) => rule.should_run(ctx),
+            Self::EslintConsistentThis(rule) => rule.should_run(ctx),
             Self::EslintConstructorSuper(rule) => rule.should_run(ctx),
             Self::EslintCurly(rule) => rule.should_run(ctx),
             Self::EslintDefaultCase(rule) => rule.should_run(ctx),
@@ -20149,6 +20171,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::IS_TSGOLINT_RULE,
             Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::IS_TSGOLINT_RULE,
             Self::EslintComplexity(_) => EslintComplexity::IS_TSGOLINT_RULE,
+            Self::EslintConsistentThis(_) => EslintConsistentThis::IS_TSGOLINT_RULE,
             Self::EslintConstructorSuper(_) => EslintConstructorSuper::IS_TSGOLINT_RULE,
             Self::EslintCurly(_) => EslintCurly::IS_TSGOLINT_RULE,
             Self::EslintDefaultCase(_) => EslintDefaultCase::IS_TSGOLINT_RULE,
@@ -21309,6 +21332,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::VERSION,
             Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::VERSION,
             Self::EslintComplexity(_) => EslintComplexity::VERSION,
+            Self::EslintConsistentThis(_) => EslintConsistentThis::VERSION,
             Self::EslintConstructorSuper(_) => EslintConstructorSuper::VERSION,
             Self::EslintCurly(_) => EslintCurly::VERSION,
             Self::EslintDefaultCase(_) => EslintDefaultCase::VERSION,
@@ -22282,6 +22306,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::HAS_CONFIG,
             Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::HAS_CONFIG,
             Self::EslintComplexity(_) => EslintComplexity::HAS_CONFIG,
+            Self::EslintConsistentThis(_) => EslintConsistentThis::HAS_CONFIG,
             Self::EslintConstructorSuper(_) => EslintConstructorSuper::HAS_CONFIG,
             Self::EslintCurly(_) => EslintCurly::HAS_CONFIG,
             Self::EslintDefaultCase(_) => EslintDefaultCase::HAS_CONFIG,
@@ -23288,6 +23313,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(rule) => rule.types_info(),
             Self::EslintClassMethodsUseThis(rule) => rule.types_info(),
             Self::EslintComplexity(rule) => rule.types_info(),
+            Self::EslintConsistentThis(rule) => rule.types_info(),
             Self::EslintConstructorSuper(rule) => rule.types_info(),
             Self::EslintCurly(rule) => rule.types_info(),
             Self::EslintDefaultCase(rule) => rule.types_info(),
@@ -24092,6 +24118,7 @@ impl RuleEnum {
             Self::EslintCapitalizedComments(rule) => rule.run_info(),
             Self::EslintClassMethodsUseThis(rule) => rule.run_info(),
             Self::EslintComplexity(rule) => rule.run_info(),
+            Self::EslintConsistentThis(rule) => rule.run_info(),
             Self::EslintConstructorSuper(rule) => rule.run_info(),
             Self::EslintCurly(rule) => rule.run_info(),
             Self::EslintDefaultCase(rule) => rule.run_info(),
@@ -24918,6 +24945,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintCapitalizedComments(EslintCapitalizedComments::default()),
         RuleEnum::EslintClassMethodsUseThis(EslintClassMethodsUseThis::default()),
         RuleEnum::EslintComplexity(EslintComplexity::default()),
+        RuleEnum::EslintConsistentThis(EslintConsistentThis::default()),
         RuleEnum::EslintConstructorSuper(EslintConstructorSuper::default()),
         RuleEnum::EslintCurly(EslintCurly::default()),
         RuleEnum::EslintDefaultCase(EslintDefaultCase::default()),

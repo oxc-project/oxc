@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.mjs:1:5]
+ 1 │ var self; (function() { self = this; }())
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.mjs:1:8]
+ 1 │ import self from 'x'; self = 42
+   ·        ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.mjs:1:23]
+ 1 │ import self from 'x'; self = 42
+   ·                       ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.mjs:1:10]
+ 1 │ import { x as self } from 'x'; self = 42
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.mjs:1:32]
+ 1 │ import { x as self } from 'x'; self = 42
+   ·                                ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.mjs:1:8]
+ 1 │ import self from 'x'
+   ·        ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.mjs:1:10]
+ 1 │ import { x as self } from 'x'
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.mjs:1:8]
+ 1 │ import * as self from 'x'
+   ·        ─────────
+   ╰────
