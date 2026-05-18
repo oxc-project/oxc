@@ -583,6 +583,9 @@
         "jest/valid-expect-in-promise": {
           "$ref": "#/definitions/DummyRule"
         },
+        "jest/valid-mock-module-path": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "jest/valid-title": {
           "$ref": "#/definitions/DummyRule"
         },

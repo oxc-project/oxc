@@ -1,5 +1,6 @@
 ---
 source: tasks/website_linter/src/json_schema.rs
+assertion_line: 23
 expression: json
 ---
 {
@@ -585,6 +586,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "jest/valid-expect-in-promise": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jest/valid-mock-module-path": {
           "$ref": "#/definitions/DummyRule"
         },
         "jest/valid-title": {
