@@ -813,6 +813,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         let original_tokens =
             if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
 
+        // Module record already built in the first parse; skip re-recording (#22158).
+        self.module_record_builder.set_suppressed(true);
+
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
         for (stmt_index, checkpoint) in checkpoints {
             // Rewind to the checkpoint
@@ -828,6 +831,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 statements[stmt_index] = stmt;
             }
         }
+
+        self.module_record_builder.set_suppressed(false);
 
         if let Some(original_tokens) = original_tokens {
             self.lexer.set_tokens(original_tokens);
