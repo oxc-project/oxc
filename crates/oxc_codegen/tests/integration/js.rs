@@ -667,7 +667,7 @@ fn string() {
     // Dynamic require is not affected
     test_minify("require(foo);", "require(foo);");
     // Single-quoted require
-    test_minify(r#"require('./foo');"#, r#"require("./foo");"#);
+    test_minify(r"require('./foo');", r#"require("./foo");"#);
 }
 
 #[test]
