@@ -223,10 +223,9 @@ fn check_arrow_cb_arg<'a>(
 ) {
     if arrow_expr.expression {
         if let Some(Statement::ExpressionStatement(expr_stmt)) = arrow_expr.body.statements.first()
+            && let Expression::CallExpression(call_expr) = &expr_stmt.expression
         {
-            if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
-                check_for_resolve_reject(ctx, allow_reject, call_expr);
-            }
+            check_for_resolve_reject(ctx, allow_reject, call_expr);
         }
     } else {
         check_function_body(ctx, allow_reject, &arrow_expr.body);
