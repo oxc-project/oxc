@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ObjectPropertyKind, PropertyKey, PropertyKind},
+    ast::{ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -99,7 +99,7 @@ impl Rule for NoDupeKeys {
     }
 }
 
-fn is_proto_setter_property(prop: &oxc_ast::ast::ObjectProperty<'_>, name: &str) -> bool {
+fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &str) -> bool {
     name == "__proto__"
         && prop.kind == PropertyKind::Init
         && !prop.computed
