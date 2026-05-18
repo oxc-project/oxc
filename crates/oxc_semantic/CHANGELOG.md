@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.132.0] - 2026-05-18
+
+### ⚡ Performance
+
+- ce92c6c semantic: `#[inline]` `Scoping::get_binding` (#22414) (Dunqing)
+- d782b78 minifier: Use BitSet for LiveUsageCollector live references (#22425) (Boshen)
+
 ## [0.130.0] - 2026-05-11
 
 ### 🐛 Bug Fixes
