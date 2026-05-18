@@ -850,6 +850,7 @@ pub(crate) mod vue {
     pub mod require_typed_ref;
     pub mod return_in_computed_property;
     pub mod valid_define_emits;
+    pub mod valid_define_options;
     pub mod valid_define_props;
 }
 
