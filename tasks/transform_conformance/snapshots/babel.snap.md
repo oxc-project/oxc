@@ -2303,26 +2303,35 @@ x Output mismatch
 x Output mismatch
 
 * optimize-const-enums/local/input.ts
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["A"]
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "x", "y"]
+rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "A":
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 * optimize-const-enums/merged/input.ts
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["A"]
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "x", "y"]
+rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["A", "z"]
+rebuilt        : ScopeId(2): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "A":
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol redeclarations mismatch for "A":
+after transform: SymbolId(0): [Span { start: 11, end: 12 }, Span { start: 36, end: 37 }]
+rebuilt        : SymbolId(0): []
 
 * optimize-const-enums/merged-exported/input.ts
 x Output mismatch

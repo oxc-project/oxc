@@ -82,6 +82,7 @@ pub use crate::rules::eslint::no_func_assign::NoFuncAssign as EslintNoFuncAssign
 pub use crate::rules::eslint::no_global_assign::NoGlobalAssign as EslintNoGlobalAssign;
 pub use crate::rules::eslint::no_implicit_coercion::NoImplicitCoercion as EslintNoImplicitCoercion;
 pub use crate::rules::eslint::no_implicit_globals::NoImplicitGlobals as EslintNoImplicitGlobals;
+pub use crate::rules::eslint::no_implied_eval::NoImpliedEval as EslintNoImpliedEval;
 pub use crate::rules::eslint::no_import_assign::NoImportAssign as EslintNoImportAssign;
 pub use crate::rules::eslint::no_inline_comments::NoInlineComments as EslintNoInlineComments;
 pub use crate::rules::eslint::no_inner_declarations::NoInnerDeclarations as EslintNoInnerDeclarations;
@@ -447,6 +448,7 @@ pub use crate::rules::react::no_find_dom_node::NoFindDomNode as ReactNoFindDomNo
 pub use crate::rules::react::no_is_mounted::NoIsMounted as ReactNoIsMounted;
 pub use crate::rules::react::no_multi_comp::NoMultiComp as ReactNoMultiComp;
 pub use crate::rules::react::no_namespace::NoNamespace as ReactNoNamespace;
+pub use crate::rules::react::no_object_type_as_default_prop::NoObjectTypeAsDefaultProp as ReactNoObjectTypeAsDefaultProp;
 pub use crate::rules::react::no_react_children::NoReactChildren as ReactNoReactChildren;
 pub use crate::rules::react::no_redundant_should_component_update::NoRedundantShouldComponentUpdate as ReactNoRedundantShouldComponentUpdate;
 pub use crate::rules::react::no_render_return_value::NoRenderReturnValue as ReactNoRenderReturnValue;
@@ -923,6 +925,7 @@ pub enum RuleEnum {
     EslintNoGlobalAssign(EslintNoGlobalAssign),
     EslintNoImplicitCoercion(EslintNoImplicitCoercion),
     EslintNoImplicitGlobals(EslintNoImplicitGlobals),
+    EslintNoImpliedEval(EslintNoImpliedEval),
     EslintNoImportAssign(EslintNoImportAssign),
     EslintNoInlineComments(EslintNoInlineComments),
     EslintNoInnerDeclarations(EslintNoInnerDeclarations),
@@ -1240,6 +1243,7 @@ pub enum RuleEnum {
     ReactNoIsMounted(ReactNoIsMounted),
     ReactNoMultiComp(ReactNoMultiComp),
     ReactNoNamespace(ReactNoNamespace),
+    ReactNoObjectTypeAsDefaultProp(ReactNoObjectTypeAsDefaultProp),
     ReactNoReactChildren(ReactNoReactChildren),
     ReactNoRedundantShouldComponentUpdate(ReactNoRedundantShouldComponentUpdate),
     ReactNoRenderReturnValue(ReactNoRenderReturnValue),
@@ -1730,7 +1734,8 @@ const ESLINT_NO_FUNC_ASSIGN_ID: usize = ESLINT_NO_FALLTHROUGH_ID + 1usize;
 const ESLINT_NO_GLOBAL_ASSIGN_ID: usize = ESLINT_NO_FUNC_ASSIGN_ID + 1usize;
 const ESLINT_NO_IMPLICIT_COERCION_ID: usize = ESLINT_NO_GLOBAL_ASSIGN_ID + 1usize;
 const ESLINT_NO_IMPLICIT_GLOBALS_ID: usize = ESLINT_NO_IMPLICIT_COERCION_ID + 1usize;
-const ESLINT_NO_IMPORT_ASSIGN_ID: usize = ESLINT_NO_IMPLICIT_GLOBALS_ID + 1usize;
+const ESLINT_NO_IMPLIED_EVAL_ID: usize = ESLINT_NO_IMPLICIT_GLOBALS_ID + 1usize;
+const ESLINT_NO_IMPORT_ASSIGN_ID: usize = ESLINT_NO_IMPLIED_EVAL_ID + 1usize;
 const ESLINT_NO_INLINE_COMMENTS_ID: usize = ESLINT_NO_IMPORT_ASSIGN_ID + 1usize;
 const ESLINT_NO_INNER_DECLARATIONS_ID: usize = ESLINT_NO_INLINE_COMMENTS_ID + 1usize;
 const ESLINT_NO_INVALID_REGEXP_ID: usize = ESLINT_NO_INNER_DECLARATIONS_ID + 1usize;
@@ -2092,7 +2097,8 @@ const REACT_NO_FIND_DOM_NODE_ID: usize = REACT_NO_DIRECT_MUTATION_STATE_ID + 1us
 const REACT_NO_IS_MOUNTED_ID: usize = REACT_NO_FIND_DOM_NODE_ID + 1usize;
 const REACT_NO_MULTI_COMP_ID: usize = REACT_NO_IS_MOUNTED_ID + 1usize;
 const REACT_NO_NAMESPACE_ID: usize = REACT_NO_MULTI_COMP_ID + 1usize;
-const REACT_NO_REACT_CHILDREN_ID: usize = REACT_NO_NAMESPACE_ID + 1usize;
+const REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID: usize = REACT_NO_NAMESPACE_ID + 1usize;
+const REACT_NO_REACT_CHILDREN_ID: usize = REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID + 1usize;
 const REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID: usize = REACT_NO_REACT_CHILDREN_ID + 1usize;
 const REACT_NO_RENDER_RETURN_VALUE_ID: usize =
     REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID + 1usize;
@@ -2634,6 +2640,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(_) => ESLINT_NO_GLOBAL_ASSIGN_ID,
             Self::EslintNoImplicitCoercion(_) => ESLINT_NO_IMPLICIT_COERCION_ID,
             Self::EslintNoImplicitGlobals(_) => ESLINT_NO_IMPLICIT_GLOBALS_ID,
+            Self::EslintNoImpliedEval(_) => ESLINT_NO_IMPLIED_EVAL_ID,
             Self::EslintNoImportAssign(_) => ESLINT_NO_IMPORT_ASSIGN_ID,
             Self::EslintNoInlineComments(_) => ESLINT_NO_INLINE_COMMENTS_ID,
             Self::EslintNoInnerDeclarations(_) => ESLINT_NO_INNER_DECLARATIONS_ID,
@@ -3021,6 +3028,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => REACT_NO_IS_MOUNTED_ID,
             Self::ReactNoMultiComp(_) => REACT_NO_MULTI_COMP_ID,
             Self::ReactNoNamespace(_) => REACT_NO_NAMESPACE_ID,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => REACT_NO_OBJECT_TYPE_AS_DEFAULT_PROP_ID,
             Self::ReactNoReactChildren(_) => REACT_NO_REACT_CHILDREN_ID,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 REACT_NO_REDUNDANT_SHOULD_COMPONENT_UPDATE_ID
@@ -3560,6 +3568,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::NAME,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::NAME,
             Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::NAME,
+            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::NAME,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::NAME,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::NAME,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::NAME,
@@ -3943,6 +3952,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::NAME,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::NAME,
             Self::ReactNoNamespace(_) => ReactNoNamespace::NAME,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::NAME,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::NAME,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::NAME
@@ -4474,6 +4484,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::CATEGORY,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::CATEGORY,
             Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::CATEGORY,
+            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::CATEGORY,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::CATEGORY,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::CATEGORY,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::CATEGORY,
@@ -4881,6 +4892,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::CATEGORY,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::CATEGORY,
             Self::ReactNoNamespace(_) => ReactNoNamespace::CATEGORY,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::CATEGORY,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::CATEGORY,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::CATEGORY
@@ -5443,6 +5455,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::FIX,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::FIX,
             Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::FIX,
+            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::FIX,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::FIX,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::FIX,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::FIX,
@@ -5826,6 +5839,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::FIX,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::FIX,
             Self::ReactNoNamespace(_) => ReactNoNamespace::FIX,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::FIX,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::FIX,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::FIX
@@ -6366,6 +6380,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::documentation(),
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::documentation(),
             Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::documentation(),
+            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::documentation(),
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::documentation(),
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::documentation(),
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::documentation(),
@@ -6843,6 +6858,9 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::documentation(),
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::documentation(),
             Self::ReactNoNamespace(_) => ReactNoNamespace::documentation(),
+            Self::ReactNoObjectTypeAsDefaultProp(_) => {
+                ReactNoObjectTypeAsDefaultProp::documentation()
+            }
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::documentation(),
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::documentation()
@@ -7671,6 +7689,8 @@ impl RuleEnum {
                 .or_else(|| EslintNoImplicitCoercion::schema(generator)),
             Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::config_schema(generator)
                 .or_else(|| EslintNoImplicitGlobals::schema(generator)),
+            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::config_schema(generator)
+                .or_else(|| EslintNoImpliedEval::schema(generator)),
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::config_schema(generator)
                 .or_else(|| EslintNoImportAssign::schema(generator)),
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::config_schema(generator)
@@ -8603,6 +8623,10 @@ impl RuleEnum {
                 .or_else(|| ReactNoMultiComp::schema(generator)),
             Self::ReactNoNamespace(_) => ReactNoNamespace::config_schema(generator)
                 .or_else(|| ReactNoNamespace::schema(generator)),
+            Self::ReactNoObjectTypeAsDefaultProp(_) => {
+                ReactNoObjectTypeAsDefaultProp::config_schema(generator)
+                    .or_else(|| ReactNoObjectTypeAsDefaultProp::schema(generator))
+            }
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::config_schema(generator)
                 .or_else(|| ReactNoReactChildren::schema(generator)),
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
@@ -9814,6 +9838,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(_) => "eslint",
             Self::EslintNoImplicitCoercion(_) => "eslint",
             Self::EslintNoImplicitGlobals(_) => "eslint",
+            Self::EslintNoImpliedEval(_) => "eslint",
             Self::EslintNoImportAssign(_) => "eslint",
             Self::EslintNoInlineComments(_) => "eslint",
             Self::EslintNoInnerDeclarations(_) => "eslint",
@@ -10129,6 +10154,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => "react",
             Self::ReactNoMultiComp(_) => "react",
             Self::ReactNoNamespace(_) => "react",
+            Self::ReactNoObjectTypeAsDefaultProp(_) => "react",
             Self::ReactNoReactChildren(_) => "react",
             Self::ReactNoRedundantShouldComponentUpdate(_) => "react",
             Self::ReactNoRenderReturnValue(_) => "react",
@@ -10831,6 +10857,9 @@ impl RuleEnum {
             Self::EslintNoImplicitGlobals(_) => Ok(Self::EslintNoImplicitGlobals(
                 EslintNoImplicitGlobals::from_configuration(value)?,
             )),
+            Self::EslintNoImpliedEval(_) => {
+                Ok(Self::EslintNoImpliedEval(EslintNoImpliedEval::from_configuration(value)?))
+            }
             Self::EslintNoImportAssign(_) => {
                 Ok(Self::EslintNoImportAssign(EslintNoImportAssign::from_configuration(value)?))
             }
@@ -11868,6 +11897,9 @@ impl RuleEnum {
             Self::ReactNoNamespace(_) => {
                 Ok(Self::ReactNoNamespace(ReactNoNamespace::from_configuration(value)?))
             }
+            Self::ReactNoObjectTypeAsDefaultProp(_) => Ok(Self::ReactNoObjectTypeAsDefaultProp(
+                ReactNoObjectTypeAsDefaultProp::from_configuration(value)?,
+            )),
             Self::ReactNoReactChildren(_) => {
                 Ok(Self::ReactNoReactChildren(ReactNoReactChildren::from_configuration(value)?))
             }
@@ -13197,6 +13229,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(rule) => rule.to_configuration(),
             Self::EslintNoImplicitCoercion(rule) => rule.to_configuration(),
             Self::EslintNoImplicitGlobals(rule) => rule.to_configuration(),
+            Self::EslintNoImpliedEval(rule) => rule.to_configuration(),
             Self::EslintNoImportAssign(rule) => rule.to_configuration(),
             Self::EslintNoInlineComments(rule) => rule.to_configuration(),
             Self::EslintNoInnerDeclarations(rule) => rule.to_configuration(),
@@ -13514,6 +13547,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(rule) => rule.to_configuration(),
             Self::ReactNoMultiComp(rule) => rule.to_configuration(),
             Self::ReactNoNamespace(rule) => rule.to_configuration(),
+            Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.to_configuration(),
             Self::ReactNoReactChildren(rule) => rule.to_configuration(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.to_configuration(),
             Self::ReactNoRenderReturnValue(rule) => rule.to_configuration(),
@@ -14009,6 +14043,7 @@ impl RuleEnum {
                 Self::EslintNoGlobalAssign(rule) => rule.run(node, ctx),
                 Self::EslintNoImplicitCoercion(rule) => rule.run(node, ctx),
                 Self::EslintNoImplicitGlobals(rule) => rule.run(node, ctx),
+                Self::EslintNoImpliedEval(rule) => rule.run(node, ctx),
                 Self::EslintNoImportAssign(rule) => rule.run(node, ctx),
                 Self::EslintNoInlineComments(rule) => rule.run(node, ctx),
                 Self::EslintNoInnerDeclarations(rule) => rule.run(node, ctx),
@@ -14326,6 +14361,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run(node, ctx),
                 Self::ReactNoMultiComp(rule) => rule.run(node, ctx),
                 Self::ReactNoNamespace(rule) => rule.run(node, ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run(node, ctx),
                 Self::ReactNoReactChildren(rule) => rule.run(node, ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run(node, ctx),
                 Self::ReactNoRenderReturnValue(rule) => rule.run(node, ctx),
@@ -14814,6 +14850,7 @@ impl RuleEnum {
                 Self::EslintNoGlobalAssign(rule) => rule.run(node, ctx),
                 Self::EslintNoImplicitCoercion(rule) => rule.run(node, ctx),
                 Self::EslintNoImplicitGlobals(rule) => rule.run(node, ctx),
+                Self::EslintNoImpliedEval(rule) => rule.run(node, ctx),
                 Self::EslintNoImportAssign(rule) => rule.run(node, ctx),
                 Self::EslintNoInlineComments(rule) => rule.run(node, ctx),
                 Self::EslintNoInnerDeclarations(rule) => rule.run(node, ctx),
@@ -15131,6 +15168,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run(node, ctx),
                 Self::ReactNoMultiComp(rule) => rule.run(node, ctx),
                 Self::ReactNoNamespace(rule) => rule.run(node, ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run(node, ctx),
                 Self::ReactNoReactChildren(rule) => rule.run(node, ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run(node, ctx),
                 Self::ReactNoRenderReturnValue(rule) => rule.run(node, ctx),
@@ -15626,6 +15664,7 @@ impl RuleEnum {
                 Self::EslintNoGlobalAssign(rule) => rule.run_once(ctx),
                 Self::EslintNoImplicitCoercion(rule) => rule.run_once(ctx),
                 Self::EslintNoImplicitGlobals(rule) => rule.run_once(ctx),
+                Self::EslintNoImpliedEval(rule) => rule.run_once(ctx),
                 Self::EslintNoImportAssign(rule) => rule.run_once(ctx),
                 Self::EslintNoInlineComments(rule) => rule.run_once(ctx),
                 Self::EslintNoInnerDeclarations(rule) => rule.run_once(ctx),
@@ -15943,6 +15982,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run_once(ctx),
                 Self::ReactNoMultiComp(rule) => rule.run_once(ctx),
                 Self::ReactNoNamespace(rule) => rule.run_once(ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_once(ctx),
                 Self::ReactNoReactChildren(rule) => rule.run_once(ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run_once(ctx),
                 Self::ReactNoRenderReturnValue(rule) => rule.run_once(ctx),
@@ -16431,6 +16471,7 @@ impl RuleEnum {
                 Self::EslintNoGlobalAssign(rule) => rule.run_once(ctx),
                 Self::EslintNoImplicitCoercion(rule) => rule.run_once(ctx),
                 Self::EslintNoImplicitGlobals(rule) => rule.run_once(ctx),
+                Self::EslintNoImpliedEval(rule) => rule.run_once(ctx),
                 Self::EslintNoImportAssign(rule) => rule.run_once(ctx),
                 Self::EslintNoInlineComments(rule) => rule.run_once(ctx),
                 Self::EslintNoInnerDeclarations(rule) => rule.run_once(ctx),
@@ -16748,6 +16789,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run_once(ctx),
                 Self::ReactNoMultiComp(rule) => rule.run_once(ctx),
                 Self::ReactNoNamespace(rule) => rule.run_once(ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_once(ctx),
                 Self::ReactNoReactChildren(rule) => rule.run_once(ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run_once(ctx),
                 Self::ReactNoRenderReturnValue(rule) => rule.run_once(ctx),
@@ -17250,6 +17292,7 @@ impl RuleEnum {
                 Self::EslintNoGlobalAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintNoImplicitCoercion(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintNoImplicitGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::EslintNoImpliedEval(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintNoImportAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintNoInlineComments(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintNoInnerDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17687,6 +17730,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoMultiComp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoReactChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
@@ -18307,6 +18351,7 @@ impl RuleEnum {
                 Self::EslintNoGlobalAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintNoImplicitCoercion(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintNoImplicitGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::EslintNoImpliedEval(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintNoImportAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintNoInlineComments(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintNoInnerDeclarations(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18744,6 +18789,7 @@ impl RuleEnum {
                 Self::ReactNoIsMounted(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoMultiComp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoReactChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactNoRedundantShouldComponentUpdate(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
@@ -19360,6 +19406,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(rule) => rule.should_run(ctx),
             Self::EslintNoImplicitCoercion(rule) => rule.should_run(ctx),
             Self::EslintNoImplicitGlobals(rule) => rule.should_run(ctx),
+            Self::EslintNoImpliedEval(rule) => rule.should_run(ctx),
             Self::EslintNoImportAssign(rule) => rule.should_run(ctx),
             Self::EslintNoInlineComments(rule) => rule.should_run(ctx),
             Self::EslintNoInnerDeclarations(rule) => rule.should_run(ctx),
@@ -19675,6 +19722,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(rule) => rule.should_run(ctx),
             Self::ReactNoMultiComp(rule) => rule.should_run(ctx),
             Self::ReactNoNamespace(rule) => rule.should_run(ctx),
+            Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.should_run(ctx),
             Self::ReactNoReactChildren(rule) => rule.should_run(ctx),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.should_run(ctx),
             Self::ReactNoRenderReturnValue(rule) => rule.should_run(ctx),
@@ -20172,6 +20220,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::IS_TSGOLINT_RULE,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::IS_TSGOLINT_RULE,
             Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::IS_TSGOLINT_RULE,
+            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::IS_TSGOLINT_RULE,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::IS_TSGOLINT_RULE,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::IS_TSGOLINT_RULE,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::IS_TSGOLINT_RULE,
@@ -20649,6 +20698,9 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::IS_TSGOLINT_RULE,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::IS_TSGOLINT_RULE,
             Self::ReactNoNamespace(_) => ReactNoNamespace::IS_TSGOLINT_RULE,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => {
+                ReactNoObjectTypeAsDefaultProp::IS_TSGOLINT_RULE
+            }
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::IS_TSGOLINT_RULE,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::IS_TSGOLINT_RULE
@@ -21324,6 +21376,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::VERSION,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::VERSION,
             Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::VERSION,
+            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::VERSION,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::VERSION,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::VERSION,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::VERSION,
@@ -21731,6 +21784,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::VERSION,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::VERSION,
             Self::ReactNoNamespace(_) => ReactNoNamespace::VERSION,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::VERSION,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::VERSION,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::VERSION
@@ -22299,6 +22353,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::HAS_CONFIG,
             Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::HAS_CONFIG,
             Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::HAS_CONFIG,
+            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::HAS_CONFIG,
             Self::EslintNoImportAssign(_) => EslintNoImportAssign::HAS_CONFIG,
             Self::EslintNoInlineComments(_) => EslintNoInlineComments::HAS_CONFIG,
             Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::HAS_CONFIG,
@@ -22718,6 +22773,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::HAS_CONFIG,
             Self::ReactNoMultiComp(_) => ReactNoMultiComp::HAS_CONFIG,
             Self::ReactNoNamespace(_) => ReactNoNamespace::HAS_CONFIG,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::HAS_CONFIG,
             Self::ReactNoReactChildren(_) => ReactNoReactChildren::HAS_CONFIG,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::HAS_CONFIG
@@ -23299,6 +23355,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(rule) => rule.types_info(),
             Self::EslintNoImplicitCoercion(rule) => rule.types_info(),
             Self::EslintNoImplicitGlobals(rule) => rule.types_info(),
+            Self::EslintNoImpliedEval(rule) => rule.types_info(),
             Self::EslintNoImportAssign(rule) => rule.types_info(),
             Self::EslintNoInlineComments(rule) => rule.types_info(),
             Self::EslintNoInnerDeclarations(rule) => rule.types_info(),
@@ -23614,6 +23671,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(rule) => rule.types_info(),
             Self::ReactNoMultiComp(rule) => rule.types_info(),
             Self::ReactNoNamespace(rule) => rule.types_info(),
+            Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.types_info(),
             Self::ReactNoReactChildren(rule) => rule.types_info(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.types_info(),
             Self::ReactNoRenderReturnValue(rule) => rule.types_info(),
@@ -24101,6 +24159,7 @@ impl RuleEnum {
             Self::EslintNoGlobalAssign(rule) => rule.run_info(),
             Self::EslintNoImplicitCoercion(rule) => rule.run_info(),
             Self::EslintNoImplicitGlobals(rule) => rule.run_info(),
+            Self::EslintNoImpliedEval(rule) => rule.run_info(),
             Self::EslintNoImportAssign(rule) => rule.run_info(),
             Self::EslintNoInlineComments(rule) => rule.run_info(),
             Self::EslintNoInnerDeclarations(rule) => rule.run_info(),
@@ -24416,6 +24475,7 @@ impl RuleEnum {
             Self::ReactNoIsMounted(rule) => rule.run_info(),
             Self::ReactNoMultiComp(rule) => rule.run_info(),
             Self::ReactNoNamespace(rule) => rule.run_info(),
+            Self::ReactNoObjectTypeAsDefaultProp(rule) => rule.run_info(),
             Self::ReactNoReactChildren(rule) => rule.run_info(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run_info(),
             Self::ReactNoRenderReturnValue(rule) => rule.run_info(),
@@ -24925,6 +24985,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoGlobalAssign(EslintNoGlobalAssign::default()),
         RuleEnum::EslintNoImplicitCoercion(EslintNoImplicitCoercion::default()),
         RuleEnum::EslintNoImplicitGlobals(EslintNoImplicitGlobals::default()),
+        RuleEnum::EslintNoImpliedEval(EslintNoImpliedEval::default()),
         RuleEnum::EslintNoImportAssign(EslintNoImportAssign::default()),
         RuleEnum::EslintNoInlineComments(EslintNoInlineComments::default()),
         RuleEnum::EslintNoInnerDeclarations(EslintNoInnerDeclarations::default()),
@@ -25308,6 +25369,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoIsMounted(ReactNoIsMounted::default()),
         RuleEnum::ReactNoMultiComp(ReactNoMultiComp::default()),
         RuleEnum::ReactNoNamespace(ReactNoNamespace::default()),
+        RuleEnum::ReactNoObjectTypeAsDefaultProp(ReactNoObjectTypeAsDefaultProp::default()),
         RuleEnum::ReactNoReactChildren(ReactNoReactChildren::default()),
         RuleEnum::ReactNoRedundantShouldComponentUpdate(
             ReactNoRedundantShouldComponentUpdate::default(),

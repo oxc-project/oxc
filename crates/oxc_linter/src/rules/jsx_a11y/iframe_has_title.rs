@@ -95,12 +95,17 @@ impl Rule for IframeHasTitle {
                     expr @ JSXExpression::Identifier(_) if !expr.is_undefined() => {
                         return;
                     }
-                    // Call expressions and member expressions are considered valid
-                    // (e.g., titleGenerator('hello'), file.name, obj.prop, obj['key'])
+                    // These expressions are considered valid
+                    // (e.g., titleGenerator('hello'), file.name, obj.prop, obj['key'],
+                    //  a ? b : c, i18n`title`, new Title())
                     JSXExpression::CallExpression(_)
                     | JSXExpression::StaticMemberExpression(_)
                     | JSXExpression::ComputedMemberExpression(_)
-                    | JSXExpression::PrivateFieldExpression(_) => return,
+                    | JSXExpression::PrivateFieldExpression(_)
+                    | JSXExpression::LogicalExpression(_)
+                    | JSXExpression::ConditionalExpression(_)
+                    | JSXExpression::TaggedTemplateExpression(_)
+                    | JSXExpression::NewExpression(_) => return,
                     _ => {}
                 }
             }
@@ -128,6 +133,12 @@ fn test() {
         (r"<iframe title={file.name} />", None, None),
         (r"<iframe title={obj.prop.name} />", None, None),
         (r"<iframe title={obj['prop']} />", None, None),
+        // Other expression tests
+        (r"<iframe title={a ?? b} />", None, None),
+        (r"<iframe title={a && b} />", None, None),
+        (r"<iframe title={a ? b : c} />", None, None),
+        (r"<iframe title={i18n`title`} />", None, None),
+        (r"<iframe title={new Title()} />", None, None),
         // CUSTOM ELEMENT TESTS FOR COMPONENTS SETTINGS
         (
             r"<FooComponent title='Unique title' />",
