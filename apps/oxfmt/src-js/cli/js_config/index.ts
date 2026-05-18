@@ -1,5 +1,5 @@
 import { pathToFileURL } from "node:url";
-import { getUnsupportedTypeScriptModuleLoadHint } from "./node_version";
+import { getUnsupportedTypeScriptModuleLoadHintForError } from "@oxapps/shared";
 
 const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -15,8 +15,8 @@ async function importJsConfig(path: string): Promise<unknown> {
   fileUrl.searchParams.set("cache", Date.now().toString());
 
   const { default: config } = await import(fileUrl.href).catch((err) => {
-    const hint = getUnsupportedTypeScriptModuleLoadHint(err, path);
-    if (hint && err instanceof Error) err.message += `\n\n${hint}`;
+    const hint = getUnsupportedTypeScriptModuleLoadHintForError(err, path);
+    if (hint && err instanceof Error) err.message = hint;
     throw err;
   });
 

@@ -1,6 +1,6 @@
 import { getErrorMessage } from "./utils/utils.ts";
 import { DateNow, JSONStringify } from "./utils/globals.ts";
-import { getUnsupportedTypeScriptModuleLoadHintForError } from "./utils/node_version.ts";
+import { getUnsupportedTypeScriptModuleLoadHintForError } from "@oxapps/shared";
 
 interface JsConfigResult {
   path: string;
