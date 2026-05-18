@@ -2000,6 +2000,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
+ "oxc_formatter_core",
  "oxc_jsdoc",
  "oxc_parser",
  "oxc_semantic",
@@ -2015,6 +2016,10 @@ dependencies = [
  "smallvec",
  "unicode-width",
 ]
+
+[[package]]
+name = "oxc_formatter_core"
+version = "0.50.0"
 
 [[package]]
 name = "oxc_index"
