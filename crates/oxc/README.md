@@ -77,7 +77,7 @@ let mut errors = Vec::new();
 
 // Step 1: Parsing
 // Parse the TSX file into an AST. The root AST node is a `Program` struct.
-let ParserReturn { program, trivias, errors: parser_errors, panicked } =
+let ParserReturn { program, errors: parser_errors, panicked, .. } =
     Parser::new(&allocator, source_text, source_type).parse();
 errors.extend(parser_errors);
 
@@ -123,14 +123,14 @@ These feature flags enable/disable various tools in oxc's toolchain:
 
 - `full`: Enable all features that provide access to a tool.
 - `semantic`: Enable the `semantic` module for semantic analysis on ASTs.
-- `transformer`: Enable the `transform` module for babel-like transpiling.
+- `transformer`: Enable the `transformer` module for babel-like transpiling.
 - `minifier`: Enable the `minifier` and `mangler` modules for terser-like minification.
-- `codegen`: Enable the `codegen` module, which prints ASTs to source code.
+- `codegen`: Enable the `codegen` module, which prints ASTs to source code and source maps.
 - `mangler`: Enable the `mangler` module without enabling `minifier`.
 - `cfg`: Expose the `cfg` module. CFGs may still be created in `semantic`
   without turning this on.
-- `sourcemap`: Enable the `sourcemap` module. Useful when using `codegen` to
-  print both source code and source maps.
+- `ast_visit`: Enable the `ast_visit` module for AST traversal.
+- `regular_expression`: Enable regular expression parsing support.
 - `isolated_declarations`: enable the `isolated_declarations` module for
   generating typescript type declarations
 
@@ -139,10 +139,7 @@ by the `full` feature.
 
 - `serialize`: Implements `Serialize` and `Deserialize` for various oxc data
   structures.
-- `sourcemap_concurrent`: Generate source maps in parallel. Only useful when
-  the `sourcemap` feature is also enabled.
-- `wasm`: Enable WASM bindings for the transformer/transpiler. Only useful when
-  the `transformer` feature is enabled.
+- `conformance`: Enables additional AST visitor hooks for conformance tests.
 
 [crate-oxc-badge]: https://img.shields.io/crates/v/oxc?style=flat-square&logo=rust
 [crate-oxc-url]: https://crates.io/crates/oxc

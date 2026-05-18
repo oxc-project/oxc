@@ -4,6 +4,69 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
    ╭─[no_unsafe_optional_chaining.tsx:1:2]
+ 1 │ (obj?.foo).bar
+   ·  ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:2]
+ 1 │ (obj?.foo)();
+   ·  ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:6]
+ 1 │ new (obj?.foo)();
+   ·      ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:2]
+ 1 │ (obj?.foo)`template`
+   ·  ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:17]
+ 1 │ class A extends obj?.foo {}
+   ·                 ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:15]
+ 1 │ const {foo} = obj?.bar;
+   ·               ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:10]
+ 1 │ ({foo} = obj?.bar);
+   ·          ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:8]
+ 1 │ foo in obj?.bar;
+   ·        ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:13]
+ 1 │ for (foo of obj?.bar) {}
+   ·             ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:2]
  1 │ (obj?.foo && obj?.baz).bar
    ·  ────────
    ╰────
@@ -71,3 +134,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────────
    ╰────
   help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe arithmetic operation on optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:7]
+ 1 │ bar + obj?.foo;
+   ·       ────────
+   ╰────
+  help: This can result in NaN.

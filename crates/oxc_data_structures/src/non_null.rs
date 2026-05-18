@@ -39,6 +39,26 @@
 //!
 //! * A `NonNullConst<T>` is only created from a pointer with at least read provenance.
 //! * A `NonNullMut<T>` is only created from a pointer with write provenance.
+//!
+//! # Note on `as_ref` and `as_mut` methods
+//!
+//! Standard library's `NonNull::as_ref` and `NonNull::as_mut` methods take `&self` and `&mut self` respectively.
+//! Our versions here take `self` (`NonNullConst` and `NonNullMut` are both `Copy`).
+//!
+//! It appears that Rust's maintainers consider these methods taking `&self` and `&mut self` to have been a mistake,
+//! and are only not changing it because of backwards compatibility.
+//!
+//! Ralf Jung: "My conclusion back then was that this was meant as a kind of safety net...
+//! I am not sure if that safety net is really helping anyone, though."
+//! <https://github.com/rust-lang/rust/pull/80771#issuecomment-756049892>
+//!
+//! Thom Chiovoloni: "I think it's better to take by value. If we could change the others compatibly, I think we would."
+//! <https://github.com/rust-lang/rust/pull/96100#issuecomment-1100506407>
+//!
+//! The newer `NonNull::as_uninit_ref` / `as_uninit_mut` take `self` by value, explicitly to correct the pattern.
+//! `as_ref` / `as_mut` on `*const T` and `*mut T` also take `self` by value.
+//!
+//! We are not bound by backwards compatibility, so we can correct the mistake.
 
 // All methods just delegate to `NonNull`'s methods
 #![expect(clippy::inline_always)]

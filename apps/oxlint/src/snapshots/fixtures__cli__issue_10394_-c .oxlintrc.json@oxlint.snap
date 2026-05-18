@@ -6,7 +6,7 @@ arguments: -c .oxlintrc.json
 working directory: fixtures/cli/issue_10394
 ----------
 
-  ! eslint-plugin-jest(valid-title): Should not have an empty title
+  ! jest(valid-title): Should not have an empty title
    ,-[foo.test.ts:1:10]
  1 | describe("", () => {
    :          ^^
@@ -14,7 +14,7 @@ working directory: fixtures/cli/issue_10394
    `----
   help: Write a meaningful title for your test
 
-  ! eslint-plugin-vitest(valid-title): Should not have an empty title
+  ! vitest(valid-title): Should not have an empty title
    ,-[foo.test.ts:1:10]
  1 | describe("", () => {
    :          ^^

@@ -269,6 +269,19 @@ fn test() {
                 serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^(foo|bar)$"], "ignorePropertyModificationsFor": ["baz"], }, ]),
             ),
         ),
+        (
+            "function foo(key, value) { this[key] = value; }",
+            Some(serde_json::json!([{ "props": true }])),
+        ),
+        (
+            "function foo(key, value) { this[key] += value; }",
+            Some(serde_json::json!([{ "props": true }])),
+        ),
+        ("function foo(key) { delete this[key]; }", Some(serde_json::json!([{ "props": true }]))),
+        (
+            "function foo<T>(this: Record<PropertyKey, T>, key: PropertyKey, value: T) { this[key] = value; }",
+            Some(serde_json::json!([{ "props": true }])),
+        ),
     ];
 
     let fail = vec![

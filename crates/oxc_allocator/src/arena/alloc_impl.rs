@@ -4,14 +4,14 @@
 //! They all ultimately call into `alloc_layout` or `try_alloc_layout`, defined in this module.
 //! (`alloc_layout` and `try_alloc_layout` are also public methods)
 
-use std::{alloc::Layout, cmp::max, iter, ptr::NonNull};
+use std::{alloc::Layout, cmp::max, ptr::NonNull};
 
 use allocator_api2::alloc::{AllocError, Allocator};
 
 use oxc_data_structures::assert_unchecked;
 
 use super::{
-    Arena, CHUNK_FOOTER_SIZE, DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER,
+    Arena, CHUNK_FOOTER_SIZE, DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER, EMPTY_ARENA_DATA_PTR,
     bumpalo_alloc::{Alloc as BumpaloAlloc, AllocErr},
     utils::{
         is_pointer_aligned_to, layout_from_size_align, oom, round_down_to, round_mut_ptr_down_to,
@@ -73,11 +73,16 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             start_ptr <= cursor_ptr,
             "start pointer {start_ptr:#p} should be less than or equal to bump pointer {cursor_ptr:#p}"
         );
-        debug_assert!(
-            cursor_ptr <= self.current_chunk_footer_ptr.get().cast::<u8>().as_ptr(),
-            "bump pointer {cursor_ptr:#p} should be less than or equal to footer pointer {:#p}",
-            self.current_chunk_footer_ptr.get()
-        );
+        if cfg!(debug_assertions) {
+            let end_ptr = self
+                .current_chunk_footer_ptr
+                .get()
+                .map_or(EMPTY_ARENA_DATA_PTR, NonNull::cast::<u8>);
+            assert!(
+                cursor_ptr <= end_ptr.as_ptr(),
+                "bump pointer {cursor_ptr:#p} should be less than or equal to footer pointer {end_ptr:#p}",
+            );
+        }
         #[expect(clippy::checked_conversions)]
         {
             debug_assert!(
@@ -323,64 +328,112 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Slow path for allocation, shared between `alloc_layout` and `try_alloc_layout`.
     /// Called when there isn't enough room in our current chunk, so need to allocate a new chunk.
     fn try_alloc_layout_slow_impl(&self, layout: Layout) -> Option<NonNull<u8>> {
-        unsafe {
-            if !self.can_grow {
+        let current_footer_ptr = self.current_chunk_footer_ptr.get();
+
+        // Fixed-size arenas (those created via `Arena::from_raw_parts`) cannot add further chunks.
+        // On Windows with `fixed_size` feature enabled, the existing chunk can grow in place by committing more pages.
+        if let Some(footer_ptr) = current_footer_ptr {
+            // SAFETY: `footer_ptr` always points to a valid `ChunkFooter`
+            let footer = unsafe { footer_ptr.as_ref() };
+            if footer.is_fixed_size {
+                // Attempt to grow the chunk in place to accommodate the allocation.
+                //
+                // `is_fixed_size` can only be `true` in 3 circumstances:
+                // * Oxlint: `grow_fixed_size_chunk` will attempt to grow the chunk in place.
+                // * NAPI parser raw transfer: `start_ptr` is aligned on 4 GiB, so `grow_fixed_size_chunk`
+                //   considers the container already grown to maximum size, will always fail to grow the chunk,
+                //   and returns `None`.
+                // * Oxlint's `RuleTester`: Same as NAPI parser raw transfer.
+                #[cfg(all(
+                    feature = "fixed_size",
+                    target_pointer_width = "64",
+                    target_endian = "little"
+                ))]
+                {
+                    // SAFETY: Allocating `layout` within current chunk is not possible.
+                    // If it was, then `try_alloc_layout_fast` would have succeeded,
+                    // and this method wouldn't have been called.
+                    // `is_fixed_size` is `true`, so it's a fixed-size chunk.
+                    let new_ptr = unsafe { self.grow_fixed_size_chunk(layout) };
+                    if let Some(new_ptr) = new_ptr {
+                        debug_assert!(new_ptr >= self.start_ptr.get());
+                        debug_assert!(new_ptr < self.cursor_ptr.get());
+                        debug_assert!(
+                            self.cursor_ptr.get().addr().get() - new_ptr.addr().get()
+                                >= layout.size()
+                        );
+                        debug_assert!(is_pointer_aligned_to(new_ptr, layout.align()));
+                        debug_assert!(is_pointer_aligned_to(new_ptr, MIN_ALIGN));
+
+                        // Update cursor and return pointer where `layout` can be allocated
+                        self.cursor_ptr.set(new_ptr);
+                        return Some(new_ptr);
+                    }
+                }
+
+                // Could not grow the chunk in place enough to accommodate allocating `layout`.
+                // Fixed-size arenas cannot add more chunks, so allocation fails.
                 return None;
             }
+        }
 
-            // Get a new chunk from the global allocator
-            let current_footer_ptr = self.current_chunk_footer_ptr.get();
+        // Get a new chunk from the global allocator.
+        // By default, we want our new chunk to be about twice as big as the previous chunk.
+        // If the global allocator refuses it, we try to divide it by half until it works for `layout`
+        // or the requested size is smaller than the default chunk size.
+        let min_new_chunk_size = max(layout.size(), DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER);
 
-            let current_layout = current_footer_ptr.as_ref().layout;
-            let current_size_without_footer = current_layout.size() - CHUNK_FOOTER_SIZE;
+        let mut size = match current_footer_ptr {
+            // Double the size of the current chunk, but not less than `min_new_chunk_size`
+            Some(footer_ptr) => {
+                // SAFETY: `footer_ptr` always points to a valid `ChunkFooter`
+                let footer = unsafe { footer_ptr.as_ref() };
+                let current_size_without_footer = footer.layout.size() - CHUNK_FOOTER_SIZE;
+                // `current_size_without_footer * 2` cannot overflow because `Layout::size()` is always `<= isize::MAX`
+                max(current_size_without_footer * 2, min_new_chunk_size)
+            }
+            // No existing chunks, so just use `min_new_chunk_size`
+            None => min_new_chunk_size,
+        };
 
-            // By default, we want our new chunk to be about twice as big as the previous chunk.
-            // If the global allocator refuses it, we try to divide it by half until it works
-            // or the requested size is smaller than the default footer size.
-            let min_new_chunk_size = layout.size().max(DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER);
-            // `current_size_without_footer * 2` cannot overflow because `Layout::size()` is always `<= isize::MAX`
-            let mut base_size = (current_size_without_footer * 2).max(min_new_chunk_size);
-
-            let mut chunk_memory_details = iter::from_fn(|| {
-                if base_size >= min_new_chunk_size {
-                    let size = base_size;
-                    base_size /= 2;
-                    Self::new_chunk_memory_details(Some(size), layout)
-                } else {
-                    None
-                }
-            });
-
-            let new_footer_ptr = chunk_memory_details.find_map(|new_chunk_memory_details| {
-                Self::new_chunk(new_chunk_memory_details, layout, current_footer_ptr)
-            })?;
-
-            debug_assert!(is_pointer_aligned_to(new_footer_ptr.as_ref().start_ptr, layout.align()));
-
-            // Sync `Arena::cursor_ptr` back to the retiring chunk's footer so iteration over chunks
-            // can read its final cursor position later.
-            //
-            // Do not update `cursor_ptr` of the empty chunk.
-            // That update would be a no-op - when current chunk is the empty chunk, `self.cursor_ptr` always points
-            // to the empty chunk's footer, which is the existing value of empty chunk footer's `cursor_ptr` anyway.
-            // But nonetheless, the empty chunk footer is a `static`, accessible from all threads simultaneously.
-            // Updating it from 2 threads simultaneously would be a data race (UB), even though both writes are no-ops.
-            if !current_footer_ptr.as_ref().is_empty() {
-                current_footer_ptr.as_ref().cursor_ptr.set(self.cursor_ptr.get());
+        let (new_start_ptr, new_footer_ptr) = loop {
+            // Try to allocate a chunk of `size` bytes (plus footer and rounding).
+            // SAFETY: `current_footer_ptr` points to a valid `ChunkFooter` for a chunk in this `Arena`, or it's `None`.
+            let new_chunk = unsafe { Self::new_chunk(size, layout, current_footer_ptr) };
+            if let Some(new_chunk) = new_chunk {
+                break new_chunk;
             }
 
-            // Set the new chunk as our new current chunk, and sync `start_ptr` and `cursor_ptr` accordingly.
-            // Initial cursor sits at the footer (end of the allocatable region).
-            // The footer is aligned on `CHUNK_ALIGN >= MIN_ALIGN`, so no rounding is needed.
-            self.start_ptr.set(new_footer_ptr.as_ref().start_ptr);
-            self.cursor_ptr.set(new_footer_ptr.cast::<u8>());
-            self.current_chunk_footer_ptr.set(new_footer_ptr);
+            // Failed. Halve size and try again.
+            // TODO: Before admitting defeat, try one last time with minimum size required to service the request.
+            // This can be a value somewhere between `size` and `size / 2`.
+            size /= 2;
+            if size < min_new_chunk_size {
+                return None;
+            }
+        };
 
-            // And then we can rely on `try_alloc_layout_fast` to allocate space within this chunk
-            let ptr = self.try_alloc_layout_fast(layout);
-            debug_assert!(ptr.is_some());
-            ptr
+        debug_assert!(is_pointer_aligned_to(new_start_ptr, layout.align()));
+
+        // Sync `Arena::cursor_ptr` back to the retiring chunk's footer so iteration over chunks
+        // can read its final cursor position later. Skip this if there was no current chunk.
+        if let Some(footer_ptr) = current_footer_ptr {
+            // SAFETY: `footer_ptr` always points to a valid `ChunkFooter`
+            let footer = unsafe { footer_ptr.as_ref() };
+            footer.cursor_ptr.set(self.cursor_ptr.get());
         }
+
+        // Set the new chunk as our new current chunk, and sync `start_ptr` and `cursor_ptr` accordingly.
+        // Initial cursor sits at the footer (end of the allocatable region).
+        // The footer is aligned on `CHUNK_ALIGN >= MIN_ALIGN`, so no rounding is needed.
+        self.start_ptr.set(new_start_ptr);
+        self.cursor_ptr.set(new_footer_ptr.cast::<u8>());
+        self.current_chunk_footer_ptr.set(Some(new_footer_ptr));
+
+        // And then we can rely on `try_alloc_layout_fast` to allocate space within this chunk
+        let ptr = self.try_alloc_layout_fast(layout);
+        debug_assert!(ptr.is_some());
+        ptr
     }
 
     #[inline]
@@ -441,7 +494,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         let new_size = new_layout.size();
 
         // This is how much space we would *actually* reclaim while satisfying the requested alignment
-        let delta = round_down_to(old_size - new_size, new_layout.align().max(MIN_ALIGN));
+        let delta = round_down_to(old_size - new_size, max(new_layout.align(), MIN_ALIGN));
 
         if self.is_last_allocation(ptr)
                 // Only reclaim the excess space (which requires a copy) if it is worth it:

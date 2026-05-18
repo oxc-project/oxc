@@ -419,7 +419,7 @@ fn test_vars_destructure() {
         ),
         (
             "const { a, ...rest } = obj; console.log(rest)",
-            Some(json!( [{ "ignoreRestSiblings": true, "vars": "all" }] )),
+            Some(json!( [{ "ignoreRestSiblings": true, "vars": "local" }] )),
         ),
         // https://github.com/oxc-project/oxc/issues/4888
         (
@@ -469,13 +469,13 @@ fn test_vars_destructure() {
         ("let [f,\u{a0}a]=p", "let [,a]=p", None, FixKind::DangerousSuggestion),
         (
             "const [a, b, c, d, e] = arr; f(a, e)",
-            "const [a, ,,,e] = arr; f(a, e)",
+            "const [a, ,c, ,e] = arr; f(a, e)",
             None,
             FixKind::DangerousSuggestion,
         ),
         (
             "const [a, b, c, d, e, f] = arr; fn(a, e)",
-            "const [a, ,,,e] = arr; fn(a, e)",
+            "const [a, ,c, ,e] = arr; fn(a, e)",
             None,
             FixKind::DangerousSuggestion,
         ),
@@ -1010,7 +1010,6 @@ fn test_exports() {
         // default exports
         "export default class Foo {}",
         "export default [ class Foo {} ];",
-        "export default function foo() {}",
         "export default { foo() {} };",
         "export default { foo: function foo() {} };",
         "export default { get foo() {} };",
@@ -1025,12 +1024,16 @@ fn test_exports() {
         "export * as a from 'a'",
         "export { a, b } from 'a'",
     ];
-    let fail = vec!["import { a as b } from 'a'; export { a }"];
+    let fail = vec![
+        "import { a as b } from 'a'; export { a }",
+        r#"import { resolve } from "path";
+export { resolve } from "path";"#,
+    ];
 
-    // these are mostly pass[] cases, so do not snapshot
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
-        .test();
+        .with_snapshot_suffix("oxc-exports")
+        .test_and_snapshot();
 }
 
 #[test]
@@ -1086,6 +1089,7 @@ fn test_arguments() {
     let pass = vec![
         ("function foo(a) { return a } foo()", None),
         ("function foo(a, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
+        ("let a; a = function(a = a) {}; a();", None),
         ("let ids = arr.map(el => el.id); f(ids)", None),
         (
             "let targetId = '1234'; let user = users.find(user => user.id === targetId); f(user)",
@@ -1140,12 +1144,142 @@ fn test_arguments() {
         ("function foo(a) {} foo()", None),
         ("function foo(a: number) {} foo()", None),
         ("function foo({ a }, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
+        ("function foo(...args: typeof args) {} foo()", None),
+        ("function foo(...args: unknown[]): args is string[] { return true } foo()", None),
+        ("function foo(...unused) {} foo()", Some(json!([{ "argsIgnorePattern": "^ignored" }]))),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-arguments")
         .test_and_snapshot();
+}
+
+#[test]
+fn test_argument_parameter_rename_fix() {
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fix = vec![
+        (
+            "function foo(unused = 1) {} foo()",
+            "function foo(_unused = 1) {} foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function foo(unused) {} foo()",
+            "function foo(_unused) {} foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const foo = function(unused) {}; foo()",
+            "const foo = function(_unused) {}; foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const foo = (unused) => {}; foo()",
+            "const foo = (_unused) => {}; foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const obj = { method(unused) {} }; obj.method()",
+            "const obj = { method(_unused) {} }; obj.method()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function foo(unused, _unused) { console.log(_unused) } foo()",
+            "function foo(_unused0, _unused) { console.log(_unused) } foo()",
+            Some(json!([{ "args": "all", "argsIgnorePattern": "^_" }])),
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "class Foo { method(@dec unused: string) {} } new Foo().method('x')",
+            "class Foo { method(@dec _unused: string) {} } new Foo().method('x')",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const marker = 1; class Foo { method(@dec(marker) unused: string) {} } new Foo().method('x')",
+            "const marker = 1; class Foo { method(@dec(marker) _unused: string) {} } new Foo().method('x')",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const _unused = 1; function foo(unused) { return _unused } foo()",
+            "const _unused = 1; function foo(_unused0) { return _unused } foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const _unused = 1; function foo(unused) { return function() { return _unused } } foo()",
+            "const _unused = 1; function foo(_unused0) { return function() { return _unused } } foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function foo(unused) { return _unused } foo()",
+            "function foo(_unused0) { return _unused } foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function foo(unused) { { let _unused = 1; console.log(_unused); } } foo()",
+            "function foo(_unused) { { let _unused = 1; console.log(_unused); } } foo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "type _unused = number; function foo(unused: _unused) {} foo(1 as _unused)",
+            "type _unused = number; function foo(_unused: _unused) {} foo(1 as _unused)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function foo(unused: _unused) {} foo(1 as _unused)",
+            "function foo(_unused: _unused) {} foo(1 as _unused)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const _unused = 1; function foo(unused: typeof _unused) {} foo(1)",
+            "const _unused = 1; function foo(_unused0: typeof _unused) {} foo(1)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const _unused = 1; class Foo { method(@dec unused: string) { return _unused } } new Foo().method('x')",
+            "const _unused = 1; class Foo { method(@dec _unused0: string) { return _unused } } new Foo().method('x')",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // TODO: support renaming destructuring and rest parameters, and generate
+        // names for more `argsIgnorePattern` values.
+        (
+            "function foo({ unused }) {} foo()",
+            "function foo({ unused }) {} foo()",
+            None,
+            FixKind::None,
+        ),
+        ("function foo([unused]) {} foo()", "function foo([unused]) {} foo()", None, FixKind::None),
+        (
+            "function foo(...unused) {} foo()",
+            "function foo(...unused) {} foo()",
+            None,
+            FixKind::None,
+        ),
+        (
+            "function foo(unused) {} foo()",
+            "function foo(unused) {} foo()",
+            Some(json!([{ "argsIgnorePattern": "^ignored" }])),
+            FixKind::None,
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -1432,6 +1566,11 @@ fn test_type_references() {
         "interface LinkedList<T> { next: LinkedList<T> | undefined }",
         "function foo(): typeof foo { }",
         "function foo(): typeof foo { return foo }",
+        // https://github.com/oxc-project/oxc/issues/22367
+        "export function foo(a: unknown): a is string { return true }",
+        "export const foo = (a: unknown): a is string => true",
+        "function assertString(a: unknown): asserts a is string {} assertString('')",
+        "function assertDefined(a: unknown): asserts a {} assertDefined('')",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)

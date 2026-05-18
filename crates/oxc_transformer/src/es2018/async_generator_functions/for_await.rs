@@ -102,8 +102,11 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
-        let step_key =
-            ctx.generate_uid("step", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
+        let step_key = ctx.generate_uid(
+            "step",
+            ctx.current_hoist_scope_id(),
+            SymbolFlags::FunctionScopedVariable,
+        );
         // step.value
         let step_value = Expression::from(ctx.ast.member_expression_static(
             SPAN,
@@ -141,10 +144,9 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             let mut statements = ctx.ast.vec_with_capacity(2);
             statements.push(assignment_statement);
             let stmt_body = &mut stmt.body;
-            if let Statement::BlockStatement(block) = stmt_body
-                && !block.body.is_empty()
-            {
-                statements.push(stmt_body.take_in(ctx.ast));
+            match stmt_body {
+                Statement::BlockStatement(block) if block.body.is_empty() => {}
+                _ => statements.push(stmt_body.take_in(ctx.ast)),
             }
             statements
         };
@@ -205,7 +207,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
-        let var_scope_id = ctx.current_scope_id();
+        let var_scope_id = ctx.current_hoist_scope_id();
 
         let iterator_had_error_key =
             ctx.generate_uid("didIteratorError", var_scope_id, SymbolFlags::FunctionScopedVariable);

@@ -318,16 +318,6 @@ fn test() {
                     })
                   ",
         "
-                    xit('foo', () => {
-                      switch('bar') {}
-                    })
-                  ",
-        "
-                    fit('foo', () => {
-                      switch('bar') {}
-                    })
-                  ",
-        "
                     test('foo', () => {
                       switch('bar') {}
                     })
@@ -339,16 +329,6 @@ fn test() {
                   ",
         "
                     test.only('foo', () => {
-                      switch('bar') {}
-                    })
-                  ",
-        "
-                    xtest('foo', () => {
-                      switch('bar') {}
-                    })
-                  ",
-        "
-                    xtest('foo', function () {
                       switch('bar') {}
                     })
                   ",
@@ -441,16 +421,6 @@ fn test() {
                     })
                   ",
         "
-                    xit('foo', () => {
-                      if ('bar') {}
-                    })
-                  ",
-        "
-                    fit('foo', () => {
-                      if ('bar') {}
-                    })
-                  ",
-        "
                     test('foo', () => {
                       if ('bar') {}
                     })
@@ -462,11 +432,6 @@ fn test() {
                   ",
         "
                     test.only('foo', () => {
-                      if ('bar') {}
-                    })
-                  ",
-        "
-                    xtest('foo', () => {
                       if ('bar') {}
                     })
                   ",

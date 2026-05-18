@@ -79,7 +79,7 @@ enum DisabledRule {
         /// Full outer span of the comment (including `//` or `/* */` delimiters).
         /// Used for diagnostic labels.
         comment_span: Span,
-        /// Span used for the fix.  Extends to cover the whole line (including leading
+        /// Span used for the fix. Extends to cover the whole line (including leading
         /// whitespace and the trailing newline) when the comment is the only content
         /// on that line; otherwise equals `comment_span`.
         fix_span: Span,
@@ -107,7 +107,7 @@ enum DisabledRule {
         /// Full outer span of the comment (including `//` or `/* */` delimiters).
         /// Used for diagnostic labels.
         comment_span: Span,
-        /// Span used for the fix.  Extends to cover the whole line (including leading
+        /// Span used for the fix. Extends to cover the whole line (including leading
         /// whitespace and the trailing newline) when the comment is the only content
         /// on that line; otherwise equals `comment_span`.
         fix_span: Span,
@@ -178,54 +178,62 @@ impl RuleCommentRule {
     pub fn create_fix(&self, source_text: &str, comment_span: Span) -> Fix {
         let before_source =
             &source_text[comment_span.start as usize..self.name_span.start as usize];
-
-        // check if there is a comma before the rule name
-        // if there is, remove the comma, whitespace and the rule name
-        let mut comma_before_offset = None;
-        for (i, c) in before_source.chars().rev().enumerate() {
-            if c.is_whitespace() {
-                continue;
-            }
-            if c == ',' {
-                comma_before_offset = Some(1 + i as u32);
-            }
-            break;
-        }
-
-        if let Some(comma_before_offset) = comma_before_offset {
+        let before_trimmed = before_source.trim_end();
+        if before_trimmed.ends_with(',') {
             return Fix::delete(Span::new(
-                self.name_span.start - comma_before_offset,
+                comment_span.start + before_trimmed.len() as u32 - 1,
                 self.name_span.end,
             ))
             .with_kind(FixKind::Suggestion);
         }
 
         let after_source = &source_text[self.name_span.end as usize..comment_span.end as usize];
-
-        // check if there is a comma after the rule name
-        // if there is, remove the comma, whitespace and the rule name
-        let mut comma_after_offset = None;
-        for (i, c) in after_source.char_indices() {
-            if c.is_whitespace() {
-                continue;
-            }
-            if c == ',' {
-                comma_after_offset = Some(1 + i as u32);
-            }
-            break;
-        }
-
-        if let Some(comma_after_offset) = comma_after_offset {
+        let after_trimmed = after_source.trim_start();
+        let whitespace_after = after_source.len() - after_trimmed.len();
+        if let Some(after_comma) = after_trimmed.strip_prefix(',') {
+            let whitespace_after_comma = after_comma.len() - after_comma.trim_start().len();
             return Fix::delete(Span::new(
                 self.name_span.start,
-                self.name_span.end + comma_after_offset,
+                self.name_span.end + whitespace_after as u32 + 1 + whitespace_after_comma as u32,
+            ))
+            .with_kind(FixKind::Suggestion);
+        }
+
+        if whitespace_after > 0
+            && !after_trimmed.is_empty()
+            && !after_trimmed.starts_with('-')
+            && !after_trimmed.starts_with("*/")
+        {
+            return Fix::delete(Span::new(
+                self.name_span.start,
+                self.name_span.end + whitespace_after as u32,
+            ))
+            .with_kind(FixKind::Suggestion);
+        }
+
+        let whitespace_before = before_source.len() - before_trimmed.len();
+        if whitespace_before > 0 && self.previous_token_is_rule(before_trimmed) {
+            return Fix::delete(Span::new(
+                self.name_span.start - whitespace_before as u32,
+                self.name_span.end,
             ))
             .with_kind(FixKind::Suggestion);
         }
 
         unreachable!(
-            "A `RuleCommentRule` should have a comma, because only one rule should be RuleCommentType::All"
+            "A `RuleCommentRule` should have another rule in the same directive, because only one rule should be RuleCommentType::All"
         );
+    }
+
+    fn previous_token_is_rule(&self, text: &str) -> bool {
+        let Some(token) =
+            text.rsplit(|ch: char| ch == ',' || ch.is_whitespace()).find(|token| !token.is_empty())
+        else {
+            return false;
+        };
+
+        let directive_name = self.directive_prefix.disable_directive_name();
+        !matches!(token.strip_prefix(directive_name), Some("" | "-next-line" | "-line"))
     }
 }
 
@@ -285,19 +293,22 @@ impl DisableDirectives {
             // Check if this rule should be disabled
             let rule_matches = match &interval.val {
                 DisabledRule::All { .. } => true,
-                // `rule_name` does not contain the prefix.
+                // `rule_name` does not contain the plugin prefix.
                 // - `vitest/foobar` will be just `foobar`.
                 // - `@typescript-eslint/no-var-requires` will be just `no-var-requires`
                 //
                 // This enables matching rules across different plugins that share the same
                 // rule name, such as jest<->vitest rules and eslint<->typescript rules.
+                //
+                // We strip the plugin prefix from the directive name and compare equality
+                // rather than doing a substring match. Otherwise unrelated rules like
+                // `canonical/no-re-export` would accidentally match oxlint's `export`
+                // rule because `"no-re-export".contains("export")` is true.
                 DisabledRule::Single { rule_name: name, .. } => {
-                    if name.contains(rule_name) {
-                        true
+                    if rule_name.contains('/') {
+                        name == rule_name
                     } else {
-                        // Special-case mapping: `vitest/no-restricted-vi-methods` is implemented by `jest/no-restricted-jest-methods`.
-                        name == "vitest/no-restricted-vi-methods"
-                            && rule_name == "no-restricted-jest-methods"
+                        name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule) == rule_name
                     }
                 }
             };
@@ -459,7 +470,7 @@ impl DisableDirectivesBuilder {
     ///
     /// If the comment is the only non-whitespace content on its line, returns a
     /// span that covers the entire line (including leading whitespace and the
-    /// trailing newline).  Otherwise returns the comment's full outer span
+    /// trailing newline). Otherwise returns the comment's full outer span
     /// (including `//` or `/* */` delimiters).
     ///
     /// This span is stored in [`DisabledRule`] so that `Fix::delete(span)`
@@ -516,10 +527,11 @@ impl DisableDirectivesBuilder {
             let comment_fix_span = Self::compute_comment_fix_span(comment, source_text);
             let text_source = comment_span.source_text(source_text);
             let text = text_source.trim_start();
-            let mut rule_name_start = comment_span.start + (text_source.len() - text.len()) as u32;
+            let directive_start = comment_span.start + (text_source.len() - text.len()) as u32;
 
             if let Some((directive_prefix, text)) = self.match_disable_directive(text) {
-                rule_name_start += directive_prefix.disable_directive_name().len() as u32;
+                let mut rule_name_start =
+                    directive_start + directive_prefix.disable_directive_name().len() as u32;
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {
@@ -539,8 +551,10 @@ impl DisableDirectivesBuilder {
                     continue;
                 }
                 // `eslint-disable-next-line`
-                else if let Some(text) = text.strip_prefix("-next-line") {
-                    rule_name_start += 10; // -next-line is 10 bytes
+                else if let Some(text) = text.strip_prefix("-next-line")
+                    && (text.is_empty() || text.starts_with(char::is_whitespace))
+                {
+                    rule_name_start += "-next-line".len() as u32;
                     // Get the span up to the next new line
                     let mut stop = comment_span.end;
                     let mut lines_after_comment_end =
@@ -575,7 +589,8 @@ impl DisableDirectivesBuilder {
                     } else {
                         // `eslint-disable-next-line rule_name1, rule_name2`
                         let mut rules = vec![];
-                        Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
+                        Self::get_rule_names(text, |rule_name, name_span| {
+                            let name_span = name_span.move_right(rule_name_start);
                             self.add_interval(
                                 comment_span.end,
                                 stop,
@@ -604,9 +619,10 @@ impl DisableDirectivesBuilder {
                     continue;
                 }
                 // `eslint-disable-line`
-                else if let Some(text) = text.strip_prefix("-line") {
-                    rule_name_start += 5; // -line is 5 bytes
-
+                else if let Some(text) = text.strip_prefix("-line")
+                    && (text.is_empty() || text.starts_with(char::is_whitespace))
+                {
+                    rule_name_start += "-line".len() as u32;
                     // Get the span between the preceding newline to this comment
                     let start = source_text[..comment_span.start as usize]
                         .lines()
@@ -635,7 +651,8 @@ impl DisableDirectivesBuilder {
                     } else {
                         // `eslint-disable-line rule-name1, rule-name2`
                         let mut rules = vec![];
-                        Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
+                        Self::get_rule_names(text, |rule_name, name_span| {
+                            let name_span = name_span.move_right(rule_name_start);
                             self.add_interval(
                                 start,
                                 stop,
@@ -668,7 +685,9 @@ impl DisableDirectivesBuilder {
                 else if text.starts_with(char::is_whitespace) {
                     // `eslint-disable rule-name1, rule-name2`
                     let mut rules = vec![];
-                    Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
+                    let rule_list_start = comment_span.end - text.len() as u32;
+                    Self::get_rule_names(text, |rule_name, name_span| {
+                        let name_span = name_span.move_right(rule_list_start);
                         self.disable_start_map.entry(rule_name.to_string()).or_insert((
                             comment_span.end,
                             directive_prefix,
@@ -693,7 +712,6 @@ impl DisableDirectivesBuilder {
             }
 
             if let Some((directive_prefix, text)) = self.match_enable_directive(text) {
-                rule_name_start += directive_prefix.enable_directive_name().len() as u32;
                 // `eslint-enable`
                 if text.trim().is_empty() {
                     if let Some((start, disable_prefix, _, _)) = self.disable_all_start.take() {
@@ -711,9 +729,11 @@ impl DisableDirectivesBuilder {
                         // collect as unused enable (see more at note comments in beginning of this method)
                         unused_enable_directives.push((directive_prefix, None, comment_span));
                     }
-                } else {
+                } else if text.starts_with(char::is_whitespace) {
                     // `eslint-enable rule-name1, rule-name2`
-                    Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
+                    let rule_list_start = comment_span.end - text.len() as u32;
+                    Self::get_rule_names(text, |rule_name, name_span| {
+                        let name_span = name_span.move_right(rule_list_start);
                         if let Some((start, disable_prefix, _, _, _)) =
                             self.disable_start_map.remove(rule_name)
                         {
@@ -796,23 +816,57 @@ impl DisableDirectivesBuilder {
         }
     }
 
+    /// Iterates over rule names in the text that follows a disable/enable directive.
+    ///
+    /// Given the following disable directive:
+    ///
+    /// ```txt
+    /// // oxlint-disable-next-line no-debugger, no-console -- this is a description
+    ///                            ────┬────────────────────────────────────────────
+    ///                                ╰── rule_list_text (passed to this function)
+    /// ```
+    ///
+    /// The callback span is relative to the start of `rule_list_text`. Callers that need an
+    /// absolute source span can move it right by the absolute start of `rule_list_text`.
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    fn get_rule_names<F: FnMut(&str, Span)>(text: &str, rule_name_start: u32, mut cb: F) {
-        if let Some(text) = text.split_terminator("--").next() {
-            let mut rule_name_start: u32 = rule_name_start;
+    fn get_rule_names<F: FnMut(&str, Span)>(text: &str, mut cb: F) {
+        let mut rule_start = None;
+        let mut rule_end = text.len();
+        let mut emit_rule = |start: usize, end: usize| {
+            let rule_name = &text[start..end];
+            cb(rule_name, Span::sized(start as u32, rule_name.len() as u32));
+        };
 
-            for part in text.split(',') {
-                let trimmed = part.trim();
-                cb(
-                    trimmed,
-                    Span::sized(
-                        rule_name_start + (part.len() - part.trim_start().len()) as u32,
-                        trimmed.len() as u32,
-                    ),
-                );
+        let mut chars = text.char_indices().peekable();
+        let mut previous = None;
+        while let Some((index, ch)) = chars.next() {
+            // descriptions can be represented either as:
+            // `// oxlint-disable-next-line no-debugger -- this is a description` // must be two sequential `--`
+            // `// oxlint-disable-next-line no-debugger - this is a description` // must be a single `-` surrounded by whitespace
+            let is_description_start = ch == '-'
+                && (chars.peek().map(|(_, ch)| *ch).is_some_and(|c| {
+                    c == '-'
+                        || (previous.is_some_and(char::is_whitespace) && char::is_whitespace(c))
+                }));
 
-                rule_name_start += 1 + part.len() as u32; // +1 for the next ","
+            if is_description_start {
+                rule_end = index;
+                break;
             }
+
+            if ch == ',' || ch.is_whitespace() {
+                if let Some(start) = rule_start.take() {
+                    emit_rule(start, index);
+                }
+            } else if rule_start.is_none() {
+                rule_start = Some(index);
+            }
+
+            previous = Some(ch);
+        }
+
+        if let Some(start) = rule_start {
+            emit_rule(start, rule_end);
         }
     }
 }
@@ -941,6 +995,16 @@ fn test() {
             debugger;
         "
             ),
+            // Single-hyphen descriptions and whitespace-separated rule lists.
+            format!(
+                "
+            // {prefix}-disable-next-line no-debugger - Here's a description about why this configuration is necessary.
+            debugger;
+
+            // {prefix}-disable-next-line no-alert no-debugger - Here's a description about why this configuration is necessary.
+            debugger;
+        "
+            ),
             // Should only match `eslint-enable` comments, not `eslint-enablefoo`
             format!("
             /* {prefix}-disable */
@@ -1042,7 +1106,14 @@ no-debugger
                 /* {prefix}-disable , ,no-debugger, , */
                 debugger;
             "),
-            format!("debugger;//{prefix}-disable-line")
+            format!("debugger;//{prefix}-disable-line"),
+            format!("
+            /* {prefix}-disable no-debugger, no-console */
+                debugger;
+            /* {prefix}-enablefoo, no-debugger, no-console */
+                debugger;
+            "
+            )
         ];
 
         let fail = vec![
@@ -1114,6 +1185,8 @@ no-debugger
                 debugger;
                 "
             ),
+            format!("debugger; // {prefix}-disable-linefoo no-debugger"),
+            format!("debugger; /* {prefix}-disable-linefoo no-debugger */"),
             format!(
                 "
             debugger; // {prefix}-disable-lext-nine no-debugger
@@ -1130,6 +1203,7 @@ no-debugger
             format!(
                 "debugger; // {prefix}-disable-linefoo
             debugger; // {prefix}-disable-linefoo
+            debugger; // {prefix}-disable-linefoo no-debugger
 
             // {prefix}-disable-next-linefoo
             debugger;
@@ -1138,6 +1212,7 @@ no-debugger
             debugger;
 
             debugger; /* {prefix}-disable-linefoo */
+            debugger; /* {prefix}-disable-linefoo no-debugger */
         "
             ),
             format!(
@@ -1348,6 +1423,40 @@ mod tests {
 
         assert_eq!(interval.start, expected_start);
         assert_eq!(interval.stop, expected_stop);
+    }
+
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    fn test_directive(directive: &str, expected_rules: &[&str]) {
+        let source_text =
+            if directive.contains("-disable-line") && !directive.contains("-disable-next-line") {
+                format!("debugger; {directive}")
+            } else {
+                format!("{directive}\ndebugger;")
+            };
+
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, &source_text);
+        let comments = semantic.comments();
+        let directives = DisableDirectivesBuilder::new().build(semantic.source_text(), comments);
+
+        let rule_names = match &directives.disable_rule_comments()[0].r#type {
+            RuleCommentType::All => Vec::new(),
+            RuleCommentType::Single(rules) => {
+                rules.iter().map(|rule| rule.rule_name.as_str()).collect()
+            }
+        };
+        assert_eq!(rule_names, expected_rules);
+
+        let debugger_span = Span::sized(source_text.rfind("debugger").unwrap() as u32, 8);
+        for rule in expected_rules {
+            assert!(directives.contains(rule, debugger_span), "{directive} should disable {rule}");
+            if let Some((_, rule_without_plugin)) = rule.rsplit_once('/') {
+                assert!(
+                    directives.contains(rule_without_plugin, debugger_span),
+                    "{directive} should disable {rule_without_plugin}"
+                );
+            }
+        }
     }
 
     #[test]
@@ -1604,6 +1713,90 @@ mod tests {
     }
 
     #[test]
+    fn directive_rule_lists_parse_rules_and_descriptions() {
+        let cases: &[(&str, &[&str])] = &[
+            ("// oxlint-disable-next-line no-debugger", &["no-debugger"]),
+            ("// eslint-disable-next-line no-debugger", &["no-debugger"]),
+            (
+                "// oxlint-disable-next-line no-debugger,no-unused-vars",
+                &["no-debugger", "no-unused-vars"],
+            ),
+            (
+                "// oxlint-disable-next-line no-debugger, no-unused-vars",
+                &["no-debugger", "no-unused-vars"],
+            ),
+            (
+                "// oxlint-disable-next-line no-debugger no-unused-vars",
+                &["no-debugger", "no-unused-vars"],
+            ),
+            (
+                "// oxlint-disable-next-line no-debugger  no-unused-vars -- description",
+                &["no-debugger", "no-unused-vars"],
+            ),
+            (
+                "// oxlint-disable-next-line no-debugger no-unused-vars -- description",
+                &["no-debugger", "no-unused-vars"],
+            ),
+            ("// oxlint-disable-next-line no-debugger-- description", &["no-debugger"]),
+            (
+                "// oxlint-disable-next-line typescript/unbound-method - bound later",
+                &["typescript/unbound-method"],
+            ),
+            (
+                "// eslint-disable-next-line no-bitwise no-implicit-coercion -- intentional",
+                &["no-bitwise", "no-implicit-coercion"],
+            ),
+            (
+                "// oxlint-disable-next-line @typescript-eslint/no-unused-vars",
+                &["@typescript-eslint/no-unused-vars"],
+            ),
+            (
+                "// oxlint-disable-next-line typescript-eslint/no-unused-vars",
+                &["typescript-eslint/no-unused-vars"],
+            ),
+            (
+                "// oxlint-disable-next-line @scope/plugin/rule-name no-debugger -- description",
+                &["@scope/plugin/rule-name", "no-debugger"],
+            ),
+        ];
+
+        for (directive, expected_rules) in cases {
+            test_directive(directive, expected_rules);
+        }
+    }
+
+    #[test]
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    fn unused_disable_fix_handles_whitespace_separated_rule_names() {
+        let source_text = concat!(
+            "// eslint-disable-next-line no-bitwise no-implicit-coercion - intentional\n",
+            "const x = 1;\n",
+        );
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+
+        let x_span = Span::sized(source_text.find("const x").unwrap() as u32, 5);
+        assert!(directives.contains("no-bitwise", x_span));
+
+        let unused = directives.collect_unused_disable_comments();
+        assert_eq!(unused.len(), 1);
+
+        let RuleCommentType::Single(rules) = &unused[0].r#type else {
+            panic!("expected only the unused rule to be reported");
+        };
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].rule_name, "no-implicit-coercion");
+
+        let fix = rules[0].create_fix(source_text, unused[0].span);
+        assert_eq!(
+            apply_delete(source_text, fix.span),
+            concat!("// eslint-disable-next-line no-bitwise - intentional\n", "const x = 1;\n",)
+        );
+    }
+
+    #[test]
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
     fn test_rule_comment_rule_create_fix() {
         let source_text = "// eslint-disable-next-line max-params, no-console, no-debugger";
@@ -1619,7 +1812,11 @@ mod tests {
         .create_fix(source_text, comment_span);
 
         assert_eq!(&source_text[28..38], "max-params");
-        assert_eq!(max_params_fix.span, Span::sized(28, 11)); // max-params is 10 + 1 for the comma
+        assert_eq!(max_params_fix.span, Span::sized(28, 12)); // max-params is 10 + 1 for the comma + 1 for the space
+        assert_eq!(
+            apply_delete(source_text, max_params_fix.span),
+            "// eslint-disable-next-line no-console, no-debugger"
+        );
 
         let no_console_fix = RuleCommentRule {
             directive_prefix: DirectivePrefix::Eslint,
@@ -1640,11 +1837,44 @@ mod tests {
 
         assert_eq!(&source_text[52..63], "no-debugger");
         assert_eq!(no_debugger_fix.span, Span::sized(50, 13)); // no-debugger is 11 + 2 for the comma before and the space
+
+        let source_text = "// eslint-disable-next-line no-bitwise no-implicit-coercion";
+        let comment_span = Span::new(0, source_text.len() as u32);
+        let no_bitwise_start = source_text.find("no-bitwise").unwrap() as u32;
+        let no_bitwise_end = no_bitwise_start + "no-bitwise".len() as u32;
+        let no_implicit_start = source_text.find("no-implicit-coercion").unwrap() as u32;
+        let no_implicit_end = no_implicit_start + "no-implicit-coercion".len() as u32;
+
+        let no_bitwise_fix = RuleCommentRule {
+            directive_prefix: DirectivePrefix::Eslint,
+            rule_name: "no-bitwise".to_string(),
+            name_span: Span::new(no_bitwise_start, no_bitwise_end),
+        }
+        .create_fix(source_text, comment_span);
+
+        assert_eq!(no_bitwise_fix.span, Span::new(no_bitwise_start, no_implicit_start));
+        assert_eq!(
+            apply_delete(source_text, no_bitwise_fix.span),
+            "// eslint-disable-next-line no-implicit-coercion"
+        );
+
+        let no_implicit_fix = RuleCommentRule {
+            directive_prefix: DirectivePrefix::Eslint,
+            rule_name: "no-implicit-coercion".to_string(),
+            name_span: Span::new(no_implicit_start, no_implicit_end),
+        }
+        .create_fix(source_text, comment_span);
+
+        assert_eq!(no_implicit_fix.span, Span::new(no_bitwise_end, no_implicit_end));
+        assert_eq!(
+            apply_delete(source_text, no_implicit_fix.span),
+            "// eslint-disable-next-line no-bitwise"
+        );
     }
 
     #[test]
     #[should_panic(
-        expected = "A `RuleCommentRule` should have a comma, because only one rule should be RuleCommentType::All"
+        expected = "A `RuleCommentRule` should have another rule in the same directive, because only one rule should be RuleCommentType::All"
     )]
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
     fn test_rule_comment_rule_create_fix_panic() {
@@ -1813,5 +2043,45 @@ function test() {
         // fix_span must delete the whole line (including the 4-space indentation).
         let result = apply_delete(source_text, unused[0].fix_span);
         assert_eq!(result, "function f() {\n    console.log();\n}\n");
+    }
+
+    #[test]
+    fn directive_rule_name_is_matched_on_full_rule_name_not_substring() {
+        // Regression test: a directive for an unrelated plugin rule whose name happens
+        // to contain an oxlint rule name as a substring (e.g. `canonical/no-re-export`
+        // vs the oxlint `export` rule) must NOT suppress the oxlint rule.
+        let source_text = r"
+            // eslint-disable-next-line canonical/no-re-export
+            export * from './foo';
+        ";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+
+        #[expect(clippy::cast_possible_truncation)]
+        let export_start = source_text.find("export *").unwrap() as u32;
+        let export_span = Span::sized(export_start, 21);
+        assert!(
+            !directives.contains("export", export_span),
+            "`canonical/no-re-export` directive must not suppress the `export` rule"
+        );
+
+        // But a directive that names the rule exactly (with or without a plugin prefix)
+        // still matches.
+        let source_text_exact = r"
+            // eslint-disable-next-line import/export
+            export * from './foo';
+        ";
+        let semantic = process_source(&allocator, source_text_exact);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        #[expect(clippy::cast_possible_truncation)]
+        let export_start = source_text_exact.find("export *").unwrap() as u32;
+        let export_span = Span::sized(export_start, 21);
+        assert!(
+            directives.contains("export", export_span),
+            "`import/export` directive must suppress the `export` rule"
+        );
     }
 }

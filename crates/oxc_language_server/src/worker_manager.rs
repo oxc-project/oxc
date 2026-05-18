@@ -4,7 +4,7 @@ use std::sync::{
 };
 
 use serde_json::Value;
-use tokio::sync::{RwLock, RwLockReadGuard};
+use tokio::sync::{OnceCell, RwLock, RwLockReadGuard};
 use tower_lsp_server::{
     jsonrpc::{Error, Result},
     ls_types::{Registration, Unregistration, Uri, WorkspaceFolder},
@@ -18,8 +18,7 @@ use crate::{
 
 enum WorkerGuardInner<'a> {
     Vec(RwLockReadGuard<'a, Vec<WorkspaceWorker>>),
-    #[cfg(test)]
-    Single(RwLockReadGuard<'a, WorkspaceWorker>),
+    Single(&'a WorkspaceWorker),
 }
 
 /// A RAII guard that holds a shared read lock over the workers list and exposes
@@ -38,7 +37,6 @@ impl std::ops::Deref for WorkerGuard<'_> {
     fn deref(&self) -> &Self::Target {
         match &self.guard {
             WorkerGuardInner::Vec(vec_guard) => &vec_guard[self.index],
-            #[cfg(test)]
             WorkerGuardInner::Single(single_guard) => single_guard,
         }
     }
@@ -46,10 +44,6 @@ impl std::ops::Deref for WorkerGuard<'_> {
 
 /// The mode that the [`WorkerManager`] is operating in, which determines how it manages workers and delegates the task to the tool.
 pub enum ManagerMode {
-    // the manager requires an explicit workspace to operate
-    // these workspaces are managed by the client and communicated via `initialize` + `didChangeWorkspaceFolders`
-    #[expect(dead_code)] // needs to be implemented
-    RequireWorkspace,
     // the manager works in 2 modes, when no workspaces are configured, it creates workers dynamically for file URIs.
     // When workspaces are reconfigured (added or removed by the client), it creates workers for those and ignores file URIs outside of them.
     DynamicNoWorkspaces(
@@ -58,8 +52,8 @@ pub enum ManagerMode {
     ),
     // The manager will create workers dynamically for file URIs. It also supports workspaces configured by the client, but does not require them.
     // This is useful for tasks on URIs that are outside of any configured workspace.
-    #[cfg(test)] // needs to be implemented
-    DynamicWithWorkspaces(Box<RwLock<WorkspaceWorker>>),
+    // At first it is `None` until the diagnostic mode is known, then it is set to a worker with the root URI `file:///` and the same diagnostic mode as the other workers.
+    DynamicWithWorkspaces(Box<OnceCell<WorkspaceWorker>>),
 }
 
 /// Manages the lifecycle of [`WorkspaceWorker`]s for the language server.
@@ -92,20 +86,41 @@ impl WorkerManager {
         }
     }
 
-    #[cfg(test)]
-    pub fn new_with_mode(tool_builder: Arc<dyn ToolBuilder>, mode: ManagerMode) -> Self {
-        Self { mode, tool_builder, workers: RwLock::new(vec![]) }
+    /// Create a new [`WorkerManager`] with `DynamicWithWorkspaces` mode.
+    pub fn new_dynamic(tool_builder: Arc<dyn ToolBuilder>) -> Self {
+        Self {
+            mode: ManagerMode::DynamicWithWorkspaces(Box::new(OnceCell::new())),
+            tool_builder,
+            workers: RwLock::new(vec![]),
+        }
     }
 
     // ── Starting / Stopping ───────────────────────────────────────────────────────
 
-    pub async fn start_manager(&self, workers: Vec<WorkspaceWorker>) {
+    /// # Panics
+    /// If `file:///` cannot be converted to `Uri`, which should never happen.
+    pub async fn start_manager(
+        &self,
+        workers: Vec<WorkspaceWorker>,
+        diagnostic_mode: DiagnosticMode,
+    ) {
         *self.workers.write().await = workers;
 
         // for dynamic workspaces we need to start them manually
-        #[cfg(test)]
-        if let ManagerMode::DynamicWithWorkspaces(worker) = &self.mode {
-            worker.read().await.start_worker(serde_json::Value::Null).await;
+        if let ManagerMode::DynamicWithWorkspaces(cell) = &self.mode {
+            debug_assert!(
+                cell.get().is_none(),
+                "dynamic worker should not be set when starting the manager"
+            );
+
+            let worker = WorkspaceWorker::new(
+                "file:///".parse().unwrap(),
+                Arc::clone(&self.tool_builder),
+                diagnostic_mode,
+            );
+            worker.start_worker(serde_json::Value::Null).await;
+
+            let _ = cell.set(worker);
         }
     }
 
@@ -125,10 +140,12 @@ impl WorkerManager {
             clear_uris.extend(worker_uris);
         }
 
-        #[cfg(test)]
         if let ManagerMode::DynamicWithWorkspaces(worker) = &self.mode {
-            let (worker_uris, _) = worker.read().await.shutdown().await;
-            clear_uris.extend(worker_uris);
+            let dynamic_worker = worker.get();
+            if let Some(dynamic_worker) = dynamic_worker {
+                let (worker_uris, _) = dynamic_worker.shutdown().await;
+                clear_uris.extend(worker_uris);
+            }
         }
 
         clear_uris
@@ -142,12 +159,10 @@ impl WorkerManager {
         self.workers.read().await
     }
 
-    /// Acquire a shared read lock over the dynamic worker in `DynamicWithWorkspaces` mode, if enabled.
-    #[cfg_attr(not(test), expect(clippy::unused_async))] // when removing the test-only mode, this method will need to perform async initialization for the dynamic worker
-    pub async fn read_dynamic_worker(&self) -> Option<RwLockReadGuard<'_, WorkspaceWorker>> {
-        #[cfg(test)]
+    /// Return the dynamic worker from `DynamicWithWorkspaces` mode, if enabled.
+    pub fn read_dynamic_worker(&self) -> Option<&WorkspaceWorker> {
         if let ManagerMode::DynamicWithWorkspaces(worker) = &self.mode {
-            return Some(worker.read().await);
+            return worker.get();
         }
         None
     }
@@ -240,13 +255,16 @@ impl WorkerManager {
             }
         }
 
-        #[cfg(test)]
         if let ManagerMode::DynamicWithWorkspaces(worker) = &self.mode {
+            let Some(worker) = worker.get() else {
+                debug!(
+                    "dynamic worker is not initialized yet, cannot find worker for URI {}",
+                    uri.as_str()
+                );
+                return None;
+            };
             // In DynamicWithWorkspaces mode, if no worker matches the URI, fallback to the dynamic worker.
-            return Some(WorkerGuard {
-                guard: WorkerGuardInner::Single(worker.read().await),
-                index: 0,
-            });
+            return Some(WorkerGuard { guard: WorkerGuardInner::Single(worker), index: 0 });
         }
 
         None
@@ -262,6 +280,9 @@ impl WorkerManager {
 
     /// Validate that every URI in `workspaces` can be resolved to a local file
     /// path.  Returns an LSP error on the first invalid URI.
+    ///
+    /// # Errors
+    /// * If any URI in `workspaces` cannot be converted to a file path, an error is returned indicating which URI was invalid.
     pub fn assert_workspaces_are_valid_paths(workspaces: &[Uri]) -> Result<()> {
         for uri in workspaces {
             if uri.to_file_path().is_none() {
@@ -367,7 +388,11 @@ impl WorkerManager {
         {
             let mut workers = self.workers.write().await;
             if self.is_single_file_mode() && Self::find_worker_for_uri(&workers, uri).is_none() {
-                workers.push(worker.take().unwrap());
+                #[expect(clippy::missing_panics_doc)]
+                // We wrapped the worker in `Some` to avoid moving it before acquiring the lock, so it should always be `Some` here.
+                workers.push(worker.take().expect(
+                    "freshly created worker should be available when storing it in the list",
+                ));
             }
         }
 
@@ -430,7 +455,6 @@ mod tests {
     use std::path::PathBuf;
     use std::sync::Arc;
 
-    use tokio::sync::RwLock;
     use tower_lsp_server::ls_types::Uri;
 
     use crate::{
@@ -461,7 +485,7 @@ mod tests {
         );
         let workers = vec![workspace, workspace_deeper];
         let manager = WorkerManager::new(create_builder());
-        manager.start_manager(workers).await;
+        manager.start_manager(workers, DiagnosticMode::None).await;
 
         // File in deeper workspace should match the deeper worker
         let file_in_deeper: Uri = "file:///path/to/workspace/deeper/file.js".parse().unwrap();
@@ -495,7 +519,7 @@ mod tests {
         );
         let workers = vec![workspace, workspace2];
         let manager = WorkerManager::new(create_builder());
-        manager.start_manager(workers).await;
+        manager.start_manager(workers, DiagnosticMode::None).await;
 
         // File in workspace-2 should match workspace-2 only
         let file_in_workspace2: Uri = "file:///path/to/workspace-2/file.js".parse().unwrap();
@@ -519,7 +543,7 @@ mod tests {
         );
         let workers = vec![workspace];
         let manager = WorkerManager::new(create_builder());
-        manager.start_manager(workers).await;
+        manager.start_manager(workers, DiagnosticMode::None).await;
 
         // File in workspace should match
         let file_in_workspace: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
@@ -537,7 +561,7 @@ mod tests {
     async fn test_get_worker_for_uri_no_workers() {
         let workers: Vec<WorkspaceWorker> = vec![];
         let manager = WorkerManager::new(create_builder());
-        manager.start_manager(workers).await;
+        manager.start_manager(workers, DiagnosticMode::None).await;
 
         let file: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
         let worker = manager.get_worker_for_uri(&file).await;
@@ -556,7 +580,7 @@ mod tests {
         // non file URI should use first workspace
         let vscode_userdata_file: Uri = "vscode-userdata:///Untitled-1".parse().unwrap();
         let manager = WorkerManager::new(create_builder());
-        manager.start_manager(workers).await;
+        manager.start_manager(workers, DiagnosticMode::None).await;
         let worker = manager.get_worker_for_uri(&vscode_userdata_file).await;
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
@@ -574,7 +598,7 @@ mod tests {
         // non file URI should use first workspace
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let manager = WorkerManager::new(create_builder());
-        manager.start_manager(workers).await;
+        manager.start_manager(workers, DiagnosticMode::None).await;
         let worker = manager.get_worker_for_uri(&untitled_file).await;
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
@@ -597,7 +621,7 @@ mod tests {
         // non file URI should use first workspace (not second)
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let manager = WorkerManager::new(create_builder());
-        manager.start_manager(workers).await;
+        manager.start_manager(workers, DiagnosticMode::None).await;
         let worker = manager.get_worker_for_uri(&untitled_file).await;
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace1");
@@ -610,7 +634,7 @@ mod tests {
         // Untitled file with no workspaces should return None
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let manager = WorkerManager::new(create_builder());
-        manager.start_manager(workers).await;
+        manager.start_manager(workers, DiagnosticMode::None).await;
         let worker = manager.get_worker_for_uri(&untitled_file).await;
         assert!(worker.is_none());
     }
@@ -632,7 +656,7 @@ mod tests {
         // Untitled file should use first workspace (not nested one)
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let manager = WorkerManager::new(create_builder());
-        manager.start_manager(workers).await;
+        manager.start_manager(workers, DiagnosticMode::None).await;
         let worker = manager.get_worker_for_uri(&untitled_file).await;
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
@@ -682,7 +706,7 @@ mod tests {
         );
         let workers = vec![workspace];
         let manager = WorkerManager::new(create_builder());
-        manager.start_manager(workers).await;
+        manager.start_manager(workers, DiagnosticMode::None).await;
 
         // File with different case should still match on Windows
         let file: Uri = Uri::from_file_path(fixture.join("text.txt")).unwrap();
@@ -692,18 +716,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_worker_for_uri_dynamic_with_workspaces_no_workspaces() {
-        let dynamic_worker = WorkspaceWorker::new(
-            "file:///".parse().unwrap(),
-            create_builder(),
-            DiagnosticMode::None,
-        );
-        let manager = WorkerManager::new_with_mode(
-            create_builder(),
-            crate::worker_manager::ManagerMode::DynamicWithWorkspaces(Box::new(RwLock::new(
-                dynamic_worker,
-            ))),
-        );
-        manager.start_manager(vec![]).await;
+        let manager = WorkerManager::new_dynamic(create_builder());
+        manager.start_manager(vec![], DiagnosticMode::None).await;
 
         // File in workspace should match dynamic worker
         let file: Uri = "file:///any/path/file.js".parse().unwrap();
@@ -720,36 +734,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_worker_for_uri_dynamic_with_workspaces_with_workspaces() {
-        let dynamic_worker = WorkspaceWorker::new(
-            "file:///".parse().unwrap(),
-            create_builder(),
-            DiagnosticMode::None,
-        );
-        let manager = WorkerManager::new_with_mode(
-            create_builder(),
-            crate::worker_manager::ManagerMode::DynamicWithWorkspaces(Box::new(RwLock::new(
-                dynamic_worker,
-            ))),
-        );
-
-        // File in workspace should match dynamic worker
-        let file: Uri = "file:///any/path/file.js".parse().unwrap();
-        let worker = manager.get_worker_for_uri(&file).await;
-        assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///");
-
-        // Non-file URI should also match dynamic worker
-        let non_file_uri: Uri = "untitled:///Untitled-1".parse().unwrap();
-        let worker = manager.get_worker_for_uri(&non_file_uri).await;
-        assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///");
-
+        let manager = WorkerManager::new_dynamic(create_builder());
         manager
-            .start_manager(vec![WorkspaceWorker::new(
-                "file:///path/to/workspace".parse().unwrap(),
-                create_builder(),
+            .start_manager(
+                vec![WorkspaceWorker::new(
+                    "file:///path/to/workspace".parse().unwrap(),
+                    create_builder(),
+                    DiagnosticMode::None,
+                )],
                 DiagnosticMode::None,
-            )])
+            )
             .await;
 
         // Files outside workspace should still match dynamic worker

@@ -14,13 +14,14 @@ fn no_conditional_in_test(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub const DOCUMENTATION: &str = r#"### What it does
+pub const DOCUMENTATION: &str = r"### What it does
 
 Disallow conditional statements in tests.
 
 ### Why is this bad?
 
-Conditional statements in tests can make the test harder to read and understand. It is better to have a single test case per test function.
+Conditional statements in tests can make the test harder to read and understand.
+It is better to have a single test case per test function.
 
 ### Examples
 
@@ -89,18 +90,7 @@ it('baz', async () => {
   await expect(promiseValue()).resolves.toBe(1);
 });
 ```
-
-This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-in-test.md),
-to use it, add the following configuration to your `.oxlintrc.json`:
-
-```json
-{
-  "rules": {
-     "vitest/no-conditional-in-test": "error"
-  }
-}
-```
-"#;
+";
 
 pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     match node.kind() {

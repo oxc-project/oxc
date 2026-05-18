@@ -28,23 +28,25 @@ fn no_underscore_dangle_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnderscoreDangleConfig {
-    // Whether to allow dangling underscores in members of the `super` object.
+    /// Whether to allow dangling underscores in members of the `super` object.
     allow_after_super: bool,
-    // Whether to allow dangling underscores in members of the `this.constructor` object.
+    /// Whether to allow dangling underscores in members of the `this.constructor` object.
     allow_after_this_constructor: bool,
-    // An array of variable names that are allowed to have dangling underscores.
+    /// An array of variable names that are allowed to have dangling underscores.
     allow: Vec<String>,
-    // Whether to allow dangling underscores in members of the `this` object.
+    /// Whether to allow dangling underscores in members of the `this` object.
     allow_after_this: bool,
-    // Whether to allow dangling underscores in variable names assigned by array destructuring.
+    /// Whether to allow dangling underscores in variable names assigned by array destructuring.
     allow_in_array_destructuring: bool,
-    // Whether to allow dangling underscores in variable names assigned by object destructuring.
+    /// Whether to allow dangling underscores in variable names assigned by object destructuring.
     allow_in_object_destructuring: bool,
-    // Whether to allow dangling underscores in function parameter names.
+    /// Whether to allow dangling underscores in function parameter names.
     allow_function_params: bool,
-    // Whether to enforce dangling underscores in class field names.
+    /// Whether to allow dangling underscores in `using` and `await using` declarations.
+    allow_in_using_declarations: bool,
+    /// Whether to enforce dangling underscores in class field names.
     enforce_in_class_fields: bool,
-    // Whether to enforce dangling underscores in method names.
+    /// Whether to enforce dangling underscores in method names.
     enforce_in_method_names: bool,
 }
 
@@ -69,6 +71,7 @@ impl Default for NoUnderscoreDangleConfig {
             allow_in_array_destructuring: true,
             allow_in_object_destructuring: true,
             allow_function_params: true,
+            allow_in_using_declarations: false,
             enforce_in_class_fields: false,
             enforce_in_method_names: false,
         }
@@ -84,7 +87,7 @@ declare_oxc_lint!(
     ///
     /// There is a long history of using `_` as a prefix or suffix for private members in JavaScript.
     /// It is however recommended to use the formal private class feature introduced in ES2022.
-    /// See  <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements> for more information.
+    /// See <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements> for more information.
     ///
     /// ### Examples
     ///
@@ -109,7 +112,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     config = NoUnderscoreDangle,
-    version = "next",
+    version = "1.62.0",
 );
 
 impl Rule for NoUnderscoreDangle {
@@ -139,6 +142,7 @@ enum BindingContext {
     ArrayDestructure,
     ObjectDestructure,
     FunctionParam,
+    Using,
     Plain,
     NotInteresting,
 }
@@ -191,6 +195,7 @@ impl NoUnderscoreDangle {
             BindingContext::ArrayDestructure => self.allow_in_array_destructuring,
             BindingContext::ObjectDestructure => self.allow_in_object_destructuring,
             BindingContext::FunctionParam => self.allow_function_params,
+            BindingContext::Using => self.allow_in_using_declarations,
             BindingContext::Plain => false,
             BindingContext::NotInteresting => return,
         };
@@ -224,8 +229,12 @@ fn binding_context(ctx: &LintContext, id: NodeId) -> BindingContext {
                     BindingContext::FunctionParam
                 };
             }
-            AstKind::VariableDeclarator(_) => {
-                return destructure_context.unwrap_or(BindingContext::Plain);
+            AstKind::VariableDeclarator(declarator) => {
+                return if declarator.kind.is_using() {
+                    BindingContext::Using
+                } else {
+                    destructure_context.unwrap_or(BindingContext::Plain)
+                };
             }
             _ => return BindingContext::NotInteresting,
         }
@@ -388,6 +397,14 @@ fn test() {
         ("import('foo.json', { _with: { _type } })", None),         // { "ecmaVersion": 2025 }
         ("const o = { _foo: 'bar' }", Some(serde_json::json!([{ "enforceInMethodNames": true }]))), // { "ecmaVersion": 6 },
         (
+            "using _guard = enterCriticalSection();",
+            Some(serde_json::json!([{ "allowInUsingDeclarations": true }])),
+        ),
+        (
+            "async function foo() { await using _guard = enterCriticalSection(); }",
+            Some(serde_json::json!([{ "allowInUsingDeclarations": true }])),
+        ),
+        (
             "function foo([_bar]) {}",
             Some(serde_json::json!([{ "allowInArrayDestructuring": false }])),
         ), // { "ecmaVersion": 6 },
@@ -515,6 +532,11 @@ fn test() {
         ("class foo { #field_; }", Some(serde_json::json!([{ "enforceInClassFields": true }]))), // { "ecmaVersion": 2022 },
         ("var __filename = 1;", None),
         ("class Foo { #_x; foo() { this.#_x; } }", None),
+        ("using _guard = enterCriticalSection();", None),
+        (
+            "using guard_ = enterCriticalSection();",
+            Some(serde_json::json!([{ "allowInUsingDeclarations": false }])),
+        ),
     ];
 
     Tester::new(NoUnderscoreDangle::NAME, NoUnderscoreDangle::PLUGIN, pass, fail)

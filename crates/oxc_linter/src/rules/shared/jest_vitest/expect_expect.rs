@@ -26,7 +26,7 @@ fn expect_expect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub const DOCUMENTATION: &str = r#"### What it does
+pub const DOCUMENTATION: &str = r"### What it does
 
 This rule triggers when there is no call made to `expect` in a test, ensure that there is at least one `expect` call made in a test.
 
@@ -43,18 +43,7 @@ it('should be a test', () => {
 });
 test('should assert something', () => {});
 ```
-
-This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/expect-expect.md),
-to use it, add the following configuration to your `.oxlintrc.json`:
-
-```json
-{
-  "rules": {
-     "vitest/expect-expect": "error"
-  }
-}
-```
-"#;
+";
 #[derive(Debug, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ExpectExpectConfig {

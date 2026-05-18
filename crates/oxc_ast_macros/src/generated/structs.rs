@@ -155,7 +155,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("TSMappedType", StructDetails { field_order: Some(&[1, 0, 3, 4, 5, 6, 7, 8, 2]) }),
         ("TSTypeReference", StructDetails { field_order: Some(&[1, 0, 2, 3]) }),
         ("SymbolId", StructDetails { field_order: None }),
-        ("FixedSizeAllocatorMetadata", StructDetails { field_order: Some(&[1, 0, 2]) }),
+        ("FixedSizeAllocatorMetadata", StructDetails { field_order: None }),
         ("RawTransferData", StructDetails { field_order: None }),
         ("CharacterClassRange", StructDetails { field_order: None }),
         ("Hashbang", StructDetails { field_order: Some(&[1, 0, 2]) }),

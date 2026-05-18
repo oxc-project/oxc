@@ -816,11 +816,6 @@ fn test() {
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
-            r#"import "fs";
-            import "fs""#,
-            None,
-        ),
-        (
             r#"import { type Merge } from "lodash-es";
             import { type Find } from "lodash-es";"#,
             None,

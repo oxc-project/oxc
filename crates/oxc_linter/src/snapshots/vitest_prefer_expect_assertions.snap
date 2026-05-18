@@ -1,0 +1,241 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it("it1", () => foo())
+   · ──────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:3:13]
+ 2 │                 import * as vi from 'vitest';
+ 3 │ ╭─▶             it('my test description', ({ expect }) => {
+ 4 │ │                 const a = 1;
+ 5 │ │                 const b = 2;
+ 6 │ │   
+ 7 │ │                 expect(sum(a, b)).toBe(a + b);
+ 8 │ ╰─▶             })
+ 9 │                 
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `context.expect.assertions(<number of assertions>)` or `context.expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             it('my test description', (context) => {
+ 3 │ │                 const a = 1;
+ 4 │ │                 const b = 2;
+ 5 │ │   
+ 6 │ │                 context.expect(sum(a, b)).toBe(a + b);
+ 7 │ ╰─▶             })
+ 8 │                 
+   ╰────
+  help: Add `context.expect.hasAssertions()` or `context.expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it('resolves', () => expect(staged()).toBe(true));
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it('resolves', async () => expect(await staged()).toBe(true));
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it("it1", () => {})
+   · ───────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it("it1", () => { foo()})
+   · ─────────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ it("it1", function() {var a = 2;})
+   · ──────────────────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): `expect.assertions` expects a single argument of type number.
+   ╭─[prefer_expect_assertions.tsx:1:23]
+ 1 │ it("it1", function() {expect.assertions();})
+   ·                       ─────────────────
+   ╰────
+  help: Pass a single numeric argument to `expect.assertions()`.
+
+  ⚠ vitest(prefer-expect-assertions): `expect.assertions` expects a single argument of type number.
+   ╭─[prefer_expect_assertions.tsx:1:42]
+ 1 │ it("it1", function() {expect.assertions(1,2);})
+   ·                                          ──
+   ╰────
+  help: Pass a single numeric argument to `expect.assertions()`.
+
+  ⚠ vitest(prefer-expect-assertions): `expect.assertions` expects a single argument of type number.
+   ╭─[prefer_expect_assertions.tsx:1:42]
+ 1 │ it("it1", function() {expect.assertions(1,2,);})
+   ·                                          ───
+   ╰────
+  help: Pass a single numeric argument to `expect.assertions()`.
+
+  ⚠ vitest(prefer-expect-assertions): This argument should be a number.
+   ╭─[prefer_expect_assertions.tsx:1:41]
+ 1 │ it("it1", function() {expect.assertions("1");})
+   ·                                         ───
+   ╰────
+  help: Replace this argument with a numeric literal.
+
+  ⚠ vitest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:1:44]
+ 1 │ it("it1", function() {expect.hasAssertions("1");})
+   ·                                            ───
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ vitest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:1:44]
+ 1 │ it("it1", function() {expect.hasAssertions("1",);})
+   ·                                            ───
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ vitest(prefer-expect-assertions): `expect.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:1:44]
+ 1 │ it("it1", function() {expect.hasAssertions("1", "2");})
+   ·                                            ────────
+   ╰────
+  help: Remove the arguments from `expect.hasAssertions()`.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:9:18]
+  8 │     
+  9 │ ╭─▶                  it("it1", () => {
+ 10 │ │                   for (const number of getNumbers()) {
+ 11 │ │                     expect(number).toBeGreaterThan(0);
+ 12 │ │                   }
+ 13 │ ╰─▶                  });
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("returns numbers that are greater than four", async () => {
+ 2 │ │                    for (const number of await getNumbers()) {
+ 3 │ │                   expect(number).toBeGreaterThan(4);
+ 4 │ │                    }
+ 5 │ ╰─▶                });
+ 6 │     
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+    ╭─[prefer_expect_assertions.tsx:7:16]
+  6 │     
+  7 │ ╭─▶                it("returns numbers that are greater than five", () => {
+  8 │ │                    for (const number of getNumbers()) {
+  9 │ │                   expect(number).toBeGreaterThan(5);
+ 10 │ │                    }
+ 11 │ ╰─▶                });
+ 12 │                     
+    ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ ╭─▶ it("it1", () => {
+ 2 │ │                   const foo = { bar({ baz }) { baz(); } };
+ 3 │ ╰─▶               });
+ 4 │                     
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `myExpect.assertions(<number of assertions>)` or `myExpect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │     import * as vi from 'vitest';
+ 2 │ ╭─▶             it('missing assertions', ({ expect: myExpect }) => {
+ 3 │ │                 myExpect(true).toBe(true);
+ 4 │ ╰─▶             })
+ 5 │                 
+   ╰────
+  help: Add `myExpect.hasAssertions()` or `myExpect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `ctx.expect.assertions(<number of assertions>)` or `ctx.expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │     import * as vi from 'vitest';
+ 2 │ ╭─▶             it('missing assertions', (ctx) => {
+ 3 │ │                 ctx.expect(true).toBe(true);
+ 4 │ ╰─▶             })
+ 5 │                 
+   ╰────
+  help: Add `ctx.expect.hasAssertions()` or `ctx.expect.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): `e.assertions` expects a single argument of type number.
+   ╭─[prefer_expect_assertions.tsx:2:43]
+ 1 │ import * as vi from 'vitest';
+ 2 │             it("it1", ({ expect: e }) => {e.assertions();})
+   ·                                           ────────────
+   ╰────
+  help: Pass a single numeric argument to `e.assertions()`.
+
+  ⚠ vitest(prefer-expect-assertions): This argument should be a number.
+   ╭─[prefer_expect_assertions.tsx:2:55]
+ 1 │ import * as vi from 'vitest';
+ 2 │             it("it1", (ctx) => {ctx.expect.assertions("1");})
+   ·                                                       ───
+   ╰────
+  help: Replace this argument with a numeric literal.
+
+  ⚠ vitest(prefer-expect-assertions): `e.hasAssertions` expects no arguments.
+   ╭─[prefer_expect_assertions.tsx:2:59]
+ 1 │ import * as vi from 'vitest';
+ 2 │             it("it1", ({ expect: e }) => {e.hasAssertions("1");})
+   ·                                                           ───
+   ╰────
+  help: Remove the arguments from `e.hasAssertions()`.
+
+  ⚠ vitest(prefer-expect-assertions): `ctx.expect.assertions` expects a single argument of type number.
+   ╭─[prefer_expect_assertions.tsx:2:56]
+ 1 │ import * as vi from 'vitest';
+ 2 │             it("it1", (ctx) => {ctx.expect.assertions(1, 2);})
+   ·                                                        ───
+   ╰────
+  help: Pass a single numeric argument to `ctx.expect.assertions()`.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │ import { expect as e } from 'vitest';
+ 2 │             test("reassigned", () => { e(true).toBe(true); });
+   ·             ─────────────────────────────────────────────────
+   ╰────
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │ import { expect as e } from 'vite-plus/test';
+ 2 │             test("re-exported missing", () => { e(true).toBe(true); });
+   ·             ──────────────────────────────────────────────────────────
+   ╰────
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:4:17]
+ 3 │                     beforeEach(() => { expect.hasAssertions(); });
+ 4 │ ╭─▶                 it('test', () => {
+ 5 │ │                       e(true).toBe(true);
+ 6 │ ╰─▶                 });
+ 7 │                 });
+   ╰────
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in this test.

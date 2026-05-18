@@ -117,7 +117,7 @@ declare_oxc_lint!(
     react,
     correctness,
     config = NoDidUpdateSetStateConfig,
-    version = "next"
+    version = "1.62.0"
 );
 
 impl Rule for NoDidUpdateSetState {

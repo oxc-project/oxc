@@ -15,15 +15,17 @@ catalog:
   "@napi-rs/wasm-runtime": 1.1.4
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  eslint: 9.39.4
+  eslint: 10.3.0
   json-schema-to-typescript: ^15.0.4
-  publint: 0.3.18
-  rolldown: 1.0.0-rc.17
-  tsdown: 0.21.10
-  vitest: 4.1.4
+  publint: 0.3.21
+  rolldown: 1.0.1
+  tsdown: 0.22.0
+  vitest: 4.1.6
 
-onlyBuiltDependencies:
-  - "@vscode/vsce-sign@2.0.8"
-  - esbuild@0.25.11
+allowBuilds:
+  "@vscode/vsce-sign@2.0.8": true
+  esbuild@0.27.7: true
+  esbuild@0.28.0: true
+  "@nestjs/core@11.1.9": false
 
 verifyDepsBeforeRun: install

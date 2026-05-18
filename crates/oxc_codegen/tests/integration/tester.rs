@@ -107,16 +107,21 @@ pub fn codegen_options(source_text: &str, options: &CodegenOptions) -> CodegenRe
 
 #[track_caller]
 pub fn test_idempotency(source_text: &str) {
+    test_idempotency_options(source_text, &default_options());
+}
+
+#[track_caller]
+pub fn test_idempotency_options(source_text: &str, options: &CodegenOptions) {
     let allocator = Allocator::default();
     let source_type = SourceType::tsx();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
-    let first = Codegen::new().with_options(default_options()).build(&ret.program).code;
+    let first = Codegen::new().with_options(options.clone()).build(&ret.program).code;
 
     let allocator2 = Allocator::default();
     let ret2 = Parser::new(&allocator2, &first, source_type).parse();
     assert!(ret2.errors.is_empty(), "Parse errors on second pass: {:?}", ret2.errors);
-    let second = Codegen::new().with_options(default_options()).build(&ret2.program).code;
+    let second = Codegen::new().with_options(options.clone()).build(&ret2.program).code;
 
     assert_eq!(
         first, second,

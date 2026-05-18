@@ -1,0 +1,119 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=sarif --report-unused-disable-directives disable-directive.js
+working directory: fixtures/cli/output_formatter_diagnostic
+----------
+{
+  "version": "2.1.0",
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "oxlint",
+          "version": "<variable>",
+          "semanticVersion": "<variable>",
+          "informationUri": "https://oxc.rs/docs/guide/usage/linter.html",
+          "rules": [
+            {
+              "id": "OXL0001",
+              "name": "oxlint-diagnostic",
+              "shortDescription": {
+                "text": "Oxlint diagnostic"
+              },
+              "fullDescription": {
+                "text": "An oxlint diagnostic that is associated with an artifact but not with a lint rule."
+              }
+            }
+          ]
+        }
+      },
+      "artifacts": [
+        {
+          "location": {
+            "uri": "disable-directive.js"
+          }
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "OXL0001",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "Unused eslint-disable directive (no problems were reported)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "disable-directive.js",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 1,
+                  "endLine": 9,
+                  "endColumn": 40
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "OXL0001",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "Unused oxlint-disable directive (no problems were reported)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "disable-directive.js",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 1,
+                  "endLine": 12,
+                  "endColumn": 40
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "OXL0001",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "Unused oxlint-disable directive (no problems were reported)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "disable-directive.js",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 15,
+                  "startColumn": 1,
+                  "endLine": 15,
+                  "endColumn": 47
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "unicodeCodePoints"
+    }
+  ]
+}----------
+CLI result: LintSucceeded
+----------

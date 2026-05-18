@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$data` is reserved.
+
+  ⚠ vue(no-reserved-keys): Key `$data` is reserved.
    ╭─[no_reserved_keys.tsx:4:27]
  3 │                 export default {
  4 │                   props: ['$data']
@@ -9,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$data` is reserved.
+  ⚠ vue(no-reserved-keys): Key `$data` is reserved.
    ╭─[no_reserved_keys.tsx:4:28]
  3 │                 export default {
  4 │                   props: { $data: { type: String } }
@@ -17,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$emit` is reserved.
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
    ╭─[no_reserved_keys.tsx:4:30]
  3 │                 export default {
  4 │                   methods: { $emit() {} }
@@ -25,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$forceUpdate` is reserved.
+  ⚠ vue(no-reserved-keys): Key `$forceUpdate` is reserved.
    ╭─[no_reserved_keys.tsx:4:31]
  3 │                 export default {
  4 │                   computed: { $forceUpdate() {} }
@@ -33,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$el` is reserved.
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
    ╭─[no_reserved_keys.tsx:4:37]
  3 │                 export default {
  4 │                   data() { return { $el: 1 } }
@@ -41,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
    ╭─[no_reserved_keys.tsx:4:37]
  3 │                 export default {
  4 │                   data() { return { _foo: 1 } }
@@ -49,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$emit` is reserved.
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
    ╭─[no_reserved_keys.tsx:4:30]
  3 │                 defineComponent({
  4 │                   methods: { $emit() {} }
@@ -57,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$el` is reserved.
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
    ╭─[no_reserved_keys.tsx:4:28]
  3 │                 new Vue({
  4 │                   props: { $el: String }
@@ -65,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$el` is reserved.
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
    ╭─[no_reserved_keys.tsx:4:39]
  3 │                 new Vue({
  4 │                   setup () { return { $el: '' } }
@@ -73,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Key `$el` is reserved.
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
    ╭─[no_reserved_keys.tsx:4:43]
  3 │                 new Vue({
  4 │                   asyncData () { return { $el: '' } }
@@ -81,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
    ╭─[no_reserved_keys.tsx:4:27]
  3 │                 new Vue({
  4 │                   data: { _foo: String }
@@ -89,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
    ╭─[no_reserved_keys.tsx:4:42]
  3 │                 new Vue({
  4 │                   data: () => { return { _foo: String } }
@@ -97,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
    ╭─[no_reserved_keys.tsx:4:34]
  3 │                 new Vue({
  4 │                   data: () => ({ _foo: String })
@@ -105,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ eslint-plugin-vue(no-reserved-keys): Keys starting with `_` are reserved in `asyncData` group.
+  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `asyncData` group.
    ╭─[no_reserved_keys.tsx:4:39]
  3 │                 new Vue({
  4 │                   asyncData: () => ({ _foo: String })
