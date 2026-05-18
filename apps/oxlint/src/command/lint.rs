@@ -1,4 +1,4 @@
-use std::{path::PathBuf, str::FromStr};
+use std::{path::PathBuf, str::FromStr, sync::OnceLock};
 
 use bpaf::{Bpaf, doc::Style};
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
@@ -93,8 +93,16 @@ impl LintCommand {
     ///
     /// If `--threads` option is not used, or `--threads 0` is given,
     /// default to the number of available CPU cores.
+    ///
+    /// Idempotent: rayon's global pool can only be initialized once per
+    /// process. The `OnceLock` guarantees we only call `build_global` once,
+    /// so the napi `lint()` entry point can be invoked more than once in
+    /// the same Node process. The thread count from the first call wins;
+    /// subsequent calls keep that pool.
     #[expect(clippy::print_stderr)]
     fn init_rayon_thread_pool(threads: Option<usize>) {
+        static RAYON_INIT: OnceLock<()> = OnceLock::new();
+
         // Always initialize thread pool, even if using default thread count,
         // to ensure thread pool's thread count is locked after this point.
         // `rayon::current_num_threads()` will always return the same number after this point.
@@ -124,7 +132,9 @@ impl LintCommand {
             1
         };
 
-        rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+        RAYON_INIT.get_or_init(|| {
+            rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+        });
     }
 }
 
