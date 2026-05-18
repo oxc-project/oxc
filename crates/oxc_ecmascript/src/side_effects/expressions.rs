@@ -12,6 +12,7 @@ use super::known_globals::{
     is_known_global_property, is_known_global_property_deep, is_pure_callable_constructor,
     is_pure_collection_constructor, is_pure_global_function, is_pure_global_method_call,
     is_typed_array_constructor, is_unconditionally_pure_constructor, is_valid_regexp,
+    proxy_sensitive_arg_index,
 };
 use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 
@@ -601,6 +602,22 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
 
         if is_pure_global_method_call(object.name.as_str(), name) {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+        }
+
+        if let Some(idx) = proxy_sensitive_arg_index(object.name.as_str(), name) {
+            if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                return true;
+            }
+            // If property reads are assumed pure, then Proxy traps are irrelevant.
+            if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+                return false;
+            }
+            // Otherwise, if the argument's type is undetermined, it could be a
+            // Proxy. Spread elements are conservatively treated as side-effectful
+            // since we can't statically determine the spread value.
+            return self.arguments.get(idx).is_some_and(|arg| {
+                arg.as_expression().is_none_or(|e| e.value_type(ctx).is_undetermined())
+            });
         }
 
         true

@@ -400,13 +400,33 @@ pub(super) fn is_pure_global_method_call(object: &str, method: &str) -> bool {
         "Date" => matches!(method, "now" | "parse" | "UTC"),
         "Math" => is_pure_math_method(method),
         "Number" => matches!(method, "isFinite" | "isInteger" | "isNaN" | "isSafeInteger" | "parseFloat" | "parseInt"),
-        "Object" => matches!(method, "create" | "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors" | "getOwnPropertyNames"
-                | "getOwnPropertySymbols" | "getPrototypeOf" | "hasOwn" | "is" | "isExtensible" | "isFrozen" | "isSealed" | "keys"),
+        "Object" => method == "is",
         "String" => matches!(method, "fromCharCode" | "fromCodePoint" | "raw"),
         "Symbol" => matches!(method, "for" | "keyFor"),
         "URL" => method == "canParse",
         _ if is_typed_array_constructor(object) => method == "of",
         _ => false,
+    }
+}
+
+/// For global method calls that are pure *except* for Proxy traps on a specific
+/// argument, returns the index of the argument that must not be a Proxy.
+/// Returns `None` for methods not handled here (either unconditionally pure
+/// via `is_pure_global_method_call`, or unconditionally impure).
+#[rustfmt::skip]
+pub(super) fn proxy_sensitive_arg_index(object: &str, method: &str) -> Option<usize> {
+    match (object, method) {
+        // These Object methods introspect their first argument via internal
+        // methods that Proxy can trap (e.g. [[GetOwnProperty]], [[OwnPropertyKeys]]).
+        ("Object", "entries" | "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors"
+            | "getOwnPropertyNames" | "getOwnPropertySymbols" | "getPrototypeOf"
+            | "hasOwn" | "isExtensible" | "isFrozen" | "isSealed"
+            | "keys" | "values") => Some(0),
+        // Object.create(proto) is pure, but Object.create(proto, props)
+        // calls ObjectDefineProperties which reads [[OwnPropertyKeys]]
+        // and [[Get]] on props — both Proxy-trappable.
+        ("Object", "create") => Some(1),
+        _ => None,
     }
 }
 
