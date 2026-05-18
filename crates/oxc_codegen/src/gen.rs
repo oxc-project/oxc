@@ -1502,7 +1502,8 @@ impl GenExpr for CallExpression<'_> {
             if let Some(type_parameters) = &self.type_arguments {
                 type_parameters.print(p, ctx);
             }
-            if !try_print_cjs_define_property_call(p, self, ctx) {
+            if !try_print_cjs_define_property_call(p, self, ctx) && !try_print_require_call(p, self)
+            {
                 p.print_arguments(self.span, &self.arguments, ctx);
             }
         });
@@ -1544,6 +1545,25 @@ fn try_print_cjs_define_property_call(
             arg.print(p, ctx);
         }
     }
+    p.add_source_mapping_end(call.span);
+    p.print_ascii_byte(b')');
+    true
+}
+
+/// Print `require("...")` with a plain string literal so `cjs-module-lexer` (used by Node for
+/// CJS/ESM interop) can detect reexport sources. Returns `true` if printed.
+///
+/// Minify-only: outside minify, `print_string_literal` already uses `self.quote` (never
+/// backtick), and this path skips the argument comments that `print_arguments` preserves.
+fn try_print_require_call(p: &mut Codegen<'_>, call: &CallExpression<'_>) -> bool {
+    if !p.options.minify {
+        return false;
+    }
+    let Some(str_lit) = call.common_js_require() else {
+        return false;
+    };
+    p.print_ascii_byte(b'(');
+    p.print_string_literal(str_lit, false);
     p.add_source_mapping_end(call.span);
     p.print_ascii_byte(b')');
     true
