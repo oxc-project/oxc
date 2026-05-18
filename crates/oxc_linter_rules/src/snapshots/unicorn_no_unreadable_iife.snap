@@ -1,0 +1,74 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
+   ╭─[no_unreadable_iife.tsx:1:20]
+ 1 │ const foo = (() => (a ? b : c))();
+   ·                    ───────────
+   ╰────
+  help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
+
+  ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
+   ╭─[no_unreadable_iife.tsx:1:20]
+ 1 │ ╭─▶ const foo = (() => (
+ 2 │ │                   a ? b : c
+ 3 │ ╰─▶             ))();
+   ╰────
+  help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
+
+  ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
+   ╭─[no_unreadable_iife.tsx:2:23]
+ 1 │     const foo = (
+ 2 │ ╭─▶                 () => (
+ 3 │ │                       a ? b : c
+ 4 │ ╰─▶                 )
+ 5 │                 )();
+   ╰────
+  help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
+
+  ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
+   ╭─[no_unreadable_iife.tsx:1:20]
+ 1 │ ╭─▶ const foo = (() => (
+ 2 │ │                   a, b
+ 3 │ ╰─▶             ))();
+   ╰────
+  help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
+
+  ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
+   ╭─[no_unreadable_iife.tsx:1:20]
+ 1 │ ╭─▶ const foo = (() => ({
+ 2 │ │                   a: b,
+ 3 │ ╰─▶             }))();
+   ╰────
+  help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
+
+  ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
+   ╭─[no_unreadable_iife.tsx:1:21]
+ 1 │ const foo = (bar => (bar))();
+   ·                     ─────
+   ╰────
+  help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
+
+  ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
+   ╭─[no_unreadable_iife.tsx:1:14]
+ 1 │ ╭─▶ (async () => ({
+ 2 │ │                   bar,
+ 3 │ ╰─▶             }))();
+   ╰────
+  help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
+
+  ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
+   ╭─[no_unreadable_iife.tsx:1:29]
+ 1 │ ╭─▶ const foo = (async (bar) => ({
+ 2 │ │                   bar: await baz(),
+ 3 │ ╰─▶             }))();
+   ╰────
+  help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
+
+  ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
+   ╭─[no_unreadable_iife.tsx:1:14]
+ 1 │ (async () => (( {bar} )))();
+   ·              ───────────
+   ╰────
+  help: Rewrite the IIFE to avoid having a parenthesized arrow function body.

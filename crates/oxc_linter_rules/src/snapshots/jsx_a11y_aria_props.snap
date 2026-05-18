@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ jsx-a11y(aria-props): 'aria-' is not a valid ARIA attribute.
+   ╭─[aria_props.tsx:1:6]
+ 1 │ <div aria-="foobar" />
+   ·      ──────────────
+   ╰────
+  help: You can find a list of valid ARIA attributes at https://www.w3.org/TR/wai-aria-1.1/#state_prop_def
+
+  ⚠ jsx-a11y(aria-props): 'aria-labeledby' is not a valid ARIA attribute.
+   ╭─[aria_props.tsx:1:6]
+ 1 │ <div aria-labeledby="foobar" />
+   ·      ───────────────────────
+   ╰────
+  help: Did you mean 'aria-labelledby'?
+
+  ⚠ jsx-a11y(aria-props): 'aria-skldjfaria-klajsd' is not a valid ARIA attribute.
+   ╭─[aria_props.tsx:1:6]
+ 1 │ <div aria-skldjfaria-klajsd="foobar" />
+   ·      ───────────────────────────────
+   ╰────
+  help: You can find a list of valid ARIA attributes at https://www.w3.org/TR/wai-aria-1.1/#state_prop_def

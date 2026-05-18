@@ -1,0 +1,199 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:2:13]
+ 1 │ import assert from 'assert';
+ 2 │             assert(foo)
+   ·             ──────
+   ╰────
+  help: Prefer `assert.ok(...)` over `assert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:2:13]
+ 1 │ import assert from 'node:assert';
+ 2 │             assert(foo)
+   ·             ──────
+   ╰────
+  help: Prefer `assert.ok(...)` over `assert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:2:13]
+ 1 │ import assert from 'assert/strict';
+ 2 │             assert(foo)
+   ·             ──────
+   ╰────
+  help: Prefer `assert.ok(...)` over `assert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:2:13]
+ 1 │ import assert from 'node:assert/strict';
+ 2 │             assert(foo)
+   ·             ──────
+   ╰────
+  help: Prefer `assert.ok(...)` over `assert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:2:13]
+ 1 │ import customAssert from 'assert';
+ 2 │             customAssert(foo)
+   ·             ────────────
+   ╰────
+  help: Prefer `customAssert.ok(...)` over `customAssert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:2:13]
+ 1 │ import customAssert from 'node:assert';
+ 2 │             customAssert(foo)
+   ·             ────────────
+   ╰────
+  help: Prefer `customAssert.ok(...)` over `customAssert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:2:13]
+ 1 │ import assert from 'assert';
+ 2 │             assert(foo)
+   ·             ──────
+ 3 │             assert(bar)
+   ╰────
+  help: Prefer `assert.ok(...)` over `assert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:3:13]
+ 2 │             assert(foo)
+ 3 │             assert(bar)
+   ·             ──────
+ 4 │             assert(baz)
+   ╰────
+  help: Prefer `assert.ok(...)` over `assert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:4:13]
+ 3 │             assert(bar)
+ 4 │             assert(baz)
+   ·             ──────
+   ╰────
+  help: Prefer `assert.ok(...)` over `assert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:2:13]
+ 1 │ import {strict} from 'assert';
+ 2 │             strict(foo)
+   ·             ──────
+   ╰────
+  help: Prefer `strict.ok(...)` over `strict(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:2:13]
+ 1 │ import {strict as assert} from 'assert';
+ 2 │             assert(foo)
+   ·             ──────
+   ╰────
+  help: Prefer `assert.ok(...)` over `assert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:5:13]
+ 4 │             import i, {default as j} from 'assert/strict';
+ 5 │             a(foo);
+   ·             ─
+ 6 │             b(foo);
+   ╰────
+  help: Prefer `a.ok(...)` over `a(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:6:13]
+ 5 │             a(foo);
+ 6 │             b(foo);
+   ·             ─
+ 7 │             c(foo);
+   ╰────
+  help: Prefer `b.ok(...)` over `b(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:7:13]
+ 6 │             b(foo);
+ 7 │             c(foo);
+   ·             ─
+ 8 │             d(foo);
+   ╰────
+  help: Prefer `c.ok(...)` over `c(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:8:13]
+ 7 │             c(foo);
+ 8 │             d(foo);
+   ·             ─
+ 9 │             e(foo);
+   ╰────
+  help: Prefer `d.ok(...)` over `d(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+    ╭─[consistent_assert.tsx:9:13]
+  8 │             d(foo);
+  9 │             e(foo);
+    ·             ─
+ 10 │             f(foo);
+    ╰────
+  help: Prefer `e.ok(...)` over `e(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+    ╭─[consistent_assert.tsx:10:13]
+  9 │             e(foo);
+ 10 │             f(foo);
+    ·             ─
+ 11 │             g(foo);
+    ╰────
+  help: Prefer `f.ok(...)` over `f(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+    ╭─[consistent_assert.tsx:11:13]
+ 10 │             f(foo);
+ 11 │             g(foo);
+    ·             ─
+ 12 │             h(foo);
+    ╰────
+  help: Prefer `g.ok(...)` over `g(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+    ╭─[consistent_assert.tsx:12:13]
+ 11 │             g(foo);
+ 12 │             h(foo);
+    ·             ─
+ 13 │             i(foo);
+    ╰────
+  help: Prefer `h.ok(...)` over `h(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+    ╭─[consistent_assert.tsx:13:13]
+ 12 │             h(foo);
+ 13 │             i(foo);
+    ·             ─
+ 14 │             j(foo);
+    ╰────
+  help: Prefer `i.ok(...)` over `i(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+    ╭─[consistent_assert.tsx:14:13]
+ 13 │             i(foo);
+ 14 │             j(foo);
+    ·             ─
+    ╰────
+  help: Prefer `j.ok(...)` over `j(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:2:13]
+ 1 │ import assert from 'node:assert';
+ 2 │             assert?.(foo)
+   ·             ──────
+   ╰────
+  help: Prefer `assert.ok(...)` over `assert(...)`.
+
+  ⚠ unicorn(consistent-assert): Inconsistent assert usage.
+   ╭─[consistent_assert.tsx:5:21]
+ 4 │                     /* comment */
+ 5 │                     assert
+   ·                     ──────
+ 6 │                     /* comment */
+   ╰────
+  help: Prefer `assert.ok(...)` over `assert(...)`.

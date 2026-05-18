@@ -17,7 +17,7 @@ fix: "conditional_dangerous_fix_or_suggestion"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/eslint/no_unused_vars/mod.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/eslint/no_unused_vars/mod.rs`;
 </script>
 
 <RuleHeader />
@@ -636,7 +636,7 @@ fix: "none"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/import/namespace.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/import/namespace.rs`;
 </script>
 
 <RuleHeader />
@@ -733,7 +733,7 @@ fix: "none"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/jest/expect_expect.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/jest/expect_expect.rs`;
 </script>
 
 <RuleHeader />
@@ -810,7 +810,7 @@ fix: "none"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/nextjs/no_duplicate_head.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/nextjs/no_duplicate_head.rs`;
 </script>
 
 <RuleHeader />
@@ -894,7 +894,7 @@ fix: "none"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/promise/no_callback_in_promise.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/promise/no_callback_in_promise.rs`;
 </script>
 
 <RuleHeader />
@@ -992,7 +992,7 @@ fix: "none"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/react/no_will_update_set_state.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/react/no_will_update_set_state.rs`;
 </script>
 
 <RuleHeader />
@@ -1081,7 +1081,7 @@ fix: "fixable_suggestion"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/typescript/no_floating_promises.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/typescript/no_floating_promises.rs`;
 const tsgolintSource = `https://github.com/oxc-project/tsgolint/blob/main/internal/rules/no_floating_promises/no_floating_promises.go`;
 </script>
 
@@ -1368,7 +1368,7 @@ fix: "none"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/vue/no_lifecycle_after_await.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/vue/no_lifecycle_after_await.rs`;
 </script>
 
 <RuleHeader />
@@ -1437,7 +1437,7 @@ fix: "pending"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/unicorn/prefer_array_find.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/unicorn/prefer_array_find.rs`;
 </script>
 
 <RuleHeader />
@@ -1493,7 +1493,7 @@ fix: "none"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/oxc/no_barrel_file.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/oxc/no_barrel_file.rs`;
 </script>
 
 <RuleHeader />
@@ -1576,7 +1576,7 @@ fix: "none"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/react/forbid_dom_props.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/react/forbid_dom_props.rs`;
 </script>
 
 <RuleHeader />
@@ -1696,7 +1696,7 @@ fix: "conditional_fix"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/typescript/no_explicit_any.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/typescript/no_explicit_any.rs`;
 </script>
 
 <RuleHeader />
@@ -1794,7 +1794,7 @@ fix: "pending"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/jsdoc/require_returns.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/jsdoc/require_returns.rs`;
 </script>
 
 <RuleHeader />
@@ -1906,7 +1906,7 @@ fix: "none"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/react/rules_of_hooks.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/react/rules_of_hooks.rs`;
 </script>
 
 <RuleHeader />
@@ -1995,7 +1995,7 @@ fix: "none"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/jest/require_top_level_describe.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/jest/require_top_level_describe.rs`;
 </script>
 
 <RuleHeader />
@@ -2093,7 +2093,7 @@ fix: "pending"
 
 <script setup>
 import { data } from '../version.data.js';
-const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter/src/rules/typescript/class_literal_property_style.rs`;
+const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_linter_rules/src/rules/typescript/class_literal_property_style.rs`;
 </script>
 
 <RuleHeader />

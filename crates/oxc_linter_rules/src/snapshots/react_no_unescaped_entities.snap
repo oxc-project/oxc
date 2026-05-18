@@ -1,0 +1,53 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[no_unescaped_entities.tsx:3:24]
+ 2 │             render: function() {
+ 3 │               return <>> babel-eslint</>;
+   ·                        ▲
+ 4 │             }
+   ╰────
+
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[no_unescaped_entities.tsx:5:47]
+ 4 │               so is second
+ 5 │               and here are some bad entities: ></>
+   ·                                               ▲
+ 6 │             }
+   ╰────
+
+  ⚠ react(no-unescaped-entities): `'` can be escaped with &apos; or &lsquo; or &#39; or &rsquo;
+   ╭─[no_unescaped_entities.tsx:4:27]
+ 3 │             render: function() {
+ 4 │               return <div>'</div>;
+   ·                           ─
+ 5 │             }
+   ╰────
+
+  × Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+   ╭─[no_unescaped_entities.tsx:4:60]
+ 3 │             render: function() {
+ 4 │               return <>{"Unbalanced braces - babel-eslint"}}</>;
+   ·                                                            ▲
+ 5 │             }
+   ╰────
+
+  ⚠ react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
+   ╭─[no_unescaped_entities.tsx:1:22]
+ 1 │ <script>window.foo = "bar"</script>
+   ·                      ─
+   ╰────
+
+  ⚠ react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
+   ╭─[no_unescaped_entities.tsx:1:26]
+ 1 │ <script>window.foo = "bar"</script>
+   ·                          ─
+   ╰────
+
+  ⚠ react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
+   ╭─[no_unescaped_entities.tsx:1:16]
+ 1 │ <script>测试 " 测试</script>
+   ·              ─
+   ╰────

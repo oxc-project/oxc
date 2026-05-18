@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.
+   ╭─[no_head_import_in_document.tsx:3:10]
+ 2 │                   import Document, { Html, Main, NextScript } from 'next/document'
+ 3 │                   import Head from 'next/head'
+   ·                   ────────────────────────────
+ 4 │ 
+   ╰────
+  help: See https://nextjs.org/docs/messages/no-head-import-in-document
+
+  ⚠ next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.
+   ╭─[no_head_import_in_document.tsx:3:10]
+ 2 │                   import Document, { Html, Main, NextScript } from 'next/document'
+ 3 │                   import Head from 'next/head'
+   ·                   ────────────────────────────
+ 4 │ 
+   ╰────
+  help: See https://nextjs.org/docs/messages/no-head-import-in-document
+
+  ⚠ next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.
+   ╭─[no_head_import_in_document.tsx:3:10]
+ 2 │                   import Document, { Html, Main, NextScript } from 'next/document'
+ 3 │                   import Head from 'next/head'
+   ·                   ────────────────────────────
+ 4 │ 
+   ╰────
+  help: See https://nextjs.org/docs/messages/no-head-import-in-document
+
+  ⚠ next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.
+   ╭─[no_head_import_in_document.tsx:3:10]
+ 2 │                   import Document, { Html, Main, NextScript } from 'next/document'
+ 3 │                   import Head from 'next/head'
+   ·                   ────────────────────────────
+ 4 │ 
+   ╰────
+  help: See https://nextjs.org/docs/messages/no-head-import-in-document
+
+  ⚠ next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.
+   ╭─[no_head_import_in_document.tsx:3:10]
+ 2 │                   import Document, { Html, Main, NextScript } from 'next/document'
+ 3 │                   import Head from 'next/head'
+   ·                   ────────────────────────────
+ 4 │ 
+   ╰────
+  help: See https://nextjs.org/docs/messages/no-head-import-in-document

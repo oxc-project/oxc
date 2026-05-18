@@ -1,0 +1,439 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code <= 400 && status_code > 500;
+   · ─────────┬────────    ────────┬────────
+   ·          │                    ╰── Requires that `status_code > 500` 
+   ·          ╰── Requires that `status_code <= 400` 
+   ╰────
+  help: since `400` < `500`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code > 500 && status_code < 400;
+   · ────────┬────────    ────────┬────────
+   ·         │                    ╰── Requires that `status_code < 400` 
+   ·         ╰── Requires that `status_code > 500` 
+   ╰────
+  help: since `500` > `400`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code < 500 && status_code > 500;
+   · ────────┬────────    ────────┬────────
+   ·         │                    ╰── Requires that `status_code > 500` 
+   ·         ╰── Requires that `status_code < 500` 
+   ╰────
+  help: `status_code` cannot simultaneously be greater than and less than `500`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ 500 >= status_code && 600 < status_code;
+   · ─────────┬────────    ────────┬────────
+   ·          │                    ╰── Requires that `status_code > 600` 
+   ·          ╰── Requires that `status_code <= 500` 
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ 500 >= status_code && status_code > 600;
+   · ─────────┬────────    ────────┬────────
+   ·          │                    ╰── Requires that `status_code > 600` 
+   ·          ╰── Requires that `status_code <= 500` 
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ 500 >= status && 600 < status;
+   · ──────┬──────    ──────┬─────
+   ·       │                ╰── Requires that `status > 600` 
+   ·       ╰── Requires that `status <= 500` 
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ 500 >= status && status > 600;
+   · ──────┬──────    ──────┬─────
+   ·       │                ╰── Requires that `status > 600` 
+   ·       ╰── Requires that `status <= 500` 
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status`
+
+  ⚠ oxc(const-comparisons): Right-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code < 200 && status_code <= 299;
+   · ────────┬────────    ─────────┬────────
+   ·         │                     ╰── This will always evaluate to true.
+   ·         ╰── If this evaluates to `true`
+   ╰────
+  help: if `status_code < 200` evaluates to true, `status_code <= 299` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Left-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code > 200 && status_code >= 299;
+   · ────────┬────────    ─────────┬────────
+   ·         │                     ╰── If this evaluates to `true`
+   ·         ╰── This will always evaluate to true.
+   ╰────
+  help: if `status_code >= 299` evaluates to true, `status_code > 200` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Left-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code >= 500 && status_code > 500;
+   · ─────────┬────────    ────────┬────────
+   ·          │                    ╰── If this evaluates to `true`
+   ·          ╰── This will always evaluate to true.
+   ╰────
+  help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Right-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code > 500 && status_code >= 500;
+   · ────────┬────────    ─────────┬────────
+   ·         │                     ╰── This will always evaluate to true.
+   ·         ╰── If this evaluates to `true`
+   ╰────
+  help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Left-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code <= 500 && status_code < 500;
+   · ─────────┬────────    ────────┬────────
+   ·          │                    ╰── If this evaluates to `true`
+   ·          ╰── This will always evaluate to true.
+   ╰────
+  help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Right-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code < 500 && status_code <= 500;
+   · ────────┬────────    ─────────┬────────
+   ·         │                     ╰── This will always evaluate to true.
+   ·         ╰── If this evaluates to `true`
+   ╰────
+  help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code <= 400 && foo() && status_code > 500;
+   · ─────────┬────────             ────────┬────────
+   ·          │                             ╰── Requires that `status_code > 500` 
+   ·          ╰── Requires that `status_code <= 400` 
+   ╰────
+  help: since `400` < `500`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code > 500 && foo() && bar && status_code < 400;
+   · ────────┬────────                    ────────┬────────
+   ·         │                                    ╰── Requires that `status_code < 400` 
+   ·         ╰── Requires that `status_code > 500` 
+   ╰────
+  help: since `500` > `400`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:17]
+ 1 │ foo() && bar && status_code < 500 && status_code > 500;
+   ·                 ────────┬────────    ────────┬────────
+   ·                         │                    ╰── Requires that `status_code > 500` 
+   ·                         ╰── Requires that `status_code < 500` 
+   ╰────
+  help: `status_code` cannot simultaneously be greater than and less than `500`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ 500 >= status_code && baz && 600 < status_code;
+   · ─────────┬────────           ────────┬────────
+   ·          │                           ╰── Requires that `status_code > 600` 
+   ·          ╰── Requires that `status_code <= 500` 
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:8]
+ 1 │ que && 500 >= status_code && baz && status_code > 600;
+   ·        ─────────┬────────           ────────┬────────
+   ·                 │                           ╰── Requires that `status_code > 600` 
+   ·                 ╰── Requires that `status_code <= 500` 
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:8]
+ 1 │ baz && 500 >= status && 600 < status;
+   ·        ──────┬──────    ──────┬─────
+   ·              │                ╰── Requires that `status > 600` 
+   ·              ╰── Requires that `status <= 500` 
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ 500 >= status && baz && que() && status > 600;
+   · ──────┬──────                    ──────┬─────
+   ·       │                                ╰── Requires that `status > 600` 
+   ·       ╰── Requires that `status <= 500` 
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status`
+
+  ⚠ oxc(const-comparisons): Left-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:10]
+ 1 │ foo() && status_code >= 500 && status_code > 500;
+   ·          ─────────┬────────    ────────┬────────
+   ·                   │                    ╰── If this evaluates to `true`
+   ·                   ╰── This will always evaluate to true.
+   ╰────
+  help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Left-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code <= 500 && foo() && status_code < 500;
+   · ─────────┬────────             ────────┬────────
+   ·          │                             ╰── If this evaluates to `true`
+   ·          ╰── This will always evaluate to true.
+   ╰────
+  help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Left-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code >= 500 && response && status_code > 500;
+   · ─────────┬────────                ────────┬────────
+   ·          │                                ╰── If this evaluates to `true`
+   ·          ╰── This will always evaluate to true.
+   ╰────
+  help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Right-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:13]
+ 1 │ response && status_code > 500 && status_code >= 500;
+   ·             ────────┬────────    ─────────┬────────
+   ·                     │                     ╰── This will always evaluate to true.
+   ·                     ╰── If this evaluates to `true`
+   ╰────
+  help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Left-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code <= 500 && response && status_code < 500;
+   · ─────────┬────────                ────────┬────────
+   ·          │                                ╰── If this evaluates to `true`
+   ·          ╰── This will always evaluate to true.
+   ╰────
+  help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Right-hand side of `&&` operator has no effect.
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code < 500 && response && status_code <= 500;
+   · ────────┬────────                ─────────┬────────
+   ·         │                                 ╰── This will always evaluate to true.
+   ·         ╰── If this evaluates to `true`
+   ╰────
+  help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to false
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a < a
+   · ─────
+   ╰────
+  help: Because `a` will never be less then itself
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to true
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a <= a
+   · ──────
+   ╰────
+  help: Because `a` will always be equal to itself
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to false
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a > a
+   · ─────
+   ╰────
+  help: Because `a` will never be greater than itself
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to true
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a >= a
+   · ──────
+   ╰────
+  help: Because `a` will always be equal to itself
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to true
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a.b.c >= a.b.c
+   · ──────────────
+   ╰────
+  help: Because `a.b.c` will always be equal to itself
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are the same
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a == b && a == b
+   · ───┬──    ───┬──
+   ·    │         ╰── This expression will always evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as the expression itself.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are the same
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a == b || a == b
+   · ───┬──    ───┬──
+   ·    │         ╰── This expression will always evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as the expression itself.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are equivalent
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a == b && b == a
+   · ───┬──    ───┬──
+   ·    │         ╰── This equivalent expression will always evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as either side.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are equivalent
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a == (b) && (b) == a
+   · ────┬───    ────┬───
+   ·     │           ╰── This equivalent expression will always evaluate to true
+   ·     ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as either side.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are equivalent
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a != b || b != a
+   · ───┬──    ───┬──
+   ·    │         ╰── This equivalent expression will always evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as either side.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are the same
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ !foo && !foo
+   · ──┬─    ──┬─
+   ·   │       ╰── This expression will always evaluate to true
+   ·   ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as the expression itself.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are the same
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ !foo || !foo
+   · ──┬─    ──┬─
+   ·   │       ╰── This expression will always evaluate to true
+   ·   ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as the expression itself.
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to false
+   ╭─[const_comparisons.tsx:1:69]
+ 1 │ class Foo { #a; #b; constructor() { this.#a = 1; }; test() { return this.#a > this.#a } }
+   ·                                                                     ─────────────────
+   ╰────
+  help: Because `this.#a` will never be greater than itself
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ !foo && foo
+   · ──┬─    ─┬─
+   ·   │      ╰── This expression cannot also evaluate to true
+   ·   ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to false
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ foo && !foo
+   · ─┬─    ──┬─
+   ·  │       ╰── This expression cannot also evaluate to true
+   ·  ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to false
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ !foo || foo
+   · ──┬─    ─┬─
+   ·   │      ╰── This expression must evaluate to true
+   ·   ╰── If this expression evaluates to false
+   ╰────
+  help: This logical expression will always evaluate to true
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ foo || !foo
+   · ─┬─    ──┬─
+   ·  │       ╰── This expression must evaluate to true
+   ·  ╰── If this expression evaluates to false
+   ╰────
+  help: This logical expression will always evaluate to true
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a == b && a != b
+   · ───┬──    ───┬──
+   ·    │         ╰── This expression cannot also evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to false
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a != b && b == a
+   · ───┬──    ───┬──
+   ·    │         ╰── This expression cannot also evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to false
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a !== a && a === a
+   · ───┬───    ───┬───
+   ·    │          ╰── This expression cannot also evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to false
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a === b || a !== b
+   · ───┬───    ───┬───
+   ·    │          ╰── This expression must evaluate to true
+   ·    ╰── If this expression evaluates to false
+   ╰────
+  help: This logical expression will always evaluate to true
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a !== a || a === a
+   · ───┬───    ───┬───
+   ·    │          ╰── This expression must evaluate to true
+   ·    ╰── If this expression evaluates to false
+   ╰────
+  help: This logical expression will always evaluate to true
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to false
+   ╭─[const_comparisons.tsx:1:67]
+ 1 │ let numOrUndefined: number | undefined = 6; if (numOrUndefined || 0 > 0) {}
+   ·                                                                   ─────
+   ╰────
+  help: Because `0` will never be greater than itself
+  note: It looks like you're mixing logical and comparison operators without parentheses. Comparison operators have higher precedence than logical operators, so this is parsed as `numOrUndefined || (0 > 0)`. If you intended to compare the result of the logical expression, add parentheses: `(numOrUndefined || 0) > 0`.
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to false
+   ╭─[const_comparisons.tsx:1:67]
+ 1 │ let numOrUndefined: number | undefined = 6; if (numOrUndefined ?? 0 > 0) {}
+   ·                                                                   ─────
+   ╰────
+  help: Because `0` will never be greater than itself
+  note: It looks like you're mixing logical and comparison operators without parentheses. Comparison operators have higher precedence than logical operators, so this is parsed as `numOrUndefined ?? (0 > 0)`. If you intended to compare the result of the logical expression, add parentheses: `(numOrUndefined ?? 0) > 0`.

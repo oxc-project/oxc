@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-unused-vars): Enum 'Foo' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:6]
+ 1 │ enum Foo { A }
+   ·      ─┬─
+   ·       ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.

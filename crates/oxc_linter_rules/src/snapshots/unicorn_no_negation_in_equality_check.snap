@@ -1,0 +1,90 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:1:1]
+ 1 │ !foo === bar
+   · ────
+   ╰────
+  help: Remove the negation operator and use '!==' instead of '==='.
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:1:1]
+ 1 │ !foo !== bar
+   · ────
+   ╰────
+  help: Remove the negation operator and use '===' instead of '!=='.
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:1:1]
+ 1 │ !foo == bar
+   · ────
+   ╰────
+  help: Remove the negation operator and use '!=' instead of '=='.
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:1:1]
+ 1 │ !foo != bar
+   · ────
+   ╰────
+  help: Remove the negation operator and use '==' instead of '!='.
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:2:23]
+ 1 │ function x() {
+ 2 │                 return!foo === bar;
+   ·                       ────
+ 3 │             }
+   ╰────
+  help: Remove the negation operator and use '!==' instead of '==='.
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:2:23]
+ 1 │     function x() {
+ 2 │ ╭─▶                 return!
+ 3 │ ╰─▶                     foo === bar;
+ 4 │                     throw!
+   ╰────
+  help: Remove the negation operator and use '!==' instead of '==='.
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:4:22]
+ 3 │                         foo === bar;
+ 4 │ ╭─▶                 throw!
+ 5 │ ╰─▶                     foo === bar;
+ 6 │                 }
+   ╰────
+  help: Remove the negation operator and use '!==' instead of '==='.
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:2:13]
+ 1 │ foo
+ 2 │             !(a) === b
+   ·             ────
+   ╰────
+  help: Remove the negation operator and use '!==' instead of '==='.
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:2:13]
+ 1 │ foo
+ 2 │             ![a, b].join('') === c
+   ·             ────────────────
+   ╰────
+  help: Remove the negation operator and use '!==' instead of '==='.
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:2:13]
+ 1 │ foo
+ 2 │             ! [a, b].join('') === c
+   ·             ─────────────────
+   ╰────
+  help: Remove the negation operator and use '!==' instead of '==='.
+
+  ⚠ unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
+   ╭─[no_negation_in_equality_check.tsx:2:13]
+ 1 │ foo
+ 2 │             !/* comment */[a, b].join('') === c
+   ·             ─────────────────────────────
+   ╰────
+  help: Remove the negation operator and use '!==' instead of '==='.

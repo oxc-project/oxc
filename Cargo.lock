@@ -2073,6 +2073,39 @@ dependencies = [
 name = "oxc_linter"
 version = "1.65.0"
 dependencies = [
+ "insta",
+ "lazy-regex",
+ "markdown",
+ "oxc-schemars",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_linter_core",
+ "oxc_linter_rules",
+ "oxc_macros",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_span",
+ "rustc-hash",
+ "serde_json",
+]
+
+[[package]]
+name = "oxc_linter_codegen"
+version = "0.0.0"
+dependencies = [
+ "convert_case",
+ "proc-macro2",
+ "project-root",
+ "quote",
+ "rustc-hash",
+ "syn",
+]
+
+[[package]]
+name = "oxc_linter_core"
+version = "1.65.0"
+dependencies = [
  "bitflags",
  "constcat",
  "convert_case",
@@ -2125,15 +2158,59 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_linter_codegen"
-version = "0.0.0"
+name = "oxc_linter_rules"
+version = "1.65.0"
 dependencies = [
+ "bitflags",
+ "constcat",
  "convert_case",
- "proc-macro2",
- "project-root",
- "quote",
+ "cow-utils",
+ "fast-glob",
+ "icu_segmenter",
+ "ignore",
+ "indexmap",
+ "insta",
+ "itertools",
+ "javascript-globals",
+ "json-strip-comments",
+ "language-tags",
+ "lazy-regex",
+ "markdown",
+ "memchr",
+ "nodejs-built-in-modules",
+ "oxc-schemars",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_ast_macros",
+ "oxc_ast_visit",
+ "oxc_cfg",
+ "oxc_codegen",
+ "oxc_config",
+ "oxc_data_structures",
+ "oxc_diagnostics",
+ "oxc_ecmascript",
+ "oxc_estree_tokens",
+ "oxc_index",
+ "oxc_linter_core",
+ "oxc_macros",
+ "oxc_parser",
+ "oxc_regular_expression",
+ "oxc_resolver",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_str",
+ "oxc_syntax",
+ "papaya",
+ "phf",
+ "rayon",
+ "rust-lapper",
  "rustc-hash",
- "syn",
+ "self_cell",
+ "serde",
+ "serde_json",
+ "simdutf8",
+ "smallvec",
+ "url",
 ]
 
 [[package]]

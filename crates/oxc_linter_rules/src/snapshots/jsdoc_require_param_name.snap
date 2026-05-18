@@ -1,0 +1,21 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ jsdoc(require-param-name): Missing JSDoc `@param` name.
+   ╭─[require_param_name.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @param
+   ·                          ──────
+ 4 │                        */
+   ╰────
+  help: Add name to `@param` tag.
+
+  ⚠ jsdoc(require-param-name): Missing JSDoc `@param` name.
+   ╭─[require_param_name.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @param {string}
+   ·                          ──────
+ 4 │                        */
+   ╰────
+  help: Add name to `@param` tag.

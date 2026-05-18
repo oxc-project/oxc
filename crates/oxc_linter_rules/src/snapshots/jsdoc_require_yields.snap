@@ -1,0 +1,596 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                              */
+ 5 │                             function * quux (foo) { yield foo; }
+   ·                             ────────────────────────────────────
+ 6 │                         
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux (foo) {
+  6 │ │                                 someLabel: {
+  7 │ │                                   yield foo;
+  8 │ │                                 }
+  9 │ ╰─▶                             }
+ 10 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux (foo) {
+ 6 │ │   
+ 7 │ │                                 const a = yield foo;
+ 8 │ ╰─▶                             }
+ 9 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux (foo) {
+ 6 │ │                                 yield foo;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux() {
+ 6 │ │                                 yield 5;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux() {
+ 6 │ │                                 yield;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:42]
+ 4 │                                  */
+ 5 │ ╭─▶                             const quux = async function * () {
+ 6 │ │                                 yield;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:30]
+ 4 │                                   */
+ 5 │ ╭─▶                              async function * quux () {
+ 6 │ │                                  yield;
+ 7 │ ╰─▶                              }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 yield;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:6:25]
+ 5 │                              */
+ 6 │                         function*d() {}
+   ·                         ───────────────
+ 7 │                         
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Duplicate `@yields` tags.
+   ╭─[require_yields.tsx:4:32]
+ 3 │                              * @yields {undefined}
+ 4 │                              * @yields {void}
+   ·                                ───────
+ 5 │                              */
+   ╰────
+  help: Remove redundant `@yields` tag.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux (foo) {
+ 6 │ │                                 yield 'bar';
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:25]
+ 4 │                              */
+ 5 │ ╭─▶                         async function * foo(a) {
+ 6 │ │                             return;
+ 7 │ ╰─▶                         }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:25]
+ 4 │                              */
+ 5 │ ╭─▶                         async function * foo(a) {
+ 6 │ │                             yield Promise.all(a);
+ 7 │ ╰─▶                         }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:6:34]
+ 5 │                                */
+ 6 │ ╭─▶                           * quux () {
+ 7 │ │                               yield;
+ 8 │ ╰─▶                           }
+ 9 │                             }
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:25]
+ 4 │                              */
+ 5 │ ╭─▶                         async function * foo(a) {
+ 6 │ │                             yield Promise.all(a);
+ 7 │ ╰─▶                         }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 if (true) {
+  7 │ │                                   yield;
+  8 │ │                                 }
+  9 │ │                                 yield true;
+ 10 │ ╰─▶                             }
+ 11 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 if (yield false) {
+  7 │ │   
+  8 │ │                                 }
+  9 │ ╰─▶                             }
+ 10 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 b ? yield false : true
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 try {
+  7 │ │                                   yield true;
+  8 │ │                                 } catch (err) {
+  9 │ │                                 }
+ 10 │ │                                 yield;
+ 11 │ ╰─▶                             }
+ 12 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 try {
+  7 │ │                                 } finally {
+  8 │ │                                   yield true;
+  9 │ │                                 }
+ 10 │ │                                 yield;
+ 11 │ ╰─▶                             }
+ 12 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 try {
+  7 │ │                                   yield;
+  8 │ │                                 } catch (err) {
+  9 │ │                                 }
+ 10 │ │                                 yield true;
+ 11 │ ╰─▶                             }
+ 12 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 try {
+  7 │ │                                   something();
+  8 │ │                                 } catch (err) {
+  9 │ │                                   yield true;
+ 10 │ │                                 }
+ 11 │ │                                 yield;
+ 12 │ ╰─▶                             }
+ 13 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 switch (true) {
+  7 │ │                                 case 'abc':
+  8 │ │                                   yield true;
+  9 │ │                                 }
+ 10 │ │                                 yield;
+ 11 │ ╰─▶                             }
+ 12 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 switch (true) {
+  7 │ │                                 case 'abc':
+  8 │ │                                   yield;
+  9 │ │                                 }
+ 10 │ │                                 yield true;
+ 11 │ ╰─▶                             }
+ 12 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 for (const i of abc) {
+  7 │ │                                   yield true;
+  8 │ │                                 }
+  9 │ │                                 yield;
+ 10 │ ╰─▶                             }
+ 11 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 for (const a in b) {
+  7 │ │                                   yield true;
+  8 │ │                                 }
+  9 │ ╰─▶                             }
+ 10 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 for (let i=0; i<n; i+=1) {
+  7 │ │                                   yield true;
+  8 │ │                                 }
+  9 │ ╰─▶                             }
+ 10 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 while(true) {
+  7 │ │                                   yield true
+  8 │ │                                 }
+  9 │ ╰─▶                             }
+ 10 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 do {
+  7 │ │                                   yield true
+  8 │ │                                 }
+  9 │ │                                 while(true)
+ 10 │ ╰─▶                             }
+ 11 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 if (true) {
+  7 │ │                                   yield true;
+  8 │ │                                 }
+  9 │ ╰─▶                             }
+ 10 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 var a = {};
+  7 │ │                                 with (a) {
+  8 │ │                                   yield true;
+  9 │ │                                 }
+ 10 │ ╰─▶                             }
+ 11 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 if (true) {
+  7 │ │                                   yield;
+  8 │ │                                 } else {
+  9 │ │                                   yield true;
+ 10 │ │                                 }
+ 11 │ │                                 yield;
+ 12 │ ╰─▶                             }
+ 13 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 if (false) {
+  7 │ │                                   return;
+  8 │ │                                 }
+  9 │ │                                 return yield true;
+ 10 │ ╰─▶                             }
+ 11 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 [yield true];
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 const [a = yield true] = [];
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 a || (yield true);
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 (r = yield true);
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 a + (yield true);
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 a, yield true;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 +(yield);
+  7 │ │                                 [...yield];
+  8 │ │                                 [...+(yield true)];
+  9 │ ╰─▶                             }
+ 10 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 someLabel: {
+  7 │ │                                   yield true;
+  8 │ │                                 }
+  9 │ ╰─▶                             }
+ 10 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 var obj = {
+  7 │ │                                   [someKey]: 'val',
+  8 │ │                                   anotherKey: yield true
+  9 │ │                                 }
+ 10 │ ╰─▶                             }
+ 11 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+    ╭─[require_yields.tsx:5:29]
+  4 │                                  */
+  5 │ ╭─▶                             function * quux () {
+  6 │ │                                 var obj = {
+  7 │ │                                   [yield true]: 'val',
+  8 │ │                                 }
+  9 │ ╰─▶                             }
+ 10 │                             
+    ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 `abc${yield true}`;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 tagTemp`abc${yield true}`;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 a.b[yield true].c;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 abc?.[yield true].d?.e(yield true);
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 abc?.[yield true].d?.e(yield true);
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 const [a = yield true] = arr;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 const {a = yield true} = obj;
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
+   ╭─[require_yields.tsx:5:29]
+ 4 │                                  */
+ 5 │ ╭─▶                             function * quux () {
+ 6 │ │                                 import(yield true);
+ 7 │ ╰─▶                             }
+ 8 │                             
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.
+
+  ⚠ jsdoc(require-yields): `@yields` tag is required when using `@generator` tag.
+   ╭─[require_yields.tsx:4:34]
+ 3 │                                * fail(`@generator`+missing `@yields`, with config)
+ 4 │                                * @generator
+   ·                                  ──────────
+ 5 │                                */
+   ╰────
+  help: Add `@yields` tag to the JSDoc comment.

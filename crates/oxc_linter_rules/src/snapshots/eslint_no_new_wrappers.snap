@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-new-wrappers): Do not use `String` as a constructor
+   ╭─[no_new_wrappers.tsx:1:9]
+ 1 │ var a = new String('hello');
+   ·         ───────────────────
+   ╰────
+  help: Remove the `new` operator.
+
+  ⚠ eslint(no-new-wrappers): Do not use `Number` as a constructor
+   ╭─[no_new_wrappers.tsx:1:9]
+ 1 │ var a = new Number(10);
+   ·         ──────────────
+   ╰────
+  help: Remove the `new` operator.
+
+  ⚠ eslint(no-new-wrappers): Do not use `Boolean` as a constructor
+   ╭─[no_new_wrappers.tsx:1:9]
+ 1 │ var a = new Boolean(false);
+   ·         ──────────────────
+   ╰────
+  help: Remove the `new` operator.
+
+  ⚠ eslint(no-new-wrappers): Do not use `String` as a constructor
+   ╭─[no_new_wrappers.tsx:2:23]
+ 1 │ 
+ 2 │             const a = new String('bar');
+   ·                       ─────────────────
+ 3 │             {
+   ╰────
+  help: Remove the `new` operator.
+
+  ⚠ eslint(no-new-wrappers): Do not use `String` as a constructor
+   ╭─[no_new_wrappers.tsx:5:27]
+ 4 │                 const String = CustomString;
+ 5 │                 const b = new String('foo');
+   ·                           ─────────────────
+ 6 │             }
+   ╰────
+  help: Remove the `new` operator.
+
+  ⚠ eslint(no-new-wrappers): Do not use `String` as a constructor
+   ╭─[no_new_wrappers.tsx:2:21]
+ 1 │ 
+ 2 │             var a = new String('wow look at me im a really long string, ' +
+   ·                     ──────────
+ 3 │                                'it sure would be annoying if this whole thing ' +
+   ╰────
+  help: Remove the `new` operator.

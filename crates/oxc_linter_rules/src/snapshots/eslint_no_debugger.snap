@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-debugger): `debugger` statement is not allowed
+   ╭─[no_debugger.tsx:1:10]
+ 1 │ if (foo) debugger
+   ·          ────────
+   ╰────
+  help: Remove the debugger statement

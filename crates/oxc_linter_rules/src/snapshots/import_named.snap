@@ -1,0 +1,121 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ import(named): named import "somethingElse" not found
+   ╭─[index.js:1:10]
+ 1 │ import { somethingElse } from './test-module'
+   ·          ─────────────
+   ╰────
+  help: Does "./test-module" have the export "somethingElse"?
+
+  ⚠ import(named): named import "baz" not found
+   ╭─[index.js:1:10]
+ 1 │ import { baz } from './bar'
+   ·          ───
+   ╰────
+  help: Does "./bar" have the export "baz"?
+
+  ⚠ import(named): named import "baz" not found
+   ╭─[index.js:1:10]
+ 1 │ import { baz, bop } from './bar'
+   ·          ───
+   ╰────
+  help: Does "./bar" have the export "baz"?
+
+  ⚠ import(named): named import "bop" not found
+   ╭─[index.js:1:15]
+ 1 │ import { baz, bop } from './bar'
+   ·               ───
+   ╰────
+  help: Does "./bar" have the export "bop"?
+
+  ⚠ import(named): named import "c" not found
+   ╭─[index.js:1:15]
+ 1 │ import {a, b, c} from './named-exports'
+   ·               ─
+   ╰────
+  help: Does "./named-exports" have the export "c"?
+
+  ⚠ import(named): named import "a" not found
+   ╭─[index.js:1:10]
+ 1 │ import { a } from './default-export'
+   ·          ─
+   ╰────
+  help: Does "./default-export" have the export "a"?
+
+  ⚠ import(named): named import "ActionTypes1" not found
+   ╭─[index.js:1:10]
+ 1 │ import { ActionTypes1 } from './qc'
+   ·          ────────────
+   ╰────
+  help: Does "./qc" have the export "ActionTypes1"?
+
+  ⚠ import(named): named import "e" not found
+   ╭─[index.js:1:21]
+ 1 │ import {a, b, c, d, e} from './re-export'
+   ·                     ─
+   ╰────
+  help: Does "./re-export" have the export "e"?
+
+  ⚠ import(named): named import "a" not found
+   ╭─[index.js:1:10]
+ 1 │ import { a } from './re-export-names'
+   ·          ─
+   ╰────
+  help: Does "./re-export-names" have the export "a"?
+
+  ⚠ import(named): named import "bar" not found
+   ╭─[index.js:1:10]
+ 1 │ export { bar } from './bar'
+   ·          ───
+   ╰────
+  help: Does "./bar" have the export "bar"?
+
+  × Unexpected token
+   ╭─[index.js:1:8]
+ 1 │ export bar2, { bar } from './bar'
+   ·        ────
+   ╰────
+
+  ⚠ import(named): named import "baz" not found
+   ╭─[index.js:1:10]
+ 1 │ import { baz } from 'es6-module'
+   ·          ───
+   ╰────
+  help: Does "es6-module" have the export "baz"?
+
+  ⚠ import(named): named import "bap" not found
+   ╭─[index.js:1:20]
+ 1 │ import { foo, bar, bap } from './re-export-default'
+   ·                    ───
+   ╰────
+  help: Does "./re-export-default" have the export "bap"?
+
+  ⚠ import(named): named import "default" not found
+   ╭─[index.js:1:10]
+ 1 │ import { default as barDefault } from './re-export'
+   ·          ───────
+   ╰────
+  help: Does "./re-export" have the export "default"?
+
+  ⚠ import(named): named import "bar" not found
+   ╭─[index.js:1:10]
+ 1 │ import { bar } from './export-all'
+   ·          ───
+   ╰────
+  help: Does "./export-all" have the export "bar"?
+
+  ⚠ import(named): named import "NotExported" not found
+   ╭─[index.js:1:10]
+ 1 │ import { NotExported } from './typescript-export-assign-object'
+   ·          ───────────
+   ╰────
+  help: Does "./typescript-export-assign-object" have the export "NotExported"?
+
+  ⚠ import(named): named import "FooBar" not found
+   ╭─[index.js:1:10]
+ 1 │ import { FooBar } from './typescript-export-assign-object'
+   ·          ──────
+   ╰────
+  help: Does "./typescript-export-assign-object" have the export "FooBar"?

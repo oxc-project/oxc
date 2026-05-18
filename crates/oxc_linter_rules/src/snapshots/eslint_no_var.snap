@@ -1,0 +1,346 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var foo = bar;
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var foo = bar, toast = most;
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var foo = bar; let toast = most;
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:6]
+ 1 │ for (var a of b) { console.log(a); }
+   ·      ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:6]
+ 1 │ for (var a in b) { console.log(a); }
+   ·      ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:20]
+ 1 │ for (let a of b) { var c = 1; console.log(c); }
+   ·                    ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:6]
+ 1 │ for (var i = 0; i < list.length; ++i) { foo(i) }
+   ·      ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:6]
+ 1 │ for (var i = 0, i = 0; false;);
+   ·      ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var i = 0; for (var i = 1; false;); console.log(i);
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:17]
+ 1 │ var i = 0; for (var i = 1; false;); console.log(i);
+   ·                 ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var a, b, c; var a;
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:14]
+ 1 │ var a, b, c; var a;
+   ·              ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var a; if (b) { var a; }
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:17]
+ 1 │ var a; if (b) { var a; }
+   ·                 ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:12]
+ 1 │ if (foo) { var a, b, c; } a;
+   ·            ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:6]
+ 1 │ for (var i = 0; i < 10; ++i) {} i;
+   ·      ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:6]
+ 1 │ for (var a in obj) {} a;
+   ·      ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:6]
+ 1 │ for (var a of list) {} a;
+   ·      ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:22]
+ 1 │ switch (a) { case 0: var b = 1 }
+   ·                      ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:6]
+ 1 │ for (var a of b) { arr.push(() => a); }
+   ·      ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:20]
+ 1 │ for (let a of b) { var c; console.log(c); c = 'hello'; }
+   ·                    ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var a = a
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var {a = a} = {}
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var {a = b, b} = {}
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var {a, b = a} = {}
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var a = b, b = 1
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var a = b; var b = 1
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:12]
+ 1 │ var a = b; var b = 1
+   ·            ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:22]
+ 1 │ function foo() { a } var a = 1; foo()
+   ·                      ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:10]
+ 1 │ if (foo) var bar = 1;
+   ·          ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var foo = 1
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:3]
+ 1 │ { var foo = 1 }
+   ·   ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:13]
+ 1 │ if (true) { var foo = 1 }
+   ·             ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var foo = 1
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:9]
+ 1 │ declare var foo: 2;
+   ·         ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:18]
+ 1 │ function foo() { var let; }
+   ·                  ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:18]
+ 1 │ function foo() { var { let } = {}; }
+   ·                  ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var fx = function (i = 0) { if (i < 5) { return fx(i + 1); } console.log(i); }; fx();
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var foo = function () { foo() };
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var foo = () => foo();
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var foo = (function () { foo(); })();
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var foo = bar(function () { foo(); });
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var bar = foo, foo = function () { foo(); };
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var bar = foo; var foo = function () { foo(); };
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:16]
+ 1 │ var bar = foo; var foo = function () { foo(); };
+   ·                ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var { foo = foo } = function () { foo(); };
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var { bar = foo, foo } = function () { foo(); };
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:1]
+ 1 │ var bar = function () { foo(); }; var foo = function() {};
+   · ───
+   ╰────
+  help: Replace var with let or const
+
+  ⚠ eslint(no-var): Unexpected var, use let or const instead.
+   ╭─[no_var.tsx:1:35]
+ 1 │ var bar = function () { foo(); }; var foo = function() {};
+   ·                                   ───
+   ╰────
+  help: Replace var with let or const

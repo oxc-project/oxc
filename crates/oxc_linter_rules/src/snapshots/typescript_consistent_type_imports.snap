@@ -1,0 +1,751 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import Foo from 'foo';
+   ·               ──────────────────────
+ 3 │               let foo: Foo;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import Foo from 'foo';
+   ·               ──────────────────────
+ 3 │               let foo: Foo;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import Foo from 'foo';
+   ·               ──────────────────────
+ 3 │               let foo: Foo;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B } from 'foo';
+   ·               ───────────────────────────
+ 3 │               let foo: A;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A as a, B as b } from 'foo';
+   ·               ─────────────────────────────────────
+ 3 │               let foo: a;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import Foo from 'foo';
+   ·               ──────────────────────
+ 3 │               type Bar = typeof Foo; // TSTypeQuery
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import foo from 'foo';
+   ·               ──────────────────────
+ 3 │               type Bar = foo.Bar; // TSQualifiedName
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import foo from 'foo';
+   ·               ──────────────────────
+ 3 │               type Baz = (typeof foo.bar)['Baz']; // TSQualifiedName & TSTypeQuery
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import * as A from 'foo';
+   ·               ─────────────────────────
+ 3 │               let foo: A.Foo;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import A, { B } from 'foo';
+   ·               ───────────────────────────
+ 3 │               let foo: A;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import A, {} from 'foo';
+   ·               ────────────────────────
+ 3 │               let foo: A;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): Imports A are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B } from 'foo';
+   ·               ───────────────────────────
+ 3 │               const foo: A = B();
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports A and C are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B, C } from 'foo';
+   ·               ──────────────────────────────
+ 3 │               const foo: A = B();
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports A, C, and D are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B, C, D } from 'foo';
+   ·               ─────────────────────────────────
+ 3 │               const foo: A = B();
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports A, C, and D are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import A, { B, C, D } from 'foo';
+   ·               ─────────────────────────────────
+ 3 │               B();
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports A are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import A, { B } from 'foo';
+   ·               ───────────────────────────
+ 3 │               B();
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports B are only used as type.
+   ╭─[consistent_type_imports.tsx:4:15]
+ 3 │               import type { Already1 } from 'foo';
+ 4 │               import A, { B } from 'foo';
+   ·               ───────────────────────────
+ 5 │               import { C, D, E } from 'bar';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports C and D are only used as type.
+   ╭─[consistent_type_imports.tsx:5:15]
+ 4 │               import A, { B } from 'foo';
+ 5 │               import { C, D, E } from 'bar';
+   ·               ──────────────────────────────
+ 6 │               import type { Already2 } from 'bar';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports B are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import A, { /* comment */ B } from 'foo';
+   ·               ─────────────────────────────────────────
+ 3 │               type T = B;
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports A are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B, C } from 'foo';
+   ·               ──────────────────────────────
+ 3 │               import { D, E, F, } from 'bar';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports D are only used as type.
+   ╭─[consistent_type_imports.tsx:3:15]
+ 2 │               import { A, B, C } from 'foo';
+ 3 │               import { D, E, F, } from 'bar';
+   ·               ───────────────────────────────
+ 4 │               type T = A | D;
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports B are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B, C } from 'foo';
+   ·               ──────────────────────────────
+ 3 │               import { D, E, F, } from 'bar';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports E are only used as type.
+   ╭─[consistent_type_imports.tsx:3:15]
+ 2 │               import { A, B, C } from 'foo';
+ 3 │               import { D, E, F, } from 'bar';
+   ·               ───────────────────────────────
+ 4 │               type T = B | E;
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports C are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B, C } from 'foo';
+   ·               ──────────────────────────────
+ 3 │               import { D, E, F, } from 'bar';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports F are only used as type.
+   ╭─[consistent_type_imports.tsx:3:15]
+ 2 │               import { A, B, C } from 'foo';
+ 3 │               import { D, E, F, } from 'bar';
+   ·               ───────────────────────────────
+ 4 │               type T = C | F;
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { Type1, Type2 } from 'named_types';
+   ·               ───────────────────────────────────────────
+ 3 │               import Type from 'default_type';
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:3:15]
+ 2 │               import { Type1, Type2 } from 'named_types';
+ 3 │               import Type from 'default_type';
+   ·               ────────────────────────────────
+ 4 │               import * as Types from 'namespace_type';
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:4:15]
+ 3 │               import Type from 'default_type';
+ 4 │               import * as Types from 'namespace_type';
+   ·               ────────────────────────────────────────
+ 5 │               import Default, { Named } from 'default_and_named_type';
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:5:15]
+ 4 │               import * as Types from 'namespace_type';
+ 5 │               import Default, { Named } from 'default_and_named_type';
+   ·               ────────────────────────────────────────────────────────
+ 6 │               type T = Type1 | Type2 | Type | Types.A | Default | Named;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): Imports Type1 are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { Value1, Type1 } from 'named_import';
+   ·               ─────────────────────────────────────────────
+ 3 │               import Type2, { Value2 } from 'default_import';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports Type2 are only used as type.
+   ╭─[consistent_type_imports.tsx:3:15]
+ 2 │               import { Value1, Type1 } from 'named_import';
+ 3 │               import Type2, { Value2 } from 'default_import';
+   ·               ───────────────────────────────────────────────
+ 4 │               import Value3, { Type3 } from 'default_import2';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports Type3 are only used as type.
+   ╭─[consistent_type_imports.tsx:4:15]
+ 3 │               import Type2, { Value2 } from 'default_import';
+ 4 │               import Value3, { Type3 } from 'default_import2';
+   ·               ────────────────────────────────────────────────
+ 5 │               import Type4, { Type5, Value4 } from 'default_and_named_import';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports Type4 and Type5 are only used as type.
+   ╭─[consistent_type_imports.tsx:5:15]
+ 4 │               import Value3, { Type3 } from 'default_import2';
+ 5 │               import Type4, { Type5, Value4 } from 'default_and_named_import';
+   ·               ────────────────────────────────────────────────────────────────
+ 6 │               type T = Type1 | Type2 | Type3 | Type4 | Type5;
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): `import()` type annotations are forbidden.
+   ╭─[consistent_type_imports.tsx:2:24]
+ 1 │ 
+ 2 │               let foo: import('foo');
+   ·                        ─────────────
+ 3 │               let bar: import('foo').Bar;
+   ╰────
+  help: Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type`.
+
+  ⚠ typescript(consistent-type-imports): `import()` type annotations are forbidden.
+   ╭─[consistent_type_imports.tsx:3:24]
+ 2 │               let foo: import('foo');
+ 3 │               let bar: import('foo').Bar;
+   ·                        ─────────────────
+ 4 │             
+   ╰────
+  help: Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type`.
+
+  ⚠ typescript(consistent-type-imports): `import()` type annotations are forbidden.
+   ╭─[consistent_type_imports.tsx:2:24]
+ 1 │ 
+ 2 │               let foo: import('foo');
+   ·                        ─────────────
+ 3 │             
+   ╰────
+  help: Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type`.
+
+  ⚠ typescript(consistent-type-imports): Use an `import` instead of an `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import type Foo from 'foo';
+   ·               ───────────────────────────
+ 3 │               let foo: Foo;
+   ╰────
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
+
+  ⚠ typescript(consistent-type-imports): Use an `import` instead of an `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import type { Foo } from 'foo';
+   ·               ───────────────────────────────
+ 3 │               let foo: Foo;
+   ╰────
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import Type from 'foo';
+   ·               ───────────────────────
+ 3 │ 
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { Type } from 'foo';
+   ·               ───────────────────────────
+ 3 │ 
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import * as Type from 'foo';
+   ·               ────────────────────────────
+ 3 │ 
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): Use an `import` instead of an `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import type Type from 'foo';
+   ·               ────────────────────────────
+ 3 │ 
+   ╰────
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
+
+  ⚠ typescript(consistent-type-imports): Use an `import` instead of an `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import type { Type } from 'foo';
+   ·               ────────────────────────────────
+ 3 │ 
+   ╰────
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
+
+  ⚠ typescript(consistent-type-imports): Use an `import` instead of an `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import type * as Type from 'foo';
+   ·               ─────────────────────────────────
+ 3 │ 
+   ╰────
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
+
+  ⚠ typescript(consistent-type-imports): Use an `import` instead of an `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import type /*comment*/ * as AllType from 'foo';
+   ·               ────────────────────────────────────────────────
+ 3 │               import type // comment
+   ╰────
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
+
+  ⚠ typescript(consistent-type-imports): Use an `import` instead of an `import type`.
+   ╭─[consistent_type_imports.tsx:3:15]
+ 2 │                   import type /*comment*/ * as AllType from 'foo';
+ 3 │ ╭─▶               import type // comment
+ 4 │ ╰─▶               DefType from 'foo';
+ 5 │                   import type /*comment*/ { Type } from 'foo';
+   ╰────
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
+
+  ⚠ typescript(consistent-type-imports): Use an `import` instead of an `import type`.
+   ╭─[consistent_type_imports.tsx:5:15]
+ 4 │               DefType from 'foo';
+ 5 │               import type /*comment*/ { Type } from 'foo';
+   ·               ────────────────────────────────────────────
+ 6 │ 
+   ╰────
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
+
+  ⚠ typescript(consistent-type-imports): Imports Rest are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import Default, * as Rest from 'module';
+   ·               ────────────────────────────────────────
+ 3 │               const a: Rest.A = '';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports Default are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import Default, * as Rest from 'module';
+   ·               ────────────────────────────────────────
+ 3 │               const a: Default = '';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import Default, * as Rest from 'module';
+   ·               ────────────────────────────────────────
+ 3 │               const a: Default = '';
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): Imports Default are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import Default, /*comment*/ * as Rest from 'module';
+   ·               ────────────────────────────────────────────────────
+ 3 │               const a: Default = '';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports Default are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import Default /*comment1*/, /*comment2*/ { Data } from 'module';
+   ·               ─────────────────────────────────────────────────────────────────
+ 3 │               const a: Default = '';
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Use an `import` instead of an `import type`.
+   ╭─[consistent_type_imports.tsx:2:24]
+ 1 │ 
+ 2 │               import { type A, B } from 'foo';
+   ·                        ──────
+ 3 │               type T = A;
+   ╰────
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
+
+  ⚠ typescript(consistent-type-imports): Imports A are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B, type C } from 'foo';
+   ·               ───────────────────────────────────
+ 3 │               type T = A | C;
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B } from 'foo';
+   ·               ───────────────────────────
+ 3 │               let foo: A;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): Imports A are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B } from 'foo';
+   ·               ───────────────────────────
+ 3 │ 
+   ╰────
+  help: Add type specifier to imported types
+
+  ⚠ typescript(consistent-type-imports): Imports A are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B } from 'foo';
+   ·               ───────────────────────────
+ 3 │               type T = A;
+   ╰────
+  help: Add type specifier to imported types
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A } from 'foo';
+   ·               ────────────────────────
+ 3 │               import { B } from 'foo';
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:3:15]
+ 2 │               import { A } from 'foo';
+ 3 │               import { B } from 'foo';
+   ·               ────────────────────────
+ 4 │               type T = A;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A } from 'foo';
+   ·               ────────────────────────
+ 3 │               import B from 'foo';
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:3:15]
+ 2 │               import { A } from 'foo';
+ 3 │               import B from 'foo';
+   ·               ────────────────────
+ 4 │               type T = A;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): Imports B and C are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import A, { B, C } from 'foo';
+   ·               ──────────────────────────────
+ 3 │               type T = B;
+   ╰────
+  help: Add type specifier to imported types
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import A, { B, C } from 'foo';
+   ·               ──────────────────────────────
+ 3 │               type T = B;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import A, { B, C as D } from 'foo';
+   ·               ───────────────────────────────────
+ 3 │               type T = B;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): Imports A are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { /* comment */ A, B } from 'foo';
+   ·               ─────────────────────────────────────────
+ 3 │               type T = A;
+   ╰────
+  help: Add type specifier to imported types
+
+  ⚠ typescript(consistent-type-imports): Imports A are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { B, /* comment */ A } from 'foo';
+   ·               ─────────────────────────────────────────
+ 3 │               type T = A;
+   ╰────
+  help: Add type specifier to imported types
+
+  ⚠ typescript(consistent-type-imports): Imports A and C are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B, C } from 'foo';
+   ·               ──────────────────────────────
+ 3 │               import type { D } from 'deez';
+   ╰────
+  help: Add type specifier to imported types
+
+  ⚠ typescript(consistent-type-imports): Imports A are only used as type.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A, B, type C } from 'foo';
+   ·               ───────────────────────────────────
+ 3 │               import type { D } from 'deez';
+   ╰────
+  help: Add type specifier to imported types
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import A from 'foo';
+   ·               ────────────────────
+ 3 │               export = {} as A;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:15]
+ 1 │ 
+ 2 │               import { A } from 'foo';
+   ·               ────────────────────────
+ 3 │               export = {} as A;
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:17]
+ 1 │ 
+ 2 │                 import Foo from 'foo';
+   ·                 ──────────────────────
+ 3 │                 class A {
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:17]
+ 1 │ 
+ 2 │                 import Foo from 'foo';
+   ·                 ──────────────────────
+ 3 │                 class A {
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:17]
+ 1 │ 
+ 2 │                 import Foo from 'foo';
+   ·                 ──────────────────────
+ 3 │                 class A {
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:17]
+ 1 │ 
+ 2 │                 import Foo from 'foo';
+   ·                 ──────────────────────
+ 3 │                 class A {
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
+   ╭─[consistent_type_imports.tsx:2:17]
+ 1 │ 
+ 2 │                 import Foo from 'foo';
+   ·                 ──────────────────────
+ 3 │                 class A {
+   ╰────
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
+  note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
+
+  ⚠ typescript(consistent-type-imports): Imports Foo are only used as type.
+   ╭─[consistent_type_imports.tsx:3:15]
+ 2 │               import 'foo';
+ 3 │               import { Foo, Bar } from 'foo';
+   ·               ───────────────────────────────
+ 4 │               function test(foo: Foo) {}
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports Foo are only used as type.
+   ╭─[consistent_type_imports.tsx:3:15]
+ 2 │               import {} from 'foo';
+ 3 │               import { Foo, Bar } from 'foo';
+   ·               ───────────────────────────────
+ 4 │               function test(foo: Foo) {}
+   ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports Config, OnEvent, and URLHelper are only used as type.
+    ╭─[consistent_type_imports.tsx:5:13]
+  4 │                 } from '../../../fundamentals';
+  5 │ ╭─▶             import {
+  6 │ │                 Config,
+  7 │ │                 OnEvent,
+  8 │ │                 StorageProviderFactory,
+  9 │ │                 URLHelper,
+ 10 │ ╰─▶             } from '../../../fundamentals';
+ 11 │     
+    ╰────
+  help: Mark all type-only imports with the type specifier
+
+  ⚠ typescript(consistent-type-imports): Imports DefineParallelPluginResult are only used as type.
+   ╭─[consistent_type_imports.tsx:5:13]
+ 4 │             } from './plugin'
+ 5 │             import { defineParallelPlugin,DefineParallelPluginResult } from './plugin'
+   ·             ──────────────────────────────────────────────────────────────────────────
+ 6 │ 
+   ╰────
+  help: Mark all type-only imports with the type specifier

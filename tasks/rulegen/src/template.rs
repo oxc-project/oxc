@@ -30,21 +30,21 @@ impl<'a> Template<'a> {
             .unwrap();
 
         let path = match rule_kind {
-            RuleKind::ESLint => Path::new("crates/oxc_linter/src/rules/eslint"),
-            RuleKind::Jest => Path::new("crates/oxc_linter/src/rules/jest"),
-            RuleKind::Typescript => Path::new("crates/oxc_linter/src/rules/typescript"),
-            RuleKind::Unicorn => Path::new("crates/oxc_linter/src/rules/unicorn"),
-            RuleKind::Import => Path::new("crates/oxc_linter/src/rules/import"),
-            RuleKind::React => Path::new("crates/oxc_linter/src/rules/react"),
-            RuleKind::ReactPerf => Path::new("crates/oxc_linter/src/rules/react_perf"),
-            RuleKind::JSXA11y => Path::new("crates/oxc_linter/src/rules/jsx_a11y"),
-            RuleKind::Oxc => Path::new("crates/oxc_linter/src/rules/oxc"),
-            RuleKind::NextJS => Path::new("crates/oxc_linter/src/rules/nextjs"),
-            RuleKind::JSDoc => Path::new("crates/oxc_linter/src/rules/jsdoc"),
-            RuleKind::Node => Path::new("crates/oxc_linter/src/rules/node"),
-            RuleKind::Promise => Path::new("crates/oxc_linter/src/rules/promise"),
-            RuleKind::Vitest => Path::new("crates/oxc_linter/src/rules/vitest"),
-            RuleKind::Vue => Path::new("crates/oxc_linter/src/rules/vue"),
+            RuleKind::ESLint => Path::new("crates/oxc_linter_rules/src/rules/eslint"),
+            RuleKind::Jest => Path::new("crates/oxc_linter_rules/src/rules/jest"),
+            RuleKind::Typescript => Path::new("crates/oxc_linter_rules/src/rules/typescript"),
+            RuleKind::Unicorn => Path::new("crates/oxc_linter_rules/src/rules/unicorn"),
+            RuleKind::Import => Path::new("crates/oxc_linter_rules/src/rules/import"),
+            RuleKind::React => Path::new("crates/oxc_linter_rules/src/rules/react"),
+            RuleKind::ReactPerf => Path::new("crates/oxc_linter_rules/src/rules/react_perf"),
+            RuleKind::JSXA11y => Path::new("crates/oxc_linter_rules/src/rules/jsx_a11y"),
+            RuleKind::Oxc => Path::new("crates/oxc_linter_rules/src/rules/oxc"),
+            RuleKind::NextJS => Path::new("crates/oxc_linter_rules/src/rules/nextjs"),
+            RuleKind::JSDoc => Path::new("crates/oxc_linter_rules/src/rules/jsdoc"),
+            RuleKind::Node => Path::new("crates/oxc_linter_rules/src/rules/node"),
+            RuleKind::Promise => Path::new("crates/oxc_linter_rules/src/rules/promise"),
+            RuleKind::Vitest => Path::new("crates/oxc_linter_rules/src/rules/vitest"),
+            RuleKind::Vue => Path::new("crates/oxc_linter_rules/src/rules/vue"),
         };
 
         std::fs::create_dir_all(path)?;

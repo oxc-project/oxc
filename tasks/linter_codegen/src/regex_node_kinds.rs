@@ -5,12 +5,12 @@ use crate::{node_type_set::NodeTypeSet, utils::astkind_variant_from_path};
 /// Fetches the current list of variants that are handled by `run_on_regex_node`.
 /// We read the source file to avoid hardcoding the list here and ensure this will stay updated.
 pub fn get_regex_node_kinds() -> Option<NodeTypeSet> {
-    // Read crates/oxc_linter/src/utils/regex.rs and extract all variants in `run_on_regex_node` function
+    // Read crates/oxc_linter_core/src/utils/regex.rs and extract all variants in `run_on_regex_node` function
     let regex_utils_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()?
         .parent()?
         .join("crates")
-        .join("oxc_linter")
+        .join("oxc_linter_core")
         .join("src")
         .join("utils")
         .join("regex.rs");

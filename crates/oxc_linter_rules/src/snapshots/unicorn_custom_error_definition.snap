@@ -1,0 +1,272 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:1:1]
+ 1 │ class FooError extends Error {}
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:2:20]
+ 1 │ class FooError extends Error {
+ 2 │             name = 'BadError';
+   ·                    ──────────
+ 3 │         }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:1:1]
+ 1 │ ╭─▶ class FooError extends Error {
+ 2 │ │               static name = 'FooError';
+ 3 │ ╰─▶         }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Invalid class name, use `FooError`.
+   ╭─[custom_error_definition.tsx:1:7]
+ 1 │ class fooError extends Error {
+   ·       ────────
+ 2 │             constructor(message) {
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `fooError`.
+   ╭─[custom_error_definition.tsx:4:29]
+ 3 │                 super(message);
+ 4 │                 this.name = 'FooError';
+   ·                             ──────────
+ 5 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Invalid class name, use `FooError`.
+   ╭─[custom_error_definition.tsx:1:7]
+ 1 │ class fooError extends Error {
+   ·       ────────
+ 2 │             constructor(message) {
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Invalid class name, use `FooError`.
+   ╭─[custom_error_definition.tsx:1:7]
+ 1 │ class Foo extends Error {
+   ·       ───
+ 2 │             constructor(message) {
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Invalid class name, use `FooError`.
+   ╭─[custom_error_definition.tsx:1:7]
+ 1 │ class FooERROR extends Error {
+   ·       ────────
+ 2 │             constructor(message) {
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Invalid class name, use `FooError`.
+   ╭─[custom_error_definition.tsx:1:7]
+ 1 │ class fooerror extends Error {
+   ·       ────────
+ 2 │             constructor(message) {
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Missing call to `super()` in constructor.
+   ╭─[custom_error_definition.tsx:2:27]
+ 1 │ class FooError extends Error {
+ 2 │             constructor() { }
+   ·                           ───
+ 3 │         }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:2:27]
+ 1 │ class FooError extends Error {
+ 2 │             constructor() { }
+   ·                           ───
+ 3 │         }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Pass the error message to `super()` instead of setting `this.message`.
+   ╭─[custom_error_definition.tsx:3:17]
+ 2 │             constructor() {
+ 3 │                 super();
+   ·                 ────────
+ 4 │                 this.message = 'My custom message';
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:2:27]
+ 1 │     class FooError extends Error {
+ 2 │ ╭─▶             constructor() {
+ 3 │ │                   super();
+ 4 │ │                   this.message = 'My custom message';
+ 5 │ ╰─▶             }
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:2:27]
+ 1 │     class FooError extends Error {
+ 2 │ ╭─▶             constructor() {
+ 3 │ │                   super();
+ 4 │ ╰─▶             }
+ 5 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Missing call to `super()` in constructor.
+   ╭─[custom_error_definition.tsx:3:42]
+ 2 │                 constructor(message: string);
+ 3 │ ╭─▶             constructor(message: string) {
+ 4 │ │                   this.name = 'FooError';
+ 5 │ ╰─▶             }
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:4:29]
+ 3 │                 super('My awesome Foo Error');
+ 4 │                 this.name = this.constructor.name;
+   ·                             ─────────────────────
+ 5 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Pass the error message to `super()` instead of setting `this.message`.
+   ╭─[custom_error_definition.tsx:3:17]
+ 2 │             constructor(message) {
+ 3 │                 super(message);
+   ·                 ───────────────
+ 4 │                 this.message = message;
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Pass the error message to `super()` instead of setting `this.message`.
+   ╭─[custom_error_definition.tsx:3:17]
+ 2 │             constructor(message) {
+ 3 │                 super();
+   ·                 ────────
+ 4 │                 this.message = message;
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Pass the error message to `super()` instead of setting `this.message`.
+   ╭─[custom_error_definition.tsx:3:17]
+ 2 │             constructor(message) {
+ 3 │                 super();
+   ·                 ────────
+ 4 │                 this.message = message;
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:2:34]
+ 1 │     class FooError extends Error {
+ 2 │ ╭─▶             constructor(message) {
+ 3 │ │                   super();
+ 4 │ │                   this.message = message;
+ 5 │ ╰─▶             }
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Pass the error message to `super()` instead of setting `this.message`.
+   ╭─[custom_error_definition.tsx:3:17]
+ 2 │             constructor(message) {
+ 3 │                 super();
+   ·                 ────────
+ 4 │                 this.name = 'FooError';
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:4:29]
+ 3 │                 super();
+ 4 │                 this.name = 'foo';
+   ·                             ─────
+ 5 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:4:29]
+ 3 │                 super();
+ 4 │                 this.name = 'foo';
+   ·                             ─────
+ 5 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Exported error name should match error class
+   ╭─[custom_error_definition.tsx:1:9]
+ 1 │ exports.fooError = class FooError extends Error {
+   ·         ────────
+ 2 │             constructor(error) {
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Exported error name should match error class
+   ╭─[custom_error_definition.tsx:1:9]
+ 1 │ exports.fooError = (class FooError extends Error {
+   ·         ────────
+ 2 │             constructor(error) {
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:4:29]
+ 3 │                 super();
+ 4 │                 this.name = 'foo';
+   ·                             ─────
+ 5 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:4:29]
+ 3 │                 super();
+ 4 │                 this.name = 'foo';
+   ·                             ─────
+ 5 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:4:29]
+ 3 │                 super();
+ 4 │                 this.name = 'foo';
+   ·                             ─────
+ 5 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Pass the error message to `super()` instead of setting `this.message`.
+   ╭─[custom_error_definition.tsx:8:17]
+ 7 │ 
+ 8 │                 super();
+   ·                 ────────
+ 9 │                 this.name = 'AbortError';
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): Pass the error message to `super()` instead of setting `this.message`.
+   ╭─[custom_error_definition.tsx:3:17]
+ 2 │             constructor() {
+ 3 │                 super();
+   ·                 ────────
+ 4 │                 this.message = foo.error;
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `ValidationError`.
+   ╭─[custom_error_definition.tsx:2:20]
+ 1 │ export class ValidationError extends Error {
+ 2 │             name = 'FOO';
+   ·                    ─────
+ 3 │             constructor(message) {
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:4:34]
+ 3 │                 [name] = 'FooError';
+ 4 │ ╭─▶             constructor(message) {
+ 5 │ │                   super(message);
+ 6 │ ╰─▶             }
+ 7 │             }
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `ValidationError`.
+   ╭─[custom_error_definition.tsx:2:13]
+ 1 │ export class ValidationError extends Error {
+ 2 │             'name': SomeType;
+   ·             ─────────────────
+ 3 │             constructor(message) {
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `FooError`.
+   ╭─[custom_error_definition.tsx:2:13]
+ 1 │ class FooError extends Error {
+ 2 │             name: string;
+   ·             ─────────────
+ 3 │         }
+   ╰────

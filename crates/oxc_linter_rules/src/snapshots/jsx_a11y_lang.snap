@@ -1,0 +1,45 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ jsx-a11y(lang): `lang` attribute must have a valid value.
+   ╭─[lang.tsx:1:7]
+ 1 │ <html lang='foo' />
+   ·       ──────────
+   ╰────
+  help: Set a valid value for `lang` attribute.
+
+  ⚠ jsx-a11y(lang): `lang` attribute must have a valid value.
+   ╭─[lang.tsx:1:7]
+ 1 │ <html lang='n'></html>
+   ·       ────────
+   ╰────
+  help: Set a valid value for `lang` attribute.
+
+  ⚠ jsx-a11y(lang): `lang` attribute must have a valid value.
+   ╭─[lang.tsx:1:7]
+ 1 │ <html lang='zz-LL' />
+   ·       ────────────
+   ╰────
+  help: Set a valid value for `lang` attribute.
+
+  ⚠ jsx-a11y(lang): `lang` attribute must have a valid value.
+   ╭─[lang.tsx:1:7]
+ 1 │ <html lang={undefined} />
+   ·       ────────────────
+   ╰────
+  help: Set a valid value for `lang` attribute.
+
+  ⚠ jsx-a11y(lang): `lang` attribute must have a valid value.
+   ╭─[lang.tsx:1:6]
+ 1 │ <Foo lang={undefined} />
+   ·      ────────────────
+   ╰────
+  help: Set a valid value for `lang` attribute.
+
+  ⚠ jsx-a11y(lang): `lang` attribute must have a valid value.
+   ╭─[lang.tsx:1:16]
+ 1 │ <Box as='html' lang='foo' />
+   ·                ──────────
+   ╰────
+  help: Set a valid value for `lang` attribute.

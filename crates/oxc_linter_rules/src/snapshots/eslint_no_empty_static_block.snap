@@ -1,0 +1,32 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-empty-static-block): Unexpected empty static blocks
+   ╭─[no_empty_static_block.tsx:1:13]
+ 1 │ class Foo { static {} }
+   ·             ─────────
+   ╰────
+  help: Remove this empty block or add content to it.
+
+  ⚠ eslint(no-empty-static-block): Unexpected empty static blocks
+   ╭─[no_empty_static_block.tsx:1:13]
+ 1 │ class Foo { static { } }
+   ·             ──────────
+   ╰────
+  help: Remove this empty block or add content to it.
+
+  ⚠ eslint(no-empty-static-block): Unexpected empty static blocks
+   ╭─[no_empty_static_block.tsx:1:13]
+ 1 │ ╭─▶ class Foo { static {
+ 2 │ │   
+ 3 │ ╰─▶              } }
+   ╰────
+  help: Remove this empty block or add content to it.
+
+  ⚠ eslint(no-empty-static-block): Unexpected empty static blocks
+   ╭─[no_empty_static_block.tsx:1:31]
+ 1 │ class Foo { static { bar(); } static {} }
+   ·                               ─────────
+   ╰────
+  help: Remove this empty block or add content to it.

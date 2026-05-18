@@ -1,0 +1,68 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ typescript(no-duplicate-enum-values): Duplicate enum value `1`
+   ╭─[no_duplicate_enum_values.tsx:3:19]
+ 2 │             enum E {
+ 3 │               A = 1,
+   ·                   ┬
+   ·                   ╰── 1 is first used as an initializer here
+ 4 │               B = 1,
+   ·                   ┬
+   ·                   ╰── and is re-used here
+ 5 │             }
+   ╰────
+  help: Give B a unique value
+
+  ⚠ typescript(no-duplicate-enum-values): Duplicate enum value `16`
+   ╭─[no_duplicate_enum_values.tsx:3:19]
+ 2 │             enum E {
+ 3 │               A = 0x10,
+   ·                   ──┬─
+   ·                     ╰── 16 is first used as an initializer here
+ 4 │               B = 16,
+   ·                   ─┬
+   ·                    ╰── and is re-used here
+ 5 │             }
+   ╰────
+  help: Give B a unique value
+
+  ⚠ typescript(no-duplicate-enum-values): Duplicate enum value `'A'`
+   ╭─[no_duplicate_enum_values.tsx:3:19]
+ 2 │             enum E {
+ 3 │               A = 'A',
+   ·                   ─┬─
+   ·                    ╰── 'A' is first used as an initializer here
+ 4 │               B = 'A',
+   ·                   ─┬─
+   ·                    ╰── and is re-used here
+ 5 │             }
+   ╰────
+  help: Give B a unique value
+
+  ⚠ typescript(no-duplicate-enum-values): Duplicate enum value `'A'`
+   ╭─[no_duplicate_enum_values.tsx:3:19]
+ 2 │             enum E {
+ 3 │               A = 'A',
+   ·                   ─┬─
+   ·                    ╰── 'A' is first used as an initializer here
+ 4 │               B = 'A',
+   ·                   ─┬─
+   ·                    ╰── and is re-used here
+ 5 │               C = 1,
+   ╰────
+  help: Give B a unique value
+
+  ⚠ typescript(no-duplicate-enum-values): Duplicate enum value `1`
+   ╭─[no_duplicate_enum_values.tsx:5:19]
+ 4 │               B = 'A',
+ 5 │               C = 1,
+   ·                   ┬
+   ·                   ╰── 1 is first used as an initializer here
+ 6 │               D = 1,
+   ·                   ┬
+   ·                   ╰── and is re-used here
+ 7 │             }
+   ╰────
+  help: Give D a unique value

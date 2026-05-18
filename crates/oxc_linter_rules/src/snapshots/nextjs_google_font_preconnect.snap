@@ -1,0 +1,21 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ next(google-font-preconnect): `rel="preconnect"` is missing from Google Font.
+   ╭─[google_font_preconnect.tsx:4:15]
+ 3 │                     <div>
+ 4 │                       <link href="https://fonts.gstatic.com"/>
+   ·                        ────
+ 5 │                     </div>
+   ╰────
+  help: See: https://nextjs.org/docs/messages/google-font-preconnect
+
+  ⚠ next(google-font-preconnect): `rel="preconnect"` is missing from Google Font.
+   ╭─[google_font_preconnect.tsx:4:15]
+ 3 │                     <div>
+ 4 │                       <link rel="preload" href="https://fonts.gstatic.com"/>
+   ·                        ────
+ 5 │                     </div>
+   ╰────
+  help: See: https://nextjs.org/docs/messages/google-font-preconnect

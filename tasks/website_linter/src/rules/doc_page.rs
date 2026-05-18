@@ -229,7 +229,7 @@ const source = `{}`;{}
 fn rule_source(rule: &RuleTableRow) -> String {
     use project_root::get_project_root;
     use std::sync::OnceLock;
-    const LINT_RULES_DIR: &str = "crates/oxc_linter/src/rules";
+    const LINT_RULES_DIR: &str = "crates/oxc_linter_rules/src/rules";
     static ROOT: OnceLock<PathBuf> = OnceLock::new();
     let root = ROOT.get_or_init(|| get_project_root().unwrap());
 
@@ -243,7 +243,7 @@ fn rule_source(rule: &RuleTableRow) -> String {
     }
 
     format!(
-        "https://github.com/oxc-project/oxc/blob/${{ data }}/crates/oxc_linter/src/rules/{rule_path}"
+        "https://github.com/oxc-project/oxc/blob/${{ data }}/crates/oxc_linter_rules/src/rules/{rule_path}"
     )
 }
 

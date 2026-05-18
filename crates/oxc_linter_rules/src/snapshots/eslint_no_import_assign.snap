@@ -1,0 +1,416 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:25]
+ 1 │ import mod1 from 'mod'; mod1 = 0
+   ·                         ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:25]
+ 1 │ import mod2 from 'mod'; mod2 += 0
+   ·                         ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:25]
+ 1 │ import mod3 from 'mod'; mod3++
+   ·                         ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:30]
+ 1 │ import mod4 from 'mod'; for (mod4 in foo);
+   ·                              ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:30]
+ 1 │ import mod5 from 'mod'; for (mod5 of foo);
+   ·                              ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:26]
+ 1 │ import mod6 from 'mod'; [mod6] = foo
+   ·                          ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:26]
+ 1 │ import mod7 from 'mod'; [mod7 = 0] = foo
+   ·                          ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:29]
+ 1 │ import mod8 from 'mod'; [...mod8] = foo
+   ·                             ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:33]
+ 1 │ import mod9 from 'mod'; ({ bar: mod9 } = foo)
+   ·                                 ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:34]
+ 1 │ import mod10 from 'mod'; ({ bar: mod10 = 0 } = foo)
+   ·                                  ─────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:32]
+ 1 │ import mod11 from 'mod'; ({ ...mod11 } = foo)
+   ·                                ─────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:29]
+ 1 │ import {named1} from 'mod'; named1 = 0
+   ·                             ──────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:29]
+ 1 │ import {named2} from 'mod'; named2 += 0
+   ·                             ──────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:29]
+ 1 │ import {named3} from 'mod'; named3++
+   ·                             ──────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:34]
+ 1 │ import {named4} from 'mod'; for (named4 in foo);
+   ·                                  ──────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:34]
+ 1 │ import {named5} from 'mod'; for (named5 of foo);
+   ·                                  ──────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:30]
+ 1 │ import {named6} from 'mod'; [named6] = foo
+   ·                              ──────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:30]
+ 1 │ import {named7} from 'mod'; [named7 = 0] = foo
+   ·                              ──────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:33]
+ 1 │ import {named8} from 'mod'; [...named8] = foo
+   ·                                 ──────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:37]
+ 1 │ import {named9} from 'mod'; ({ bar: named9 } = foo)
+   ·                                     ──────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:38]
+ 1 │ import {named10} from 'mod'; ({ bar: named10 = 0 } = foo)
+   ·                                      ───────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:36]
+ 1 │ import {named11} from 'mod'; ({ ...named11 } = foo)
+   ·                                    ───────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:37]
+ 1 │ import {named12 as foo} from 'mod'; foo = 0; named12 = 0
+   ·                                     ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:30]
+ 1 │ import * as mod1 from 'mod'; mod1 = 0
+   ·                              ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:30]
+ 1 │ import * as mod2 from 'mod'; mod2 += 0
+   ·                              ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:30]
+ 1 │ import * as mod3 from 'mod'; mod3++
+   ·                              ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:35]
+ 1 │ import * as mod4 from 'mod'; for (mod4 in foo);
+   ·                                   ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:35]
+ 1 │ import * as mod5 from 'mod'; for (mod5 of foo);
+   ·                                   ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:31]
+ 1 │ import * as mod6 from 'mod'; [mod6] = foo
+   ·                               ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:31]
+ 1 │ import * as mod7 from 'mod'; [mod7 = 0] = foo
+   ·                               ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:34]
+ 1 │ import * as mod8 from 'mod'; [...mod8] = foo
+   ·                                  ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:38]
+ 1 │ import * as mod9 from 'mod'; ({ bar: mod9 } = foo)
+   ·                                      ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:39]
+ 1 │ import * as mod10 from 'mod'; ({ bar: mod10 = 0 } = foo)
+   ·                                       ─────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:37]
+ 1 │ import * as mod11 from 'mod'; ({ ...mod11 } = foo)
+   ·                                     ─────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:30]
+ 1 │ import * as mod1 from 'mod'; mod1.named = 0
+   ·                              ──────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:30]
+ 1 │ import * as mod2 from 'mod'; mod2.named += 0
+   ·                              ──────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:30]
+ 1 │ import * as mod3 from 'mod'; mod3.named++
+   ·                              ──────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:35]
+ 1 │ import * as mod4 from 'mod'; for (mod4.named in foo);
+   ·                                   ──────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:35]
+ 1 │ import * as mod5 from 'mod'; for (mod5.named of foo);
+   ·                                   ──────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:31]
+ 1 │ import * as mod6 from 'mod'; [mod6.named] = foo
+   ·                               ──────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:31]
+ 1 │ import * as mod7 from 'mod'; [mod7.named = 0] = foo
+   ·                               ──────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:34]
+ 1 │ import * as mod8 from 'mod'; [...mod8.named] = foo
+   ·                                  ──────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:38]
+ 1 │ import * as mod9 from 'mod'; ({ bar: mod9.named } = foo)
+   ·                                      ──────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:39]
+ 1 │ import * as mod10 from 'mod'; ({ bar: mod10.named = 0 } = foo)
+   ·                                       ───────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:37]
+ 1 │ import * as mod11 from 'mod'; ({ ...mod11.named } = foo)
+   ·                                     ───────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:38]
+ 1 │ import * as mod12 from 'mod'; delete mod12.named
+   ·                                      ───────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:43]
+ 1 │ import * as mod from 'mod'; Object.assign(mod, obj)
+   ·                                           ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:51]
+ 1 │ import * as mod from 'mod'; Object.defineProperty(mod, key, d)
+   ·                                                   ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:53]
+ 1 │ import * as mod from 'mod'; Object.defineProperties(mod, d)
+   ·                                                     ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:51]
+ 1 │ import * as mod from 'mod'; Object.setPrototypeOf(mod, proto)
+   ·                                                   ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:43]
+ 1 │ import * as mod from 'mod'; Object.freeze(mod)
+   ·                                           ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:52]
+ 1 │ import * as mod from 'mod'; Reflect.defineProperty(mod, key, d)
+   ·                                                    ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:52]
+ 1 │ import * as mod from 'mod'; Reflect.deleteProperty(mod, key)
+   ·                                                    ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:41]
+ 1 │ import * as mod from 'mod'; Reflect.set(mod, key, value)
+   ·                                         ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:52]
+ 1 │ import * as mod from 'mod'; Reflect.setPrototypeOf(mod, proto)
+   ·                                                    ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:51]
+ 1 │ import mod, * as mod_ns from 'mod'; mod.prop = 0; mod_ns.prop = 0
+   ·                                                   ───────────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:52]
+ 1 │ import * as mod from 'mod'; Object?.defineProperty(mod, key, d)
+   ·                                                    ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:54]
+ 1 │ import * as mod from 'mod'; (Object?.defineProperty)(mod, key, d)
+   ·                                                      ───
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:36]
+ 1 │ import * as mod from 'mod'; delete mod?.prop
+   ·                                    ─────────
+   ╰────
+  help: Imported bindings are readonly

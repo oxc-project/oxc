@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ next(no-assign-module-variable): Do not assign to the variable `module`.
+   ╭─[no_assign_module_variable.tsx:2:14]
+ 1 │ 
+ 2 │                   let module = {};
+   ·                       ──────
+ 3 │ 
+   ╰────
+  help: See https://nextjs.org/docs/messages/no-assign-module-variable

@@ -1,0 +1,321 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ module foo {}
+   · ──────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace foo {}
+   · ─────────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ module foo {}
+   · ──────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace foo {}
+   · ─────────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ module foo {}
+   · ──────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace foo {}
+   · ─────────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:9]
+ 1 │ declare module foo {}
+   ·         ──────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:9]
+ 1 │ declare namespace foo {}
+   ·         ─────────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:9]
+ 1 │ declare module foo {}
+   ·         ──────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:9]
+ 1 │ declare namespace foo {}
+   ·         ─────────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace foo {}
+   · ─────────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ module foo {}
+   · ──────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:9]
+ 1 │ declare module foo {}
+   ·         ──────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:9]
+ 1 │ declare namespace foo {}
+   ·         ─────────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace Foo.Bar {}
+   · ─────────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace Foo.Bar {
+   · ─────────
+ 2 │                namespace Baz.Bas {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:16]
+ 1 │ namespace Foo.Bar {
+ 2 │                namespace Baz.Bas {
+   ·                ─────────
+ 3 │                  interface X {}
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:16]
+ 1 │ namespace A {
+ 2 │                namespace B {
+   ·                ─────────
+ 3 │                  declare namespace C {}
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:16]
+ 1 │ namespace A {
+ 2 │                namespace B {
+   ·                ─────────
+ 3 │                  export declare namespace C {}
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                declare namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                export declare namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                export declare namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                export declare namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                declare namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace A {
+   · ─────────
+ 2 │                export namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:23]
+ 1 │ namespace A {
+ 2 │                export namespace B {
+   ·                       ─────────
+ 3 │                  export declare namespace C {}
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:16]
+ 1 │ export namespace A {
+ 2 │                namespace B {
+   ·                ─────────
+ 3 │                  declare namespace C {}
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:16]
+ 1 │ export namespace A {
+ 2 │                namespace B {
+   ·                ─────────
+ 3 │                  export declare namespace C {}
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                declare namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                export declare namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                export declare namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                export declare namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                declare namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:8]
+ 1 │ export namespace A {
+   ·        ─────────
+ 2 │                export namespace B {
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:23]
+ 1 │ export namespace A {
+ 2 │                export namespace B {
+   ·                       ─────────
+ 3 │                  export declare namespace C {}
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:22]
+ 1 │ declare /* module */ module foo {}
+   ·                      ──────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ⚠ typescript(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:25]
+ 1 │ declare /* namespace */ namespace foo {}
+   ·                         ─────────
+   ╰────
+  help: Replace the namespace with an ES2015 module or use `declare module`

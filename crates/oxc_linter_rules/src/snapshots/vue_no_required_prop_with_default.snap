@@ -1,0 +1,216 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                         props: {
+ 4 │ ╭─▶                         'name': {
+ 5 │ │                           required: true,
+ 6 │ │                           default: 'Hello'
+ 7 │ ╰─▶                         }
+ 8 │                         }
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         name: string
+   ·                         ────────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         name: string | number
+   ·                         ─────────────────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "na::me" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         'na::me': string
+   ·                         ────────────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:5:25]
+ 4 │                       interface TestPropType {
+ 5 │                         name: nameType
+   ·                         ──────────────
+ 6 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         name
+   ·                         ────
+ 5 │                       }
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         name
+   ·                         ────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "na\"me2" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         'na\\"me2'
+   ·                         ──────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "foo" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         foo(): void
+   ·                         ───────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         readonly name
+   ·                         ─────────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         readonly 'name'
+   ·                         ───────────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "a" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         readonly 'a'
+   ·                         ────────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "a" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         readonly '\u0061'
+   ·                         ─────────────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:5:25]
+ 4 │                           props: {
+ 5 │ ╭─▶                         name: {
+ 6 │ │                             required: true,
+ 7 │ │                             default: 'Hello'
+ 8 │ ╰─▶                         }
+ 9 │                           }
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:5:25]
+ 4 │                           props: {
+ 5 │ ╭─▶                         'name': {
+ 6 │ │                             required: true,
+ 7 │ │                             default: 'Hello'
+ 8 │ ╰─▶                         }
+ 9 │                           }
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+    ╭─[no_required_prop_with_default.tsx:6:25]
+  5 │                           props: {
+  6 │ ╭─▶                         'name': {
+  7 │ │                             required: true,
+  8 │ │                             default: 'Hello'
+  9 │ ╰─▶                         }
+ 10 │                           }
+    ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+    ╭─[no_required_prop_with_default.tsx:6:25]
+  5 │                           props: {
+  6 │ ╭─▶                         name: {
+  7 │ │                             required: true,
+  8 │ │                             default: 'Hello'
+  9 │ ╰─▶                         }
+ 10 │                           }
+    ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+    ╭─[no_required_prop_with_default.tsx:6:25]
+  5 │                           props: {
+  6 │ ╭─▶                         name: {
+  7 │ │                             required: true,
+  8 │ │                             default: 'Hello'
+  9 │ ╰─▶                         }
+ 10 │                           }
+    ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                           const props = defineProps({
+ 4 │ ╭─▶                         name: {
+ 5 │ │                             required: true,
+ 6 │ │                             default: 'Hello'
+ 7 │ ╰─▶                         }
+ 8 │                           })
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       interface TestPropType {
+ 4 │                         name: string
+   ·                         ────────────
+ 5 │                       }
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                       const {name="World"} = defineProps<{
+ 4 │                         name: string
+   ·                         ────────────
+ 5 │                       }>();
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                           const {name="World"} = defineProps({
+ 4 │ ╭─▶                         name: {
+ 5 │ │                             required: true,
+ 6 │ ╰─▶                         }
+ 7 │                           });
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.

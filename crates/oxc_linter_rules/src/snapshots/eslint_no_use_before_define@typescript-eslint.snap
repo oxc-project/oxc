@@ -1,0 +1,838 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             a++;
+   ·             ┬
+   ·             ╰── used here
+ 3 │             var a = 19;
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             a++;
+   ·             ┬
+   ·             ╰── used here
+ 3 │             var a = 19;
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             a++;
+   ·             ┬
+   ·             ╰── used here
+ 3 │             var a = 19;
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             a();
+   ·             ┬
+   ·             ╰── used here
+ 3 │             var a = function () {};
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:19]
+ 1 │ 
+ 2 │             alert(a[1]);
+   ·                   ┬
+   ·                   ╰── used here
+ 3 │             var a = [1, 3];
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             a();
+   ·             ┬
+   ·             ╰── used here
+ 3 │             function a() {
+   ·                      ┬
+   ·                      ╰── defined here
+ 4 │               alert(b);
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'b' was used before it was defined.
+   ╭─[no_use_before_define.tsx:4:21]
+ 3 │             function a() {
+ 4 │               alert(b);
+   ·                     ┬
+   ·                     ╰── used here
+ 5 │               var b = 10;
+   ·                   ┬
+   ·                   ╰── defined here
+ 6 │               a();
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             a();
+   ·             ┬
+   ·             ╰── used here
+ 3 │             var a = function () {};
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:21]
+ 2 │             (() => {
+ 3 │               alert(a);
+   ·                     ┬
+   ·                     ╰── used here
+ 4 │               var a = 42;
+   ·                   ┬
+   ·                   ╰── defined here
+ 5 │             })();
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:20]
+ 1 │ 
+ 2 │             (() => a())();
+   ·                    ┬
+   ·                    ╰── used here
+ 3 │             function a() {}
+   ·                      ┬
+   ·                      ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             a();
+   ·             ┬
+   ·             ╰── used here
+ 3 │             try {
+   ╰────
+   ╭─[no_use_before_define.tsx:6:19]
+ 5 │             } catch (foo) {
+ 6 │               var a;
+   ·                   ┬
+   ·                   ╰── defined here
+ 7 │             }
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:27]
+ 1 │ 
+ 2 │             var f = () => a;
+   ·                           ┬
+   ·                           ╰── used here
+ 3 │             var a;
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:17]
+ 1 │ 
+ 2 │             new A();
+   ·                 ┬
+   ·                 ╰── used here
+ 3 │             class A {}
+   ·                   ┬
+   ·                   ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:19]
+ 2 │             function foo() {
+ 3 │               new A();
+   ·                   ┬
+   ·                   ╰── used here
+ 4 │             }
+ 5 │             class A {}
+   ·                   ┬
+   ·                   ╰── defined here
+ 6 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:17]
+ 1 │ 
+ 2 │             new A();
+   ·                 ┬
+   ·                 ╰── used here
+ 3 │             var A = class {};
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:19]
+ 2 │             function foo() {
+ 3 │               new A();
+   ·                   ┬
+   ·                   ╰── used here
+ 4 │             }
+ 5 │             var A = class {};
+   ·                 ┬
+   ·                 ╰── defined here
+ 6 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             a++;
+   ·             ┬
+   ·             ╰── used here
+ 3 │             {
+ 4 │               var a;
+   ·                   ┬
+   ·                   ╰── defined here
+ 5 │             }
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:4:15]
+ 3 │             {
+ 4 │               a();
+   ·               ┬
+   ·               ╰── used here
+ 5 │               function a() {}
+   ·                        ┬
+   ·                        ╰── defined here
+ 6 │             }
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:15]
+ 2 │             {
+ 3 │               a;
+   ·               ┬
+   ·               ╰── used here
+ 4 │               let a = 1;
+   ·                   ┬
+   ·                   ╰── defined here
+ 5 │             }
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:4:17]
+ 3 │               case 1:
+ 4 │                 a();
+   ·                 ┬
+   ·                 ╰── used here
+ 5 │               default:
+ 6 │                 let a;
+   ·                     ┬
+   ·                     ╰── defined here
+ 7 │             }
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:4:17]
+ 3 │               function foo() {
+ 4 │                 a;
+   ·                 ┬
+   ·                 ╰── used here
+ 5 │               }
+ 6 │               let a;
+   ·                   ┬
+   ·                   ╰── defined here
+ 7 │             }
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             a();
+   ·             ┬
+   ·             ╰── used here
+ 3 │             var a = function () {};
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:17]
+ 1 │ 
+ 2 │             new A();
+   ·                 ┬
+   ·                 ╰── used here
+ 3 │             var A = class {};
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:19]
+ 2 │             function foo() {
+ 3 │               new A();
+   ·                   ┬
+   ·                   ╰── used here
+ 4 │             }
+ 5 │             var A = class {};
+   ·                 ┬
+   ·                 ╰── defined here
+ 6 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:9]
+ 1 │ var a = a;
+   ·     ┬   ┬
+   ·     │   ╰── used here
+   ·     ╰── defined here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:9]
+ 1 │ let a = a + b;
+   ·     ┬   ┬
+   ·     │   ╰── used here
+   ·     ╰── defined here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:15]
+ 1 │ const a = foo(a);
+   ·       ┬       ┬
+   ·       │       ╰── used here
+   ·       ╰── defined here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:18]
+ 1 │ function foo(a = a) {}
+   ·              ┬   ┬
+   ·              │   ╰── used here
+   ·              ╰── defined here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:11]
+ 1 │ var { a = a } = [];
+   ·       ┬   ┬
+   ·       │   ╰── used here
+   ·       ╰── defined here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:10]
+ 1 │ var [a = a] = [];
+   ·      ┬   ┬
+   ·      │   ╰── used here
+   ·      ╰── defined here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:11]
+ 1 │ var { b = a, a } = {};
+   ·           ┬  ┬
+   ·           │  ╰── defined here
+   ·           ╰── used here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:10]
+ 1 │ var [b = a, a] = {};
+   ·          ┬  ┬
+   ·          │  ╰── defined here
+   ·          ╰── used here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:17]
+ 1 │ var { a = 0 } = a;
+   ·       ┬         ┬
+   ·       │         ╰── used here
+   ·       ╰── defined here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:15]
+ 1 │ var [a = 0] = a;
+   ·      ┬        ┬
+   ·      │        ╰── used here
+   ·      ╰── defined here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:27]
+ 1 │ 
+ 2 │             for (var a in a) {
+   ·                      ┬    ┬
+   ·                      │    ╰── used here
+   ·                      ╰── defined here
+ 3 │             }
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:27]
+ 1 │ 
+ 2 │             for (var a of a) {
+   ·                      ┬    ┬
+   ·                      │    ╰── used here
+   ·                      ╰── defined here
+ 3 │             }
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:28]
+ 2 │             interface Bar {
+ 3 │               type: typeof Foo;
+   ·                            ─┬─
+   ·                             ╰── used here
+ 4 │             }
+ 5 │ 
+ 6 │             const Foo = 2;
+   ·                   ─┬─
+   ·                    ╰── defined here
+ 7 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:28]
+ 2 │             interface Bar {
+ 3 │               type: typeof Foo.FOO;
+   ·                            ─┬─
+   ·                             ╰── used here
+ 4 │             }
+ 5 │ 
+ 6 │             class Foo {
+   ·                   ─┬─
+   ·                    ╰── defined here
+ 7 │               public static readonly FOO = '';
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:28]
+ 2 │             interface Bar {
+ 3 │               type: typeof Foo.Bar.Baz;
+   ·                            ─┬─
+   ·                             ╰── used here
+ 4 │             }
+ 5 │ 
+ 6 │             const Foo = {
+   ·                   ─┬─
+   ·                    ╰── defined here
+ 7 │               Bar: {
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'baz' was used before it was defined.
+   ╭─[no_use_before_define.tsx:5:27]
+ 4 │             } satisfies {
+ 5 │               bar: typeof baz;
+   ·                           ─┬─
+   ·                            ╰── used here
+ 6 │             };
+ 7 │ 
+ 8 │             const baz = '';
+   ·                   ─┬─
+   ·                    ╰── defined here
+ 9 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'bar' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:15]
+ 2 │             function foo() {
+ 3 │               bar;
+   ·               ─┬─
+   ·                ╰── used here
+ 4 │               var bar = 1;
+   ·                   ─┬─
+   ·                    ╰── defined here
+ 5 │             }
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
+   ╭─[no_use_before_define.tsx:4:24]
+ 3 │               foo(args: Foo): Foo {
+ 4 │                 return Foo.FOO;
+   ·                        ─┬─
+   ·                         ╰── used here
+ 5 │               }
+ 6 │             }
+ 7 │ 
+ 8 │             enum Foo {
+   ·                  ─┬─
+   ·                   ╰── defined here
+ 9 │               FOO,
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:22]
+ 2 │             function foo(): Foo {
+ 3 │               return Foo.FOO;
+   ·                      ─┬─
+   ·                       ╰── used here
+ 4 │             }
+ 5 │ 
+ 6 │             enum Foo {
+   ·                  ─┬─
+   ·                   ╰── defined here
+ 7 │               FOO,
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:25]
+ 1 │ 
+ 2 │             const foo = Foo.Foo;
+   ·                         ─┬─
+   ·                          ╰── used here
+ 3 │ 
+ 4 │             enum Foo {
+   ·                  ─┬─
+   ·                   ╰── defined here
+ 5 │               FOO,
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { a };
+   ·                      ┬
+   ·                      ╰── used here
+ 3 │             const a = 1;
+   ·                   ┬
+   ·                   ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { a };
+   ·                      ┬
+   ·                      ╰── used here
+ 3 │             const a = 1;
+   ·                   ┬
+   ·                   ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { a };
+   ·                      ┬
+   ·                      ╰── used here
+ 3 │             const a = 1;
+   ·                   ┬
+   ·                   ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { a };
+   ·                      ┬
+   ·                      ╰── used here
+ 3 │             const a = 1;
+   ·                   ┬
+   ·                   ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { a as b };
+   ·                      ┬
+   ·                      ╰── used here
+ 3 │             const a = 1;
+   ·                   ┬
+   ·                   ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { a, b };
+   ·                      ┬
+   ·                      ╰── used here
+ 3 │             let a, b;
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'b' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:25]
+ 1 │ 
+ 2 │             export { a, b };
+   ·                         ┬
+   ·                         ╰── used here
+ 3 │             let a, b;
+   ·                    ┬
+   ·                    ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { a };
+   ·                      ┬
+   ·                      ╰── used here
+ 3 │             var a;
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'f' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { f };
+   ·                      ┬
+   ·                      ╰── used here
+ 3 │             function f() {}
+   ·                      ┬
+   ·                      ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'C' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { C };
+   ·                      ┬
+   ·                      ╰── used here
+ 3 │             class C {}
+   ·                   ┬
+   ·                   ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:32]
+ 1 │ 
+ 2 │             export const foo = a;
+   ·                                ┬
+   ·                                ╰── used here
+ 3 │             const a = 1;
+   ·                   ┬
+   ·                   ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:3:22]
+ 2 │             export function foo() {
+ 3 │               return a;
+   ·                      ┬
+   ·                      ╰── used here
+ 4 │             }
+ 5 │             const a = 1;
+   ·                   ┬
+   ·                   ╰── defined here
+ 6 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:4:24]
+ 3 │               foo() {
+ 4 │                 return a;
+   ·                        ┬
+   ·                        ╰── used here
+ 5 │               }
+ 6 │             }
+ 7 │             const a = 1;
+   ·                   ┬
+   ·                   ╰── defined here
+ 8 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { Foo };
+   ·                      ─┬─
+   ·                       ╰── used here
+ 3 │ 
+ 4 │             enum Foo {
+   ·                  ─┬─
+   ·                   ╰── defined here
+ 5 │               BAR,
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { Foo };
+   ·                      ─┬─
+   ·                       ╰── used here
+ 3 │ 
+ 4 │             namespace Foo {
+   ·                       ─┬─
+   ·                        ╰── defined here
+ 5 │               export let bar = () => console.log('bar');
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:22]
+ 1 │ 
+ 2 │             export { Foo, baz };
+   ·                      ─┬─
+   ·                       ╰── used here
+ 3 │ 
+ 4 │             enum Foo {
+   ·                  ─┬─
+   ·                   ╰── defined here
+ 5 │               BAR,
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'baz' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:27]
+ 1 │ 
+ 2 │             export { Foo, baz };
+   ·                           ─┬─
+   ·                            ╰── used here
+ 3 │ 
+   ╰────
+   ╭─[no_use_before_define.tsx:8:17]
+ 7 │ 
+ 8 │             let baz: Enum;
+   ·                 ─┬─
+   ·                  ╰── defined here
+ 9 │             enum Enum {}
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'f' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             f();
+   ·             ┬
+   ·             ╰── used here
+ 3 │             function f() {}
+   ·                      ┬
+   ·                      ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:19]
+ 1 │ 
+ 2 │             alert(a);
+   ·                   ┬
+   ·                   ╰── used here
+ 3 │             var a = 10;
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'f' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             f()?.();
+   ·             ┬
+   ·             ╰── used here
+ 3 │             function f() {
+   ·                      ┬
+   ·                      ╰── defined here
+ 4 │               return function t() {};
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:19]
+ 1 │ 
+ 2 │             alert(a?.b);
+   ·                   ┬
+   ·                   ╰── used here
+ 3 │             var a = { b: 5 };
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.

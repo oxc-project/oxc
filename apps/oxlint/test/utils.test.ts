@@ -172,8 +172,8 @@ describe("convertSubPath", () => {
   });
 
   it("converts other repo paths to <root>/path", () => {
-    const result = convertSubPath("/crates/oxc_linter/src/lib.rs", fixtureName);
-    expect(result).toBe("<root>/crates/oxc_linter/src/lib.rs");
+    const result = convertSubPath("/crates/oxc_linter_core/src/lib.rs", fixtureName);
+    expect(result).toBe("<root>/crates/oxc_linter_core/src/lib.rs");
   });
 
   it("converts root path to <root>/path", () => {

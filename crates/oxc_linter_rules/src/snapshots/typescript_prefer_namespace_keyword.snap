@@ -1,0 +1,58 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ typescript(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
+   ╭─[prefer_namespace_keyword.tsx:1:1]
+ 1 │ module foo {}
+   · ─────────────
+   ╰────
+  help: Replace `module` with `namespace` for internal declarations.
+  note: `module` for internal declarations is no longer supported: treat it as a hard error. Expect it to become a parse error in a future version of TypeScript and Oxlint. See: https://github.com/microsoft/TypeScript/issues/54500, https://github.com/microsoft/TypeScript/issues/62211, https://github.com/microsoft/TypeScript/pull/62876.
+
+  ⚠ typescript(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
+   ╭─[prefer_namespace_keyword.tsx:1:1]
+ 1 │ module A.B {}
+   · ─────────────
+   ╰────
+  help: Replace `module` with `namespace` for internal declarations.
+  note: `module` for internal declarations is no longer supported: treat it as a hard error. Expect it to become a parse error in a future version of TypeScript and Oxlint. See: https://github.com/microsoft/TypeScript/issues/54500, https://github.com/microsoft/TypeScript/issues/62211, https://github.com/microsoft/TypeScript/pull/62876.
+
+  ⚠ typescript(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
+   ╭─[prefer_namespace_keyword.tsx:1:1]
+ 1 │ declare module foo {}
+   · ─────────────────────
+   ╰────
+  help: Replace `module` with `namespace` for internal declarations.
+  note: `module` for internal declarations is no longer supported: treat it as a hard error. Expect it to become a parse error in a future version of TypeScript and Oxlint. See: https://github.com/microsoft/TypeScript/issues/54500, https://github.com/microsoft/TypeScript/issues/62211, https://github.com/microsoft/TypeScript/pull/62876.
+
+  ⚠ typescript(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
+   ╭─[prefer_namespace_keyword.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         declare module foo {
+ 3 │ │             declare module bar {}
+ 4 │ ╰─▶         }
+ 5 │             
+   ╰────
+  help: Replace `module` with `namespace` for internal declarations.
+  note: `module` for internal declarations is no longer supported: treat it as a hard error. Expect it to become a parse error in a future version of TypeScript and Oxlint. See: https://github.com/microsoft/TypeScript/issues/54500, https://github.com/microsoft/TypeScript/issues/62211, https://github.com/microsoft/TypeScript/pull/62876.
+
+  ⚠ typescript(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
+   ╭─[prefer_namespace_keyword.tsx:3:11]
+ 2 │         declare module foo {
+ 3 │           declare module bar {}
+   ·           ─────────────────────
+ 4 │         }
+   ╰────
+  help: Replace `module` with `namespace` for internal declarations.
+  note: `module` for internal declarations is no longer supported: treat it as a hard error. Expect it to become a parse error in a future version of TypeScript and Oxlint. See: https://github.com/microsoft/TypeScript/issues/54500, https://github.com/microsoft/TypeScript/issues/62211, https://github.com/microsoft/TypeScript/pull/62876.
+
+  ⚠ typescript(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
+   ╭─[prefer_namespace_keyword.tsx:3:13]
+ 2 │         declare global {
+ 3 │             module foo {}
+   ·             ─────────────
+ 4 │         }
+   ╰────
+  help: Replace `module` with `namespace` for internal declarations.
+  note: `module` for internal declarations is no longer supported: treat it as a hard error. Expect it to become a parse error in a future version of TypeScript and Oxlint. See: https://github.com/microsoft/TypeScript/issues/54500, https://github.com/microsoft/TypeScript/issues/62211, https://github.com/microsoft/TypeScript/pull/62876.

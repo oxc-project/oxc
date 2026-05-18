@@ -1,0 +1,161 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:5:17]
+ 4 │                 }
+ 5 │                 break;
+   ·                 ──────
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `return` inside the block statement.
+   ╭─[switch_case_break_position.tsx:6:21]
+ 5 │                     }
+ 6 │                     return;
+   ·                     ───────
+ 7 │                 }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `return` inside the block statement.
+   ╭─[switch_case_break_position.tsx:6:21]
+ 5 │                     }
+ 6 │                     return result;
+   ·                     ──────────────
+ 7 │                 }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `throw` inside the block statement.
+   ╭─[switch_case_break_position.tsx:5:17]
+ 4 │                 }
+ 5 │                 throw new Error('bad');
+   ·                 ───────────────────────
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:5:17]
+ 4 │                 }
+ 5 │                 break;
+   ·                 ──────
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:6:21]
+ 5 │                     }
+ 6 │                     break;
+   ·                     ──────
+ 7 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+    ╭─[switch_case_break_position.tsx:9:17]
+  8 │                 }
+  9 │                 break;
+    ·                 ──────
+ 10 │             }
+    ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `continue` inside the block statement.
+   ╭─[switch_case_break_position.tsx:6:21]
+ 5 │                     }
+ 6 │                     continue;
+   ·                     ─────────
+ 7 │                 }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:6:21]
+ 5 │                     }
+ 6 │                     break outer;
+   ·                     ────────────
+ 7 │                 }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:6:17]
+ 5 │                 // This break is intentional
+ 6 │                 break;
+   ·                 ──────
+ 7 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `return` inside the block statement.
+   ╭─[switch_case_break_position.tsx:6:21]
+ 5 │                     }
+ 6 │                     return value;
+   ·                     ─────────────
+ 7 │                 }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `throw` inside the block statement.
+   ╭─[switch_case_break_position.tsx:6:21]
+ 5 │                     }
+ 6 │                     throw error;
+   ·                     ────────────
+ 7 │                 }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:5:17]
+ 4 │                 }
+ 5 │                 break;
+   ·                 ──────
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:5:17]
+ 4 │                 }
+ 5 │                 break;
+   ·                 ──────
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:6:17]
+ 5 │                 }
+ 6 │                 break;
+   ·                 ──────
+ 7 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:5:17]
+ 4 │                 }
+ 5 │                 break;
+   ·                 ──────
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:1:38]
+ 1 │ switch(foo) { case 1: { doStuff(); } break; }
+   ·                                      ──────
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:5:17]
+ 4 │                 }
+ 5 │                 break; // keep with break
+   ·                 ──────
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `break` inside the block statement.
+   ╭─[switch_case_break_position.tsx:5:17]
+ 4 │                 }
+ 5 │                 break; /* keep with break */
+   ·                 ──────
+ 6 │             }
+   ╰────
+
+  ⚠ unicorn(switch-case-break-position): Move `return` inside the block statement.
+   ╭─[switch_case_break_position.tsx:6:21]
+ 5 │                     }
+ 6 │                     return value; // keep with return
+   ·                     ─────────────
+ 7 │                 }
+   ╰────

@@ -1,0 +1,143 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-unused-vars): Type alias 'T' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type T = number; function foo<T>(a: T): T { return a as T }; foo(1)
+   ·      ┬
+   ·      ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'A' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type A = number; type B<A> = A; console.log(3 as B<3>)
+   ·      ┬
+   ·      ╰── 'A' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'T' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type T = { foo: T }
+   ·      ┬
+   ·      ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'T' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type T = { foo?: T | undefined }
+   ·      ┬
+   ·      ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'A' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type A<T> = { foo: T extends Array<infer R> ? A<R> : T }
+   ·      ┬
+   ·      ╰── 'A' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'T' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type T = { foo(): T }
+   ·      ┬
+   ·      ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:7]
+ 1 │ class Foo {
+   ·       ─┬─
+   ·        ╰── 'Foo' is declared here
+ 2 │             private _inner: Foo | undefined;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:7]
+ 1 │ class Foo {
+   ·       ─┬─
+   ·        ╰── 'Foo' is declared here
+ 2 │             _inner: any;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'LinkedList' is declared but never used.
+   ╭─[no_unused_vars.ts:1:7]
+ 1 │ class LinkedList<T> {
+   ·       ─────┬────
+   ·            ╰── 'LinkedList' is declared here
+ 2 │             #next?: LinkedList<T>;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'LinkedList' is declared but never used.
+   ╭─[no_unused_vars.ts:1:7]
+ 1 │ class LinkedList<T> {
+   ·       ─────┬────
+   ·            ╰── 'LinkedList' is declared here
+ 2 │             #next?: LinkedList<T>;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Interface 'LinkedList' is declared but never used.
+   ╭─[no_unused_vars.ts:1:11]
+ 1 │ interface LinkedList<T> { next: LinkedList<T> | undefined }
+   ·           ─────┬────
+   ·                ╰── 'LinkedList' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:10]
+ 1 │ function foo(): typeof foo { }
+   ·          ─┬─
+   ·           ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:10]
+ 1 │ function foo(): typeof foo { return foo }
+   ·          ─┬─
+   ·           ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but only used as a type. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.ts:1:21]
+ 1 │ export function foo(a: unknown): a is string { return true }
+   ·                     ┬
+   ·                     ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but only used as a type. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.ts:1:21]
+ 1 │ export const foo = (a: unknown): a is string => true
+   ·                     ┬
+   ·                     ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but only used as a type. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.ts:1:23]
+ 1 │ function assertString(a: unknown): asserts a is string {} assertString('')
+   ·                       ┬
+   ·                       ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but only used as a type. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.ts:1:24]
+ 1 │ function assertDefined(a: unknown): asserts a {} assertDefined('')
+   ·                        ┬
+   ·                        ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.

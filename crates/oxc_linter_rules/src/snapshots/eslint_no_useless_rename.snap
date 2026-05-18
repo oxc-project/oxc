@@ -1,0 +1,889 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {foo: foo} = obj;
+   ·      ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: (foo)} = obj);
+   ·   ──────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {\u0061: a} = obj;
+   ·      ─────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {a: \u0061} = obj;
+   ·      ─────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {\u0061: \u0061} = obj;
+   ·      ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ let {a, foo: foo} = obj;
+   ·         ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {foo: foo, bar: baz} = obj;
+   ·      ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ let {foo: bar, baz: baz} = obj;
+   ·                ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {foo: foo, bar: bar} = obj;
+   ·      ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ let {foo: foo, bar: bar} = obj;
+   ·                ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:12]
+ 1 │ let {foo: {bar: bar}} = obj;
+   ·            ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:23]
+ 1 │ let {foo: {bar: bar}, baz: baz} = obj;
+   ·                       ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:12]
+ 1 │ let {foo: {bar: bar}, baz: baz} = obj;
+   ·            ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {'foo': foo} = obj;
+   ·      ──────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {'foo': foo, 'bar': baz} = obj;
+   ·      ──────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:18]
+ 1 │ let {'foo': bar, 'baz': baz} = obj;
+   ·                  ──────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {'foo': foo, 'bar': bar} = obj;
+   ·      ──────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:18]
+ 1 │ let {'foo': foo, 'bar': bar} = obj;
+   ·                  ──────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:14]
+ 1 │ let {'foo': {'bar': bar}} = obj;
+   ·              ──────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:27]
+ 1 │ let {'foo': {'bar': bar}, 'baz': baz} = obj;
+   ·                           ──────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:14]
+ 1 │ let {'foo': {'bar': bar}, 'baz': baz} = obj;
+   ·              ──────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {foo: foo = 1, 'bar': bar = 1, baz: baz} = obj;
+   ·      ────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:20]
+ 1 │ let {foo: foo = 1, 'bar': bar = 1, baz: baz} = obj;
+   ·                    ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:36]
+ 1 │ let {foo: foo = 1, 'bar': bar = 1, baz: baz} = obj;
+   ·                                    ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:12]
+ 1 │ let {foo: {bar: bar = 1, 'baz': baz = 1}} = obj;
+   ·            ────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:26]
+ 1 │ let {foo: {bar: bar = 1, 'baz': baz = 1}} = obj;
+   ·                          ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:12]
+ 1 │ let {foo: {bar: bar = {}} = {}} = obj;
+   ·            ─────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: (foo) = a} = obj);
+   ·   ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {foo: foo = (a)} = obj;
+   ·      ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:6]
+ 1 │ let {foo: foo = (a, b)} = obj;
+   ·      ─────────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ function func({foo: foo}) {}
+   ·                ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ function func({foo: foo, bar: baz}) {}
+   ·                ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:26]
+ 1 │ function func({foo: bar, baz: baz}) {}
+   ·                          ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ function func({foo: foo, bar: bar}) {}
+   ·                ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:26]
+ 1 │ function func({foo: foo, bar: bar}) {}
+   ·                          ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ function func({foo: foo = 1, 'bar': bar = 1, baz: baz}) {}
+   ·                ────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:30]
+ 1 │ function func({foo: foo = 1, 'bar': bar = 1, baz: baz}) {}
+   ·                              ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:46]
+ 1 │ function func({foo: foo = 1, 'bar': bar = 1, baz: baz}) {}
+   ·                                              ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:22]
+ 1 │ function func({foo: {bar: bar = 1, 'baz': baz = 1}}) {}
+   ·                      ────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:36]
+ 1 │ function func({foo: {bar: bar = 1, 'baz': baz = 1}}) {}
+   ·                                    ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:22]
+ 1 │ function func({foo: {bar: bar = {}} = {}}) {}
+   ·                      ─────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: foo}) => {}
+   ·   ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: foo, bar: baz}) => {}
+   ·   ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:13]
+ 1 │ ({foo: bar, baz: baz}) => {}
+   ·             ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: foo, bar: bar}) => {}
+   ·   ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:13]
+ 1 │ ({foo: foo, bar: bar}) => {}
+   ·             ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: foo = 1, 'bar': bar = 1, baz: baz}) => {}
+   ·   ────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:17]
+ 1 │ ({foo: foo = 1, 'bar': bar = 1, baz: baz}) => {}
+   ·                 ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:33]
+ 1 │ ({foo: foo = 1, 'bar': bar = 1, baz: baz}) => {}
+   ·                                 ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ ({foo: {bar: bar = 1, 'baz': baz = 1}}) => {}
+   ·         ────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:23]
+ 1 │ ({foo: {bar: bar = 1, 'baz': baz = 1}}) => {}
+   ·                       ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ ({foo: {bar: bar = {}} = {}}) => {}
+   ·         ─────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:8]
+ 1 │ const {foo: foo, ...stuff} = myObject;
+   ·        ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:8]
+ 1 │ const {foo: foo, bar: baz, ...stuff} = myObject;
+   ·        ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:8]
+ 1 │ const {foo: foo, bar: bar, ...stuff} = myObject;
+   ·        ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:18]
+ 1 │ const {foo: foo, bar: bar, ...stuff} = myObject;
+   ·                  ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ import {foo as foo} from 'foo';
+   ·                ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:18]
+ 1 │ import {'foo' as foo} from 'foo';
+   ·                  ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:19]
+ 1 │ import {\u0061 as a} from 'foo';
+   ·                   ─
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:14]
+ 1 │ import {a as \u0061} from 'foo';
+   ·              ──────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:19]
+ 1 │ import {\u0061 as \u0061} from 'foo';
+   ·                   ──────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ import {foo as foo, bar as baz} from 'foo';
+   ·                ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:28]
+ 1 │ import {foo as bar, baz as baz} from 'foo';
+   ·                            ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ import {foo as foo, bar as bar} from 'foo';
+   ·                ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:28]
+ 1 │ import {foo as foo, bar as bar} from 'foo';
+   ·                            ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:22]
+ 1 │ var foo = 0; export {foo as foo};
+   ·                      ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:22]
+ 1 │ var foo = 0; export {foo as 'foo'};
+   ·                      ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {foo as 'foo'} from 'bar';
+   ·         ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {'foo' as foo} from 'bar';
+   ·         ─────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {'foo' as 'foo'} from 'bar';
+   ·         ─────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {' 👍 ' as ' 👍 '} from 'bar';
+   ·         ──────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {'' as ''} from 'bar';
+   ·         ──
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:20]
+ 1 │ var a = 0; export {a as \u0061};
+   ·                    ─
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:25]
+ 1 │ var \u0061 = 0; export {\u0061 as a};
+   ·                         ──────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:25]
+ 1 │ var \u0061 = 0; export {\u0061 as \u0061};
+   ·                         ──────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:35]
+ 1 │ var foo = 0; var bar = 0; export {foo as foo, bar as baz};
+   ·                                   ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:47]
+ 1 │ var foo = 0; var baz = 0; export {foo as bar, baz as baz};
+   ·                                               ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:34]
+ 1 │ var foo = 0; var bar = 0;export {foo as foo, bar as bar};
+   ·                                  ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:46]
+ 1 │ var foo = 0; var bar = 0;export {foo as foo, bar as bar};
+   ·                                              ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {foo as foo} from 'foo';
+   ·         ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {a as \u0061} from 'foo';
+   ·         ─
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {\u0061 as a} from 'foo';
+   ·         ──────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {\u0061 as \u0061} from 'foo';
+   ·         ──────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {foo as foo, bar as baz} from 'foo';
+   ·         ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:47]
+ 1 │ var foo = 0; var bar = 0; export {foo as bar, baz as baz} from 'foo';
+   ·                                               ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:9]
+ 1 │ export {foo as foo, bar as bar} from 'foo';
+   ·         ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:21]
+ 1 │ export {foo as foo, bar as bar} from 'foo';
+   ·                     ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ ({/* comment */foo: foo} = {});
+   ·                ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ ({/* comment */foo: foo = 1} = {});
+   ·                ────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:21]
+ 1 │ ({foo, /* comment */bar: bar} = {});
+   ·                     ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo/**/ : foo} = {});
+   ·   ─────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo/**/ : foo = 1} = {});
+   ·   ─────────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo /**/: foo} = {});
+   ·   ─────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo /**/: foo = 1} = {});
+   ·   ─────────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ╭─▶ ({foo://
+ 2 │ ╰─▶             foo} = {});
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: /**/foo} = {});
+   ·   ────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: (/**/foo)} = {});
+   ·   ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: (foo/**/)} = {});
+   ·   ──────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ╭─▶ ({foo: (foo //
+ 2 │ ╰─▶             )} = {});
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: /**/foo = 1} = {});
+   ·   ────────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: (/**/foo) = 1} = {});
+   ·   ──────────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: (foo/**/) = 1} = {});
+   ·   ──────────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: foo/* comment */} = {});
+   ·   ────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: foo//comment
+   ·   ────────
+ 2 │             ,bar} = {});
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: foo/* comment */ = 1} = {});
+   ·   ─────────────────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ╭─▶ ({foo: foo // comment
+ 2 │ ╰─▶              = 1} = {});
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: foo = /* comment */ 1} = {});
+   ·   ──────────────────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ╭─▶ ({foo: foo = // comment
+ 2 │ ╰─▶              1} = {});
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:3]
+ 1 │ ({foo: foo = (1/* comment */)} = {});
+   ·   ───────────────────────────
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:29]
+ 1 │ import {/* comment */foo as foo} from 'foo';
+   ·                             ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:33]
+ 1 │ import {foo,/* comment */bar as bar} from 'foo';
+   ·                                 ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:20]
+ 1 │ import {foo/**/ as foo} from 'foo';
+   ·                    ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:20]
+ 1 │ import {foo /**/as foo} from 'foo';
+   ·                    ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:2:16]
+ 1 │ import {foo //
+ 2 │             as foo} from 'foo';
+   ·                ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:19]
+ 1 │ import {foo as/**/foo} from 'foo';
+   ·                   ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ import {foo as foo/* comment */} from 'foo';
+   ·                ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:16]
+ 1 │ import {foo as foo/* comment */,bar} from 'foo';
+   ·                ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:31]
+ 1 │ let foo; export {/* comment */foo as foo};
+   ·                               ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:40]
+ 1 │ let foo, bar; export {foo,/* comment */bar as bar};
+   ·                                        ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:18]
+ 1 │ let foo; export {foo/**/as foo};
+   ·                  ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:18]
+ 1 │ let foo; export {foo as/**/ foo};
+   ·                  ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:18]
+ 1 │ let foo; export {foo as /**/foo};
+   ·                  ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:18]
+ 1 │ let foo; export {foo as//comment
+   ·                  ───
+ 2 │              foo};
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:18]
+ 1 │ let foo; export {foo as foo/* comment*/};
+   ·                  ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:23]
+ 1 │ let foo, bar; export {foo as foo/* comment*/,bar};
+   ·                       ───
+   ╰────
+  help: Use the variable's original name or rename it to a different name
+
+  ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
+   ╭─[no_useless_rename.tsx:1:23]
+ 1 │ let foo, bar; export {foo as foo//comment
+   ·                       ───
+ 2 │             ,bar};
+   ╰────
+  help: Use the variable's original name or rename it to a different name

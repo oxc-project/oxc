@@ -1,0 +1,195 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:29]
+ 1 │ var a = 1; switch (a) {case 1: break; case 1: break; case 2: break; default: break;}
+   ·                             ┬              ┬
+   ·                             │              ╰── is duplicated here
+   ·                             ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:29]
+ 1 │ var a = 1; switch (a) {case 1: break; case (1): break; case 2: break; default: break;}
+   ·                             ┬               ┬
+   ·                             │               ╰── is duplicated here
+   ·                             ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:31]
+ 1 │ var a = '1'; switch (a) {case '1': break; case '1': break; case '2': break; default: break;}
+   ·                               ─┬─              ─┬─
+   ·                                │                ╰── is duplicated here
+   ·                                ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:38]
+ 1 │ var a = 1, one = 1; switch (a) {case one: break; case one: break; case 2: break; default: break;}
+   ·                                      ─┬─              ─┬─
+   ·                                       │                ╰── is duplicated here
+   ·                                       ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:54]
+ 1 │ var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p.p.p1: break; case p.p.p1: break; default: break;}
+   ·                                                      ───┬──              ───┬──
+   ·                                                         │                   ╰── is duplicated here
+   ·                                                         ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:84]
+ 1 │ var a = 1, f = function(b) { return b ? { p1: 1 } : { p1: 2 }; }; switch (a) {case f(true).p1: break; case f(true).p1: break; default: break;}
+   ·                                                                                    ─────┬────              ─────┬────
+   ·                                                                                         │                       ╰── is duplicated here
+   ·                                                                                         ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:67]
+ 1 │ var a = 1, f = function(s) { return { p1: s } }; switch (a) {case f(a + 1).p1: break; case f(a + 1).p1: break; default: break;}
+   ·                                                                   ─────┬─────              ─────┬─────
+   ·                                                                        │                        ╰── is duplicated here
+   ·                                                                        ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:67]
+ 1 │ var a = 1, f = function(s) { return { p1: s } }; switch (a) {case f(a === 1 ? 2 : 3).p1: break; case f(a === 1 ? 2 : 3).p1: break; default: break;}
+   ·                                                                   ──────────┬──────────              ──────────┬──────────
+   ·                                                                             │                                  ╰── is duplicated here
+   ·                                                                             ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:67]
+ 1 │ var a = 1, f1 = function() { return { p1: 1 } }; switch (a) {case f1().p1: break; case f1().p1: break; default: break;}
+   ·                                                                   ───┬───              ───┬───
+   ·                                                                      │                    ╰── is duplicated here
+   ·                                                                      ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:43]
+ 1 │ var a = [1, 2]; switch(a.toString()){case ([1, 2]).toString():break; case ([1, 2]).toString():break; default:break;}
+   ·                                           ─────────┬─────────             ─────────┬─────────
+   ·                                                    │                               ╰── is duplicated here
+   ·                                                    ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:19]
+ 1 │ switch (a) { case a: case a: }
+   ·                   ┬       ┬
+   ·                   │       ╰── is duplicated here
+   ·                   ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:19]
+ 1 │ switch (a) { case a: break; case b: break; case a: break; case c: break; case a: break; }
+   ·                   ┬                             ┬
+   ·                   │                             ╰── is duplicated here
+   ·                   ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:19]
+ 1 │ switch (a) { case a: break; case b: break; case a: break; case c: break; case a: break; }
+   ·                   ┬                                                           ┬
+   ·                   │                                                           ╰── is duplicated here
+   ·                   ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:54]
+ 1 │ ╭─▶ var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p.p.p1: break; case p. p // comment
+   · │                                                        ───┬──
+   · │                                                           ╰── This label here
+ 2 │ ├─▶  .p1: break; default: break;}
+   · ╰──── is duplicated here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:54]
+ 1 │ ╭─▶ var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p .p
+ 2 │ │   /* comment */
+ 3 │ ├─▶ .p1: break; case p.p.p1: break; default: break;}
+   · ╰───                 ───┬──
+   · ╰───                    ╰── is duplicated here
+   · ╰──── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:54]
+ 1 │ ╭──▶ var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p .p
+ 2 │ │    /* comment */
+ 3 │ ├──▶ .p1: break; case p. p // comment
+   · ╰───── This label here
+ 4 │ ├──▶  .p1: break; default: break;}
+   · ╰───── is duplicated here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:54]
+ 1 │ ╭─▶ var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p.p.p1: break; case p. p // comment
+   · │                                                        ───┬──
+   · │                                                           ╰── This label here
+ 2 │ ├─▶  .p1: break; case p .p
+   · ╰──── is duplicated here
+ 3 │     /* comment */
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:54]
+ 1 │     var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p.p.p1: break; case p. p // comment
+   ·                                                          ───┬──
+   ·                                                             ╰── This label here
+ 2 │ ╭─▶  .p1: break; case p .p
+ 3 │ │   /* comment */
+ 4 │ ├─▶ .p1: break; default: break;}
+   · ╰──── is duplicated here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:67]
+ 1 │ var a = 1, f = function(s) { return { p1: s } }; switch (a) {case f(a + 1).p1: break; case f(a+1).p1: break; default: break;}
+   ·                                                                   ─────┬─────              ────┬────
+   ·                                                                        │                       ╰── is duplicated here
+   ·                                                                        ╰── This label here
+   ╰────
+  help: Remove the duplicated case
+
+  ⚠ eslint(no-duplicate-case): Duplicate case label
+   ╭─[no_duplicate_case.tsx:1:67]
+ 1 │ ╭──▶ var a = 1, f = function(s) { return { p1: s } }; switch (a) {case f(
+ 2 │ │    a + 1 // comment
+ 3 │ ├──▶ ).p1: break; case f(a+1)
+   · ╰───── This label here
+ 4 │ ├──▶ .p1: break; default: break;}
+   · ╰───── is duplicated here
+   ╰────
+  help: Remove the duplicated case

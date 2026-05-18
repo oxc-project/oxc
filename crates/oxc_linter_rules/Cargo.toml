@@ -1,0 +1,86 @@
+[package]
+name = "oxc_linter_rules"
+version = "1.65.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/examples", "/src"]
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+description.workspace = true
+
+[features]
+default = []
+ruledocs = [
+  "oxc_linter_core/ruledocs",
+  "oxc_macros/ruledocs",
+] # Enables the `ruledocs` feature for conditional compilation
+force_test_reporter = []
+
+[lints]
+workspace = true
+
+[lib]
+doctest = true
+
+[dependencies]
+oxc_linter_core = { workspace = true }
+oxc_allocator = { workspace = true, features = ["fixed_size", "bitset"] }
+oxc_ast = { workspace = true }
+oxc_ast_macros = { workspace = true }
+oxc_ast_visit = { workspace = true, features = ["serialize"] }
+oxc_cfg = { workspace = true }
+oxc_codegen = { workspace = true, default-features = false }
+oxc_config = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["box_macros"] }
+oxc_diagnostics = { workspace = true }
+oxc_estree_tokens = { workspace = true }
+oxc_ecmascript = { workspace = true }
+oxc_index = { workspace = true }
+oxc_macros = { workspace = true, features = ["ruledocs"] }
+oxc_parser = { workspace = true }
+oxc_regular_expression = { workspace = true }
+oxc_resolver = { workspace = true }
+oxc_semantic = { workspace = true, features = ["cfg", "linter"] }
+oxc_span = { workspace = true, features = ["schemars", "serialize"] }
+oxc_str = { workspace = true, features = ["serialize"] }
+oxc_syntax = { workspace = true, features = ["serialize"] }
+
+#
+bitflags = { workspace = true }
+constcat = { workspace = true }
+convert_case = { workspace = true }
+cow-utils = { workspace = true }
+fast-glob = { workspace = true }
+icu_segmenter = { workspace = true }
+ignore = { workspace = true }
+indexmap = { workspace = true, features = ["rayon"] }
+itertools = { workspace = true }
+javascript-globals = { workspace = true }
+json-strip-comments = { workspace = true }
+language-tags = { workspace = true }
+lazy-regex = { workspace = true }
+memchr = { workspace = true }
+nodejs-built-in-modules = { workspace = true }
+papaya = { workspace = true }
+phf = { workspace = true, features = ["macros"] }
+rayon = { workspace = true }
+rust-lapper = { workspace = true }
+rustc-hash = { workspace = true }
+schemars = { workspace = true, features = ["indexmap2", "regex"] }
+self_cell = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, features = [
+  "preserve_order",
+] } # preserve_order: print config with ordered keys.
+simdutf8 = { workspace = true }
+smallvec = { workspace = true }
+url = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
+markdown = { workspace = true }

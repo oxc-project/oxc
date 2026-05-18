@@ -1,0 +1,9 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ vitest(consistent-test-filename): The 1.spec.ts is a test file but his name is not allowed
+  help: Rename the file that match the pattern .*\.test\.[tj]sx?$
+
+  ⚠ vitest(consistent-test-filename): The 2.ts is a test file but his name is not allowed
+  help: Rename the file that match the pattern (?u).*\.spec\.ts$

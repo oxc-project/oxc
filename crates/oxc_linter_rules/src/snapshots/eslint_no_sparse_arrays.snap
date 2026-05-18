@@ -1,0 +1,62 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-sparse-arrays): Unexpected comma in middle of array
+   ╭─[no_sparse_arrays.tsx:1:10]
+ 1 │ var a = [,];
+   ·          ▲
+   ·          ╰── unexpected comma
+   ╰────
+  help: remove the comma or insert `undefined`
+
+  ⚠ eslint(no-sparse-arrays): Unexpected comma in middle of array
+   ╭─[no_sparse_arrays.tsx:1:13]
+ 1 │ var a = [ 1,, 2];
+   ·             ▲
+   ·             ╰── unexpected comma
+   ╰────
+  help: remove the comma or insert `undefined`
+
+  ⚠ eslint(no-sparse-arrays): Unexpected comma in middle of array
+   ╭─[no_sparse_arrays.tsx:1:13]
+ 1 │ var a = [ 1,,,, 2];
+   ·             ▲▲▲
+   ·             ││╰── unexpected comma
+   ·             │╰── unexpected comma
+   ·             ╰── unexpected comma
+   ╰────
+  help: remove the comma or insert `undefined`
+
+  ⚠ eslint(no-sparse-arrays): 30 unexpected commas in middle of array
+   ╭─[no_sparse_arrays.tsx:1:9]
+ 1 │ var a = [ 1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, 2];
+   ·         ──────────────────┬──────────────────
+   ·                           ╰── the array here
+   ╰────
+  help: remove the comma or insert `undefined`
+
+  ⚠ eslint(no-sparse-arrays): 83 unexpected commas in middle of array
+   ╭─[no_sparse_arrays.tsx:1:9]
+ 1 │ var a = [ 1, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,  2];
+   ·         ▲
+   ·         ╰── the array starting here
+   ╰────
+  help: remove the comma or insert `undefined`
+
+  ⚠ eslint(no-sparse-arrays): 82 unexpected commas in middle of array
+   ╭─[no_sparse_arrays.tsx:1:9]
+ 1 │ var a = [ 1, , , , , , , , , , , , , , , , , , , , , , , , , , hello, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,  2];
+   ·         ▲
+   ·         ╰── the array starting here
+   ╰────
+  help: remove the comma or insert `undefined`
+
+  ⚠ eslint(no-sparse-arrays): 81 unexpected commas in middle of array
+   ╭─[no_sparse_arrays.tsx:1:9]
+ 1 │ var a = [ 1, , , , , , , , , , , , , , , , , , , , , , , , , ,
+   ·         ▲
+   ·         ╰── the array starting here
+ 2 │ 
+   ╰────
+  help: remove the comma or insert `undefined`

@@ -47,7 +47,7 @@ jobs:
           OXLINT_VERSION: ${{ steps.oxlint.outputs.version }}
         run: |
           node .github/scripts/update-rule-versions.mts --release-version "$OXLINT_VERSION" --write
-          git diff --exit-code -- crates/oxc_linter/src/rules
+          git diff --exit-code -- crates/oxc_linter_rules/src/rules
 
   build-oxlint:
     needs: check

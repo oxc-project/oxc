@@ -100,7 +100,7 @@ Modify examples in `crates/<crate_name>/examples/` to test specific scenarios.
 ### Key Locations
 
 - AST: Start with `oxc_ast`, use `oxc_ast_visit` for traversal
-- Linting rules: `crates/oxc_linter/src/rules/` (visitor pattern)
+- Linting rules: `crates/oxc_linter_rules/src/rules/` (visitor pattern)
 - Parser: `crates/oxc_parser/src/lib.rs`, lexer in `src/lexer/`
 - Tests: Co-located with source, integration in `tests/`, uses `insta` for snapshots
 

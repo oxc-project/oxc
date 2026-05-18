@@ -1,0 +1,99 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:1:29]
+ 1 │ doThing().then(function() { a.then() })
+   ·                             ──────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:1:29]
+ 1 │ doThing().then(function() { b.catch() })
+   ·                             ───────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:1:36]
+ 1 │ doThing().then(function() { return a.then() })
+   ·                                    ──────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:1:36]
+ 1 │ doThing().then(function() { return b.catch() })
+   ·                                    ───────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:1:24]
+ 1 │ doThing().then(() => { a.then() })
+   ·                        ──────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:1:24]
+ 1 │ doThing().then(() => { b.catch() })
+   ·                        ───────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:1:22]
+ 1 │ doThing().then(() => a.then())
+   ·                      ──────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:1:22]
+ 1 │ doThing().then(() => b.catch())
+   ·                      ───────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:1:25]
+ 1 │ doThing().then((val) => doSomething(val).catch(errors))
+   ·                         ──────────────────────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:1:26]
+ 1 │ doThing().catch((val) => doSomething(val).catch(errors))
+   ·                          ──────────────────────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:3:13]
+ 2 │           .then(() =>
+ 3 │             a.then(() => Promise.resolve(1)))
+   ·             ──────
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:2:16]
+ 1 │     doThing()
+ 2 │ ╭─▶           .then(a => getB(a)
+ 3 │ ╰─▶             .then(b => getC(b))
+ 4 │               )
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.
+
+  ⚠ promise(no-nesting): Avoid nesting promises.
+   ╭─[no_nesting.tsx:3:18]
+ 2 │               .then(a => getB(a)
+ 3 │ ╭─▶             .then(b => getC(a, b)
+ 4 │ ╰─▶               .then(c => getD(a, c))
+ 5 │                 )
+   ╰────
+  help: Refactor so that promises are chained in a flat manner.

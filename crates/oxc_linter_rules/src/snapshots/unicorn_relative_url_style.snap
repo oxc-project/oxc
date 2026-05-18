@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
+   ╭─[relative_url_style.tsx:1:9]
+ 1 │ new URL("./foo", base)
+   ·         ───────
+   ╰────
+  help: Remove leading `./`
+
+  ⚠ unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
+   ╭─[relative_url_style.tsx:1:9]
+ 1 │ new URL('./foo', base)
+   ·         ───────
+   ╰────
+  help: Remove leading `./`
+
+  ⚠ unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
+   ╭─[relative_url_style.tsx:1:9]
+ 1 │ new URL("././a", base)
+   ·         ───────
+   ╰────
+  help: Remove leading `./`
+
+  ⚠ unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
+   ╭─[relative_url_style.tsx:1:9]
+ 1 │ new URL(`./${foo}`, base)
+   ·         ──────────
+   ╰────
+  help: Remove leading `./`
+
+  ⚠ unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
+   ╭─[relative_url_style.tsx:1:9]
+ 1 │ new URL("./", "https://example.com/a/b/")
+   ·         ────
+   ╰────
+  help: Remove leading `./`
+
+  ⚠ unicorn(relative-url-style): Add a `./` prefix to the relative URL.
+   ╭─[relative_url_style.tsx:1:9]
+ 1 │ new URL("foo", base)
+   ·         ─────
+   ╰────
+  help: Add `./` prefix
+
+  ⚠ unicorn(relative-url-style): Add a `./` prefix to the relative URL.
+   ╭─[relative_url_style.tsx:1:9]
+ 1 │ new URL('foo', base)
+   ·         ─────
+   ╰────
+  help: Add `./` prefix
+
+  ⚠ unicorn(relative-url-style): Add a `./` prefix to the relative URL.
+   ╭─[relative_url_style.tsx:1:9]
+ 1 │ new URL("", "https://example.com/a/b/")
+   ·         ──
+   ╰────
+  help: Add `./` prefix

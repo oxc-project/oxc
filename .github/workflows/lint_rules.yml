@@ -8,8 +8,8 @@ on:
       - main
     paths:
       - ".github/workflows/lint_rules.yml"
-      - "crates/oxc_linter/src/rules.rs"
-      - "crates/oxc_linter/src/utils/mod.rs" # here are the remaps for some plugins
+      - "crates/oxc_linter_rules/src/rules.rs"
+      - "crates/oxc_linter_core/src/utils/mod.rs" # here are the remaps for some plugins
       - "tasks/lint_rules/**"
 
 jobs:

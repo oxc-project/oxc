@@ -1,0 +1,369 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div allowTransparency="true" />
+   ·      ─────────────────
+   ╰────
+  help: Remove unknown property
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div hasOwnProperty="should not be allowed property"></div>;
+   ·      ──────────────
+   ╰────
+  help: Remove unknown property
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div abc="should not be allowed property"></div>;
+   ·      ───
+   ╰────
+  help: Remove unknown property
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div aria-fake="should not be allowed property"></div>;
+   ·      ─────────
+   ╰────
+  help: Remove unknown property
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div someProp="bar"></div>;
+   ·      ────────
+   ╰────
+  help: Remove unknown property
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div class="bar"></div>;
+   ·      ─────
+   ╰────
+  help: Use 'className' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div for="bar"></div>;
+   ·      ───
+   ╰────
+  help: Use 'htmlFor' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div accept-charset="bar"></div>;
+   ·      ──────────────
+   ╰────
+  help: Use 'acceptCharset' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div http-equiv="bar"></div>;
+   ·      ──────────
+   ╰────
+  help: Use 'httpEquiv' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div accesskey="bar"></div>;
+   ·      ─────────
+   ╰────
+  help: Use 'accessKey' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div onclick="bar"></div>;
+   ·      ───────
+   ╰────
+  help: Use 'onClick' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div onmousedown="bar"></div>;
+   ·      ───────────
+   ╰────
+  help: Use 'onMouseDown' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div onMousedown="bar"></div>;
+   ·      ───────────
+   ╰────
+  help: Use 'onMouseDown' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <use xlink:href="bar" />;
+   ·      ──────────
+   ╰────
+  help: Use 'xlinkHref' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:7]
+ 1 │ <rect clip-path="bar" />;
+   ·       ─────────
+   ╰────
+  help: Use 'clipPath' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:9]
+ 1 │ <script crossorigin nomodule />
+   ·         ───────────
+   ╰────
+  help: Use 'crossOrigin' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:21]
+ 1 │ <script crossorigin nomodule />
+   ·                     ────────
+   ╰────
+  help: Use 'noModule' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div crossorigin />
+   ·      ───────────
+   ╰────
+  help: Use 'crossOrigin' instead
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div crossOrigin />
+   ·      ───────────
+   ╰────
+  help: Property 'crossOrigin' is only allowed on: link, script, audio, image, img, video
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div as="audio" />
+   ·      ──
+   ╰────
+  help: Property 'as' is only allowed on: link
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
+   ·      ───────
+   ╰────
+  help: Property 'onAbort' is only allowed on: video, audio
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:27]
+ 1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
+   ·                           ────────────────
+   ╰────
+  help: Property 'onDurationChange' is only allowed on: video, audio
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:66]
+ 1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
+   ·                                                                  ─────────
+   ╰────
+  help: Property 'onEmptied' is only allowed on: video, audio
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:91]
+ 1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
+   ·                                                                                           ───────
+   ╰────
+  help: Property 'onEnded' is only allowed on: video, audio
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:110]
+ 1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
+   ·                                                                                                              ────────
+   ╰────
+  help: Property 'onResize' is only allowed on: video, audio
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:133]
+ 1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
+   ·                                                                                                                                     ───────
+   ╰────
+  help: Property 'onError' is only allowed on: source, picture, video, link, script, audio, img, iframe
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div onLoad={this.load} />
+   ·      ──────
+   ╰────
+  help: Property 'onLoad' is only allowed on: source, body, img, link, script, picture, object, iframe
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div fill="pink" />
+   ·      ────
+   ╰────
+  help: Property 'fill' is only allowed on: polyline, animateMotion, g, animateTransform, polygon, svg, set, path, mask, symbol, tref, textPath, ellipse, animateColor, altGlyph, marker, circle, line, animate, tspan, text, use, rect
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
+   ·      ────────
+   ╰────
+  help: Property 'controls' is only allowed on: video, audio
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:31]
+ 1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
+   ·                               ────
+   ╰────
+  help: Property 'loop' is only allowed on: video, audio
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:43]
+ 1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
+   ·                                           ─────
+   ╰────
+  help: Property 'muted' is only allowed on: video, audio
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:77]
+ 1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
+   ·                                                                             ───────────
+   ╰────
+  help: Property 'playsInline' is only allowed on: video
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:96]
+ 1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
+   ·                                                                                                ───────────────
+   ╰────
+  help: Property 'allowFullScreen' is only allowed on: video, iframe
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div download="foo" />
+   ·      ────────
+   ╰────
+  help: Property 'download' is only allowed on: a, area
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div imageSrcSet="someImageSrcSet" />
+   ·      ───────────
+   ╰────
+  help: Property 'imageSrcSet' is only allowed on: link
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div imageSizes="someImageSizes" />
+   ·      ──────────
+   ╰────
+  help: Property 'imageSizes' is only allowed on: link
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div popoverTarget="locale-switcher" />
+   ·      ─────────────
+   ╰────
+  help: Property 'popoverTarget' is only allowed on: input, button
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div popoverTargetAction="show" />
+   ·      ───────────────────
+   ╰────
+  help: Property 'popoverTargetAction' is only allowed on: input, button
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div fetchPriority="high" />
+   ·      ─────────────
+   ╰────
+  help: Property 'fetchPriority' is only allowed on: link, img, script
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <img fetchpriority="high" src="foo.jpg" />
+   ·      ─────────────
+   ╰────
+  help: Use 'fetchPriority' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:7]
+ 1 │ <link fetchpriority="high" href="style.css" rel="stylesheet" />
+   ·       ─────────────
+   ╰────
+  help: Use 'fetchPriority' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:9]
+ 1 │ <script fetchpriority="high" src="script.js" />
+   ·         ─────────────
+   ╰────
+  help: Use 'fetchPriority' instead
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div data-xml-anything="invalid" />
+   ·      ─────────────────
+   ╰────
+  help: Remove unknown property
+
+  ⚠ react(no-unknown-property): React does not recognize data-* props with uppercase characters on a DOM element
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div data-testID="bar" data-under_sCoRe="bar" />;
+   ·      ───────────
+   ╰────
+  help: Use 'data-testid' instead
+
+  ⚠ react(no-unknown-property): React does not recognize data-* props with uppercase characters on a DOM element
+   ╭─[no_unknown_property.tsx:1:24]
+ 1 │ <div data-testID="bar" data-under_sCoRe="bar" />;
+   ·                        ────────────────
+   ╰────
+  help: Use 'data-under_score' instead
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div abbr="abbr" />
+   ·      ────
+   ╰────
+  help: Property 'abbr' is only allowed on: th, td
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div webkitDirectory="" />
+   ·      ───────────────
+   ╰────
+  help: Property 'webkitDirectory' is only allowed on: input
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div webkitdirectory="" />
+   ·      ───────────────
+   ╰────
+  help: Property 'webkitdirectory' is only allowed on: input
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:2:33]
+ 1 │ 
+ 2 │                     <div className="App" data-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash:c="customValue">
+   ·                                          ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 3 │                       Hello, world!
+   ╰────
+  help: Remove unknown property
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:4]
+ 1 │ <t onChñnge/>
+   ·    ────────
+   ╰────
+  help: Remove unknown property
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div precedence="default" />
+   ·      ──────────
+   ╰────
+  help: Property 'precedence' is only allowed on: style, link
+
+  ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:9]
+ 1 │ <script precedence="high" src="foo.js" />
+   ·         ──────────
+   ╰────
+  help: Property 'precedence' is only allowed on: style, link

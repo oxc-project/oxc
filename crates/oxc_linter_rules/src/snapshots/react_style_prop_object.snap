@@ -1,0 +1,89 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:1:12]
+ 1 │ <div style="color: 'red'" />
+   ·            ──────────────
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:1:14]
+ 1 │ <Hello style="color: 'green'" />
+   ·              ────────────────
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:1:12]
+ 1 │ <div style={true} />
+   ·            ──────
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:4:35]
+ 3 │               function redDiv2() {
+ 4 │                 return <div style={styles} />;
+   ·                                   ────────
+ 5 │               }
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:4:35]
+ 3 │               function redDiv2() {
+ 4 │                 return <div style={styles} />;
+   ·                                   ────────
+ 5 │               }
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:4:37]
+ 3 │               function redDiv2() {
+ 4 │                 return <Hello style={styles} />;
+   ·                                     ────────
+ 5 │               }
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:4:35]
+ 3 │               function redDiv() {
+ 4 │                 return <div style={styles} />;
+   ·                                   ────────
+ 5 │               }
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:1:20]
+ 1 │ <MyComponent style="myStyle" />
+   ·                    ─────────
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:1:44]
+ 1 │ React.createElement(MyComponent2, { style: "mySpecialStyle" })
+   ·                                            ────────────────
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:3:31]
+ 2 │             let styles: string | undefined
+ 3 │             return <div style={styles} />
+   ·                               ────────
+ 4 │           
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:3:31]
+ 2 │             let styles: number | undefined
+ 3 │             return <div style={styles} />
+   ·                               ────────
+ 4 │           
+   ╰────
+
+  ⚠ react(style-prop-object): `style` prop value must be an object.
+   ╭─[style_prop_object.tsx:3:31]
+ 2 │             let styles: boolean | undefined
+ 3 │             return <div style={styles} />
+   ·                               ────────
+ 4 │           
+   ╰────

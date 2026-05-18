@@ -1,0 +1,42 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
+   ╭─[no_img_element.tsx:6:19]
+ 5 │                         <div>
+ 6 │                           <img
+   ·                            ─┬─
+   ·                             ╰── Use `<Image />` from `next/image` instead.
+ 7 │                             src="/test.png"
+   ·                                 ─────┬─────
+   ·                                      ╰── Use a static image import instead.
+ 8 │                             alt="Test picture"
+   ╰────
+  help: Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.
+  note: See https://nextjs.org/docs/messages/no-img-element
+
+  ⚠ next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
+   ╭─[no_img_element.tsx:5:17]
+ 4 │                       return (
+ 5 │                         <img
+   ·                          ─┬─
+   ·                           ╰── Use `<Image />` from `next/image` instead.
+ 6 │                           src="/test.png"
+   ·                               ─────┬─────
+   ·                                    ╰── Use a static image import instead.
+ 7 │                           alt="Test picture"
+   ╰────
+  help: Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.
+  note: See https://nextjs.org/docs/messages/no-img-element
+
+  ⚠ next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
+   ╭─[no_img_element.tsx:4:7]
+ 3 │         export const MyComponent = () => (
+ 4 │            <img src={somePicture.src} alt='foo' />
+   ·             ─┬─
+   ·              ╰── Use `<Image />` from `next/image` instead.
+ 5 │         );
+   ╰────
+  help: Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.
+  note: See https://nextjs.org/docs/messages/no-img-element

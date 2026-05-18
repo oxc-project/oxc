@@ -1,0 +1,159 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:20]
+ 1 │ function abc(foo = {a: 123}) {}
+   ·                    ────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:28]
+ 1 │ async function * abc(foo = {a: 123}) {}
+   ·                            ────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:20]
+ 1 │ function abc(foo = {a: false}) {}
+   ·                    ──────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:21]
+ 1 │ function abc(foo = ({a: false})) {}
+   ·                     ──────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:20]
+ 1 │ function abc(foo = {a: "bar"}) {}
+   ·                    ──────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:20]
+ 1 │ function abc(foo = {a: "bar", b: {c: true}}) {}
+   ·                    ────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:20]
+ 1 │ const abc = (foo = {a: false}) => {};
+   ·                    ──────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:20]
+ 1 │ const abc = (foo = {a: 123, b: false}) => {};
+   ·                    ──────────────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:20]
+ 1 │ const abc = (foo = {a: false, b: 1, c: "test", d: null}) => {};
+   ·                    ────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:28]
+ 1 │ const abc = function(foo = {a: 123}) {}
+   ·                            ────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:2:27]
+ 1 │ class A {
+ 2 │                 abc(foo = {a: 123}) {}
+   ·                           ────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:2:35]
+ 1 │ class A {
+ 2 │                 constructor(foo = {a: 123}) {}
+   ·                                   ────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:2:34]
+ 1 │ class A {
+ 2 │                 static abc(foo = {a: 123}) {}
+   ·                                  ────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:2:29]
+ 1 │ class A {
+ 2 │                 * abc(foo = {a: 123}) {}
+   ·                             ────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:2:42]
+ 1 │ class A {
+ 2 │                 static async * abc(foo = {a: 123}) {}
+   ·                                          ────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:2:40]
+ 1 │ class A {
+ 2 │                 [foo = {a: 123}](foo = {a: 123}) {}
+   ·                                        ────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:2:27]
+ 1 │ const A = class {
+ 2 │                 abc(foo = {a: 123}) {}
+   ·                           ────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:2:27]
+ 1 │ object = {
+ 2 │                 abc(foo = {a: 123}) {}
+   ·                           ────────
+ 3 │             };
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default
+   ╭─[no_object_as_default_parameter.tsx:2:27]
+ 1 │ const A = class {
+ 2 │                 abc({a} = {a: 123}) {}
+   ·                           ────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:24]
+ 1 │ /**/function abc(foo = {a: 123}) {}
+   ·                        ────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:20]
+ 1 │ const abc = (foo = {a: false}) => {};
+   ·                    ──────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default
+   ╭─[no_object_as_default_parameter.tsx:1:20]
+ 1 │ function abc({a} = {a: 123}) {}
+   ·                    ────────
+   ╰────
+
+  ⚠ unicorn(no-object-as-default-parameter): Do not use an object literal as default
+   ╭─[no_object_as_default_parameter.tsx:1:20]
+ 1 │ function abc([a] = {a: 123}) {}
+   ·                    ────────
+   ╰────

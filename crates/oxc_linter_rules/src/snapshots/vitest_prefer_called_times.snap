@@ -1,0 +1,45 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ vitest(prefer-called-times): Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`
+   ╭─[prefer_called_times.tsx:1:1]
+ 1 │ expect(fn).toBeCalledOnce();
+   · ───────────────────────────
+   ╰────
+  help: Replace with `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` for clarity and consistency
+
+  ⚠ vitest(prefer-called-times): Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`
+   ╭─[prefer_called_times.tsx:1:1]
+ 1 │ expect(fn).toHaveBeenCalledOnce();
+   · ─────────────────────────────────
+   ╰────
+  help: Replace with `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` for clarity and consistency
+
+  ⚠ vitest(prefer-called-times): Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`
+   ╭─[prefer_called_times.tsx:1:1]
+ 1 │ expect(fn).not.toBeCalledOnce();
+   · ───────────────────────────────
+   ╰────
+  help: Replace with `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` for clarity and consistency
+
+  ⚠ vitest(prefer-called-times): Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`
+   ╭─[prefer_called_times.tsx:1:1]
+ 1 │ expect(fn).not.toHaveBeenCalledOnce();
+   · ─────────────────────────────────────
+   ╰────
+  help: Replace with `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` for clarity and consistency
+
+  ⚠ vitest(prefer-called-times): Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`
+   ╭─[prefer_called_times.tsx:1:1]
+ 1 │ expect(fn).resolves.toBeCalledOnce();
+   · ────────────────────────────────────
+   ╰────
+  help: Replace with `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` for clarity and consistency
+
+  ⚠ vitest(prefer-called-times): Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`
+   ╭─[prefer_called_times.tsx:1:1]
+ 1 │ expect(fn).resolves.toHaveBeenCalledOnce();
+   · ──────────────────────────────────────────
+   ╰────
+  help: Replace with `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` for clarity and consistency

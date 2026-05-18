@@ -1,0 +1,98 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:3:39]
+ 2 │                     function Foo(props) {
+ 3 │                       const { foo } = this.props;
+   ·                                       ────
+ 4 │                       return <div>{foo}</div>;
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:3:36]
+ 2 │                     function Foo(props) {
+ 3 │                       return <div>{this.props.foo}</div>;
+   ·                                    ────
+ 4 │                     }
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:3:36]
+ 2 │                     function Foo(props) {
+ 3 │                       return <div>{this.state.foo}</div>;
+   ·                                    ────
+ 4 │                     }
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:3:39]
+ 2 │                     function Foo(props) {
+ 3 │                       const { foo } = this.state;
+   ·                                       ────
+ 4 │                       return <div>{foo}</div>;
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:3:48]
+ 2 │                     function Foo(props) {
+ 3 │                       return props.foo ? <div>{this.props.bar}</div> : null;
+   ·                                                ────
+ 4 │                     }
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:4:38]
+ 3 │                       if (props.foo) {
+ 4 │                         return <div>{this.props.bar}</div>;
+   ·                                      ────
+ 5 │                       }
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:3:27]
+ 2 │                     function Foo(props) {
+ 3 │                       if (this.props.foo) {
+   ·                           ────
+ 4 │                         something();
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:1:31]
+ 1 │ const Foo = (props) => <span>{this.props.foo}</span>
+   ·                               ────
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:1:24]
+ 1 │ const Foo = (props) => this.props.foo ? <span>{props.bar}</span> : null;
+   ·                        ────
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:3:36]
+ 2 │                     function Foo(props) {
+ 3 │                       return <div>{this["props"].foo}</div>;
+   ·                                    ────
+ 4 │                     }
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:6:54]
+ 5 │                       }
+ 6 │                       return <div onClick={onClick}>{this.props.foo}</div>;
+   ·                                                      ────
+ 7 │                     }
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`

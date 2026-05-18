@@ -1,0 +1,239 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:34]
+ 1 │ var a = function() { return 1; }.bind(b)
+   ·                                  ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:34]
+ 1 │ var a = function() { return 1; }['bind'](b)
+   ·                                  ──────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:34]
+ 1 │ var a = function() { return 1; }[`bind`](b)
+   ·                                  ──────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:31]
+ 1 │ var a = (() => { return 1; }).bind(b)
+   ·                               ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:34]
+ 1 │ var a = (() => { return this; }).bind(b)
+   ·                                  ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:47]
+ 1 │ var a = function() { (function(){ this.c }) }.bind(b)
+   ·                                               ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:47]
+ 1 │ var a = function() { function c(){ this.d } }.bind(b)
+   ·                                               ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:34]
+ 1 │ var a = function() { return 1; }.bind(this)
+   ·                                  ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:71]
+ 1 │ var a = function() { (function(){ (function(){ this.d }.bind(c)) }) }.bind(b)
+   ·                                                                       ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:36]
+ 1 │ var a = (function() { return 1; }).bind(this)
+   ·                                    ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:35]
+ 1 │ var a = (function() { return 1; }.bind)(this)
+   ·                                   ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:23]
+ 1 │ var a = function() {}.bind(b++)
+   ·                       ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:23]
+ 1 │ var a = function() {}.bind(b())
+   ·                       ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:23]
+ 1 │ var a = function() {}.bind(b.c)
+   ·                       ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:27]
+ 1 │ var a = function() {}/**/.bind(b)
+   ·                           ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:27]
+ 1 │ var a = function() {}/**/['bind'](b)
+   ·                           ──────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:2:5]
+ 1 │ var a = function() {}//comment
+ 2 │             .bind(b)
+   ·              ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:27]
+ 1 │ var a = function() {}./**/bind(b)
+   ·                           ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:27]
+ 1 │ var a = function() {}[/**/'bind'](b)
+   ·                           ──────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:2:4]
+ 1 │ var a = function() {}.//
+ 2 │             bind(b)
+   ·             ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:23]
+ 1 │ var a = function() {}.bind/**/(b)
+   ·                       ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:23]
+ 1 │ var a = function() {}.bind(
+   ·                       ────
+ 2 │             /**/b)
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:23]
+ 1 │ var a = function() {}.bind(b/**/)
+   ·                       ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:23]
+ 1 │ var a = function() {}.bind(b//
+   ·                       ────
+ 2 │             )
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:23]
+ 1 │ var a = function() {}.bind(b
+   ·                       ────
+ 2 │             /**/)
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:23]
+ 1 │ var a = function() {}.bind(b)/**/
+   ·                       ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:34]
+ 1 │ var a = function() { return 1; }.bind?.(b)
+   ·                                  ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:35]
+ 1 │ var a = function() { return 1; }?.bind(b)
+   ·                                   ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:36]
+ 1 │ var a = (function() { return 1; }?.bind)(b)
+   ·                                    ────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:34]
+ 1 │ var a = function() { return 1; }['bind']?.(b)
+   ·                                  ──────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:36]
+ 1 │ var a = function() { return 1; }?.['bind'](b)
+   ·                                    ──────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:37]
+ 1 │ var a = (function() { return 1; }?.['bind'])(b)
+   ·                                     ──────
+   ╰────
+  help: Remove the `.bind` call.
+
+  ⚠ eslint(no-extra-bind): The function binding is unnecessary.
+   ╭─[no_extra_bind.tsx:1:46]
+ 1 │ var a = function() { function v() { this } }.bind(a)
+   ·                                              ────
+   ╰────
+  help: Remove the `.bind` call.

@@ -1,0 +1,513 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:12]
+ 1 │ <App prop={`foo`} />
+   ·            ─────
+   ╰────
+  help: Replace `{`foo`}` with `"foo"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{<myApp></myApp>}</App>
+   ·       ───────────────
+   ╰────
+  help: remove the curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{<myApp></myApp>}</App>
+   ·       ───────────────
+   ╰────
+  help: remove the curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:12]
+ 1 │ <App prop={`foo`}>foo</App>
+   ·            ─────
+   ╰────
+  help: Replace `{`foo`}` with `"foo"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{`foo`}</App>
+   ·       ─────
+   ╰────
+  help: Replace `{`foo`}` with `foo`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:4]
+ 1 │ <>{`foo`}</>
+   ·    ─────
+   ╰────
+  help: Replace `{`foo`}` with `foo`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:15]
+ 1 │ <MyComponent>{'foo'}</MyComponent>
+   ·               ─────
+   ╰────
+  help: Replace `{'foo'}` with `foo`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <MyComponent prop={'bar'}>foo</MyComponent>
+   ·                    ─────
+   ╰────
+  help: Replace `{'bar'}` with `"bar"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:15]
+ 1 │ <MyComponent>{'foo'}</MyComponent>
+   ·               ─────
+   ╰────
+  help: Replace `{'foo'}` with `foo`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <MyComponent prop={'bar'}>foo</MyComponent>
+   ·                    ─────
+   ╰────
+  help: Replace `{'bar'}` with `"bar"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:3:24]
+ 2 │                     <MyComponent>
+ 3 │                       {'%'}
+   ·                        ───
+ 4 │                     </MyComponent>
+   ╰────
+  help: Replace `{'%'}` with `%`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:3:24]
+ 2 │                     <MyComponent>
+ 3 │                       {'foo'}
+   ·                        ─────
+ 4 │                       <div>
+   ╰────
+  help: Replace `{'foo'}` with `foo`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:7:24]
+ 6 │                       </div>
+ 7 │                       {'baz'}
+   ·                        ─────
+ 8 │                     </MyComponent>
+   ╰────
+  help: Replace `{'baz'}` with `baz`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:5:26]
+ 4 │                       <div>
+ 5 │                         {'bar'}
+   ·                          ─────
+ 6 │                       </div>
+   ╰────
+  help: Replace `{'bar'}` with `bar`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:3:24]
+ 2 │                     <MyComponent>
+ 3 │                       {'foo'}
+   ·                        ─────
+ 4 │                       <div>
+   ╰────
+  help: Replace `{'foo'}` with `foo`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:7:24]
+ 6 │                       </div>
+ 7 │                       {'baz'}
+   ·                        ─────
+ 8 │                       {'some-complicated-exp'}
+   ╰────
+  help: Replace `{'baz'}` with `baz`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:8:24]
+ 7 │                       {'baz'}
+ 8 │                       {'some-complicated-exp'}
+   ·                        ──────────────────────
+ 9 │                     </MyComponent>
+   ╰────
+  help: Replace `{'some-complicated-exp'}` with `some-complicated-exp`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:5:26]
+ 4 │                       <div>
+ 5 │                         {'bar'}
+   ·                          ─────
+ 6 │                       </div>
+   ╰────
+  help: Replace `{'bar'}` with `bar`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop='bar'>foo</MyComponent>
+   ·                   ──┬──
+   ·                     ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop="foo 'bar'">foo</MyComponent>
+   ·                   ─────┬─────
+   ·                        ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop='foo "bar"'>foo</MyComponent>
+   ·                   ─────┬─────
+   ·                        ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop="foo 'bar'">foo</MyComponent>
+   ·                   ─────┬─────
+   ·                        ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo bar </MyComponent>
+   ·              ────┬───
+   ·                  ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop="foo 'bar' \n ">foo</MyComponent>
+   ·                   ───────┬───────
+   ·                          ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo bar  </MyComponent>
+   ·              ─────┬────
+   ·                   ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo bar 'foo'</MyComponent>
+   ·              ──────┬──────
+   ·                    ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo bar "foo"</MyComponent>
+   ·              ──────┬──────
+   ·                    ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo bar <App/></MyComponent>
+   ·              ────┬───
+   ·                  ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ ╭─▶ <MyComponent>foo 
+ 2 │ ├─▶  bar</MyComponent>
+   · ╰──── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo \u1234 bar</MyComponent>
+   ·              ───────┬──────
+   ·                     ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop='foo \u1234 bar' />
+   ·                   ────────┬───────
+   ·                           ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <MyComponent prop={'bar'}>{'foo'}</MyComponent>
+   ·                    ─────
+   ╰────
+  help: Replace `{'bar'}` with `"bar"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:28]
+ 1 │ <MyComponent prop={'bar'}>{'foo'}</MyComponent>
+   ·                            ─────
+   ╰────
+  help: Replace `{'foo'}` with `foo`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop='bar'>foo</MyComponent>
+   ·                   ──┬──
+   ·                     ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:25]
+ 1 │ <MyComponent prop='bar'>foo</MyComponent>
+   ·                         ─┬─
+   ·                          ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:12]
+ 1 │ <App prop={'foo'} attr={" foo "} />
+   ·            ─────
+   ╰────
+  help: Replace `{'foo'}` with `"foo"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:25]
+ 1 │ <App prop={'foo'} attr={" foo "} />
+   ·                         ───────
+   ╰────
+  help: Replace `{" foo "}` with `" foo "`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:11]
+ 1 │ <App prop='foo' attr="bar" />
+   ·           ──┬──
+   ·             ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:22]
+ 1 │ <App prop='foo' attr="bar" />
+   ·                      ──┬──
+   ·                        ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:11]
+ 1 │ <App prop='foo' attr={"bar"} />
+   ·           ──┬──
+   ·             ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:24]
+ 1 │ <App prop={'foo'} attr='bar' />
+   ·                        ──┬──
+   ·                          ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:11]
+ 1 │ <App prop='foo &middot; bar' />
+   ·           ─────────┬────────
+   ·                    ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:6]
+ 1 │ <App>foo &middot; bar</App>
+   ·      ────────┬───────
+   ·              ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{'foo "bar"'}</App>
+   ·       ───────────
+   ╰────
+  help: Replace `{'foo "bar"'}` with `foo "bar"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{"foo 'bar'"}</App>
+   ·       ───────────
+   ╰────
+  help: Replace `{"foo 'bar'"}` with `foo 'bar'`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:2:31]
+ 1 │ 
+ 2 │                     <App prop="" />
+   ·                               ─┬
+   ·                                ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:2:31]
+ 1 │ 
+ 2 │                     <App prop='' />
+   ·                               ─┬
+   ·                                ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:2:26]
+ 1 │     
+ 2 │ ╭─▶                     <App>
+ 3 │ │                         foo bar
+ 4 │ ├─▶                       <div>foo bar foo</div>
+   · ╰──── Wrap this value in curly braces
+ 5 │                           <span>
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:4:28]
+ 3 │                       foo bar
+ 4 │                       <div>foo bar foo</div>
+   ·                            ─────┬─────
+   ·                                 ╰── Wrap this value in curly braces
+ 5 │                       <span>
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:5:29]
+ 4 │                           <div>foo bar foo</div>
+ 5 │ ╭─▶                       <span>
+ 6 │ ├─▶                         foo bar <i>foo bar</i>
+   · ╰──── Wrap this value in curly braces
+ 7 │                             <strong>
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:6:36]
+ 5 │                       <span>
+ 6 │                         foo bar <i>foo bar</i>
+   ·                                    ───┬───
+   ·                                       ╰── Wrap this value in curly braces
+ 7 │                         <strong>
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+    ╭─[jsx_curly_brace_presence.tsx:7:33]
+  6 │                             foo bar <i>foo bar</i>
+  7 │ ╭─▶                         <strong>
+  8 │ │                             foo bar
+  9 │ ├─▶                         </strong>
+    · ╰──── Wrap this value in curly braces
+ 10 │                           </span>
+    ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:2:26]
+ 1 │     
+ 2 │ ╭─▶                     <App>
+ 3 │ │                         &lt;Component&gt;
+ 4 │ ├─▶                       &nbsp;<Component />&nbsp;
+   · ╰──── Wrap this value in curly braces
+ 5 │                           &nbsp;
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:2:30]
+ 1 │ 
+ 2 │                     <Box mb={'1rem'} />
+   ·                              ──────
+ 3 │                   
+   ╰────
+  help: Replace `{'1rem'}` with `"1rem"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:2:30]
+ 1 │ 
+ 2 │                     <Box mb={'1rem {}'} />
+   ·                              ─────────
+ 3 │                   
+   ╰────
+  help: Replace `{'1rem {}'}` with `"1rem {}"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <MyComponent prop={"{ style: true }"}>bar</MyComponent>
+   ·                    ─────────────────
+   ╰────
+  help: Replace `{"{ style: true }"}` with `"{ style: true }"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <MyComponent prop={"< style: true >"}>foo</MyComponent>
+   ·                    ─────────────────
+   ╰────
+  help: Replace `{"< style: true >"}` with `"< style: true >"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:13]
+ 1 │ <App horror=<div /> />
+   ·             ───┬───
+   ·                ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <App horror={<div />} />
+   ·              ───────
+   ╰────
+  help: Replace `{<div />}` with `<div />`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:11]
+ 1 │ <Foo bar={"'"} />
+   ·           ───
+   ╰────
+  help: Replace `{"'"}` with `"'"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:2:32]
+ 1 │ 
+ 2 │                     <Foo help={'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'} />
+   ·                                ──────────────────────────────────────────────────────────────────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace `{'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'}` with `'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:13]
+ 1 │ <Image alt={""} />
+   ·             ──
+   ╰────
+  help: Replace `{""}` with `""`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{""}</App>
+   ·       ──
+   ╰────
+  help: Remove `{""}`.

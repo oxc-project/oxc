@@ -1,0 +1,192 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:20]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello key={index} />
+   ·                    ───────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:20]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello key={`abc${index}`} />
+   ·                    ───────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:20]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello key={1 + index} />
+   ·                    ───────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:34]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello thing={thing} key={index} />
+   ·                                  ───────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:41]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.cloneElement(thing, { key: index })
+   ·                                         ──────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:3:15]
+ 2 │             React.cloneElement(thing, {
+ 3 │               key: index
+   ·               ──────────
+ 4 │             })
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:41]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.cloneElement(thing, { key: `abc${index}` })
+   ·                                         ──────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:41]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.cloneElement(thing, { key: 1 + index })
+   ·                                         ──────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:37]
+ 1 │ things.forEach((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                                     ───────────
+ 3 │           });
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:37]
+ 1 │ things.filter((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                                     ───────────
+ 3 │           });
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:37]
+ 1 │ things.some((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                                     ───────────
+ 3 │           });
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:37]
+ 1 │ things.every((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                                     ───────────
+ 3 │           });
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:37]
+ 1 │ things.find((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                                     ───────────
+ 3 │           });
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:37]
+ 1 │ things.findIndex((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                                     ───────────
+ 3 │           });
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:20]
+ 1 │ things.flatMap((thing, index) => (
+ 2 │             <Hello key={index} />
+   ·                    ───────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:38]
+ 1 │ things.reduce((collection, thing, index) => (
+ 2 │             collection.concat(<Hello key={index} />)
+   ·                                      ───────────
+ 3 │           ), []);
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:38]
+ 1 │ things.reduceRight((collection, thing, index) => (
+ 2 │             collection.concat(<Hello key={index} />)
+   ·                                      ───────────
+ 3 │           ), []);
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:20]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello key={index.toString()} />
+   ·                    ──────────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:20]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello key={String(index)} />
+   ·                    ───────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:41]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.cloneElement(thing, { key: index.toString() })
+   ·                                         ─────────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:41]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.cloneElement(thing, { key: String(index) })
+   ·                                         ──────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders

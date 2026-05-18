@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ jsdoc(require-property-name): Missing name in `@property` tag.
+   ╭─[require_property_name.tsx:4:17]
+ 3 │                        * @typedef {SomeType} SomeTypedef
+ 4 │                        * @property
+   ·                          ─────────
+ 5 │                        */
+   ╰────
+  help: Add a type name to this `@property` tag.
+
+  ⚠ jsdoc(require-property-name): Missing name in `@property` tag.
+   ╭─[require_property_name.tsx:4:17]
+ 3 │                        * @typedef {SomeType} SomeTypedef
+ 4 │                        * @property {string}
+   ·                          ─────────
+ 5 │                        */
+   ╰────
+  help: Add a type name to this `@property` tag.
+
+  ⚠ jsdoc(require-property-name): Missing name in `@property` tag.
+   ╭─[require_property_name.tsx:4:17]
+ 3 │                        * @typedef {SomeType} SomeTypedef
+ 4 │                        * @prop {string}
+   ·                          ─────
+ 5 │                        */
+   ╰────
+  help: Add a type name to this `@property` tag.

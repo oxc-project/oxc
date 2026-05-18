@@ -360,7 +360,7 @@ function getPluginName(
  * - `@scope/eslint-plugin` -> `@scope`
  * - `@scope/eslint-plugin-foo` -> `@scope/foo`
  *
- * This logic is replicated on Rust side in `normalize_plugin_name` in `crates/oxc_linter/src/config/plugins.rs`.
+ * This logic is replicated on Rust side in `normalize_plugin_name` in `crates/oxc_linter_core/src/config/plugins.rs`.
  * The 2 implementations must be kept in sync.
  *
  * @param name - Plugin name defined by plugin

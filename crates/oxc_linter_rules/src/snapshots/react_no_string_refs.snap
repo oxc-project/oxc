@@ -1,0 +1,129 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:4:35]
+ 3 │                 componentDidMount: function() {
+ 4 │                   var component = this.refs.hello;
+   ·                                   ─────────
+ 5 │                 },
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ react(no-string-refs): Using string literals in ref attributes is deprecated.
+   ╭─[no_string_refs.tsx:4:31]
+ 3 │                 render: function() {
+ 4 │                   return <div ref="hello">Hello {this.props.name}</div>;
+   ·                               ───────────
+ 5 │                 }
+   ╰────
+  help: Using reference callback instead
+
+  ⚠ react(no-string-refs): Using string literals in ref attributes is deprecated.
+   ╭─[no_string_refs.tsx:4:31]
+ 3 │                 render: function() {
+ 4 │                   return <div ref={'hello'}>Hello {this.props.name}</div>;
+   ·                               ─────────────
+ 5 │                 }
+   ╰────
+  help: Using reference callback instead
+
+  ⚠ react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:4:35]
+ 3 │                 componentDidMount: function() {
+ 4 │                   var component = this.refs.hello;
+   ·                                   ─────────
+ 5 │                 },
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ react(no-string-refs): Using string literals in ref attributes is deprecated.
+   ╭─[no_string_refs.tsx:7:31]
+ 6 │                 render: function() {
+ 7 │                   return <div ref="hello">Hello {this.props.name}</div>;
+   ·                               ───────────
+ 8 │                 }
+   ╰────
+  help: Using reference callback instead
+
+  ⚠ react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:4:33]
+ 3 │                 componentDidMount: function() {
+ 4 │                 var component = this.refs.hello;
+   ·                                 ─────────
+ 5 │                 },
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ react(no-string-refs): Using string literals in ref attributes is deprecated.
+   ╭─[no_string_refs.tsx:7:31]
+ 6 │                 render: function() {
+ 7 │                   return <div ref={`hello`}>Hello {this.props.name}</div>;
+   ·                               ─────────────
+ 8 │                 }
+   ╰────
+  help: Using reference callback instead
+
+  ⚠ react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:4:33]
+ 3 │                 componentDidMount: function() {
+ 4 │                 var component = this.refs.hello;
+   ·                                 ─────────
+ 5 │                 },
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ react(no-string-refs): Using string literals in ref attributes is deprecated.
+   ╭─[no_string_refs.tsx:7:31]
+ 6 │                 render: function() {
+ 7 │                   return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
+   ·                               ─────────────────────
+ 8 │                 }
+   ╰────
+  help: Using reference callback instead
+
+  ⚠ react(no-string-refs): Using string literals in ref attributes is deprecated.
+   ╭─[no_string_refs.tsx:4:31]
+ 3 │                 render: function() {
+ 4 │                   return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
+   ·                               ─────────────────────
+ 5 │                 }
+   ╰────
+  help: Using reference callback instead
+
+  ⚠ react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:4:35]
+ 3 │                 componentDidMount() {
+ 4 │                   var component = this.refs.hello;
+   ·                                   ─────────
+ 5 │                 }
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:4:35]
+ 3 │                 componentDidMount() {
+ 4 │                   var component = this.refs.hello;
+   ·                                   ─────────
+ 5 │                 }
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:4:35]
+ 3 │                 componentDidMount() {
+ 4 │                   var component = this.refs.hello;
+   ·                                   ─────────
+ 5 │                 }
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ react(no-string-refs): Using string literals in ref attributes is deprecated.
+   ╭─[no_string_refs.tsx:7:31]
+ 6 │                 render() {
+ 7 │                   return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
+   ·                               ─────────────────────
+ 8 │                 }
+   ╰────
+  help: Using reference callback instead

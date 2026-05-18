@@ -18,7 +18,7 @@ impl RuleEntry<'_> {
     }
 }
 
-/// Parses `crates/oxc_linter/src/rules.rs` to extract all lint rule declarations into a list
+/// Parses `crates/oxc_linter_rules/src/rules.rs` to extract all lint rule declarations into a list
 /// of `RuleEntry` by scanning the module declarations.
 pub fn get_all_rules(contents: &str) -> Vec<RuleEntry<'_>> {
     let mut rule_entries = Vec::new();
@@ -60,9 +60,9 @@ pub fn get_all_rules(contents: &str) -> Vec<RuleEntry<'_>> {
 /// Given a rule entry, attempt to find its corresponding source file path
 pub fn find_rule_source_file(root: &Path, rule: &RuleEntry) -> Option<std::path::PathBuf> {
     // A rule path corresponds to:
-    // 1) `crates/oxc_linter/src/rules/<plugin>/<rule>.rs`
-    // 2) `crates/oxc_linter/src/rules/<plugin>/<rule>/mod.rs`
-    let rules_path = root.join("crates/oxc_linter/src/rules").join(rule.plugin_module_name);
+    // 1) `crates/oxc_linter_rules/src/rules/<plugin>/<rule>.rs`
+    // 2) `crates/oxc_linter_rules/src/rules/<plugin>/<rule>/mod.rs`
+    let rules_path = root.join("crates/oxc_linter_rules/src/rules").join(rule.plugin_module_name);
 
     let direct_path = rules_path.join(format!("{}.rs", rule.rule_module_name));
     if direct_path.exists() {

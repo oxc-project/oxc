@@ -1,0 +1,108 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:1:1]
+ 1 │ async function foo() {}
+   · ─────
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:1:13]
+ 1 │ const foo = async () => {}
+   ·             ─────
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:1:1]
+ 1 │ async () => {}
+   · ─────
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:1:14]
+ 1 │ const test = async () => {};
+   ·              ─────
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:3:17]
+ 2 │             const test = {
+ 3 │                 async test() {}
+   ·                 ─────
+ 4 │             };
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:3:13]
+ 2 │         class Foo {
+ 3 │             async foo() {}
+   ·             ─────
+ 4 │         }
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:3:20]
+ 2 │         class Foo {
+ 3 │             public async foo() {}
+   ·                    ─────
+ 4 │         }
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:3:13]
+ 2 │         const obj = {
+ 3 │             async foo() {}
+   ·             ─────
+ 4 │         }
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:3:13]
+ 2 │         class async {
+ 3 │             async async() {
+   ·             ─────
+ 4 │                 async();
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:3:13]
+ 2 │         class async {
+ 3 │             async async() {
+   ·             ─────
+ 4 │                 function async() {
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:6:32]
+ 5 │                     const async = {
+ 6 │                         async: async () => {},
+   ·                                ─────
+ 7 │                     }
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:1:13]
+ 1 │ /* async */ async function foo() {}
+   ·             ─────
+   ╰────
+  help: Remove the `async` keyword
+
+  ⚠ oxc(no-async-await): async is not allowed
+   ╭─[no_async_await.tsx:1:25]
+ 1 │ class Foo { /* async */ async bar() {} }
+   ·                         ─────
+   ╰────
+  help: Remove the `async` keyword

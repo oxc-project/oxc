@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ jsx-a11y(scope): The `scope` prop can only be used on `<th>` elements
+   ╭─[scope.tsx:1:6]
+ 1 │ <div scope />
+   ·      ─────
+   ╰────
+  help: Remove the `scope` prop on elements other than `<th>`.
+
+  ⚠ jsx-a11y(scope): The `scope` prop can only be used on `<th>` elements
+   ╭─[scope.tsx:1:6]
+ 1 │ <Foo scope='bar' />;
+   ·      ───────────
+   ╰────
+  help: Remove the `scope` prop on elements other than `<th>`.

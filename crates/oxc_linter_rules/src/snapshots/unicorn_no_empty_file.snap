@@ -1,0 +1,149 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │  
+   · ─
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │     
+   · ────
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ 
+   · ─
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 0 │ 
+   · ─
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ 
+   · ─
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ ╭─▶ 
+ 2 │ │   
+ 3 │ ╰─▶         
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ // comment
+   · ──────────
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ /* comment */
+   · ─────────────
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ #!/usr/bin/env node
+   · ───────────────────
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ 'use asm';
+   · ──────────
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ 'use strict';
+   · ─────────────
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ "use strict"
+   · ────────────
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ ""
+   · ──
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ ;
+   · ─
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ ;;
+   · ──
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ {}
+   · ──
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ {;;}
+   · ────
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ {{}}
+   · ────
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ "";
+   · ───
+   ╰────
+  help: Delete this file or add some code to it.
+
+  ⚠ unicorn(no-empty-file): Empty files are not allowed.
+   ╭─[no_empty_file.tsx:1:1]
+ 1 │ "use strict";
+   · ─────────────
+   ╰────
+  help: Delete this file or add some code to it.

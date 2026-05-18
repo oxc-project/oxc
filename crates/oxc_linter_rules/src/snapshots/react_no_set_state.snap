@@ -1,0 +1,43 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(no-set-state): Do not use `setState`.
+   ╭─[no_set_state.tsx:4:16]
+ 3 │                       componentDidUpdate: function() {
+ 4 │                         this.setState({
+   ·                         ─────────────
+ 5 │                           name: this.props.name.toUpperCase()
+   ╰────
+
+  ⚠ react(no-set-state): Do not use `setState`.
+   ╭─[no_set_state.tsx:4:16]
+ 3 │                       someMethod: function() {
+ 4 │                         this.setState({
+   ·                         ─────────────
+ 5 │                           name: this.props.name.toUpperCase()
+   ╰────
+
+  ⚠ react(no-set-state): Do not use `setState`.
+   ╭─[no_set_state.tsx:4:16]
+ 3 │                       someMethod() {
+ 4 │                         this.setState({
+   ·                         ─────────────
+ 5 │                           name: this.props.name.toUpperCase()
+   ╰────
+
+  ⚠ react(no-set-state): Do not use `setState`.
+   ╭─[no_set_state.tsx:4:16]
+ 3 │                       someMethod = () => {
+ 4 │                         this.setState({
+   ·                         ─────────────
+ 5 │                           name: this.props.name.toUpperCase()
+   ╰────
+
+  ⚠ react(no-set-state): Do not use `setState`.
+   ╭─[no_set_state.tsx:4:48]
+ 3 │                       render() {
+ 4 │                         return <div onMouseEnter={() => this.setState({dropdownIndex: index})} />;
+   ·                                                         ─────────────
+ 5 │                       }
+   ╰────

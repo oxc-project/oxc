@@ -9,7 +9,7 @@ This skill guides you through working with [insta](https://insta.rs) snapshot te
 
 Insta is a snapshot testing library for Rust. Oxc uses it extensively for:
 
-- Linter rule tests (`crates/oxc_linter/src/snapshots/`)
+- Linter rule tests (`crates/oxc_linter_rules/src/snapshots/`)
 - Semantic analysis tests (`crates/oxc_semantic/tests/integration/snapshots/`)
 - Other crate-specific snapshot tests
 
@@ -119,13 +119,13 @@ cargo test -p oxc_linter
 cargo insta pending-snapshots
 
 # 4. Review specific snapshot (using Read tool)
-# Read: crates/oxc_linter/src/snapshots/some_test.snap.new
+# Read: crates/oxc_linter_rules/src/snapshots/some_test.snap.new
 
 # 5. Accept if correct
 cargo insta accept -p oxc_linter
 
 # 6. Verify with git
-git diff crates/oxc_linter/src/snapshots/
+git diff crates/oxc_linter_rules/src/snapshots/
 
 # 7. Run tests again to ensure everything passes
 cargo test -p oxc_linter

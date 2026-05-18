@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ jsdoc(implements-on-classes): `@implements` used on a non-constructor function
+   ╭─[implements_on_classes.tsx:3:13]
+ 2 │                   /**
+ 3 │                    * @implements {SomeClass}
+   ·                      ───────────
+ 4 │                    */
+   ╰────
+  help: Add `@class` tag or use class syntax.
+
+  ⚠ jsdoc(implements-on-classes): `@implements` used on a non-constructor function
+   ╭─[implements_on_classes.tsx:3:13]
+ 2 │                   /**
+ 3 │                    * @implements {SomeClass}
+   ·                      ───────────
+ 4 │                    */
+   ╰────
+  help: Add `@class` tag or use class syntax.
+
+  ⚠ jsdoc(implements-on-classes): `@implements` used on a non-constructor function
+   ╭─[implements_on_classes.tsx:4:13]
+ 3 │                    * @function
+ 4 │                    * @implements {SomeClass}
+   ·                      ───────────
+ 5 │                    */
+   ╰────
+  help: Add `@class` tag or use class syntax.

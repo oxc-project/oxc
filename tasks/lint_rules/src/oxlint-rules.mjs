@@ -5,7 +5,7 @@ import { typescriptTypeCheckRules } from "./eslint-rules.mjs";
 
 const readAllImplementedRuleNames = async () => {
   const rulesFile = await readFile(
-    resolve("crates/oxc_linter/src/generated/rules_enum.rs"),
+    resolve("crates/oxc_linter_rules/src/generated/rules_enum.rs"),
     "utf8",
   );
 
@@ -53,7 +53,7 @@ const readAllPendingFixRuleNames = async () => {
   /** @type {Set<string>} */
   const pendingFixRules = new Set();
 
-  const rulesDir = resolve("crates/oxc_linter/src/rules");
+  const rulesDir = resolve("crates/oxc_linter_rules/src/rules");
 
   /**
    * Recursively read all .rs files in a directory
@@ -258,7 +258,7 @@ const getArrayEntries = (constName, fileContent) => {
  */
 export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (ruleEntries) => {
   const typescriptCompatibleRulesFile = await readFile(
-    "crates/oxc_linter/src/utils/mod.rs",
+    "crates/oxc_linter_core/src/utils/mod.rs",
     "utf8",
   );
   const rules = getArrayEntries(

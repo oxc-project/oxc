@@ -1,0 +1,21 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ next(no-sync-scripts): Prevent synchronous scripts.
+    ╭─[no_sync_scripts.tsx:9:21]
+  8 │                             <h1>Hello title</h1>
+  9 │                             <script src='https://blah.com'></script>
+    ·                              ──────
+ 10 │                           </div>
+    ╰────
+  help: See https://nextjs.org/docs/messages/no-sync-scripts
+
+  ⚠ next(no-sync-scripts): Prevent synchronous scripts.
+    ╭─[no_sync_scripts.tsx:9:21]
+  8 │                             <h1>Hello title</h1>
+  9 │                             <script src={props.src}></script>
+    ·                              ──────
+ 10 │                           </div>
+    ╰────
+  help: See https://nextjs.org/docs/messages/no-sync-scripts

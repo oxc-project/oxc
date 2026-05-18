@@ -1,0 +1,277 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:14]
+ 1 │ var regex = /\x1f/
+   ·              ──┬─
+   ·                ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:16]
+ 1 │ var regex = /\\\x1f\\x1e/
+   ·                ──┬─
+   ·                  ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:16]
+ 1 │ var regex = /\\\x1fFOO\\x00/
+   ·                ──┬─
+   ·                  ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:19]
+ 1 │ var regex = /FOO\\\x1fFOO\\x1f/
+   ·                   ──┬─
+   ·                     ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control characters
+   ╭─[no_control_regex.tsx:1:25]
+ 1 │ var regex = new RegExp('\x1f\x1e')
+   ·                         ──┬───┬─
+   ·                           │   ╰── 'U+001E' is a control character.
+   ·                           ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control characters
+   ╭─[no_control_regex.tsx:1:25]
+ 1 │ var regex = new RegExp('\x1fFOO\x00')
+   ·                         ──┬─   ──┬─
+   ·                           │      ╰── 'U+0000' is a control character.
+   ·                           ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control characters
+   ╭─[no_control_regex.tsx:1:28]
+ 1 │ var regex = new RegExp('FOO\x1fFOO\x1f')
+   ·                            ──┬─   ──┬─
+   ·                              │      ╰── 'U+001F' is a control character.
+   ·                              ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:21]
+ 1 │ var regex = RegExp('\x1f')
+   ·                     ──┬─
+   ·                       ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:19]
+ 1 │ var regex = /(?<a>\x1f)/
+   ·                   ──┬─
+   ·                     ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:29]
+ 1 │ var regex = /(?<\u{1d49c}>.)\x1f/
+   ·                             ──┬─
+   ·                               ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:23]
+ 1 │ new RegExp('\\u{1111}*\\x1F', 'u')
+   ·                       ──┬──
+   ·                         ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\u{1F}/u
+   ·  ───┬──
+   ·     ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\u{1F}/ugi
+   ·  ───┬──
+   ·     ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:13]
+ 1 │ new RegExp('\\u{1F}', 'u')
+   ·             ───┬───
+   ·                ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:13]
+ 1 │ new RegExp(`\\u{1F}`, 'u')
+   ·             ───┬───
+   ·                ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:13]
+ 1 │ new RegExp('\\u{1F}', `u`)
+   ·             ───┬───
+   ·                ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:13]
+ 1 │ new RegExp('\\u{1F}', 'ugi')
+   ·             ───┬───
+   ·                ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\u{0a}/u
+   ·  ───┬──
+   ·     ╰── 'U+000A' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\x0a/u
+   ·  ──┬─
+   ·    ╰── 'U+000A' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\u{0d}/u
+   ·  ───┬──
+   ·     ╰── 'U+000D' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\x0d/u
+   ·  ──┬─
+   ·    ╰── 'U+000D' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\u{09}/u
+   ·  ───┬──
+   ·     ╰── 'U+0009' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\x09/u
+   ·  ──┬─
+   ·    ╰── 'U+0009' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control characters
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\0\1\2/
+   ·  ─┬─┬─┬
+   ·   │ │ ╰── '\2' is a control character. It looks like a backreference, but there is no corresponding capture group.
+   ·   │ ╰── '\1' is a control character. It looks like a backreference, but there is no corresponding capture group.
+   ·   ╰── '\0' matches the null character (U+0000), which is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control characters
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\x1f\2/
+   ·  ──┬──┬
+   ·    │  ╰── '\2' is a control character. It looks like a backreference, but there is no corresponding capture group.
+   ·    ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control characters
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\x1f\0/
+   ·  ──┬──┬
+   ·    │  ╰── '\0' matches the null character (U+0000), which is a control character.
+   ·    ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control characters
+   ╭─[no_control_regex.tsx:1:2]
+ 1 │ /\x1f\0\2/
+   ·  ──┬──┬─┬
+   ·    │  │ ╰── '\2' is a control character. It looks like a backreference, but there is no corresponding capture group.
+   ·    │  ╰── '\0' matches the null character (U+0000), which is a control character.
+   ·    ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control characters
+   ╭─[no_control_regex.tsx:1:36]
+ 1 │ var regex = new globalThis.RegExp('\x1f\x1e')
+   ·                                    ──┬───┬─
+   ·                                      │   ╰── 'U+001E' is a control character.
+   ·                                      ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:32]
+ 1 │ var regex = globalThis.RegExp('\x1f')
+   ·                                ──┬─
+   ·                                  ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:10]
+ 1 │ RegExp(('\x1f'))
+   ·          ──┬─
+   ·            ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:14]
+ 1 │ new RegExp(('\x1f'))
+   ·              ──┬─
+   ·                ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:15]
+ 1 │ new RegExp((('\x1f')))
+   ·               ──┬─
+   ·                 ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:13]
+ 1 │ new RegExp('\x1f' as string)
+   ·             ──┬─
+   ·               ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.

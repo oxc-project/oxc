@@ -1,0 +1,52 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(forward-ref-uses-ref): Components wrapped with `forwardRef` must have a `ref` parameter
+   ╭─[forward_ref_uses_ref.tsx:3:23]
+ 2 │                         import { forwardRef } from 'react'
+ 3 │ ╭─▶                     forwardRef((props) => {
+ 4 │ │                         return null;
+ 5 │ ╰─▶                     });
+ 6 │                       
+   ╰────
+  help: Add a `ref` parameter, or remove `forwardRef`
+
+  ⚠ react(forward-ref-uses-ref): Components wrapped with `forwardRef` must have a `ref` parameter
+   ╭─[forward_ref_uses_ref.tsx:3:23]
+ 2 │                         import { forwardRef } from 'react'
+ 3 │ ╭─▶                     forwardRef(props => {
+ 4 │ │                         return null;
+ 5 │ ╰─▶                     });
+ 6 │                       
+   ╰────
+  help: Add a `ref` parameter, or remove `forwardRef`
+
+  ⚠ react(forward-ref-uses-ref): Components wrapped with `forwardRef` must have a `ref` parameter
+   ╭─[forward_ref_uses_ref.tsx:3:29]
+ 2 │                     import * as React from 'react'
+ 3 │                     React.forwardRef((props) => null);
+   ·                                      ───────────────
+ 4 │                   
+   ╰────
+  help: Add a `ref` parameter, or remove `forwardRef`
+
+  ⚠ react(forward-ref-uses-ref): Components wrapped with `forwardRef` must have a `ref` parameter
+   ╭─[forward_ref_uses_ref.tsx:3:41]
+ 2 │                         import { forwardRef } from 'react'
+ 3 │ ╭─▶                     const Component = forwardRef(function (props) {
+ 4 │ │                         return null;
+ 5 │ ╰─▶                     });
+ 6 │                       
+   ╰────
+  help: Add a `ref` parameter, or remove `forwardRef`
+
+  ⚠ react(forward-ref-uses-ref): Components wrapped with `forwardRef` must have a `ref` parameter
+   ╭─[forward_ref_uses_ref.tsx:3:29]
+ 2 │                         import * as React from 'react'
+ 3 │ ╭─▶                     React.forwardRef(function Component(props) {
+ 4 │ │                         return null;
+ 5 │ ╰─▶                     });
+ 6 │                       
+   ╰────
+  help: Add a `ref` parameter, or remove `forwardRef`

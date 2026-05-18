@@ -1,0 +1,99 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ typescript(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:1:1]
+ 1 │ class Foo {}
+   · ────────────
+   ╰────
+  help: Delete this class
+
+  ⚠ typescript(no-extraneous-class): Unexpected class with only static properties.
+   ╭─[no_extraneous_class.tsx:5:23]
+ 4 │               constructor() {
+ 5 │                 class Bar {
+   ·                       ───
+ 6 │                   static PROP = 2;
+   ╰────
+  help: Try using standalone functions instead of static methods
+
+  ⚠ typescript(no-extraneous-class): Unexpected class with only static properties.
+    ╭─[no_extraneous_class.tsx:10:26]
+  9 │             }
+ 10 │             export class Bar {
+    ·                          ───
+ 11 │               public static helper(): void {}
+    ╰────
+  help: Try using standalone functions instead of static methods
+
+  ⚠ typescript(no-extraneous-class): Unexpected class with only a constructor.
+   ╭─[no_extraneous_class.tsx:1:7]
+ 1 │ class Foo { constructor() {} }
+   ·       ───
+   ╰────
+  help: Try replacing this class with a standalone function or deleting it entirely
+
+  ⚠ typescript(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:8:17]
+ 7 │               constructor() {
+ 8 │                 class nestedClass {}
+   ·                 ────────────────────
+ 9 │               }
+   ╰────
+  help: Delete this class
+
+  ⚠ typescript(no-extraneous-class): Unexpected class with only static properties.
+   ╭─[no_extraneous_class.tsx:1:16]
+ 1 │ export default class { static hello() {} }
+   ·                ───────────────────────────
+   ╰────
+  help: Try using standalone functions instead of static methods
+
+  ⚠ typescript(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:3:13]
+ 2 │             @FooDecorator
+ 3 │             class Foo {}
+   ·             ────────────
+ 4 │             
+   ╰────
+  help: Set "allowWithDecorator": true in your config to allow empty decorated classes
+
+  ⚠ typescript(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:6:13]
+ 5 │             })
+ 6 │             class Foo {}
+   ·             ────────────
+ 7 │             
+   ╰────
+  help: Set "allowWithDecorator": true in your config to allow empty decorated classes
+
+  ⚠ typescript(no-extraneous-class): Unexpected class with only a constructor.
+   ╭─[no_extraneous_class.tsx:3:19]
+ 2 │             @FooDecorator
+ 3 │             class Foo {
+   ·                   ───
+ 4 │               constructor(foo: Foo) {
+   ╰────
+  help: Try replacing this class with a standalone function or deleting it entirely
+
+  ⚠ typescript(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:1:1]
+ 1 │ abstract class Foo {}
+   · ─────────────────────
+   ╰────
+  help: Delete this class
+
+  ⚠ typescript(no-extraneous-class): Unexpected class with only static properties.
+   ╭─[no_extraneous_class.tsx:1:16]
+ 1 │ abstract class Foo { static property: string; }
+   ·                ───
+   ╰────
+  help: Try using standalone functions instead of static methods
+
+  ⚠ typescript(no-extraneous-class): Unexpected class with only a constructor.
+   ╭─[no_extraneous_class.tsx:1:16]
+ 1 │ abstract class Foo { constructor() {} }
+   ·                ───
+   ╰────
+  help: Try replacing this class with a standalone function or deleting it entirely

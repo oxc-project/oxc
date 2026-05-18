@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ node(no-exports-assign): Unexpected assignment to 'exports'.
+   ╭─[no_exports_assign.tsx:1:1]
+ 1 │ exports = {}
+   · ───────
+   ╰────
+  help: Use 'module.exports' instead.

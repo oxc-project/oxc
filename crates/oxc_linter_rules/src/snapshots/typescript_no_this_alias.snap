@@ -1,0 +1,134 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:7]
+ 1 │ const self = this;
+   ·       ────
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of members of 'this' to local variables.
+   ╭─[no_this_alias.tsx:1:7]
+ 1 │ const { props, state } = this;
+   ·       ────────────────
+   ╰────
+  help: Disabling destructuring of this is not a default, consider allowing destructuring
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of members of 'this' to local variables.
+   ╭─[no_this_alias.tsx:1:7]
+ 1 │ const [ props, state ] = this;
+   ·       ────────────────
+   ╰────
+  help: Disabling destructuring of this is not a default, consider allowing destructuring
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:6:1]
+ 5 │ 
+ 6 │ foo = this
+   · ───
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:11]
+ 1 │ let foo; (foo as any) = this
+   ·           ───
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:2:17]
+ 1 │ function testFunction() {
+ 2 │             let inFunction = this;
+   ·                 ──────────
+ 3 │           }
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:2:19]
+ 1 │ const testLambda = () => {
+ 2 │             const inLambda = this;
+   ·                   ────────
+ 3 │           };
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:3:21]
+ 2 │             constructor() {
+ 3 │               const inConstructor = this;
+   ·                     ─────────────
+ 4 │               const asThis: this = this;
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:4:21]
+ 3 │               const inConstructor = this;
+ 4 │               const asThis: this = this;
+   ·                     ──────
+ 5 │ 
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+    ╭─[no_this_alias.tsx:12:21]
+ 11 │             public act(scope: this = this) {
+ 12 │               const inMemberFunction = this;
+    ·                     ────────────────
+ 13 │               const { act1 } = this;
+    ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of members of 'this' to local variables.
+    ╭─[no_this_alias.tsx:13:21]
+ 12 │               const inMemberFunction = this;
+ 13 │               const { act1 } = this;
+    ·                     ────────
+ 14 │               const { act2, constructor } = this;
+    ╰────
+  help: Disabling destructuring of this is not a default, consider allowing destructuring
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of members of 'this' to local variables.
+    ╭─[no_this_alias.tsx:14:21]
+ 13 │               const { act1 } = this;
+ 14 │               const { act2, constructor } = this;
+    ·                     ─────────────────────
+ 15 │               const [foo1] = this;
+    ╰────
+  help: Disabling destructuring of this is not a default, consider allowing destructuring
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of members of 'this' to local variables.
+    ╭─[no_this_alias.tsx:15:21]
+ 14 │               const { act2, constructor } = this;
+ 15 │               const [foo1] = this;
+    ·                     ──────
+ 16 │               const [foo, bar] = this;
+    ╰────
+  help: Disabling destructuring of this is not a default, consider allowing destructuring
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of members of 'this' to local variables.
+    ╭─[no_this_alias.tsx:16:21]
+ 15 │               const [foo1] = this;
+ 16 │               const [foo, bar] = this;
+    ·                     ──────────
+ 17 │             }
+    ╰────
+  help: Disabling destructuring of this is not a default, consider allowing destructuring
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:7]
+ 1 │ const self = this;
+   ·       ────
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:7]
+ 1 │ const self = this;
+   ·       ────
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.

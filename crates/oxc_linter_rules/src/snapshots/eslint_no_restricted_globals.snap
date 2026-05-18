@@ -1,0 +1,164 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'location'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ location; function test(location) { location; }
+   · ────────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'event'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ event
+   · ─────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo()
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo.bar()
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'event'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ event
+   · ─────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo()
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo.bar()
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'event'. Use local event parameter.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ event
+   · ─────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo()
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo.bar()
+   · ───
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'hasOwnProperty'.
+   ╭─[no_restricted_globals.tsx:1:18]
+ 1 │ var foo = obj => hasOwnProperty(obj, 'name');
+   ·                  ──────────────
+   ╰────
+  help: Use a local variable or function parameter instead of the restricted global.

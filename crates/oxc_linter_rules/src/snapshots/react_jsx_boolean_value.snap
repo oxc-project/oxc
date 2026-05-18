@@ -1,0 +1,108 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for boolean attribute "foo"
+   ╭─[jsx_boolean_value.tsx:1:9]
+ 1 │ <App foo={true} />;
+   ·         ───────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for boolean attribute "foo"
+   ╭─[jsx_boolean_value.tsx:1:9]
+ 1 │ <App foo={true} bar={true} baz={true} />;
+   ·         ───────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for boolean attribute "bar"
+   ╭─[jsx_boolean_value.tsx:1:20]
+ 1 │ <App foo={true} bar={true} baz={true} />;
+   ·                    ───────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for boolean attribute "foo"
+   ╭─[jsx_boolean_value.tsx:1:9]
+ 1 │ <App foo={true} />;
+   ·         ───────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for boolean attribute "foo"
+   ╭─[jsx_boolean_value.tsx:1:9]
+ 1 │ <App foo = {true} />;
+   ·         ─────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be set for boolean attribute "foo"
+   ╭─[jsx_boolean_value.tsx:1:6]
+ 1 │ <App foo />;
+   ·      ───
+   ╰────
+  help: Insert `={true}`
+
+  ⚠ react(jsx-boolean-value): Value must be set for boolean attribute "foo"
+   ╭─[jsx_boolean_value.tsx:1:6]
+ 1 │ <App foo bar baz />;
+   ·      ───
+   ╰────
+  help: Insert `={true}`
+
+  ⚠ react(jsx-boolean-value): Value must be set for boolean attribute "bar"
+   ╭─[jsx_boolean_value.tsx:1:10]
+ 1 │ <App foo bar baz />;
+   ·          ───
+   ╰────
+  help: Insert `={true}`
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for `false` attribute "foo"
+   ╭─[jsx_boolean_value.tsx:1:6]
+ 1 │ <App foo={false} bak={false} />;
+   ·      ───────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for `false` attribute "bak"
+   ╭─[jsx_boolean_value.tsx:1:18]
+ 1 │ <App foo={false} bak={false} />;
+   ·                  ───────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for `false` attribute "baz"
+   ╭─[jsx_boolean_value.tsx:1:29]
+ 1 │ <App foo={true} bar={false} baz={false} bak={false} />;
+   ·                             ───────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for `false` attribute "bak"
+   ╭─[jsx_boolean_value.tsx:1:41]
+ 1 │ <App foo={true} bar={false} baz={false} bak={false} />;
+   ·                                         ───────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for boolean attribute "foo"
+   ╭─[jsx_boolean_value.tsx:1:9]
+ 1 │ <App foo={true} bar={true} baz />;
+   ·         ───────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be omitted for boolean attribute "bar"
+   ╭─[jsx_boolean_value.tsx:1:20]
+ 1 │ <App foo={true} bar={true} baz />;
+   ·                    ───────
+   ╰────
+  help: Delete this code.
+
+  ⚠ react(jsx-boolean-value): Value must be set for boolean attribute "baz"
+   ╭─[jsx_boolean_value.tsx:1:28]
+ 1 │ <App foo={true} bar={true} baz />;
+   ·                            ───
+   ╰────
+  help: Insert `={true}`

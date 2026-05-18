@@ -1,0 +1,154 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:8]
+ 1 │ a.then(cb)
+   ·        ──
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:14]
+ 1 │ a.then(() => cb())
+   ·              ────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:24]
+ 1 │ a.then(function(err) { cb(err) })
+   ·                        ───────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:25]
+ 1 │ a.then(function(data) { cb(data) }, function(err) { cb(err) })
+   ·                         ────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:53]
+ 1 │ a.then(function(data) { cb(data) }, function(err) { cb(err) })
+   ·                                                     ───────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:25]
+ 1 │ a.catch(function(err) { cb(err) })
+   ·                         ───────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:8]
+ 1 │ a.then(callback)
+   ·        ────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:14]
+ 1 │ a.then(() => callback())
+   ·              ──────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:24]
+ 1 │ a.then(function(err) { callback(err) })
+   ·                        ─────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:25]
+ 1 │ a.then(function(data) { callback(data) }, function(err) { callback(err) })
+   ·                         ──────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:59]
+ 1 │ a.then(function(data) { callback(data) }, function(err) { callback(err) })
+   ·                                                           ─────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:25]
+ 1 │ a.catch(function(err) { callback(err) })
+   ·                         ─────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:14]
+ 1 │ a.then(() => doSomething(cb))
+   ·              ───────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:4:13]
+ 3 │         .then(() => {
+ 4 │             setTimeout(callback);
+   ·             ────────────────────
+ 5 │         });
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:4:30]
+ 3 │         .then(() => {
+ 4 │             setTimeout(() => callback());
+   ·                              ──────────
+ 5 │         });
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:49]
+ 1 │ whatever.then((err) => { process.nextTick(() => cb()) })
+   ·                                                 ────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:45]
+ 1 │ whatever.then((err) => { setImmediate(() => cb()) })
+   ·                                             ────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:43]
+ 1 │ whatever.then((err) => setImmediate(() => cb()))
+   ·                                           ────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:47]
+ 1 │ whatever.then((err) => process.nextTick(() => cb()))
+   ·                                               ────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:24]
+ 1 │ whatever.then((err) => process.nextTick(cb))
+   ·                        ────────────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:24]
+ 1 │ whatever.then((err) => setImmediate(cb))
+   ·                        ────────────────
+   ╰────
+  help: Use `then` and `catch` directly

@@ -1,0 +1,35 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ jest(no-restricted-jest-methods): Use of `fn` is not allowed
+   ╭─[no_restricted_jest_methods.tsx:1:6]
+ 1 │ jest.fn()
+   ·      ──
+   ╰────
+
+  ⚠ jest(no-restricted-jest-methods): Use of `fn` is not allowed
+   ╭─[no_restricted_jest_methods.tsx:1:6]
+ 1 │ jest["fn"]()
+   ·      ────
+   ╰────
+
+  ⚠ jest(no-restricted-jest-methods): Do not use mocks
+   ╭─[no_restricted_jest_methods.tsx:1:6]
+ 1 │ jest.mock()
+   ·      ────
+   ╰────
+
+  ⚠ jest(no-restricted-jest-methods): Do not use mocks
+   ╭─[no_restricted_jest_methods.tsx:1:6]
+ 1 │ jest["mock"]()
+   ·      ──────
+   ╰────
+
+  ⚠ jest(no-restricted-jest-methods): Use of `advanceTimersByTime` is not allowed
+   ╭─[no_restricted_jest_methods.tsx:3:22]
+ 2 │                 import { jest } from '@jest/globals';
+ 3 │                 jest.advanceTimersByTime();
+   ·                      ───────────────────
+ 4 │             
+   ╰────

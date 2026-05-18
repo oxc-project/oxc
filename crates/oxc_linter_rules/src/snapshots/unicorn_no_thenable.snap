@@ -1,0 +1,612 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const foo = {then: 1}
+   ·              ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:15]
+ 1 │ const foo = {["then"]: 1}
+   ·               ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:15]
+ 1 │ const foo = {[`then`]: 1}
+   ·               ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";const foo = {[THEN]: 1}
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const foo = {then() {}}
+   ·              ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:15]
+ 1 │ const foo = {["then"]() {}}
+   ·               ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:15]
+ 1 │ const foo = {[`then`]() {}}
+   ·               ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";const foo = {[THEN]() {}}
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:18]
+ 1 │ const foo = {get then() {}}
+   ·                  ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:19]
+ 1 │ const foo = {get ["then"]() {}}
+   ·                   ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:19]
+ 1 │ const foo = {get [`then`]() {}}
+   ·                   ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";const foo = {get [THEN]() {}}
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:12]
+ 1 │ class Foo {then}
+   ·            ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:20]
+ 1 │ const Foo = class {then}
+   ·                    ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:13]
+ 1 │ class Foo {["then"]}
+   ·             ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:13]
+ 1 │ class Foo {[`then`]}
+   ·             ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";class Foo {[THEN]}
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:12]
+ 1 │ class Foo {then() {}}
+   ·            ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:13]
+ 1 │ class Foo {["then"]() {}}
+   ·             ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:13]
+ 1 │ class Foo {[`then`]() {}}
+   ·             ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";class Foo {[THEN]() {}}
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:19]
+ 1 │ class Foo {static then}
+   ·                   ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:20]
+ 1 │ class Foo {static ["then"]}
+   ·                    ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:20]
+ 1 │ class Foo {static [`then`]}
+   ·                    ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";class Foo {static [THEN]}
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:19]
+ 1 │ class Foo {static then() {}}
+   ·                   ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:20]
+ 1 │ class Foo {static ["then"]() {}}
+   ·                    ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:20]
+ 1 │ class Foo {static [`then`]() {}}
+   ·                    ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";class Foo {static [THEN]() {}}
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:16]
+ 1 │ class Foo {get then() {}}
+   ·                ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:17]
+ 1 │ class Foo {get ["then"]() {}}
+   ·                 ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:17]
+ 1 │ class Foo {get [`then`]() {}}
+   ·                 ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";class Foo {get [THEN]() {}}
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:16]
+ 1 │ class Foo {set then(v) {}}
+   ·                ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:17]
+ 1 │ class Foo {set ["then"](v) {}}
+   ·                 ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:17]
+ 1 │ class Foo {set [`then`](v) {}}
+   ·                 ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";class Foo {set [THEN](v) {}}
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:23]
+ 1 │ class Foo {static get then() {}}
+   ·                       ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:24]
+ 1 │ class Foo {static get ["then"]() {}}
+   ·                        ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:24]
+ 1 │ class Foo {static get [`then`]() {}}
+   ·                        ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";class Foo {static get [THEN]() {}}
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:1]
+ 1 │ foo.then = 1
+   · ────────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:5]
+ 1 │ foo["then"] = 1
+   ·     ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:5]
+ 1 │ foo[`then`] = 1
+   ·     ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";foo[THEN] = 1
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:1]
+ 1 │ foo.then += 1
+   · ────────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:1]
+ 1 │ foo.then ||= 1
+   · ────────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to a class.
+   ╭─[no_thenable.tsx:1:1]
+ 1 │ foo.then ??= 1
+   · ────────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:28]
+ 1 │ Object.defineProperty(foo, "then", 1)
+   ·                            ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:28]
+ 1 │ Object.defineProperty(foo, `then`, 1)
+   ·                            ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";Object.defineProperty(foo, THEN, 1)
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:29]
+ 1 │ Reflect.defineProperty(foo, "then", 1)
+   ·                             ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:29]
+ 1 │ Reflect.defineProperty(foo, `then`, 1)
+   ·                             ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";Reflect.defineProperty(foo, THEN, 1)
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:22]
+ 1 │ Object.fromEntries([["then", 1]])
+   ·                      ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:22]
+ 1 │ Object.fromEntries([["then"]])
+   ·                      ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:22]
+ 1 │ Object.fromEntries([[`then`, 1]])
+   ·                      ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ const THEN = "then";Object.fromEntries([[THEN, 1]])
+   ·              ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not add `then` to an object.
+   ╭─[no_thenable.tsx:1:27]
+ 1 │ Object.fromEntries([foo, ["then", 1]])
+   ·                           ──────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:25]
+ 1 │ const then = 1; export {then}
+   ·                         ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:39]
+ 1 │ const notThen = 1; export {notThen as then}
+   ·                                       ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:9]
+ 1 │ export {then} from "foo"
+   ·         ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:17]
+ 1 │ export function then() {}
+   ·                 ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:23]
+ 1 │ export async function then() {}
+   ·                       ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:19]
+ 1 │ export function * then() {}
+   ·                   ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:25]
+ 1 │ export async function * then() {}
+   ·                         ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ export class then {}
+   ·              ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:14]
+ 1 │ export const then = 1
+   ·              ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:12]
+ 1 │ export let then = 1
+   ·            ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:12]
+ 1 │ export var then = 1
+   ·            ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:15]
+ 1 │ export const [then] = 1
+   ·               ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:13]
+ 1 │ export let [then] = 1
+   ·             ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:13]
+ 1 │ export var [then] = 1
+   ·             ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:17]
+ 1 │ export const [, then] = 1
+   ·                 ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:15]
+ 1 │ export let [, then] = 1
+   ·               ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:15]
+ 1 │ export var [, then] = 1
+   ·               ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:20]
+ 1 │ export const [, ...then] = 1
+   ·                    ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:18]
+ 1 │ export let [, ...then] = 1
+   ·                  ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:18]
+ 1 │ export var [, ...then] = 1
+   ·                  ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:15]
+ 1 │ export const {then} = 1
+   ·               ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:13]
+ 1 │ export let {then} = 1
+   ·             ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:13]
+ 1 │ export var {then} = 1
+   ·             ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:23]
+ 1 │ export const {foo, ...then} = 1
+   ·                       ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:21]
+ 1 │ export let {foo, ...then} = 1
+   ·                     ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:21]
+ 1 │ export var {foo, ...then} = 1
+   ·                     ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:33]
+ 1 │ export const {foo: {bar: [{baz: then}]}} = 1
+   ·                                 ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
+
+  ⚠ unicorn(no-thenable): Do not export `then`.
+   ╭─[no_thenable.tsx:1:27]
+ 1 │ export const notThen = 1, then = 1
+   ·                           ────
+   ╰────
+  help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems

@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ promise(no-return-in-finally): Don't return in a finally callback
+   ╭─[no_return_in_finally.tsx:1:36]
+ 1 │ Promise.resolve(1).finally(() => { return 2 })
+   ·                                    ────────
+   ╰────
+  help: Remove the return statement as nothing can consume the return value
+
+  ⚠ promise(no-return-in-finally): Don't return in a finally callback
+   ╭─[no_return_in_finally.tsx:1:35]
+ 1 │ Promise.reject(0).finally(() => { return 2 })
+   ·                                   ────────
+   ╰────
+  help: Remove the return statement as nothing can consume the return value
+
+  ⚠ promise(no-return-in-finally): Don't return in a finally callback
+   ╭─[no_return_in_finally.tsx:1:27]
+ 1 │ myPromise.finally(() => { return 2 });
+   ·                           ────────
+   ╰────
+  help: Remove the return statement as nothing can consume the return value
+
+  ⚠ promise(no-return-in-finally): Don't return in a finally callback
+   ╭─[no_return_in_finally.tsx:1:42]
+ 1 │ Promise.resolve(1).finally(function () { return 2 })
+   ·                                          ────────
+   ╰────
+  help: Remove the return statement as nothing can consume the return value

@@ -1,0 +1,52 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ vue(valid-define-props): `defineProps` is referencing locally declared variables.
+   ╭─[valid_define_props.tsx:5:21]
+ 4 │                     const def = { msg: String }
+ 5 │                     defineProps(def)
+   ·                     ────────────────
+ 6 │                   </script>
+   ╰────
+  help: inline the variable or import it from another module.
+
+  ⚠ vue(valid-define-props): `defineProps` has both a type-only emit and an argument.
+   ╭─[valid_define_props.tsx:4:21]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineProps<{ msg?:string }>({ msg: String })
+   ·                     ─────────────────────────────────────────────
+ 5 │                   </script>
+   ╰────
+  help: remove the argument for better type inference.
+
+  ⚠ vue(valid-define-props): `defineProps` has been called multiple times.
+   ╭─[valid_define_props.tsx:4:21]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineProps({ msg: String })
+   ·                     ──────────────┬─────────────
+   ·                                   ╰── `defineProps` is called here too
+ 5 │                     defineProps({ count: Number })
+   ·                     ───────────────┬──────────────
+   ·                                    ╰── `defineProps` is called here
+ 6 │                   </script>
+   ╰────
+  help: combine all `defineProps` calls into a single `defineProps` call.
+
+  ⚠ vue(valid-define-props): Props are defined in both `defineProps` and `export default {}`.
+    ╭─[valid_define_props.tsx:9:21]
+  8 │                     /* ✗ BAD */
+  9 │                     defineProps({ count: Number })
+    ·                     ──────────────────────────────
+ 10 │                   </script>
+    ╰────
+  help: Remove `export default`.
+
+  ⚠ vue(valid-define-props): Props are not defined.
+   ╭─[valid_define_props.tsx:4:21]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineProps()
+   ·                     ─────────────
+ 5 │                   </script>
+   ╰────
+  help: Define at least one prop in `defineProps`.

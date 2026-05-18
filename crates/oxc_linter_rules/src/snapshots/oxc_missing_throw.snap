@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ oxc(missing-throw): Missing throw
+   ╭─[missing_throw.tsx:1:18]
+ 1 │ function foo() { new Error() }
+   ·                  ───────────
+   ╰────
+  help: The `throw` keyword seems to be missing in front of this 'new' expression
+
+  ⚠ oxc(missing-throw): Missing throw
+   ╭─[missing_throw.tsx:1:21]
+ 1 │ const foo = () => { new Error() }
+   ·                     ───────────
+   ╰────
+  help: The `throw` keyword seems to be missing in front of this 'new' expression

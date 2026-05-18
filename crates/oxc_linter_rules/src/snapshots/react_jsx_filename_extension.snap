@@ -1,0 +1,119 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.js'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ ╭─▶ module.exports = function MyComponent() { return <div>
+ 2 │ │   <div />
+ 3 │ ╰─▶ </div>; }
+   ╰────
+  help: Rename the file to use an allowed extension: .jsx
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.js'
+   ╭─[jsx_filename_extension.tsx:1:48]
+ 1 │ export default function MyComponent() { return <Comp />; }
+   ·                                                ────────
+   ╰────
+  help: Rename the file to use an allowed extension: .jsx
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.js'
+   ╭─[jsx_filename_extension.tsx:1:40]
+ 1 │ export function MyComponent() { return <div><Comp /></div>; }
+   ·                                        ───────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .jsx
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.js'
+   ╭─[jsx_filename_extension.tsx:1:28]
+ 1 │ const MyComponent = () => (<div><Comp /></div>); export default MyComponent;
+   ·                            ───────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .jsx
+
+  ⚠ react(jsx-filename-extension): Only files containing JSX may use the extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:1]
+ 1 │ module.exports = {}
+   · ▲
+   ╰────
+  help: Rename the file with a good extension.
+
+  ⚠ react(jsx-filename-extension): Only files containing JSX may use the extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:1]
+ 1 │ export function foo() { return 'foo'; }
+   · ▲
+   ╰────
+  help: Rename the file with a good extension.
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.js'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ ╭─▶ module.exports = function MyComponent() { return <div>
+ 2 │ │   <div />
+ 3 │ ╰─▶ </div>; }
+   ╰────
+  help: Rename the file to use an allowed extension: .jsx
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ ╭─▶ module.exports = function MyComponent() { return <div>
+ 2 │ │   <div />
+ 3 │ ╰─▶ </div>; }
+   ╰────
+  help: Rename the file to use an allowed extension: .js
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.js'
+   ╭─[jsx_filename_extension.tsx:1:40]
+ 1 │ export function MyComponent() { return <><Comp /><Comp /></>; }
+   ·                                        ─────────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .jsx
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.js'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ module.exports = function MyComponent() { return <><Comp /><Comp /></>; }
+   ·                                                  ─────────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .jsx
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:40]
+ 1 │ export function MyComponent() { return <><Comp /><Comp /></>; }
+   ·                                        ─────────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .js
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:40]
+ 1 │ export function MyComponent() { return <><Comp /><Comp /></>; }
+   ·                                        ─────────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .js, .tsx, .ts
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ module.exports = function MyComponent() { return <><Comp /><Comp /></>; }
+   ·                                                  ─────────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .js
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ module.exports = function MyComponent() { return <><Comp /><Comp /></>; }
+   ·                                                  ─────────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .js
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ module.exports = function MyComponent() { return <><Comp /><Comp /></>; }
+   ·                                                  ─────────────────────
+   ╰────
+  help: Rename the file to use an allowed extension: .js
+
+  ⚠ react(jsx-filename-extension): JSX not allowed in files with extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:50]
+ 1 │ ╭─▶ module.exports = function MyComponent() { return <div>
+ 2 │ │   <div />
+ 3 │ ╰─▶ </div>; }
+   ╰────
+  help: Rename the file to use an allowed extension: .tsx

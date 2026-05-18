@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.
+   ╭─[inline_script_id.tsx:5:17]
+ 4 │                       return (
+ 5 │                         <Script>
+   ·                          ──────
+ 6 │                           {`console.log('Hello world');`}
+   ╰────
+  help: See https://nextjs.org/docs/messages/inline-script-id
+
+  ⚠ next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.
+   ╭─[inline_script_id.tsx:5:17]
+ 4 │                       return (
+ 5 │                         <Script
+   ·                          ──────
+ 6 │                           dangerouslySetInnerHTML={{
+   ╰────
+  help: See https://nextjs.org/docs/messages/inline-script-id
+
+  ⚠ next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.
+   ╭─[inline_script_id.tsx:5:17]
+ 4 │                       return (
+ 5 │                         <MyScript>
+   ·                          ────────
+ 6 │                           {`console.log('Hello world');`}
+   ╰────
+  help: See https://nextjs.org/docs/messages/inline-script-id
+
+  ⚠ next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.
+   ╭─[inline_script_id.tsx:5:17]
+ 4 │                       return (
+ 5 │                         <MyScript
+   ·                          ────────
+ 6 │                           dangerouslySetInnerHTML={{
+   ╰────
+  help: See https://nextjs.org/docs/messages/inline-script-id

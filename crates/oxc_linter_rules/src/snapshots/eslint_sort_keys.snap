@@ -1,0 +1,776 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, '':2} // default
+   ·           ───────────
+   ╰────
+  help: Replace `a:1, '':2` with `'':2, a:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, [``]:2} // default
+   ·           ─────────────
+   ╰────
+  help: Replace `a:1, [``]:2` with `[``]:2, a:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3} // default
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `_:2, a:1, b:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, c:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, c:2, b:3` with `a:1, b:3, c:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, a:2, b:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, a:2, b:3` with `a:2, b:3, b_:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, c:2, C:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, c:2, C:3` with `C:3, b_:1, c:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {$:1, _:2, A:3, a:4}
+   ·           ────────────────────
+   ╰────
+  help: Replace `$:1, _:2, A:3, a:4` with `$:1, A:3, _:2, a:4`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {1:1, 2:4, A:3, '11':2}
+   ·           ───────────────────────
+   ╰────
+  help: Replace `1:1, 2:4, A:3, '11':2` with `1:1, '11':2, 2:4, A:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'#':1, À:3, 'Z':2, è:4}
+   ·           ────────────────────────
+   ╰────
+  help: Replace `'#':1, À:3, 'Z':2, è:4` with `'#':1, 'Z':2, À:3, è:4`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = { null: 1, [/(?<zero>0)/]: 2 }
+   ·           ──────────────────────────────
+   ╰────
+  help: Replace `null: 1, [/(?<zero>0)/]: 2` with `[/(?<zero>0)/]: 2, null: 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {...z, c:1, b:1}
+   ·           ────────────────
+   ╰────
+  help: Replace `c:1, b:1` with `b:1, c:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {...z, ...c, d:4, b:1, ...y, ...f, e:2, a:1}
+   ·           ────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {c:1, b:1, ...a}
+   ·           ────────────────
+   ╰────
+  help: Replace `c:1, b:1` with `b:1, c:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {...z, ...a, c:1, b:1}
+   ·           ──────────────────────
+   ╰────
+  help: Replace `c:1, b:1` with `b:1, c:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {...z, b:1, a:1, ...d, ...c}
+   ·           ────────────────────────────
+   ╰────
+  help: Replace `b:1, a:1` with `a:1, b:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {...z, a:2, b:0, ...x, ...c}
+   ·           ────────────────────────────
+   ╰────
+  help: Replace `a:2, b:0` with `b:0, a:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {...z, a:2, b:0, ...x}
+   ·           ──────────────────────
+   ╰────
+  help: Replace `a:2, b:0` with `b:0, a:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {...z, '':1, a:2}
+   ·           ─────────────────
+   ╰────
+  help: Replace `'':1, a:2` with `a:2, '':1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, [b+c]:2, '':3}
+   ·           ────────────────────
+   ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'':1, [b+c]:2, a:3}
+   ·           ────────────────────
+   ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b:1, [f()]:2, '':3, a:4}
+   ·           ─────────────────────────
+   ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, c:{y:1, x:1}, b:1}
+   ·           ────────────────────────
+   ╰────
+  help: Replace `a:1, c:{y:1, x:1}, b:1` with `a:1, b:1, c:{x:1, y:1}`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:19]
+ 1 │ var obj = {a:1, c:{y:1, x:1}, b:1}
+   ·                   ──────────
+   ╰────
+  help: Replace `y:1, x:1` with `x:1, y:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3} // asc
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `_:2, a:1, b:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, c:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, c:2, b:3` with `a:1, b:3, c:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, a:2, b:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, a:2, b:3` with `a:2, b:3, b_:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, c:2, C:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, c:2, C:3` with `C:3, b_:1, c:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {$:1, _:2, A:3, a:4}
+   ·           ────────────────────
+   ╰────
+  help: Replace `$:1, _:2, A:3, a:4` with `$:1, A:3, _:2, a:4`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {1:1, 2:4, A:3, '11':2}
+   ·           ───────────────────────
+   ╰────
+  help: Replace `1:1, 2:4, A:3, '11':2` with `1:1, '11':2, 2:4, A:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'#':1, À:3, 'Z':2, è:4}
+   ·           ────────────────────────
+   ╰────
+  help: Replace `'#':1, À:3, 'Z':2, è:4` with `'#':1, 'Z':2, À:3, è:4`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `_:2, a:1, b:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3} // asc, insensitive
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `_:2, a:1, b:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, c:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, c:2, b:3` with `a:1, b:3, c:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, a:2, b:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, a:2, b:3` with `a:2, b:3, b_:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {$:1, A:3, _:2, a:4}
+   ·           ────────────────────
+   ╰────
+  help: Replace `$:1, A:3, _:2, a:4` with `$:1, _:2, A:3, a:4`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {1:1, 2:4, A:3, '11':2}
+   ·           ───────────────────────
+   ╰────
+  help: Replace `1:1, 2:4, A:3, '11':2` with `1:1, '11':2, 2:4, A:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'#':1, À:3, 'Z':2, è:4}
+   ·           ────────────────────────
+   ╰────
+  help: Replace `'#':1, À:3, 'Z':2, è:4` with `'#':1, 'Z':2, À:3, è:4`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `_:2, a:1, b:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3} // asc, natural
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `_:2, a:1, b:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, c:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, c:2, b:3` with `a:1, b:3, c:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, a:2, b:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, a:2, b:3` with `a:2, b:3, b_:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, c:2, C:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, c:2, C:3` with `C:3, b_:1, c:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {$:1, A:3, _:2, a:4}
+   ·           ────────────────────
+   ╰────
+  help: Replace `$:1, A:3, _:2, a:4` with `$:1, _:2, A:3, a:4`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {1:1, 2:4, A:3, '11':2}
+   ·           ───────────────────────
+   ╰────
+  help: Replace `1:1, 2:4, A:3, '11':2` with `1:1, 2:4, '11':2, A:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'#':1, À:3, 'Z':2, è:4}
+   ·           ────────────────────────
+   ╰────
+  help: Replace `'#':1, À:3, 'Z':2, è:4` with `'#':1, 'Z':2, À:3, è:4`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `_:2, a:1, b:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3} // asc, natural, insensitive
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `_:2, a:1, b:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, c:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, c:2, b:3` with `a:1, b:3, c:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, a:2, b:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, a:2, b:3` with `a:2, b:3, b_:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {$:1, A:3, _:2, a:4}
+   ·           ────────────────────
+   ╰────
+  help: Replace `$:1, A:3, _:2, a:4` with `$:1, _:2, A:3, a:4`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {1:1, '11':2, 2:4, A:3}
+   ·           ───────────────────────
+   ╰────
+  help: Replace `1:1, '11':2, 2:4, A:3` with `1:1, 2:4, '11':2, A:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'#':1, À:3, 'Z':2, è:4}
+   ·           ────────────────────────
+   ╰────
+  help: Replace `'#':1, À:3, 'Z':2, è:4` with `'#':1, 'Z':2, À:3, è:4`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `_:2, a:1, b:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'':1, a:'2'} // desc
+   ·           ─────────────
+   ╰────
+  help: Replace `'':1, a:'2'` with `a:'2', '':1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {[``]:1, a:'2'} // desc
+   ·           ───────────────
+   ╰────
+  help: Replace `[``]:1, a:'2'` with `a:'2', [``]:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3} // desc
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `b:3, a:1, _:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, c:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, c:2, b:3` with `c:2, b:3, a:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, a:2, b:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, a:2, b:3` with `b_:1, b:3, a:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, c:2, C:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, c:2, C:3` with `c:2, b_:1, C:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {$:1, _:2, A:3, a:4}
+   ·           ────────────────────
+   ╰────
+  help: Replace `$:1, _:2, A:3, a:4` with `a:4, _:2, A:3, $:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {1:1, 2:4, A:3, '11':2}
+   ·           ───────────────────────
+   ╰────
+  help: Replace `1:1, 2:4, A:3, '11':2` with `A:3, 2:4, '11':2, 1:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'#':1, À:3, 'Z':2, è:4}
+   ·           ────────────────────────
+   ╰────
+  help: Replace `'#':1, À:3, 'Z':2, è:4` with `è:4, À:3, 'Z':2, '#':1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `b:3, a:1, _:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3} // desc, insensitive
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `b:3, a:1, _:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, c:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, c:2, b:3` with `c:2, b:3, a:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, a:2, b:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, a:2, b:3` with `b_:1, b:3, a:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, c:2, C:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, c:2, C:3` with `c:2, C:3, b_:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {$:1, _:2, A:3, a:4}
+   ·           ────────────────────
+   ╰────
+  help: Replace `$:1, _:2, A:3, a:4` with `A:3, a:4, _:2, $:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {1:1, 2:4, A:3, '11':2}
+   ·           ───────────────────────
+   ╰────
+  help: Replace `1:1, 2:4, A:3, '11':2` with `A:3, 2:4, '11':2, 1:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'#':1, À:3, 'Z':2, è:4}
+   ·           ────────────────────────
+   ╰────
+  help: Replace `'#':1, À:3, 'Z':2, è:4` with `è:4, À:3, 'Z':2, '#':1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `b:3, a:1, _:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3} // desc, natural
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `b:3, a:1, _:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, c:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, c:2, b:3` with `c:2, b:3, a:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, a:2, b:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, a:2, b:3` with `b_:1, b:3, a:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, c:2, C:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, c:2, C:3` with `c:2, b_:1, C:3`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {$:1, _:2, A:3, a:4}
+   ·           ────────────────────
+   ╰────
+  help: Replace `$:1, _:2, A:3, a:4` with `a:4, A:3, _:2, $:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {1:1, 2:4, A:3, '11':2}
+   ·           ───────────────────────
+   ╰────
+  help: Replace `1:1, 2:4, A:3, '11':2` with `A:3, '11':2, 2:4, 1:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'#':1, À:3, 'Z':2, è:4}
+   ·           ────────────────────────
+   ╰────
+  help: Replace `'#':1, À:3, 'Z':2, è:4` with `è:4, À:3, 'Z':2, '#':1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `b:3, a:1, _:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3} // desc, natural, insensitive
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `b:3, a:1, _:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, c:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, c:2, b:3` with `c:2, b:3, a:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, a:2, b:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, a:2, b:3` with `b_:1, b:3, a:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {b_:1, c:2, C:3}
+   ·           ────────────────
+   ╰────
+  help: Replace `b_:1, c:2, C:3` with `c:2, C:3, b_:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {$:1, _:2, A:3, a:4}
+   ·           ────────────────────
+   ╰────
+  help: Replace `$:1, _:2, A:3, a:4` with `A:3, a:4, _:2, $:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {1:1, 2:4, '11':2, A:3}
+   ·           ───────────────────────
+   ╰────
+  help: Replace `1:1, 2:4, '11':2, A:3` with `A:3, '11':2, 2:4, 1:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {'#':1, À:3, 'Z':2, è:4}
+   ·           ────────────────────────
+   ╰────
+  help: Replace `'#':1, À:3, 'Z':2, è:4` with `è:4, À:3, 'Z':2, '#':1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a:1, _:2, b:3}
+   ·           ───────────────
+   ╰────
+  help: Replace `a:1, _:2, b:3` with `b:3, a:1, _:2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:2:39]
+ 1 │     
+ 2 │ ╭─▶                             var obj = {
+ 3 │ │                                   b: 1,
+ 4 │ │                                   c: 2,
+ 5 │ │                                   a: 3
+ 6 │ ╰─▶                             }
+ 7 │                             
+   ╰────
+  help: Replace `b: 1,
+                                        c: 2,
+                                        a: 3` with `a: 3,
+                                        b: 1,
+                                        c: 2`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:2:39]
+ 1 │     
+ 2 │ ╭─▶                             let obj = {
+ 3 │ │                                   b
+ 4 │ │   
+ 5 │ │                                   ,a
+ 6 │ ╰─▶                             }
+ 7 │                             
+   ╰────
+  help: Replace `b
+        
+                                        ,a` with `a,
+        
+                                        b`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:2:40]
+ 1 │     
+ 2 │ ╭─▶                              var obj = {
+ 3 │ │                                   b: 1,
+ 4 │ │                                   c () {
+ 5 │ │   
+ 6 │ │                                   },
+ 7 │ │                                   a: 3
+ 8 │ ╰─▶                               }
+ 9 │                              
+   ╰────
+  help: Replace `b: 1,
+                                        c () {
+        
+                                        },
+                                        a: 3` with `a: 3,
+                                        b: 1,
+                                        c () {
+        
+                                        }`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+    ╭─[sort_keys.tsx:2:40]
+  1 │     
+  2 │ ╭─▶                              var obj = {
+  3 │ │                                   a: 1,
+  4 │ │                                   b: 2,
+  5 │ │   
+  6 │ │                                   z () {
+  7 │ │   
+  8 │ │                                   },
+  9 │ │                                   y: 3
+ 10 │ ╰─▶                               }
+ 11 │                              
+    ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:2:40]
+ 1 │     
+ 2 │ ╭─▶                              var obj = {
+ 3 │ │                                   b: 1,
+ 4 │ │                                   c () {
+ 5 │ │                                   },
+ 6 │ │                                   // comment
+ 7 │ │                                   a: 3
+ 8 │ ╰─▶                               }
+ 9 │                              
+   ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:2:39]
+ 1 │     
+ 2 │ ╭─▶                             var obj = {
+ 3 │ │                                 b,
+ 4 │ │                                 [a+b]: 1,
+ 5 │ │                                 a // sort-keys: 'a' should be before 'b'
+ 6 │ ╰─▶                             }
+ 7 │                             
+   ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+    ╭─[sort_keys.tsx:2:39]
+  1 │     
+  2 │ ╭─▶                             var obj = {
+  3 │ │                                   c: 1,
+  4 │ │                                   d: 2,
+  5 │ │                                   // comment
+  6 │ │                                   // comment
+  7 │ │                                   b() {
+  8 │ │                                   },
+  9 │ │                                   e: 4
+ 10 │ ╰─▶                             }
+ 11 │                             
+    ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+    ╭─[sort_keys.tsx:2:39]
+  1 │     
+  2 │ ╭─▶                             var obj = {
+  3 │ │                                   c: 1,
+  4 │ │                                   d: 2,
+  5 │ │   
+  6 │ │                                   z() {
+  7 │ │   
+  8 │ │                                   },
+  9 │ │                                   f: 3,
+ 10 │ │                                   /*
+ 11 │ │   
+ 12 │ │   
+ 13 │ │                                   */
+ 14 │ │                                   [a+b]: 1,
+ 15 │ │                                   b: 1,
+ 16 │ │                                   e: 2
+ 17 │ ╰─▶                             }
+ 18 │                             
+    ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:2:39]
+ 1 │     
+ 2 │ ╭─▶                             var obj = {
+ 3 │ │                                   b: "/*",
+ 4 │ │                                   a: "*/",
+ 5 │ ╰─▶                             }
+ 6 │                             
+   ╰────
+  help: Replace `b: "/*",
+                                        a: "*/"` with `a: "*/",
+                                        b: "/*"`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:2:39]
+ 1 │     
+ 2 │ ╭─▶                             var obj = {
+ 3 │ │                                   b: 1
+ 4 │ │                                   // comment before comma
+ 5 │ │                                   , a: 2
+ 6 │ ╰─▶                             };
+ 7 │                             
+   ╰────
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+    ╭─[sort_keys.tsx:2:39]
+  1 │     
+  2 │ ╭─▶                             let obj = {
+  3 │ │                                 b,
+  4 │ │                                 [foo()]: [
+  5 │ │                                 // ↓ this blank is inside a property and therefore should not count
+  6 │ │   
+  7 │ │                                 ],
+  8 │ │                                 a
+  9 │ ╰─▶                             }
+ 10 │                             
+    ╰────

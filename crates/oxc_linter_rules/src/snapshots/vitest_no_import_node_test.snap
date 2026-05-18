@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ vitest(no-import-node-test): Do not import from `node:test`
+   ╭─[no_import_node_test.tsx:1:22]
+ 1 │ import { test } from "node:test"
+   ·                      ───────────
+   ╰────
+  help: Import from `vitest` instead.
+
+  ⚠ vitest(no-import-node-test): Do not import from `node:test`
+   ╭─[no_import_node_test.tsx:1:22]
+ 1 │ import * as foo from 'node:test'
+   ·                      ───────────
+   ╰────
+  help: Import from `vitest` instead.

@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ next(no-title-in-document-head): Prevent usage of `<title>` with `Head` component from `next/document`.
+   ╭─[no_title_in_document_head.tsx:7:17]
+ 6 │                       return (
+ 7 │                         <Head>
+   ·                          ────
+ 8 │                           <title>My page title</title>
+   ╰────
+  help: See https://nextjs.org/docs/messages/no-title-in-document-head

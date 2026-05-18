@@ -1,0 +1,213 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:1]
+ 1 │ undefined
+   · ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:1]
+ 1 │ undefined.a
+   · ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:3]
+ 1 │ a[undefined]
+   ·   ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:1]
+ 1 │ undefined[0]
+   · ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:3]
+ 1 │ f(undefined)
+   ·   ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:12]
+ 1 │ function f(undefined) {}
+   ·            ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:20]
+ 1 │ function f() { var undefined; }
+   ·                    ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:16]
+ 1 │ function f() { undefined = true; }
+   ·                ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:5]
+ 1 │ var undefined;
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:14]
+ 1 │ try {} catch(undefined) {}
+   ·              ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:10]
+ 1 │ function undefined() {}
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:11]
+ 1 │ (function undefined(){}())
+   ·           ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:20]
+ 1 │ var foo = function undefined() {}
+   ·                    ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:16]
+ 1 │ foo = function undefined() {}
+   ·                ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:1]
+ 1 │ undefined = true
+   · ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:5]
+ 1 │ var undefined = true
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:4]
+ 1 │ ({ undefined })
+   ·    ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:5]
+ 1 │ ({ [undefined]: foo })
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:9]
+ 1 │ ({ bar: undefined })
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:9]
+ 1 │ ({ bar: undefined } = foo)
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:7]
+ 1 │ var { undefined } = foo
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:12]
+ 1 │ var { bar: undefined } = foo
+   ·            ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:24]
+ 1 │ ({ undefined: function undefined() {} })
+   ·                        ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:18]
+ 1 │ ({ foo: function undefined() {} })
+   ·                  ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:14]
+ 1 │ class Foo { [undefined]() {} }
+   ·              ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:11]
+ 1 │ (class { [undefined]() {} })
+   ·           ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:5]
+ 1 │ var undefined = true; undefined = false;
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:23]
+ 1 │ var undefined = true; undefined = false;
+   ·                       ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:8]
+ 1 │ import undefined from 'foo'
+   ·        ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:13]
+ 1 │ import * as undefined from 'foo'
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:10]
+ 1 │ import { undefined } from 'foo'
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:15]
+ 1 │ import { a as undefined } from 'foo'
+   ·               ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:16]
+ 1 │ let a = [b, ...undefined]
+   ·                ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:8]
+ 1 │ [a, ...undefined] = b
+   ·        ─────────
+   ╰────
+
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
+   ╭─[no_undefined.tsx:1:6]
+ 1 │ [a = undefined] = b
+   ·      ─────────
+   ╰────

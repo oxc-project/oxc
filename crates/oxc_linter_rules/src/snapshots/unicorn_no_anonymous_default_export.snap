@@ -1,0 +1,265 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default function () {}
+   ·                ──────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default class {}
+   ·                ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default () => {}
+   ·                ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default function * () {}
+   ·                ────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function () {}
+   ·                ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function * () {}
+   ·                ──────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async () => {}
+   ·                ──────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default class extends class {} {}
+   ·                ─────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default class{}
+   ·                ───────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:28]
+ 1 │ let Foo, Foo_, foo, foo_
+ 2 │             export default class {}
+   ·                            ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:29]
+ 1 │ let Foo, Foo_, foo, foo_
+ 2 │             export default (class{})
+   ·                             ───────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:17]
+ 1 │ export default (class extends class {} {})
+   ·                 ─────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:23]
+ 1 │ let Exports, Exports_, exports, exports_
+ 2 │             exports = class {}
+   ·                       ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:18]
+ 1 │ module.exports = class {}
+   ·                  ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default function* () {}
+   ·                ───────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function* () {}
+   ·                ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function*() {}
+   ·                ────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function *() {}
+   ·                ─────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function   *   () {}
+   ·                ──────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default async function * /* comment */ () {}
+   ·                ────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ ╭─▶ export default async function * // comment
+ 2 │ ╰─▶             () {}
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:28]
+ 1 │ let Foo, Foo_, foo, foo_
+ 2 │             export default async function * () {}
+   ·                            ──────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:29]
+ 1 │ let Foo, Foo_, foo, foo_
+ 2 │             export default (async function * () {})
+   ·                             ──────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:23]
+ 1 │ let Exports, Exports_, exports, exports_
+ 2 │             exports = function() {}
+   ·                       ─────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:18]
+ 1 │ module.exports = function() {}
+   ·                  ─────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default () => {};
+   ·                ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:15]
+ 1 │ export default() => {}
+   ·               ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default foo => {}
+   ·                ─────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:19]
+ 1 │ export default (( () => {} ))
+   ·                   ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:65]
+ 1 │ /* comment 1 */ export /* comment 2 */ default /* comment 3 */  () => {}
+   ·                                                                 ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:6:13]
+ 5 │             // comment 3
+ 6 │             () => {}
+   ·             ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:28]
+ 1 │ let Foo, Foo_, foo, foo_
+ 2 │             export default async () => {}
+   ·                            ──────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:2:26]
+ 1 │ let Exports, Exports_, exports, exports_
+ 2 │             exports = (( () => {} ))
+   ·                          ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:8:13]
+ 7 │             // comment 4
+ 8 │             () => {};
+   ·             ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:17]
+ 1 │ (( exports = (( () => {} )) ))
+   ·                 ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:24]
+ 1 │ (( module.exports = (( () => {} )) ))
+   ·                        ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:17]
+ 1 │ (( exports = (( () => {} )) ));
+   ·                 ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This function default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:24]
+ 1 │ (( module.exports = (( () => {} )) ));
+   ·                        ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:27]
+ 1 │ @decorator export default class {}
+   ·                           ────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:16]
+ 1 │ export default @decorator(class {}) class extends class {} {}
+   ·                ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:18]
+ 1 │ module.exports = @decorator(class {}) class extends class {} {}
+   ·                  ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(no-anonymous-default-export): This class default export is missing a name
+   ╭─[no_anonymous_default_export.tsx:1:48]
+ 1 │ @decorator @decorator(class {}) export default class {}
+   ·                                                ────────
+   ╰────

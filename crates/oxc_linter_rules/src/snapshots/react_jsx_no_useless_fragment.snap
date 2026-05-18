@@ -1,0 +1,186 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:1:1]
+ 1 │ <></>
+   · ──
+   ╰────
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:1:1]
+ 1 │ <>{}</>
+   · ──
+   ╰────
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:1:7]
+ 1 │ <p>moo<>foo</></p>
+   ·       ──
+   ╰────
+  help: Replace `<>foo</>` with `foo`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:1:7]
+ 1 │ <p>moo<>foo</></p>
+   ·       ──
+   ╰────
+  help: Replace `<>foo</>` with `foo`.
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:1:1]
+ 1 │ <>{meow}</>
+   · ──
+   ╰────
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:1:4]
+ 1 │ <p><>{meow}</></p>
+   ·    ──
+   ╰────
+  help: Replace `<>{meow}</>` with `{meow}`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:1:4]
+ 1 │ <p><>{meow}</></p>
+   ·    ──
+   ╰────
+  help: Replace `<>{meow}</>` with `{meow}`.
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:1:1]
+ 1 │ <><div/></>
+   · ──
+   ╰────
+  help: Replace `<><div/></>` with `<div/>`.
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:2:13]
+ 1 │ 
+ 2 │             <>
+   ·             ──
+ 3 │               <div/>
+   ╰────
+  help: Replace `<>
+                      <div/>
+                    </>` with `<div/>`.
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:1:1]
+ 1 │ <Fragment />
+   · ────────────
+   ╰────
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:2:17]
+ 1 │ 
+ 2 │                 <React.Fragment>
+   ·                 ────────────────
+ 3 │                   <Foo />
+   ╰────
+  help: Replace `<React.Fragment>
+                          <Foo />
+                        </React.Fragment>` with `<Foo />`.
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:1:7]
+ 1 │ <Eeee><>foo</></Eeee>
+   ·       ──
+   ╰────
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:1:6]
+ 1 │ <div><>foo</></div>
+   ·      ──
+   ╰────
+  help: Replace `<>foo</>` with `foo`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:1:6]
+ 1 │ <div><>foo</></div>
+   ·      ──
+   ╰────
+  help: Replace `<>foo</>` with `foo`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:1:6]
+ 1 │ <div><>{"a"}{"b"}</></div>
+   ·      ──
+   ╰────
+  help: Replace `<>{"a"}{"b"}</>` with `{"a"}{"b"}`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:1:6]
+ 1 │ <div><>{"a"}{"b"}</></div>
+   ·      ──
+   ╰────
+  help: Replace `<>{"a"}{"b"}</>` with `{"a"}{"b"}`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:5:15]
+ 4 │               <Eeee />
+ 5 │               <>{"a"}{"b"}</>
+   ·               ──
+ 6 │             </section>
+   ╰────
+  help: Replace `<>{"a"}{"b"}</>` with `{"a"}{"b"}`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:1:6]
+ 1 │ <div><Fragment>{"a"}{"b"}</Fragment></div>
+   ·      ──────────
+   ╰────
+  help: Replace `<Fragment>{"a"}{"b"}</Fragment>` with `{"a"}{"b"}`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:3:18]
+ 2 │             <section>
+ 3 │               git<>
+   ·                  ──
+ 4 │                 <b>hub</b>.
+   ╰────
+  help: Replace `<>
+                        <b>hub</b>.
+                      </>` with `<b>hub</b>.`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:7:18]
+ 6 │ 
+ 7 │               git<> <b>hub</b></>
+   ·                  ──
+ 8 │             </section>
+   ╰────
+  help: Replace `<> <b>hub</b></>` with ` <b>hub</b>`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:1:8]
+ 1 │ <div>a <>{""}{""}</> a</div>
+   ·        ──
+   ╰────
+  help: Replace `<>{""}{""}</>` with `{""}{""}`.
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:4:17]
+ 3 │               <html>
+ 4 │                 <React.Fragment />
+   ·                 ──────────────────
+ 5 │               </html>
+   ╰────
+  help: Remove `<React.Fragment />`.
+
+  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
+   ╭─[jsx_no_useless_fragment.tsx:4:17]
+ 3 │               <html>
+ 4 │                 <React.Fragment />
+   ·                 ──────────────────
+ 5 │               </html>
+   ╰────
+  help: Remove `<React.Fragment />`.
+
+  ⚠ react(jsx-no-useless-fragment): Fragments should contain more than one child.
+   ╭─[jsx_no_useless_fragment.tsx:1:1]
+ 1 │ <><Foo>{moo}</Foo></>
+   · ──
+   ╰────
+  help: Replace `<><Foo>{moo}</Foo></>` with `<Foo>{moo}</Foo>`.

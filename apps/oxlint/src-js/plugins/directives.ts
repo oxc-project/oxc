@@ -6,7 +6,7 @@
  * - Oxlint: `oxlint-disable`, `oxlint-disable-line`, `oxlint-disable-next-line`, `oxlint-enable`
  *
  * The pattern matching mirrors the Rust implementation in
- * `crates/oxc_linter/src/disable_directives.rs` (`match_disable_directive`, `match_enable_directive`).
+ * `crates/oxc_linter_core/src/disable_directives.rs` (`match_disable_directive`, `match_enable_directive`).
  * This ensures consistent behavior between the Rust linter and JS plugins.
  *
  * @see <https://oxc.rs/docs/guide/usage/linter/ignore-comments.html#inline-ignore-comments>

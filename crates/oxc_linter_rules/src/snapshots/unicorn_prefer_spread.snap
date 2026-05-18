@@ -1,0 +1,988 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:11]
+ 1 │ const x = Array.from(set);
+   ·           ───────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Array.from(set).map(() => {});
+   · ───────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Array.from(new Set([1, 2])).map(() => {});
+   · ───────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Array.from(document.querySelectorAll("*")).map(() => {});
+   · ──────────────────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = []
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = "1"
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = null
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = true
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = 1
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = /./
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = /./g
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = bar
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = bar.baz
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:23]
+ 1 │ function* foo() {
+ 2 │                 yield Array.from(arrayLike).forEach(doSomething)
+   ·                       ─────────────────────
+ 3 │             }
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_spread.tsx:1:14]
+ 1 │ const foo = \\`bar\\`
+   ·              ─
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ╰────
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = [];
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:19]
+ 1 │ for (const key of Array.from(arrayLike)) {
+   ·                   ─────────────────────
+ 2 │             }
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:19]
+ 1 │ for (const key in Array.from(arrayLike)) {
+   ·                   ─────────────────────
+ 2 │             }
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:16]
+ 1 │ const foo = `${Array.from(arrayLike)}`
+   ·                ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:30]
+ 1 │ async function foo(){
+ 2 │                 return await Array.from(arrayLike)
+   ·                              ─────────────────────
+ 3 │             }
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ foo()
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const foo = {}
+ 2 │             Array.from(arrayLike).forEach(doSomething)
+   ·             ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (Array).from(foo)
+   · ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (Array.from)(foo)
+   · ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ ((Array).from)(foo)
+   · ───────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (Array).from((0, foo))
+   · ──────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (Array.from)((0, foo))
+   · ──────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ ((Array).from)((0, foo))
+   · ────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Array.from(a ? b : c)
+   · ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Array.from((0, a))
+   · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Array.from([...a, ...b], )
+   · ──────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Array.from([1])
+   · ───────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Array.from([...a, ...b])
+   · ────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:9]
+ 1 │ /* 1 */ Array /* 2 */ .from /* 3 */ ( /* 4 */ a /* 5 */,)
+   ·         ─────────────────────────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1].concat(2)
+   · ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1].concat([2, 3])
+   · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1].concat(2,)
+   · ──────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1].concat([2, ...bar],)
+   · ────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1,].concat(2)
+   · ──────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1,].concat([2, 3])
+   · ───────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1,].concat(2,)
+   · ───────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1,].concat([2, 3],)
+   · ────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:4]
+ 1 │ (( (( (( [1,] )).concat ))( (([2, 3])) ,) ))
+   ·    ──────────────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:4]
+ 1 │ (( (( (( [1,] )).concat ))( (([2, 3])) , bar ) ))
+   ·    ───────────────────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat(2)
+   · ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat([2, 3])
+   · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat(2,)
+   · ──────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat([2, 3],)
+   · ───────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:4]
+ 1 │ (( (( ((foo)).concat ))( (([2, 3])) ,) ))
+   ·    ───────────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:4]
+ 1 │ (( (( ((foo)).concat ))( (([2, 3])) , bar ) ))
+   ·    ────────────────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ bar()
+ 2 │             foo.concat(2)
+   ·             ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:13]
+ 1 │ const foo = foo.concat(2)
+   ·             ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:19]
+ 1 │ const foo = () => foo.concat(2)
+   ·                   ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const five = 2 + 3;
+ 2 │             foo.concat(five);
+   ·             ────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ const array = [2 + 3];
+ 2 │             foo.concat(array);
+   ·             ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat([bar])
+   · ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat(bar)
+   · ───────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Array.from(set).concat([2, 3])
+   · ──────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Array.from(set).concat([2, 3])
+   · ───────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat([2, 3]).concat(4)
+   · ────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat([2, 3]).concat(4)
+   · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ string.concat("bar")
+   · ────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat(2, 3)
+   · ────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat(2, bar)
+   · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [...foo, 2].concat(bar)
+   · ───────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:20]
+ 1 │ let sortedScores = scores.concat().sort((a, b) => b[0] - a[0]);
+   ·                    ───────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat(bar, 2, 3)
+   · ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat(bar, 2, 3, baz)
+   · ──────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:28]
+ 1 │ async function a() {return [].concat(await bar)}
+   ·                            ────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:28]
+ 1 │ async function a() {return [].concat((0, bar))}
+   ·                            ───────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:28]
+ 1 │ async function a() {return [].concat(((await bar)))}
+   ·                            ────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat((0, 1))
+   · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:28]
+ 1 │ async function a() {return (await bar).concat(1)}
+   ·                            ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [].concat(...bar)
+   · ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [].concat([,], [])
+   · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [,].concat([,], [,])
+   · ────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [,].concat([,,], [,])
+   · ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [,].concat([,], [,,])
+   · ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1].concat([2,], [3,])
+   · ──────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1].concat([2,,], [3,,])
+   · ────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1,].concat([2,], [3,])
+   · ───────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [1,].concat([2,,], [3,,])
+   · ─────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [].concat([], [])
+   · ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+    ╭─[prefer_spread.tsx:4:27]
+  3 │                 const EMPTY_STRING_IN_ARRAY_OF_ARRAY = ""
+  4 │ ╭─▶             const array = [].concat(
+  5 │ │                   undefined,
+  6 │ │                   null,
+  7 │ │                   EMPTY_STRING,
+  8 │ │                   false,
+  9 │ │                   0,
+ 10 │ │                   [EMPTY_STRING_IN_ARRAY],
+ 11 │ │                   [[EMPTY_STRING_IN_ARRAY_OF_ARRAY]]
+ 12 │ ╰─▶             )
+    ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [].concat((a.b.c), 2)
+   · ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ [].concat(a.b(), 2)
+   · ───────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat(bar, 2, [3, 4], baz, 5, [6, 7])
+   · ──────────────────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.concat(bar, 2, 3, ...baz)
+   · ─────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ notClass.concat(1)
+   · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ _A.concat(1)
+   · ────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ FOO.concat(1)
+   · ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ A.concat(1)
+   · ───────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ Foo.x.concat(1)
+   · ───────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:11]
+ 1 │ if (test) foo.concat(1)
+   ·           ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:19]
+ 1 │ if (test) {} else foo.concat(1)
+   ·                   ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:19]
+ 1 │ if (test) {} else foo.concat(1)
+   ·                   ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:10]
+ 1 │ for (;;) foo.concat(1)
+   ·          ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:14]
+ 1 │ for (a in b) foo.concat(1)
+   ·              ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:14]
+ 1 │ for (a in b) foo.concat(1)
+   ·              ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:20]
+ 1 │ for (const a of b) foo.concat(1)
+   ·                    ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:14]
+ 1 │ while (test) foo.concat(1)
+   ·              ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:4]
+ 1 │ do foo.concat(1); while (test)
+   ·    ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:12]
+ 1 │ with (foo) foo.concat(1)
+   ·            ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:2:26]
+ 1 │ const baz = [2];
+ 2 │             call(foo, ...[bar].concat(baz));
+   ·                          ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ foo.join(foo, bar).concat("...")
+   · ────────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.slice()
+   · ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.slice().slice()
+   · ─────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.slice().slice()
+   · ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.slice(1).slice()
+   · ──────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.slice().slice(1)
+   · ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:14]
+ 1 │ const copy = array.slice()
+   ·              ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:4]
+ 1 │ (( (( (( array )).slice ))() ))
+   ·    ─────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ (scopeManager?.scopes).slice()
+   · ──────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ bar()
+ 2 │             foo.slice()
+   ·             ───────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ "".slice()
+   · ──────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.slice(0)
+   · ──────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.slice(0b0)
+   · ────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.slice(0.00)
+   · ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.slice(0.00, )
+   · ───────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.toSpliced()
+   · ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.toSpliced().toSpliced()
+   · ─────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ array.toSpliced().toSpliced()
+   · ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
+   ╭─[prefer_spread.tsx:1:14]
+ 1 │ const copy = array.toSpliced()
+   ·              ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
+   ╭─[prefer_spread.tsx:1:4]
+ 1 │ (( (( (( array )).toSpliced ))() ))
+   ·    ─────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ bar()
+ 2 │             foo.toSpliced()
+   ·             ───────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ "".toSpliced()
+   · ──────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ new Uint8Array([10, 20, 30, 40, 50]).toSpliced()
+   · ────────────────────────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ "string".split("")
+   · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ "string".split('')
+   · ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ unknown.split("")
+   · ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
+   ╭─[prefer_spread.tsx:1:20]
+ 1 │ const characters = "string".split("")
+   ·                    ──────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
+   ╭─[prefer_spread.tsx:1:4]
+ 1 │ (( (( (( "string" )).split ))( (("")) ) ))
+   ·    ────────────────────────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
+   ╭─[prefer_spread.tsx:2:13]
+ 1 │ bar()
+ 2 │             foo.split("")
+   ·             ─────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ unknown.split("")
+   · ─────────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
+   ╭─[prefer_spread.tsx:1:1]
+ 1 │ "🦄".split("")
+   · ──────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.
+
+  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
+   ╭─[prefer_spread.tsx:1:18]
+ 1 │ const {length} = "🦄".split("")
+   ·                  ──────────────
+   ╰────
+  help: The spread operator (`...`) is more concise and readable.

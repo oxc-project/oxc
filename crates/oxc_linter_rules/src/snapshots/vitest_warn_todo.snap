@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:1:10]
+ 1 │ describe.todo("foo", function () {})
+   ·          ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:1:4]
+ 1 │ it.todo("foo", function () {})
+   ·    ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:1:6]
+ 1 │ test.todo("foo", function () {})
+   ·      ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:1:10]
+ 1 │ describe.todo.each([])("foo", function () {})
+   ·          ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:1:4]
+ 1 │ it.todo.each([])("foo", function () {})
+   ·    ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:1:6]
+ 1 │ test.todo.each([])("foo", function () {})
+   ·      ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:1:15]
+ 1 │ describe.only.todo("foo", function () {})
+   ·               ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:1:9]
+ 1 │ it.only.todo("foo", function () {})
+   ·         ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:1:11]
+ 1 │ test.only.todo("foo", function () {})
+   ·           ────
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.
+
+  ⚠ vitest(warn-todo): The use of `.todo` is not recommended.
+   ╭─[warn_todo.tsx:2:16]
+ 1 │ import { test as vpTest } from "vite-plus/test";
+ 2 │         vpTest.todo(
+   ·                ────
+ 3 │           "vite-plus/test does not have expected vitest/warn-todo lint error",
+   ╰────
+  help: Write an actual test and remove the `.todo` modifier before pushing/merging your changes.

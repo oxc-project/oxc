@@ -1,0 +1,81 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+   ╭─[bad_replace_all_arg.tsx:1:12]
+ 1 │ withSpaces.replaceAll(/\s+/, ',');
+   ·            ─────┬──── ──┬──
+   ·                 │       ╰── RegExp supplied here
+   ·                 ╰── `replaceAll` called here
+   ╰────
+  help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+   ╭─[bad_replace_all_arg.tsx:1:12]
+ 1 │ withSpaces.replaceAll(/\s+/i, ',');
+   ·            ─────┬──── ───┬──
+   ·                 │        ╰── RegExp supplied here
+   ·                 ╰── `replaceAll` called here
+   ╰────
+  help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+   ╭─[bad_replace_all_arg.tsx:1:12]
+ 1 │ withSpaces.replaceAll(new RegExp('\s+'), ',');
+   ·            ─────┬──── ────────┬────────
+   ·                 │             ╰── RegExp supplied here
+   ·                 ╰── `replaceAll` called here
+   ╰────
+  help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+   ╭─[bad_replace_all_arg.tsx:1:12]
+ 1 │ withSpaces.replaceAll(new RegExp('\s+','i'), ',');
+   ·            ─────┬──── ──────────┬──────────
+   ·                 │               ╰── RegExp supplied here
+   ·                 ╰── `replaceAll` called here
+   ╰────
+  help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+   ╭─[bad_replace_all_arg.tsx:2:25]
+ 1 │ 
+ 2 │             const foo = /\s+/;
+   ·                         ──┬──
+   ·                           ╰── RegExp supplied here
+ 3 │ 
+ 4 │             withSpaces.replaceAll(foo, ',');
+   ·                        ─────┬────
+   ·                             ╰── `replaceAll` called here
+ 5 │         
+   ╰────
+  help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+   ╭─[bad_replace_all_arg.tsx:2:25]
+ 1 │ 
+ 2 │             const foo = /\s+/i;
+   ·                         ───┬──
+   ·                            ╰── RegExp supplied here
+ 3 │ 
+ 4 │             withSpaces.replaceAll(foo, ',');
+   ·                        ─────┬────
+   ·                             ╰── `replaceAll` called here
+ 5 │         
+   ╰────
+  help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+   ╭─[bad_replace_all_arg.tsx:2:25]
+ 1 │ 
+ 2 │             const foo = new RegExp('\s+');
+   ·                         ────────┬────────
+   ·                                 ╰── RegExp supplied here
+ 3 │ 
+ 4 │             withSpaces.replaceAll(foo, ',');
+   ·                        ─────┬────
+   ·                             ╰── `replaceAll` called here
+ 5 │         
+   ╰────
+  help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.

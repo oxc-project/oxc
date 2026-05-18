@@ -1,0 +1,212 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(max-params): Function 'test' has too many parameters (3). Maximum allowed is 2.
+   ╭─[max_params.tsx:1:14]
+ 1 │ function test(a, b, c) {}
+   ·              ─────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'test' has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:1:14]
+ 1 │ function test(a, b, c, d) {}
+   ·              ────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:1:20]
+ 1 │ var test = function(a, b, c, d) {};
+   ·                    ────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Arrow function has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:1:12]
+ 1 │ var test = (a, b, c, d) => {};
+   ·            ────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:1:10]
+ 1 │ (function(a, b, c, d) {});
+   ·          ────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'test' has too many parameters (3). Maximum allowed is 1.
+   ╭─[max_params.tsx:1:25]
+ 1 │ var test = function test(a, b, c) {};
+   ·                         ─────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'test' has too many parameters (3). Maximum allowed is 2.
+   ╭─[max_params.tsx:1:14]
+ 1 │ function test(a, b, c) {}
+   ·              ─────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'test' has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:1:14]
+ 1 │ function test(a, b, c, d) {}
+   ·              ────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'test' has too many parameters (1). Maximum allowed is 0.
+   ╭─[max_params.tsx:1:14]
+ 1 │ function test(a) {}
+   ·              ───
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'test' has too many parameters (3). Maximum allowed is 2.
+   ╭─[max_params.tsx:1:14]
+ 1 │ function test(a, b, c) {
+   ·              ─────────
+ 2 │                           // Just to make it longer
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'foo' has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:1:13]
+ 1 │ function foo(a, b, c, d) {}
+   ·             ────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:1:22]
+ 1 │ const foo = function (a, b, c, d) {};
+   ·                      ────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Arrow function has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:1:13]
+ 1 │ const foo = (a, b, c, d) => {};
+   ·             ────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Arrow function has too many parameters (1). Maximum allowed is 0.
+   ╭─[max_params.tsx:1:13]
+ 1 │ const foo = a => {};
+   ·             ─
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:3:23]
+ 2 │               class Foo {
+ 3 │                 method(this: void, a, b, c, d) {}
+   ·                       ────────────────────────
+ 4 │               }
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function has too many parameters (2). Maximum allowed is 1.
+   ╭─[max_params.tsx:3:23]
+ 2 │               class Foo {
+ 3 │                 method(this: void, a) {}
+   ·                       ───────────────
+ 4 │               }
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function has too many parameters (2). Maximum allowed is 1.
+   ╭─[max_params.tsx:3:23]
+ 2 │               class Foo {
+ 3 │                 method(this: void, a) {}
+   ·                       ───────────────
+ 4 │               }
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'testD' has too many parameters (2). Maximum allowed is 1.
+   ╭─[max_params.tsx:1:15]
+ 1 │ function testD(this: void, a) {}
+   ·               ───────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'testD' has too many parameters (2). Maximum allowed is 1.
+   ╭─[max_params.tsx:1:15]
+ 1 │ function testD(this: void, a) {}
+   ·               ───────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function has too many parameters (2). Maximum allowed is 1.
+   ╭─[max_params.tsx:1:24]
+ 1 │ const testE = function (this: void, a) {}
+   ·                        ───────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'testFunction' has too many parameters (2). Maximum allowed is 1.
+   ╭─[max_params.tsx:1:22]
+ 1 │ function testFunction(test: void, a: number) {}
+   ·                      ───────────────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function has too many parameters (2). Maximum allowed is 1.
+   ╭─[max_params.tsx:1:24]
+ 1 │ const testE = function (this: void, a) {}
+   ·                        ───────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'testFunction' has too many parameters (2). Maximum allowed is 1.
+   ╭─[max_params.tsx:1:22]
+ 1 │ function testFunction(test: void, a: number) {}
+   ·                      ───────────────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:3:23]
+ 2 │               class Foo {
+ 3 │                 method(this: Foo, a, b, c) {}
+   ·                       ────────────────────
+ 4 │               }
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'makeDate' has too many parameters (3). Maximum allowed is 1.
+   ╭─[max_params.tsx:2:40]
+ 1 │ 
+ 2 │               declare function makeDate(m: number, d: number, y: number): Date;
+   ·                                        ─────────────────────────────────
+ 3 │                     
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function has too many parameters (2). Maximum allowed is 1.
+   ╭─[max_params.tsx:2:26]
+ 1 │ 
+ 2 │               type sum = (a: number, b: number) => number;
+   ·                          ──────────────────────
+ 3 │                     
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'foo' has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:1:13]
+ 1 │ function foo(this: unknown[], a, b, c) {}
+   ·             ──────────────────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ⚠ eslint(max-params): Function 'foo' has too many parameters (4). Maximum allowed is 3.
+   ╭─[max_params.tsx:1:13]
+ 1 │ function foo(this: unknown[], a, b, c) {}
+   ·             ──────────────────────────
+   ╰────
+  help: This rule enforces a maximum number of parameters allowed in function definitions.

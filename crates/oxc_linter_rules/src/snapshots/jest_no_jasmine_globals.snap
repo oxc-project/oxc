@@ -1,0 +1,143 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of global spyOn"
+   ╭─[no_jasmine_globals.tsx:1:1]
+ 1 │ spyOn(some, 'object')
+   · ─────
+   ╰────
+  help: "prefer use Jest own API `jest.spyOn`"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of global spyOnProperty"
+   ╭─[no_jasmine_globals.tsx:1:1]
+ 1 │ spyOnProperty(some, 'object')
+   · ─────────────
+   ╰────
+  help: "prefer use Jest own API `jest.spyOn`"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of `fail`"
+   ╭─[no_jasmine_globals.tsx:1:1]
+ 1 │ fail()
+   · ────
+   ╰────
+  help: "prefer throwing an error, or the `done.fail` callback"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of `pending`,"
+   ╭─[no_jasmine_globals.tsx:1:1]
+ 1 │ pending()
+   · ───────
+   ╰────
+  help: "prefer explicitly skipping a test using `test.skip`"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
+   ·         ────────────────────────
+   ╰────
+  help: "prefer using Jest's own API"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.DEFAULT_TIMEOUT_INTERVAL = function() {}
+   ·         ────────────────────────
+   ╰────
+  help: "prefer using Jest's own API"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of `addMatchers`"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.addMatchers(matchers)
+   ·         ───────────
+   ╰────
+  help: "prefer use Jest own API `expect.extend`"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of `createSpy`"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.createSpy()
+   ·         ─────────
+   ╰────
+  help: "prefer use Jest own API `jest.fn`"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of `any`"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.any()
+   ·         ───
+   ╰────
+  help: "prefer use Jest own API `expect.any`"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of `anything`"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.anything()
+   ·         ────────
+   ╰────
+  help: "prefer use Jest own API `expect.anything`"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of `arrayContaining`"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.arrayContaining()
+   ·         ───────────────
+   ╰────
+  help: "prefer use Jest own API `expect.arrayContaining`"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of `objectContaining`"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.objectContaining()
+   ·         ────────────────
+   ╰────
+  help: "prefer use Jest own API `expect.objectContaining`"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of `stringMatching`"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.stringMatching()
+   ·         ──────────────
+   ╰────
+  help: "prefer use Jest own API `expect.stringMatching`"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.getEnv()
+   ·         ──────
+   ╰────
+  help: "prefer using Jest's own API"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.empty()
+   ·         ─────
+   ╰────
+  help: "prefer using Jest's own API"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.falsy()
+   ·         ─────
+   ╰────
+  help: "prefer using Jest's own API"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.truthy()
+   ·         ──────
+   ╰────
+  help: "prefer using Jest's own API"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.arrayWithExactContents()
+   ·         ──────────────────────
+   ╰────
+  help: "prefer using Jest's own API"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.clock()
+   ·         ─────
+   ╰────
+  help: "prefer using Jest's own API"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine.MAX_PRETTY_PRINT_ARRAY_LENGTH = 42
+   ·         ─────────────────────────────
+   ╰────
+  help: "prefer using Jest's own API"

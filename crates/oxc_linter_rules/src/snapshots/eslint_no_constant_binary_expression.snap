@@ -1,0 +1,1550 @@
+---
+source: crates/oxc_linter_rules/src/tester.rs
+---
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [] && greeting
+   · ──────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "||" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [] || greeting
+   · ──────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [] ?? greeting
+   · ──────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [] == true
+   · ──────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true == []
+   · ──────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [] != true
+   · ──────────
+   ╰────
+  help: This compares constantly with the right-hand side of the !=
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [] === true
+   · ───────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [] !== true
+   · ───────────
+   ╰────
+  help: This compares constantly with the right-hand side of the !==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ !foo == null
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ !foo ?? bar
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a + b) / 2 ?? bar
+   · ──────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ String(foo.bar) ?? baz
+   · ──────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 'hello' + name ?? ''
+   · ────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [foo?.bar ?? ''] ?? []
+   · ──────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true && hello
+   · ─────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "||" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true || hello
+   · ─────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true && foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ '' && foo
+   · ─────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 100 && foo
+   · ──────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ +100 && foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ -100 && foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ~100 && foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ /[a-z]/ && foo
+   · ──────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ Boolean([]) && foo
+   · ──────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ Boolean() && foo
+   · ────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ Boolean([], n) && foo
+   · ─────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) && foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [] && foo
+   · ─────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (() => {}) && foo
+   · ─────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (function() {}) && foo
+   · ──────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (class {}) && foo
+   · ─────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (class { valueOf() { return x; } }) && foo
+   · ──────────────────────────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (class { [x]() { return x; } }) && foo
+   · ──────────────────────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ new Foo() && foo
+   · ────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ new Boolean(unknown) && foo
+   · ───────────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (bar = false) && foo
+   · ────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (bar.baz = false) && foo
+   · ────────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (bar[0] = false) && foo
+   · ───────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ `hello ${hello}` && foo
+   · ───────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ void bar && foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ !true && foo
+   · ────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ typeof bar && foo
+   · ─────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (bar, baz, true) && foo
+   · ───────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ undefined && foo
+   · ────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) ?? foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ([]) ?? foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (() => {}) ?? foo
+   · ─────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (function() {}) ?? foo
+   · ──────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (class {}) ?? foo
+   · ─────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ new Foo() ?? foo
+   · ────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 1 ?? foo
+   · ────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ /[a-z]/ ?? foo
+   · ──────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ `${''}` ?? foo
+   · ──────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a = true) ?? foo
+   · ─────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a += 1) ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a -= 1) ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a *= 1) ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a /= 1) ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a %= 1) ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a <<= 1) ?? foo
+   · ────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a >>= 1) ?? foo
+   · ────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a >>>= 1) ?? foo
+   · ─────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a |= 1) ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a ^= 1) ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a &= 1) ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ undefined ?? foo
+   · ────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ !bar ?? foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ void bar ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ typeof bar ?? foo
+   · ─────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ +bar ?? foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ -bar ?? foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ~bar ?? foo
+   · ───────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ++bar ?? foo
+   · ────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ bar++ ?? foo
+   · ────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ --bar ?? foo
+   · ────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ bar-- ?? foo
+   · ────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x == y) ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x + y) ?? foo
+   · ──────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x / y) ?? foo
+   · ──────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x instanceof String) ?? foo
+   · ────────────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x in y) ?? foo
+   · ───────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ Boolean(x) ?? foo
+   · ─────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ String(x) ?? foo
+   · ────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ Number(x) ?? foo
+   · ────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) != null
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the !=
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) == null
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ null == ({})
+   · ────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) == undefined
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ undefined == ({})
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) != true
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the !=
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) == true
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ([]) == true
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ([a, b]) == true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (() => {}) == true
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (function() {}) == true
+   · ───────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ void foo == true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ typeof foo == true
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ![] == true
+   · ───────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true == class {}
+   · ────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true == 1
+   · ─────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ undefined == true
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true == undefined
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ `hello` == true
+   · ───────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ /[a-z]/ == true
+   · ───────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) == Boolean({})
+   · ───────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) == Boolean()
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) == Boolean(() => {}, foo)
+   · ──────────────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) !== true
+   · ─────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the !==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) == !({})
+   · ─────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) === true
+   · ─────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ([]) === true
+   · ─────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (function() {}) === true
+   · ────────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (() => {}) === true
+   · ───────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ !{} === true
+   · ────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ typeof n === true
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ void n === true
+   · ───────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ +n === true
+   · ───────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ -n === true
+   · ───────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ~n === true
+   · ───────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true === true
+   · ─────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 1 === true
+   · ──────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 'hello' === true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ /[a-z]/ === true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ undefined === true
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a = {}) === true
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a += 1) === true
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a -= 1) === true
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a *= 1) === true
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a %= 1) === true
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a ** b) === true
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a << b) === true
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a >> b) === true
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a >>> b) === true
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ --a === true
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ a-- === true
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ++a === true
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ a++ === true
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a + b) === true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a - b) === true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a * b) === true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a / b) === true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a % b) === true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a | b) === true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a ^ b) === true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a & b) === true
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ Boolean(0) === Boolean(1)
+   · ─────────────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true === String(x)
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true === Number(x)
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ Boolean(0) == !({})
+   · ───────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) !== null
+   · ─────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the !==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) === null
+   · ─────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ([]) === null
+   · ─────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (() => {}) === null
+   · ───────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (function() {}) === null
+   · ────────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (class {}) === null
+   · ───────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ new Foo() === null
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ `` === null
+   · ───────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 1 === null
+   · ──────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 'hello' === null
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ /[a-z]/ === null
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true === null
+   · ─────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ null === null
+   · ─────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ a++ === null
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ++a === null
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ --a === null
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ a-- === null
+   · ────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ !a === null
+   · ───────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ typeof a === null
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ delete a === null
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ void a === null
+   · ───────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ undefined === null
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x = {}) === null
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x += y) === null
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x -= y) === null
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a, b, {}) === null
+   · ───────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) !== undefined
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the !==
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) === undefined
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ([]) === undefined
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (() => {}) === undefined
+   · ────────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (function() {}) === undefined
+   · ─────────────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (class {}) === undefined
+   · ────────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ new Foo() === undefined
+   · ───────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ `` === undefined
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 1 === undefined
+   · ───────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 'hello' === undefined
+   · ─────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ /[a-z]/ === undefined
+   · ─────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true === undefined
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ null === undefined
+   · ──────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ a++ === undefined
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ++a === undefined
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ --a === undefined
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ a-- === undefined
+   · ─────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ !a === undefined
+   · ────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ typeof a === undefined
+   · ──────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ delete a === undefined
+   · ──────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ void a === undefined
+   · ────────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ undefined === undefined
+   · ───────────────────────
+   ╰────
+  help: This compares constantly with the left-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x = {}) === undefined
+   · ──────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x += y) === undefined
+   · ──────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (x -= y) === undefined
+   · ──────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ (a, b, {}) === undefined
+   · ────────────────────────
+   ╰────
+  help: This compares constantly with the right-hand side of the ===
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison of two newly constructed objects
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [a] == [a]
+   · ──────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison of two newly constructed objects
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ [a] != [a]
+   · ──────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison of two newly constructed objects
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ({}) == []
+   · ──────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === {}
+   · ────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x !== {}
+   · ────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === []
+   · ────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === (() => {})
+   · ────────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === (function() {})
+   · ─────────────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === (class {})
+   · ────────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === new Boolean()
+   · ───────────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === new Promise()
+   · ───────────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === new WeakSet()
+   · ───────────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === (foo, {})
+   · ───────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === (y = {})
+   · ──────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === (y ? {} : [])
+   · ───────────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === /[a-z]/
+   · ─────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ x === (x = {})
+   · ──────────────
+   ╰────
+  help: These two values can never be equal
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ window.abc && false && anything
+   · ───────────────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "||" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ window.abc || true || anything
+   · ──────────────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ window.abc ?? 'non-nullish' ?? anything
+   · ───────────────────────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
