@@ -62,6 +62,7 @@ pub(crate) mod eslint {
     pub mod grouped_accessor_pairs;
     pub mod guard_for_in;
     pub mod id_length;
+    pub mod id_match;
     pub mod init_declarations;
     pub mod logical_assignment_operators;
     pub mod max_classes_per_file;

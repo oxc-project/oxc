@@ -1,6 +1,5 @@
 import { extname as pathExtname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getErrorMessage } from "./utils.ts";
 
 export const NODE_TYPESCRIPT_SUPPORT_RANGE = "^20.19.0 || >=22.18.0";
 
@@ -28,6 +27,16 @@ function isUnknownFileExtensionError(err: unknown): boolean {
   return typeof message === "string" && /unknown(?: or unsupported)? file extension/i.test(message);
 }
 
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return String(err);
+}
+
+/**
+ * Returns a complete replacement string suitable for `Error.message` assignment
+ * (includes the original error message + appended hint), or `null` when the
+ * error is unrelated to TS module loading. Callers should overwrite, not append.
+ */
 export function getUnsupportedTypeScriptModuleLoadHintForError(
   err: unknown,
   specifier: string,

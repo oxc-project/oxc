@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- e6090e7 transformer: Keep enum IIFE when a non-inlinable value reference remains (#22501) (Dunqing)
+- 931b7d6 transformer: Inline const enum members through type-cast wrappers (#22500) (Dunqing)
+- c73c159 transformer/async-to-generator: Reparent parameter initializer scopes (#22507) (camc314)
+- ecfd3ca transformer/async-to-generator: Move only parameter bindings (#22503) (camc314)
+- 3ce3431 transformer/explicit-resource-managment: Preserve shadowed for-head block (#22451) (camc314)
+
 ## [0.131.0] - 2026-05-15
 
 ### 🐛 Bug Fixes

@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.66.0] - 2026-05-18
+
+### 🚀 Features
+
+- 0440b0f linter/eslint: Implement `id-match` rule (#22379) (Vladislav Sayapin)
+- 65bf119 linter: Implement react no-object-type-as-default-prop (#22481) (uhyo)
+- 2a6ddce linter/eslint: Implement `no-implied-eval` rule (#22391) (Vladislav Sayapin)
+- d3a3c1d linter: Auto detect agents from CLI and transition to the agent output format (#22068) (Jovi De Croock)
+- 625758a linter/vitest: Implement padding-around-after-all-blocks rule (#21788) (kapobajza)
+- 37680b0 linter: Implement react no-unstable-nested-components (#22248) (Jovi De Croock)
+- d8d9c74 linter: Implement import/newline-after-import rule (#19142) (Ryuya Yanagi)
+
+### 🐛 Bug Fixes
+
+- 3f59e03 linter: Only call rayon/miette/tracing inits once (#21899) (Matiss Janis Aboltins)
+- 5747ff1 linter: Avoid enabling jest with vitest plugin (#22499) (camc314)
+
+### ⚡ Performance
+
+- 4c9ca72 oxlint: Align walker thread count with rayon pool (#22494) (Boshen)
+
 ## [1.65.0] - 2026-05-15
 
 ### 🚀 Features

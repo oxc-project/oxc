@@ -83,16 +83,14 @@ impl StdinRunner {
         }
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
-            // TODO: Plugins support
-            Ok(_) => {}
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to setup external formatter.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
+        if let Err(err) =
+            tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads))
+        {
+            utils::print_and_flush(
+                stderr,
+                &format!("Failed to setup external formatter.\n{err}\n"),
+            );
+            return CliRunResult::InvalidOptionConfig;
         }
 
         // Resolve filepath to absolute for nested config resolution and ignore check

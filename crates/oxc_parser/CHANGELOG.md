@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- e431a0e parser: Break extends clause loop on fatal error (#22517) (Boshen)
+
 ## [0.131.0] - 2026-05-15
 
 ### ⚡ Performance

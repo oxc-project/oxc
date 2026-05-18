@@ -37,7 +37,38 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        // Normalise the key before checking shorthand: `try_compress_property_key`
+        // can turn `{ "x": x }` into `{ x: x }`, which then becomes a candidate
+        // for shorthand normalisation in the same visit.
         Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::normalize_object_property_shorthand(prop);
+    }
+
+    /// `{ x: x }` is observationally equivalent to `{ x }`, and codegen always
+    /// prints it as `{ x }`. Set `shorthand = true` so the AST matches the
+    /// printed output; otherwise content-equality checks (e.g. when merging
+    /// adjacent `if` statements with identical jump bodies) treat the two
+    /// forms as different on the first pass and only converge on the second.
+    ///
+    /// Output text is unchanged, so we deliberately do not flip
+    /// `ctx.state.changed`.
+    fn normalize_object_property_shorthand(prop: &mut ObjectProperty<'a>) {
+        if prop.shorthand {
+            return;
+        }
+        let Expression::Identifier(value) = &prop.value else { return };
+        if prop.computed || prop.method || prop.kind != PropertyKind::Init {
+            return;
+        }
+        let PropertyKey::StaticIdentifier(key) = &prop.key else { return };
+        // `{ __proto__: __proto__ }` triggers the Annex B.3.1 proto setter
+        // (literal `__proto__` key, non-computed, non-shorthand, non-method),
+        // but `{ __proto__ }` is a plain shorthand `IdentifierReference` that
+        // creates a regular own data property and does NOT set `[[Prototype]]`.
+        // Converting would change observable behaviour, so bail out.
+        if key.name == value.name && key.name != "__proto__" {
+            prop.shorthand = true;
+        }
     }
 
     pub fn substitute_assignment_target_property_property(

@@ -103,24 +103,17 @@ impl WalkRunner {
 
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
-        match tokio::task::block_in_place(|| {
+        if let Err(err) = tokio::task::block_in_place(|| {
             self.external_formatter
                 .as_ref()
                 .expect("External formatter must be set when `napi` feature is enabled")
                 .init(num_of_threads)
         }) {
-            // TODO: Plugins support
-            // - Parse returned `languages`
-            // - Allow its `extensions` and `filenames` in `walk.rs`
-            // - Pass `parser` to `SourceFormatter`
-            Ok(_) => {}
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to setup external formatter.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
+            utils::print_and_flush(
+                stderr,
+                &format!("Failed to setup external formatter.\n{err}\n"),
+            );
+            return CliRunResult::InvalidOptionConfig;
         }
 
         // Resolve ignore paths early to validate before walk starts

@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.66.0] - 2026-05-18
+
+### 🚀 Features
+
+- 1ae291e linter/no-underscore-dangle: Add `allowInUsingDeclarations` option (#22483) (吴杨帆)
+- 0440b0f linter/eslint: Implement `id-match` rule (#22379) (Vladislav Sayapin)
+- 65bf119 linter: Implement react no-object-type-as-default-prop (#22481) (uhyo)
+- 2a6ddce linter/eslint: Implement `no-implied-eval` rule (#22391) (Vladislav Sayapin)
+- 625758a linter/vitest: Implement padding-around-after-all-blocks rule (#21788) (kapobajza)
+- 37680b0 linter: Implement react no-unstable-nested-components (#22248) (Jovi De Croock)
+- d8d9c74 linter: Implement import/newline-after-import rule (#19142) (Ryuya Yanagi)
+
+### 🐛 Bug Fixes
+
+- 602dfd6 linter/promise/no-return-wrap: Detect Promise calls in all branches (#22474) (zennnnnnn11)
+- e182aee linter: Allow dialogs and popovers for no_autofocus (#22289) (mehm8128)
+- 7ffb710 linter/jest/vitest: Jest/no-standalone-expect ignores additionalTestBlockFunctions option for jest/vitest hooks (#22477) (kapobajza)
+- c6f2d3f linter: Add more expression support for iframe-has-title (#22460) (mehm8128)
+- 863984f linter/no-find-dom-node: Run on all files (#22479) (bab)
+
+### ⚡ Performance
+
+- 2afef79 linter: Optimize `no-loop-func` (#22491) (camchenry)
+
+### 📚 Documentation
+
+- f7967c7 linter/id-match: Clarify `onlyDeclarations` config docs (#22523) (camc314)
+- 1e0c97f linter: Fix closing code block in documentation for `padding-around-after-all-blocks` rule. (#22513) (connorshea)
+- a9049fd linter: Exclude directly provide autoFocus to dialog pattern (#22510) (mehm8128)
+
 ## [1.65.0] - 2026-05-15
 
 ### 🚀 Features

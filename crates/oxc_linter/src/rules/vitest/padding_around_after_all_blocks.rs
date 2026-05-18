@@ -16,7 +16,7 @@ declare_oxc_lint!(
     style,
     fix,
     docs = DOCUMENTATION,
-    version = "next",
+    version = "1.66.0",
 );
 
 impl Rule for PaddingAroundAfterAllBlocks {
