@@ -1299,6 +1299,7 @@ export interface DummyRuleMap {
   "vue/no-deprecated-destroyed-lifecycle"?: DummyRule;
   "vue/no-deprecated-events-api"?: DummyRule;
   "vue/no-deprecated-model-definition"?: DummyRule;
+  "vue/no-deprecated-props-default-this"?: DummyRule;
   "vue/no-deprecated-vue-config-keycodes"?: DummyRule;
   "vue/no-export-in-script-setup"?: DummyRule;
   "vue/no-import-compiler-macros"?: DummyRule;

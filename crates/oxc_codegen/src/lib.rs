@@ -124,6 +124,16 @@ pub struct Codegen<'a> {
     // Builders
     comments: CommentsMap,
 
+    /// Pure / no-side-effects annotation comments keyed by `attached_to`,
+    /// so the emission site can recover verbatim source text instead of a
+    /// canonicalised literal (rolldown#9408). The emission site falls back
+    /// to the canonical literal when (a) no comment is stashed, (b) the
+    /// stashed comment's kind doesn't match the emission site (mixed
+    /// `@__PURE__` and `@__NO_SIDE_EFFECTS__` on the same `attached_to`),
+    /// (c) the comment is a line comment but the site can't break the line,
+    /// or (d) source text isn't available.
+    annotation_comments: FxHashMap<u32, Comment>,
+
     /// Sorted, deduped `attached_to` keys for pending legal comments. Lets
     /// `print_legal_orphans_before` flush via `partition_point` + `drain`.
     legal_comment_keys: Vec<u32>,
@@ -180,6 +190,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            annotation_comments: FxHashMap::default(),
             legal_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]
             sourcemap_builder: None,

@@ -437,8 +437,16 @@ fn pure_comment() {
     test_same("/* @__PURE__ */ pureOperation();\n");
     test_same("/* @__PURE__ */ new PureConsutrctor();\n");
     test("/* @__PURE__ */\npureOperation();\n", "/* @__PURE__ */ pureOperation();\n");
+    test_same("/* @__PURE__ The comment may contain additional text */ pureOperation();\n");
+    test_same(
+        "/* #__PURE__ -- @preserve */ pureOperation();\n", // rolldown#9408
+    );
+    // A `@__NO_SIDE_EFFECTS__` comment sharing the call site's `attached_to`
+    // must not be emitted in place of the pure-call annotation. Without the
+    // kind filter, `FxHashMap` last-write-wins would print the wrong
+    // annotation kind in front of a CallExpression.
     test(
-        "/* @__PURE__ The comment may contain additional text */ pureOperation();\n",
+        "/* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ pureOperation();\n",
         "/* @__PURE__ */ pureOperation();\n",
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation

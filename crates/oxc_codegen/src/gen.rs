@@ -13,11 +13,8 @@ use crate::{
     Codegen, Context, Operator, Quote,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
     cjs_module_lexer,
+    comment::AnnotationKind,
 };
-
-const PURE_COMMENT: &str = "/* @__PURE__ */ ";
-const NO_SIDE_EFFECTS_NEW_LINE_COMMENT: &str = "/* @__NO_SIDE_EFFECTS__ */\n";
-const NO_SIDE_EFFECTS_COMMENT: &str = "/* @__NO_SIDE_EFFECTS__ */ ";
 
 /// Generate source code for an AST node.
 pub trait Gen: GetSpan {
@@ -124,7 +121,11 @@ impl Gen for Statement<'_> {
                 p.print_comments_at(decl.span.start);
                 if decl.pure && p.options.print_annotation_comment() {
                     p.print_indent();
-                    p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
+                    p.print_annotation_comment(
+                        decl.span.start,
+                        AnnotationKind::NoSideEffects,
+                        true,
+                    );
                 }
                 p.print_indent();
                 decl.print(p, ctx);
@@ -1002,7 +1003,10 @@ impl Gen for ExportNamedDeclaration<'_> {
             && func.pure
             && p.options.print_annotation_comment()
         {
-            p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
+            // Recover the verbatim annotation only when it sits before the
+            // `export` keyword; an annotation between `export` and `function`
+            // attaches to the inner function span and falls back to canonical.
+            p.print_annotation_comment(self.span.start, AnnotationKind::NoSideEffects, true);
         }
         p.print_indent();
         p.add_source_mapping(self.span);
@@ -1165,7 +1169,8 @@ impl Gen for ExportDefaultDeclaration<'_> {
             && func.pure
             && p.options.print_annotation_comment()
         {
-            p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
+            // See [`ExportNamedDeclaration`] for the rationale.
+            p.print_annotation_comment(self.span.start, AnnotationKind::NoSideEffects, true);
         }
         p.print_indent();
         p.add_source_mapping(self.span);
@@ -1223,13 +1228,21 @@ impl GenExpr for Expression<'_> {
             // Function expressions
             Self::ArrowFunctionExpression(func) => {
                 if func.pure && p.options.print_annotation_comment() {
-                    p.print_str(NO_SIDE_EFFECTS_COMMENT);
+                    p.print_annotation_comment(
+                        func.span.start,
+                        AnnotationKind::NoSideEffects,
+                        false,
+                    );
                 }
                 func.print_expr(p, precedence, ctx);
             }
             Self::FunctionExpression(func) => {
                 if func.pure && p.options.print_annotation_comment() {
-                    p.print_str(NO_SIDE_EFFECTS_COMMENT);
+                    p.print_annotation_comment(
+                        func.span.start,
+                        AnnotationKind::NoSideEffects,
+                        false,
+                    );
                 }
                 func.print(p, ctx);
             }
@@ -1489,7 +1502,7 @@ impl GenExpr for CallExpression<'_> {
         p.wrap(wrap, |p| {
             if pure {
                 p.add_source_mapping(self.span);
-                p.print_str(PURE_COMMENT);
+                p.print_annotation_comment(self.span.start, AnnotationKind::Pure, false);
             }
             if is_export_default {
                 p.start_of_default_export = p.code_len();
@@ -2275,7 +2288,7 @@ impl GenExpr for NewExpression<'_> {
         }
         p.wrap(wrap, |p| {
             if pure {
-                p.print_str(PURE_COMMENT);
+                p.print_annotation_comment(self.span.start, AnnotationKind::Pure, false);
             }
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);

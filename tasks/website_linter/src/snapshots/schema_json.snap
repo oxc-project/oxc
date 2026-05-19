@@ -2612,6 +2612,9 @@ expression: json
         "vue/no-deprecated-model-definition": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/no-deprecated-props-default-this": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/no-deprecated-vue-config-keycodes": {
           "$ref": "#/definitions/DummyRule"
         },

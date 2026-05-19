@@ -9,14 +9,61 @@ use crate::{Codegen, LegalComment, options::CommentOptions};
 
 pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
+/// Which annotation kind an emission site expects to recover from
+/// [`Codegen::annotation_comments`].
+///
+/// `@__PURE__` / `#__PURE__` on a `CallExpression` or `NewExpression`, and
+/// `@__NO_SIDE_EFFECTS__` / `#__NO_SIDE_EFFECTS__` on a function declaration or
+/// expression, are not interchangeable: downstream tree-shakers only honor
+/// each on its corresponding node kind. The filter prevents
+/// [`Codegen::print_annotation_comment`] from emitting one kind where the
+/// other was expected when both share an `attached_to`.
+#[derive(Clone, Copy)]
+pub enum AnnotationKind {
+    Pure,
+    NoSideEffects,
+}
+
+impl AnnotationKind {
+    #[inline]
+    fn matches(self, comment: &Comment) -> bool {
+        match self {
+            Self::Pure => comment.is_pure(),
+            Self::NoSideEffects => comment.is_no_side_effects(),
+        }
+    }
+
+    /// Canonical literal to emit when no verbatim source is available.
+    /// `newline_after = true` is used at statement-level emission sites
+    /// (function declarations, exports), `false` at inline emission sites
+    /// (call / new / function expressions).
+    #[inline]
+    fn canonical(self, newline_after: bool) -> &'static str {
+        match (self, newline_after) {
+            (Self::Pure, false) => "/* @__PURE__ */ ",
+            (Self::Pure, true) => "/* @__PURE__ */\n",
+            (Self::NoSideEffects, false) => "/* @__NO_SIDE_EFFECTS__ */ ",
+            (Self::NoSideEffects, true) => "/* @__NO_SIDE_EFFECTS__ */\n",
+        }
+    }
+}
+
 impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
         if self.options.comments == CommentOptions::disabled() {
             return;
         }
         for comment in comments {
-            // Omit pure comments because they are handled separately.
+            // Stash pure / no-side-effects comments by `attached_to` so the
+            // emission site can recover the verbatim source text instead of
+            // falling back to the canonical literal (rolldown#9408).
+            // Best-effort: when several annotation comments share an
+            // `attached_to`, only the last survives; the emission site falls
+            // back to the canonical literal for the dropped ones.
             if comment.is_pure() || comment.is_no_side_effects() {
+                if comment.is_leading() && self.options.print_annotation_comment() {
+                    self.annotation_comments.insert(comment.attached_to, *comment);
+                }
                 continue;
             }
             let mut add = false;
@@ -47,6 +94,48 @@ impl Codegen<'_> {
 
     pub(crate) fn has_comment(&self, start: u32) -> bool {
         self.comments.contains_key(&start)
+    }
+
+    /// Emit a pure / no-side-effects annotation comment for the AST node at
+    /// `start`, falling back to the canonical literal when no verbatim source
+    /// can be recovered.
+    ///
+    /// The fallback covers four cases:
+    /// - no annotation comment is stashed at `start`,
+    /// - the stashed comment's kind doesn't match the emission site (e.g. a
+    ///   `@__NO_SIDE_EFFECTS__` slot being queried by a `CallExpression`
+    ///   site that needs `@__PURE__`),
+    /// - the comment is a line comment but the site can't break the line, or
+    /// - source text is unavailable (e.g. the [`Codegen::print_expression`]
+    ///   path that skips [`Codegen::build_comments`]).
+    ///
+    /// Export sites pass `self.span.start` and only recover verbatim when the
+    /// annotation precedes the `export` keyword. The rarer
+    /// `export /* @__NO_SIDE_EFFECTS__ */ function …` form (annotation between
+    /// `export` and `function`) attaches to the inner function's span and
+    /// falls back to canonical here.
+    pub(crate) fn print_annotation_comment(
+        &mut self,
+        start: u32,
+        kind: AnnotationKind,
+        newline_after: bool,
+    ) {
+        if self.source_text.is_some()
+            && let Some(comment) = self.annotation_comments.get(&start).copied()
+            && kind.matches(&comment)
+            // Inline line comments would swallow the rest of the line.
+            && (!comment.is_line() || newline_after)
+        {
+            self.annotation_comments.remove(&start);
+            self.print_comment(&comment);
+            if newline_after {
+                self.print_hard_newline();
+            } else {
+                self.print_str(" ");
+            }
+            return;
+        }
+        self.print_str(kind.canonical(newline_after));
     }
 
     pub(crate) fn print_leading_comments(&mut self, start: u32) {
