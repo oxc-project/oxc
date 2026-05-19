@@ -3,7 +3,7 @@
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 use crate::{
-    Argument, Arguments, Buffer, FormatElement, FormatState, VecBuffer,
+    Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState, VecBuffer,
     format::{Format, write},
     format_element::Interned,
 };
@@ -36,6 +36,15 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     #[inline]
     pub fn context_mut(&mut self) -> &mut C {
         self.state_mut().context_mut()
+    }
+
+    /// Returns the format options.
+    #[inline]
+    pub fn options(&self) -> &<C as FormatContext>::Options
+    where
+        C: FormatContext,
+    {
+        self.context().options()
     }
 
     /// Formats `content` into an interned element without writing it to the formatter's buffer.

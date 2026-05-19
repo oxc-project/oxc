@@ -1,5 +1,5 @@
 use crate::{
-    formatter::{Buffer, Format, JsFormatContext, JsFormatter, JsFormatterExt as _},
+    formatter::{Buffer, Format, JsFormatContext, JsFormatter},
     options::Semicolons,
     write,
 };

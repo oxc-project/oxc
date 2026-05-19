@@ -5,10 +5,7 @@ use oxc_span::{GetSpan, Span};
 use Tag::{EndEntry, EndFill, StartEntry, StartFill};
 
 use super::{
-    Buffer, JsFormatContext,
-    format_element::{TextWidth, tag::Tag},
-    prelude::*,
-    separated::FormatSeparatedIter,
+    Buffer, JsFormatContext, format_element::tag::Tag, prelude::*, separated::FormatSeparatedIter,
 };
 use crate::{TrailingSeparator, write};
 
@@ -16,57 +13,6 @@ use crate::{TrailingSeparator, write};
 // so that legacy `crate::formatter::builders::*` call-sites keep working
 // without having to be updated.
 pub use oxc_formatter_core::builders::*;
-
-/// Creates a text from a dynamic string and a range of the input source
-pub fn text(text: &str) -> Text<'_> {
-    debug_assert_no_cr_line_break(text);
-    Text { text, width: None }
-}
-
-/// Creates a text from a dynamic string that contains no whitespace characters
-pub fn text_without_whitespace(text: &str) -> Text<'_> {
-    debug_assert!(
-        text.as_bytes().iter().all(|&b| !b.is_ascii_whitespace()),
-        "The content '{text}' contains whitespace characters but text must not contain any whitespace characters."
-    );
-    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)) }
-}
-
-#[derive(Eq, PartialEq)]
-pub struct Text<'a> {
-    text: &'a str,
-    width: Option<TextWidth>,
-}
-
-impl<'a> Format<'a, JsFormatContext<'a>> for Text<'a> {
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        f.write_element(FormatElement::Text {
-            text: self.text,
-            width: self
-                .width
-                .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width)),
-        });
-    }
-}
-
-impl std::fmt::Debug for Text<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "Text({})", self.text)
-    }
-}
-
-/// Debug assert that the given text contains no `\r` line terminator characters.
-//
-// `#[inline(always)]` because this is a no-op in release mode
-#[inline(always)]
-#[expect(clippy::inline_always)]
-#[track_caller]
-fn debug_assert_no_cr_line_break(text: &str) {
-    debug_assert!(
-        !text.contains('\r'),
-        "The content `{text}` contains an unsupported `\\r` line terminator character but text must only use line feeds `\\n` as line separator. Use `\\n` instead of `\\r` and `\\r\\n` to insert a line break in strings."
-    );
-}
 
 /// Utility for formatting some content with an inline lambda function.
 #[derive(Copy, Clone)]

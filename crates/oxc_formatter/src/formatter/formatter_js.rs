@@ -7,15 +7,12 @@
 
 use oxc_span::GetSpan;
 
-use crate::{
-    formatter::{
-        Buffer, Comments, Format, Formatter, GroupId, JsFormatContext, SourceText,
-        UniqueGroupIdBuilder,
-        builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line, Space},
-        format_element::FormatElements,
-        prelude::{hard_line_break, soft_line_break_or_space, space},
-    },
-    options::JsFormatOptions,
+use crate::formatter::{
+    Buffer, Comments, Format, Formatter, GroupId, JsFormatContext, SourceText,
+    UniqueGroupIdBuilder,
+    builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line, Space},
+    format_element::FormatElements,
+    prelude::{hard_line_break, soft_line_break_or_space, space},
 };
 
 /// JS/TS-specialized [`Formatter`].
@@ -27,7 +24,6 @@ pub type JsFormatter<'buf, 'ast> = Formatter<'buf, 'ast, JsFormatContext<'ast>>;
 /// because `Formatter` is defined in `oxc_formatter_core`, so adding inherent methods
 /// here would violate the orphan rule.
 pub trait JsFormatterExt<'buf, 'ast> {
-    fn options(&self) -> &JsFormatOptions;
     fn source_text(&self) -> SourceText<'ast>;
     fn comments(&self) -> &Comments<'_>;
     fn group_id(&self, debug_name: &'static str) -> GroupId;
@@ -50,12 +46,6 @@ pub trait JsFormatterExt<'buf, 'ast> {
 }
 
 impl<'buf, 'ast> JsFormatterExt<'buf, 'ast> for Formatter<'buf, 'ast, JsFormatContext<'ast>> {
-    /// Returns the format options
-    #[inline]
-    fn options(&self) -> &JsFormatOptions {
-        self.context().options()
-    }
-
     /// Returns the source text wrapper.
     #[inline]
     fn source_text(&self) -> SourceText<'ast> {

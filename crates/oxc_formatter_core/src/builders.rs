@@ -8,10 +8,11 @@ use std::num::NonZeroU8;
 use oxc_allocator::Vec as ArenaVec;
 
 use crate::{
-    Argument, Arguments, Buffer, Format, FormatElement, Formatter, GroupId, VecBuffer,
+    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, Formatter,
+    GroupId, VecBuffer,
     format::write,
     format_element::{
-        self, LineMode, PrintMode,
+        self, LineMode, PrintMode, TextWidth,
         tag::{self, Condition, DedentMode, GroupMode, LabelId, Tag},
     },
 };
@@ -112,6 +113,64 @@ impl std::fmt::Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::write!(f, "Token({})", self.text)
     }
+}
+
+// ---------------------------------------------------------------------------
+// Text
+// ---------------------------------------------------------------------------
+
+/// Creates a text from a dynamic string and a range of the input source
+pub fn text(text: &str) -> Text<'_> {
+    debug_assert_no_cr_line_break(text);
+    Text { text, width: None }
+}
+
+/// Creates a text from a dynamic string that contains no whitespace characters
+pub fn text_without_whitespace(text: &str) -> Text<'_> {
+    debug_assert!(
+        text.as_bytes().iter().all(|&b| !b.is_ascii_whitespace()),
+        "The content '{text}' contains whitespace characters but text must not contain any whitespace characters."
+    );
+    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)) }
+}
+
+#[derive(Eq, PartialEq)]
+pub struct Text<'a> {
+    text: &'a str,
+    width: Option<TextWidth>,
+}
+
+impl<'a, C> Format<'a, C> for Text<'a>
+where
+    C: FormatContext,
+{
+    fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
+        f.write_element(FormatElement::Text {
+            text: self.text,
+            width: self
+                .width
+                .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width())),
+        });
+    }
+}
+
+impl std::fmt::Debug for Text<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::write!(f, "Text({})", self.text)
+    }
+}
+
+/// Debug assert that the given text contains no `\r` line terminator characters.
+//
+// `#[inline(always)]` because this is a no-op in release mode
+#[inline(always)]
+#[expect(clippy::inline_always)]
+#[track_caller]
+fn debug_assert_no_cr_line_break(text: &str) {
+    debug_assert!(
+        !text.contains('\r'),
+        "The content `{text}` contains an unsupported `\\r` line terminator character but text must only use line feeds `\\n` as line separator. Use `\\n` instead of `\\r` and `\\r\\n` to insert a line break in strings."
+    );
 }
 
 // ---------------------------------------------------------------------------
