@@ -1542,7 +1542,11 @@ impl RuleRunner for crate::rules::typescript::consistent_type_exports::Consisten
 }
 
 impl RuleRunner for crate::rules::typescript::consistent_type_imports::ConsistentTypeImports {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ImportDeclaration,
+        AstType::ImportSpecifier,
+        AstType::TSImportType,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
