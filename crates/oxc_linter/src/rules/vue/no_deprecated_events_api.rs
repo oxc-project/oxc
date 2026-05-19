@@ -338,7 +338,6 @@ fn test() {
             None,
             Some(PathBuf::from("test.js")),
         ),
-        // Forms covered after consolidating component detection into utils.
         (
             r"
             Vue.mixin({
