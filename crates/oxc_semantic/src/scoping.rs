@@ -250,7 +250,10 @@ mod scoping_cell {
         }
 
         /// Consume [`ScopingCell`] and return the [`Allocator`] it contains.
-        #[expect(dead_code)]
+        ///
+        /// This is used by [`Scoping::reset`] to pull the arena out before
+        /// resetting it and rebuilding the inner state on top of the now-empty
+        /// arena.
         #[inline(always)]
         pub fn into_owner(self) -> Allocator {
             self.0.into_owner()
@@ -612,6 +615,36 @@ impl Scoping {
         self.scope_table.reserve(additional_scopes);
         self.cell.with_dependent_mut(|_allocator, cell| {
             cell.bindings.reserve(additional_scopes);
+        });
+    }
+
+    /// Clear all semantic facts while preserving reusable allocations.
+    ///
+    /// This is used by transform pipelines that need to rebuild fresh scoping for a mutated AST,
+    /// but can reuse the backing storage from a stale [`Scoping`].
+    pub fn clear_reusing_allocations(&mut self) {
+        self.symbol_table.clear();
+        self.references.clear();
+        self.no_side_effects.clear();
+        self.enum_data.clear();
+        self.scope_table.clear();
+
+        let empty_cell = ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
+            symbol_names: ArenaVec::new_in(allocator),
+            resolved_references: ArenaVec::new_in(allocator),
+            symbol_redeclarations: FxHashMap::default(),
+            bindings: IndexVec::new(),
+            root_unresolved_references: UnresolvedReferences::new_in(allocator),
+        });
+        let old_cell = mem::replace(&mut self.cell, empty_cell);
+        let mut allocator = old_cell.into_owner();
+        allocator.reset();
+        self.cell = ScopingCell::new(allocator, |allocator| ScopingInner {
+            symbol_names: ArenaVec::new_in(allocator),
+            resolved_references: ArenaVec::new_in(allocator),
+            symbol_redeclarations: FxHashMap::default(),
+            bindings: IndexVec::new(),
+            root_unresolved_references: UnresolvedReferences::new_in(allocator),
         });
     }
 
