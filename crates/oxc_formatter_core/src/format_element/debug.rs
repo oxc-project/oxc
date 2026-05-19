@@ -1,35 +1,106 @@
+//! Human-readable debug rendering for [`Document`].
+//!
+//! This module provides:
+//! * The `Format` implementation for `&[FormatElement]` that produces a readable
+//!   textual representation of the IR (used by `DisplayDocument`).
+//! * The [`DisplayDocument`] wrapper exposed via [`Document::display`].
+//!
+//! The rendering is language-agnostic and works with any `C: FormatContext`.
+//! Languages that support Tailwind sorting can override
+//! [`FormatContext::get_tailwind_class`] to surface class names; languages
+//! without Tailwind support get the default `None` and an `<UNKNOWN_TAILWIND_CLASS_INDEX<..>>`
+//! marker if a `FormatElement::TailwindClass` ever appears.
+
 #![expect(clippy::mutable_key_type)]
+
 use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
 
-use crate::formatter::format_element::document::Document;
-use crate::formatter::prelude::{
-    tag::{self, DedentMode, GroupMode},
-    *,
+use crate::{
+    Argument, Arguments, Buffer, BufferExtensions, Document, Format, FormatContext, FormatElement,
+    FormatOptions, FormatState, Formatter, PrintMode, Printer, PrinterOptions, SimpleFormatContext,
+    VecBuffer,
+    builders::{hard_line_break, soft_line_break_or_space, space, text, token},
+    format::write,
+    format_element::{
+        LineMode, TextWidth,
+        tag::{self, DedentMode, GroupMode, Tag},
+    },
 };
-use crate::{Format, format, formatter::JsFormatContext, formatter::JsFormatter, write};
 
-/// Wrapper that produces a human-readable debug rendering of a [`Document`].
-///
-/// Defined in `oxc_formatter` (rather than `oxc_formatter_core`) because the
-/// rendering depends on the JS-specific [`JsFormatContext`].
-pub struct DocumentDebug<'a>(pub &'a Document<'a>);
+/// Local helper that mirrors the JS-side `write!` macro by calling
+/// `Buffer::write_fmt`. Using method-call syntax allows two-phase borrows so
+/// that argument expressions can immutably borrow the formatter while the
+/// formatter is the mutable receiver of the call.
+macro_rules! w {
+    ($f:expr, [$($arg:expr),+ $(,)?]) => {
+        $f.write_fmt(
+            $crate::Arguments::new(&[$($crate::Argument::new(&$arg)),+]),
+        )
+    };
+}
 
-impl std::fmt::Display for DocumentDebug<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let allocator = Allocator::default();
-        let mut context = JsFormatContext::dummy(&allocator);
-        // Set the sorted Tailwind CSS classes in the context, so that `FormatElement::TailwindClass` can access them.
-        context.set_tailwind_classes(self.0.sorted_tailwind_classes().to_vec());
-        let formatted = format!(context, [self.0.elements()]);
-
-        f.write_str(formatted.print().expect("Expected a valid document").as_code())
+impl<'a> Document<'a> {
+    /// Returns a wrapper that formats the document for human-readable debug display.
+    ///
+    /// The `source_text` is passed to the temporary [`SimpleFormatContext`] used
+    /// while rendering and is only required so that `Format` implementations that
+    /// look up the source text behave sensibly. The debug renderer itself does not
+    /// use the source text.
+    pub fn display<'src>(&'a self, source_text: &'src str) -> DisplayDocument<'a, 'src> {
+        DisplayDocument {
+            elements: self.elements(),
+            tailwind_classes: self.sorted_tailwind_classes(),
+            source_text,
+        }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+/// `Display` wrapper that renders a [`Document`] as a human-readable debug string.
+///
+/// Obtain one via [`Document::display`].
+pub struct DisplayDocument<'a, 'src> {
+    elements: &'a [FormatElement<'a>],
+    tailwind_classes: &'a [String],
+    source_text: &'src str,
+}
+
+impl std::fmt::Display for DisplayDocument<'_, '_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let allocator = Allocator::default();
+        let mut context = SimpleFormatContext::default().with_source_code(self.source_text);
+        context.set_tailwind_classes(self.tailwind_classes.to_vec());
+
+        let mut state: FormatState<'_, SimpleFormatContext<'_>> =
+            FormatState::new(context, &allocator);
+        let mut buffer = VecBuffer::new(&mut state);
+
+        let elements = FormatElementSlice(self.elements);
+        write(&mut buffer, Arguments::new(&[Argument::new(&elements)]));
+
+        let elements = buffer.into_vec();
+        let document = Document::new(elements, Vec::default());
+
+        let printer_options = PrinterOptions::default();
+        let (rendered_elements, sorted) = document.into_elements_and_tailwind_classes();
+        let printed = Printer::new(printer_options, &sorted)
+            .print(rendered_elements)
+            .expect("Expected a valid document");
+
+        f.write_str(printed.as_code())
+    }
+}
+
+/// Wrapper around a [`FormatElement`] slice so we can provide a `Format`
+/// implementation without conflicting with the blanket `Format` impl for `&T`.
+struct FormatElementSlice<'a>(&'a [FormatElement<'a>]);
+
+impl<'a, C> Format<'a, C> for FormatElementSlice<'a>
+where
+    C: FormatContext,
+{
+    fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
             EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
@@ -37,18 +108,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
             StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
-        write!(f, [ContentArrayStart]);
+        w!(f, [ContentArrayStart]);
 
         let mut tag_stack = Vec::new();
         let mut first_element = true;
         let mut in_text = false;
 
-        let mut iter = self.iter().peekable();
+        let mut iter = self.0.iter().peekable();
 
         while let Some(element) = iter.next() {
             if !first_element && !in_text && !element.is_end_tag() {
                 // Write a separator between every two elements
-                write!(f, [token(","), soft_line_break_or_space()]);
+                w!(f, [token(","), soft_line_break_or_space()]);
             }
 
             first_element = false;
@@ -58,14 +129,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                 | FormatElement::Token { .. }
                 | FormatElement::Text { .. }) => {
                     if !in_text {
-                        write!(f, [token("\"")]);
+                        w!(f, [token("\"")]);
                     }
 
                     in_text = true;
 
                     match element {
                         FormatElement::Space => {
-                            write!(f, [token(" ")]);
+                            w!(f, [token(" ")]);
                         }
                         element if element.is_text() => {
                             // escape quotes
@@ -78,7 +149,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                                         text: f.allocator().alloc_str(&text),
                                         width: TextWidth::from_text(
                                             &text,
-                                            f.options().indent_width,
+                                            f.options().indent_width(),
                                         ),
                                     }
                                 }
@@ -92,42 +163,42 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                     let is_next_text = iter.peek().is_some_and(|e| e.is_text() || e.is_space());
 
                     if !is_next_text {
-                        write!(f, [token("\"")]);
+                        w!(f, [token("\"")]);
                         in_text = false;
                     }
                 }
 
                 FormatElement::Line(mode) => match mode {
                     LineMode::SoftOrSpace => {
-                        write!(f, [token("soft_line_break_or_space")]);
+                        w!(f, [token("soft_line_break_or_space")]);
                     }
                     LineMode::Soft => {
-                        write!(f, [token("soft_line_break")]);
+                        w!(f, [token("soft_line_break")]);
                     }
                     LineMode::Hard => {
-                        write!(f, [token("hard_line_break")]);
+                        w!(f, [token("hard_line_break")]);
                     }
                     LineMode::Empty => {
-                        write!(f, [token("empty_line")]);
+                        w!(f, [token("empty_line")]);
                     }
                 },
                 FormatElement::ExpandParent => {
-                    write!(f, [token("expand_parent")]);
+                    w!(f, [token("expand_parent")]);
                 }
 
                 FormatElement::LineSuffixBoundary => {
-                    write!(f, [token("line_suffix_boundary")]);
+                    w!(f, [token("line_suffix_boundary")]);
                 }
 
                 FormatElement::BestFitting(best_fitting) => {
-                    write!(f, [token("best_fitting([")]);
+                    w!(f, [token("best_fitting([")]);
                     f.write_elements([
                         FormatElement::Tag(StartIndent),
                         FormatElement::Line(LineMode::Hard),
                     ]);
 
                     for variant in best_fitting.variants() {
-                        write!(f, [&**variant, hard_line_break()]);
+                        w!(f, [FormatElementSlice(variant), hard_line_break()]);
                     }
 
                     f.write_elements([
@@ -135,7 +206,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                         FormatElement::Line(LineMode::Hard),
                     ]);
 
-                    write!(f, [token("])")]);
+                    w!(f, [token("])")]);
                 }
 
                 FormatElement::Interned(interned) => {
@@ -145,25 +216,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                             let index = interned_elements.len();
                             interned_elements.insert(interned.clone(), index);
 
-                            write!(
+                            w!(
                                 f,
                                 [
                                     text(
-                                        f.context()
-                                            .allocator()
+                                        f.allocator()
                                             .alloc_str(&std::format!("<interned {index}>"))
                                     ),
                                     space(),
-                                    &&**interned,
+                                    FormatElementSlice(interned),
                                 ]
                             );
                         }
                         Some(reference) => {
-                            write!(
+                            w!(
                                 f,
                                 [text(
-                                    f.context()
-                                        .allocator()
+                                    f.allocator()
                                         .alloc_str(&std::format!("<ref interned *{reference}>"))
                                 )]
                             );
@@ -181,13 +250,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                         match tag_stack.pop() {
                             None => {
                                 // Only write the end tag without any indent to ensure the output document is valid.
-                                write!(
+                                w!(
                                     f,
                                     [
                                         token("<END_TAG_WITHOUT_START<"),
                                         text(
-                                            f.context()
-                                                .allocator()
+                                            f.allocator()
                                                 .alloc_str(&std::format!("{:?}", tag.kind()))
                                         ),
                                         token(">>"),
@@ -197,7 +265,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                                 continue;
                             }
                             Some(start_kind) if start_kind != tag.kind() => {
-                                write!(
+                                w!(
                                     f,
                                     [
                                         ContentArrayEnd,
@@ -205,14 +273,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                                         soft_line_break_or_space(),
                                         token("ERROR<START_END_TAG_MISMATCH<start: "),
                                         text(
-                                            f.context()
-                                                .allocator()
+                                            f.allocator()
                                                 .alloc_str(&std::format!("{start_kind:?}"))
                                         ),
                                         token(", end: "),
                                         text(
-                                            f.context()
-                                                .allocator()
+                                            f.allocator()
                                                 .alloc_str(&std::format!("{:?}", tag.kind()))
                                         ),
                                         token(">>")
@@ -229,7 +295,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
 
                     match tag {
                         StartIndent => {
-                            write!(f, [token("indent(")]);
+                            w!(f, [token("indent(")]);
                         }
 
                         StartDedent(mode) => {
@@ -238,11 +304,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                                 DedentMode::Root => "dedentRoot",
                             };
 
-                            write!(f, [token(label), token("(")]);
+                            w!(f, [token(label), token("(")]);
                         }
 
                         StartAlign(align) => {
-                            write!(
+                            w!(
                                 f,
                                 [
                                     token("align("),
@@ -254,19 +320,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                         }
 
                         StartLineSuffix => {
-                            write!(f, [token("line_suffix(")]);
+                            w!(f, [token("line_suffix(")]);
                         }
 
                         StartGroup(group) => {
-                            write!(f, [token("group(")]);
+                            w!(f, [token("group(")]);
 
                             if let Some(group_id) = group.id() {
-                                write!(
+                                w!(
                                     f,
                                     [
                                         text(
-                                            f.context()
-                                                .allocator()
+                                            f.allocator()
                                                 .alloc_str(&std::format!("\"{group_id:?}\""))
                                         ),
                                         token(","),
@@ -278,24 +343,20 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                             match group.mode() {
                                 GroupMode::Flat => {}
                                 GroupMode::Expand => {
-                                    write!(f, [token("expand: true,"), space()]);
+                                    w!(f, [token("expand: true,"), space()]);
                                 }
                                 GroupMode::Propagated => {
-                                    write!(f, [token("expand: propagated,"), space()]);
+                                    w!(f, [token("expand: propagated,"), space()]);
                                 }
                             }
                         }
 
                         StartIndentIfGroupBreaks(id) => {
-                            write!(
+                            w!(
                                 f,
                                 [
                                     token("indent_if_group_breaks("),
-                                    text(
-                                        f.context()
-                                            .allocator()
-                                            .alloc_str(&std::format!("\"{id:?}\"")),
-                                    ),
+                                    text(f.allocator().alloc_str(&std::format!("\"{id:?}\"")),),
                                     token(","),
                                     space(),
                                 ]
@@ -305,20 +366,19 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                         StartConditionalContent(condition) => {
                             match condition.mode() {
                                 PrintMode::Flat => {
-                                    write!(f, [token("if_group_fits_on_line(")]);
+                                    w!(f, [token("if_group_fits_on_line(")]);
                                 }
                                 PrintMode::Expanded => {
-                                    write!(f, [token("if_group_breaks(")]);
+                                    w!(f, [token("if_group_breaks(")]);
                                 }
                             }
 
                             if let Some(group_id) = condition.group_id() {
-                                write!(
+                                w!(
                                     f,
                                     [
                                         text(
-                                            f.context()
-                                                .allocator()
+                                            f.allocator()
                                                 .alloc_str(&std::format!("\"{group_id:?}\"")),
                                         ),
                                         token(","),
@@ -329,14 +389,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                         }
 
                         StartLabelled(label_id) => {
-                            write!(
+                            w!(
                                 f,
                                 [
                                     token("label("),
                                     text(
-                                        f.context()
-                                            .allocator()
-                                            .alloc_str(&std::format!("\"{label_id:?}\"")),
+                                        f.allocator().alloc_str(&std::format!("\"{label_id:?}\"")),
                                     ),
                                     token(","),
                                     space(),
@@ -345,13 +403,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                         }
 
                         StartFill => {
-                            write!(f, [token("fill(")]);
+                            w!(f, [token("fill(")]);
                         }
 
                         StartEntry => {
                             // handled after the match for all start tags
                         }
-                        EndEntry => write!(f, [ContentArrayEnd]),
+                        EndEntry => w!(f, [ContentArrayEnd]),
 
                         EndFill
                         | EndLabelled
@@ -362,20 +420,20 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                         | EndGroup
                         | EndLineSuffix
                         | EndDedent(_) => {
-                            write!(f, [ContentArrayEnd, token(")")]);
+                            w!(f, [ContentArrayEnd, token(")")]);
                         }
                     }
 
                     if tag.is_start() {
-                        write!(f, [ContentArrayStart]);
+                        w!(f, [ContentArrayStart]);
                     }
                 }
                 FormatElement::TailwindClass(index) => {
                     let class = f.context().get_tailwind_class(*index);
                     if let Some(class) = class {
-                        write!(f, [text(f.allocator().alloc_str(class))]);
+                        w!(f, [text(f.allocator().alloc_str(class))]);
                     } else {
-                        write!(
+                        w!(
                             f,
                             [
                                 token("<UNKNOWN_TAILWIND_CLASS_INDEX<"),
@@ -389,32 +447,28 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
         }
 
         while let Some(top) = tag_stack.pop() {
-            write!(
+            w!(
                 f,
                 [
                     ContentArrayEnd,
                     token(")"),
                     soft_line_break_or_space(),
-                    text(
-                        f.context()
-                            .allocator()
-                            .alloc_str(&std::format!("<START_WITHOUT_END<{top:?}>>"))
-                    ),
+                    text(f.allocator().alloc_str(&std::format!("<START_WITHOUT_END<{top:?}>>"))),
                 ]
             );
         }
 
-        write!(f, [ContentArrayEnd]);
+        w!(f, [ContentArrayEnd]);
     }
 }
 
 struct ContentArrayStart;
 
-impl<'a> Format<'a, JsFormatContext<'a>> for ContentArrayStart {
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+impl<'a, C> Format<'a, C> for ContentArrayStart {
+    fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
         use Tag::{StartGroup, StartIndent};
 
-        write!(f, [token("[")]);
+        w!(f, [token("[")]);
 
         f.write_elements([
             FormatElement::Tag(StartGroup(tag::Group::new())),
@@ -426,8 +480,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ContentArrayStart {
 
 struct ContentArrayEnd;
 
-impl<'a> Format<'a, JsFormatContext<'a>> for ContentArrayEnd {
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+impl<'a, C> Format<'a, C> for ContentArrayEnd {
+    fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
         use Tag::{EndGroup, EndIndent};
         f.write_elements([
             FormatElement::Tag(EndIndent),
@@ -435,6 +489,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ContentArrayEnd {
             FormatElement::Tag(EndGroup),
         ]);
 
-        write!(f, [token("]")]);
+        w!(f, [token("]")]);
     }
 }

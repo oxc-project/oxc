@@ -40,6 +40,7 @@ pub use buffer::{
 };
 pub use diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
 pub use format::{Format, write};
+pub use format_element::debug::DisplayDocument;
 pub use format_element::document::Document;
 pub use format_element::tag::{
     self, Align, Condition, DedentMode, Group, GroupMode, Label, LabelId, Tag, TagKind,

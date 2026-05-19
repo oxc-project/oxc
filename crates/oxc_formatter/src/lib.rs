@@ -33,7 +33,7 @@ pub use crate::formatter::format_element::tag::{
 pub use crate::formatter::format_element::{
     BestFittingElement, FormatElement, LineMode, PrintMode, TextWidth,
 };
-pub use crate::formatter::{DocumentDebug, Format, FormatContext, FormatOptions, Formatted};
+pub use crate::formatter::{Format, FormatContext, FormatOptions, Formatted};
 pub use crate::formatter::{GroupId, JsFormatContext, UniqueGroupIdBuilder};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
@@ -41,6 +41,7 @@ pub use crate::print::{FormatVueBindingParams, FormatVueScriptGeneric};
 pub use crate::service::*;
 #[cfg(feature = "detect_code_removal")]
 pub use detect_code_removal::detect_code_removal;
+pub use oxc_formatter_core::DisplayDocument;
 
 use self::formatter::prelude::tag::Label;
 

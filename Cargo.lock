@@ -2020,6 +2020,7 @@ dependencies = [
 name = "oxc_formatter_core"
 version = "0.50.0"
 dependencies = [
+ "cow-utils",
  "oxc_allocator",
  "oxc_data_structures",
  "oxc_span",

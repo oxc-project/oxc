@@ -1,3 +1,4 @@
+pub mod debug;
 pub mod document;
 pub mod tag;
 

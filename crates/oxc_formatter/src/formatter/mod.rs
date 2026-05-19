@@ -20,8 +20,6 @@
 mod builders;
 pub mod comments;
 mod context;
-mod format_element_debug;
-pub use format_element_debug::DocumentDebug;
 mod format_str;
 pub mod formatter_js;
 pub mod jsdoc;

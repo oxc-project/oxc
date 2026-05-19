@@ -136,6 +136,10 @@ impl oxc_formatter_core::FormatContext for JsFormatContext<'_> {
     fn source_code(&self) -> &str {
         &self.source_text
     }
+
+    fn get_tailwind_class(&self, idx: usize) -> Option<&str> {
+        self.tailwind_classes.get(idx).map(String::as_str)
+    }
 }
 
 impl<'ast> JsFormatContext<'ast> {
@@ -158,21 +162,6 @@ impl<'ast> JsFormatContext<'ast> {
             tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
             external_callbacks: external_callbacks.unwrap_or_default(),
-            allocator,
-        }
-    }
-
-    pub(crate) fn dummy(allocator: &'ast Allocator) -> Self {
-        Self {
-            options: JsFormatOptions::default(),
-            source_text: SourceText::new(""),
-            source_type: SourceType::default(),
-            comments: Comments::new(SourceText::new(""), &[]),
-            cached_elements: FxHashMap::default(),
-            quote_needed_stack: Vec::new(),
-            tailwind_classes: Vec::new(),
-            tailwind_context_stack: Vec::new(),
-            external_callbacks: ExternalCallbacks::default(),
             allocator,
         }
     }
@@ -250,10 +239,6 @@ impl<'ast> JsFormatContext<'ast> {
         self.tailwind_classes.push(class);
         index
     }
-    pub fn get_tailwind_class(&self, index: usize) -> Option<&String> {
-        self.tailwind_classes.get(index)
-    }
-
     /// Take all collected Tailwind classes, clearing the internal storage.
     pub fn take_tailwind_classes(&mut self) -> Vec<String> {
         mem::take(&mut self.tailwind_classes)

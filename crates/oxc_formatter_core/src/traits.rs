@@ -17,6 +17,15 @@ pub trait FormatContext {
 
     /// Returns the source text being formatted as a raw string slice.
     fn source_code(&self) -> &str;
+
+    /// Returns the sorted Tailwind CSS class string for the given index,
+    /// or `None` if the language does not support Tailwind or the index is invalid.
+    ///
+    /// Used by the document debug renderer to display `FormatElement::TailwindClass`.
+    /// Languages that support Tailwind sorting (currently JS/TS) should override this.
+    fn get_tailwind_class(&self, _idx: usize) -> Option<&str> {
+        None
+    }
 }
 
 /// Language-agnostic format options trait.
