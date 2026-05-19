@@ -1,6 +1,6 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
-use bpaf::{Bpaf, Parser};
+use bpaf::{Bpaf, Parser, doc::Style};
 #[cfg(feature = "napi")]
 use cow_utils::CowUtils;
 
@@ -22,6 +22,14 @@ const PATHS_ERROR_MESSAGE: &str = "PATH must not contain \"..\"";
 pub struct FormatCommand {
     #[bpaf(external(mode))]
     pub mode: Mode,
+    #[bpaf(
+        long("debug"),
+        argument::<DebugOptions>("OPTIONS"),
+        fallback(DebugOptions::default()),
+        help(DebugOptions::HELP),
+        hide_usage
+    )]
+    pub debug: DebugOptions,
     #[bpaf(external)]
     pub config_options: ConfigOptions,
     #[bpaf(external)]
@@ -37,6 +45,64 @@ pub struct FormatCommand {
     // so we implement the fallback behavior in code instead.
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DebugOption {
+    /// Print the list of files that will be formatted
+    Files,
+}
+
+impl DebugOption {
+    const FILES_NAME: &str = "files";
+    const FILES_HELP: &str = "Print the list of files that will be formatted";
+}
+
+impl FromStr for DebugOption {
+    type Err = String;
+
+    fn from_str(option: &str) -> Result<Self, Self::Err> {
+        match option {
+            Self::FILES_NAME => Ok(Self::Files),
+            _ => Err(format!("'{option}' is not a known debug option")),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct DebugOptions {
+    options: Vec<DebugOption>,
+}
+
+impl DebugOptions {
+    const HELP: &'static [(&'static str, Style)] = &[
+        (
+            "Enable debug output options. Options are comma-separated. Possible values:\n",
+            Style::Text,
+        ),
+        ("  * `", Style::Text),
+        (DebugOption::FILES_NAME, Style::Text),
+        ("` - ", Style::Text),
+        (DebugOption::FILES_HELP, Style::Text),
+        (".", Style::Text),
+    ];
+
+    pub fn contains(&self, option: DebugOption) -> bool {
+        self.options.contains(&option)
+    }
+}
+
+impl FromStr for DebugOptions {
+    type Err = String;
+
+    fn from_str(options: &str) -> Result<Self, Self::Err> {
+        options
+            .split(',')
+            .filter(|option| !option.is_empty())
+            .map(DebugOption::from_str)
+            .collect::<Result<Vec<_>, _>>()
+            .map(|options| Self { options })
+    }
 }
 
 // ---
@@ -172,4 +238,40 @@ pub struct RuntimeOptions {
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::{DebugOption, DebugOptions, FormatCommand, format_command};
+
+    fn get_format_command(arg: &str) -> FormatCommand {
+        let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
+        format_command().run_inner(args.as_slice()).unwrap()
+    }
+
+    #[test]
+    fn debug() {
+        let options = get_format_command("--debug files src");
+        assert!(options.debug.contains(DebugOption::Files));
+        assert_eq!(options.paths, [PathBuf::from("src")]);
+    }
+
+    #[test]
+    fn debug_default() {
+        let options = get_format_command("src");
+        assert_eq!(options.debug, DebugOptions::default());
+    }
+
+    #[test]
+    fn debug_error() {
+        let args =
+            "--debug foo".split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
+        let result = format_command().run_inner(args.as_slice());
+        assert!(
+            result.is_err_and(|err| err.unwrap_stderr()
+                == "couldn't parse `foo`: 'foo' is not a known debug option")
+        );
+    }
 }

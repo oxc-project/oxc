@@ -1,9 +1,16 @@
-use std::{env, io::BufWriter, path::PathBuf, sync::mpsc, time::Instant};
+use std::{
+    env,
+    io::BufWriter,
+    path::PathBuf,
+    sync::{Arc, mpsc},
+    time::Instant,
+};
 
 use oxc_diagnostics::DiagnosticService;
 
 use super::{
-    command::{FormatCommand, Mode, OutputMode},
+    command::{DebugOption, FormatCommand, Mode, OutputMode},
+    debug_files::run_debug_files,
     reporter::DefaultReporter,
     resolve::resolve_ignore_paths,
     result::CliRunResult,
@@ -69,8 +76,9 @@ impl WalkRunner {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, mode, config_options, ignore_options, runtime_options } =
+        let FormatCommand { paths, mode, debug, config_options, ignore_options, runtime_options } =
             self.options;
+        let debug_files = debug.contains(DebugOption::Files);
         // If `napi` feature is disabled, there is no other mode.
         #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
         let Mode::Cli(format_mode) = mode else {
@@ -103,12 +111,14 @@ impl WalkRunner {
 
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
-        if let Err(err) = tokio::task::block_in_place(|| {
-            self.external_formatter
-                .as_ref()
-                .expect("External formatter must be set when `napi` feature is enabled")
-                .init(num_of_threads)
-        }) {
+        if !debug_files
+            && let Err(err) = tokio::task::block_in_place(|| {
+                self.external_formatter
+                    .as_ref()
+                    .expect("External formatter must be set when `napi` feature is enabled")
+                    .init(num_of_threads)
+            })
+        {
             utils::print_and_flush(
                 stderr,
                 &format!("Failed to setup external formatter.\n{err}\n"),
@@ -127,6 +137,36 @@ impl WalkRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
+
+        if debug_files {
+            let (tx_entry, rx_entry) = mpsc::channel::<FormatStrategy>();
+            let (tx_error, _rx_error) = mpsc::channel();
+
+            let result = ScopedWalker::new(cwd.clone(), &paths).run(
+                root_config_resolver,
+                &resolved_ignore_paths,
+                ignore_options.with_node_modules,
+                config_options.config.is_none() && !config_options.disable_nested_config,
+                editorconfig_path.as_deref(),
+                #[cfg(feature = "napi")]
+                self.js_config_loader.as_ref(),
+                &tx_entry,
+                &tx_error,
+            );
+            drop(tx_entry);
+            drop(tx_error);
+
+            if let Err(err) = result {
+                utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
+                return CliRunResult::InvalidOptionConfig;
+            }
+
+            return run_debug_files(
+                rx_entry.into_iter().map(|strategy| Arc::clone(strategy.path())),
+                &cwd,
+                stdout,
+            );
+        }
 
         // Shared channel for format entries from all scopes
         let (tx_entry, rx_entry) = mpsc::channel::<FormatStrategy>();
