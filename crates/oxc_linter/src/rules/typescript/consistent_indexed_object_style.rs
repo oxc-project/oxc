@@ -1,3 +1,8 @@
+use itertools::Itertools;
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{TSMappedType, TSSignature, TSType, TSTypeName},
@@ -6,9 +11,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -190,9 +192,20 @@ impl Rule for ConsistentIndexedObjectStyle {
                             } else {
                                 format!("Record<{key_type}, {value_type}>")
                             };
+                            let record = if inf.extends.is_empty() {
+                                record
+                            } else {
+                                let extends = inf
+                                    .extends
+                                    .iter()
+                                    .map(|extend| fixer.source_range(extend.span))
+                                    .join(" & ");
+                                format!("{extends} & {record}")
+                            };
+                            let declare = if inf.declare { "declare " } else { "" };
 
                             let replacement =
-                                format!("type {}{type_params} = {record};", inf.id.name);
+                                format!("{declare}type {}{type_params} = {record};", inf.id.name);
                             fixer.replace(inf.span, replacement)
                         },
                     );
@@ -1469,6 +1482,27 @@ fn test() {
             };
                   ", "
             type Foo = Record<string, any>;
+                  ", None),
+        ("
+            interface B extends A {
+              [index: number]: unknown;
+            }
+                  ", "
+            type B = A & Record<number, unknown>;
+                  ", None),
+        ("
+            interface D extends A, B, C {
+              [index: number]: unknown;
+            }
+                  ", "
+            type D = A & B & C & Record<number, unknown>;
+                  ", None),
+        ("
+            declare interface Foo {
+              [key: string]: unknown;
+            }
+                  ", "
+            declare type Foo = Record<string, unknown>;
                   ", None)
     ];
     Tester::new(
