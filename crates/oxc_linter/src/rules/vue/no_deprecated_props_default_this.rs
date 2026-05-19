@@ -1,12 +1,12 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression, ObjectExpression, ObjectPropertyKind},
+    ast::{Expression, ObjectExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_vue_component_options_object};
 
 fn no_deprecated_props_default_this_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Props default value factory functions no longer have access to `this`.")
@@ -103,59 +103,29 @@ impl Rule for NoDeprecatedPropsDefaultThis {
             return;
         }
 
-        let in_props = nodes.ancestors(fn_id).any(|ancestor| {
-            matches!(
-                ancestor.kind(),
-                AstKind::ObjectProperty(op) if op.key.is_specific_static_name("props")
-            )
-        });
-        if !in_props {
+        let prop_definition_node = nodes.parent_node(opts_node.id());
+        if !matches!(prop_definition_node.kind(), AstKind::ObjectProperty(_)) {
             return;
         }
 
-        let in_vue_component =
-            nodes.ancestors(fn_id).any(|ancestor| is_vue_component_root(ancestor.kind()));
-        if !in_vue_component {
+        let props_object_node = nodes.parent_node(prop_definition_node.id());
+        if !matches!(props_object_node.kind(), AstKind::ObjectExpression(_)) {
+            return;
+        }
+
+        let props_node = nodes.parent_node(props_object_node.id());
+        let AstKind::ObjectProperty(props_prop) = props_node.kind() else { return };
+        if !props_prop.key.is_specific_static_name("props") {
+            return;
+        }
+
+        let component_options_node = nodes.parent_node(props_node.id());
+        if !is_vue_component_options_object(component_options_node, ctx) {
             return;
         }
 
         ctx.diagnostic(no_deprecated_props_default_this_diagnostic(this_expr.span));
     }
-}
-
-fn is_vue_component_root(kind: AstKind<'_>) -> bool {
-    match kind {
-        AstKind::ExportDefaultDeclaration(_) => true,
-        AstKind::CallExpression(call) => is_vue_component_definition_call(call),
-        AstKind::NewExpression(new_expr) => {
-            new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "Vue")
-        }
-        _ => false,
-    }
-}
-
-fn is_vue_component_definition_call(call: &CallExpression<'_>) -> bool {
-    let callee = call.callee.get_inner_expression();
-
-    if let Expression::Identifier(ident) = callee {
-        return matches!(
-            ident.name.as_str(),
-            "defineComponent" | "component" | "createApp" | "defineNuxtComponent"
-        );
-    }
-
-    let Some(MemberExpression::StaticMemberExpression(static_member)) =
-        callee.as_member_expression()
-    else {
-        return false;
-    };
-    let prop_name = static_member.property.name.as_str();
-    if let Expression::Identifier(obj_ident) = static_member.object.get_inner_expression()
-        && obj_ident.name == "Vue"
-    {
-        return matches!(prop_name, "component" | "mixin" | "extend");
-    }
-    matches!(prop_name, "component" | "mixin")
 }
 
 fn has_function_type(opts: &ObjectExpression<'_>) -> bool {
@@ -294,6 +264,50 @@ fn test() {
                   }
                   </script>
                   "#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                    <template><div /></template>
+                    <script>
+                    export default {
+                      props: {
+                        a: {
+                          validator () {
+                            return {
+                              default () {
+                                return this.a
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                    <template><div /></template>
+                    <script>
+                    export default {
+                      props: {
+                        a: {
+                          nested: {
+                            default () {
+                              return this.a
+                            }
+                          }
+                        }
+                      }
+                    }
+                    </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
