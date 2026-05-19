@@ -14,7 +14,7 @@ use oxc_semantic::{AstNode, NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn no_loop_func_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Function declared in a loop contains unsafe references to variable(s)")
@@ -138,10 +138,9 @@ impl NoLoopFunc {
     fn is_safe_iife<'a>(func_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         let nodes = ctx.nodes();
 
-        let mut current = nodes.parent_node(func_node.id());
-        while matches!(current.kind(), AstKind::ParenthesizedExpression(_)) {
-            current = nodes.parent_node(current.id());
-        }
+        let Some(current) = outermost_paren_parent(func_node, ctx) else {
+            return false;
+        };
 
         let AstKind::CallExpression(call_expr) = current.kind() else {
             return false;
