@@ -58,6 +58,7 @@ pub use oxc_formatter_core::{
     UniqueGroupIdBuilder, VecBuffer, write,
 };
 
+pub use self::builders::JoinBuilderJsExt;
 pub use self::comments::Comments;
 pub use self::{
     context::{JsFormatContext, TailwindContextEntry},

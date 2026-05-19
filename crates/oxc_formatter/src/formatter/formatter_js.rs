@@ -10,7 +10,7 @@ use oxc_span::GetSpan;
 use crate::formatter::{
     Buffer, Comments, Format, Formatter, GroupId, JsFormatContext, SourceText,
     UniqueGroupIdBuilder,
-    builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line, Space},
+    builders::{JoinNodesBuilder, Line, Space},
     format_element::FormatElements,
     prelude::{hard_line_break, soft_line_break_or_space, space},
 };
@@ -28,17 +28,9 @@ pub trait JsFormatterExt<'buf, 'ast> {
     fn comments(&self) -> &Comments<'_>;
     fn group_id(&self, debug_name: &'static str) -> GroupId;
     fn group_id_builder(&self) -> &UniqueGroupIdBuilder;
-    fn join<'fmt>(&'fmt mut self) -> JoinBuilder<'fmt, 'buf, 'ast, ()>;
-    fn join_with<'fmt, Joiner>(
-        &'fmt mut self,
-        joiner: Joiner,
-    ) -> JoinBuilder<'fmt, 'buf, 'ast, Joiner>
-    where
-        Joiner: Format<'ast, JsFormatContext<'ast>>;
     fn join_nodes_with_soft_line<'fmt>(&'fmt mut self) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line>;
     fn join_nodes_with_hardline<'fmt>(&'fmt mut self) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line>;
     fn join_nodes_with_space<'fmt>(&'fmt mut self) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Space>;
-    fn fill<'fmt>(&'fmt mut self) -> FillBuilder<'fmt, 'buf, 'ast>;
     fn speculate_will_break(
         &mut self,
         content: &(impl Format<'ast, JsFormatContext<'ast>> + GetSpan),
@@ -70,20 +62,6 @@ impl<'buf, 'ast> JsFormatterExt<'buf, 'ast> for Formatter<'buf, 'ast, JsFormatCo
         self.state().group_id_builder()
     }
 
-    fn join<'fmt>(&'fmt mut self) -> JoinBuilder<'fmt, 'buf, 'ast, ()> {
-        JoinBuilder::new(self)
-    }
-
-    fn join_with<'fmt, Joiner>(
-        &'fmt mut self,
-        joiner: Joiner,
-    ) -> JoinBuilder<'fmt, 'buf, 'ast, Joiner>
-    where
-        Joiner: Format<'ast, JsFormatContext<'ast>>,
-    {
-        JoinBuilder::with_separator(self, joiner)
-    }
-
     fn join_nodes_with_soft_line<'fmt>(&'fmt mut self) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line> {
         JoinNodesBuilder::new(soft_line_break_or_space(), self)
     }
@@ -94,10 +72,6 @@ impl<'buf, 'ast> JsFormatterExt<'buf, 'ast> for Formatter<'buf, 'ast, JsFormatCo
 
     fn join_nodes_with_space<'fmt>(&'fmt mut self) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Space> {
         JoinNodesBuilder::new(space(), self)
-    }
-
-    fn fill<'fmt>(&'fmt mut self) -> FillBuilder<'fmt, 'buf, 'ast> {
-        FillBuilder::new(self)
     }
 
     fn speculate_will_break(

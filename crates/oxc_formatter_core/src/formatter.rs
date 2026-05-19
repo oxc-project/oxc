@@ -4,6 +4,7 @@ use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 use crate::{
     Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState, VecBuffer,
+    builders::{FillBuilder, JoinBuilder},
     format::{Format, write},
     format_element::Interned,
 };
@@ -68,6 +69,27 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
             1 => Some(elements.pop().unwrap()),
             _ => Some(FormatElement::Interned(Interned::new(elements))),
         }
+    }
+
+    /// Creates a [`JoinBuilder`] that joins entries together without a separator.
+    pub fn join<'fmt>(&'fmt mut self) -> JoinBuilder<'fmt, 'buf, 'ast, (), C> {
+        JoinBuilder::new(self)
+    }
+
+    /// Creates a [`JoinBuilder`] that joins entries together using `joiner` as a separator.
+    pub fn join_with<'fmt, Joiner>(
+        &'fmt mut self,
+        joiner: Joiner,
+    ) -> JoinBuilder<'fmt, 'buf, 'ast, Joiner, C>
+    where
+        Joiner: Format<'ast, C>,
+    {
+        JoinBuilder::with_separator(self, joiner)
+    }
+
+    /// Creates a [`FillBuilder`] that fills as many elements as possible on a single line.
+    pub fn fill<'fmt>(&'fmt mut self) -> FillBuilder<'fmt, 'buf, 'ast, C> {
+        FillBuilder::new(self)
     }
 }
 

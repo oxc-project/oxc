@@ -2,11 +2,7 @@ use std::cell::Cell;
 
 use oxc_span::{GetSpan, Span};
 
-use Tag::{EndEntry, EndFill, StartEntry, StartFill};
-
-use super::{
-    Buffer, JsFormatContext, format_element::tag::Tag, prelude::*, separated::FormatSeparatedIter,
-};
+use super::{JsFormatContext, prelude::*, separated::FormatSeparatedIter};
 use crate::{TrailingSeparator, write};
 
 // Re-export the language-agnostic builders that live in `oxc_formatter_core`,
@@ -74,57 +70,29 @@ impl<T> std::fmt::Debug for FormatOnce<T> {
     }
 }
 
-/// Builder to join together a sequence of content.
-/// See [Formatter::join]
-#[must_use = "must eventually call `finish()` on Format builders"]
-pub struct JoinBuilder<'fmt, 'buf, 'ast, Separator> {
-    fmt: &'fmt mut JsFormatter<'buf, 'ast>,
-    with: Option<Separator>,
-    has_elements: bool,
+/// Extension trait that adds JS-specific helper methods on [`JoinBuilder`].
+///
+/// [`JoinBuilder`] itself lives in `oxc_formatter_core` and is generic over the
+/// format context, so adding inherent methods here would violate the orphan
+/// rule. The trait is blanket-implemented for the JS-bound specialization.
+pub trait JoinBuilderJsExt<'ast, Separator> {
+    fn entries_with_trailing_separator<F, I>(
+        &mut self,
+        entries: I,
+        separator: &'static str,
+        trailing_separator: TrailingSeparator,
+    ) -> &mut Self
+    where
+        F: Format<'ast, JsFormatContext<'ast>> + GetSpan,
+        I: IntoIterator<Item = F>;
 }
 
-impl<'fmt, 'buf, 'ast, Separator> JoinBuilder<'fmt, 'buf, 'ast, Separator>
+impl<'ast, Separator> JoinBuilderJsExt<'ast, Separator>
+    for JoinBuilder<'_, '_, 'ast, Separator, JsFormatContext<'ast>>
 where
     Separator: Format<'ast, JsFormatContext<'ast>>,
 {
-    /// Creates a new instance that joins the elements without a separator
-    pub(super) fn new(fmt: &'fmt mut JsFormatter<'buf, 'ast>) -> Self {
-        Self { fmt, has_elements: false, with: None }
-    }
-
-    /// Creates a new instance that prints the passed separator between every two entries.
-    pub(super) fn with_separator(fmt: &'fmt mut JsFormatter<'buf, 'ast>, with: Separator) -> Self {
-        Self { fmt, has_elements: false, with: Some(with) }
-    }
-
-    /// Adds a new entry to the join output.
-    pub fn entry(&mut self, entry: &dyn Format<'ast, JsFormatContext<'ast>>) -> &mut Self {
-        if let Some(with) = &self.with
-            && self.has_elements
-        {
-            with.fmt(self.fmt);
-        }
-        self.has_elements = true;
-
-        entry.fmt(self.fmt);
-
-        self
-    }
-
-    /// Adds the contents of an iterator of entries to the join output.
-    pub fn entries<F, I>(&mut self, entries: I) -> &mut Self
-    where
-        F: Format<'ast, JsFormatContext<'ast>>,
-        I: IntoIterator<Item = F>,
-    {
-        for entry in entries {
-            self.entry(&entry);
-        }
-
-        self
-    }
-
-    pub fn entries_with_trailing_separator<F, I>(
+    fn entries_with_trailing_separator<F, I>(
         &mut self,
         entries: I,
         separator: &'static str,
@@ -232,63 +200,5 @@ where
     /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
     pub fn has_lines_before(&self, span: Span) -> bool {
         self.fmt.source_text().get_lines_before(span, self.fmt.comments()) > 1
-    }
-}
-
-/// Builder to fill as many elements as possible on a single line.
-#[must_use = "must eventually call `finish()` on Format builders"]
-pub struct FillBuilder<'fmt, 'buf, 'ast> {
-    fmt: &'fmt mut JsFormatter<'buf, 'ast>,
-    empty: bool,
-}
-
-impl<'fmt, 'buf, 'ast> FillBuilder<'fmt, 'buf, 'ast> {
-    pub(crate) fn new(fmt: &'fmt mut JsFormatter<'buf, 'ast>) -> Self {
-        fmt.write_element(FormatElement::Tag(StartFill));
-
-        Self { fmt, empty: true }
-    }
-
-    /// Adds an iterator of entries to the fill output. Uses the passed `separator` to separate any two items.
-    pub fn entries<F, I>(
-        &mut self,
-        separator: &dyn Format<'ast, JsFormatContext<'ast>>,
-        entries: I,
-    ) -> &mut Self
-    where
-        F: Format<'ast, JsFormatContext<'ast>>,
-        I: IntoIterator<Item = F>,
-    {
-        for entry in entries {
-            self.entry(separator, &entry);
-        }
-
-        self
-    }
-
-    /// Adds a new entry to the fill output. The `separator` isn't written if this is the first element in the list.
-    pub fn entry(
-        &mut self,
-        separator: &dyn Format<'ast, JsFormatContext<'ast>>,
-        entry: &dyn Format<'ast, JsFormatContext<'ast>>,
-    ) -> &mut Self {
-        if self.empty {
-            self.empty = false;
-        } else {
-            self.fmt.write_element(FormatElement::Tag(StartEntry));
-            separator.fmt(self.fmt);
-            self.fmt.write_element(FormatElement::Tag(EndEntry));
-        }
-
-        self.fmt.write_element(FormatElement::Tag(StartEntry));
-        entry.fmt(self.fmt);
-        self.fmt.write_element(FormatElement::Tag(EndEntry));
-
-        self
-    }
-
-    /// Finishes the output and returns any error encountered
-    pub fn finish(&mut self) {
-        self.fmt.write_element(FormatElement::Tag(EndFill));
     }
 }

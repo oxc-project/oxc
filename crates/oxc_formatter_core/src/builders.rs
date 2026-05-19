@@ -18,10 +18,10 @@ use crate::{
 };
 
 use Tag::{
-    EndAlign, EndConditionalContent, EndDedent, EndEntry, EndGroup, EndIndent,
+    EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
     EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign, StartConditionalContent,
-    StartDedent, StartEntry, StartGroup, StartIndent, StartIndentIfGroupBreaks, StartLabelled,
-    StartLineSuffix,
+    StartDedent, StartEntry, StartFill, StartGroup, StartIndent, StartIndentIfGroupBreaks,
+    StartLabelled, StartLineSuffix,
 };
 
 // ---------------------------------------------------------------------------
@@ -755,5 +755,120 @@ impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
         };
 
         f.write_element(element);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// JoinBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder to join together a sequence of content.
+/// See [Formatter::join]
+#[must_use = "must eventually call `finish()` on Format builders"]
+pub struct JoinBuilder<'fmt, 'buf, 'ast, Separator, C> {
+    pub(crate) fmt: &'fmt mut Formatter<'buf, 'ast, C>,
+    with: Option<Separator>,
+    has_elements: bool,
+}
+
+impl<'fmt, 'buf, 'ast, Separator, C> JoinBuilder<'fmt, 'buf, 'ast, Separator, C>
+where
+    Separator: Format<'ast, C>,
+{
+    /// Creates a new instance that joins the elements without a separator
+    pub fn new(fmt: &'fmt mut Formatter<'buf, 'ast, C>) -> Self {
+        Self { fmt, has_elements: false, with: None }
+    }
+
+    /// Creates a new instance that prints the passed separator between every two entries.
+    pub fn with_separator(fmt: &'fmt mut Formatter<'buf, 'ast, C>, with: Separator) -> Self {
+        Self { fmt, has_elements: false, with: Some(with) }
+    }
+
+    /// Adds a new entry to the join output.
+    pub fn entry(&mut self, entry: &dyn Format<'ast, C>) -> &mut Self {
+        if let Some(with) = &self.with
+            && self.has_elements
+        {
+            with.fmt(self.fmt);
+        }
+        self.has_elements = true;
+
+        entry.fmt(self.fmt);
+
+        self
+    }
+
+    /// Adds the contents of an iterator of entries to the join output.
+    pub fn entries<F, I>(&mut self, entries: I) -> &mut Self
+    where
+        F: Format<'ast, C>,
+        I: IntoIterator<Item = F>,
+    {
+        for entry in entries {
+            self.entry(&entry);
+        }
+
+        self
+    }
+
+    pub fn finish(self) {}
+}
+
+// ---------------------------------------------------------------------------
+// FillBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder to fill as many elements as possible on a single line.
+#[must_use = "must eventually call `finish()` on Format builders"]
+pub struct FillBuilder<'fmt, 'buf, 'ast, C> {
+    fmt: &'fmt mut Formatter<'buf, 'ast, C>,
+    empty: bool,
+}
+
+impl<'fmt, 'buf, 'ast, C> FillBuilder<'fmt, 'buf, 'ast, C> {
+    pub fn new(fmt: &'fmt mut Formatter<'buf, 'ast, C>) -> Self {
+        fmt.write_element(FormatElement::Tag(StartFill));
+
+        Self { fmt, empty: true }
+    }
+
+    /// Adds an iterator of entries to the fill output. Uses the passed `separator` to separate any two items.
+    pub fn entries<F, I>(&mut self, separator: &dyn Format<'ast, C>, entries: I) -> &mut Self
+    where
+        F: Format<'ast, C>,
+        I: IntoIterator<Item = F>,
+    {
+        for entry in entries {
+            self.entry(separator, &entry);
+        }
+
+        self
+    }
+
+    /// Adds a new entry to the fill output. The `separator` isn't written if this is the first element in the list.
+    pub fn entry(
+        &mut self,
+        separator: &dyn Format<'ast, C>,
+        entry: &dyn Format<'ast, C>,
+    ) -> &mut Self {
+        if self.empty {
+            self.empty = false;
+        } else {
+            self.fmt.write_element(FormatElement::Tag(StartEntry));
+            separator.fmt(self.fmt);
+            self.fmt.write_element(FormatElement::Tag(EndEntry));
+        }
+
+        self.fmt.write_element(FormatElement::Tag(StartEntry));
+        entry.fmt(self.fmt);
+        self.fmt.write_element(FormatElement::Tag(EndEntry));
+
+        self
+    }
+
+    /// Finishes the output and returns any error encountered
+    pub fn finish(&mut self) {
+        self.fmt.write_element(FormatElement::Tag(EndFill));
     }
 }
