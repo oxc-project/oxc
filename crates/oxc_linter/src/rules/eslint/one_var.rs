@@ -1,17 +1,15 @@
 use oxc_ast::{
     AstKind, AstType,
     ast::{
-        ArrowFunctionExpression, BlockStatement, Declaration, Expression, ForInStatement,
-        ForOfStatement, ForStatement, ForStatementInit, ForStatementLeft, Function, Statement,
-        StaticBlock, SwitchStatement, TSGlobalDeclaration, TSModuleDeclaration,
-        TSModuleDeclarationBody, VariableDeclaration, VariableDeclarationKind, VariableDeclarator,
+        Expression, ForStatementInit, ForStatementLeft, VariableDeclaration,
+        VariableDeclarationKind, VariableDeclarator,
     },
 };
-use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax::{node::NodeId, scope::ScopeId};
+use rustc_hash::FxHashMap;
 use schemars::{
     JsonSchema,
     r#gen::SchemaGenerator,
@@ -23,7 +21,7 @@ use serde::{
 };
 use serde_json::Value;
 use smallvec::SmallVec;
-use std::borrow::Cow;
+use std::{borrow::Cow, ptr};
 
 use crate::{
     AstNode,
@@ -164,6 +162,29 @@ impl OneVarRuntimeConfig {
             VariableDeclarationKind::Using => self.using,
             VariableDeclarationKind::AwaitUsing => self.await_using,
         }
+    }
+
+    fn policies(&self) -> [KindPolicy; 5] {
+        [self.var, self.let_, self.const_, self.using, self.await_using]
+    }
+
+    fn needs_consecutive(&self) -> bool {
+        self.policies().into_iter().any(|policy| {
+            policy.initialized == RuntimeMode::Consecutive
+                || policy.uninitialized == RuntimeMode::Consecutive
+        })
+    }
+
+    fn needs_always(&self) -> bool {
+        self.policies().into_iter().any(|policy| {
+            policy.initialized == RuntimeMode::Always || policy.uninitialized == RuntimeMode::Always
+        })
+    }
+
+    fn needs_never(&self) -> bool {
+        self.policies().into_iter().any(|policy| {
+            policy.initialized == RuntimeMode::Never || policy.uninitialized == RuntimeMode::Never
+        })
     }
 }
 
@@ -388,38 +409,102 @@ impl Rule for OneVar {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // `Program` is in NODE_TYPES, so preserve the cheap file-level skip for
-        // files without variable declarations.
+        // Preserve the cheap file-level skip for files without variable declarations.
         ctx.semantic().nodes().contains_any(VARIABLE_DECLARATION_NODE_TYPES)
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Each run checks one var-scope owner.
-        // Nested owners are handled by separate runner dispatches.
-        match node.kind() {
-            AstKind::Program(program) => {
-                OneVarScopeChecker::new(ctx, &self.0).check_scope(&program.body);
-            }
-            AstKind::Function(function) => {
-                if let Some(body) = &function.body {
-                    OneVarScopeChecker::new(ctx, &self.0).check_scope(&body.statements);
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        let needs_always = self.0.needs_always();
+        let needs_never = self.0.needs_never();
+        let needs_consecutive = self.0.needs_consecutive();
+
+        if !needs_always && !needs_never && !needs_consecutive {
+            return;
+        }
+
+        let mut previous_by_list: FxHashMap<NodeId, PreviousDeclaration> = FxHashMap::default();
+        let mut always_state: FxHashMap<AlwaysStateKey, SeenState> = FxHashMap::default();
+        let mut var_scope_cache: FxHashMap<ScopeId, ScopeId> = FxHashMap::default();
+
+        // Process the semantic node table once instead of running a recursive AST visitor.
+        // `previous_by_list` relies on source/preorder node order for statement-list adjacency.
+        // Scope-wide checks keep per effective-scope state; `var` scope is resolved lazily.
+        for node in ctx.semantic().nodes() {
+            let node_id = node.id();
+            let statement_list_id =
+                needs_consecutive.then(|| statement_list_parent_id(ctx, node_id)).flatten();
+
+            let AstKind::VariableDeclaration(decl) = node.kind() else {
+                if let Some(statement_list_id) = statement_list_id {
+                    previous_by_list.remove(&statement_list_id);
+                }
+                continue;
+            };
+
+            let policy = self.0.policy(decl.kind);
+            let policy_needs_always = policy.initialized == RuntimeMode::Always
+                || policy.uninitialized == RuntimeMode::Always;
+            let policy_needs_never = policy.initialized == RuntimeMode::Never
+                || policy.uninitialized == RuntimeMode::Never;
+            let policy_needs_consecutive = policy.initialized == RuntimeMode::Consecutive
+                || policy.uninitialized == RuntimeMode::Consecutive;
+            let needs_declaration_checks =
+                policy_needs_always || policy_needs_never || policy_needs_consecutive;
+            let summary = if needs_declaration_checks {
+                summarize_declaration(decl, self.0.separate_requires)
+            } else {
+                DeclSummary::default()
+            };
+
+            if needs_declaration_checks {
+                let context = if policy_needs_always || policy_needs_never {
+                    classify_var_decl_context(ctx, node.id(), decl)
+                } else {
+                    VarDeclContext::Other
+                };
+                let split_requires_reported = self.0.separate_requires
+                    && policy.initialized == RuntimeMode::Always
+                    && summary.has_mixed_require_groups();
+
+                if split_requires_reported {
+                    ctx.diagnostic(one_var_diagnostic(
+                        decl.span(),
+                        DiagnosticKind::SplitRequires,
+                        declaration_type(decl.kind),
+                    ));
+                }
+
+                if let Some(statement_list_id) = statement_list_id
+                    && let Some(previous) = previous_by_list.get(&statement_list_id).copied()
+                    && previous.kind == decl.kind
+                    && policy_needs_consecutive
+                {
+                    self.check_consecutive(decl, summary, previous.summary, policy, ctx);
+                }
+
+                if policy_needs_always {
+                    let scope_id = effective_scope_id(ctx, node, decl.kind, &mut var_scope_cache);
+                    self.check_always(
+                        decl,
+                        summary,
+                        policy,
+                        context,
+                        split_requires_reported,
+                        scope_id,
+                        &mut always_state,
+                        ctx,
+                    );
+                }
+
+                if policy_needs_never {
+                    Self::check_never(decl, summary, policy, context, ctx);
                 }
             }
-            AstKind::ArrowFunctionExpression(arrow) => {
-                OneVarScopeChecker::new(ctx, &self.0).check_scope(&arrow.body.statements);
+
+            if let Some(statement_list_id) = statement_list_id {
+                previous_by_list
+                    .insert(statement_list_id, PreviousDeclaration { kind: decl.kind, summary });
             }
-            AstKind::StaticBlock(block) => {
-                OneVarScopeChecker::new(ctx, &self.0).check_scope(&block.body);
-            }
-            AstKind::TSModuleDeclaration(declaration) => {
-                if let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &declaration.body {
-                    OneVarScopeChecker::new(ctx, &self.0).check_scope(&block.body);
-                }
-            }
-            AstKind::TSGlobalDeclaration(declaration) => {
-                OneVarScopeChecker::new(ctx, &self.0).check_scope(&declaration.body.body);
-            }
-            _ => {}
         }
     }
 }
@@ -442,12 +527,16 @@ struct SeenState {
     required: bool, // meaningful only when `separateRequires == true`
 }
 
-#[derive(Debug, Clone, Copy, Default)]
-struct BlockScopeState {
-    let_: SeenState,
-    const_: SeenState,
-    using: SeenState,
-    await_using: SeenState,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct AlwaysStateKey {
+    scope_id: ScopeId,
+    kind: u8,
+}
+
+impl AlwaysStateKey {
+    fn new(scope_id: ScopeId, kind: VariableDeclarationKind) -> Self {
+        Self { scope_id, kind: kind as u8 }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -496,148 +585,14 @@ struct PreviousDeclaration {
     summary: DeclSummary,
 }
 
-struct OneVarScopeChecker<'a, 'ctx> {
-    ctx: &'ctx LintContext<'a>,
-    config: &'ctx OneVarRuntimeConfig,
-    var_state: SeenState,
-    block_stack: SmallVec<[BlockScopeState; 8]>,
-}
-
-impl<'a, 'ctx> OneVarScopeChecker<'a, 'ctx> {
-    fn new(ctx: &'ctx LintContext<'a>, config: &'ctx OneVarRuntimeConfig) -> Self {
-        let mut block_stack = SmallVec::new();
-        block_stack.push(BlockScopeState::default());
-        Self { ctx, config, var_state: SeenState::default(), block_stack }
-    }
-
-    fn check_scope(&mut self, statements: &[Statement<'a>]) {
-        self.visit_statement_list(statements);
-    }
-
-    fn start_block(&mut self) {
-        self.block_stack.push(BlockScopeState::default());
-    }
-
-    fn end_block(&mut self) {
-        self.block_stack.pop();
-    }
-
-    fn current_scope_state(&self, kind: VariableDeclarationKind) -> SeenState {
-        match kind {
-            VariableDeclarationKind::Var => self.var_state,
-            VariableDeclarationKind::Let => self.block_stack.last().unwrap().let_,
-            VariableDeclarationKind::Const => self.block_stack.last().unwrap().const_,
-            VariableDeclarationKind::Using => self.block_stack.last().unwrap().using,
-            VariableDeclarationKind::AwaitUsing => self.block_stack.last().unwrap().await_using,
-        }
-    }
-
-    fn current_scope_mut(&mut self, kind: VariableDeclarationKind) -> &mut SeenState {
-        match kind {
-            VariableDeclarationKind::Var => &mut self.var_state,
-            VariableDeclarationKind::Let => &mut self.block_stack.last_mut().unwrap().let_,
-            VariableDeclarationKind::Const => &mut self.block_stack.last_mut().unwrap().const_,
-            VariableDeclarationKind::Using => &mut self.block_stack.last_mut().unwrap().using,
-            VariableDeclarationKind::AwaitUsing => {
-                &mut self.block_stack.last_mut().unwrap().await_using
-            }
-        }
-    }
-
-    fn declaration_type(kind: VariableDeclarationKind) -> &'static str {
-        match kind {
-            VariableDeclarationKind::Var => "var",
-            VariableDeclarationKind::Let => "let",
-            VariableDeclarationKind::Const => "const",
-            VariableDeclarationKind::Using => "using",
-            VariableDeclarationKind::AwaitUsing => "await using",
-        }
-    }
-
-    fn visit_statement_list(&mut self, statements: &[Statement<'a>]) {
-        let mut previous = None;
-
-        for statement in statements {
-            match statement {
-                Statement::VariableDeclaration(decl) => {
-                    let summary = self.visit_variable_declaration_with_context(
-                        decl,
-                        VarDeclContext::StatementList,
-                        previous.as_ref(),
-                    );
-                    previous = Some(PreviousDeclaration { kind: decl.kind, summary });
-                }
-                Statement::ExportNamedDeclaration(export) => {
-                    if let Some(Declaration::VariableDeclaration(decl)) = &export.declaration {
-                        self.visit_variable_declaration_with_context(
-                            decl,
-                            VarDeclContext::ExportNamedDeclaration,
-                            None,
-                        );
-                        previous = None;
-                    } else {
-                        previous = None;
-                        self.visit_statement(statement);
-                    }
-                }
-                _ => {
-                    previous = None;
-                    self.visit_statement(statement);
-                }
-            }
-        }
-    }
-
-    fn visit_variable_declaration_with_context(
-        &mut self,
-        decl: &VariableDeclaration<'a>,
-        context: VarDeclContext,
-        previous: Option<&PreviousDeclaration>,
-    ) -> DeclSummary {
-        let policy = self.config.policy(decl.kind);
-        if policy.initialized == RuntimeMode::Off && policy.uninitialized == RuntimeMode::Off {
-            return DeclSummary::default();
-        }
-
-        let summary = summarize_declaration(decl, self.config.separate_requires);
-        self.check_variable_declaration(decl, summary, policy, context, previous);
-        summary
-    }
-
-    fn check_variable_declaration(
-        &mut self,
-        decl: &VariableDeclaration<'a>,
-        summary: DeclSummary,
-        policy: KindPolicy,
-        context: VarDeclContext,
-        previous: Option<&PreviousDeclaration>,
-    ) {
-        let split_requires_reported = self.config.separate_requires
-            && policy.initialized == RuntimeMode::Always
-            && summary.has_mixed_require_groups();
-
-        if split_requires_reported {
-            self.ctx.diagnostic(one_var_diagnostic(
-                decl.span(),
-                DiagnosticKind::SplitRequires,
-                Self::declaration_type(decl.kind),
-            ));
-        }
-
-        if let Some(previous) = previous.filter(|previous| previous.kind == decl.kind) {
-            self.check_consecutive(decl, summary, previous.summary, policy);
-        }
-
-        self.check_always(decl, summary, policy, context, split_requires_reported);
-        self.check_never(decl, summary, policy, context);
-    }
-
+impl OneVar {
     fn check_consecutive(
         &self,
-        decl: &VariableDeclaration<'a>,
+        decl: &VariableDeclaration<'_>,
         summary: DeclSummary,
         previous: DeclSummary,
         policy: KindPolicy,
+        ctx: &LintContext<'_>,
     ) {
         if policy.initialized != RuntimeMode::Consecutive
             && policy.uninitialized != RuntimeMode::Consecutive
@@ -647,7 +602,7 @@ impl<'a, 'ctx> OneVarScopeChecker<'a, 'ctx> {
 
         // Intentional oxlint divergence: `require(...)` is only special when
         // `separateRequires` is enabled.
-        if self.config.separate_requires {
+        if self.0.separate_requires {
             let has_require = summary.has_require() || previous.has_require();
             let has_non_require =
                 summary.has_non_require_declarator() || previous.has_non_require_declarator();
@@ -675,28 +630,32 @@ impl<'a, 'ctx> OneVarScopeChecker<'a, 'ctx> {
         };
 
         if let Some(diagnostic) = diagnostic {
-            self.ctx.diagnostic(one_var_diagnostic(
+            ctx.diagnostic(one_var_diagnostic(
                 decl.span(),
                 diagnostic,
-                Self::declaration_type(decl.kind),
+                declaration_type(decl.kind),
             ));
         }
     }
 
     fn check_always(
-        &mut self,
-        decl: &VariableDeclaration<'a>,
+        &self,
+        decl: &VariableDeclaration<'_>,
         summary: DeclSummary,
         policy: KindPolicy,
         context: VarDeclContext,
         split_requires_reported: bool,
+        scope_id: ScopeId,
+        always_state: &mut FxHashMap<AlwaysStateKey, SeenState>,
+        ctx: &LintContext<'_>,
     ) {
-        let scope = self.current_scope_state(decl.kind);
+        let state_key = AlwaysStateKey::new(scope_id, decl.kind);
+        let scope = always_state.get(&state_key).copied().unwrap_or_default();
         let mut reported = false;
 
         if policy.initialized == RuntimeMode::Always && policy.uninitialized == RuntimeMode::Always
         {
-            let should_report = if self.config.separate_requires {
+            let should_report = if self.0.separate_requires {
                 (summary.requires > 0 && scope.required)
                     || (summary.has_non_require_group()
                         && (scope.initialized || scope.uninitialized))
@@ -706,15 +665,15 @@ impl<'a, 'ctx> OneVarScopeChecker<'a, 'ctx> {
 
             if should_report {
                 reported = true;
-                self.ctx.diagnostic(one_var_diagnostic(
+                ctx.diagnostic(one_var_diagnostic(
                     decl.span(),
                     DiagnosticKind::Combine,
-                    Self::declaration_type(decl.kind),
+                    declaration_type(decl.kind),
                 ));
             }
         } else {
             if policy.initialized == RuntimeMode::Always && summary.initialized > 0 {
-                let should_report = if self.config.separate_requires {
+                let should_report = if self.0.separate_requires {
                     (summary.non_require_initialized_count() > 0 && scope.initialized)
                         || (summary.requires > 0 && scope.required)
                 } else {
@@ -723,10 +682,10 @@ impl<'a, 'ctx> OneVarScopeChecker<'a, 'ctx> {
 
                 if should_report {
                     reported = true;
-                    self.ctx.diagnostic(one_var_diagnostic(
+                    ctx.diagnostic(one_var_diagnostic(
                         decl.span(),
                         DiagnosticKind::CombineInitialized,
-                        Self::declaration_type(decl.kind),
+                        declaration_type(decl.kind),
                     ));
                 }
             }
@@ -737,10 +696,10 @@ impl<'a, 'ctx> OneVarScopeChecker<'a, 'ctx> {
                 && !matches!(context, VarDeclContext::ForInLeft | VarDeclContext::ForOfLeft)
             {
                 reported = true;
-                self.ctx.diagnostic(one_var_diagnostic(
+                ctx.diagnostic(one_var_diagnostic(
                     decl.span(),
                     DiagnosticKind::CombineUninitialized,
-                    Self::declaration_type(decl.kind),
+                    declaration_type(decl.kind),
                 ));
             }
         }
@@ -750,18 +709,17 @@ impl<'a, 'ctx> OneVarScopeChecker<'a, 'ctx> {
         // that split, even if the original declaration already emitted a
         // visible `combine`.
         if !reported || split_requires_reported {
-            self.record_always_buckets(decl.kind, summary, policy);
+            self.record_always_buckets(summary, policy, always_state.entry(state_key).or_default());
         }
     }
 
     fn record_always_buckets(
-        &mut self,
-        kind: VariableDeclarationKind,
+        &self,
         summary: DeclSummary,
         policy: KindPolicy,
+        current_scope: &mut SeenState,
     ) {
-        let separate_requires = self.config.separate_requires;
-        let current_scope = self.current_scope_mut(kind);
+        let separate_requires = self.0.separate_requires;
 
         if policy.initialized == RuntimeMode::Always {
             if separate_requires {
@@ -785,11 +743,11 @@ impl<'a, 'ctx> OneVarScopeChecker<'a, 'ctx> {
     }
 
     fn check_never(
-        &self,
-        decl: &VariableDeclaration<'a>,
+        decl: &VariableDeclaration<'_>,
         summary: DeclSummary,
         policy: KindPolicy,
         context: VarDeclContext,
+        ctx: &LintContext<'_>,
     ) {
         if summary.total <= 1 || context == VarDeclContext::ForInit {
             return;
@@ -808,71 +766,129 @@ impl<'a, 'ctx> OneVarScopeChecker<'a, 'ctx> {
         };
 
         if let Some(diagnostic) = diagnostic {
-            self.ctx.diagnostic(one_var_diagnostic(
+            ctx.diagnostic(one_var_diagnostic(
                 decl.span(),
                 diagnostic,
-                Self::declaration_type(decl.kind),
+                declaration_type(decl.kind),
             ));
         }
     }
 }
 
-impl<'a> Visit<'a> for OneVarScopeChecker<'a, '_> {
-    // This checker walks statement structure only.
-    // Variable declarations inside expression subtrees can only appear in nested scope owners,
-    // which the runner dispatches to separately.
-    fn visit_expression(&mut self, _expression: &Expression<'a>) {}
+fn declaration_type(kind: VariableDeclarationKind) -> &'static str {
+    match kind {
+        VariableDeclarationKind::Var => "var",
+        VariableDeclarationKind::Let => "let",
+        VariableDeclarationKind::Const => "const",
+        VariableDeclarationKind::Using => "using",
+        VariableDeclarationKind::AwaitUsing => "await using",
+    }
+}
 
-    // Nested scope owners are checked by separate `run` dispatches.
-    fn visit_function(&mut self, _function: &Function<'a>, _flags: ScopeFlags) {}
-    fn visit_arrow_function_expression(&mut self, _arrow: &ArrowFunctionExpression<'a>) {}
-    fn visit_static_block(&mut self, _block: &StaticBlock<'a>) {}
-    fn visit_ts_module_declaration(&mut self, _declaration: &TSModuleDeclaration<'a>) {}
-    fn visit_ts_global_declaration(&mut self, _declaration: &TSGlobalDeclaration<'a>) {}
+fn effective_scope_id(
+    ctx: &LintContext<'_>,
+    node: &AstNode<'_>,
+    kind: VariableDeclarationKind,
+    var_scope_cache: &mut FxHashMap<ScopeId, ScopeId>,
+) -> ScopeId {
+    let node_scope_id = node.scope_id();
 
-    fn visit_block_statement(&mut self, block: &BlockStatement<'a>) {
-        self.start_block();
-        self.visit_statement_list(&block.body);
-        self.end_block();
+    if kind != VariableDeclarationKind::Var {
+        return node_scope_id;
     }
 
-    fn visit_switch_statement(&mut self, switch: &SwitchStatement<'a>) {
-        self.start_block();
-        for case in &switch.cases {
-            self.visit_statement_list(&case.consequent);
+    if let Some(scope_id) = var_scope_cache.get(&node_scope_id).copied() {
+        return scope_id;
+    }
+
+    let scoping = ctx.semantic().scoping();
+    let mut current_scope_id = node_scope_id;
+    let mut visited = SmallVec::<[ScopeId; 8]>::new();
+
+    let var_scope_id = loop {
+        if let Some(scope_id) = var_scope_cache.get(&current_scope_id).copied() {
+            break scope_id;
         }
-        self.end_block();
-    }
 
-    fn visit_for_statement(&mut self, statement: &ForStatement<'a>) {
-        self.start_block();
-        if let Some(ForStatementInit::VariableDeclaration(decl)) = &statement.init {
-            self.visit_variable_declaration_with_context(decl, VarDeclContext::ForInit, None);
+        if scoping.scope_flags(current_scope_id).is_var() {
+            break current_scope_id;
         }
-        self.visit_statement(&statement.body);
-        self.end_block();
+
+        visited.push(current_scope_id);
+        let Some(parent_scope_id) = scoping.scope_parent_id(current_scope_id) else {
+            break node_scope_id;
+        };
+        current_scope_id = parent_scope_id;
+    };
+
+    for scope_id in visited {
+        var_scope_cache.insert(scope_id, var_scope_id);
+    }
+    var_scope_cache.insert(node_scope_id, var_scope_id);
+    var_scope_id
+}
+
+// Only direct statement-list children participate in `consecutive`.
+// Non-variable direct children clear the previous declaration for that list.
+fn statement_list_parent_id(ctx: &LintContext<'_>, node_id: NodeId) -> Option<NodeId> {
+    let nodes = ctx.semantic().nodes();
+    if matches!(nodes.kind(node_id), AstKind::Program(_)) {
+        return None;
     }
 
-    fn visit_for_in_statement(&mut self, statement: &ForInStatement<'a>) {
-        self.start_block();
-        if let ForStatementLeft::VariableDeclaration(decl) = &statement.left {
-            self.visit_variable_declaration_with_context(decl, VarDeclContext::ForInLeft, None);
+    let parent_id = nodes.parent_id(node_id);
+    match nodes.kind(parent_id) {
+        AstKind::Program(_)
+        | AstKind::FunctionBody(_)
+        | AstKind::BlockStatement(_)
+        | AstKind::StaticBlock(_)
+        | AstKind::TSModuleBlock(_)
+        | AstKind::SwitchCase(_) => Some(parent_id),
+        _ => None,
+    }
+}
+
+fn classify_var_decl_context<'a>(
+    ctx: &LintContext<'a>,
+    node_id: NodeId,
+    decl: &VariableDeclaration<'a>,
+) -> VarDeclContext {
+    match ctx.semantic().nodes().parent_kind(node_id) {
+        AstKind::Program(_)
+        | AstKind::FunctionBody(_)
+        | AstKind::BlockStatement(_)
+        | AstKind::StaticBlock(_)
+        | AstKind::TSModuleBlock(_)
+        | AstKind::SwitchCase(_) => VarDeclContext::StatementList,
+        AstKind::ExportNamedDeclaration(_) => VarDeclContext::ExportNamedDeclaration,
+        AstKind::ForStatement(statement) => {
+            if let Some(ForStatementInit::VariableDeclaration(init)) = &statement.init
+                && ptr::eq(decl, init.as_ref())
+            {
+                VarDeclContext::ForInit
+            } else {
+                VarDeclContext::Other
+            }
         }
-        self.visit_statement(&statement.body);
-        self.end_block();
-    }
-
-    fn visit_for_of_statement(&mut self, statement: &ForOfStatement<'a>) {
-        self.start_block();
-        if let ForStatementLeft::VariableDeclaration(decl) = &statement.left {
-            self.visit_variable_declaration_with_context(decl, VarDeclContext::ForOfLeft, None);
+        AstKind::ForInStatement(statement) => {
+            if let ForStatementLeft::VariableDeclaration(left) = &statement.left
+                && ptr::eq(decl, left.as_ref())
+            {
+                VarDeclContext::ForInLeft
+            } else {
+                VarDeclContext::Other
+            }
         }
-        self.visit_statement(&statement.body);
-        self.end_block();
-    }
-
-    fn visit_variable_declaration(&mut self, decl: &VariableDeclaration<'a>) {
-        self.visit_variable_declaration_with_context(decl, VarDeclContext::Other, None);
+        AstKind::ForOfStatement(statement) => {
+            if let ForStatementLeft::VariableDeclaration(left) = &statement.left
+                && ptr::eq(decl, left.as_ref())
+            {
+                VarDeclContext::ForOfLeft
+            } else {
+                VarDeclContext::Other
+            }
+        }
+        _ => VarDeclContext::Other,
     }
 }
 
@@ -943,6 +959,7 @@ fn test() {
             "function foo() { let a = 1; var c = true; if (a) {let c = true; } }",
             Some(serde_json::json!(["always"])),
         ),
+        ("function f() { let a; { let {} = obj; } }", Some(serde_json::json!(["always"]))),
         (
             "function foo() { const a = 1; var c = true; if (a) {const c = true; } }",
             Some(serde_json::json!(["always"])),
@@ -1031,6 +1048,7 @@ fn test() {
             Some(serde_json::json!(["consecutive"])),
         ),
         ("class C { static { if (foo) var b; var a; } }", Some(serde_json::json!(["consecutive"]))),
+        ("var a; { var b; } var c;", Some(serde_json::json!(["consecutive"]))),
         ("using a = 0; let b = 1; const c = 2;", None),
         ("await using a = 0; let b = 1; const c = 2;", None),
         ("using a = 0, b = 1;", None),
@@ -1230,6 +1248,13 @@ fn test() {
             "function foo() { var bar = true; if (qux) { var baz = false; } else { var quxx = 42; } }",
             None,
         ),
+        ("var {} = obj; var a;", Some(serde_json::json!(["always"]))),
+        ("function f() { var a; { var {} = obj; } }", Some(serde_json::json!(["always"]))),
+        ("var {} = obj; var a;", Some(serde_json::json!(["consecutive"]))),
+        (
+            "function f() { {{{{{ var a; }}}}} {{{{{ var b; }}}}} }",
+            Some(serde_json::json!(["always"])),
+        ),
         ("var foo = () => { var bar = true; var baz = false; }", None),
         ("var foo = function() { var bar = true; if (qux) { var baz = false; } }", None),
         ("var foo; var bar;", None),
@@ -1311,6 +1336,8 @@ fn test() {
         ("await using a = 0, b = 1;", Some(serde_json::json!(["never"]))),
         ("using a = 0; using b = 1;", Some(serde_json::json!(["consecutive"]))),
         ("await using a = 0; await using b = 1;", Some(serde_json::json!(["consecutive"]))),
+        ("function f() { var a; var b; }", Some(serde_json::json!(["consecutive"]))),
+        ("const f = () => { var a; var b; };", Some(serde_json::json!(["consecutive"]))),
         ("var x = 1; var fs = require('fs');", Some(serde_json::json!(["always"]))),
         ("var x = 1; var fs = require('fs');", Some(serde_json::json!([{ "var": "consecutive" }]))),
         ("switch (x) { case 1: var a; var b; }", Some(serde_json::json!(["consecutive"]))),

@@ -1259,15 +1259,8 @@ impl RuleRunner for crate::rules::eslint::object_shorthand::ObjectShorthand {
 }
 
 impl RuleRunner for crate::rules::eslint::one_var::OneVar {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::ArrowFunctionExpression,
-        AstType::Function,
-        AstType::Program,
-        AstType::StaticBlock,
-        AstType::TSGlobalDeclaration,
-        AstType::TSModuleDeclaration,
-    ]));
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::eslint::operator_assignment::OperatorAssignment {

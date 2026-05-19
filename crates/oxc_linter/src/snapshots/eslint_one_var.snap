@@ -177,6 +177,30 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:15]
+ 1 │ var {} = obj; var a;
+   ·               ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:25]
+ 1 │ function f() { var a; { var {} = obj; } }
+   ·                         ─────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:15]
+ 1 │ var {} = obj; var a;
+   ·               ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:41]
+ 1 │ function f() { {{{{{ var a; }}}}} {{{{{ var b; }}}}} }
+   ·                                         ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
    ╭─[one_var.tsx:1:35]
  1 │ var foo = () => { var bar = true; var baz = false; }
    ·                                   ────────────────
@@ -444,6 +468,18 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[one_var.tsx:1:20]
  1 │ await using a = 0; await using b = 1;
    ·                    ──────────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:23]
+ 1 │ function f() { var a; var b; }
+   ·                       ──────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'var' statement.
+   ╭─[one_var.tsx:1:26]
+ 1 │ const f = () => { var a; var b; };
+   ·                          ──────
    ╰────
 
   ⚠ eslint(one-var): Combine this with the previous 'var' statement.
