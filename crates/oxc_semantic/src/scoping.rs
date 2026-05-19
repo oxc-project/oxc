@@ -992,7 +992,8 @@ impl Scoping {
     ///   allocates `ArenaVec` / `ArenaIdentHashMap` storage into already-owned
     ///   chunks instead of asking the OS for new ones).
     /// - The heap capacity of the flat `multi_index_vec` tables
-    ///   (`symbol_table`, `scope_table`) and the `references` `IndexVec`.
+    ///   (`symbol_table`, `scope_table`), the `references` `IndexVec`, and
+    ///   the `enum_data` `FxHashMap`s.
     ///
     /// Does **not** preserve:
     /// - The heap capacity of cell-internal containers like
@@ -1016,7 +1017,7 @@ impl Scoping {
         self.symbol_table.clear();
         self.references.clear();
         self.no_side_effects.clear();
-        self.enum_data = EnumData::default();
+        self.enum_data.clear();
         self.scope_table.clear();
 
         // 2. Replace the self-cell. We can't simply call `.clear()` on the
