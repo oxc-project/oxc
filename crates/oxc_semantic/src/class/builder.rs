@@ -54,12 +54,7 @@ impl<'a> ClassTableBuilder<'a> {
     ///
     /// Averages are computed with ceiling division so per-class capacity is
     /// at least the rounded-up mean.
-    pub fn reserve(
-        &mut self,
-        classes: usize,
-        class_elements: usize,
-        class_private_id_refs: usize,
-    ) {
+    pub fn reserve(&mut self, classes: usize, class_elements: usize, class_private_id_refs: usize) {
         self.classes.declarations.reserve(classes);
         self.classes.elements.reserve(classes);
         self.classes.private_identifier_references.reserve(classes);
