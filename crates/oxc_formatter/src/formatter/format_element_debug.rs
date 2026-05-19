@@ -241,12 +241,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                             write!(f, [token(label), token("(")]);
                         }
 
-                        StartAlign(tag::Align(count)) => {
+                        StartAlign(align) => {
                             write!(
                                 f,
                                 [
                                     token("align("),
-                                    text(f.allocator().alloc_str(&count.to_string()),),
+                                    text(f.allocator().alloc_str(&align.count().to_string()),),
                                     token(","),
                                     space(),
                                 ]
@@ -303,7 +303,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                         }
 
                         StartConditionalContent(condition) => {
-                            match condition.mode {
+                            match condition.mode() {
                                 PrintMode::Flat => {
                                     write!(f, [token("if_group_fits_on_line(")]);
                                 }
@@ -312,7 +312,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for &[FormatElement<'a>] {
                                 }
                             }
 
-                            if let Some(group_id) = condition.group_id {
+                            if let Some(group_id) = condition.group_id() {
                                 write!(
                                     f,
                                     [

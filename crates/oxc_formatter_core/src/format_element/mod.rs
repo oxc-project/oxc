@@ -158,7 +158,7 @@ impl PrintMode {
 pub struct Interned<'a>(&'a [FormatElement<'a>]);
 
 impl<'a> Interned<'a> {
-    pub fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
+    pub(crate) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
         Self(content.into_arena_slice())
     }
 }

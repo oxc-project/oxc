@@ -200,11 +200,11 @@ pub enum DedentMode {
 pub struct Condition {
     /// * Flat -> Omitted if the enclosing group is a multiline group, printed for groups fitting on a single line
     /// * Multiline -> Omitted if the enclosing group fits on a single line, printed if the group breaks over multiple lines.
-    pub mode: PrintMode,
+    pub(crate) mode: PrintMode,
 
     /// The id of the group for which it should check if it breaks or not. The group must appear in the document
     /// before the conditional group (but doesn't have to be in the ancestor chain).
-    pub group_id: Option<GroupId>,
+    pub(crate) group_id: Option<GroupId>,
 }
 
 impl Condition {
@@ -228,7 +228,7 @@ impl Condition {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Align(pub NonZeroU8);
+pub struct Align(pub(crate) NonZeroU8);
 
 impl Align {
     pub fn new(count: NonZeroU8) -> Self {
