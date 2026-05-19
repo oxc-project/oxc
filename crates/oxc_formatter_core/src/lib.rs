@@ -26,6 +26,7 @@ mod format_extensions;
 mod formatted;
 mod formatter;
 mod group_id;
+mod macros;
 mod options;
 pub mod printer;
 mod simple_context;

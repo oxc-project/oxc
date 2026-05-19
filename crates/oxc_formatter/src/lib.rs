@@ -42,6 +42,10 @@ pub use crate::service::*;
 #[cfg(feature = "detect_code_removal")]
 pub use detect_code_removal::detect_code_removal;
 pub use oxc_formatter_core::DisplayDocument;
+// Re-export the language-agnostic formatting macros from `oxc_formatter_core` so existing
+// `crate::write!` / `crate::format_args!` / `crate::dbg_write!` / `crate::best_fitting!`
+// call-sites in `oxc_formatter` continue to work without changes.
+pub use oxc_formatter_core::{best_fitting, dbg_write, format_args, write};
 
 use self::formatter::prelude::tag::Label;
 

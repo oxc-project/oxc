@@ -27,19 +27,8 @@ use crate::{
         LineMode, TextWidth,
         tag::{self, DedentMode, GroupMode, Tag},
     },
+    write as w,
 };
-
-/// Local helper that mirrors the JS-side `write!` macro by calling
-/// `Buffer::write_fmt`. Using method-call syntax allows two-phase borrows so
-/// that argument expressions can immutably borrow the formatter while the
-/// formatter is the mutable receiver of the call.
-macro_rules! w {
-    ($f:expr, [$($arg:expr),+ $(,)?]) => {
-        $f.write_fmt(
-            $crate::Arguments::new(&[$($crate::Argument::new(&$arg)),+]),
-        )
-    };
-}
 
 impl<'a> Document<'a> {
     /// Returns a wrapper that formats the document for human-readable debug display.
