@@ -288,6 +288,7 @@ impl<'a> SemanticBuilder<'a> {
             stats.references as usize,
             stats.scopes as usize,
         );
+        self.unresolved_references.reserve_exact(stats.references as usize);
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);

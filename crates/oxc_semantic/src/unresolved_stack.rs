@@ -16,6 +16,14 @@ impl<'a> UnresolvedReferences<'a> {
         Self { references: Vec::new() }
     }
 
+    /// Reserve exactly `additional` more slots in the underlying `Vec`.
+    /// Avoids growth reallocations when the expected count is known up-front
+    /// (typically from [`crate::Stats::count`]).
+    #[inline]
+    pub(crate) fn reserve_exact(&mut self, additional: usize) {
+        self.references.reserve_exact(additional);
+    }
+
     /// Push an unresolved reference to the flat list.
     #[inline]
     pub(crate) fn push(&mut self, name: Ident<'a>, reference_id: ReferenceId) {
