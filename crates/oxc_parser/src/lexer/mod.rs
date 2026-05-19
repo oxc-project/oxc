@@ -35,7 +35,7 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
-pub(crate) use byte_handlers::{ByteHandler, ByteHandlers, byte_handler_tables};
+pub use byte_handlers::{ByteHandler, ByteHandlers, byte_handler_tables};
 pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;

@@ -227,6 +227,13 @@ impl<'a, State> TraverseCtx<'a, State> {
         self.scoping.scoping_mut()
     }
 
+    /// Consume `self` and return the inner `Scoping`. Drops the traversal
+    /// ancestry and state.
+    #[inline]
+    pub(crate) fn into_scoping(self) -> Scoping {
+        self.scoping.into_scoping()
+    }
+
     /// Get iterator over scopes, starting with current scope and working up.
     ///
     /// This is a shortcut for `ctx.scoping.parent_scopes`.

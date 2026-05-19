@@ -28,6 +28,13 @@ impl<'a, State> ReusableTraverseCtx<'a, State> {
     pub fn state(&self) -> &State {
         &self.0.state
     }
+
+    /// Consume `self` and return the inner `Scoping`. Drops the traversal
+    /// ancestry and user state.
+    #[inline]
+    pub fn into_scoping(self) -> Scoping {
+        self.0.into_scoping()
+    }
 }
 
 // Internal methods

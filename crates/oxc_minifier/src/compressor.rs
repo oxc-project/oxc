@@ -66,6 +66,34 @@ impl<'a> Compressor<'a> {
         Self::run_in_loop(max_iterations, program, &mut ctx)
     }
 
+    /// Same as [`Self::dead_code_elimination_with_scoping`], but also returns
+    /// the consumed `Scoping` back to the caller after running.
+    ///
+    /// Used by callers (e.g. rolldown) that want to recycle the `Scoping`'s
+    /// bumpalo arena across builds. Pair with [`oxc_semantic::Scoping::reset`]
+    /// and [`oxc_semantic::SemanticBuilder::with_scoping`] for the rebuild
+    /// pattern.
+    ///
+    /// Returns `(total_iterations, scoping)`.
+    pub fn dead_code_elimination_with_scoping_returning_scoping(
+        self,
+        program: &mut Program<'a>,
+        scoping: Scoping,
+        options: CompressOptions,
+    ) -> (u8, Scoping) {
+        let max_iterations = options.max_iterations;
+        let state = MinifierState::new(program.source_type, options, /* dce */ true, &scoping);
+        let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
+        let normalize_options = NormalizeOptions {
+            convert_while_to_fors: false,
+            convert_const_to_let: false,
+            remove_unnecessary_use_strict: false,
+        };
+        Normalize::new(normalize_options).build(program, &mut ctx);
+        let iterations = Self::run_in_loop(max_iterations, program, &mut ctx);
+        (iterations, ctx.into_scoping())
+    }
+
     /// Fixed-point iteration loop for peephole optimizations.
     fn run_in_loop(
         max_iterations: Option<u8>,

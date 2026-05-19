@@ -68,6 +68,12 @@ impl<'a> TraverseScoping<'a> {
         &mut self.scoping
     }
 
+    /// Consume `self` and return the inner `Scoping`.
+    #[inline]
+    pub(crate) fn into_scoping(self) -> Scoping {
+        self.scoping
+    }
+
     /// Get iterator over scopes, starting with current scope and working up
     pub fn ancestor_scopes(&self) -> impl Iterator<Item = ScopeId> + '_ {
         self.scoping.scope_ancestors(self.current_scope_id)
