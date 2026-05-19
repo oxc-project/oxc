@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::{
     AstNode,
-    ast_util::is_method_call,
+    ast_util::{is_method_call, outermost_paren_parent},
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
@@ -172,16 +172,9 @@ impl Rule for NoUselessUndefined {
             AstKind::IdentifierReference(undefined_literal)
                 if undefined_literal.name == "undefined" =>
             {
-                let mut parent_node: &AstNode<'a> = node;
-                loop {
-                    let parent = ctx.nodes().parent_node(parent_node.id());
-                    if let AstKind::ParenthesizedExpression(_) = parent.kind() {
-                        parent_node = parent;
-                    } else {
-                        break;
-                    }
-                }
-                let parent_node = ctx.nodes().parent_node(parent_node.id());
+                let Some(parent_node) = outermost_paren_parent(node, ctx) else {
+                    return;
+                };
                 let parent_node_kind = parent_node.kind();
 
                 match parent_node_kind {
