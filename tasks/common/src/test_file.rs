@@ -75,8 +75,8 @@ impl TestFiles {
             files: [
                 // TypeScript syntax (2.81MB)
                 "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts",
-                // Real world app tsx (1.0M)
-                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx",
+                // Real world app tsx (415KB) — excalidraw App.tsx (master @ f6d85bc8)
+                "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
                 // Real world content-heavy app jsx (3K)
                 "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
                 // Heavy with classes (554K)
