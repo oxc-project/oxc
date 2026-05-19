@@ -148,10 +148,7 @@ fn has_function_type(opts: &ObjectExpression<'_>) -> bool {
 }
 
 fn is_function_identifier(expr: &Expression<'_>) -> bool {
-    if let Expression::Identifier(ident) = expr.get_inner_expression() {
-        return ident.name == "Function";
-    }
-    false
+    expr.get_inner_expression().is_specific_id("Function")
 }
 
 #[test]
