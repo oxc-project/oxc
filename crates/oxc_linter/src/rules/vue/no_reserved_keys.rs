@@ -13,6 +13,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::is_vue_component_options_object,
 };
 
 /// Reserved instance properties of the Vue instance (Vue 2/3 common).
@@ -147,18 +148,8 @@ impl Rule for NoReservedKeys {
             return;
         }
 
-        let mut ancestors = ctx.nodes().ancestors(node.id());
-        let Some(parent) = ancestors.next() else { return };
-        if !matches!(parent.kind(), AstKind::ObjectExpression(_)) {
-            return;
-        }
-        let Some(grand) = ancestors.next() else { return };
-        let in_vue = matches!(grand.kind(), AstKind::ExportDefaultDeclaration(_))
-            || matches!(grand.kind(), AstKind::CallExpression(c)
-                if c.callee.get_identifier_reference().is_some_and(|i| i.name == "defineComponent"))
-            || matches!(grand.kind(), AstKind::NewExpression(n)
-                if n.callee.get_identifier_reference().is_some_and(|i| i.name == "Vue"));
-        if !in_vue {
+        let Some(parent) = ctx.nodes().ancestors(node.id()).next() else { return };
+        if !is_vue_component_options_object(parent, ctx) {
             return;
         }
 
@@ -538,6 +529,79 @@ fn test() {
                 </script>
             ",
             Some(serde_json::json!([{ "groups": ["extraGroup"] }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // Component definition forms beyond `export default` / `defineComponent` / `new Vue`
+        (
+            "
+                <script>
+                createApp({
+                  methods: { $emit() {} }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                Vue.component('foo', {
+                  props: ['$data']
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                Vue.extend({
+                  methods: { $emit() {} }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                Vue.mixin({
+                  data() { return { _foo: 1 } }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                app.component('foo', {
+                  computed: { $forceUpdate() {} }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                defineNuxtComponent({
+                  methods: { $emit() {} }
+                })
+                </script>
+            ",
+            None,
             None,
             Some(PathBuf::from("test.vue")),
         ),

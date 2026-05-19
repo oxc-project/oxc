@@ -137,3 +137,51 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────
  5 │                 }
    ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
+   ╭─[no_reserved_keys.tsx:4:30]
+ 3 │                 createApp({
+ 4 │                   methods: { $emit() {} }
+   ·                              ─────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$data` is reserved.
+   ╭─[no_reserved_keys.tsx:4:27]
+ 3 │                 Vue.component('foo', {
+ 4 │                   props: ['$data']
+   ·                           ───────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
+   ╭─[no_reserved_keys.tsx:4:30]
+ 3 │                 Vue.extend({
+ 4 │                   methods: { $emit() {} }
+   ·                              ─────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+   ╭─[no_reserved_keys.tsx:4:37]
+ 3 │                 Vue.mixin({
+ 4 │                   data() { return { _foo: 1 } }
+   ·                                     ────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$forceUpdate` is reserved.
+   ╭─[no_reserved_keys.tsx:4:31]
+ 3 │                 app.component('foo', {
+ 4 │                   computed: { $forceUpdate() {} }
+   ·                               ────────────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
+   ╭─[no_reserved_keys.tsx:4:30]
+ 3 │                 defineNuxtComponent({
+ 4 │                   methods: { $emit() {} }
+   ·                              ─────
+ 5 │                 })
+   ╰────
