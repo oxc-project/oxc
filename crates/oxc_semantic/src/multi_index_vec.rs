@@ -226,6 +226,29 @@ macro_rules! multi_index_vec {
                 (0..len).map(|i| unsafe { <$idx as ::oxc_index::Idx>::from_usize_unchecked(i) })
             }
 
+            /// Drop all elements and set length to 0. Preserves the underlying allocation
+            /// (and therefore capacity), so subsequent pushes can reuse the buffer without
+            /// reallocating.
+            #[allow(dead_code)]
+            $vis fn clear(&mut self) {
+                let len = self.len as usize;
+                if len == 0 {
+                    return;
+                }
+                self.len = 0;
+                $(
+                    if ::core::mem::needs_drop::<$fty>() {
+                        for i in 0..len {
+                            // SAFETY: `i < len`, so the pointer is within the
+                            // currently-initialized portion of the allocation.
+                            unsafe {
+                                ::core::ptr::drop_in_place(self.$fname.as_ptr().add(i));
+                            }
+                        }
+                    }
+                )*
+            }
+
             #[inline(always)]
             fn checked_idx(&self, id: $idx) -> usize {
                 let idx = ::oxc_index::Idx::index(id);
@@ -417,5 +440,25 @@ mod tests {
 
         assert_eq!(table.values(id), "a1");
         assert_eq!(clone.values(id), "a2");
+    }
+
+    #[test]
+    fn clear_drops_elements_and_preserves_capacity() {
+        let mut table = StringTable::new();
+        table.reserve(4);
+        let cap_before = table.cap;
+        table.push(String::from("a"));
+        table.push(String::from("b"));
+        table.push(String::from("c"));
+        assert_eq!(table.len(), 3);
+
+        table.clear();
+        assert_eq!(table.len(), 0);
+        assert!(table.is_empty());
+        assert_eq!(table.cap, cap_before, "capacity should be preserved");
+
+        // Re-push to make sure the cleared buffer is reusable.
+        table.push(String::from("x"));
+        assert_eq!(table.values(StringId::from(0usize)), "x");
     }
 }
