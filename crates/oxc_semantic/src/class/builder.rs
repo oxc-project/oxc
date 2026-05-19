@@ -19,11 +19,53 @@ use super::{
 pub struct ClassTableBuilder<'a> {
     pub current_class_id: Option<ClassId>,
     pub classes: ClassTable<'a>,
+    /// Average number of elements per class, derived from `Stats`. Used to
+    /// pre-size the inner `elements` `IndexVec` when a new class is declared.
+    /// `0` until [`Self::reserve`] is called.
+    elements_capacity_per_class: usize,
+    /// Average number of private-id references per class, derived from `Stats`.
+    /// Used to pre-size the inner `private_identifier_references` `Vec`.
+    /// `0` until [`Self::reserve`] is called.
+    private_id_refs_capacity_per_class: usize,
 }
 
 impl<'a> ClassTableBuilder<'a> {
     pub fn new() -> Self {
-        Self { current_class_id: None, classes: ClassTable::default() }
+        Self {
+            current_class_id: None,
+            classes: ClassTable::default(),
+            elements_capacity_per_class: 0,
+            private_id_refs_capacity_per_class: 0,
+        }
+    }
+
+    /// Reserve capacity in `ClassTable`'s outer per-class `IndexVec`s and
+    /// store per-class average sizes for use when declaring each class.
+    ///
+    /// - `classes`: pre-reserves `declarations`, `elements`, and
+    ///   `private_identifier_references` outer `IndexVec`s.
+    /// - `class_elements`: total class elements across all classes. Used to
+    ///   compute the average per-class element count, which sizes each class's
+    ///   inner `elements` `IndexVec` on declaration. Avoids first-growth
+    ///   reallocations inside `add_element`.
+    /// - `class_private_id_refs`: total `PrivateIdentifier` count across all
+    ///   classes. Used the same way for the inner `private_identifier_references`
+    ///   `Vec`.
+    ///
+    /// Averages are computed with ceiling division so per-class capacity is
+    /// at least the rounded-up mean.
+    pub fn reserve(
+        &mut self,
+        classes: usize,
+        class_elements: usize,
+        class_private_id_refs: usize,
+    ) {
+        self.classes.declarations.reserve(classes);
+        self.classes.elements.reserve(classes);
+        self.classes.private_identifier_references.reserve(classes);
+        // ceil(total / classes), guarded against zero divisor.
+        self.elements_capacity_per_class = class_elements.div_ceil(classes.max(1));
+        self.private_id_refs_capacity_per_class = class_private_id_refs.div_ceil(classes.max(1));
     }
 
     pub fn build(self) -> ClassTable<'a> {
@@ -37,7 +79,12 @@ impl<'a> ClassTableBuilder<'a> {
         nodes: &AstNodes,
     ) {
         let parent_id = nodes.parent_id(current_node_id);
-        self.current_class_id = Some(self.classes.declare_class(self.current_class_id, parent_id));
+        self.current_class_id = Some(self.classes.declare_class(
+            self.current_class_id,
+            parent_id,
+            self.elements_capacity_per_class,
+            self.private_id_refs_capacity_per_class,
+        ));
 
         for element in &class.body {
             match element {

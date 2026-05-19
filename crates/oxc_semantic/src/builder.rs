@@ -289,19 +289,36 @@ impl<'a> SemanticBuilder<'a> {
             stats.scopes as usize,
         );
         self.unresolved_references.reserve_exact(stats.references as usize);
+        self.class_table_builder.reserve(
+            stats.classes as usize,
+            stats.class_elements as usize,
+            stats.class_private_id_refs as usize,
+        );
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
 
         // Check that estimated counts accurately (unless in release mode)
         #[cfg(debug_assertions)]
+        #[expect(clippy::cast_possible_truncation)]
         if let Some(stats) = check_stats {
-            #[expect(clippy::cast_possible_truncation)]
+            let actual_class_elements: u32 =
+                self.class_table_builder.classes.elements.iter().map(|v| v.len() as u32).sum();
+            let actual_private_id_refs: u32 = self
+                .class_table_builder
+                .classes
+                .private_identifier_references
+                .iter()
+                .map(|v| v.len() as u32)
+                .sum();
             let actual_stats = Stats::new(
                 self.nodes.len() as u32,
                 self.scoping.scopes_len() as u32,
                 self.scoping.symbols_len() as u32,
                 self.scoping.references.len() as u32,
+                self.class_table_builder.classes.len() as u32,
+                actual_class_elements,
+                actual_private_id_refs,
             );
             stats.assert_accurate(actual_stats);
         }

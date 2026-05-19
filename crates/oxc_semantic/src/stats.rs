@@ -2,7 +2,10 @@ use std::cell::Cell;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, IdentifierReference, Program, TSEnumMemberName},
+    ast::{
+        AccessorProperty, BindingIdentifier, Class, IdentifierReference, MethodDefinition,
+        PrivateIdentifier, Program, PropertyDefinition, TSEnumMemberName,
+    },
 };
 use oxc_ast_visit::{Visit, walk::walk_ts_enum_member_name};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
@@ -73,12 +76,35 @@ pub struct Stats {
     pub symbols: u32,
     /// Number of identifier references.
     pub references: u32,
+    /// Number of classes (`ClassDeclaration` + `ClassExpression`). Used to
+    /// pre-allocate `ClassTable`'s per-class outer `IndexVec`s.
+    pub classes: u32,
+    /// Total number of class elements (`PropertyDefinition`, `MethodDefinition`,
+    /// and `AccessorProperty` nodes) across all classes. Combined with
+    /// `classes`, gives the average elements per class — used to pre-size the
+    /// *inner* `elements` `IndexVec` for each class. May over-estimate (e.g.
+    /// counts constructors and TypeScript-syntax methods that
+    /// `ClassTableBuilder` filters out).
+    pub class_elements: u32,
+    /// Total number of `PrivateIdentifier` nodes — used to pre-size the inner
+    /// `private_identifier_references` `Vec` for each class. May over-estimate
+    /// (`PrivateIdentifier`s outside `PrivateInExpression` / member expressions
+    /// don't become references).
+    pub class_private_id_refs: u32,
 }
 
 impl Stats {
     /// Create new [`Stats`] from specified counts.
-    pub fn new(nodes: u32, scopes: u32, symbols: u32, references: u32) -> Self {
-        Stats { nodes, scopes, symbols, references }
+    pub fn new(
+        nodes: u32,
+        scopes: u32,
+        symbols: u32,
+        references: u32,
+        classes: u32,
+        class_elements: u32,
+        class_private_id_refs: u32,
+    ) -> Self {
+        Stats { nodes, scopes, symbols, references, classes, class_elements, class_private_id_refs }
     }
 
     /// Gather [`Stats`] by visiting AST and counting nodes, scopes, symbols, and references.
@@ -111,6 +137,9 @@ impl Stats {
         self.scopes = increase(self.scopes);
         self.symbols = increase(self.symbols);
         self.references = increase(self.references);
+        self.classes = increase(self.classes);
+        self.class_elements = increase(self.class_elements);
+        self.class_private_id_refs = increase(self.class_private_id_refs);
 
         self
     }
@@ -123,6 +152,7 @@ impl Stats {
         assert_eq!(self.nodes, actual.nodes, "nodes count mismatch");
         assert_eq!(self.scopes, actual.scopes, "scopes count mismatch");
         assert_eq!(self.references, actual.references, "references count mismatch");
+        assert_eq!(self.classes, actual.classes, "classes count mismatch");
         // `Counter` may overestimate number of symbols, because multiple `BindingIdentifier`s
         // can result in only a single symbol.
         // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
@@ -130,6 +160,17 @@ impl Stats {
         // It's allocating with *not enough* capacity which is costly, as then the `Vec`
         // will grow and reallocate.
         assert_ge!(self.symbols, actual.symbols, "symbols count mismatch");
+        // `Counter` may overestimate `class_elements` (counts constructors and
+        // TS-syntax methods that `ClassTableBuilder` filters out from
+        // `add_element`) and `class_private_id_refs` (`PrivateIdentifier`s
+        // outside `PrivateInExpression`/member expression context don't become
+        // references). Over-estimation is fine for reserve-capacity purposes.
+        assert_ge!(self.class_elements, actual.class_elements, "class_elements count mismatch");
+        assert_ge!(
+            self.class_private_id_refs,
+            actual.class_private_id_refs,
+            "class_private_id_refs count mismatch"
+        );
     }
 }
 
@@ -166,5 +207,38 @@ impl<'a> Visit<'a> for Counter {
     fn visit_ts_enum_member_name(&mut self, it: &TSEnumMemberName<'a>) {
         self.stats.symbols += 1;
         walk_ts_enum_member_name(self, it);
+    }
+
+    #[inline]
+    fn visit_class(&mut self, class: &Class<'a>) {
+        self.stats.classes += 1;
+        oxc_ast_visit::walk::walk_class(self, class);
+    }
+
+    #[inline]
+    fn visit_property_definition(&mut self, it: &PropertyDefinition<'a>) {
+        self.stats.class_elements += 1;
+        oxc_ast_visit::walk::walk_property_definition(self, it);
+    }
+
+    #[inline]
+    fn visit_method_definition(&mut self, it: &MethodDefinition<'a>) {
+        self.stats.class_elements += 1;
+        oxc_ast_visit::walk::walk_method_definition(self, it);
+    }
+
+    #[inline]
+    fn visit_accessor_property(&mut self, it: &AccessorProperty<'a>) {
+        self.stats.class_elements += 1;
+        oxc_ast_visit::walk::walk_accessor_property(self, it);
+    }
+
+    #[inline]
+    fn visit_private_identifier(&mut self, _: &PrivateIdentifier<'a>) {
+        // Override (rather than relying on default walk + `enter_node`) because
+        // `PrivateIdentifier` has no children to walk. Counts the node manually,
+        // mirroring `visit_identifier_reference`.
+        self.stats.nodes += 1;
+        self.stats.class_private_id_refs += 1;
     }
 }

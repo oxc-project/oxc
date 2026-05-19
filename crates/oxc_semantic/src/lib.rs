@@ -217,13 +217,19 @@ impl<'a> Semantic<'a> {
     }
 
     /// Get statistics about data held in `Semantic`.
+    #[expect(clippy::cast_possible_truncation)]
     pub fn stats(&self) -> Stats {
-        #[expect(clippy::cast_possible_truncation)]
+        let class_elements: u32 = self.classes.elements.iter().map(|v| v.len() as u32).sum();
+        let class_private_id_refs: u32 =
+            self.classes.private_identifier_references.iter().map(|v| v.len() as u32).sum();
         Stats::new(
             self.nodes.len() as u32,
             self.scoping.scopes_len() as u32,
             self.scoping.symbols_len() as u32,
             self.scoping.references.len() as u32,
+            self.classes.len() as u32,
+            class_elements,
+            class_private_id_refs,
         )
     }
 

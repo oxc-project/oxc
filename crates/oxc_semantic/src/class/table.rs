@@ -110,13 +110,26 @@ impl<'a> ClassTable<'a> {
         self.elements[class_id].iter().any(|p| p.is_private && p.name == name)
     }
 
-    pub fn declare_class(&mut self, parent_id: Option<ClassId>, node_id: NodeId) -> ClassId {
+    /// Declare a new class.
+    ///
+    /// `elements_capacity` / `private_id_refs_capacity` pre-size the *inner*
+    /// vecs for this class. Pass `0` when no estimate is available; pass an
+    /// average derived from [`crate::Stats::class_elements`] /
+    /// [`crate::Stats::class_private_id_refs`] to avoid the first growth in
+    /// `add_element` / `add_private_identifier_reference`.
+    pub fn declare_class(
+        &mut self,
+        parent_id: Option<ClassId>,
+        node_id: NodeId,
+        elements_capacity: usize,
+        private_id_refs_capacity: usize,
+    ) -> ClassId {
         let class_id = self.declarations.push(node_id);
         if let Some(parent_id) = parent_id {
             self.parent_ids.insert(class_id, parent_id);
         }
-        self.elements.push(IndexVec::default());
-        self.private_identifier_references.push(Vec::new());
+        self.elements.push(IndexVec::with_capacity(elements_capacity));
+        self.private_identifier_references.push(Vec::with_capacity(private_id_refs_capacity));
         class_id
     }
 
