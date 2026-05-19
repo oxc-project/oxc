@@ -28,6 +28,11 @@ impl<'a, State> ReusableTraverseCtx<'a, State> {
     pub fn state(&self) -> &State {
         &self.0.state
     }
+
+    /// Consume [`ReusableTraverseCtx`] and return [`Scoping`].
+    pub fn into_scoping(self) -> Scoping {
+        self.0.scoping.into_scoping()
+    }
 }
 
 // Internal methods

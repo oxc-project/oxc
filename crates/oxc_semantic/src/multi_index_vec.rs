@@ -134,6 +134,24 @@ macro_rules! multi_index_vec {
                 self.len == 0
             }
 
+            /// Clear all elements while keeping the current allocation.
+            #[allow(dead_code)]
+            $vis fn clear(&mut self) {
+                let len = self.len as usize;
+                $(
+                    if ::core::mem::needs_drop::<$fty>() {
+                        for i in 0..len {
+                            // SAFETY: `i < len <= cap`, so the pointer is within the allocation.
+                            // Each initialized element is dropped exactly once.
+                            unsafe {
+                                ::core::ptr::drop_in_place(self.$fname.as_ptr().add(i));
+                            }
+                        }
+                    }
+                )*
+                self.len = 0;
+            }
+
             /// Reserve capacity for at least `additional` more elements.
             $vis fn reserve(&mut self, additional: usize) {
                 let required = (self.len as usize).checked_add(additional).expect("capacity overflow");
@@ -417,5 +435,24 @@ mod tests {
 
         assert_eq!(table.values(id), "a1");
         assert_eq!(clone.values(id), "a2");
+    }
+
+    #[test]
+    fn clear_keeps_capacity_and_allows_reuse() {
+        let mut table = StringTable::new();
+        table.reserve(2);
+        let id = table.push(String::from("a"));
+        table.push(String::from("b"));
+        assert_eq!(table.len(), 2);
+        assert_eq!(table.cap, 4);
+        assert_eq!(table.values(id), "a");
+
+        table.clear();
+        assert!(table.is_empty());
+        assert_eq!(table.cap, 4);
+
+        let id = table.push(String::from("c"));
+        assert_eq!(table.len(), 1);
+        assert_eq!(table.values(id), "c");
     }
 }

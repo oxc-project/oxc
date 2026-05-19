@@ -134,6 +134,16 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
+/// Data returned by [`SemanticBuilder::build_scoping`].
+pub struct SemanticScopingBuilderReturn {
+    /// Built scoping model.
+    pub scoping: Scoping,
+    /// Diagnostics collected during semantic analysis.
+    pub errors: Vec<OxcDiagnostic>,
+    /// Statistics for the rebuilt AST and scoping data.
+    pub stats: Stats,
+}
+
 impl Default for SemanticBuilder<'_> {
     fn default() -> Self {
         Self::new()
@@ -231,6 +241,17 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_stats(mut self, stats: Stats) -> Self {
         self.stats = Some(stats);
+        self
+    }
+
+    /// Reuse a stale [`Scoping`] allocation for a fresh semantic rebuild.
+    ///
+    /// All old semantic facts are cleared. Only backing allocation capacity is kept.
+    #[must_use]
+    pub fn with_recycled_scoping(mut self, mut scoping: Scoping) -> Self {
+        scoping.clear_reusing_allocations();
+        self.current_scope_id = scoping.root_scope_id();
+        self.scoping = scoping;
         self
     }
 
@@ -334,6 +355,32 @@ impl<'a> SemanticBuilder<'a> {
             cfg: (),
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
+    }
+
+    /// Build semantic data and return only the resulting [`Scoping`].
+    ///
+    /// This is intended for transform/rebuild pipelines that do not need to retain
+    /// [`Semantic`] after the rebuild. It keeps the normal full-build hot path unchanged while
+    /// still allowing callers to recycle stale [`Scoping`] storage with
+    /// [`SemanticBuilder::with_recycled_scoping`].
+    ///
+    /// # Panics
+    /// Panics if syntax checking or CFG construction is enabled.
+    pub fn build_scoping(self, program: &'a Program<'a>) -> SemanticScopingBuilderReturn {
+        assert!(
+            !self.check_syntax_error,
+            "SemanticBuilder::build_scoping requires syntax checks disabled"
+        );
+        #[cfg(feature = "cfg")]
+        assert!(self.cfg.is_none(), "SemanticBuilder::build_scoping cannot build CFG");
+
+        let ret = self.build(program);
+        let stats = ret.semantic.stats();
+        SemanticScopingBuilderReturn {
+            scoping: ret.semantic.into_scoping(),
+            errors: ret.errors,
+            stats,
+        }
     }
 
     /// Push a Syntax Error

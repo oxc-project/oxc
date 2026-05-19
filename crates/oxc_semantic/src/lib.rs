@@ -45,7 +45,7 @@ mod unresolved_stack;
 
 #[cfg(feature = "linter")]
 pub use ast_types_bitset::AstTypesBitset;
-pub use builder::{SemanticBuilder, SemanticBuilderReturn};
+pub use builder::{SemanticBuilder, SemanticBuilderReturn, SemanticScopingBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
 #[cfg(feature = "jsdoc")]
 pub use jsdoc::JSDocFinder;
@@ -349,6 +349,174 @@ mod tests {
 
         let second = SemanticBuilder::new().with_check_syntax_error(true).build(&parse.program);
         assert!(second.errors.is_empty());
+    }
+
+    fn build_full_scoping(source: &str, source_type: SourceType) -> (Scoping, Stats) {
+        let allocator = Allocator::default();
+        let parse = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+        assert!(parse.errors.is_empty(), "Parse error: {}", parse.errors[0]);
+
+        let semantic = SemanticBuilder::new().with_enum_eval(true).build(&parse.program);
+        assert!(semantic.errors.is_empty(), "Semantic error: {}", semantic.errors[0]);
+
+        let stats = semantic.semantic.stats();
+        (semantic.semantic.into_scoping(), stats)
+    }
+
+    fn build_scoping(
+        source: &str,
+        source_type: SourceType,
+        recycled_scoping: Option<Scoping>,
+    ) -> (Scoping, Stats) {
+        let allocator = Allocator::default();
+        let parse = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+        assert!(parse.errors.is_empty(), "Parse error: {}", parse.errors[0]);
+
+        let mut builder = SemanticBuilder::new().with_enum_eval(true);
+        if let Some(scoping) = recycled_scoping {
+            builder = builder.with_recycled_scoping(scoping);
+        }
+        let semantic = builder.build_scoping(&parse.program);
+        assert!(semantic.errors.is_empty(), "Semantic error: {}", semantic.errors[0]);
+
+        (semantic.scoping, semantic.stats)
+    }
+
+    fn scoping_snapshot(scoping: &Scoping, stats: Stats) -> Vec<String> {
+        let mut rows = vec![format!("stats:{stats:?}")];
+
+        for scope_id in scoping.scope_descendants_from_root() {
+            let mut bindings = scoping
+                .get_bindings(scope_id)
+                .iter()
+                .map(|(name, symbol_id)| format!("{}:{}", name.as_str(), usize::from(*symbol_id)))
+                .collect::<Vec<_>>();
+            bindings.sort_unstable();
+            rows.push(format!(
+                "scope:{} parent:{:?} node:{} flags:{:?} bindings:{bindings:?}",
+                usize::from(scope_id),
+                scoping.scope_parent_id(scope_id).map(usize::from),
+                usize::from(scoping.get_node_id(scope_id)),
+                scoping.scope_flags(scope_id),
+            ));
+        }
+
+        for symbol_id in scoping.symbol_ids() {
+            let redeclarations = scoping
+                .symbol_redeclarations(symbol_id)
+                .iter()
+                .map(|redeclaration| {
+                    format!(
+                        "{:?}@{:?}:{}",
+                        redeclaration.flags,
+                        redeclaration.span,
+                        usize::from(redeclaration.declaration)
+                    )
+                })
+                .collect::<Vec<_>>();
+            let references = scoping
+                .get_resolved_reference_ids(symbol_id)
+                .iter()
+                .map(|reference_id| usize::from(*reference_id))
+                .collect::<Vec<_>>();
+            let enum_value = scoping
+                .get_enum_member_value(symbol_id)
+                .map(|value| format!("{value:?}"))
+                .unwrap_or_default();
+            rows.push(format!(
+                "symbol:{} name:{} scope:{} decl:{} span:{:?} flags:{:?} refs:{references:?} redecl:{redeclarations:?} enum:{enum_value}",
+                usize::from(symbol_id),
+                scoping.symbol_name(symbol_id),
+                usize::from(scoping.symbol_scope_id(symbol_id)),
+                usize::from(scoping.symbol_declaration(symbol_id)),
+                scoping.symbol_span(symbol_id),
+                scoping.symbol_flags(symbol_id),
+            ));
+        }
+
+        for (reference_id, reference) in scoping.references.iter_enumerated() {
+            let symbol = reference
+                .symbol_id()
+                .map(|symbol_id| {
+                    format!("{}:{}", scoping.symbol_name(symbol_id), usize::from(symbol_id))
+                })
+                .unwrap_or_default();
+            rows.push(format!(
+                "reference:{} node:{} scope:{} symbol:{symbol} flags:{:?}",
+                usize::from(reference_id),
+                usize::from(reference.node_id()),
+                usize::from(reference.scope_id()),
+                reference.flags(),
+            ));
+        }
+
+        let mut unresolved = scoping
+            .root_unresolved_references()
+            .iter()
+            .map(|(name, references)| {
+                let references = references.iter().map(|id| usize::from(*id)).collect::<Vec<_>>();
+                format!("{}:{references:?}", name.as_str())
+            })
+            .collect::<Vec<_>>();
+        unresolved.sort_unstable();
+        rows.push(format!("unresolved:{unresolved:?}"));
+
+        let mut pure = scoping
+            .no_side_effects()
+            .iter()
+            .map(|symbol_id| {
+                format!("{}:{}", scoping.symbol_name(*symbol_id), usize::from(*symbol_id))
+            })
+            .collect::<Vec<_>>();
+        pure.sort_unstable();
+        rows.push(format!("pure:{pure:?}"));
+
+        rows
+    }
+
+    #[test]
+    fn build_scoping_matches_full_build() {
+        let source = r"
+            /* @__NO_SIDE_EFFECTS__ */ function pureFn() {}
+            (function named(named) { var named; return named; })();
+            var hoisted;
+            if (true) { function annex() {} }
+            enum E { A = 1, B = A + 2 }
+            namespace N {
+                export const x = E.B;
+                export import Alias = N;
+            }
+            declare const ambient: string;
+            class C {
+                #x = 1;
+                method() { return this.#x; }
+                check(value) { return #x in value; }
+            }
+            try { throw 1; } catch (caught) { var caught; }
+            rootMissing(pureFn, ambient);
+        ";
+        let source_type = SourceType::ts().with_module(true);
+
+        let (full_scoping, full_stats) = build_full_scoping(source, source_type);
+        let full_snapshot = scoping_snapshot(&full_scoping, full_stats);
+
+        let (scoping, scoping_stats) = build_scoping(source, source_type, None);
+        assert_eq!(scoping_snapshot(&scoping, scoping_stats), full_snapshot);
+
+        let recycled_source = "const stale = 1; stale; missingStale;";
+        let (recycled_scoping, _) = build_scoping(recycled_source, source_type, Some(scoping));
+        let (recycled_scoping, recycled_stats) =
+            build_scoping(source, source_type, Some(recycled_scoping));
+        assert_eq!(scoping_snapshot(&recycled_scoping, recycled_stats), full_snapshot);
+    }
+
+    #[test]
+    #[should_panic(expected = "SemanticBuilder::build_scoping requires syntax checks disabled")]
+    fn build_scoping_rejects_syntax_checks() {
+        let allocator = Allocator::default();
+        let source = "let x = 1;";
+        let parse = oxc_parser::Parser::new(&allocator, source, SourceType::default()).parse();
+        SemanticBuilder::new().with_check_syntax_error(true).build_scoping(&parse.program);
     }
 
     #[test]

@@ -30,4 +30,9 @@ impl EnumData {
     pub(crate) fn add_body_scope(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
         self.body_scopes.entry(symbol_id).or_default().push(scope_id);
     }
+
+    pub(crate) fn clear(&mut self) {
+        self.member_values.clear();
+        self.body_scopes.clear();
+    }
 }

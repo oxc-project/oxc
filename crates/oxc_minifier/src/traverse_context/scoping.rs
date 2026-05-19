@@ -368,6 +368,11 @@ impl TraverseScoping<'_> {
         }
     }
 
+    /// Consume [`TraverseScoping`] and return [`Scoping`].
+    pub(super) fn into_scoping(self) -> Scoping {
+        self.scoping
+    }
+
     /// Set current scope ID
     #[inline]
     pub(crate) fn set_current_scope_id(&mut self, scope_id: ScopeId) {

@@ -54,6 +54,16 @@ impl<'a> Compressor<'a> {
         scoping: Scoping,
         options: CompressOptions,
     ) -> u8 {
+        self.dead_code_elimination_with_scoping_returning_scoping(program, scoping, options).0
+    }
+
+    /// Returns total number of iterations ran and the stale scoping storage after DCE.
+    pub fn dead_code_elimination_with_scoping_returning_scoping(
+        self,
+        program: &mut Program<'a>,
+        scoping: Scoping,
+        options: CompressOptions,
+    ) -> (u8, Scoping) {
         let max_iterations = options.max_iterations;
         let state = MinifierState::new(program.source_type, options, /* dce */ true, &scoping);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
@@ -63,7 +73,8 @@ impl<'a> Compressor<'a> {
             remove_unnecessary_use_strict: false,
         };
         Normalize::new(normalize_options).build(program, &mut ctx);
-        Self::run_in_loop(max_iterations, program, &mut ctx)
+        let iterations = Self::run_in_loop(max_iterations, program, &mut ctx);
+        (iterations, ctx.into_scoping())
     }
 
     /// Fixed-point iteration loop for peephole optimizations.
