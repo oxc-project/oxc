@@ -76,14 +76,13 @@ impl Rule for NoDeprecatedPropsDefaultThis {
 
         // Walk up to the lexical `this` binding. Arrow functions are skipped
         // because they bind `this` lexically.
-        let mut binding_fn_id = None;
-        for ancestor in nodes.ancestors(node.id()) {
-            if matches!(ancestor.kind(), AstKind::Function(_)) {
-                binding_fn_id = Some(ancestor.id());
-                break;
-            }
-        }
-        let Some(fn_id) = binding_fn_id else { return };
+        let Some(fn_id) = nodes
+            .ancestors(node.id())
+            .find(|ancestor| matches!(ancestor.kind(), AstKind::Function(_)))
+            .map(AstNode::id)
+        else {
+            return;
+        };
 
         let prop_node = nodes.parent_node(fn_id);
         let AstKind::ObjectProperty(default_prop) = prop_node.kind() else { return };
