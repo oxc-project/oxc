@@ -252,6 +252,41 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Provide an existing [`Scoping`] for the builder to reuse.
+    ///
+    /// The provided `scoping` is *not* re-initialized by this method — it must
+    /// already be empty. Call [`Scoping::reset`] on a previously-built `Scoping`
+    /// first if you want to recycle its bumpalo arena and heap capacities.
+    ///
+    /// # Why
+    ///
+    /// `SemanticBuilder` is sometimes invoked multiple times against the same
+    /// program (e.g. rolldown rebuilds `Scoping` after each transformer /
+    /// define / inject / DCE pass, because those passes can mutate the AST in
+    /// ways that invalidate the previous `Scoping`). A fresh `Scoping::default()`
+    /// for every rebuild allocates a new bumpalo arena and grows the flat
+    /// `IndexVec` tables from zero. Passing the reset-then-rebuild `Scoping`
+    /// here avoids both costs.
+    ///
+    /// # Panics
+    ///
+    /// Debug-only: panics if `scoping` is non-empty when `build` is called.
+    #[must_use]
+    pub fn with_scoping(mut self, scoping: Scoping) -> Self {
+        debug_assert!(
+            scoping.symbols_is_empty()
+                && scoping.scopes_is_empty()
+                && scoping.references_len() == 0,
+            "SemanticBuilder::with_scoping requires a reset Scoping; \
+             call Scoping::reset() on it first"
+        );
+        self.scoping = scoping;
+        // `current_scope_id` is tracked separately and is set to the root
+        // scope id in `build()` before any scopes exist; nothing to update
+        // here.
+        self
+    }
+
     /// Finalize the builder.
     ///
     /// # Panics
