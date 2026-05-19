@@ -1,3 +1,4 @@
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
@@ -9,7 +10,7 @@ use crate::{TraverseCtx, state::ObjectPropertyUsageState};
 
 use super::PeepholeOptimizations;
 
-type UsedProperties<'a> = FxHashMap<SymbolId, Vec<Str<'a>>>;
+type UsedProperties<'a> = FxHashMap<SymbolId, ArenaVec<'a, Str<'a>>>;
 
 impl<'a> PeepholeOptimizations {
     pub(super) fn collect_object_property_candidate(
@@ -88,7 +89,10 @@ impl<'a> PeepholeOptimizations {
         usage.member_object_references.insert(reference_id);
 
         if let Some(property_name) = property_name {
-            let used_properties = usage.used_properties.entry(symbol_id).or_default();
+            let used_properties = usage
+                .used_properties
+                .entry(symbol_id)
+                .or_insert_with(|| ArenaVec::new_in(ctx.ast.allocator));
             if !used_properties.contains(&property_name) {
                 used_properties.push(property_name);
             }
