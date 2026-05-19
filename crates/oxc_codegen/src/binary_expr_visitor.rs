@@ -12,6 +12,52 @@ use oxc_syntax::{
 
 use crate::{Codegen, Context, Operator, r#gen::GenExpr};
 
+/// Force plain string quotes for `"default"` and `"__esModule"` when they
+/// appear as an operand of an equality comparison during minification. This
+/// keeps `cjs-module-lexer` (used by Node for CJS/ESM interop) able to
+/// recognise the re-export pattern emitted by Babel / TypeScript / Rollup:
+///
+/// ```js
+/// Object.keys(mod).forEach(function (key) {
+///   if (key === "default" || key === "__esModule") return;
+///   ...
+/// });
+/// ```
+///
+/// Without this, `print_string_literal`'s tie-breaker in
+/// `calculate_quote_maybe_backtick` prefers backtick on equal cost, and the
+/// lexer's heuristic parser does not match `key === \`default\``.
+///
+/// Companion to `try_print_require_call` and `try_print_cjs_define_property_call`
+/// in `gen.rs`, which preserve plain quotes at the other two syntactic positions
+/// `cjs-module-lexer` recognises.
+///
+/// Returns `true` if printed.
+#[inline]
+fn try_print_cjs_lexer_equality_string(
+    operator: BinaryishOperator,
+    operand: &Expression,
+    p: &mut Codegen,
+) -> bool {
+    if !p.options.minify {
+        return false;
+    }
+    let BinaryishOperator::Binary(op) = operator else {
+        return false;
+    };
+    if !op.is_equality() {
+        return false;
+    }
+    let Expression::StringLiteral(str_lit) = operand else {
+        return false;
+    };
+    if !matches!(str_lit.value.as_str(), "default" | "__esModule") {
+        return false;
+    }
+    p.print_string_literal(str_lit, false);
+    true
+}
+
 #[derive(Clone, Copy)]
 pub enum Binaryish<'a> {
     Binary(&'a BinaryExpression<'a>),
@@ -124,7 +170,9 @@ impl<'a> BinaryExpressionVisitor<'a> {
             };
 
             let Some(left_binary) = left_binary else {
-                left.gen_expr(p, v.left_precedence, v.ctx);
+                if !try_print_cjs_lexer_equality_string(v.operator, left, p) {
+                    left.gen_expr(p, v.left_precedence, v.ctx);
+                }
                 v.visit_right_and_finish(p);
                 break;
             };
@@ -223,7 +271,10 @@ impl<'a> BinaryExpressionVisitor<'a> {
         p.print_soft_space();
         self.operator.r#gen(p);
         p.print_soft_space();
-        self.e.right().gen_expr(p, self.right_precedence, self.ctx);
+        let right = self.e.right();
+        if !try_print_cjs_lexer_equality_string(self.operator, right, p) {
+            right.gen_expr(p, self.right_precedence, self.ctx);
+        }
         if self.wrap {
             p.print_ascii_byte(b')');
         }

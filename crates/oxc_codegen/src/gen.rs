@@ -1517,6 +1517,9 @@ impl GenExpr for CallExpression<'_> {
 ///
 /// Minify-only: outside minify, `print_string_literal` already uses `self.quote` (never
 /// backtick), and this path skips the argument comments that `print_arguments` preserves.
+///
+/// Companion to `try_print_require_call` (below) and
+/// `try_print_cjs_lexer_equality_string` in `binary_expr_visitor.rs`.
 fn try_print_cjs_define_property_call(
     p: &mut Codegen<'_>,
     call: &CallExpression<'_>,
@@ -1555,6 +1558,9 @@ fn try_print_cjs_define_property_call(
 ///
 /// Minify-only: outside minify, `print_string_literal` already uses `self.quote` (never
 /// backtick), and this path skips the argument comments that `print_arguments` preserves.
+///
+/// Companion to `try_print_cjs_define_property_call` (above) and
+/// `try_print_cjs_lexer_equality_string` in `binary_expr_visitor.rs`.
 fn try_print_require_call(p: &mut Codegen<'_>, call: &CallExpression<'_>) -> bool {
     if !p.options.minify {
         return false;
