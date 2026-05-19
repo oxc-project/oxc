@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{Format, JsFormatContext, JsFormatter},
+    formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _},
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 

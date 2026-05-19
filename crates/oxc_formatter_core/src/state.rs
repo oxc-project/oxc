@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 
-use super::{GroupId, UniqueGroupIdBuilder, prelude::Interned};
+use crate::{GroupId, UniqueGroupIdBuilder, format_element::Interned};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///

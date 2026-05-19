@@ -169,7 +169,7 @@ pub fn should_group_function_parameters<'a>(
     type_parameters: Option<&TSTypeParameterDeclaration<'a>>,
     parameter_count: usize,
     return_type: Option<&TSTypeAnnotation<'a>>,
-    formatted_return_type: &Memoized<'a, impl Format<'a, JsFormatContext<'a>>>,
+    formatted_return_type: &Memoized<'a, impl Format<'a, JsFormatContext<'a>>, JsFormatContext<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     if let Some(type_parameters) = type_parameters {

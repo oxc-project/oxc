@@ -2,7 +2,9 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format,
-    formatter::{JsFormatContext, JsFormatter, trivia::format_leading_comments},
+    formatter::{
+        JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::format_leading_comments,
+    },
     utils::suppressed::FormatSuppressedNode,
 };
 

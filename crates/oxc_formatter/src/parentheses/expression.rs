@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::JsFormatter,
+    formatter::{JsFormatter, JsFormatterExt as _},
     print::{BinaryLikeExpression, should_flatten},
     utils::expression::ExpressionLeftSide,
 };

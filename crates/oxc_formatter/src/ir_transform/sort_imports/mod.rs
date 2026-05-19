@@ -11,7 +11,7 @@ use oxc_allocator::{Allocator, Vec as ArenaVec};
 use crate::{
     Buffer, JsLabels, SortImportsOptions,
     formatter::{
-        JsFormatter,
+        JsFormatter, JsFormatterExt as _,
         format_element::{
             FormatElement, LineMode,
             tag::{LabelId, Tag},

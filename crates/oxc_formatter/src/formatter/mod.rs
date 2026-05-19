@@ -17,22 +17,19 @@
 // FIXME
 #![allow(rustdoc::broken_intra_doc_links)]
 
-mod arguments;
-pub mod buffer;
 mod builders;
 pub mod comments;
 mod context;
 mod format_element_debug;
 pub use format_element_debug::DocumentDebug;
-mod format_extensions;
-pub mod formatter;
+mod format_str;
+pub(crate) mod formatter_js;
 pub mod jsdoc;
 pub mod macros;
 pub mod prelude;
 mod printer_options_js;
 pub mod separated;
 mod source_text;
-mod state;
 pub mod token;
 pub mod trivia;
 
@@ -48,248 +45,33 @@ pub mod format_element {
     pub use oxc_formatter_core::format_element::*;
 }
 
-use std::fmt::Debug;
+/// Re-export of the core buffer module so it can still be reached
+/// via `crate::formatter::buffer` from existing call-sites.
+pub mod buffer {
+    pub use oxc_formatter_core::buffer::*;
+}
 
-pub use buffer::{Buffer, BufferExtensions, VecBuffer};
 pub use oxc_formatter_core::{
-    FormatContext, FormatElement, FormatError, FormatOptions, GroupId, PrintResult, Printed,
-    Printer, UniqueGroupIdBuilder,
+    ActualStart, Argument, Arguments, Buffer, BufferExtensions, Format, FormatContext,
+    FormatElement, FormatError, FormatOptions, FormatState, Formatted, Formatter, GroupId,
+    InvalidDocumentError, MemoizeFormat, Memoized, PrintError, PrintResult, Printed, Printer,
+    UniqueGroupIdBuilder, VecBuffer, write,
 };
 
 pub use self::comments::Comments;
 pub use self::{
-    arguments::{Argument, Arguments},
     context::{JsFormatContext, TailwindContextEntry},
-    formatter::{Formatter, JsFormatter},
+    formatter_js::{JsFormatter, JsFormatterExt},
     source_text::SourceText,
-    state::FormatState,
 };
 use oxc_formatter_core::Document;
 
-#[derive(Debug)]
-pub struct Formatted<'a, C> {
-    document: Document<'a>,
-    context: C,
-}
-
-impl<'a, C> Formatted<'a, C> {
-    pub fn new(document: Document<'a>, context: C) -> Self {
-        Self { document, context }
-    }
-
-    /// Returns the context used during formatting.
-    pub fn context(&self) -> &C {
-        &self.context
-    }
-
-    /// Returns the formatted document.
-    pub fn document(&self) -> &Document<'a> {
-        &self.document
-    }
-
-    pub fn document_mut(&mut self) -> &mut Document<'a> {
-        &mut self.document
-    }
-
-    /// Consumes `self` and returns the formatted document.
-    pub fn into_document(self) -> Document<'a> {
-        self.document
-    }
-}
-
-impl<C: FormatContext> Formatted<'_, C> {
-    /// Prints the formatted document to a string.
-    ///
-    /// # Errors
-    /// Returns `PrintError` if the document contains invalid structure.
-    pub fn print(self) -> PrintResult<Printed> {
-        let print_options = self.context.options().as_print_options();
-        let (elements, sorted_tailwind_classes) =
-            self.document.into_elements_and_tailwind_classes();
-        let printed = Printer::new(print_options, &sorted_tailwind_classes).print(elements)?;
-        Ok(printed)
-    }
-
-    /// Prints the formatted document to a string, starting at the given indentation level.
-    ///
-    /// # Errors
-    /// Returns `PrintError` if the document contains invalid structure.
-    pub fn print_with_indent(self, indent: u16) -> PrintResult<Printed> {
-        let print_options = self.context.options().as_print_options();
-        let (elements, sorted_tailwind_classes) =
-            self.document.into_elements_and_tailwind_classes();
-        let printed = Printer::new(print_options, &sorted_tailwind_classes)
-            .print_with_indent(elements, indent)?;
-        Ok(printed)
-    }
-}
 // Public return type of the formatter
 pub type FormatResult<F> = Result<F, FormatError>;
-
-/// Formatting trait for types that can create a formatted representation. The `biome_formatter` equivalent
-/// to [std::fmt::Display].
-///
-/// ## Example
-/// Implementing `Format` for a custom struct
-///
-/// ```text
-/// use biome_formatter::{format, write, IndentStyle, LineWidth};
-/// use biome_formatter::prelude::*;
-/// use biome_rowan::TextSize;
-///
-/// struct Paragraph(String);
-///
-/// impl Format<SimpleFormatContext> for Paragraph {
-///     fn fmt(&self, f: &mut Formatter<SimpleFormatContext>)  {
-///         write!(f, [
-///             hard_line_break(),
-///             text(&self.0, TextSize::from(0)),
-///             hard_line_break(),
-///         ])
-///     }
-/// }
-///
-/// # fn main()  {
-/// let paragraph = Paragraph(String::from("test"));
-/// let formatted = format!(SimpleFormatContext::default(), [paragraph])?;
-///
-/// assert_eq!("test\n", formatted.print()?.as_code());
-/// # Ok(())
-/// # }
-/// ```
-pub trait Format<'ast, C> {
-    /// Formats the object using the given formatter.
-    /// # Errors
-    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>);
-}
-
-impl<'ast, C, T> Format<'ast, C> for &T
-where
-    T: ?Sized + Format<'ast, C>,
-{
-    #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        Format::fmt(&**self, f);
-    }
-}
-
-impl<'ast, C, T> Format<'ast, C> for &mut T
-where
-    T: ?Sized + Format<'ast, C>,
-{
-    #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        Format::fmt(&**self, f);
-    }
-}
-
-impl<'ast, C, T> Format<'ast, C> for Option<T>
-where
-    T: Format<'ast, C>,
-{
-    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        if let Some(value) = self {
-            value.fmt(f);
-        }
-    }
-}
-
-impl<C> Format<'_, C> for () {
-    #[inline]
-    fn fmt(&self, _: &mut Formatter<'_, '_, C>) {
-        // Intentionally left empty
-    }
-}
-
-// Hardcoded to `JsFormatContext` rather than generic over `C` so the blanket
-// `&T where T: Format` doesn't overlap (str doesn't impl Format for any C).
-// Uses `Token` (not `Text`) so downstream IR transforms (e.g. `sort_imports`) can match
-// on token text shape.
-impl<'ast> Format<'ast, JsFormatContext<'ast>> for &'static str {
-    #[inline]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast, JsFormatContext<'ast>>) {
-        crate::write!(f, builders::token(self));
-    }
-}
-
-/// The `write` function takes a target buffer and an `Arguments` struct that can be precompiled with the `format_args!` macro.
-///
-/// The arguments will be formatted in-order into the output buffer provided.
-///
-/// # Examples
-///
-/// ```text
-/// use biome_formatter::prelude::*;
-/// use biome_formatter::{VecBuffer, format_args, FormatState, write, Formatted};
-///
-/// # fn main()  {
-/// let mut state = FormatState::new(SimpleFormatContext::default());
-/// let mut buffer = VecBuffer::new(&mut state);
-///
-/// write!(&mut buffer, [format_args!(token("Hello World"))])?;
-///
-/// let formatted = Formatted::new(Document::from(buffer.into_vec()), SimpleFormatContext::default());
-///
-/// assert_eq!("Hello World", formatted.print()?.as_code());
-/// # Ok(())
-/// # }
-/// ```
-///
-/// Please note that using [`write!`] might be preferable. Example:
-///
-/// ```text
-/// use biome_formatter::prelude::*;
-/// use biome_formatter::{VecBuffer, format_args, FormatState, write, Formatted};
-///
-/// # fn main()  {
-/// let mut state = FormatState::new(SimpleFormatContext::default());
-/// let mut buffer = VecBuffer::new(&mut state);
-///
-/// write!(&mut buffer, [token("Hello World")])?;
-///
-/// let formatted = Formatted::new(Document::from(buffer.into_vec()), SimpleFormatContext::default());
-///
-/// assert_eq!("Hello World", formatted.print()?.as_code());
-/// # Ok(())
-/// # }
-/// ```
-///
-#[inline(always)]
-pub fn write<'ast, C>(output: &mut dyn Buffer<'ast, C>, args: Arguments<'_, 'ast, C>) {
-    Formatter::new(output).write_fmt(args);
-}
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.
 ///
 /// The [`Arguments`] instance can be created with the [`format_args!`].
-///
-/// # Examples
-///
-/// Basic usage:
-///
-/// ```text
-/// use biome_formatter::prelude::*;
-/// use biome_formatter::{format, format_args};
-///
-/// # fn main()  {
-/// let formatted = format!(SimpleFormatContext::default(), [&format_args!(token("test"))])?;
-/// assert_eq!("test", formatted.print()?.as_code());
-/// # Ok(())
-/// # }
-/// ```
-///
-/// Please note that using [`format!`] might be preferable. Example:
-///
-/// ```text
-/// use biome_formatter::prelude::*;
-/// use biome_formatter::{format};
-///
-/// # fn main()  {
-/// let formatted = format!(SimpleFormatContext::default(), [token("test")])?;
-/// assert_eq!("test", formatted.print()?.as_code());
-/// # Ok(())
-/// # }
-/// ```
 pub fn format<'ast>(
     context: JsFormatContext<'ast>,
     arguments: Arguments<'_, 'ast, JsFormatContext<'ast>>,

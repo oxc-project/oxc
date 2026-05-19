@@ -8,7 +8,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::AstNode,
     formatter::{
-        Format, JsFormatContext, JsFormatter,
+        Format, JsFormatContext, JsFormatter, JsFormatterExt as _,
         trivia::{format_leading_comments, format_trailing_comments},
     },
     parentheses::NeedsParentheses,

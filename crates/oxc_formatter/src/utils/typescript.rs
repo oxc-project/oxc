@@ -1,7 +1,7 @@
 use oxc_ast::ast::{TSType, TSUnionType};
 use oxc_span::GetSpan;
 
-use crate::formatter::JsFormatter;
+use crate::formatter::{JsFormatter, JsFormatterExt as _};
 
 /// Check if a TSType is a simple type (primitives, keywords, simple references)
 pub fn is_simple_type(ty: &TSType) -> bool {

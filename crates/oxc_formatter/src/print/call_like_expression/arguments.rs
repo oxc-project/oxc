@@ -7,7 +7,8 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Comments, FormatElement, JsFormatContext, JsFormatter, SourceText, VecBuffer,
+        Comments, FormatElement, JsFormatContext, JsFormatter, JsFormatterExt as _, SourceText,
+        VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         format_element,
         prelude::{

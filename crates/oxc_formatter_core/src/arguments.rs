@@ -1,6 +1,6 @@
 use std::{ffi::c_void, marker::PhantomData};
 
-use super::{Buffer, Format, Formatter};
+use crate::{Buffer, Format, Formatter};
 
 /// Mono-morphed type to format an object. Used by the [crate::format!], [crate::format_args!], and
 /// [crate::write!] macros.
@@ -51,7 +51,7 @@ impl<'fmt, 'ast, C> Argument<'fmt, 'ast, C> {
 
     /// Formats the value stored by this argument using the given formatter.
     #[inline(always)]
-    pub(super) fn format(&self, f: &mut Formatter<'_, 'ast, C>) {
+    pub(crate) fn format(&self, f: &mut Formatter<'_, 'ast, C>) {
         (self.formatter)(self.value, f);
     }
 }

@@ -85,7 +85,7 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{Format, JsFormatContext, JsFormatter, trivia::{format_leading_comments, format_trailing_comments}},
+                formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},

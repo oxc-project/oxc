@@ -5,7 +5,7 @@ use oxc_syntax::identifier::is_identifier_name_patched;
 use crate::{
     Buffer, Format,
     ast_nodes::{AstNode, AstNodes},
-    formatter::JsFormatter,
+    formatter::{JsFormatter, JsFormatterExt as _},
     utils::{
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},

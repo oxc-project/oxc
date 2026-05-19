@@ -8,8 +8,7 @@ pub use oxc_formatter_core::{
 pub use crate::formatter::{Buffer, Format, FormatResult, token::string::Quote};
 use crate::{
     formatter::{
-        JsFormatContext,
-        formatter::JsFormatter,
+        JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{if_group_breaks, token},
         printer::PrinterOptions,
     },
