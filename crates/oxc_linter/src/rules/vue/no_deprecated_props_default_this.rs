@@ -69,10 +69,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDeprecatedPropsDefaultThis {
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_extension().is_some_and(|ext| ext == "vue")
-    }
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ThisExpression(this_expr) = node.kind() else { return };
 
@@ -125,6 +121,10 @@ impl Rule for NoDeprecatedPropsDefaultThis {
         }
 
         ctx.diagnostic(no_deprecated_props_default_this_diagnostic(this_expr.span));
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.file_extension().is_some_and(|ext| ext == "vue")
     }
 }
 
