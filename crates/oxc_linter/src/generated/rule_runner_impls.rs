@@ -1654,12 +1654,8 @@ impl RuleRunner for crate::rules::typescript::no_explicit_any::NoExplicitAny {
 }
 
 impl RuleRunner for crate::rules::typescript::no_extra_non_null_assertion::NoExtraNonNullAssertion {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::CallExpression,
-        AstType::ComputedMemberExpression,
-        AstType::StaticMemberExpression,
-        AstType::TSNonNullExpression,
-    ]));
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::TSNonNullExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
