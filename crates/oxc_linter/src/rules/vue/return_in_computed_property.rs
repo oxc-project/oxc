@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression},
+    ast::{CallExpression, Expression},
 };
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind, ReturnInstructionKind,
@@ -20,6 +20,7 @@ use crate::{
     context::{ContextHost, LintContext},
     module_record::ImportImportName,
     rule::{DefaultRuleConfig, Rule},
+    utils::is_vue_component_options_object,
 };
 
 fn return_in_computed_property_diagnostic(span: Span) -> OxcDiagnostic {
@@ -191,7 +192,7 @@ fn is_vue_computed_getter(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
 }
 
 fn is_under_vue_root(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    ctx.nodes().ancestors(node.id()).any(|a| is_vue_component_root(a.kind()))
+    ctx.nodes().ancestors(node.id()).any(|a| is_vue_component_options_object(a, ctx))
 }
 
 fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
@@ -220,41 +221,6 @@ fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> boo
         }
         scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id)
     })
-}
-
-fn is_vue_component_root(kind: AstKind<'_>) -> bool {
-    match kind {
-        AstKind::ExportDefaultDeclaration(_) => true,
-        AstKind::CallExpression(call) => is_vue_component_definition_call(call),
-        AstKind::NewExpression(new_expr) => {
-            new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "Vue")
-        }
-        _ => false,
-    }
-}
-
-fn is_vue_component_definition_call(call: &CallExpression<'_>) -> bool {
-    let callee = call.callee.get_inner_expression();
-
-    if let Expression::Identifier(ident) = callee {
-        return matches!(
-            ident.name.as_str(),
-            "defineComponent" | "component" | "createApp" | "defineNuxtComponent"
-        );
-    }
-
-    let Some(MemberExpression::StaticMemberExpression(static_member)) =
-        callee.as_member_expression()
-    else {
-        return false;
-    };
-    let prop_name = static_member.property.name.as_str();
-    if let Expression::Identifier(obj_ident) = static_member.object.get_inner_expression()
-        && obj_ident.name == "Vue"
-    {
-        return matches!(prop_name, "component" | "mixin" | "extend");
-    }
-    matches!(prop_name, "component" | "mixin")
 }
 
 fn definitely_returns_in_all_codepaths(
@@ -700,6 +666,21 @@ fn test() {
                     }
                   }
                 }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  computed: {
+                    foo() {
+                    }
+                  }
+                })
                 </script>
             ",
             None,

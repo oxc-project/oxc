@@ -1,12 +1,12 @@
-use oxc_ast::{
-    AstKind,
-    ast::{CallExpression, Expression, MemberExpression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, rule::Rule,
+    utils::is_vue_component_options_object_excluding_instance,
+};
 
 fn no_shared_component_data_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`data` property in component must be a function.").with_label(span)
@@ -76,63 +76,17 @@ impl Rule for NoSharedComponentData {
             return;
         }
 
-        let mut ancestors = ctx.nodes().ancestors(node.id());
-        let Some(parent) = ancestors.next() else { return };
+        let parent = ctx.nodes().parent_node(node.id());
         if !matches!(parent.kind(), AstKind::ObjectExpression(_)) {
             return;
         }
 
-        let Some(grand) = ancestors.next() else { return };
-        let in_vue_component = match grand.kind() {
-            AstKind::ExportDefaultDeclaration(_) => {
-                ctx.file_extension().is_some_and(|ext| ext == "vue")
-            }
-            AstKind::CallExpression(call) => {
-                is_last_object_argument(parent, call) && is_vue_component_definition_call(call)
-            }
-            _ => false,
-        };
-        if !in_vue_component {
+        if !is_vue_component_options_object_excluding_instance(parent, ctx) {
             return;
         }
 
         ctx.diagnostic(no_shared_component_data_diagnostic(prop.span));
     }
-}
-
-fn is_last_object_argument(node: &AstNode<'_>, call: &CallExpression<'_>) -> bool {
-    let AstKind::ObjectExpression(object) = node.kind() else { return false };
-
-    call.arguments.last().and_then(|argument| argument.as_expression()).is_some_and(|argument| {
-        match argument.get_inner_expression() {
-            Expression::ObjectExpression(argument_object) => argument_object.span == object.span,
-            _ => false,
-        }
-    })
-}
-
-fn is_vue_component_definition_call(call: &CallExpression<'_>) -> bool {
-    let callee = call.callee.get_inner_expression();
-
-    if let Expression::Identifier(ident) = callee {
-        return matches!(
-            ident.name.as_str(),
-            "defineComponent" | "component" | "createApp" | "defineNuxtComponent"
-        );
-    }
-
-    let Some(MemberExpression::StaticMemberExpression(static_member)) =
-        callee.as_member_expression()
-    else {
-        return false;
-    };
-    let prop_name = static_member.property.name.as_str();
-    if let Expression::Identifier(obj_ident) = static_member.object.get_inner_expression()
-        && obj_ident.name == "Vue"
-    {
-        return matches!(prop_name, "component" | "mixin" | "extend");
-    }
-    matches!(prop_name, "component" | "mixin")
 }
 
 #[test]
@@ -383,6 +337,18 @@ fn test() {
             "
                 <script>
                 defineComponent({
+                  data: { foo: 'bar' }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                Vue.mixin({
                   data: { foo: 'bar' }
                 })
                 </script>

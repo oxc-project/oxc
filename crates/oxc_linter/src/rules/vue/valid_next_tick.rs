@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode, ast_util::get_declaration_from_reference_id, context::LintContext,
-    module_record::ImportImportName, rule::Rule,
+    module_record::ImportImportName, rule::Rule, utils::is_in_vue_component_instance_method,
 };
 
 fn should_be_function_diagnostic(span: Span) -> OxcDiagnostic {
@@ -111,9 +111,7 @@ impl Rule for ValidNextTick {
             _ => return,
         };
 
-        if !is_in_vue_component_instance_method(next_tick_node, ctx)
-            && !is_in_legacy_vue_instance_method(next_tick_node, ctx)
-        {
+        if !is_in_vue_component_instance_method(next_tick_node, ctx) {
             return;
         }
 
@@ -231,149 +229,6 @@ fn is_vue_next_tick_import(ident: &IdentifierReference, ctx: &LintContext<'_>) -
         }
     }
     false
-}
-
-fn is_in_vue_component_instance_method(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let Some(function_node) = ctx
-        .nodes()
-        .ancestors(node.id())
-        .find(|ancestor| matches!(ancestor.kind(), AstKind::Function(_)))
-    else {
-        return false;
-    };
-
-    let property_node = ctx.nodes().parent_node(function_node.id());
-    let AstKind::ObjectProperty(_) = property_node.kind() else {
-        return false;
-    };
-
-    let object_node = ctx.nodes().parent_node(property_node.id());
-    if is_vue_component_options_object(object_node, ctx) {
-        return true;
-    }
-
-    let container_property_node = ctx.nodes().parent_node(object_node.id());
-    if !matches!(container_property_node.kind(), AstKind::ObjectProperty(_)) {
-        return false;
-    }
-
-    let Some(container_name) = container_property_node
-        .kind()
-        .as_object_property()
-        .and_then(|prop| if prop.computed { None } else { prop.key.static_name() })
-    else {
-        return false;
-    };
-
-    matches!(container_name.as_ref(), "computed" | "methods" | "watch")
-        && is_vue_component_options_object(
-            ctx.nodes().parent_node(container_property_node.id()),
-            ctx,
-        )
-}
-
-fn is_vue_component_options_object(object_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let AstKind::ObjectExpression(object_expr) = object_node.kind() else {
-        return false;
-    };
-
-    ctx.nodes().ancestors(object_node.id()).any(|ancestor| match ancestor.kind() {
-        AstKind::ExportDefaultDeclaration(export_default_decl) => {
-            export_default_decl.declaration.span() == object_expr.span
-        }
-        AstKind::CallExpression(call_expr) => {
-            call_expr
-                .arguments
-                .iter()
-                .any(|arg| arg.as_expression().is_some_and(|expr| expr.span() == object_expr.span))
-                && is_vue_component_options_call(call_expr)
-        }
-        _ => false,
-    })
-}
-
-fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
-    if call_expr
-        .callee
-        .get_identifier_reference()
-        .is_some_and(|ident| matches!(ident.name.as_str(), "createApp" | "defineComponent"))
-    {
-        return true;
-    }
-
-    call_expr.callee.get_member_expr().is_some_and(|member_expr| {
-        member_expr.static_property_name().is_some_and(|name| name == "component")
-    })
-}
-
-// Detect Vue 2 forms: `new Vue({...})` and `Vue.extend({...})`.
-fn is_in_legacy_vue_instance_method(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let Some(function_node) = ctx
-        .nodes()
-        .ancestors(node.id())
-        .find(|ancestor| matches!(ancestor.kind(), AstKind::Function(_)))
-    else {
-        return false;
-    };
-
-    let property_node = ctx.nodes().parent_node(function_node.id());
-    if !matches!(property_node.kind(), AstKind::ObjectProperty(_)) {
-        return false;
-    }
-
-    let object_node = ctx.nodes().parent_node(property_node.id());
-    if is_legacy_vue_options_object(object_node, ctx) {
-        return true;
-    }
-
-    let container_property_node = ctx.nodes().parent_node(object_node.id());
-    if !matches!(container_property_node.kind(), AstKind::ObjectProperty(_)) {
-        return false;
-    }
-    let Some(container_name) = container_property_node
-        .kind()
-        .as_object_property()
-        .and_then(|prop| if prop.computed { None } else { prop.key.static_name() })
-    else {
-        return false;
-    };
-
-    matches!(container_name.as_ref(), "computed" | "methods" | "watch")
-        && is_legacy_vue_options_object(ctx.nodes().parent_node(container_property_node.id()), ctx)
-}
-
-fn is_legacy_vue_options_object(object_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let AstKind::ObjectExpression(object_expr) = object_node.kind() else {
-        return false;
-    };
-    ctx.nodes().ancestors(object_node.id()).any(|ancestor| match ancestor.kind() {
-        // `new Vue({...})`
-        AstKind::NewExpression(new_expr) => {
-            new_expr
-                .arguments
-                .iter()
-                .any(|arg| arg.as_expression().is_some_and(|e| e.span() == object_expr.span))
-                && new_expr
-                    .callee
-                    .get_identifier_reference()
-                    .is_some_and(|ident| ident.name == "Vue")
-        }
-        // `Vue.extend({...})`
-        AstKind::CallExpression(call_expr) => {
-            call_expr
-                .arguments
-                .iter()
-                .any(|arg| arg.as_expression().is_some_and(|e| e.span() == object_expr.span))
-                && call_expr.callee.get_member_expr().is_some_and(|member| {
-                    member.static_property_name().is_some_and(|name| name == "extend")
-                        && matches!(
-                            member.object().get_inner_expression(),
-                            Expression::Identifier(id) if id.name == "Vue"
-                        )
-                })
-        }
-        _ => false,
-    })
 }
 
 #[test]
@@ -628,6 +483,28 @@ fn test() {
         (
             "<script>
                   Vue.extend({
+                    mounted() {
+                      this.$nextTick;
+                    }
+                  })</script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "<script>
+                  Vue.mixin({
+                    mounted() {
+                      this.$nextTick;
+                    }
+                  })</script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "<script>
+                  defineNuxtComponent({
                     mounted() {
                       this.$nextTick;
                     }

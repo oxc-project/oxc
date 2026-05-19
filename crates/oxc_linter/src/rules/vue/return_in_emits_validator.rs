@@ -1,16 +1,17 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        ArrowFunctionExpression, CallExpression, Expression, Function, ReturnStatement, Statement,
-    },
+    ast::{ArrowFunctionExpression, Expression, Function, ReturnStatement, Statement},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule,
+    utils::is_vue_component_options_object,
+};
 
 fn expected_boolean_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -140,33 +141,6 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
     }
 
     None
-}
-
-fn is_vue_component_options_object(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let AstKind::ObjectExpression(obj) = node.kind() else { return false };
-    ctx.nodes().ancestors(node.id()).any(|ancestor| match ancestor.kind() {
-        AstKind::ExportDefaultDeclaration(decl) => decl.declaration.span() == obj.span,
-        AstKind::CallExpression(call) => {
-            call.arguments
-                .iter()
-                .any(|arg| arg.as_expression().is_some_and(|e| e.span() == obj.span))
-                && is_vue_component_factory_call(call)
-        }
-        _ => false,
-    })
-}
-
-fn is_vue_component_factory_call(call: &CallExpression<'_>) -> bool {
-    if call
-        .callee
-        .get_identifier_reference()
-        .is_some_and(|ident| matches!(ident.name.as_str(), "createApp" | "defineComponent"))
-    {
-        return true;
-    }
-    call.callee.get_member_expr().is_some_and(|member_expr| {
-        member_expr.static_property_name().is_some_and(|name| name == "component")
-    })
 }
 
 /// Walks the body of an emits validator and reports whether at least one
@@ -559,6 +533,21 @@ fn test() {
                 <script setup>
                 defineEmits({
                   foo () {
+                  }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                Vue.mixin({
+                  emits: {
+                    foo () {
+                    }
                   }
                 })
                 </script>
