@@ -1,14 +1,14 @@
 use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 
-use super::{GroupId, JsFormatContext, UniqueGroupIdBuilder, prelude::Interned};
+use super::{GroupId, UniqueGroupIdBuilder, prelude::Interned};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
 /// This structure is different from [crate::Formatter] in that the formatting infrastructure
 /// creates a new [crate::Formatter] for every [crate::write!] call, whereas this structure stays alive
 /// for the whole process of formatting a root with [crate::format!].
-pub struct FormatState<'ast, C = JsFormatContext<'ast>> {
+pub struct FormatState<'ast, C> {
     context: C,
     allocator: &'ast Allocator,
     group_id_builder: UniqueGroupIdBuilder,

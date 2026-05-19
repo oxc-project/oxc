@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 use crate::{
     Format,
     ast_nodes::AstNode,
-    formatter::{Formatter, prelude::*, trivia::format_dangling_comments},
+    formatter::{prelude::*, trivia::format_dangling_comments},
     utils::array::write_array_node,
     write,
 };
@@ -23,8 +23,8 @@ impl<'a> Deref for FormatArrayPattern<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "[");
 
         if self.elements.is_empty() && self.rest.is_none() {
@@ -53,7 +53,7 @@ impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ArrayPattern<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         FormatArrayPattern(self).fmt(f);
     }
 }

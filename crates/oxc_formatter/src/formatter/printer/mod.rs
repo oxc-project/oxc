@@ -1331,7 +1331,7 @@ mod tests {
     use crate::{IndentStyle, LineEnding};
     use crate::{format_args, formatter::prelude::*, write};
 
-    fn format<'a>(allocator: &'a Allocator, root: &dyn Format<'a>) -> Printed {
+    fn format<'a>(allocator: &'a Allocator, root: &dyn Format<'a, JsFormatContext<'a>>) -> Printed {
         format_with_options(
             allocator,
             root,
@@ -1346,7 +1346,7 @@ mod tests {
 
     fn format_with_options<'a>(
         allocator: &'a Allocator,
-        root: &dyn Format<'a>,
+        root: &dyn Format<'a, JsFormatContext<'a>>,
         options: PrinterOptions,
     ) -> Printed {
         let formatted = crate::format!(JsFormatContext::dummy(allocator), [root]);
@@ -1756,11 +1756,11 @@ Group 1 breaks"
     }
 
     struct FormatArrayElements<'a> {
-        items: Vec<&'a dyn Format<'a>>,
+        items: Vec<&'a dyn Format<'a, JsFormatContext<'a>>>,
     }
 
-    impl<'a> Format<'a> for FormatArrayElements<'a> {
-        fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+    impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayElements<'a> {
+        fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
             write!(
                 f,
                 [group(&format_args!(

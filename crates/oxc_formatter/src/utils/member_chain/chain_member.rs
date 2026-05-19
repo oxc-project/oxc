@@ -3,7 +3,7 @@ use std::ops::Deref;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Format, Formatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{Format, JsFormatter, prelude::*, trivia::FormatLeadingComments},
     write,
 };
 use oxc_ast::ast::*;
@@ -67,8 +67,8 @@ impl ChainMember<'_, '_> {
     }
 }
 
-impl<'a> Format<'a> for ChainMember<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for ChainMember<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::StaticMember(member) => {
                 write!(
@@ -142,8 +142,8 @@ impl<'a> Deref for FormatComputedMemberExpressionWithoutObject<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatComputedMemberExpressionWithoutObject<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments().comments_before_character(self.span.start, b'[');
         if !comments.is_empty() {
             write!(f, [soft_line_break(), FormatLeadingComments::Comments(comments)]);

@@ -52,7 +52,7 @@ pub use self::{
     context::{JsFormatContext, TailwindContextEntry},
     core_traits::{FormatContext, FormatOptions},
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
-    formatter::Formatter,
+    formatter::{Formatter, JsFormatter},
     source_text::SourceText,
     state::FormatState,
     text_range::TextRange,
@@ -60,7 +60,7 @@ pub use self::{
 use self::{format_element::document::Document, prelude::TagKind};
 
 #[derive(Debug)]
-pub struct Formatted<'a, C = JsFormatContext<'a>> {
+pub struct Formatted<'a, C> {
     document: Document<'a>,
     context: C,
 }
@@ -185,7 +185,7 @@ pub type FormatResult<F> = Result<F, FormatError>;
 /// # Ok(())
 /// # }
 /// ```
-pub trait Format<'ast, C = JsFormatContext<'ast>> {
+pub trait Format<'ast, C> {
     /// Formats the object using the given formatter.
     /// # Errors
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>);
@@ -321,7 +321,7 @@ pub fn write<'ast, C>(output: &mut dyn Buffer<'ast, C>, args: Arguments<'_, 'ast
 pub fn format<'ast>(
     context: JsFormatContext<'ast>,
     arguments: Arguments<'_, 'ast, JsFormatContext<'ast>>,
-) -> Formatted<'ast> {
+) -> Formatted<'ast, JsFormatContext<'ast>> {
     // Pre-allocate buffer at 40% of source length (source_len * 2 / 5).
     // Analysis of 4,891 VSCode files shows FormatElement buffer length is typically 19% of source (median),
     // with 95th percentile at 30-38% across all file sizes. This 0.4x multiplier avoids

@@ -13,7 +13,7 @@ use oxc_span::GetSpan;
 use crate::{
     Buffer, SortTailwindcssOptions,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatElement, Formatter, TailwindContextEntry, prelude::*},
+    formatter::{FormatElement, TailwindContextEntry, prelude::*},
     write,
 };
 
@@ -31,7 +31,7 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 /// - The string contains whitespace (indicating multiple classes to sort)
 pub fn tailwind_context_for_string_literal<'a>(
     string: &AstNode<'a, StringLiteral<'a>>,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> Option<TailwindContextEntry> {
     f.context().tailwind_context().copied().filter(|ctx| {
         let text = f.source_text().text_for(string);
@@ -167,7 +167,7 @@ impl CollapseWhitespace {
 pub fn can_collapse_whitespace<'a, 'b>(
     span: Span,
     ancestors: impl Iterator<Item = &'b AstNodes<'a>>,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> CollapseWhitespace
 where
     'a: 'b,
@@ -234,7 +234,7 @@ where
 pub fn write_tailwind_string_literal<'a>(
     string_literal: &AstNode<'a, StringLiteral<'a>>,
     ctx: TailwindContextEntry,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     debug_assert!(
         !string_literal.value.is_empty(),
@@ -322,7 +322,7 @@ pub fn write_tailwind_string_literal<'a>(
 pub fn write_tailwind_template_element<'a>(
     element: &AstNode<'a, TemplateElement<'a>>,
     ctx: TailwindContextEntry,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     let content = f.source_text().text_for(element);
 
@@ -386,7 +386,7 @@ fn can_collapse_whitespace_template<'a>(
     element: &AstNode<'a, TemplateElement<'a>>,
     is_first: bool,
     is_last: bool,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> CollapseWhitespace {
     // Only first/last quasis can be affected by binary expression context
     if !is_first && !is_last {

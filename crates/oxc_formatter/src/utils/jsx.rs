@@ -9,12 +9,7 @@ use oxc_ast::ast::*;
 
 use crate::QuoteStyle;
 use crate::formatter::Comments;
-use crate::{
-    ast_nodes::AstNode,
-    format_args,
-    formatter::{Formatter, prelude::*},
-    write,
-};
+use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
 pub static JSX_WHITESPACE_CHARS: [u8; 4] = [b' ', b'\n', b'\t', b'\r'];
 
@@ -86,8 +81,8 @@ pub enum WrapState {
 #[derive(Default)]
 pub struct JsxSpace;
 
-impl<'a> Format<'a> for JsxSpace {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for JsxSpace {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(
             f,
             [
@@ -100,8 +95,8 @@ impl<'a> Format<'a> for JsxSpace {
 
 pub struct JsxRawSpace;
 
-impl<'a> Format<'a> for JsxRawSpace {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for JsxRawSpace {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let jsx_space = match f.options().quote_style {
             QuoteStyle::Double => r#"{" "}"#,
             QuoteStyle::Single => "{' '}",
@@ -207,8 +202,8 @@ impl<'a> JsxWord<'a> {
     }
 }
 
-impl<'a> Format<'a> for JsxWord<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for JsxWord<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [text_without_whitespace(self.text)]);
     }
 }

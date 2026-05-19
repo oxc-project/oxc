@@ -16,7 +16,7 @@ use super::{
 use crate::write;
 
 /// A trait for writing or formatting into `FormatElement`-accepting buffers or streams.
-pub trait Buffer<'ast, C = JsFormatContext<'ast>> {
+pub trait Buffer<'ast, C> {
     /// Writes a [crate::FormatElement] into this buffer, returning whether the write succeeded.
     ///
     /// # Errors

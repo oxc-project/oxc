@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Format, Formatter,
+        Buffer, Format, JsFormatContext, JsFormatter,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
         trivia::format_dangling_comments,
     },
@@ -38,7 +38,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
-    fn is_inline(&self, _f: &Formatter<'_, 'a>) -> bool {
+    fn is_inline(&self, _f: &JsFormatter<'_, 'a>) -> bool {
         match self {
             Self::ObjectPattern(node) => match node.parent() {
                 AstNodes::FormalParameter(_) => true,
@@ -98,7 +98,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
-    fn layout(&self, f: &Formatter<'_, 'a>) -> ObjectPatternLayout {
+    fn layout(&self, f: &JsFormatter<'_, 'a>) -> ObjectPatternLayout {
         if self.is_empty() {
             return ObjectPatternLayout::Empty;
         }
@@ -118,7 +118,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
-    fn write_properties(&self, f: &mut Formatter<'_, 'a>) {
+    fn write_properties(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::ObjectPattern(o) => BindingPropertyList::new(o.properties(), o.rest()).fmt(f),
             Self::ObjectAssignmentTarget(o) => {
@@ -128,8 +128,8 @@ impl<'a> ObjectPatternLike<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for ObjectPatternLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for ObjectPatternLike<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
         let format_properties = format_with(|f| {
             write!(

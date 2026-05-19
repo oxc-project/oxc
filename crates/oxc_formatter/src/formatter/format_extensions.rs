@@ -55,7 +55,7 @@ pub trait MemoizeFormat<'a> {
     ///
     fn memoized(self) -> Memoized<'a, Self>
     where
-        Self: Sized + Format<'a>,
+        Self: Sized + Format<'a, JsFormatContext<'a>>,
     {
         Memoized::new(self)
     }
@@ -72,7 +72,7 @@ pub struct Memoized<'ast, F> {
 
 impl<'ast, F> Memoized<'ast, F>
 where
-    F: Format<'ast>,
+    F: Format<'ast, JsFormatContext<'ast>>,
 {
     fn new(inner: F) -> Self {
         Self { inner, memory: OnceCell::new() }
@@ -134,7 +134,7 @@ where
     /// # }
     ///
     /// ```
-    pub fn inspect(&self, f: &mut Formatter<'_, 'ast>) -> &[FormatElement<'ast>] {
+    pub fn inspect(&self, f: &mut JsFormatter<'_, 'ast>) -> &[FormatElement<'ast>] {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
         match result.as_ref() {
@@ -145,11 +145,11 @@ where
     }
 }
 
-impl<'ast, F> Format<'ast> for Memoized<'ast, F>
+impl<'ast, F> Format<'ast, JsFormatContext<'ast>> for Memoized<'ast, F>
 where
-    F: Format<'ast>,
+    F: Format<'ast, JsFormatContext<'ast>>,
 {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'ast>) {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
         if let Some(elements) = result {

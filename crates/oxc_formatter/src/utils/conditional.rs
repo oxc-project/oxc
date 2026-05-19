@@ -7,7 +7,7 @@ use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Formatter,
+        JsFormatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
@@ -114,8 +114,13 @@ impl ConditionalLayout {
     }
 }
 
-fn format_trailing_comments<'a>(mut start: u32, end: u32, operator: u8, f: &mut Formatter<'_, 'a>) {
-    let mut get_comments = |f: &mut Formatter<'_, 'a>| -> &'a [Comment] {
+fn format_trailing_comments<'a>(
+    mut start: u32,
+    end: u32,
+    operator: u8,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    let mut get_comments = |f: &mut JsFormatter<'_, 'a>| -> &'a [Comment] {
         let comments = f.context().comments().unprinted_comments();
         if comments.is_empty() {
             return &[];
@@ -160,7 +165,7 @@ fn format_trailing_comments<'a>(mut start: u32, end: u32, operator: u8, f: &mut 
 
 impl<'a> FormatConditionalLike<'a, '_> {
     /// Determines the layout of this conditional based on its parent
-    fn layout(&self, f: &Formatter<'_, 'a>) -> ConditionalLayout {
+    fn layout(&self, f: &JsFormatter<'_, 'a>) -> ConditionalLayout {
         let self_span = self.span();
 
         match self.parent() {
@@ -355,7 +360,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
     }
 
     /// Formats the test part of the conditional
-    fn format_test<'f>(&self, f: &mut Formatter<'f, 'a>, layout: ConditionalLayout) {
+    fn format_test<'f>(&self, f: &mut JsFormatter<'f, 'a>, layout: ConditionalLayout) {
         let format_inner = format_with(|f| {
             let (start, end) = match self.conditional {
                 ConditionalLike::ConditionalExpression(conditional) => {
@@ -393,7 +398,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
     }
 
     /// Formats the consequent and alternate with proper formatting
-    fn format_consequent_and_alternate<'f>(&self, f: &mut Formatter<'f, 'a>) {
+    fn format_consequent_and_alternate<'f>(&self, f: &mut JsFormatter<'f, 'a>) {
         write!(f, [soft_line_break_or_space(), "?", space()]);
 
         let format_consequent = format_with(|f| {
@@ -468,8 +473,8 @@ impl<'a> FormatConditionalLike<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for ConditionalLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for ConditionalLike<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         FormatConditionalLike {
             conditional: self,
             options: FormatConditionalLikeOptions { jsx_chain: false },
@@ -500,8 +505,8 @@ impl<'a, 'b> Deref for FormatConditionalLike<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatConditionalLike<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let layout = self.layout(f);
         let should_extra_indent = self.should_extra_indent(layout);
         let is_jsx_chain = self.options.jsx_chain || layout.is_jsx_chain();
@@ -591,14 +596,14 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
 /// Formats JSX consequent with conditional wrapping
 fn format_jsx_chain_consequent<'a, 'b>(
     expression: &'b AstNode<'a, Expression<'a>>,
-) -> impl Format<'a> + 'b {
+) -> impl Format<'a, JsFormatContext<'a>> + 'b {
     FormatJsxChainExpression { expression, alternate: false }
 }
 
 /// Formats JSX alternate with conditional wrapping
 fn format_jsx_chain_alternate<'a, 'b>(
     expression: &'b AstNode<'a, Expression<'a>>,
-) -> impl Format<'a> + 'b {
+) -> impl Format<'a, JsFormatContext<'a>> + 'b {
     FormatJsxChainExpression { expression, alternate: true }
 }
 
@@ -628,8 +633,8 @@ struct FormatJsxChainExpression<'a, 'b> {
     alternate: bool,
 }
 
-impl<'a> Format<'a> for FormatJsxChainExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatJsxChainExpression<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let no_wrap = match self.expression.as_ref() {
             Expression::Identifier(ident) => ident.name == "undefined",
             Expression::NullLiteral(_) => true,

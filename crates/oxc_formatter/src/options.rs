@@ -8,7 +8,8 @@ pub use oxc_formatter_core::{
 pub use crate::formatter::{Buffer, Format, FormatResult, token::string::Quote};
 use crate::{
     formatter::{
-        formatter::Formatter,
+        JsFormatContext,
+        formatter::JsFormatter,
         prelude::{if_group_breaks, token},
         printer::PrinterOptions,
     },
@@ -576,8 +577,8 @@ impl FormatTrailingCommas {
     }
 }
 
-impl Format<'_> for FormatTrailingCommas {
-    fn fmt(&self, f: &mut Formatter) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingCommas {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().trailing_commas.is_none() {
             return;
         }

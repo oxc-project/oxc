@@ -1,18 +1,14 @@
 use oxc_span::{GetSpan, SPAN, Span};
 
-use crate::{
-    formatter::{Formatter, prelude::*},
-    options::FormatTrailingCommas,
-    write,
-};
+use crate::{formatter::prelude::*, options::FormatTrailingCommas, write};
 
 /// Utility function to print array-like nodes (array expressions, array bindings and assignment patterns)
 pub fn write_array_node<'a, 'b, N>(
     len: usize,
     array: impl IntoIterator<Item = Option<&'a N>> + 'b,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) where
-    N: Format<'a> + GetSpan + std::fmt::Debug + 'a,
+    N: Format<'a, JsFormatContext<'a>> + GetSpan + std::fmt::Debug + 'a,
 {
     // Specifically do not use format_separated as arrays need separators
     // inserted after holes regardless of the formatting since this makes a

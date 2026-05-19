@@ -2,7 +2,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format,
-    formatter::{Formatter, trivia::format_leading_comments},
+    formatter::{JsFormatContext, JsFormatter, trivia::format_leading_comments},
     utils::suppressed::FormatSuppressedNode,
 };
 
@@ -13,11 +13,11 @@ use crate::{
 /// comment formatting behavior (leading comments, internal comments).
 pub struct FormatNodeWithoutTrailingComments<'b, T>(pub &'b T);
 
-impl<'a, T> Format<'a> for FormatNodeWithoutTrailingComments<'_, T>
+impl<'a, T> Format<'a, JsFormatContext<'a>> for FormatNodeWithoutTrailingComments<'_, T>
 where
-    T: Format<'a> + GetSpan,
+    T: Format<'a, JsFormatContext<'a>> + GetSpan,
 {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let node_end = self.0.span().end;
 
         if f.comments().has_trailing_suppression_comment(node_end) {

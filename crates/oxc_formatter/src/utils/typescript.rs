@@ -1,7 +1,7 @@
 use oxc_ast::ast::{TSType, TSUnionType};
 use oxc_span::GetSpan;
 
-use crate::formatter::Formatter;
+use crate::formatter::JsFormatter;
 
 /// Check if a TSType is a simple type (primitives, keywords, simple references)
 pub fn is_simple_type(ty: &TSType) -> bool {
@@ -34,7 +34,7 @@ pub fn is_object_like_type(ty: &TSType) -> bool {
     matches!(ty, TSType::TSTypeLiteral(_) | TSType::TSMappedType(_))
 }
 
-pub fn should_hug_type(node: &TSUnionType<'_>, f: &Formatter<'_, '_>) -> bool {
+pub fn should_hug_type(node: &TSUnionType<'_>, f: &JsFormatter<'_, '_>) -> bool {
     let types = &node.types;
 
     if types.len() == 1 {

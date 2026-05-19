@@ -7,7 +7,7 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{
-        Formatter,
+        JsFormatter,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
@@ -18,7 +18,7 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let discriminant = self.discriminant();
         let cases = self.cases();
         let format_cases =
@@ -40,14 +40,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join_nodes_with_hardline().entries(self);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_default = if let Some(test) = self.test() {
             write!(f, ["case", space(), test, ":"]);
             false

@@ -3,13 +3,13 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
+    formatter::{prelude::*, trivia::FormatTrailingComments},
     print::{FormatNodeWithoutTrailingComments, FormatWrite},
     write,
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
             self.expression(),
@@ -22,7 +22,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
             self.expression(),
@@ -39,7 +39,7 @@ fn format_as_or_satisfies_expression<'a>(
     type_annotation: &AstNode<'a, TSType>,
     is_callee_or_object: bool,
     operation: &'static str,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     let format_inner = format_with(|f| {
         let type_start = type_annotation.span().start;

@@ -15,9 +15,12 @@ use super::{
 ///
 /// The formatter is passed to the [Format] implementation of every node in the CST so that they
 /// can use it to format their children.
-pub struct Formatter<'buf, 'ast, C = JsFormatContext<'ast>> {
+pub struct Formatter<'buf, 'ast, C> {
     pub(super) buffer: &'buf mut dyn Buffer<'ast, C>,
 }
+
+/// JS/TS-specialized [`Formatter`].
+pub type JsFormatter<'buf, 'ast> = Formatter<'buf, 'ast, JsFormatContext<'ast>>;
 
 impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     /// Creates a new context that uses the given formatter context
@@ -137,7 +140,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast, JsFormatContext<'ast>> {
         joiner: Joiner,
     ) -> JoinBuilder<'fmt, 'buf, 'ast, Joiner>
     where
-        Joiner: Format<'ast>,
+        Joiner: Format<'ast, JsFormatContext<'ast>>,
     {
         JoinBuilder::with_separator(self, joiner)
     }
@@ -241,7 +244,10 @@ impl<'buf, 'ast> Formatter<'buf, 'ast, JsFormatContext<'ast>> {
     /// This snapshots and restores the comment state so that the speculative formatting
     /// doesn't permanently advance the comment cursor. Comments before the content's span
     /// are skipped so they don't get incorrectly included as leading comments.
-    pub fn speculate_will_break(&mut self, content: &(impl Format<'ast> + GetSpan)) -> bool {
+    pub fn speculate_will_break(
+        &mut self,
+        content: &(impl Format<'ast, JsFormatContext<'ast>> + GetSpan),
+    ) -> bool {
         let snapshot = self.context().comments().snapshot();
         self.context_mut().comments_mut().skip_comments_before(content.span().start);
         let will_break = self.intern(content).is_some_and(|e| e.will_break());
@@ -250,7 +256,10 @@ impl<'buf, 'ast> Formatter<'buf, 'ast, JsFormatContext<'ast>> {
     }
 
     /// Formats `content` into an interned element without writing it to the formatter's buffer.
-    pub fn intern(&mut self, content: &dyn Format<'ast>) -> Option<FormatElement<'ast>> {
+    pub fn intern(
+        &mut self,
+        content: &dyn Format<'ast, JsFormatContext<'ast>>,
+    ) -> Option<FormatElement<'ast>> {
         let mut buffer = VecBuffer::new(self.state_mut());
         crate::write!(&mut buffer, [content]);
         let elements = buffer.into_vec();

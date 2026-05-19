@@ -6,7 +6,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Formatter,
+        JsFormatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
@@ -17,7 +17,7 @@ use crate::{
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let types = self.types();
 
         let is_alias_level = matches!(self.parent(), AstNodes::TSTypeAliasDeclaration(_));
@@ -227,7 +227,7 @@ impl LeadingCommentsInfo {
 fn should_indent_alias_union<'a>(
     alias: &AstNode<'a, TSTypeAliasDeclaration<'a>>,
     comment_info: LeadingCommentsInfo,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> bool {
     // When a union starts after a trailing own-line JSDoc comment
     // (e.g. `=(/** ... */\n| A)`),
@@ -249,7 +249,7 @@ fn format_union_types<'a>(
     node: &AstNode<'a, Vec<'a, TSType<'a>>>,
     mut suppressed_node_span: Span,
     should_hug: bool,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     let mut node_iter = node.iter().peekable();
     while let Some(element) = node_iter.next() {

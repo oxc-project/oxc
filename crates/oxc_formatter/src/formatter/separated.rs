@@ -4,7 +4,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     formatter::{
-        Format, Formatter,
+        Format, JsFormatContext, JsFormatter,
         prelude::{group, if_group_breaks},
     },
     options::TrailingSeparator,
@@ -37,8 +37,10 @@ impl<T: GetSpan> GetSpan for FormatSeparatedElement<T> {
     }
 }
 
-impl<'a, E: Format<'a> + GetSpan> Format<'a> for FormatSeparatedElement<E> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a, E: Format<'a, JsFormatContext<'a>> + GetSpan> Format<'a, JsFormatContext<'a>>
+    for FormatSeparatedElement<E>
+{
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.options.nodes_grouped {
             group(&self.element).fmt(f);
         } else {

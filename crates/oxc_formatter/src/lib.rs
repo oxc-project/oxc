@@ -56,7 +56,7 @@ impl<'a> Formatter<'a> {
     }
 
     #[inline]
-    pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
+    pub fn format(self, program: &'a Program<'a>) -> Formatted<'a, JsFormatContext<'a>> {
         self.format_with_external_callbacks(program, None)
     }
 
@@ -65,7 +65,7 @@ impl<'a> Formatter<'a> {
         self,
         program: &'a Program<'a>,
         external_callbacks: Option<ExternalCallbacks>,
-    ) -> Formatted<'a> {
+    ) -> Formatted<'a, JsFormatContext<'a>> {
         let program_node = AstNode::new(program, AstNodes::Dummy(), self.allocator);
 
         let context = JsFormatContext::new(
@@ -92,14 +92,14 @@ impl<'a> Formatter<'a> {
     /// - etc...
     ///
     /// `SortImportsTransform` is skipped since it only applies to whole `Program` formatting.
-    pub fn format_node<F: formatter::Format<'a>>(
+    pub fn format_node<F: formatter::Format<'a, JsFormatContext<'a>>>(
         self,
         node: &F,
         source_text: &'a str,
         source_type: SourceType,
         comments: &'a [Comment],
         external_callbacks: Option<ExternalCallbacks>,
-    ) -> Formatted<'a> {
+    ) -> Formatted<'a, JsFormatContext<'a>> {
         let context = JsFormatContext::new(
             source_text,
             source_type,

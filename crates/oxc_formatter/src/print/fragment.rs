@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     ast_nodes::AstNode,
     format_args,
-    formatter::{Format, Formatter, prelude::*, trivia::format_dangling_comments},
+    formatter::{Format, JsFormatter, prelude::*, trivia::format_dangling_comments},
     options::TrailingSeparator,
     write,
 };
@@ -36,8 +36,8 @@ impl<'a, 'b> FormatVueBindingParams<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatVueBindingParams<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatVueBindingParams<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let list = ParameterList::with_layout(self.node, None, ParameterLayout::Default)
             .with_omit_trailing_separator();
 
@@ -75,8 +75,8 @@ impl<'a, 'b> FormatVueScriptGeneric<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatVueScriptGeneric<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatVueScriptGeneric<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let params = self.decl.params();
 
         soft_block_indent(&format_with(|f| {

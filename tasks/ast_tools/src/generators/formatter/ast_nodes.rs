@@ -112,7 +112,7 @@ impl Generator for FormatterAstNodesGenerator {
             ///@@line_break
             use crate::ast_nodes::AstNode;
             use crate::formatter::{
-                Format, Formatter,
+                Format, JsFormatter,
                 trivia::{format_leading_comments, format_trailing_comments},
             };
 
@@ -391,7 +391,7 @@ fn generate_struct_impls(
             #(#methods)*
 
             ///@@line_break
-            pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+            pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
                 format_leading_comments(
                     self.span()
                 )
@@ -399,7 +399,7 @@ fn generate_struct_impls(
             }
 
             ///@@line_break
-            pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+            pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
                 format_trailing_comments(
                     self.parent.span(),
                     self.inner.span(),

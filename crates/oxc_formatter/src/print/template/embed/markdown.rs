@@ -1,12 +1,7 @@
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_ast::ast::*;
 
-use crate::{
-    ast_nodes::AstNode,
-    format_args,
-    formatter::{Formatter, prelude::*},
-    write,
-};
+use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
 /// Format a Markdown-in-JS tagged template literal via the Doc→IR path.
 ///
@@ -14,7 +9,7 @@ use crate::{
 /// then re-escapes backticks and applies indented or dedent-to-root layout.
 pub(super) fn try_embed_markdown<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let raw = tagged.quasi.quasis[0].value.raw.as_str();
 

@@ -2,14 +2,14 @@ use oxc_ast::ast::*;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Format, Formatter, prelude::*},
+    formatter::{Format, JsFormatter, prelude::*},
     write,
 };
 
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_arrow_body = matches!(
             self.parent(),
             AstNodes::ExpressionStatement(statement) if statement.is_arrow_function_body()

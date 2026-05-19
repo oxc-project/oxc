@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     best_fitting, format_args,
-    formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
+    formatter::{prelude::*, trivia::FormatTrailingComments},
     parentheses::NeedsParentheses,
     print::jsx::{FormatChildrenResult, FormatOpeningElement},
     utils::{
@@ -32,14 +32,14 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
         }
     }
 
-    fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) {
+    fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::Element(element) => element.format_leading_comments(f),
             Self::Fragment(fragment) => fragment.format_leading_comments(f),
         }
     }
 
-    fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) {
+    fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         let trailing_comments = if let AstNodes::ArrowFunctionExpression(arrow) =
             self.parent().parent().parent()
             && arrow.expression
@@ -128,8 +128,8 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
 
         let format_tag = format_with(|f| {
@@ -272,7 +272,7 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
 }
 
 impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
-    fn fmt_opening(&self, f: &mut Formatter<'_, 'a>) {
+    fn fmt_opening(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::Element(element) => {
                 let is_self_closing = element.closing_element().is_none();
@@ -286,7 +286,7 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn fmt_closing(&self, f: &mut Formatter<'_, 'a>) {
+    fn fmt_closing(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::Element(element) => {
                 write!(f, element.closing_element());
@@ -311,7 +311,7 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+    fn needs_parentheses(&self, f: &JsFormatter<'_, 'a>) -> bool {
         match self {
             Self::Element(element) => element.needs_parentheses(f),
             Self::Fragment(fragment) => fragment.needs_parentheses(f),

@@ -2,7 +2,7 @@ use oxc_ast::ast::{TSMappedType, TSMappedTypeModifierOperator};
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{Formatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{prelude::*, trivia::FormatLeadingComments},
     print::semicolon::OptionalSemicolon,
     utils::suppressed::FormatSuppressedNode,
     write,
@@ -11,7 +11,7 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.comments().is_suppressed(self.key.span.start) {
             return write!(f, FormatSuppressedNode(self.span));
         }

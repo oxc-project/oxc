@@ -85,7 +85,7 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{Format, Formatter, trivia::{format_leading_comments, format_trailing_comments}},
+                formatter::{Format, JsFormatContext, JsFormatter, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
@@ -240,7 +240,7 @@ fn generate_struct_implementation(
         quote! {
             ///@@line_break
             impl<'a> #type_ty {
-                pub fn fmt_with_options(&self, options: #fmt_options, f: &mut Formatter<'_, 'a>) {
+                pub fn fmt_with_options(&self, options: #fmt_options, f: &mut JsFormatter<'_, 'a>) {
                     #implementation
                 }
             }
@@ -251,8 +251,8 @@ fn generate_struct_implementation(
 
     quote! {
         ///@@line_break
-        impl<'a> Format<'a> for #type_ty {
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
+            fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
                 #fmt_implementation
             }
         }
@@ -342,9 +342,9 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
     quote! {
         ///@@line_break
-        impl<'a> Format<'a> for #node_type {
+        impl<'a> Format<'a, JsFormatContext<'a>> for #node_type {
             #[inline]
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+            fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
                 #inline_trailing_suppression
                 let allocator = self.allocator;
                 let parent = self.parent;

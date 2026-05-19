@@ -5,8 +5,8 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, Formatter, SourceText, buffer::RemoveSoftLinesBuffer, prelude::*,
-        trivia::FormatTrailingComments,
+        Buffer, Format, JsFormatContext, JsFormatter, SourceText, buffer::RemoveSoftLinesBuffer,
+        prelude::*, trivia::FormatTrailingComments,
     },
     options::FormatTrailingCommas,
     print::function::FormatContentWithCacheMode,
@@ -23,14 +23,14 @@ use super::{FormatWrite, parameters::has_only_simple_parameters};
 impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
     for AstNode<'a, ArrowFunctionExpression<'a>>
 {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         FormatJsArrowFunctionExpression::new(self).fmt(f);
     }
 
     fn write_with_options(
         &self,
         options: FormatJsArrowFunctionExpressionOptions,
-        f: &mut Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) {
         FormatJsArrowFunctionExpression::new_with_options(self, options).fmt(f);
     }
@@ -92,7 +92,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     }
 
     #[inline]
-    pub fn format(&self, f: &mut Formatter<'_, 'a>) {
+    pub fn format(&self, f: &mut JsFormatter<'_, 'a>) {
         let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options);
 
         match layout {
@@ -217,8 +217,8 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatJsArrowFunctionExpression<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         self.format(f);
     }
 }
@@ -383,7 +383,7 @@ pub fn is_multiline_template_starting_on_same_line(
 ///
 /// Prettier achieves this via `label({ embed: true, hug })` + `shouldExpandLastArg`.
 /// We replicate it by detecting the same conditions on the expression.
-pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &Formatter<'_, '_>) -> bool {
+pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
     let template = match expression {
         Expression::TaggedTemplateExpression(tagged) => {
             if !matches!(&tagged.tag, Expression::Identifier(id) if id.name.as_str() == "html") {
@@ -455,8 +455,8 @@ impl<'a, 'b> ArrowChain<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for ArrowChain<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let ArrowChain { tail, expand_signatures, .. } = *self;
 
         let tail_body = tail.body();
@@ -731,7 +731,7 @@ fn format_signature<'a, 'b>(
     is_grouped_call_argument: bool,
     is_first_in_chain: bool,
     cache_mode: FunctionCacheMode,
-) -> impl Format<'a> + 'b {
+) -> impl Format<'a, JsFormatContext<'a>> + 'b {
     format_with(move |f| {
         let content = format_with(|f| {
             group(&format_args!(
@@ -787,8 +787,8 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
     pub mode: FunctionCacheMode,
 }
 
-impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatMaybeCachedFunctionBody<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let content = format_with(|f| {
             if self.expression
                 && let AstNodes::ExpressionStatement(s) =
@@ -819,9 +819,9 @@ impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
 /// Handles `oxfmt-ignore` by preserving original source text when suppressed.
 fn format_sequence_with_leading_comment<'a, 'b>(
     sequence_span: Span,
-    format_body: &'b impl Format<'a>,
-    f: &Formatter<'_, 'a>,
-) -> Option<impl Format<'a> + 'b> {
+    format_body: &'b impl Format<'a, JsFormatContext<'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> Option<impl Format<'a, JsFormatContext<'a>> + 'b> {
     if !f.comments().has_comment_before(sequence_span.start) {
         return None;
     }

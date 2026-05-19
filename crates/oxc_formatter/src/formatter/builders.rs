@@ -316,8 +316,8 @@ pub struct Text<'a> {
     width: Option<TextWidth>,
 }
 
-impl<'a> Format<'a> for Text<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for Text<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.write_element(FormatElement::Text {
             text: self.text,
             width: self
@@ -377,7 +377,7 @@ where
 }
 
 #[derive(Copy, Clone)]
-pub struct LineSuffix<'a, 'ast, C = JsFormatContext<'ast>> {
+pub struct LineSuffix<'a, 'ast, C> {
     content: Argument<'a, 'ast, C>,
 }
 
@@ -508,7 +508,7 @@ where
 }
 
 #[derive(Copy, Clone)]
-pub struct FormatLabelled<'a, 'ast, C = JsFormatContext<'ast>> {
+pub struct FormatLabelled<'a, 'ast, C> {
     label_id: LabelId,
     content: Argument<'a, 'ast, C>,
 }
@@ -651,7 +651,7 @@ where
 }
 
 #[derive(Copy, Clone)]
-pub struct Indent<'a, 'ast, C = JsFormatContext<'ast>> {
+pub struct Indent<'a, 'ast, C> {
     content: Argument<'a, 'ast, C>,
 }
 
@@ -816,7 +816,7 @@ where
 }
 
 #[derive(Copy, Clone)]
-pub struct Dedent<'a, 'ast, C = JsFormatContext<'ast>> {
+pub struct Dedent<'a, 'ast, C> {
     content: Argument<'a, 'ast, C>,
     mode: DedentMode,
 }
@@ -999,7 +999,7 @@ where
 }
 
 #[derive(Copy, Clone)]
-pub struct Align<'a, 'ast, C = JsFormatContext<'ast>> {
+pub struct Align<'a, 'ast, C> {
     count: NonZeroU8,
     content: Argument<'a, 'ast, C>,
 }
@@ -1302,7 +1302,7 @@ pub fn soft_line_indent_or_space<'ast, C>(
 }
 
 #[derive(Copy, Clone)]
-pub struct BlockIndent<'fmt, 'ast, C = JsFormatContext<'ast>> {
+pub struct BlockIndent<'fmt, 'ast, C> {
     content: Argument<'fmt, 'ast, C>,
     mode: IndentMode,
 }
@@ -1508,7 +1508,7 @@ pub fn group<'ast, C>(content: &impl Format<'ast, C>) -> Group<'_, 'ast, C> {
 }
 
 #[derive(Copy, Clone)]
-pub struct Group<'fmt, 'ast, C = JsFormatContext<'ast>> {
+pub struct Group<'fmt, 'ast, C> {
     content: Argument<'fmt, 'ast, C>,
     #[expect(clippy::struct_field_names)] // Keep the name the same as it is in the original source
     group_id: Option<GroupId>,
@@ -1765,7 +1765,7 @@ where
 }
 
 #[derive(Copy, Clone)]
-pub struct IfGroupBreaks<'a, 'ast, C = JsFormatContext<'ast>> {
+pub struct IfGroupBreaks<'a, 'ast, C> {
     content: Argument<'a, 'ast, C>,
     group_id: Option<GroupId>,
     mode: PrintMode,
@@ -1947,7 +1947,7 @@ where
 }
 
 #[derive(Copy, Clone)]
-pub struct IndentIfGroupBreaks<'a, 'ast, C = JsFormatContext<'ast>> {
+pub struct IndentIfGroupBreaks<'a, 'ast, C> {
     content: Argument<'a, 'ast, C>,
     group_id: GroupId,
 }
@@ -2031,7 +2031,7 @@ impl<T> std::fmt::Debug for FormatWith<T> {
 /// ```
 pub const fn format_with<'ast, T>(formatter: T) -> FormatWith<T>
 where
-    T: Fn(&mut Formatter<'_, 'ast>),
+    T: Fn(&mut JsFormatter<'_, 'ast>),
 {
     FormatWith { formatter }
 }
@@ -2105,7 +2105,7 @@ where
 /// ```
 pub const fn format_once<'ast, T>(formatter: T) -> FormatOnce<T>
 where
-    T: FnOnce(&mut Formatter<'_, 'ast>),
+    T: FnOnce(&mut JsFormatter<'_, 'ast>),
 {
     FormatOnce { formatter: Cell::new(Some(formatter)) }
 }
@@ -2136,27 +2136,27 @@ impl<T> std::fmt::Debug for FormatOnce<T> {
 /// See [Formatter::join]
 #[must_use = "must eventually call `finish()` on Format builders"]
 pub struct JoinBuilder<'fmt, 'buf, 'ast, Separator> {
-    fmt: &'fmt mut Formatter<'buf, 'ast>,
+    fmt: &'fmt mut JsFormatter<'buf, 'ast>,
     with: Option<Separator>,
     has_elements: bool,
 }
 
 impl<'fmt, 'buf, 'ast, Separator> JoinBuilder<'fmt, 'buf, 'ast, Separator>
 where
-    Separator: Format<'ast>,
+    Separator: Format<'ast, JsFormatContext<'ast>>,
 {
     /// Creates a new instance that joins the elements without a separator
-    pub(super) fn new(fmt: &'fmt mut Formatter<'buf, 'ast>) -> Self {
+    pub(super) fn new(fmt: &'fmt mut JsFormatter<'buf, 'ast>) -> Self {
         Self { fmt, has_elements: false, with: None }
     }
 
     /// Creates a new instance that prints the passed separator between every two entries.
-    pub(super) fn with_separator(fmt: &'fmt mut Formatter<'buf, 'ast>, with: Separator) -> Self {
+    pub(super) fn with_separator(fmt: &'fmt mut JsFormatter<'buf, 'ast>, with: Separator) -> Self {
         Self { fmt, has_elements: false, with: Some(with) }
     }
 
     /// Adds a new entry to the join output.
-    pub fn entry(&mut self, entry: &dyn Format<'ast>) -> &mut Self {
+    pub fn entry(&mut self, entry: &dyn Format<'ast, JsFormatContext<'ast>>) -> &mut Self {
         if let Some(with) = &self.with
             && self.has_elements
         {
@@ -2172,7 +2172,7 @@ where
     /// Adds the contents of an iterator of entries to the join output.
     pub fn entries<F, I>(&mut self, entries: I) -> &mut Self
     where
-        F: Format<'ast>,
+        F: Format<'ast, JsFormatContext<'ast>>,
         I: IntoIterator<Item = F>,
     {
         for entry in entries {
@@ -2189,7 +2189,7 @@ where
         trailing_separator: TrailingSeparator,
     ) -> &mut Self
     where
-        F: Format<'ast> + GetSpan,
+        F: Format<'ast, JsFormatContext<'ast>> + GetSpan,
         I: IntoIterator<Item = F>,
     {
         let iter = FormatSeparatedIter::new(entries.into_iter(), separator)
@@ -2209,38 +2209,38 @@ where
 pub struct JoinNodesBuilder<'fmt, 'buf, 'ast, Separator> {
     /// The separator to insert between nodes. Either a soft or hard line break
     separator: Separator,
-    fmt: &'fmt mut Formatter<'buf, 'ast>,
+    fmt: &'fmt mut JsFormatter<'buf, 'ast>,
     has_elements: bool,
 }
 
 impl<'fmt, 'buf, 'ast, Separator> JoinNodesBuilder<'fmt, 'buf, 'ast, Separator>
 where
-    Separator: Format<'ast>,
+    Separator: Format<'ast, JsFormatContext<'ast>>,
 {
-    pub(super) fn new(separator: Separator, fmt: &'fmt mut Formatter<'buf, 'ast>) -> Self {
+    pub(super) fn new(separator: Separator, fmt: &'fmt mut JsFormatter<'buf, 'ast>) -> Self {
         Self { separator, fmt, has_elements: false }
     }
 
     /// Returns a reference to the formatter.
-    pub fn fmt(&self) -> &Formatter<'buf, 'ast> {
+    pub fn fmt(&self) -> &JsFormatter<'buf, 'ast> {
         self.fmt
     }
 
     /// Returns a mutable reference to the formatter.
-    pub fn fmt_mut(&mut self) -> &mut Formatter<'buf, 'ast> {
+    pub fn fmt_mut(&mut self) -> &mut JsFormatter<'buf, 'ast> {
         self.fmt
     }
 
     /// Adds a new node with the specified formatted content to the output, respecting any new lines
     /// that appear before the node in the input source.
-    pub fn entry(&mut self, span: Span, content: &dyn Format<'ast>) {
+    pub fn entry(&mut self, span: Span, content: &dyn Format<'ast, JsFormatContext<'ast>>) {
         self.separator_no_entry(span);
         self.has_elements = true;
         write!(self.fmt, content);
     }
 
     /// Writes an entry without adding a separating line break or empty line.
-    pub fn entry_no_separator(&mut self, content: &dyn Format<'ast>) {
+    pub fn entry_no_separator(&mut self, content: &dyn Format<'ast, JsFormatContext<'ast>>) {
         self.has_elements = true;
         write!(self.fmt, content);
     }
@@ -2259,7 +2259,7 @@ where
     /// Adds an iterator of entries to the output. Each entry is a `(node, content)` tuple.
     pub fn entries<'a, F, I>(&mut self, entries: I) -> &mut Self
     where
-        F: Format<'ast> + GetSpan + 'a,
+        F: Format<'ast, JsFormatContext<'ast>> + GetSpan + 'a,
         I: IntoIterator<Item = F>,
     {
         for content in entries {
@@ -2275,7 +2275,7 @@ where
         trailing_separator: TrailingSeparator,
     ) -> &mut Self
     where
-        F: Format<'ast> + GetSpan + 'a,
+        F: Format<'ast, JsFormatContext<'ast>> + GetSpan + 'a,
         I: IntoIterator<Item = F>,
     {
         let iter = FormatSeparatedIter::new(entries.into_iter(), separator)
@@ -2296,21 +2296,25 @@ where
 /// Builder to fill as many elements as possible on a single line.
 #[must_use = "must eventually call `finish()` on Format builders"]
 pub struct FillBuilder<'fmt, 'buf, 'ast> {
-    fmt: &'fmt mut Formatter<'buf, 'ast>,
+    fmt: &'fmt mut JsFormatter<'buf, 'ast>,
     empty: bool,
 }
 
 impl<'fmt, 'buf, 'ast> FillBuilder<'fmt, 'buf, 'ast> {
-    pub(crate) fn new(fmt: &'fmt mut Formatter<'buf, 'ast>) -> Self {
+    pub(crate) fn new(fmt: &'fmt mut JsFormatter<'buf, 'ast>) -> Self {
         fmt.write_element(FormatElement::Tag(StartFill));
 
         Self { fmt, empty: true }
     }
 
     /// Adds an iterator of entries to the fill output. Uses the passed `separator` to separate any two items.
-    pub fn entries<F, I>(&mut self, separator: &dyn Format<'ast>, entries: I) -> &mut Self
+    pub fn entries<F, I>(
+        &mut self,
+        separator: &dyn Format<'ast, JsFormatContext<'ast>>,
+        entries: I,
+    ) -> &mut Self
     where
-        F: Format<'ast>,
+        F: Format<'ast, JsFormatContext<'ast>>,
         I: IntoIterator<Item = F>,
     {
         for entry in entries {
@@ -2321,7 +2325,11 @@ impl<'fmt, 'buf, 'ast> FillBuilder<'fmt, 'buf, 'ast> {
     }
 
     /// Adds a new entry to the fill output. The `separator` isn't written if this is the first element in the list.
-    pub fn entry(&mut self, separator: &dyn Format<'ast>, entry: &dyn Format<'ast>) -> &mut Self {
+    pub fn entry(
+        &mut self,
+        separator: &dyn Format<'ast, JsFormatContext<'ast>>,
+        entry: &dyn Format<'ast, JsFormatContext<'ast>>,
+    ) -> &mut Self {
         if self.empty {
             self.empty = false;
         } else {
@@ -2346,7 +2354,7 @@ impl<'fmt, 'buf, 'ast> FillBuilder<'fmt, 'buf, 'ast> {
 /// The first variant is the most flat, and the last is the most expanded variant.
 /// See [`best_fitting!`] macro for a more in-detail documentation
 #[derive(Copy, Clone)]
-pub struct BestFitting<'fmt, 'ast, C = JsFormatContext<'ast>> {
+pub struct BestFitting<'fmt, 'ast, C> {
     variants: Arguments<'fmt, 'ast, C>,
 }
 

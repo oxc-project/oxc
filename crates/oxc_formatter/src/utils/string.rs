@@ -6,7 +6,7 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{
     QuoteProperties, QuoteStyle,
-    formatter::{Format, Formatter, prelude::*},
+    formatter::{Format, JsFormatter, prelude::*},
 };
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
@@ -39,7 +39,7 @@ impl<'a> FormatLiteralStringToken<'a> {
         Self { string, jsx, parent_kind }
     }
 
-    pub fn clean_text(&self, f: &Formatter<'_, 'a>) -> CleanedStringLiteralText<'a> {
+    pub fn clean_text(&self, f: &JsFormatter<'_, 'a>) -> CleanedStringLiteralText<'a> {
         let options = f.options();
         let source_type = f.context().source_type();
 
@@ -79,8 +79,8 @@ impl CleanedStringLiteralText<'_> {
     }
 }
 
-impl<'a> Format<'a> for CleanedStringLiteralText<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for CleanedStringLiteralText<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         text(f.allocator().alloc_str(&self.text)).fmt(f);
     }
 }
@@ -356,8 +356,8 @@ impl<'a> LiteralStringNormalizer<'a> {
     }
 }
 
-impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatLiteralStringToken<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         self.clean_text(f).fmt(f);
     }
 }

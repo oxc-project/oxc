@@ -3,7 +3,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     Buffer, Format, format_args,
-    formatter::{Formatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{JsFormatter, prelude::*, trivia::FormatLeadingComments},
     write,
 };
 
@@ -16,7 +16,10 @@ use crate::{
 /// - `Some(&[])` if the node is a type cast node but no comments need to be printed
 /// - `Some(&[Comment, ...])` if the node is a type cast node with comments to print
 /// - `None` if the node is not a type cast node
-pub fn is_type_cast_node<'a>(node: &impl GetSpan, f: &Formatter<'_, 'a>) -> Option<&'a [Comment]> {
+pub fn is_type_cast_node<'a>(
+    node: &impl GetSpan,
+    f: &JsFormatter<'_, 'a>,
+) -> Option<&'a [Comment]> {
     let comments = f.context().comments();
     let span = node.span();
     let source = f.source_text();
@@ -94,9 +97,9 @@ pub fn is_type_cast_node<'a>(node: &impl GetSpan, f: &Formatter<'_, 'a>) -> Opti
 /// Returns `Ok(true)` if the node was formatted as a type cast, `Ok(false)` otherwise.
 /// This allows callers to know whether they need to apply their own formatting.
 pub fn format_type_cast_comment_node<'a>(
-    node: &(impl Format<'a> + GetSpan),
+    node: &(impl Format<'a, JsFormatContext<'a>> + GetSpan),
     is_object_or_array_expression: bool,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     // Check if this is a type cast node and get the comments to print
     let Some(type_cast_comments) = is_type_cast_node(node, f) else {
