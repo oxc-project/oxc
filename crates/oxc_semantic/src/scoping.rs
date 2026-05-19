@@ -254,7 +254,6 @@ mod scoping_cell {
         /// This is used by [`Scoping::reset`] to pull the arena out before
         /// resetting it and rebuilding the inner state on top of the now-empty
         /// arena.
-        #[expect(dead_code, reason = "used by Scoping::reset which is not yet implemented")]
         #[inline(always)]
         pub fn into_owner(self) -> Allocator {
             self.0.into_owner()
@@ -988,6 +987,69 @@ impl Scoping {
 }
 
 impl Scoping {
+    /// Clear all internal state. Preserves:
+    /// - The bumpalo arena's chunk capacity (the main win — the next build
+    ///   allocates `ArenaVec` / `ArenaIdentHashMap` storage into already-owned
+    ///   chunks instead of asking the OS for new ones).
+    /// - The heap capacity of the flat `multi_index_vec` tables
+    ///   (`symbol_table`, `scope_table`) and the `references` `IndexVec`.
+    ///
+    /// Does **not** preserve:
+    /// - The heap capacity of cell-internal containers like
+    ///   `ScopingInner.bindings` (a heap `IndexVec`) or
+    ///   `symbol_redeclarations` (a heap `FxHashMap`). These live inside the
+    ///   `ScopingCell` and are dropped when the cell is rebuilt, so they
+    ///   reallocate on the next build. (Acceptable: they're typically small
+    ///   and the bumpalo chunks dominate the cost.)
+    ///
+    /// This is the cheap path for callers that need to throw away the current
+    /// semantic data and immediately build a new one over the same AST (e.g.
+    /// rolldown's `recreate_scoping` loop in `pre_process_ecma_ast.rs`).
+    ///
+    /// After `reset`, the `Scoping` is equivalent to `Scoping::default()` in
+    /// content, but the bumpalo arena already owns enough memory for a build
+    /// of similar size.
+    ///
+    /// Pair with [`SemanticBuilder::with_scoping`] to actually reuse it.
+    pub fn reset(&mut self) {
+        // 1. Clear the flat heap-allocated tables (preserve capacity).
+        self.symbol_table.clear();
+        self.references.clear();
+        self.no_side_effects.clear();
+        self.enum_data = EnumData::default();
+        self.scope_table.clear();
+
+        // 2. Replace the self-cell. We can't simply call `.clear()` on the
+        //    inner `ArenaVec`s and then `allocator.reset()` in place: after
+        //    `reset()`, the buffer pointers held by the cleared `ArenaVec`s /
+        //    `HashMap`s point into freed arena memory, which is unsound to
+        //    even hold around.
+        //
+        //    Instead, pull the `Allocator` out, reset it (preserves chunk
+        //    capacity but invalidates all live arena pointers), and rebuild a
+        //    fresh `ScopingCell` with empty inner state on top of the now-empty
+        //    arena.
+        let cell = mem::replace(
+            &mut self.cell,
+            ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
+                symbol_names: ArenaVec::new_in(allocator),
+                resolved_references: ArenaVec::new_in(allocator),
+                symbol_redeclarations: FxHashMap::default(),
+                bindings: IndexVec::new(),
+                root_unresolved_references: UnresolvedReferences::new_in(allocator),
+            }),
+        );
+        let mut allocator = cell.into_owner();
+        allocator.reset();
+        self.cell = ScopingCell::new(allocator, |allocator| ScopingInner {
+            symbol_names: ArenaVec::new_in(allocator),
+            resolved_references: ArenaVec::new_in(allocator),
+            symbol_redeclarations: FxHashMap::default(),
+            bindings: IndexVec::new(),
+            root_unresolved_references: UnresolvedReferences::new_in(allocator),
+        });
+    }
+
     /// Clone all semantic data. Used in `Rolldown`.
     #[must_use]
     pub fn clone_in_with_semantic_ids_with_another_arena(&self) -> Self {
