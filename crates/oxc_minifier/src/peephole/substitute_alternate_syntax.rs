@@ -1887,18 +1887,16 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Take the IIFE body out for inlining, propagating the outer `pure`
-    /// annotation onto a call/new body. Propagation runs in both DCE and
-    /// full-minify modes; only the bail-out (via
-    /// [`Self::iife_inline_would_lose_pure`]) is gated to DCE mode, where
-    /// preserving the IIFE wrapper matters for downstream tools.
+    /// Take the IIFE body out for inlining and propagate `pure` onto a
+    /// call/new body. Bails in DCE-only mode — see the
+    /// `preserve_iife_in_dce_mode` test.
     /// Returns `None` to signal the caller should leave the IIFE intact.
     fn try_take_iife_body(
         body: &mut Expression<'a>,
         is_pure: bool,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if Self::iife_inline_would_lose_pure(is_pure, body, ctx) {
+        if ctx.state.dce {
             return None;
         }
         let mut taken = body.take_in(ctx.ast);
@@ -1910,23 +1908,6 @@ impl<'a> PeepholeOptimizations {
             }
         }
         Some(taken)
-    }
-
-    /// Whether inlining the IIFE body would weaken the outer pure assertion.
-    /// Fires only in DCE-only mode (rolldown's per-module preprocess): the
-    /// outer call has no arguments, so its `pure` flag covers the entire
-    /// body. Inlining any side-effectful body surfaces sub-effects at the
-    /// outer call site, where rolldown's side-effect detector treats them
-    /// as real side effects regardless of the inlined node's `pure` flag.
-    fn iife_inline_would_lose_pure(
-        is_pure: bool,
-        body: &Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> bool {
-        if !is_pure || !ctx.state.dce {
-            return false;
-        }
-        body.may_have_side_effects(ctx)
     }
 }
 
