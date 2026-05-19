@@ -271,7 +271,7 @@ unsafe impl<const MIN_ALIGN: usize> Send for Arena<MIN_ALIGN> {}
 /// An empty `Arena`, which does not own any memory, has `Arena::current_chunk_footer_ptr` set to `None`.
 #[repr(C, align(16))]
 #[derive(Debug)]
-pub(crate) struct ChunkFooter {
+pub struct ChunkFooter {
     /// Pointer to the start of the allocation backing this chunk.
     ///
     /// This pointer is passed to `alloc::dealloc` (or `System.dealloc` if `is_fixed_size` is `true`)

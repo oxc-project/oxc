@@ -1,4 +1,6 @@
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ecmascript::constant_evaluation::ConstantValue;
+use oxc_semantic::ReferenceId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_data_structures::stack::NonEmptyStack;
@@ -30,6 +32,8 @@ pub struct MinifierState<'a> {
     /// setters that make subsequent property writes side-effectful.
     pub proto_write_symbols: FxHashSet<SymbolId>,
 
+    pub object_property_usage: ObjectPropertyUsageState<'a>,
+
     pub changed: bool,
 }
 
@@ -48,9 +52,19 @@ impl MinifierState<'_> {
             symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
+            object_property_usage: ObjectPropertyUsageState::default(),
             changed: false,
         }
     }
+}
+
+#[derive(Default)]
+pub struct ObjectPropertyUsageState<'a> {
+    pub candidate_symbols: FxHashSet<SymbolId>,
+    pub prunable_property_counts: FxHashMap<SymbolId, u32>,
+    pub used_properties: FxHashMap<SymbolId, ArenaVec<'a, Str<'a>>>,
+    pub escaped_or_unknown_symbols: FxHashSet<SymbolId>,
+    pub member_object_references: FxHashSet<ReferenceId>,
 }
 
 /// Stack to track class symbol information
