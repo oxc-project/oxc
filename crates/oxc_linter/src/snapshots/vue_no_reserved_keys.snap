@@ -113,3 +113,27 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ────
  5 │                 })
    ╰────
+
+  ⚠ vue(no-reserved-keys): Key `bar` is reserved.
+   ╭─[no_reserved_keys.tsx:4:26]
+ 3 │                 new Vue({
+ 4 │                   foo: { bar: String }
+   ·                          ───
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `myKey` is reserved.
+   ╭─[no_reserved_keys.tsx:4:30]
+ 3 │                 export default {
+ 4 │                   methods: { myKey() {} }
+   ·                              ─────
+ 5 │                 }
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$emit` is reserved.
+   ╭─[no_reserved_keys.tsx:4:33]
+ 3 │                 export default {
+ 4 │                   extraGroup: { $emit() {} }
+   ·                                 ─────
+ 5 │                 }
+   ╰────

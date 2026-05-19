@@ -5,8 +5,15 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 /// Reserved instance properties of the Vue instance (Vue 2/3 common).
 /// Source: <https://github.com/vuejs/eslint-plugin-vue/blob/master/lib/utils/vue-reserved.json>
@@ -46,8 +53,18 @@ fn starts_with_underscore_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoReservedKeys;
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct NoReservedKeysConfig {
+    /// Extra reserved key names to disallow, on top of the built-in list.
+    reserved: Vec<CompactStr>,
+    /// Extra component option groups to inspect, on top of the built-in
+    /// `props` / `computed` / `data` / `asyncData` / `methods` / `setup`.
+    groups: Vec<CompactStr>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct NoReservedKeys(Box<NoReservedKeysConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -89,9 +106,31 @@ declare_oxc_lint!(
     /// }
     /// </script>
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// This rule has an options object with the following defaults:
+    ///
+    /// ```json
+    /// {
+    ///   "reserved": [],
+    ///   "groups": []
+    /// }
+    /// ```
+    ///
+    /// #### `reserved`
+    ///
+    /// An array of extra key names to treat as reserved, in addition to the
+    /// built-in Vue instance properties.
+    ///
+    /// #### `groups`
+    ///
+    /// An array of extra component option groups to inspect, in addition to the
+    /// built-in `props` / `computed` / `data` / `asyncData` / `methods` / `setup`.
     NoReservedKeys,
     vue,
     correctness,
+    config = NoReservedKeys,
     version = "next",
 );
 
@@ -104,7 +143,7 @@ impl Rule for NoReservedKeys {
         let AstKind::ObjectProperty(prop) = node.kind() else { return };
         let Some(group_name) = prop.key.static_name() else { return };
         let group = group_name.as_ref();
-        if !matches!(group, "props" | "data" | "asyncData" | "computed" | "methods" | "setup") {
+        if !self.is_target_group(group) {
             return;
         }
 
@@ -129,13 +168,13 @@ impl Rule for NoReservedKeys {
                     let Some(Expression::StringLiteral(lit)) = elem.as_expression() else {
                         continue;
                     };
-                    if RESERVED_KEYS.contains(&lit.value.as_str()) {
+                    if self.is_reserved(lit.value.as_str()) {
                         ctx.diagnostic(reserved_key_diagnostic(lit.value.as_str(), lit.span));
                     }
                 }
             }
             Expression::ObjectExpression(obj) => {
-                check_keys(group, obj, ctx);
+                self.check_keys(group, obj, ctx);
             }
             Expression::FunctionExpression(func) => {
                 let Some(body) = &func.body else { return };
@@ -144,7 +183,7 @@ impl Rule for NoReservedKeys {
                         && let Some(arg) = &ret.argument
                         && let Expression::ObjectExpression(obj) = arg.get_inner_expression()
                     {
-                        check_keys(group, obj, ctx);
+                        self.check_keys(group, obj, ctx);
                     }
                 }
             }
@@ -155,7 +194,7 @@ impl Rule for NoReservedKeys {
                         && let Expression::ObjectExpression(obj) =
                             es.expression.get_inner_expression()
                     {
-                        check_keys(group, obj, ctx);
+                        self.check_keys(group, obj, ctx);
                     }
                 } else {
                     // `() => { return {foo} }` block body
@@ -164,7 +203,7 @@ impl Rule for NoReservedKeys {
                             && let Some(arg) = &ret.argument
                             && let Expression::ObjectExpression(obj) = arg.get_inner_expression()
                         {
-                            check_keys(group, obj, ctx);
+                            self.check_keys(group, obj, ctx);
                         }
                     }
                 }
@@ -172,18 +211,35 @@ impl Rule for NoReservedKeys {
             _ => {}
         }
     }
+
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
 }
 
-fn check_keys<'a>(group: &str, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-    for prop_kind in &obj.properties {
-        let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
-        let Some(name) = p.key.static_name() else { continue };
-        let span = p.key.span();
-        let n = name.as_ref();
-        if RESERVED_KEYS.contains(&n) {
-            ctx.diagnostic(reserved_key_diagnostic(n, span));
-        } else if matches!(group, "data" | "asyncData") && n.starts_with('_') {
-            ctx.diagnostic(starts_with_underscore_diagnostic(group, span));
+impl NoReservedKeys {
+    /// Built-in groups plus any added via the `groups` option.
+    fn is_target_group(&self, group: &str) -> bool {
+        matches!(group, "props" | "data" | "asyncData" | "computed" | "methods" | "setup")
+            || self.0.groups.iter().any(|g| g.as_str() == group)
+    }
+
+    /// Built-in reserved keys plus any added via the `reserved` option.
+    fn is_reserved(&self, name: &str) -> bool {
+        RESERVED_KEYS.contains(&name) || self.0.reserved.iter().any(|r| r.as_str() == name)
+    }
+
+    fn check_keys<'a>(&self, group: &str, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
+        for prop_kind in &obj.properties {
+            let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
+            let Some(name) = p.key.static_name() else { continue };
+            let span = p.key.span();
+            let n = name.as_ref();
+            if self.is_reserved(n) {
+                ctx.diagnostic(reserved_key_diagnostic(n, span));
+            } else if matches!(group, "data" | "asyncData") && n.starts_with('_') {
+                ctx.diagnostic(starts_with_underscore_diagnostic(group, span));
+            }
         }
     }
 }
@@ -258,6 +314,19 @@ fn test() {
                 </script>
             ",
             None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `groups` option: a custom group with no reserved key is fine
+        (
+            "
+                <script>
+                new Vue({
+                  foo: { baz: String }
+                })
+                </script>
+            ",
+            Some(serde_json::json!([{ "groups": ["foo"] }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -430,6 +499,45 @@ fn test() {
                 </script>
             ",
             None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `reserved` + `groups` options (eslint-plugin-vue parity)
+        (
+            "
+                <script>
+                new Vue({
+                  foo: { bar: String }
+                })
+                </script>
+            ",
+            Some(serde_json::json!([{ "reserved": ["bar"], "groups": ["foo"] }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `reserved` option: an extra key flagged inside a built-in group
+        (
+            "
+                <script>
+                export default {
+                  methods: { myKey() {} }
+                }
+                </script>
+            ",
+            Some(serde_json::json!([{ "reserved": ["myKey"] }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `groups` option: an extra group inspected for built-in reserved keys
+        (
+            "
+                <script>
+                export default {
+                  extraGroup: { $emit() {} }
+                }
+                </script>
+            ",
+            Some(serde_json::json!([{ "groups": ["extraGroup"] }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
