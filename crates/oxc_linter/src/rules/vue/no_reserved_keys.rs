@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectExpression, ObjectPropertyKind, Statement},
+    ast::{
+        CallExpression, Expression, ObjectExpression, ObjectPropertyKind, Statement, TSSignature,
+        TSType, TSTypeName,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,7 +14,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
+    ast_util::get_declaration_from_reference_id,
     context::LintContext,
+    frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
     utils::is_vue_component_options_object,
 };
@@ -141,6 +146,10 @@ impl Rule for NoReservedKeys {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::CallExpression(call) = node.kind() {
+            self.check_define_props(call, ctx);
+            return;
+        }
         let AstKind::ObjectProperty(prop) = node.kind() else { return };
         let Some(group_name) = prop.key.static_name() else { return };
         let group = group_name.as_ref();
@@ -233,6 +242,101 @@ impl NoReservedKeys {
             }
         }
     }
+
+    /// `<script setup>` `defineProps(...)` — counterpart of upstream `onDefinePropsEnter`.
+    fn check_define_props<'a>(&self, call: &CallExpression<'a>, ctx: &LintContext<'a>) {
+        if ctx.frameworks_options() != FrameworkOptions::VueSetup {
+            return;
+        }
+        if !call.callee.get_identifier_reference().is_some_and(|id| id.name == "defineProps") {
+            return;
+        }
+
+        // Runtime declaration: `defineProps([...])` / `defineProps({...})`.
+        if let Some(arg) = call.arguments.first().and_then(|arg| arg.as_expression()) {
+            match arg.get_inner_expression() {
+                Expression::ArrayExpression(arr) => {
+                    for elem in &arr.elements {
+                        if let Some(Expression::StringLiteral(lit)) = elem.as_expression()
+                            && self.is_reserved(lit.value.as_str())
+                        {
+                            ctx.diagnostic(reserved_key_diagnostic(lit.value.as_str(), lit.span));
+                        }
+                    }
+                }
+                Expression::ObjectExpression(obj) => {
+                    for prop_kind in &obj.properties {
+                        let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
+                        let Some(name) = p.key.static_name() else { continue };
+                        if self.is_reserved(name.as_ref()) {
+                            ctx.diagnostic(reserved_key_diagnostic(name.as_ref(), p.key.span()));
+                        }
+                    }
+                }
+                _ => {}
+            }
+            return;
+        }
+
+        // Type-only declaration: `defineProps<T>()`.
+        if let Some(type_args) = call.type_arguments.as_ref()
+            && let Some(first) = type_args.params.first()
+        {
+            self.check_type_keys(first, ctx);
+        }
+    }
+
+    fn check_type_keys<'a>(&self, ty: &TSType<'a>, ctx: &LintContext<'a>) {
+        match ty {
+            TSType::TSTypeLiteral(literal) => {
+                for sig in &literal.members {
+                    self.check_signature(sig, ctx);
+                }
+            }
+            TSType::TSUnionType(union) => {
+                for member in &union.types {
+                    self.check_type_keys(member, ctx);
+                }
+            }
+            TSType::TSIntersectionType(intersection) => {
+                for member in &intersection.types {
+                    self.check_type_keys(member, ctx);
+                }
+            }
+            TSType::TSTypeReference(type_ref) => {
+                let TSTypeName::IdentifierReference(ident) = &type_ref.type_name else { return };
+                let Some(decl) =
+                    get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
+                else {
+                    return;
+                };
+                match decl.kind() {
+                    AstKind::TSInterfaceDeclaration(interface) => {
+                        for sig in &interface.body.body {
+                            self.check_signature(sig, ctx);
+                        }
+                    }
+                    AstKind::TSTypeAliasDeclaration(alias) => {
+                        self.check_type_keys(&alias.type_annotation, ctx);
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn check_signature<'a>(&self, sig: &TSSignature<'a>, ctx: &LintContext<'a>) {
+        let key = match sig {
+            TSSignature::TSPropertySignature(prop) => &prop.key,
+            TSSignature::TSMethodSignature(method) => &method.key,
+            _ => return,
+        };
+        let Some(name) = key.static_name() else { return };
+        if self.is_reserved(name.as_ref()) {
+            ctx.diagnostic(reserved_key_diagnostic(name.as_ref(), key.span()));
+        }
+    }
 }
 
 #[test]
@@ -318,6 +422,36 @@ fn test() {
                 </script>
             ",
             Some(serde_json::json!([{ "groups": ["foo"] }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream valid: arrow-function block-body `data`
+        (
+            "
+                <script>
+                export default {
+                  data: () => {
+                    return { dat: null }
+                  }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream valid: `_`-prefixed key in `setup` is allowed
+        (
+            "
+                <script>
+                export default {
+                  setup () {
+                    return { _bar: () => {} }
+                  }
+                }
+                </script>
+            ",
+            None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -599,6 +733,52 @@ fn test() {
                 defineNuxtComponent({
                   methods: { $emit() {} }
                 })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream invalid: `<script setup>` defineProps (object form)
+        (
+            "
+                <script setup>
+                defineProps({ $el: String })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream invalid: `<script setup>` defineProps (inline type literal)
+        (
+            "
+                <script setup lang=\"ts\">
+                defineProps<{ $el: string }>()
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream invalid: `<script setup>` defineProps (interface reference)
+        (
+            "
+                <script setup lang=\"ts\">
+                interface Props { $el: string }
+                defineProps<Props>()
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream invalid: `<script setup>` defineProps (type alias reference)
+        (
+            "
+                <script setup lang=\"ts\">
+                type A = { $el: string }
+                defineProps<A>()
                 </script>
             ",
             None,

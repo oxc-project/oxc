@@ -185,3 +185,35 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ─────
  5 │                 })
    ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:3:31]
+ 2 │                 <script setup>
+ 3 │                 defineProps({ $el: String })
+   ·                               ───
+ 4 │                 </script>
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:3:31]
+ 2 │                 <script setup lang="ts">
+ 3 │                 defineProps<{ $el: string }>()
+   ·                               ───
+ 4 │                 </script>
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:3:35]
+ 2 │                 <script setup lang="ts">
+ 3 │                 interface Props { $el: string }
+   ·                                   ───
+ 4 │                 defineProps<Props>()
+   ╰────
+
+  ⚠ vue(no-reserved-keys): Key `$el` is reserved.
+   ╭─[no_reserved_keys.tsx:3:28]
+ 2 │                 <script setup lang="ts">
+ 3 │                 type A = { $el: string }
+   ·                            ───
+ 4 │                 defineProps<A>()
+   ╰────

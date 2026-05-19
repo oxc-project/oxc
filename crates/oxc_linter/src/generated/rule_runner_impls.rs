@@ -5038,8 +5038,7 @@ impl RuleRunner for crate::rules::vue::no_required_prop_with_default::NoRequired
 }
 
 impl RuleRunner for crate::rules::vue::no_reserved_keys::NoReservedKeys {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ObjectProperty]));
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
