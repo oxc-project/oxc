@@ -450,7 +450,8 @@ fn pure_comment() {
     test("/*#__PURE__*/ (foo(), bar());", "/*#__PURE__*/ foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
 
     test_same("/* @__PURE__ */ a.b().c.d();\n");
-    test("/* @__PURE__ */ a().b;", "/* @__PURE__ */ a().b;\n"); // INVALID, it does not end with a call
+    // PURE applies to the innermost call; codegen wraps to keep the annotation on the call.
+    test("/* @__PURE__ */ a().b;", "(/* @__PURE__ */ a()).b;\n");
     test_same("(/* @__PURE__ */ a()).b;\n");
 
     // More

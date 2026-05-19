@@ -640,6 +640,26 @@ function bar() {}";
     }
 
     #[test]
+    fn pure_comment_applied_on_member_chain() {
+        // Rollup/esbuild treat PURE as applying to the innermost call/new even when
+        // member access wraps it; member-access side effects are a separate concern.
+        let cases = [
+            "/*#__PURE__*/ test().a.b.c;",
+            "/*#__PURE__*/ new Foo().a;",
+            "/*#__PURE__*/ test()[0].b;",
+            "class C { #bar; m() { /*#__PURE__*/ this.foo().#bar; } }",
+            // Chain expressions with member root
+            "/*#__PURE__*/ foo()?.a.b;",
+            "/*#__PURE__*/ foo?.().a.b;",
+            "/*#__PURE__*/ foo?.()[0];",
+        ];
+        for source_text in cases {
+            let comments = get_comments(source_text);
+            assert_eq!(comments[0].content, CommentContent::Pure, "{source_text}");
+        }
+    }
+
+    #[test]
     fn pure_comment_not_applied_marks_correct_comment() {
         // The first pure comment is invalid (before `foo`), the second is valid (before `bar()`).
         // `mark_pure_comment_not_applied` must retag the first comment, not the second.
