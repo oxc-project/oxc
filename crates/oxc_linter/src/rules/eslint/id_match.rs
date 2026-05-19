@@ -83,8 +83,9 @@ pub struct IdMatchOptions {
     /// `const { foo: alias } = obj`. This does not suppress computed key
     /// references such as `const { [key]: value } = obj`.
     ignore_destructuring: bool,
-    /// Whether to check only declaration names. References, member names,
-    /// labels, and function or arrow parameters are skipped.
+    /// Whether to check only variable and function declaration names.
+    /// References, member names, labels, class names, TypeScript declarations,
+    /// and function or arrow parameters are skipped.
     only_declarations: bool,
 }
 
@@ -152,7 +153,7 @@ declare_oxc_lint!(
     style,
     none,
     config = IdMatchConfig,
-    version = "next",
+    version = "1.66.0",
 );
 
 impl Rule for IdMatch {

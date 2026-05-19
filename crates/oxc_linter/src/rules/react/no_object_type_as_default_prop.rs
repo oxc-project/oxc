@@ -73,7 +73,7 @@ declare_oxc_lint!(
     NoObjectTypeAsDefaultProp,
     react,
     perf,
-    version = "next",
+    version = "1.66.0",
 );
 
 impl Rule for NoObjectTypeAsDefaultProp {

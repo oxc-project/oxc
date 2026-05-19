@@ -1,0 +1,225 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(valid-next-tick): Await the Promise returned by `nextTick` or pass a callback function.
+   ╭─[valid_next_tick.tsx:4:23]
+ 3 │                     async mounted() {
+ 4 │                       nt();
+   ·                       ──
+ 5 │                       Vue.nextTick();
+   ╰────
+
+  ⚠ vue(valid-next-tick): Await the Promise returned by `nextTick` or pass a callback function.
+   ╭─[valid_next_tick.tsx:5:27]
+ 4 │                       nt();
+ 5 │                       Vue.nextTick();
+   ·                           ────────
+ 6 │                       this.$nextTick();
+   ╰────
+
+  ⚠ vue(valid-next-tick): Await the Promise returned by `nextTick` or pass a callback function.
+   ╭─[valid_next_tick.tsx:6:28]
+ 5 │                       Vue.nextTick();
+ 6 │                       this.$nextTick();
+   ·                            ─────────
+ 7 │                     }
+   ╰────
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:4:23]
+ 3 │                     mounted() {
+ 4 │                       nt;
+   ·                       ──
+ 5 │                       Vue.nextTick;
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:5:27]
+ 4 │                       nt;
+ 5 │                       Vue.nextTick;
+   ·                           ────────
+ 6 │                       this.$nextTick;
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:6:28]
+ 5 │                       Vue.nextTick;
+ 6 │                       this.$nextTick;
+   ·                            ─────────
+ 7 │ 
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:8:23]
+ 7 │ 
+ 8 │                       nt.then(callback);
+   ·                       ──
+ 9 │                       Vue.nextTick.then(callback);
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+    ╭─[valid_next_tick.tsx:9:27]
+  8 │                       nt.then(callback);
+  9 │                       Vue.nextTick.then(callback);
+    ·                           ────────
+ 10 │                       this.$nextTick.then(callback);
+    ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+    ╭─[valid_next_tick.tsx:10:28]
+  9 │                       Vue.nextTick.then(callback);
+ 10 │                       this.$nextTick.then(callback);
+    ·                            ─────────
+ 11 │                     }
+    ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:4:29]
+ 3 │                     async mounted() {
+ 4 │                       await nt;
+   ·                             ──
+ 5 │                       await Vue.nextTick;
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:5:33]
+ 4 │                       await nt;
+ 5 │                       await Vue.nextTick;
+   ·                                 ────────
+ 6 │                       return this.$nextTick;
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:6:35]
+ 5 │                       await Vue.nextTick;
+ 6 │                       return this.$nextTick;
+   ·                                   ─────────
+ 7 │                     }
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:4:36]
+ 3 │                     mounted() {
+ 4 │                       Promise.all([nt, someOtherPromise]);
+   ·                                    ──
+ 5 │                       Promise.all([Vue.nextTick, someOtherPromise]);
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:5:40]
+ 4 │                       Promise.all([nt, someOtherPromise]);
+ 5 │                       Promise.all([Vue.nextTick, someOtherPromise]);
+   ·                                        ────────
+ 6 │                       Promise.all([this.$nextTick, someOtherPromise]);
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:6:41]
+ 5 │                       Promise.all([Vue.nextTick, someOtherPromise]);
+ 6 │                       Promise.all([this.$nextTick, someOtherPromise]);
+   ·                                         ─────────
+ 7 │                     }
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` expects zero or one parameters.
+   ╭─[valid_next_tick.tsx:4:23]
+ 3 │                     mounted() {
+ 4 │                       nt(callback, anotherCallback);
+   ·                       ──
+ 5 │                       Vue.nextTick(callback, anotherCallback);
+   ╰────
+
+  ⚠ vue(valid-next-tick): `nextTick` expects zero or one parameters.
+   ╭─[valid_next_tick.tsx:5:27]
+ 4 │                       nt(callback, anotherCallback);
+ 5 │                       Vue.nextTick(callback, anotherCallback);
+   ·                           ────────
+ 6 │                       this.$nextTick(callback, anotherCallback);
+   ╰────
+
+  ⚠ vue(valid-next-tick): `nextTick` expects zero or one parameters.
+   ╭─[valid_next_tick.tsx:6:28]
+ 5 │                       Vue.nextTick(callback, anotherCallback);
+ 6 │                       this.$nextTick(callback, anotherCallback);
+   ·                            ─────────
+ 7 │                     }
+   ╰────
+
+  ⚠ vue(valid-next-tick): Either await the Promise or pass a callback function to `nextTick`.
+   ╭─[valid_next_tick.tsx:4:23]
+ 3 │                     async mounted() {
+ 4 │                       nt(callback).then(anotherCallback);
+   ·                       ──
+ 5 │                       Vue.nextTick(callback).then(anotherCallback);
+   ╰────
+
+  ⚠ vue(valid-next-tick): Either await the Promise or pass a callback function to `nextTick`.
+   ╭─[valid_next_tick.tsx:5:27]
+ 4 │                       nt(callback).then(anotherCallback);
+ 5 │                       Vue.nextTick(callback).then(anotherCallback);
+   ·                           ────────
+ 6 │                       this.$nextTick(callback).then(anotherCallback);
+   ╰────
+
+  ⚠ vue(valid-next-tick): Either await the Promise or pass a callback function to `nextTick`.
+   ╭─[valid_next_tick.tsx:6:28]
+ 5 │                       Vue.nextTick(callback).then(anotherCallback);
+ 6 │                       this.$nextTick(callback).then(anotherCallback);
+   ·                            ─────────
+ 7 │ 
+   ╰────
+
+  ⚠ vue(valid-next-tick): Either await the Promise or pass a callback function to `nextTick`.
+   ╭─[valid_next_tick.tsx:8:29]
+ 7 │ 
+ 8 │                       await nt(callback);
+   ·                             ──
+ 9 │                       await Vue.nextTick(callback);
+   ╰────
+
+  ⚠ vue(valid-next-tick): Either await the Promise or pass a callback function to `nextTick`.
+    ╭─[valid_next_tick.tsx:9:33]
+  8 │                       await nt(callback);
+  9 │                       await Vue.nextTick(callback);
+    ·                                 ────────
+ 10 │                       await this.$nextTick(callback);
+    ╰────
+
+  ⚠ vue(valid-next-tick): Either await the Promise or pass a callback function to `nextTick`.
+    ╭─[valid_next_tick.tsx:10:34]
+  9 │                       await Vue.nextTick(callback);
+ 10 │                       await this.$nextTick(callback);
+    ·                                  ─────────
+ 11 │                     }
+    ╰────
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:4:28]
+ 3 │                     mounted() {
+ 4 │                       this.$nextTick;
+   ·                            ─────────
+ 5 │                     }
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:4:28]
+ 3 │                     mounted() {
+ 4 │                       this.$nextTick;
+   ·                            ─────────
+ 5 │                     }
+   ╰────
+  help: Insert `()`

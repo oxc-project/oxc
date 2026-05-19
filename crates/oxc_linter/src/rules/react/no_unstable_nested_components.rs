@@ -112,7 +112,7 @@ declare_oxc_lint!(
     suspicious,
     none,
     config = NoUnstableNestedComponentsConfig,
-    version = "next",
+    version = "1.66.0",
 );
 
 impl Rule for NoUnstableNestedComponents {
