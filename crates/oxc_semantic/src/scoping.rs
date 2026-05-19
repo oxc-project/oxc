@@ -250,7 +250,11 @@ mod scoping_cell {
         }
 
         /// Consume [`ScopingCell`] and return the [`Allocator`] it contains.
-        #[expect(dead_code)]
+        ///
+        /// This is used by [`Scoping::reset`] to pull the arena out before
+        /// resetting it and rebuilding the inner state on top of the now-empty
+        /// arena.
+        #[expect(dead_code, reason = "used by Scoping::reset which is not yet implemented")]
         #[inline(always)]
         pub fn into_owner(self) -> Allocator {
             self.0.into_owner()
