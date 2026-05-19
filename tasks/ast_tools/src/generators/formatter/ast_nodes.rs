@@ -129,6 +129,11 @@ impl Generator for FormatterAstNodesGenerator {
             }
 
             impl AstNodes<'_> {
+                /// Returns the span of this AST node.
+                ///
+                /// # Panics
+                ///
+                /// Panics when called on a `Dummy` node, which should never appear in a real AST.
                 #[inline]
                 pub fn span(&self) -> Span {
                     match self {
@@ -137,6 +142,11 @@ impl Generator for FormatterAstNodesGenerator {
                     }
                 }
 
+                /// Returns the parent of this AST node.
+                ///
+                /// # Panics
+                ///
+                /// Panics when called on a `Dummy` node, which should never appear in a real AST.
                 #[inline]
                 pub fn parent(&self) -> &Self {
                     match self {

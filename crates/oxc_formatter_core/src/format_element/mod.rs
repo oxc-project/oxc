@@ -337,6 +337,10 @@ impl<'a> BestFittingElement<'a> {
     }
 
     /// Returns the most expanded variant
+    ///
+    /// # Panics
+    ///
+    /// Panics if there are no variants. The constructor guarantees at least two variants.
     pub fn most_expanded(&self) -> &[FormatElement<'a>] {
         self.variants.last().expect(
             "Most contain at least two elements, as guaranteed by the best fitting builder.",
@@ -356,6 +360,10 @@ impl<'a> BestFittingElement<'a> {
     }
 
     /// Returns the least expanded variant
+    ///
+    /// # Panics
+    ///
+    /// Panics if there are no variants. The constructor guarantees at least two variants.
     pub fn most_flat(&self) -> &[FormatElement<'a>] {
         self.variants.first().expect(
             "Most contain at least two elements, as guaranteed by the best fitting builder.",

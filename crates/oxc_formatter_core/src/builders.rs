@@ -373,6 +373,10 @@ impl<C> std::fmt::Debug for Dedent<'_, '_, C> {
 // ---------------------------------------------------------------------------
 
 /// Aligns its content by indenting the content by `count` spaces.
+///
+/// # Panics
+///
+/// Panics if `count` is `0`.
 pub fn align<'ast, C, Content>(count: u8, content: &Content) -> Align<'_, 'ast, C>
 where
     Content: Format<'ast, C>,
@@ -542,12 +546,14 @@ pub struct Group<'fmt, 'ast, C> {
 }
 
 impl<C> Group<'_, '_, C> {
+    #[must_use]
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.group_id = group_id;
         self
     }
 
     /// Changes the [PrintMode] of the group from `Flat` to `Expanded`.
+    #[must_use]
     pub fn should_expand(mut self, should_expand: bool) -> Self {
         self.should_expand = should_expand;
         self
@@ -629,6 +635,7 @@ pub struct IfGroupBreaks<'a, 'ast, C> {
 impl<C> IfGroupBreaks<'_, '_, C> {
     /// Inserts some content that the printer only prints if the group with the specified `group_id`
     /// is printed in multiline mode.
+    #[must_use]
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.group_id = group_id;
         self
@@ -812,6 +819,7 @@ where
         self
     }
 
+    #[expect(clippy::unused_self)]
     pub fn finish(self) {}
 }
 

@@ -6,7 +6,7 @@ use crate::{GroupId, UniqueGroupIdBuilder, format_element::Interned};
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
 /// This structure is different from [crate::Formatter] in that the formatting infrastructure
-/// creates a new [crate::Formatter] for every [crate::write!] call, whereas this structure stays alive
+/// creates a new [crate::Formatter] for every [`crate::write!`] call, whereas this structure stays alive
 /// for the whole process of formatting a root with [crate::format!].
 pub struct FormatState<'ast, C> {
     context: C,

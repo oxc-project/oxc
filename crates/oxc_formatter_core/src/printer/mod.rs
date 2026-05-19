@@ -79,12 +79,20 @@ impl<'a> Printer<'a> {
     }
 
     /// Prints the passed in element as well as all its content
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`PrintError`] if the document contains invalid or unbalanced elements.
     pub fn print(self, document: &'a [FormatElement<'a>]) -> PrintResult<Printed> {
         self.print_with_indent(document, 0)
     }
 
     /// Prints the passed in element as well as all its content,
     /// starting at the specified indentation level
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`PrintError`] if the document contains invalid or unbalanced elements.
     pub fn print_with_indent(
         mut self,
         document: &'a [FormatElement<'a>],

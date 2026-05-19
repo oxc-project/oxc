@@ -1,9 +1,5 @@
-#![allow(
-    clippy::inline_always,
-    clippy::missing_panics_doc,
-    clippy::return_self_not_must_use,
-    clippy::too_long_first_doc_paragraph
-)] // FIXME: all these needs to be fixed.
+// NOTE: `inline_always`: Intentional on `FormatWith::fmt` / `FormatOnce::fmt` hot-path dispatch
+#![allow(clippy::inline_always)]
 
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
@@ -59,6 +55,11 @@ impl<'a> Formatter<'a> {
     }
 
     /// Formats the given AST `Program` and returns the formatted string.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the formatted IR is invalid or contains unbalanced elements,
+    /// indicating a bug in the formatter implementation.
     pub fn build(self, program: &Program<'a>) -> String {
         let formatted = self.format(program);
         formatted.print().unwrap().into_code()

@@ -65,8 +65,7 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
         match elements.len() {
             0 => None,
             // Doesn't get cheaper than calling clone, use the element directly
-            // SAFETY: Safe because of the `len == 1` check in the match arm.
-            1 => Some(elements.pop().unwrap()),
+            1 => elements.pop(),
             _ => Some(FormatElement::Interned(Interned::new(elements))),
         }
     }

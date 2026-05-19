@@ -1,13 +1,10 @@
-#![allow(
-    clippy::inline_always,
-    clippy::missing_errors_doc,
-    clippy::missing_panics_doc,
-    clippy::must_use_candidate,
-    clippy::redundant_pub_crate,
-    clippy::return_self_not_must_use,
-    clippy::unused_self,
-    rustdoc::broken_intra_doc_links
-)] // FIXME: all these needs to be fixed.
+// NOTE:
+// - `inline_always`: Intentional on hot-path closure/dispatch helpers
+// - `must_use_candidate`: Left for incremental cleanup
+// - `broken_intra_doc_links`: Inherited from biome docs;
+//   - Many stale references to types that no longer exist or were renamed during the oxc port.
+#![allow(clippy::inline_always, clippy::must_use_candidate, rustdoc::broken_intra_doc_links)]
+
 //! Language-agnostic formatting infrastructure.
 //!
 //! This crate provides the core IR and printing infrastructure used by all language-specific

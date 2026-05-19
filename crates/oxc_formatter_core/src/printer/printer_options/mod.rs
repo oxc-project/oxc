@@ -45,23 +45,27 @@ impl From<PrintWidth> for usize {
 }
 
 impl PrinterOptions {
+    #[must_use]
     pub fn with_print_width(mut self, width: PrintWidth) -> Self {
         self.print_width = width;
         self
     }
 
+    #[must_use]
     pub fn with_indent_style(mut self, style: IndentStyle) -> Self {
         self.indent_style = style;
 
         self
     }
 
+    #[must_use]
     pub fn with_indent_width(mut self, width: IndentWidth) -> Self {
         self.indent_width = width;
 
         self
     }
 
+    #[must_use]
     pub fn with_line_ending(mut self, line_ending: LineEnding) -> Self {
         self.line_ending = line_ending;
 

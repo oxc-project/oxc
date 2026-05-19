@@ -216,6 +216,11 @@ pub enum AstNodes<'a> {
     JSDocUnknownType(&'a AstNode<'a, JSDocUnknownType>),
 }
 impl AstNodes<'_> {
+    /// Returns the span of this AST node.
+    ///
+    /// # Panics
+    ///
+    /// Panics when called on a `Dummy` node, which should never appear in a real AST.
     #[inline]
     pub fn span(&self) -> Span {
         match self {
@@ -410,6 +415,11 @@ impl AstNodes<'_> {
             Self::JSDocUnknownType(n) => n.span(),
         }
     }
+    /// Returns the parent of this AST node.
+    ///
+    /// # Panics
+    ///
+    /// Panics when called on a `Dummy` node, which should never appear in a real AST.
     #[inline]
     pub fn parent(&self) -> &Self {
         match self {
