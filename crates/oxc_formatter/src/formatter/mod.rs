@@ -22,42 +22,49 @@ pub mod buffer;
 mod builders;
 pub mod comments;
 mod context;
-pub mod core_traits;
-pub mod diagnostics;
-pub mod format_element;
+mod format_element_debug;
+pub use format_element_debug::DocumentDebug;
 mod format_extensions;
 pub mod formatter;
-pub mod group_id;
 pub mod jsdoc;
 pub mod macros;
 pub mod prelude;
-pub mod printer;
+mod printer_options_js;
 pub mod separated;
 mod source_text;
 mod state;
-mod text_range;
 pub mod token;
 pub mod trivia;
+
+/// Re-export of the core printer module so it can still be reached
+/// via `crate::formatter::printer` from existing call-sites.
+pub mod printer {
+    pub use oxc_formatter_core::printer::*;
+}
+
+/// Re-export of the core format element module so it can still be reached
+/// via `crate::formatter::format_element` from existing call-sites.
+pub mod format_element {
+    pub use oxc_formatter_core::format_element::*;
+}
 
 use std::fmt::Debug;
 
 pub use buffer::{Buffer, BufferExtensions, VecBuffer};
-pub use format_element::FormatElement;
-pub use group_id::{GroupId, UniqueGroupIdBuilder};
+pub use oxc_formatter_core::{
+    FormatContext, FormatElement, FormatError, FormatOptions, GroupId, PrintResult, Printed,
+    Printer, UniqueGroupIdBuilder,
+};
 
 pub use self::comments::Comments;
-use self::printer::Printer;
 pub use self::{
     arguments::{Argument, Arguments},
     context::{JsFormatContext, TailwindContextEntry},
-    core_traits::{FormatContext, FormatOptions},
-    diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::{Formatter, JsFormatter},
     source_text::SourceText,
     state::FormatState,
-    text_range::TextRange,
 };
-use self::{format_element::document::Document, prelude::TagKind};
+use oxc_formatter_core::Document;
 
 #[derive(Debug)]
 pub struct Formatted<'a, C> {
@@ -90,7 +97,7 @@ impl<'a, C> Formatted<'a, C> {
     }
 }
 
-impl<C: core_traits::FormatContext> Formatted<'_, C> {
+impl<C: FormatContext> Formatted<'_, C> {
     /// Prints the formatted document to a string.
     ///
     /// # Errors
@@ -116,41 +123,6 @@ impl<C: core_traits::FormatContext> Formatted<'_, C> {
         Ok(printed)
     }
 }
-pub type PrintResult<T> = Result<T, PrintError>;
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Printed {
-    code: String,
-    range: Option<TextRange>,
-}
-
-impl Printed {
-    pub fn new(code: String, range: Option<TextRange>) -> Self {
-        Self { code, range }
-    }
-
-    /// Construct an empty formatter result
-    pub fn new_empty() -> Self {
-        Self { code: String::new(), range: None }
-    }
-
-    /// Range of the input source file covered by this formatted code,
-    /// or None if the entire file is covered in this instance
-    pub fn range(&self) -> Option<TextRange> {
-        self.range
-    }
-
-    /// Access the resulting code, borrowing the result
-    pub fn as_code(&self) -> &str {
-        &self.code
-    }
-
-    /// Access the resulting code, consuming the result
-    pub fn into_code(self) -> String {
-        self.code
-    }
-}
-
 // Public return type of the formatter
 pub type FormatResult<F> = Result<F, FormatError>;
 

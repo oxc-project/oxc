@@ -255,7 +255,7 @@ impl JsFormatOptions {
     }
 }
 
-impl crate::formatter::core_traits::FormatOptions for JsFormatOptions {
+impl oxc_formatter_core::FormatOptions for JsFormatOptions {
     fn indent_style(&self) -> IndentStyle {
         self.indent_style
     }

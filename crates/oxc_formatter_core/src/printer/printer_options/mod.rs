@@ -1,7 +1,4 @@
-use crate::{
-    JsFormatOptions,
-    options::{IndentStyle, IndentWidth, LineEnding, LineWidth},
-};
+use crate::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 
 /// Options that affect how the [crate::Printer] prints the format tokens
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -47,16 +44,6 @@ impl From<PrintWidth> for usize {
     }
 }
 
-impl<'a> From<&'a JsFormatOptions> for PrinterOptions {
-    fn from(options: &'a JsFormatOptions) -> Self {
-        PrinterOptions::default()
-            .with_indent_style(options.indent_style)
-            .with_indent_width(options.indent_width)
-            .with_print_width(options.line_width.into())
-            .with_line_ending(options.line_ending)
-    }
-}
-
 impl PrinterOptions {
     pub fn with_print_width(mut self, width: PrintWidth) -> Self {
         self.print_width = width;
@@ -86,12 +73,12 @@ impl PrinterOptions {
     }
 
     /// Width of an indent in characters.
-    pub(super) const fn indent_width(&self) -> IndentWidth {
+    pub(crate) const fn indent_width(&self) -> IndentWidth {
         self.indent_width
     }
 
     #[expect(dead_code)]
-    pub(super) const fn line_ending(&self) -> LineEnding {
+    pub(crate) const fn line_ending(&self) -> LineEnding {
         self.line_ending
     }
 }

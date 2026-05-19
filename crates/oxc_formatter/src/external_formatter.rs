@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use oxc_allocator::Allocator;
 
-use super::formatter::{FormatElement, group_id::UniqueGroupIdBuilder};
+use super::formatter::{FormatElement, UniqueGroupIdBuilder};
 
 /// Callback function type for formatting embedded code.
 /// Takes (tag_name, code) and returns formatted code or an error.

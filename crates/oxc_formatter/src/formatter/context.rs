@@ -125,7 +125,7 @@ impl std::fmt::Debug for JsFormatContext<'_> {
     }
 }
 
-impl super::core_traits::FormatContext for JsFormatContext<'_> {
+impl oxc_formatter_core::FormatContext for JsFormatContext<'_> {
     type Options = JsFormatOptions;
 
     fn options(&self) -> &JsFormatOptions {
@@ -161,7 +161,7 @@ impl<'ast> JsFormatContext<'ast> {
         }
     }
 
-    pub(crate) fn dummy(allocator: &'ast Allocator) -> Self {
+    pub fn dummy(allocator: &'ast Allocator) -> Self {
         Self {
             options: JsFormatOptions::default(),
             source_text: SourceText::new(""),

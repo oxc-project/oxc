@@ -4,7 +4,7 @@
 // use biome_rowan::{SyntaxError, TextRange};
 use std::error::Error;
 
-use super::{TextRange, prelude::TagKind};
+use crate::{TagKind, TextRange};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 /// Series of errors encountered during formatting

@@ -1,3 +1,13 @@
+#![allow(
+    clippy::inline_always,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::must_use_candidate,
+    clippy::redundant_pub_crate,
+    clippy::return_self_not_must_use,
+    clippy::unused_self,
+    rustdoc::broken_intra_doc_links
+)] // FIXME: all these needs to be fixed.
 //! Language-agnostic formatting infrastructure.
 //!
 //! This crate provides the core IR and printing infrastructure used by all language-specific
@@ -6,9 +16,28 @@
 //!
 //! See `formatter-core-plan.md` for the migration plan from `oxc_formatter`.
 
+mod diagnostics;
+pub mod format_element;
+mod group_id;
 mod options;
+pub mod printer;
+mod text_range;
+mod traits;
 
+pub use diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
+pub use format_element::document::Document;
+pub use format_element::tag::{
+    self, Align, Condition, DedentMode, Group, GroupMode, Label, LabelId, Tag, TagKind,
+};
+pub use format_element::{
+    BestFittingElement, FormatElement, FormatElements, Interned, LINE_TERMINATORS, LineMode,
+    PrintMode, TextWidth, normalize_newlines,
+};
+pub use group_id::{GroupId, UniqueGroupIdBuilder};
 pub use options::{
     IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,
     LineWidthFromIntError, ParseFormatNumberError,
 };
+pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
+pub use text_range::TextRange;
+pub use traits::{FormatContext, FormatOptions};

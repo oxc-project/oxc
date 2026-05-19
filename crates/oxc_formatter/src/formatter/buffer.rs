@@ -256,13 +256,11 @@ pub struct PreambleBuffer<'a, 'buf, C, Preamble> {
 }
 
 impl<'ast, 'buf, C, Preamble> PreambleBuffer<'ast, 'buf, C, Preamble> {
-    #[expect(unused)]
     pub fn new(inner: &'buf mut dyn Buffer<'ast, C>, preamble: Preamble) -> Self {
         Self { inner, preamble, empty: true }
     }
 
     /// Returns `true` if the preamble has been written, `false` otherwise.
-    #[expect(unused)]
     pub fn did_write_preamble(&self) -> bool {
         !self.empty
     }
@@ -569,7 +567,6 @@ impl<'ast, C> Buffer<'ast, C> for RemoveSoftLinesBuffer<'_, 'ast, C> {
 pub trait BufferExtensions<'ast, C>: Buffer<'ast, C> + Sized {
     /// Returns a new buffer that calls the passed inspector for every element that gets written to the output
     #[must_use]
-    #[expect(unused)]
     fn inspect<'inner, F>(&'inner mut self, inspector: F) -> Inspect<'ast, 'inner, C, F>
     where
         F: FnMut(&FormatElement),
@@ -655,7 +652,6 @@ where
     }
 
     #[inline(always)]
-    #[expect(unused)]
     pub fn write_element(&mut self, element: FormatElement<'ast>) {
         self.buffer.write_element(element);
     }

@@ -17,8 +17,8 @@ use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    BracketSameLine, Formatter, JsFormatOptions, JsdocOptions, LineWidth, Semicolons,
-    get_parse_options,
+    BracketSameLine, DocumentDebug, Formatter, JsFormatOptions, JsdocOptions, LineWidth,
+    Semicolons, get_parse_options,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -74,7 +74,7 @@ fn main() -> Result<(), String> {
 
     if show_ir {
         println!("--- IR ---");
-        println!("{}", &formatted.document().to_string());
+        println!("{}", DocumentDebug(formatted.document()));
         println!("--- End IR ---\n");
     }
 

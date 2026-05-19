@@ -1,6 +1,4 @@
-use crate::options::{IndentStyle, IndentWidth, LineEnding, LineWidth};
-
-use super::printer::PrinterOptions;
+use crate::{IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions};
 
 /// Language-agnostic formatting context trait.
 ///

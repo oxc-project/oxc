@@ -45,7 +45,6 @@ impl Quote {
 ///     " \\\"He\\llo\\tworld\\\" ' ' \n ",
 /// );
 /// ```
-#[expect(unused)]
 pub fn normalize_string(
     raw_content: &str,
     preferred_quote: Quote,

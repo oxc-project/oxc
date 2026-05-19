@@ -1,10 +1,15 @@
-#![allow(clippy::inline_always, clippy::missing_panics_doc)] // FIXME: all these needs to be fixed.
+#![allow(
+    clippy::inline_always,
+    clippy::missing_panics_doc,
+    clippy::return_self_not_must_use,
+    clippy::too_long_first_doc_paragraph
+)] // FIXME: all these needs to be fixed.
 
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
 mod detect_code_removal;
 mod external_formatter;
-mod formatter;
+pub mod formatter;
 mod ir_transform;
 mod options;
 mod parentheses;
@@ -28,7 +33,7 @@ pub use crate::formatter::format_element::tag::{
 pub use crate::formatter::format_element::{
     BestFittingElement, FormatElement, LineMode, PrintMode, TextWidth,
 };
-pub use crate::formatter::{Format, FormatContext, FormatOptions, Formatted};
+pub use crate::formatter::{DocumentDebug, Format, FormatContext, FormatOptions, Formatted};
 pub use crate::formatter::{GroupId, JsFormatContext, UniqueGroupIdBuilder};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;

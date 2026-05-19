@@ -30,8 +30,8 @@ use oxc::{
 };
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    Expand, Formatter, GroupEntry, ImportModifier, ImportSelector, IndentStyle, IndentWidth,
-    JsFormatOptions, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
+    DocumentDebug, Expand, Formatter, GroupEntry, ImportModifier, ImportSelector, IndentStyle,
+    IndentWidth, JsFormatOptions, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
     SortImportsOptions, SortOrder, TrailingCommas, default_groups, default_internal_patterns,
     get_parse_options,
 };
@@ -624,7 +624,7 @@ impl Oxc {
             let formatter = Formatter::new(&allocator, format_options);
             let formatted = formatter.format(&ret.program);
             if run_options.formatter {
-                self.formatter_ir_text = formatted.document().to_string();
+                self.formatter_ir_text = DocumentDebug(formatted.document()).to_string();
                 self.formatter_formatted_text = match formatted.print() {
                     Ok(printer) => printer.into_code(),
                     Err(err) => err.to_string(),
