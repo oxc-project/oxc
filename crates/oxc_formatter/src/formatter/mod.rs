@@ -23,7 +23,7 @@ mod context;
 mod format_element_debug;
 pub use format_element_debug::DocumentDebug;
 mod format_str;
-pub(crate) mod formatter_js;
+pub mod formatter_js;
 pub mod jsdoc;
 pub mod macros;
 pub mod prelude;
@@ -52,10 +52,9 @@ pub mod buffer {
 }
 
 pub use oxc_formatter_core::{
-    ActualStart, Argument, Arguments, Buffer, BufferExtensions, Format, FormatContext,
-    FormatElement, FormatError, FormatOptions, FormatState, Formatted, Formatter, GroupId,
-    InvalidDocumentError, MemoizeFormat, Memoized, PrintError, PrintResult, Printed, Printer,
-    UniqueGroupIdBuilder, VecBuffer, write,
+    Argument, Arguments, Buffer, BufferExtensions, Format, FormatContext, FormatElement,
+    FormatError, FormatOptions, FormatState, Formatted, Formatter, GroupId, MemoizeFormat,
+    Memoized, UniqueGroupIdBuilder, VecBuffer,
 };
 
 pub use self::builders::JoinBuilderJsExt;

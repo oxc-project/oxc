@@ -28,6 +28,7 @@ mod formatter;
 mod group_id;
 mod options;
 pub mod printer;
+mod simple_context;
 mod state;
 mod text_range;
 mod traits;
@@ -56,6 +57,7 @@ pub use options::{
     LineWidthFromIntError, ParseFormatNumberError,
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
+pub use simple_context::{SimpleFormatContext, SimpleFormatOptions};
 pub use state::FormatState;
 pub use text_range::TextRange;
 pub use traits::{FormatContext, FormatOptions};

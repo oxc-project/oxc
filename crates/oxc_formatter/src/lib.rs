@@ -9,7 +9,7 @@ mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
 mod detect_code_removal;
 mod external_formatter;
-pub mod formatter;
+mod formatter;
 mod ir_transform;
 mod options;
 mod parentheses;

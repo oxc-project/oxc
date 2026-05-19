@@ -162,7 +162,7 @@ impl<'ast> JsFormatContext<'ast> {
         }
     }
 
-    pub fn dummy(allocator: &'ast Allocator) -> Self {
+    pub(crate) fn dummy(allocator: &'ast Allocator) -> Self {
         Self {
             options: JsFormatOptions::default(),
             source_text: SourceText::new(""),
