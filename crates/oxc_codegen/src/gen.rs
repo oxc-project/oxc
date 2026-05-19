@@ -1977,6 +1977,13 @@ impl GenExpr for ConditionalExpression<'_> {
             p.print_soft_space();
             p.print_ascii_byte(b'?');
             p.print_soft_space();
+            if let Some(comments) = p.get_comments(self.consequent.span().start) {
+                p.print_comments(&comments);
+                if p.print_next_indent_as_space {
+                    p.print_hard_space();
+                    p.print_next_indent_as_space = false;
+                }
+            }
             self.consequent.print_expr(p, Precedence::Yield, Context::empty());
             p.print_soft_space();
             p.print_colon();

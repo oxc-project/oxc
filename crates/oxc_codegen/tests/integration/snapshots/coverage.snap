@@ -142,11 +142,16 @@ try {
 }
 
 ########## 23
+condition ? /* v8 ignore next */ uncovered() : coveredAlternate();
+----------
+condition ? /* v8 ignore next */ uncovered() : coveredAlternate();
+
+########## 24
 const a = Math.random() ? 1 : /* istanbul ignore next */ 2;
 ----------
 const a = Math.random() ? 1 : /* istanbul ignore next */ 2;
 
-########## 24
+########## 25
 switch (Math.random()) {
   case 0.5: break;
   /* istanbul ignore next */
@@ -159,7 +164,7 @@ switch (Math.random()) {
 	default: break;
 }
 
-########## 25
+########## 26
 const obj = {
   a: () => 1,
   /* v8 ignore next */
@@ -172,12 +177,12 @@ const obj = {
 	b: () => 2
 };
 
-########## 26
+########## 27
 const obj = { /* v8 ignore next */ a: () => 1 }
 ----------
 const obj = { /* v8 ignore next */ a: () => 1 };
 
-########## 27
+########## 28
 const obj = {
   /* v8 ignore next */
   a: () => 1,
@@ -190,7 +195,7 @@ const obj = {
 	b: () => 2
 };
 
-########## 28
+########## 29
 const obj = {
   a: 1,
   /* v8 ignore next */

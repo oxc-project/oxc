@@ -223,6 +223,9 @@ catch (err) /* c8 ignore next */ /* istanbul ignore next */ { handle(err); }",
             "try { something(); }
 catch (err) // v8 ignore next
 { handle(err); }",
+            // Coverage comment before ConditionalExpression consequent
+            // https://github.com/oxc-project/oxc/issues/21301
+            "condition ? /* v8 ignore next */ uncovered() : coveredAlternate();",
             // Coverage comment before ConditionalExpression alternate
             // https://github.com/oxc-project/oxc/issues/20549
             "const a = Math.random() ? 1 : /* istanbul ignore next */ 2;",
