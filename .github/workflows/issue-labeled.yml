@@ -19,9 +19,13 @@ jobs:
           GH_REPO: ${{ github.repository }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
-          labels="$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name | select(. == "pending triage" or . == "needs reproduction")] | join(",")')"
-          if [[ -n "$labels" ]]; then
-            gh issue edit "$ISSUE_NUMBER" --remove-label "$labels"
+          mapfile -t labels < <(gh issue view "$ISSUE_NUMBER" --json labels --jq '.labels[].name | select(. == "pending triage" or . == "needs reproduction")')
+          if (( ${#labels[@]} > 0 )); then
+            args=()
+            for label in "${labels[@]}"; do
+              args+=(--remove-label "$label")
+            done
+            gh issue edit "$ISSUE_NUMBER" "${args[@]}"
           fi
 
       - name: needs reproduction
