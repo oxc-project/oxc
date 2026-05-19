@@ -116,298 +116,309 @@ impl Rule for ConsistentIndexedObjectStyle {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let preferred_style = self.0;
+        match node.kind() {
+            AstKind::TSInterfaceDeclaration(inf)
+                if self.0 == ConsistentIndexedObjectStyleConfig::Record =>
+            {
+                if inf.body.body.len() != 1 {
+                    return;
+                }
+                let Some(TSSignature::TSIndexSignature(sig)) = inf.body.body.first() else {
+                    return;
+                };
 
-        if self.0 == ConsistentIndexedObjectStyleConfig::Record {
-            match node.kind() {
-                AstKind::TSInterfaceDeclaration(inf) => {
-                    if inf.body.body.len() != 1 {
-                        return;
-                    }
-                    let Some(TSSignature::TSIndexSignature(sig)) = inf.body.body.first() else {
-                        return;
-                    };
+                let parent_name = inf.id.name.as_str();
 
-                    let parent_name = inf.id.name.as_str();
+                if contains_convertible_index_signature(&sig.type_annotation.type_annotation) {
+                    return;
+                }
 
-                    if contains_convertible_index_signature(&sig.type_annotation.type_annotation) {
-                        return;
-                    }
+                let should_report = match &sig.type_annotation.type_annotation {
+                    TSType::TSTypeReference(r) => match &r.type_name {
+                        TSTypeName::IdentifierReference(ide) => {
+                            ide.name != parent_name
+                                && !is_circular_reference(
+                                    &sig.type_annotation.type_annotation,
+                                    parent_name,
+                                    ctx,
+                                )
+                        }
+                        TSTypeName::QualifiedName(_) | TSTypeName::ThisExpression(_) => true,
+                    },
+                    TSType::TSUnionType(uni) => !uni.types.iter().any(|t| {
+                        if let TSType::TSTypeReference(tref) = t
+                            && let TSTypeName::IdentifierReference(ide) = &tref.type_name
+                        {
+                            ide.name == parent_name || is_circular_reference(t, parent_name, ctx)
+                        } else {
+                            false
+                        }
+                    }),
+                    _ => !is_circular_reference(
+                        &sig.type_annotation.type_annotation,
+                        parent_name,
+                        ctx,
+                    ),
+                };
 
-                    let should_report = match &sig.type_annotation.type_annotation {
-                        TSType::TSTypeReference(r) => match &r.type_name {
-                            TSTypeName::IdentifierReference(ide) => {
+                if should_report {
+                    ctx.diagnostic_with_fix(
+                        consistent_indexed_object_style_diagnostic(
+                            ConsistentIndexedObjectStyleConfig::Record,
+                            sig.span,
+                        ),
+                        |fixer| {
+                            if matches!(
+                                ctx.nodes().parent_kind(node.id()),
+                                AstKind::ExportDefaultDeclaration(_)
+                            ) {
+                                return fixer.noop();
+                            }
+
+                            let key_type = sig.parameters.first().map_or("string", |p| {
+                                fixer.source_range(p.type_annotation.type_annotation.span())
+                            });
+                            let value_type =
+                                fixer.source_range(sig.type_annotation.type_annotation.span());
+                            let type_params = inf
+                                .type_parameters
+                                .as_ref()
+                                .map_or("", |tp| fixer.source_range(tp.span));
+
+                            let record = if sig.readonly {
+                                format!("Readonly<Record<{key_type}, {value_type}>>")
+                            } else {
+                                format!("Record<{key_type}, {value_type}>")
+                            };
+
+                            let replacement =
+                                format!("type {}{type_params} = {record};", inf.id.name);
+                            fixer.replace(inf.span, replacement)
+                        },
+                    );
+                }
+            }
+            AstKind::TSTypeLiteral(lit) if self.0 == ConsistentIndexedObjectStyleConfig::Record => {
+                if lit.members.len() != 1 {
+                    return;
+                }
+
+                let Some(TSSignature::TSIndexSignature(sig)) = lit.members.first() else {
+                    return;
+                };
+
+                if contains_convertible_index_signature(&sig.type_annotation.type_annotation) {
+                    return;
+                }
+
+                let is_nested_in_type_literal = ctx
+                    .nodes()
+                    .ancestors(node.id())
+                    .any(|ancestor| matches!(ancestor.kind(), AstKind::TSTypeLiteral(_)));
+
+                let parent_name = if is_nested_in_type_literal {
+                    None
+                } else {
+                    ctx.nodes().ancestors(node.id()).find_map(|ancestor| {
+                        if let AstKind::TSTypeAliasDeclaration(dec) = ancestor.kind() {
+                            Some(dec.id.name.as_str())
+                        } else {
+                            None
+                        }
+                    })
+                };
+
+                let should_report = match &sig.type_annotation.type_annotation {
+                    TSType::TSTypeReference(r) => match &r.type_name {
+                        TSTypeName::IdentifierReference(ide) => {
+                            if let Some(parent_name) = parent_name {
                                 ide.name != parent_name
                                     && !is_circular_reference(
                                         &sig.type_annotation.type_annotation,
                                         parent_name,
                                         ctx,
                                     )
-                            }
-                            TSTypeName::QualifiedName(_) | TSTypeName::ThisExpression(_) => true,
-                        },
-                        TSType::TSUnionType(uni) => !uni.types.iter().any(|t| {
-                            if let TSType::TSTypeReference(tref) = t
-                                && let TSTypeName::IdentifierReference(ide) = &tref.type_name
-                            {
-                                ide.name == parent_name
-                                    || is_circular_reference(t, parent_name, ctx)
-                            } else {
-                                false
-                            }
-                        }),
-                        _ => !is_circular_reference(
-                            &sig.type_annotation.type_annotation,
-                            parent_name,
-                            ctx,
-                        ),
-                    };
-
-                    if should_report {
-                        ctx.diagnostic_with_fix(
-                            consistent_indexed_object_style_diagnostic(preferred_style, sig.span),
-                            |fixer| {
-                                if matches!(
-                                    ctx.nodes().parent_kind(node.id()),
-                                    AstKind::ExportDefaultDeclaration(_)
-                                ) {
-                                    return fixer.noop();
-                                }
-
-                                let key_type = sig.parameters.first().map_or("string", |p| {
-                                    fixer.source_range(p.type_annotation.type_annotation.span())
-                                });
-                                let value_type =
-                                    fixer.source_range(sig.type_annotation.type_annotation.span());
-                                let type_params = inf
-                                    .type_parameters
-                                    .as_ref()
-                                    .map_or("", |tp| fixer.source_range(tp.span));
-
-                                let record = if sig.readonly {
-                                    format!("Readonly<Record<{key_type}, {value_type}>>")
-                                } else {
-                                    format!("Record<{key_type}, {value_type}>")
-                                };
-
-                                let replacement =
-                                    format!("type {}{type_params} = {record};", inf.id.name);
-                                fixer.replace(inf.span, replacement)
-                            },
-                        );
-                    }
-                }
-                AstKind::TSTypeLiteral(lit) => {
-                    if lit.members.len() != 1 {
-                        return;
-                    }
-
-                    let Some(TSSignature::TSIndexSignature(sig)) = lit.members.first() else {
-                        return;
-                    };
-
-                    if contains_convertible_index_signature(&sig.type_annotation.type_annotation) {
-                        return;
-                    }
-
-                    let is_nested_in_type_literal = ctx
-                        .nodes()
-                        .ancestors(node.id())
-                        .any(|ancestor| matches!(ancestor.kind(), AstKind::TSTypeLiteral(_)));
-
-                    let parent_name = if is_nested_in_type_literal {
-                        None
-                    } else {
-                        ctx.nodes().ancestors(node.id()).find_map(|ancestor| {
-                            if let AstKind::TSTypeAliasDeclaration(dec) = ancestor.kind() {
-                                Some(dec.id.name.as_str())
-                            } else {
-                                None
-                            }
-                        })
-                    };
-
-                    let should_report = match &sig.type_annotation.type_annotation {
-                        TSType::TSTypeReference(r) => match &r.type_name {
-                            TSTypeName::IdentifierReference(ide) => {
-                                if let Some(parent_name) = parent_name {
-                                    ide.name != parent_name
-                                        && !is_circular_reference(
-                                            &sig.type_annotation.type_annotation,
-                                            parent_name,
-                                            ctx,
-                                        )
-                                } else {
-                                    true
-                                }
-                            }
-                            TSTypeName::QualifiedName(_) | TSTypeName::ThisExpression(_) => true,
-                        },
-                        TSType::TSUnionType(uni) => {
-                            if let Some(parent_name) = parent_name {
-                                !uni.types.iter().any(|t| {
-                                    if let TSType::TSTypeReference(tref) = t
-                                        && let TSTypeName::IdentifierReference(ide) =
-                                            &tref.type_name
-                                    {
-                                        ide.name == parent_name
-                                            || is_circular_reference(t, parent_name, ctx)
-                                    } else {
-                                        false
-                                    }
-                                })
                             } else {
                                 true
                             }
                         }
-                        _ => {
-                            if let Some(parent_name) = parent_name {
-                                !is_circular_reference(
-                                    &sig.type_annotation.type_annotation,
-                                    parent_name,
-                                    ctx,
-                                )
-                            } else {
-                                true
-                            }
-                        }
-                    };
-
-                    if should_report {
-                        ctx.diagnostic_with_fix(
-                            consistent_indexed_object_style_diagnostic(preferred_style, sig.span),
-                            |fixer| {
-                                let key_type = sig.parameters.first().map_or("string", |p| {
-                                    fixer.source_range(p.type_annotation.type_annotation.span())
-                                });
-                                let value_type =
-                                    fixer.source_range(sig.type_annotation.type_annotation.span());
-
-                                let record = if sig.readonly {
-                                    format!("Readonly<Record<{key_type}, {value_type}>>")
+                        TSTypeName::QualifiedName(_) | TSTypeName::ThisExpression(_) => true,
+                    },
+                    TSType::TSUnionType(uni) => {
+                        if let Some(parent_name) = parent_name {
+                            !uni.types.iter().any(|t| {
+                                if let TSType::TSTypeReference(tref) = t
+                                    && let TSTypeName::IdentifierReference(ide) = &tref.type_name
+                                {
+                                    ide.name == parent_name
+                                        || is_circular_reference(t, parent_name, ctx)
                                 } else {
-                                    format!("Record<{key_type}, {value_type}>")
-                                };
-
-                                fixer.replace(lit.span, record)
-                            },
-                        );
-                    }
-                }
-                AstKind::TSMappedType(mapped) => {
-                    let constraint = &mapped.constraint;
-
-                    // Bare `keyof` mapped types preserve structure and can't be converted
-                    if is_bare_keyof(constraint) {
-                        return;
-                    }
-
-                    // Key remapping (`as`) cannot be represented with `Record`.
-                    if mapped.name_type.is_some() {
-                        return;
-                    }
-
-                    // Can't convert if value type references the key parameter
-                    if let Some(type_annotation) = &mapped.type_annotation
-                        && mapped_type_value_references_key(mapped, type_annotation, ctx)
-                    {
-                        return;
-                    }
-
-                    if let AstKind::TSTypeAliasDeclaration(dec) = ctx.nodes().parent_kind(node.id())
-                    {
-                        if let Some(type_annotation) = &mapped.type_annotation
-                            && is_circular_reference(type_annotation, dec.id.name.as_str(), ctx)
-                        {
-                            return;
-                        }
-                        if is_circular_reference(constraint, dec.id.name.as_str(), ctx) {
-                            return;
+                                    false
+                                }
+                            })
+                        } else {
+                            true
                         }
                     }
+                    _ => {
+                        if let Some(parent_name) = parent_name {
+                            !is_circular_reference(
+                                &sig.type_annotation.type_annotation,
+                                parent_name,
+                                ctx,
+                            )
+                        } else {
+                            true
+                        }
+                    }
+                };
 
+                if should_report {
                     ctx.diagnostic_with_fix(
-                        consistent_indexed_object_style_diagnostic(preferred_style, mapped.span),
+                        consistent_indexed_object_style_diagnostic(
+                            ConsistentIndexedObjectStyleConfig::Record,
+                            sig.span,
+                        ),
                         |fixer| {
-                            let unwrapped_constraint = {
-                                let mut current = constraint;
-                                while let TSType::TSParenthesizedType(p) = current {
-                                    current = &p.type_annotation;
-                                }
-                                current
+                            let key_type = sig.parameters.first().map_or("string", |p| {
+                                fixer.source_range(p.type_annotation.type_annotation.span())
+                            });
+                            let value_type =
+                                fixer.source_range(sig.type_annotation.type_annotation.span());
+
+                            let record = if sig.readonly {
+                                format!("Readonly<Record<{key_type}, {value_type}>>")
+                            } else {
+                                format!("Record<{key_type}, {value_type}>")
                             };
-                            let key_type = fixer.source_range(unwrapped_constraint.span());
-                            let value_type = mapped
-                                .type_annotation
-                                .as_ref()
-                                .map_or("any", |t| fixer.source_range(t.span()));
 
-                            let is_readonly = mapped.readonly.is_some();
-                            let is_optional = mapped.optional.is_some_and(|o| {
-                                matches!(
-                                    o,
-                                    oxc_ast::ast::TSMappedTypeModifierOperator::True
-                                        | oxc_ast::ast::TSMappedTypeModifierOperator::Plus
-                                )
-                            });
-                            let is_required = mapped.optional.is_some_and(|o| {
-                                matches!(o, oxc_ast::ast::TSMappedTypeModifierOperator::Minus)
-                            });
-
-                            let mut record = format!("Record<{key_type}, {value_type}>");
-                            if is_required {
-                                record = format!("Required<{record}>");
-                            }
-                            if is_optional {
-                                record = format!("Partial<{record}>");
-                            }
-                            if is_readonly {
-                                record = format!("Readonly<{record}>");
-                            }
-
-                            fixer.replace(mapped.span, record)
+                            fixer.replace(lit.span, record)
                         },
                     );
                 }
-                _ => {}
             }
-        } else if let AstKind::TSTypeReference(tref) = node.kind()
-            && let TSTypeName::IdentifierReference(ide) = &tref.type_name
-        {
-            if ide.name != "Record" {
-                return;
-            }
+            AstKind::TSMappedType(mapped)
+                if self.0 == ConsistentIndexedObjectStyleConfig::Record =>
+            {
+                let constraint = &mapped.constraint;
 
-            let Some(params) = &tref.type_arguments else { return };
-            if params.params.len() != 2 {
-                return;
-            }
+                // Bare `keyof` mapped types preserve structure and can't be converted
+                if is_bare_keyof(constraint) {
+                    return;
+                }
 
-            let first_param = params.params.first();
-            let key_span = match first_param {
-                Some(TSType::TSStringKeyword(k)) => Some(k.span),
-                Some(TSType::TSNumberKeyword(k)) => Some(k.span),
-                Some(TSType::TSSymbolKeyword(k)) => Some(k.span),
-                _ => None,
-            };
+                // Key remapping (`as`) cannot be represented with `Record`.
+                if mapped.name_type.is_some() {
+                    return;
+                }
 
-            if let Some(key_span) = key_span {
+                // Can't convert if value type references the key parameter
+                if let Some(type_annotation) = &mapped.type_annotation
+                    && mapped_type_value_references_key(mapped, type_annotation, ctx)
+                {
+                    return;
+                }
+
+                if let AstKind::TSTypeAliasDeclaration(dec) = ctx.nodes().parent_kind(node.id()) {
+                    if let Some(type_annotation) = &mapped.type_annotation
+                        && is_circular_reference(type_annotation, dec.id.name.as_str(), ctx)
+                    {
+                        return;
+                    }
+                    if is_circular_reference(constraint, dec.id.name.as_str(), ctx) {
+                        return;
+                    }
+                }
+
                 ctx.diagnostic_with_fix(
-                    consistent_indexed_object_style_diagnostic(preferred_style, tref.span),
+                    consistent_indexed_object_style_diagnostic(
+                        ConsistentIndexedObjectStyleConfig::Record,
+                        mapped.span,
+                    ),
                     |fixer| {
-                        let key = fixer.source_range(key_span);
-                        let params_span = Span::new(key_span.end + 1, tref.span.end - 1);
-                        let params = fixer.source_range(params_span).trim();
-                        let content = format!("{{ [key: {key}]: {params} }}");
-                        fixer.replace(tref.span, content)
+                        let unwrapped_constraint = {
+                            let mut current = constraint;
+                            while let TSType::TSParenthesizedType(p) = current {
+                                current = &p.type_annotation;
+                            }
+                            current
+                        };
+                        let key_type = fixer.source_range(unwrapped_constraint.span());
+                        let value_type = mapped
+                            .type_annotation
+                            .as_ref()
+                            .map_or("any", |t| fixer.source_range(t.span()));
+
+                        let is_readonly = mapped.readonly.is_some();
+                        let is_optional = mapped.optional.is_some_and(|o| {
+                            matches!(
+                                o,
+                                oxc_ast::ast::TSMappedTypeModifierOperator::True
+                                    | oxc_ast::ast::TSMappedTypeModifierOperator::Plus
+                            )
+                        });
+                        let is_required = mapped.optional.is_some_and(|o| {
+                            matches!(o, oxc_ast::ast::TSMappedTypeModifierOperator::Minus)
+                        });
+
+                        let mut record = format!("Record<{key_type}, {value_type}>");
+                        if is_required {
+                            record = format!("Required<{record}>");
+                        }
+                        if is_optional {
+                            record = format!("Partial<{record}>");
+                        }
+                        if is_readonly {
+                            record = format!("Readonly<{record}>");
+                        }
+
+                        fixer.replace(mapped.span, record)
                     },
                 );
-            } else {
-                ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                    preferred_style,
-                    tref.span,
-                ));
             }
+            AstKind::TSTypeReference(tref)
+                if self.0 == ConsistentIndexedObjectStyleConfig::IndexSignature =>
+            {
+                let TSTypeName::IdentifierReference(ide) = &tref.type_name else { return };
+                if ide.name != "Record" {
+                    return;
+                }
+
+                let Some(params) = &tref.type_arguments else { return };
+                if params.params.len() != 2 {
+                    return;
+                }
+
+                let first_param = params.params.first();
+                let key_span = match first_param {
+                    Some(TSType::TSStringKeyword(k)) => Some(k.span),
+                    Some(TSType::TSNumberKeyword(k)) => Some(k.span),
+                    Some(TSType::TSSymbolKeyword(k)) => Some(k.span),
+                    _ => None,
+                };
+
+                if let Some(key_span) = key_span {
+                    ctx.diagnostic_with_fix(
+                        consistent_indexed_object_style_diagnostic(
+                            ConsistentIndexedObjectStyleConfig::IndexSignature,
+                            tref.span,
+                        ),
+                        |fixer| {
+                            let key = fixer.source_range(key_span);
+                            let params_span = Span::new(key_span.end + 1, tref.span.end - 1);
+                            let params = fixer.source_range(params_span).trim();
+                            let content = format!("{{ [key: {key}]: {params} }}");
+                            fixer.replace(tref.span, content)
+                        },
+                    );
+                } else {
+                    ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                        ConsistentIndexedObjectStyleConfig::IndexSignature,
+                        tref.span,
+                    ));
+                }
+            }
+            _ => {}
         }
     }
 
