@@ -1,8 +1,8 @@
-commit: ccaac100
+commit: 78fc3f8e
 
 semantic_test262 Summary:
-AST Parsed     : 47115/47115 (100.00%)
-Positive Passed: 45595/47115 (96.77%)
+AST Parsed     : 47163/47163 (100.00%)
+Positive Passed: 45643/47163 (96.78%)
 semantic Error: tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-multiple.js
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)

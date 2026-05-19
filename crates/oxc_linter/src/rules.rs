@@ -486,6 +486,7 @@ pub(crate) mod unicorn {
     pub mod escape_case;
     pub mod explicit_length_check;
     pub mod filename_case;
+    pub mod import_style;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
     pub mod no_accessor_recursion;
@@ -844,13 +845,19 @@ pub(crate) mod vue {
     pub mod no_multiple_slot_args;
     pub mod no_required_prop_with_default;
     pub mod no_reserved_keys;
+    pub mod no_shared_component_data;
     pub mod no_this_in_before_route_enter;
+    pub mod no_watch_after_await;
     pub mod prefer_import_from_vue;
     pub mod require_default_export;
+    pub mod require_slots_as_functions;
     pub mod require_typed_ref;
     pub mod return_in_computed_property;
+    pub mod return_in_emits_validator;
     pub mod valid_define_emits;
+    pub mod valid_define_options;
     pub mod valid_define_props;
+    pub mod valid_next_tick;
 }
 
 pub(crate) mod shared;
