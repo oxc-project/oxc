@@ -214,8 +214,8 @@ impl Line {
     }
 }
 
-impl Format<'_> for Line {
-    fn fmt(&self, f: &mut Formatter) {
+impl<C> Format<'_, C> for Line {
+    fn fmt(&self, f: &mut Formatter<'_, '_, C>) {
         f.write_element(FormatElement::Line(self.mode));
     }
 }
@@ -283,8 +283,8 @@ pub struct Token {
     text: &'static str,
 }
 
-impl Format<'_> for Token {
-    fn fmt(&self, f: &mut Formatter) {
+impl<C> Format<'_, C> for Token {
+    fn fmt(&self, f: &mut Formatter<'_, '_, C>) {
         f.write_element(FormatElement::Token { text: self.text });
     }
 }
@@ -369,27 +369,27 @@ fn debug_assert_no_cr_line_break(text: &str) {
 /// # }
 /// ```
 #[inline]
-pub fn line_suffix<'a, 'ast, Content>(inner: &'a Content) -> LineSuffix<'a, 'ast>
+pub fn line_suffix<'a, 'ast, C, Content>(inner: &'a Content) -> LineSuffix<'a, 'ast, C>
 where
-    Content: Format<'ast>,
+    Content: Format<'ast, C>,
 {
     LineSuffix { content: Argument::new(inner) }
 }
 
 #[derive(Copy, Clone)]
-pub struct LineSuffix<'a, 'ast> {
-    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
+pub struct LineSuffix<'a, 'ast, C = JsFormatContext<'ast>> {
+    content: Argument<'a, 'ast, C>,
 }
 
-impl<'ast> Format<'ast> for LineSuffix<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+impl<'ast, C> Format<'ast, C> for LineSuffix<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         f.write_element(FormatElement::Tag(StartLineSuffix));
         Arguments::from(&self.content).fmt(f);
         f.write_element(FormatElement::Tag(EndLineSuffix));
     }
 }
 
-impl std::fmt::Debug for LineSuffix<'_, '_> {
+impl<C> std::fmt::Debug for LineSuffix<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("LineSuffix").field(&"{{content}}").finish()
     }
@@ -428,8 +428,8 @@ pub const fn line_suffix_boundary() -> LineSuffixBoundary {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct LineSuffixBoundary;
 
-impl Format<'_> for LineSuffixBoundary {
-    fn fmt(&self, f: &mut Formatter) {
+impl<C> Format<'_, C> for LineSuffixBoundary {
+    fn fmt(&self, f: &mut Formatter<'_, '_, C>) {
         f.write_element(FormatElement::LineSuffixBoundary);
     }
 }
@@ -497,31 +497,31 @@ impl Format<'_> for LineSuffixBoundary {
 /// Use `Memoized.inspect(f)?.has_label(LabelId::of(MyLabels::Main)` if you need to know if some content breaks that should
 /// only be written later.
 #[inline]
-pub fn labelled<'a, 'ast, Content>(
+pub fn labelled<'a, 'ast, C, Content>(
     label_id: LabelId,
     content: &'a Content,
-) -> FormatLabelled<'a, 'ast>
+) -> FormatLabelled<'a, 'ast, C>
 where
-    Content: Format<'ast>,
+    Content: Format<'ast, C>,
 {
     FormatLabelled { label_id, content: Argument::new(content) }
 }
 
 #[derive(Copy, Clone)]
-pub struct FormatLabelled<'a, 'ast> {
+pub struct FormatLabelled<'a, 'ast, C = JsFormatContext<'ast>> {
     label_id: LabelId,
-    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
+    content: Argument<'a, 'ast, C>,
 }
 
-impl<'ast> Format<'ast> for FormatLabelled<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+impl<'ast, C> Format<'ast, C> for FormatLabelled<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         f.write_element(FormatElement::Tag(StartLabelled(self.label_id)));
         Arguments::from(&self.content).fmt(f);
         f.write_element(FormatElement::Tag(EndLabelled));
     }
 }
 
-impl std::fmt::Debug for FormatLabelled<'_, '_> {
+impl<C> std::fmt::Debug for FormatLabelled<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("Label").field(&self.label_id).field(&"{{content}}").finish()
     }
@@ -573,8 +573,8 @@ pub fn maybe_space(should_insert: bool) -> Option<Space> {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Space;
 
-impl Format<'_> for Space {
-    fn fmt(&self, f: &mut Formatter) {
+impl<C> Format<'_, C> for Space {
+    fn fmt(&self, f: &mut Formatter<'_, '_, C>) {
         f.write_element(FormatElement::Space);
     }
 }
@@ -643,20 +643,20 @@ impl Format<'_> for Space {
 /// # }
 /// ```
 #[inline]
-pub fn indent<'a, 'ast, Content>(content: &'a Content) -> Indent<'a, 'ast>
+pub fn indent<'a, 'ast, C, Content>(content: &'a Content) -> Indent<'a, 'ast, C>
 where
-    Content: Format<'ast>,
+    Content: Format<'ast, C>,
 {
     Indent { content: Argument::new(content) }
 }
 
 #[derive(Copy, Clone)]
-pub struct Indent<'a, 'ast> {
-    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
+pub struct Indent<'a, 'ast, C = JsFormatContext<'ast>> {
+    content: Argument<'a, 'ast, C>,
 }
 
-impl<'ast> Format<'ast> for Indent<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+impl<'ast, C> Format<'ast, C> for Indent<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         f.write_element(FormatElement::Tag(StartIndent));
 
         let elements_length = f.elements().len();
@@ -673,7 +673,7 @@ impl<'ast> Format<'ast> for Indent<'_, 'ast> {
     }
 }
 
-impl std::fmt::Debug for Indent<'_, '_> {
+impl<C> std::fmt::Debug for Indent<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("Indent").field(&"{{content}}").finish()
     }
@@ -808,28 +808,28 @@ impl std::fmt::Debug for Indent<'_, '_> {
 /// # }
 /// ```
 #[inline]
-pub fn dedent<'ast, Content>(content: &Content) -> Dedent<'_, 'ast>
+pub fn dedent<'ast, C, Content>(content: &Content) -> Dedent<'_, 'ast, C>
 where
-    Content: Format<'ast>,
+    Content: Format<'ast, C>,
 {
     Dedent { content: Argument::new(content), mode: DedentMode::Level }
 }
 
 #[derive(Copy, Clone)]
-pub struct Dedent<'a, 'ast> {
-    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
+pub struct Dedent<'a, 'ast, C = JsFormatContext<'ast>> {
+    content: Argument<'a, 'ast, C>,
     mode: DedentMode,
 }
 
-impl<'ast> Format<'ast> for Dedent<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+impl<'ast, C> Format<'ast, C> for Dedent<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         f.write_element(FormatElement::Tag(StartDedent(self.mode)));
         Arguments::from(&self.content).fmt(f);
         f.write_element(FormatElement::Tag(EndDedent(self.mode)));
     }
 }
 
-impl std::fmt::Debug for Dedent<'_, '_> {
+impl<C> std::fmt::Debug for Dedent<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("Dedent").field(&"{{content}}").finish()
     }
@@ -878,9 +878,9 @@ impl std::fmt::Debug for Dedent<'_, '_> {
 ///
 /// This resembles the behaviour of Prettier's `align(Number.NEGATIVE_INFINITY, content)` IR element.
 #[inline]
-pub fn dedent_to_root<'ast, Content>(content: &Content) -> Dedent<'_, 'ast>
+pub fn dedent_to_root<'ast, C, Content>(content: &Content) -> Dedent<'_, 'ast, C>
 where
-    Content: Format<'ast>,
+    Content: Format<'ast, C>,
 {
     Dedent { content: Argument::new(content), mode: DedentMode::Root }
 }
@@ -988,9 +988,9 @@ where
 ///
 /// * tab indention: Printer indents the expression with two tabs because the `align` increases the indention level.
 /// * space indention: Printer indents the expression by 4 spaces (one indention level) **and** 2 spaces for the align.
-pub fn align<'ast, Content>(count: u8, content: &Content) -> Align<'_, 'ast>
+pub fn align<'ast, C, Content>(count: u8, content: &Content) -> Align<'_, 'ast, C>
 where
-    Content: Format<'ast>,
+    Content: Format<'ast, C>,
 {
     Align {
         count: NonZeroU8::new(count).expect("Alignment count must be a non-zero number."),
@@ -999,20 +999,20 @@ where
 }
 
 #[derive(Copy, Clone)]
-pub struct Align<'a, 'ast> {
+pub struct Align<'a, 'ast, C = JsFormatContext<'ast>> {
     count: NonZeroU8,
-    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
+    content: Argument<'a, 'ast, C>,
 }
 
-impl<'ast> Format<'ast> for Align<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+impl<'ast, C> Format<'ast, C> for Align<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         f.write_element(FormatElement::Tag(StartAlign(tag::Align(self.count))));
         Arguments::from(&self.content).fmt(f);
         f.write_element(FormatElement::Tag(EndAlign));
     }
 }
 
-impl std::fmt::Debug for Align<'_, '_> {
+impl<C> std::fmt::Debug for Align<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Align")
             .field("count", &self.count)
@@ -1056,7 +1056,7 @@ impl std::fmt::Debug for Align<'_, '_> {
 /// # }
 /// ```
 #[inline]
-pub fn block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> {
+pub fn block_indent<'ast, C>(content: &impl Format<'ast, C>) -> BlockIndent<'_, 'ast, C> {
     BlockIndent { content: Argument::new(content), mode: IndentMode::Block }
 }
 
@@ -1124,7 +1124,7 @@ pub fn block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> 
 /// # }
 /// ```
 #[inline]
-pub fn soft_block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> {
+pub fn soft_block_indent<'ast, C>(content: &impl Format<'ast, C>) -> BlockIndent<'_, 'ast, C> {
     BlockIndent { content: Argument::new(content), mode: IndentMode::Soft }
 }
 
@@ -1221,10 +1221,10 @@ pub fn soft_block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, '
 /// # Ok(())
 /// # }
 /// ```
-pub fn soft_block_indent_with_maybe_space<'ast>(
-    content: &impl Format<'ast>,
+pub fn soft_block_indent_with_maybe_space<'ast, C>(
+    content: &impl Format<'ast, C>,
     should_add_space: bool,
-) -> BlockIndent<'_, 'ast> {
+) -> BlockIndent<'_, 'ast, C> {
     if should_add_space { soft_space_or_block_indent(content) } else { soft_block_indent(content) }
 }
 
@@ -1295,13 +1295,15 @@ pub fn soft_block_indent_with_maybe_space<'ast>(
 /// # }
 /// ```
 #[inline]
-pub fn soft_line_indent_or_space<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> {
+pub fn soft_line_indent_or_space<'ast, C>(
+    content: &impl Format<'ast, C>,
+) -> BlockIndent<'_, 'ast, C> {
     BlockIndent { content: Argument::new(content), mode: IndentMode::SoftLineOrSpace }
 }
 
 #[derive(Copy, Clone)]
-pub struct BlockIndent<'fmt, 'ast> {
-    content: Argument<'fmt, 'ast, JsFormatContext<'ast>>,
+pub struct BlockIndent<'fmt, 'ast, C = JsFormatContext<'ast>> {
+    content: Argument<'fmt, 'ast, C>,
     mode: IndentMode,
 }
 
@@ -1313,8 +1315,8 @@ enum IndentMode {
     SoftLineOrSpace,
 }
 
-impl<'ast> Format<'ast> for BlockIndent<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+impl<'ast, C> Format<'ast, C> for BlockIndent<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         f.write_element(FormatElement::Tag(StartIndent));
 
         match self.mode {
@@ -1346,7 +1348,7 @@ impl<'ast> Format<'ast> for BlockIndent<'_, 'ast> {
     }
 }
 
-impl std::fmt::Debug for BlockIndent<'_, '_> {
+impl<C> std::fmt::Debug for BlockIndent<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = match self.mode {
             IndentMode::Soft => "SoftBlockIndent",
@@ -1422,7 +1424,9 @@ impl std::fmt::Debug for BlockIndent<'_, '_> {
 /// # Ok(())
 /// # }
 /// ```
-pub fn soft_space_or_block_indent<'ast>(content: &impl Format<'ast>) -> BlockIndent<'_, 'ast> {
+pub fn soft_space_or_block_indent<'ast, C>(
+    content: &impl Format<'ast, C>,
+) -> BlockIndent<'_, 'ast, C> {
     BlockIndent { content: Argument::new(content), mode: IndentMode::SoftSpace }
 }
 
@@ -1499,19 +1503,19 @@ pub fn soft_space_or_block_indent<'ast>(content: &impl Format<'ast>) -> BlockInd
 /// # }
 /// ```
 #[inline]
-pub fn group<'ast>(content: &impl Format<'ast>) -> Group<'_, 'ast> {
+pub fn group<'ast, C>(content: &impl Format<'ast, C>) -> Group<'_, 'ast, C> {
     Group { content: Argument::new(content), group_id: None, should_expand: false }
 }
 
 #[derive(Copy, Clone)]
-pub struct Group<'fmt, 'ast> {
-    content: Argument<'fmt, 'ast, JsFormatContext<'ast>>,
+pub struct Group<'fmt, 'ast, C = JsFormatContext<'ast>> {
+    content: Argument<'fmt, 'ast, C>,
     #[expect(clippy::struct_field_names)] // Keep the name the same as it is in the original source
     group_id: Option<GroupId>,
     should_expand: bool,
 }
 
-impl Group<'_, '_> {
+impl<C> Group<'_, '_, C> {
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.group_id = group_id;
         self
@@ -1529,8 +1533,8 @@ impl Group<'_, '_> {
     }
 }
 
-impl<'ast> Format<'ast> for Group<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+impl<'ast, C> Format<'ast, C> for Group<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         let mode = if self.should_expand { GroupMode::Expand } else { GroupMode::Flat };
 
         f.write_element(FormatElement::Tag(StartGroup(
@@ -1543,7 +1547,7 @@ impl<'ast> Format<'ast> for Group<'_, 'ast> {
     }
 }
 
-impl std::fmt::Debug for Group<'_, '_> {
+impl<C> std::fmt::Debug for Group<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("GroupElements")
             .field("group_id", &self.group_id)
@@ -1596,8 +1600,8 @@ pub const fn expand_parent() -> ExpandParent {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ExpandParent;
 
-impl Format<'_> for ExpandParent {
-    fn fmt(&self, f: &mut Formatter) {
+impl<C> Format<'_, C> for ExpandParent {
+    fn fmt(&self, f: &mut Formatter<'_, '_, C>) {
         f.write_element(FormatElement::ExpandParent);
     }
 }
@@ -1676,9 +1680,9 @@ impl Format<'_> for ExpandParent {
 /// # }
 /// ```
 #[inline]
-pub fn if_group_breaks<'ast, Content>(content: &Content) -> IfGroupBreaks<'_, 'ast>
+pub fn if_group_breaks<'ast, C, Content>(content: &Content) -> IfGroupBreaks<'_, 'ast, C>
 where
-    Content: Format<'ast>,
+    Content: Format<'ast, C>,
 {
     IfGroupBreaks { content: Argument::new(content), group_id: None, mode: PrintMode::Expanded }
 }
@@ -1753,21 +1757,21 @@ where
 /// # }
 /// ```
 #[inline]
-pub fn if_group_fits_on_line<'ast, Content>(flat_content: &Content) -> IfGroupBreaks<'_, 'ast>
+pub fn if_group_fits_on_line<'ast, C, Content>(flat_content: &Content) -> IfGroupBreaks<'_, 'ast, C>
 where
-    Content: Format<'ast>,
+    Content: Format<'ast, C>,
 {
     IfGroupBreaks { mode: PrintMode::Flat, group_id: None, content: Argument::new(flat_content) }
 }
 
 #[derive(Copy, Clone)]
-pub struct IfGroupBreaks<'a, 'ast> {
-    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
+pub struct IfGroupBreaks<'a, 'ast, C = JsFormatContext<'ast>> {
+    content: Argument<'a, 'ast, C>,
     group_id: Option<GroupId>,
     mode: PrintMode,
 }
 
-impl IfGroupBreaks<'_, '_> {
+impl<C> IfGroupBreaks<'_, '_, C> {
     /// Inserts some content that the printer only prints if the group with the specified `group_id`
     /// is printed in multiline mode. The referred group must appear before this element in the document
     /// but doesn't have to one of its ancestors.
@@ -1827,8 +1831,8 @@ impl IfGroupBreaks<'_, '_> {
     }
 }
 
-impl<'ast> Format<'ast> for IfGroupBreaks<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+impl<'ast, C> Format<'ast, C> for IfGroupBreaks<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         f.write_element(FormatElement::Tag(StartConditionalContent(
             Condition::new(self.mode).with_group_id(self.group_id),
         )));
@@ -1837,7 +1841,7 @@ impl<'ast> Format<'ast> for IfGroupBreaks<'_, 'ast> {
     }
 }
 
-impl std::fmt::Debug for IfGroupBreaks<'_, '_> {
+impl<C> std::fmt::Debug for IfGroupBreaks<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = match self.mode {
             PrintMode::Flat => "IfGroupFitsOnLine",
@@ -1932,31 +1936,31 @@ impl std::fmt::Debug for IfGroupBreaks<'_, '_> {
 /// # }
 /// ```
 #[inline]
-pub fn indent_if_group_breaks<'a, 'ast, Content>(
+pub fn indent_if_group_breaks<'a, 'ast, C, Content>(
     content: &'a Content,
     group_id: GroupId,
-) -> IndentIfGroupBreaks<'a, 'ast>
+) -> IndentIfGroupBreaks<'a, 'ast, C>
 where
-    Content: Format<'ast>,
+    Content: Format<'ast, C>,
 {
     IndentIfGroupBreaks { group_id, content: Argument::new(content) }
 }
 
 #[derive(Copy, Clone)]
-pub struct IndentIfGroupBreaks<'a, 'ast> {
-    content: Argument<'a, 'ast, JsFormatContext<'ast>>,
+pub struct IndentIfGroupBreaks<'a, 'ast, C = JsFormatContext<'ast>> {
+    content: Argument<'a, 'ast, C>,
     group_id: GroupId,
 }
 
-impl<'ast> Format<'ast> for IndentIfGroupBreaks<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+impl<'ast, C> Format<'ast, C> for IndentIfGroupBreaks<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         f.write_element(FormatElement::Tag(StartIndentIfGroupBreaks(self.group_id)));
         Arguments::from(&self.content).fmt(f);
         f.write_element(FormatElement::Tag(EndIndentIfGroupBreaks(self.group_id)));
     }
 }
 
-impl std::fmt::Debug for IndentIfGroupBreaks<'_, '_> {
+impl<C> std::fmt::Debug for IndentIfGroupBreaks<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("IndentIfGroupBreaks")
             .field("group_id", &self.group_id)
@@ -1971,12 +1975,12 @@ pub struct FormatWith<T> {
     formatter: T,
 }
 
-impl<'ast, T> Format<'ast> for FormatWith<T>
+impl<'ast, C, T> Format<'ast, C> for FormatWith<T>
 where
-    T: Fn(&mut Formatter<'_, 'ast>),
+    T: Fn(&mut Formatter<'_, 'ast, C>),
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         (self.formatter)(f);
     }
 }
@@ -2110,12 +2114,12 @@ pub struct FormatOnce<T> {
     formatter: Cell<Option<T>>,
 }
 
-impl<'ast, T> Format<'ast> for FormatOnce<T>
+impl<'ast, C, T> Format<'ast, C> for FormatOnce<T>
 where
-    T: FnOnce(&mut Formatter<'_, 'ast>),
+    T: FnOnce(&mut Formatter<'_, 'ast, C>),
 {
     #[inline(always)]
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         let formatter = self.formatter.take().expect("Tried to format a `format_once` at least twice. This is not allowed. You may want to use `format_with` or `format.memoized` instead.");
 
         (formatter)(f);
@@ -2342,11 +2346,11 @@ impl<'fmt, 'buf, 'ast> FillBuilder<'fmt, 'buf, 'ast> {
 /// The first variant is the most flat, and the last is the most expanded variant.
 /// See [`best_fitting!`] macro for a more in-detail documentation
 #[derive(Copy, Clone)]
-pub struct BestFitting<'fmt, 'ast> {
-    variants: Arguments<'fmt, 'ast, JsFormatContext<'ast>>,
+pub struct BestFitting<'fmt, 'ast, C = JsFormatContext<'ast>> {
+    variants: Arguments<'fmt, 'ast, C>,
 }
 
-impl<'fmt, 'ast> BestFitting<'fmt, 'ast> {
+impl<'fmt, 'ast, C> BestFitting<'fmt, 'ast, C> {
     /// Creates a new best fitting IR with the given variants. The method itself isn't unsafe
     /// but it is to discourage people from using it because the printer will panic if
     /// the slice doesn't contain at least the least and most expanded variants.
@@ -2361,9 +2365,7 @@ impl<'fmt, 'ast> BestFitting<'fmt, 'ast> {
     /// ## Safety
     /// The slice must contain at least two variants.
     #[doc(hidden)]
-    pub fn from_arguments_unchecked(
-        variants: Arguments<'fmt, 'ast, JsFormatContext<'ast>>,
-    ) -> Self {
+    pub fn from_arguments_unchecked(variants: Arguments<'fmt, 'ast, C>) -> Self {
         assert!(
             variants.0.len() >= 2,
             "Requires at least the least expanded and most expanded variants"
@@ -2373,8 +2375,8 @@ impl<'fmt, 'ast> BestFitting<'fmt, 'ast> {
     }
 }
 
-impl<'ast> Format<'ast> for BestFitting<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
         let mut buffer = VecBuffer::new(f.state_mut());
         let variants = self.variants.items();
 

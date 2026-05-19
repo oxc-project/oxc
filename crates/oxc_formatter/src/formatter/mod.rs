@@ -60,18 +60,18 @@ pub use self::{
 use self::{format_element::document::Document, prelude::TagKind};
 
 #[derive(Debug)]
-pub struct Formatted<'a> {
+pub struct Formatted<'a, C = JsFormatContext<'a>> {
     document: Document<'a>,
-    context: JsFormatContext<'a>,
+    context: C,
 }
 
-impl<'a> Formatted<'a> {
-    pub fn new(document: Document<'a>, context: JsFormatContext<'a>) -> Self {
+impl<'a, C> Formatted<'a, C> {
+    pub fn new(document: Document<'a>, context: C) -> Self {
         Self { document, context }
     }
 
     /// Returns the context used during formatting.
-    pub fn context(&self) -> &JsFormatContext<'a> {
+    pub fn context(&self) -> &C {
         &self.context
     }
 
@@ -90,7 +90,7 @@ impl<'a> Formatted<'a> {
     }
 }
 
-impl Formatted<'_> {
+impl<C: core_traits::FormatContext> Formatted<'_, C> {
     /// Prints the formatted document to a string.
     ///
     /// # Errors
