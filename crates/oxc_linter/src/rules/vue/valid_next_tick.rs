@@ -491,6 +491,29 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        // Forms covered after consolidating component detection into utils.
+        (
+            "<script>
+                  Vue.mixin({
+                    mounted() {
+                      this.$nextTick;
+                    }
+                  })</script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "<script>
+                  defineNuxtComponent({
+                    mounted() {
+                      this.$nextTick;
+                    }
+                  })</script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fix = vec![

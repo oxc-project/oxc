@@ -223,3 +223,21 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     }
    ╰────
   help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:4:28]
+ 3 │                     mounted() {
+ 4 │                       this.$nextTick;
+   ·                            ─────────
+ 5 │                     }
+   ╰────
+  help: Insert `()`
+
+  ⚠ vue(valid-next-tick): `nextTick` is a function.
+   ╭─[valid_next_tick.tsx:4:28]
+ 3 │                     mounted() {
+ 4 │                       this.$nextTick;
+   ·                            ─────────
+ 5 │                     }
+   ╰────
+  help: Insert `()`

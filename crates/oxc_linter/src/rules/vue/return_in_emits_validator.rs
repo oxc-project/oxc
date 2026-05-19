@@ -541,6 +541,22 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        // Forms covered after consolidating component detection into utils.
+        (
+            "
+                <script>
+                Vue.mixin({
+                  emits: {
+                    foo () {
+                    }
+                  }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     Tester::new(ReturnInEmitsValidator::NAME, ReturnInEmitsValidator::PLUGIN, pass, fail)

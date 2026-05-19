@@ -41,3 +41,11 @@ source: crates/oxc_linter/src/tester.rs
     ·                                                 ───
  10 │                       var bar = (this?.$slots)?.foo?.() // OK
     ╰────
+
+  ⚠ vue(require-slots-as-functions): Property in `$slots` should be used as function.
+   ╭─[require_slots_as_functions.tsx:5:50]
+ 4 │                     render (h) {
+ 5 │                       var children = this.$slots.default
+   ·                                                  ───────
+ 6 │                       return h('div', [...children])
+   ╰────

@@ -353,6 +353,22 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        // Forms covered after consolidating component detection into utils.
+        (
+            "
+                <script>
+                new Vue({
+                  model: {
+                    prop: 'checked',
+                    event: 'change'
+                  }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     Tester::new(NoDeprecatedModelDefinition::NAME, NoDeprecatedModelDefinition::PLUGIN, pass, fail)

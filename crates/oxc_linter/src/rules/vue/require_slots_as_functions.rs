@@ -291,6 +291,22 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        // Forms covered after consolidating component detection into utils.
+        (
+            "
+                  <script>
+                  Vue.mixin({
+                    render (h) {
+                      var children = this.$slots.default
+                      return h('div', [...children])
+                    }
+                  })
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     Tester::new(RequireSlotsAsFunctions::NAME, RequireSlotsAsFunctions::PLUGIN, pass, fail)
