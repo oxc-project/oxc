@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_vue_component_options_object};
 
 fn no_deprecated_data_object_declaration_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Object declaration on `data` property is deprecated.")
@@ -72,22 +72,12 @@ impl Rule for NoDeprecatedDataObjectDeclaration {
             return;
         }
 
-        let mut ancestors = ctx.nodes().ancestors(node.id());
-        let Some(parent) = ancestors.next() else { return };
+        let parent = ctx.nodes().parent_node(node.id());
         if !matches!(parent.kind(), AstKind::ObjectExpression(_)) {
             return;
         }
 
-        let Some(grand) = ancestors.next() else { return };
-        let in_vue = match grand.kind() {
-            AstKind::ExportDefaultDeclaration(_) => true,
-            AstKind::CallExpression(call) => call
-                .callee
-                .get_identifier_reference()
-                .is_some_and(|id| id.name == "defineComponent"),
-            _ => false,
-        };
-        if !in_vue {
+        if !is_vue_component_options_object(parent, ctx) {
             return;
         }
 

@@ -1,8 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, CallExpression, ChainElement, Expression, IdentifierReference,
-        StaticMemberExpression,
+        AssignmentTarget, ChainElement, Expression, IdentifierReference, StaticMemberExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -12,6 +11,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode, ast_util::get_declaration_from_reference_id, context::LintContext, rule::Rule,
+    utils::is_vue_component_options_object,
 };
 
 fn require_slots_as_functions_diagnostic(span: Span) -> OxcDiagnostic {
@@ -166,40 +166,6 @@ fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
 
 fn is_under_vue_component_options_object(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     ctx.nodes().ancestors(node.id()).any(|ancestor| is_vue_component_options_object(ancestor, ctx))
-}
-
-fn is_vue_component_options_object(object_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let AstKind::ObjectExpression(object_expr) = object_node.kind() else {
-        return false;
-    };
-
-    ctx.nodes().ancestors(object_node.id()).any(|ancestor| match ancestor.kind() {
-        AstKind::ExportDefaultDeclaration(export_default_decl) => {
-            export_default_decl.declaration.span() == object_expr.span
-        }
-        AstKind::CallExpression(call_expr) => {
-            call_expr
-                .arguments
-                .iter()
-                .any(|arg| arg.as_expression().is_some_and(|expr| expr.span() == object_expr.span))
-                && is_vue_component_options_call(call_expr)
-        }
-        _ => false,
-    })
-}
-
-fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
-    if call_expr
-        .callee
-        .get_identifier_reference()
-        .is_some_and(|ident| matches!(ident.name.as_str(), "createApp" | "defineComponent"))
-    {
-        return true;
-    }
-
-    call_expr.callee.get_member_expr().is_some_and(|member_expr| {
-        member_expr.static_property_name().is_some_and(|name| name == "component")
-    })
 }
 
 fn follow_references(symbol_id: SymbolId, report_span: Span, ctx: &LintContext<'_>) {
