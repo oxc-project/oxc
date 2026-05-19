@@ -4997,6 +4997,14 @@ impl RuleRunner for crate::rules::vue::no_deprecated_model_definition::NoDepreca
 }
 
 impl RuleRunner
+    for crate::rules::vue::no_deprecated_props_default_this::NoDeprecatedPropsDefaultThis
+{
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ThisExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner
     for crate::rules::vue::no_deprecated_vue_config_keycodes::NoDeprecatedVueConfigKeycodes
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
