@@ -5,7 +5,7 @@ pub use oxc_formatter_core::{
     LineWidthFromIntError, ParseFormatNumberError,
 };
 
-pub use crate::formatter::{Buffer, Format, FormatResult, token::string::Quote};
+pub use crate::formatter::{Buffer, Format, token::string::Quote};
 use crate::{
     formatter::{
         JsFormatContext, JsFormatter,

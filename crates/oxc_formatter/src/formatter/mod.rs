@@ -23,7 +23,6 @@ mod context;
 mod format_str;
 pub mod formatter_js;
 pub mod jsdoc;
-pub mod macros;
 pub mod prelude;
 mod printer_options_js;
 pub mod separated;
@@ -51,8 +50,8 @@ pub mod buffer {
 
 pub use oxc_formatter_core::{
     Argument, Arguments, Buffer, BufferExtensions, Format, FormatContext, FormatElement,
-    FormatError, FormatOptions, FormatState, Formatted, Formatter, GroupId, MemoizeFormat,
-    Memoized, UniqueGroupIdBuilder, VecBuffer,
+    FormatOptions, FormatState, Formatted, Formatter, GroupId, MemoizeFormat, Memoized,
+    UniqueGroupIdBuilder, VecBuffer,
 };
 
 pub use self::builders::JoinBuilderJsExt;
@@ -63,9 +62,6 @@ pub use self::{
     source_text::SourceText,
 };
 use oxc_formatter_core::Document;
-
-// Public return type of the formatter
-pub type FormatResult<F> = Result<F, FormatError>;
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.
 ///

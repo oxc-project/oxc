@@ -35,12 +35,12 @@ impl<'a> SourceText<'a> {
 
     // Text slicing
     /// Get text from position to end
-    pub fn slice_from(&self, position: u32) -> &'a str {
+    fn slice_from(&self, position: u32) -> &'a str {
         &self.text[position as usize..]
     }
 
     /// Get text from start to position
-    pub fn slice_to(&self, position: u32) -> &'a str {
+    fn slice_to(&self, position: u32) -> &'a str {
         &self.text[..position as usize]
     }
 
@@ -51,7 +51,7 @@ impl<'a> SourceText<'a> {
 
     // Byte slicing
     /// Get bytes from position to end
-    pub fn bytes_from(&self, position: u32) -> impl Iterator<Item = u8> {
+    fn bytes_from(&self, position: u32) -> impl Iterator<Item = u8> {
         self.text.as_bytes()[position as usize..].iter().copied()
     }
 
@@ -74,7 +74,7 @@ impl<'a> SourceText<'a> {
     }
 
     /// Get first byte at position
-    pub fn byte_at(&self, position: u32) -> Option<u8> {
+    fn byte_at(&self, position: u32) -> Option<u8> {
         self.text.as_bytes().get(position as usize).copied()
     }
 
