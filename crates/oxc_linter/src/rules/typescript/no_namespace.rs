@@ -236,6 +236,12 @@ fn test() {
             None,
             Some(PathBuf::from("test.d.ts")),
         ),
+        (
+            "global { namespace foo {} }",
+            Some(serde_json::json!([{ "allowDeclarations": true, "allowDefinitionFiles": false }])),
+            None,
+            Some(PathBuf::from("test.d.ts")),
+        ),
     ];
 
     let fail = vec![
