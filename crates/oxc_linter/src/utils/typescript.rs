@@ -3,6 +3,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use oxc_ast::AstKind;
+use oxc_semantic::AstNodes;
+use oxc_syntax::node::NodeId;
+
 /// Type or value specifier for matching specific declarations
 ///
 /// Supports four types of specifiers:
@@ -106,4 +110,15 @@ pub enum NameSpecifier {
     Single(String),
     /// Multiple names
     Multiple(Vec<String>),
+}
+
+/// Returns `true` when `node_id` has a TypeScript ambient declaration ancestor
+/// such as `declare module`, `declare namespace`, or `declare global`,
+/// including `global {}` nested inside ambient modules or namespaces.
+pub fn has_ambient_typescript_ancestor(node_id: NodeId, nodes: &AstNodes) -> bool {
+    nodes.ancestors(node_id).any(|ancestor| match ancestor.kind() {
+        AstKind::TSModuleDeclaration(module) => module.declare,
+        AstKind::TSGlobalDeclaration(global) => global.declare,
+        _ => false,
+    })
 }
