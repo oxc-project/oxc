@@ -1305,11 +1305,8 @@ export interface DummyRuleMap {
   "vue/no-lifecycle-after-await"?: DummyRule;
   "vue/no-multiple-slot-args"?: DummyRule;
   "vue/no-required-prop-with-default"?: DummyRule;
-<<<<<<< HEAD
   "vue/no-reserved-keys"?: DummyRule;
-=======
   "vue/no-shared-component-data"?: DummyRule;
->>>>>>> upstream/main
   "vue/no-this-in-before-route-enter"?: DummyRule;
   "vue/no-watch-after-await"?: DummyRule;
   "vue/prefer-import-from-vue"?: DummyRule;
