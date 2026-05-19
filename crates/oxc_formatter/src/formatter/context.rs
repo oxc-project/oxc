@@ -72,6 +72,7 @@ impl TailwindContextEntry {
 
     /// Create a new context entry with updated quasi position.
     /// Used when formatting individual quasis to track their position in the template.
+    #[must_use]
     pub fn with_quasi_position(mut self, is_first: bool, is_last: bool) -> Self {
         self.is_first_quasi = is_first;
         self.is_last_quasi = is_last;

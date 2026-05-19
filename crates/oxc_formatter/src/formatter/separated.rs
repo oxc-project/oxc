@@ -78,16 +78,19 @@ where
     }
 
     /// Wraps every node inside of a group
+    #[must_use]
     pub fn nodes_grouped(mut self) -> Self {
         self.options.nodes_grouped = true;
         self
     }
 
+    #[must_use]
     pub fn with_trailing_separator(mut self, separator: TrailingSeparator) -> Self {
         self.options.trailing_separator = separator;
         self
     }
 
+    #[must_use]
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.options.group_id = group_id;
         self

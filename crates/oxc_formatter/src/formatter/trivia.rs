@@ -330,11 +330,13 @@ pub enum DanglingIndentMode {
 
 impl FormatDanglingComments<'_> {
     /// Indents the comments with a [block](DanglingIndentMode::Block) indent.
+    #[must_use]
     pub fn with_block_indent(self) -> Self {
         self.with_indent_mode(DanglingIndentMode::Block)
     }
 
     /// Indents the comments with a [soft block](DanglingIndentMode::Soft) indent.
+    #[must_use]
     pub fn with_soft_block_indent(self) -> Self {
         self.with_indent_mode(DanglingIndentMode::Soft)
     }
