@@ -12,6 +12,7 @@ use oxc_syntax::{
 use crate::{
     Codegen, Context, Operator, Quote,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
+    cjs_module_lexer,
 };
 
 const PURE_COMMENT: &str = "/* @__PURE__ */ ";
@@ -1502,71 +1503,13 @@ impl GenExpr for CallExpression<'_> {
             if let Some(type_parameters) = &self.type_arguments {
                 type_parameters.print(p, ctx);
             }
-            if !try_print_cjs_define_property_call(p, self, ctx) && !try_print_require_call(p, self)
+            if !cjs_module_lexer::try_print_define_property_call(p, self, ctx)
+                && !cjs_module_lexer::try_print_require_call(p, self)
             {
                 p.print_arguments(self.span, &self.arguments, ctx);
             }
         });
     }
-}
-
-/// Print `Object.defineProperty(_, "name", ...)` / `Reflect.defineProperty(...)` with the
-/// property-name argument as a plain string literal so `cjs-module-lexer` (used by Node for
-/// CJS/ESM interop) can detect the export. Returns `true` if printed.
-/// See <https://github.com/oxc-project/oxc/issues/22342>.
-///
-/// Minify-only: outside minify, `print_string_literal` already uses `self.quote` (never
-/// backtick), and this path skips the argument comments that `print_arguments` preserves.
-fn try_print_cjs_define_property_call(
-    p: &mut Codegen<'_>,
-    call: &CallExpression<'_>,
-    ctx: Context,
-) -> bool {
-    if !p.options.minify {
-        return false;
-    }
-    let Some(Argument::StringLiteral(name)) = call.arguments.get(1) else {
-        return false;
-    };
-    if !call.callee.is_specific_member_access("Object", "defineProperty")
-        && !call.callee.is_specific_member_access("Reflect", "defineProperty")
-    {
-        return false;
-    }
-    p.print_ascii_byte(b'(');
-    for (i, arg) in call.arguments.iter().enumerate() {
-        if i != 0 {
-            p.print_comma();
-            p.print_soft_space();
-        }
-        if i == 1 {
-            p.print_string_literal(name, false);
-        } else {
-            arg.print(p, ctx);
-        }
-    }
-    p.add_source_mapping_end(call.span);
-    p.print_ascii_byte(b')');
-    true
-}
-
-/// Print `require("...")` with a plain string literal so `cjs-module-lexer` (used by Node for
-/// CJS/ESM interop) can detect reexport sources. Returns `true` if printed.
-///
-/// Minify-only: outside minify, `print_string_literal` already uses `self.quote` (never
-/// backtick), and this path skips the argument comments that `print_arguments` preserves.
-fn try_print_require_call(p: &mut Codegen<'_>, call: &CallExpression<'_>) -> bool {
-    if !p.options.minify {
-        return false;
-    }
-    let Some(str_lit) = call.common_js_require() else {
-        return false;
-    };
-    p.print_ascii_byte(b'(');
-    p.print_string_literal(str_lit, false);
-    p.add_source_mapping_end(call.span);
-    p.print_ascii_byte(b')');
-    true
 }
 
 impl Gen for Argument<'_> {
@@ -1998,7 +1941,7 @@ impl GenExpr for AssignmentExpression<'_> {
             && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_));
         p.wrap(wrap || precedence >= self.precedence(), |p| {
             p.add_source_mapping(self.span);
-            if !try_print_cjs_exports_computed_target(p, &self.left, ctx) {
+            if !cjs_module_lexer::try_print_exports_computed_target(p, &self.left, ctx) {
                 self.left.print(p, ctx);
             }
             p.print_soft_space();
@@ -2007,39 +1950,6 @@ impl GenExpr for AssignmentExpression<'_> {
             self.right.print_expr(p, Precedence::Comma, ctx);
         });
     }
-}
-
-/// Print `exports[STR] = …` / `module.exports[STR] = …`'s LHS with the computed key as a
-/// plain string literal so `cjs-module-lexer` (used by Node for CJS/ESM interop) can detect
-/// the export. Returns `true` if printed. Same minify-only rationale as
-/// [`try_print_cjs_define_property_call`]. See <https://github.com/oxc-project/oxc/issues/22342>.
-fn try_print_cjs_exports_computed_target(
-    p: &mut Codegen<'_>,
-    target: &AssignmentTarget<'_>,
-    ctx: Context,
-) -> bool {
-    if !p.options.minify {
-        return false;
-    }
-    let AssignmentTarget::ComputedMemberExpression(member) = target else {
-        return false;
-    };
-    let Expression::StringLiteral(key) = &member.expression else {
-        return false;
-    };
-    if !member.object.is_specific_id("exports")
-        && !member.object.is_specific_member_access("module", "exports")
-    {
-        return false;
-    }
-    member.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
-    if member.optional {
-        p.print_str("?.");
-    }
-    p.print_ascii_byte(b'[');
-    p.print_string_literal(key, false);
-    p.print_ascii_byte(b']');
-    true
 }
 
 impl Gen for AssignmentTarget<'_> {
