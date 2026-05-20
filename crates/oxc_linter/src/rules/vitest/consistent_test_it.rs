@@ -98,9 +98,9 @@ fn test() {
         ),
         (
             "
-                describe('foo', (): void => {});
+                describe('foo', () => {});
 
-                test('hello', async (): Promise<void> => {});
+                test('hello', async () => {});
             ",
             Some(serde_json::json!([{ "withinDescribe": "it" }])),
         ),
