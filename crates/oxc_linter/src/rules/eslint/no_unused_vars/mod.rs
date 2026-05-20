@@ -325,12 +325,12 @@ impl NoUnusedVars {
                     |fixer| self.rename_unused_function_parameter(fixer, symbol, param),
                 );
             }
-            AstKind::FormalParameterRest(_) => {
+            AstKind::FormalParameterRest(param) => {
                 if self.is_allowed_argument(
                     ctx.semantic(),
                     ctx.module_record(),
                     symbol,
-                    &FunctionParameterKind::Rest,
+                    &FunctionParameterKind::Rest(param),
                 ) {
                     return;
                 }
