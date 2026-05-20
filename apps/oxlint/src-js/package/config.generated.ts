@@ -1321,7 +1321,7 @@ export interface DummyRuleMap {
   "vue/valid-define-props"?: DummyRule;
   "vue/valid-next-tick"?: DummyRule;
   yoda?: DummyRule;
-  [k: string]: DummyRule;
+  [k: string]: DummyRule | undefined;
 }
 /**
  * Configure the behavior of linter plugins.
