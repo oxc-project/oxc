@@ -107,15 +107,27 @@ fn try_fold_string_casing<'a>(
         return None;
     }
 
-    let value = match object {
-        Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
-        Expression::Identifier(ident) => ident
-            .reference_id
-            .get()
-            .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
-            .and_then(ConstantValue::into_string)?,
+    let (value, source_has_lone_surrogates) = match object {
+        Expression::StringLiteral(s) => (Cow::Borrowed(s.value.as_str()), s.lone_surrogates),
+        Expression::Identifier(ident) => {
+            let cow = ident
+                .reference_id
+                .get()
+                .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
+                .and_then(ConstantValue::into_string)?;
+            let has_encoding = value_has_lone_surrogate_encoding(&cow);
+            (cow, has_encoding)
+        }
         _ => return None,
     };
+
+    // The lone-surrogate encoding uses lowercase hex. `toUpperCase` would
+    // case-fold `\uFFFDd800` to `\uFFFDD800` — no longer a valid encoding,
+    // and codegen would emit the bytes literally instead of the surrogate.
+    // `toLowerCase`/`trim*` leave the encoding intact.
+    if source_has_lone_surrogates && name == "toUpperCase" {
+        return None;
+    }
 
     let result = match name {
         "toLowerCase" => ctx.ast().str(&value.cow_to_lowercase()),
@@ -126,6 +138,35 @@ fn try_fold_string_casing<'a>(
         _ => return None,
     };
     Some(ConstantValue::String(Cow::Borrowed(result.as_str())))
+}
+
+/// Scan a string for the lone-surrogate encoding pattern
+/// (`\u{FFFD}XXXX` where `XXXX` is a surrogate-range hex value, or the
+/// `fffd` self-escape).
+///
+/// Used where only the bytes are available (e.g. reading back a
+/// previously-evaluated `ConstantValue::String`). Can produce false
+/// positives when the source literally contains U+FFFD followed by
+/// matching hex chars, which is rare. False positives here skip a fold
+/// that could have been performed — never incorrect output.
+///
+/// A copy of `oxc_minifier`'s `scan_for_lone_surrogate_encoding`; kept
+/// local to this crate because the planned WTF-8 migration deletes this
+/// whole mechanism, so consolidating is churn.
+fn value_has_lone_surrogate_encoding(s: &str) -> bool {
+    let bytes = s.as_bytes();
+    if !bytes.contains(&0xEF) {
+        return false;
+    }
+    // Need 7 bytes: 3 for U+FFFD (0xEF 0xBF 0xBD) + 4 hex chars.
+    bytes.windows(7).any(|w| {
+        w[..3] == [0xEF, 0xBF, 0xBD]
+            && (w[3] == b'd'
+                && matches!(w[4], b'8'..=b'9' | b'a'..=b'f')
+                && matches!(w[5], b'0'..=b'9' | b'a'..=b'f')
+                && matches!(w[6], b'0'..=b'9' | b'a'..=b'f')
+                || &w[3..] == b"fffd")
+    })
 }
 
 fn try_fold_string_index_of<'a>(
@@ -172,6 +213,13 @@ fn try_fold_string_substring_or_slice<'a>(
         return None;
     }
     let Expression::StringLiteral(s) = object else { return None };
+    // `substring` / `slice` operate on JS code units, but our value is the
+    // lone-surrogate-encoded form (each surrogate expands to 5 JS chars /
+    // 7 UTF-8 bytes). Folding against that form produces wrong output and
+    // can leave a partial `\uFFFDXXXX` sequence that panics codegen.
+    if s.lone_surrogates {
+        return None;
+    }
     let start_idx = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -209,6 +257,12 @@ fn try_fold_string_char_at<'a>(
         return None;
     }
     let Expression::StringLiteral(s) = object else { return None };
+    // `charAt` operates on JS code units; a lone-surrogate-encoded source
+    // has 5 JS chars per surrogate and `char_at` would return one of them
+    // (e.g. `\uFFFD`) rather than the single JS char the source represents.
+    if s.lone_surrogates {
+        return None;
+    }
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -266,12 +320,21 @@ fn try_fold_string_replace<'a>(
         return None;
     }
     let Expression::StringLiteral(s) = object else { return None };
+    // Any input using the lone-surrogate encoding could cause `replace` to
+    // split at a boundary inside a `\uFFFDXXXX` sequence or embed a partial
+    // sequence into the result. Bail out rather than risk corrupt output.
+    if s.lone_surrogates {
+        return None;
+    }
     let search_value = args.first().unwrap();
     let search_value = match search_value {
         Argument::SpreadElement(_) => return None,
         match_expression!(Argument) => {
             let value = search_value.to_expression();
             if value.may_have_side_effects(ctx) {
+                return None;
+            }
+            if arg_may_have_lone_surrogates(value) {
                 return None;
             }
             value.evaluate_value(ctx)?.into_string()?
@@ -281,7 +344,11 @@ fn try_fold_string_replace<'a>(
     let replace_value = match replace_value {
         Argument::SpreadElement(_) => return None,
         match_expression!(Argument) => {
-            replace_value.to_expression().get_side_free_string_value(ctx)?
+            let expr = replace_value.to_expression();
+            if arg_may_have_lone_surrogates(expr) {
+                return None;
+            }
+            expr.get_side_free_string_value(ctx)?
         }
     };
     if replace_value.contains('$') {
@@ -293,6 +360,17 @@ fn try_fold_string_replace<'a>(
         _ => unreachable!(),
     };
     Some(ConstantValue::String(result))
+}
+
+/// Conservative check for whether an expression (used as an argument to
+/// a fold that splices/copies strings) may carry the lone-surrogate
+/// encoding. Handles the common direct-literal case; other kinds return
+/// `false` (possibly missing the bail-out), but producing wrong output
+/// for non-literal lone-surrogate args requires a source like
+/// `const s = '\uDC00'; foo.replace(s, …)`, which is rare enough to
+/// accept until the WTF-8 migration replaces this mechanism entirely.
+fn arg_may_have_lone_surrogates(expr: &Expression<'_>) -> bool {
+    matches!(expr, Expression::StringLiteral(s) if s.lone_surrogates)
 }
 
 fn try_fold_string_from_char_code<'a>(
@@ -550,7 +628,7 @@ fn try_fold_encode_uri<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let string_value = side_free_non_lone_surrogate_string(expr, ctx)?;
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -567,6 +645,28 @@ fn try_fold_encode_uri<'a>(
     Some(ConstantValue::String(encoded))
 }
 
+/// Return `expr`'s value as a side-free string, but only when it does not
+/// use the lone-surrogate encoding.
+///
+/// URL-encoding functions interpret their input as a JS string. At
+/// runtime, `encodeURI('\uD800')` throws a URIError. Our value for that
+/// input is the `\uFFFDd800` encoded form — if we passed it through the
+/// %-encoder we'd get %EF%BF%BDd800, which doesn't match runtime
+/// behavior. Bail out rather than fold such inputs.
+fn side_free_non_lone_surrogate_string<'a>(
+    expr: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<Cow<'a, str>> {
+    if arg_may_have_lone_surrogates(expr) {
+        return None;
+    }
+    let value = expr.get_side_free_string_value(ctx)?;
+    if value_has_lone_surrogate_encoding(&value) {
+        return None;
+    }
+    Some(value)
+}
+
 fn try_fold_encode_uri_component<'a>(
     args: &Vec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
@@ -579,7 +679,7 @@ fn try_fold_encode_uri_component<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let string_value = side_free_non_lone_surrogate_string(expr, ctx)?;
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -604,7 +704,7 @@ fn try_fold_decode_uri<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let string_value = side_free_non_lone_surrogate_string(expr, ctx)?;
 
     let decoded = decode_uri_chars(
         string_value,
@@ -626,7 +726,7 @@ fn try_fold_decode_uri_component<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let string_value = side_free_non_lone_surrogate_string(expr, ctx)?;
 
     // decodeURIComponent decodes all percent-encoded sequences
     let decoded = decode_uri_chars(

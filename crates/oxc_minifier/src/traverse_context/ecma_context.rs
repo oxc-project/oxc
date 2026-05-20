@@ -15,8 +15,8 @@ use oxc_str::format_str;
 use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags};
 
 use crate::{
-    generated::ancestor::Ancestor, options::CompressOptions, state::MinifierState,
-    symbol_value::SymbolValue,
+    generated::ancestor::Ancestor, options::CompressOptions,
+    peephole::scan_for_lone_surrogate_encoding, state::MinifierState, symbol_value::SymbolValue,
 };
 
 use super::TraverseCtx;
@@ -225,7 +225,17 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
             }
             ConstantValue::String(s) => {
-                self.ast.expression_string_literal(span, self.ast.str_from_cow(&s), None)
+                // scan_for_lone_surrogate_encoding can yield false positives in the
+                // edge case where the original string contains U+FFFD followed by
+                // surrogate-range hex chars. Callers that have access to the source
+                // expression should double-check using expr_has_lone_surrogates().
+                let lone_surrogates = scan_for_lone_surrogate_encoding(&s);
+                self.ast.expression_string_literal_with_lone_surrogates(
+                    span,
+                    self.ast.str_from_cow(&s),
+                    None,
+                    lone_surrogates,
+                )
             }
             ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
             ConstantValue::Undefined => self.ast.void_0(span),
@@ -256,6 +266,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         symbol_id: SymbolId,
         constant: Option<ConstantValue<'a>>,
         is_fresh_value: bool,
+        lone_surrogates: bool,
     ) {
         let mut exported = false;
         if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
@@ -297,6 +308,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             write_references_count,
             member_write_target_read_count,
             is_fresh_value,
+            lone_surrogates,
             scope_id,
         };
         self.state.symbol_values.init_value(symbol_id, symbol_value);

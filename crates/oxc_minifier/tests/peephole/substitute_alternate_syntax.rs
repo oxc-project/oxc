@@ -311,6 +311,9 @@ fn test_string_array_splitting() {
     // all possible delimiters used, leave it alone
     test_same_with_longer_args("'.', ',', '(', ')', ' '");
 
+    // Lone surrogates in array elements propagate to the joined string.
+    test_with_longer_args("'[\\uDC00]','2','3','4','5','6'", "[\\udc00].2.3.4.5.6", ".");
+
     test_options(
         &format!("var x=['1','2','3','4','5','6'{additional_args}]"),
         "",
@@ -328,6 +331,12 @@ fn test_template_string_to_string() {
     test("x = `hello ${'foo'}`", "x = 'hello foo'");
     test("x = `${2} bananas`", "x = '2 bananas'");
     test("x = `This is ${true}`", "x = 'This is true'");
+    // Template with lone surrogates folds to string with lone_surrogates flag
+    test("x = `[\\uDC00]`", "x = '[\\udc00]'");
+    test("x = `a[\\uDC00]b`", "x = 'a[\\udc00]b'");
+    // Template containing U+FFFD followed by surrogate-range hex — NOT a lone surrogate.
+    // This exercises the expr_has_lone_surrogates path (checks the flag, not string bytes).
+    test("x = `\\uFFFDdc00`", "x = '\\uFFFDdc00'");
 }
 
 #[test]

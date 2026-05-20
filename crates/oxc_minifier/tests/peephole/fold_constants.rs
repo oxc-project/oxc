@@ -1260,6 +1260,151 @@ fn test_inline_values_in_template_literal() {
     fold_same("foo`foo${1}bar`");
 }
 
+#[test]
+fn test_lone_surrogate_propagation() {
+    // The exact bug from https://github.com/oxc-project/oxc/issues/15524
+    test("console.log(':' + `[\\uDC00-\\uDFFF]`)", "console.log(':[\\udc00-\\udfff]')");
+    // Template literal to string substitution
+    fold("`[\\uDC00-\\uDFFF]`", "'[\\udc00-\\udfff]'");
+    // String + template
+    fold("':' + `[\\uDC00]`", "':[\\udc00]'");
+    // Template + string
+    fold("`[\\uDC00]` + ':'", "'[\\udc00]:'");
+    // Template + template with lone surrogates (raw values preserve original casing)
+    test("x = `a${b}[\\uDC00]` + `[\\uDFFF]${c}d`", "x=`a${b}[\\uDC00][\\uDFFF]${c}d`");
+    // Inline values in template with lone surrogates
+    fold("`foo${1}[\\uDC00]`", "'foo1[\\udc00]'");
+    // String with lone surrogates + template with expressions: bail out
+    test_same("x = '[\\uDC00]' + `${a}`");
+    // Template with expressions + string with lone surrogates: bail out
+    test_same("x = `${a}` + '[\\uDC00]'");
+    // Inline string literal with lone surrogates into template (fully inlines to string)
+    test("x = `foo${'[\\uDC00]'}bar`", "x='foo[\\udc00]bar'");
+    // Inline string with lone surrogates into template that retains other expressions:
+    // skip inlining because template raw values can't represent lone surrogates
+    test_same("x = `${a}${'[\\uDC00]'}${b}`");
+    // Partial inline: a clean foldable is inlined into the surrounding quasis,
+    // while the lone-surrogate foldable is kept as a template expression. This
+    // exercises `inline_template_literal` with a non-empty `inline_exprs` where
+    // not all foldables were inlined.
+    test("x = `${a}${'foo'}${'[\\uDC00]'}${b}`", "x = `${a}foo${'[\\uDC00]'}${b}`");
+    // Multi-iteration quasi merge with lone surrogates in a middle quasi:
+    // after the first inline absorbs `1` + the `\uDC00` quasi into the left
+    // quasi (setting its `lone_surrogates` flag via `next_quasi`), the second
+    // inline must preserve that flag when merging in the trailing quasi.
+    // `substitute_template_literal` then folds the single-quasi template to a
+    // string literal whose `lone_surrogates` flag governs the codegen escape.
+    fold("`a${1}\\uDC00${2}b`", "'a1\\udc002b'");
+
+    // String + string with lone surrogates: exercises evaluate_value → value_to_expr path
+    fold("'[\\uDC00]' + '[\\uDFFF]'", "'[\\udc00][\\udfff]'");
+    fold("'a' + '[\\uDC00]'", "'a[\\udc00]'");
+    fold("'[\\uDC00]' + 'a'", "'[\\udc00]a'");
+
+    // U+FFFD (replacement character) is NOT a lone surrogate — should still fold correctly
+    fold("'\\uFFFD' + 'x'", "'\\uFFFDx'");
+    // U+FFFD followed by 4 hex chars that aren't in the surrogate range is NOT
+    // a lone surrogate encoding — it should fold normally.
+    fold("'\\uFFFD' + '0000'", "'\\uFFFD0000'");
+    // U+FFFD not at position 0 with a short string (regression test for off-by-one in scan bounds)
+    fold("'x\\uFFFD' + 'abc'", "'x\\uFFFDabc'");
+
+    // U+FFFD followed by 4 hex chars that ARE in the surrogate range is still NOT a lone
+    // surrogate encoding when the source StringLiteral has lone_surrogates: false.
+    // These would be false positives if we relied on byte-pattern scanning instead of flags.
+    fold("'\\uFFFD' + 'dc00'", "'\\uFFFDdc00'");
+    fold("'\\uFFFD' + 'dfff'", "'\\uFFFDdfff'");
+    fold("'\\uFFFD' + 'd800'", "'\\uFFFDd800'");
+    // U+FFFD followed by "fffd" (the self-escape suffix) — also not a lone surrogate.
+    fold("'\\uFFFD' + 'fffd'", "'\\uFFFDfffd'");
+    // Multi-char string with U+FFFD + surrogate-range hex across a concat boundary
+    fold("'a\\uFFFD' + 'dc00b'", "'a\\uFFFDdc00b'");
+
+    // All-constant triple concatenation: each `+` folds via evaluate_value →
+    // value_to_expr, confirming the lone_surrogates flag survives multi-step folding.
+    fold("'a' + '[\\uDC00]' + 'b'", "'a[\\udc00]b'");
+    fold("'[\\uDC00]' + 'a' + '[\\uDFFF]'", "'[\\udc00]a[\\udfff]'");
+    // Non-constant left operand: exercises the `a + 'b' + 'c' → a + 'bc'` path
+    // where left_binary_expr.right carries the lone_surrogates flag.
+    test("x = a + '[\\uDC00]' + 'b'", "x=a+'[\\udc00]b'");
+    test("x = a + 'b' + '[\\uDC00]'", "x=a+'b[\\udc00]'");
+
+    // Multi-referenced constant with lone surrogates passed to String():
+    // the identifier isn't inlined (>3 bytes, 2 references), so
+    // evaluate_value_to_string resolves it via the symbol table. The
+    // lone_surrogates flag must survive the round-trip through
+    // ConstantValue::String → value_to_expr.
+    test(
+        "const a = '\\uDC00'; log(a); log(String(a))",
+        "const a = '\\uDC00'; log('\\udc00'), log('\\udc00')",
+    );
+
+    // Template with lone surrogate expression folds to a string, then the
+    // string + template-with-expressions correctly bails out of merging.
+    test("x = `a${'[\\uDC00]'}` + `${b}c`", "x = 'a[\\uDC00]' + `${b}c`");
+
+    // ArrayExpression in string context: `String([...])` and
+    // `` `${[...]}` `` both route through `ArrayExpression::to_js_string`
+    // (array_join), which emits the raw lone-surrogate encoding bytes.
+    // `expr_has_lone_surrogates` must recurse into array elements so
+    // `correct_lone_surrogates_flag` keeps the flag set on the folded string.
+    fold("String(['\\uDC00', 'y'])", "'\\udc00,y'");
+    fold("String(['a', '\\uDC00'])", "'a,\\udc00'");
+    fold("`${['\\uDC00']}`", "'\\udc00'");
+    fold("`${['a', '\\uDC00']}`", "'a,\\udc00'");
+    // Nested array: recursion into element arrays.
+    fold("String([['\\uDC00']])", "'\\udc00'");
+    // U+FFFD followed by surrogate-range hex inside an array element is NOT
+    // a lone surrogate when the source StringLiteral has lone_surrogates: false.
+    fold("String(['\\uFFFDdc00'])", "'\\uFFFDdc00'");
+    // Elision elements contribute empty strings — not lone surrogates.
+    fold("String(['\\uDC00',,'y'])", "'\\udc00,,y'");
+}
+
+#[test]
+fn test_lone_surrogate_safe_by_shape() {
+    // Lock in the "safe-by-shape" kinds listed in expr_has_lone_surrogates'
+    // doc comment: their `to_js_string` result is an ASCII-only string that
+    // cannot carry lone surrogates, so returning `false` from the helper is
+    // correct even when a subexpression carries lone surrogates.
+    //
+    // If any of these grows a `to_js_string` case that can include string
+    // content (e.g. `ObjectExpression` ever stringifies a property value),
+    // the scan in `value_to_expr` would flag the result and the helper would
+    // fail to mirror it — one of these tests would then catch the divergence
+    // by producing garbage codegen for the lone-surrogate half.
+    fold("String({a: '\\uDC00'})", "'[object Object]'");
+    fold("String(void '\\uDC00')", "'undefined'");
+    fold("String(!'\\uDC00')", "'false'");
+    fold("`${{a: '\\uDC00'}}`", "'[object Object]'");
+}
+
+#[test]
+fn test_lone_surrogate_through_non_literal_subexprs() {
+    // expr_has_lone_surrogates only handles a subset of expression types
+    // (string/template literals, identifiers, addition, arrays, calls). It
+    // relies on the invariant that exit traversal folds string-yielding
+    // sub-expressions (LogicalExpression, ConditionalExpression,
+    // SequenceExpression, …) into string literals *before* their parent is
+    // folded — so by the time the helper sees a child, that child is either
+    // a literal/identifier or unfoldable (and therefore can't contribute a
+    // constant string anyway). These tests lock that invariant in: if a
+    // future change folds a parent before its children, the byte scan in
+    // `value_to_expr` would set the flag and `correct_lone_surrogates_flag`
+    // would clear it back — silently producing wrong codegen — and one of
+    // these would catch it.
+    fold("'' || '\\uDC00'", "'\\udc00'");
+    fold("(true ? '\\uDC00' : 'a')", "'\\udc00'");
+    fold("(0, '\\uDC00')", "'\\udc00'");
+    fold("'a' + (true ? '\\uDC00' : '')", "'a\\udc00'");
+    fold("'a' + (0, '\\uDC00')", "'a\\udc00'");
+    fold("'a' + ('' || '\\uDC00')", "'a\\udc00'");
+    fold("String(true ? '\\uDC00' : 'a')", "'\\udc00'");
+    fold("String((0, '\\uDC00'))", "'\\udc00'");
+    fold("String('' || '\\uDC00')", "'\\udc00'");
+    fold("`x${(0, '\\uDC00')}y`", "'x\\udc00y'");
+}
+
 mod bigint {
     use super::{
         MAX_SAFE_FLOAT, MAX_SAFE_INT, NEG_MAX_SAFE_FLOAT, NEG_MAX_SAFE_INT, fold, fold_same,

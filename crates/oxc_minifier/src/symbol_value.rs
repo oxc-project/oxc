@@ -24,6 +24,10 @@ pub struct SymbolValue<'a> {
     /// with object/array/function/class literals.
     pub is_fresh_value: bool,
 
+    /// Whether the initializer expression contains lone surrogates.
+    /// Used to correct false positives from the byte-pattern scan in `value_to_expr`.
+    pub lone_surrogates: bool,
+
     pub scope_id: ScopeId,
 }
 
