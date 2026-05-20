@@ -3,7 +3,7 @@ import {
   getUnsupportedTypeScriptModuleLoadHintForError,
   isTypeScriptModuleSpecifier,
   NODE_TYPESCRIPT_SUPPORT_RANGE,
-} from "../src-js/node_version.ts";
+} from "../../src-js/js_config/node_version.ts";
 
 it("detects supported TypeScript config specifiers", () => {
   expect(isTypeScriptModuleSpecifier("/tmp/oxfmt.config.ts")).toBe(true);

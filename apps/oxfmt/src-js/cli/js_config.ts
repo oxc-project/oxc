@@ -1,7 +1,5 @@
 import { importJsConfig, loadViteConfigField } from "@oxapps/shared";
 
-const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v);
-
 /**
  * Load and validate a standard oxfmt JS/TS config file.
  * The default export must be a plain object containing oxfmt options.
@@ -9,14 +7,8 @@ const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.i
  * @param path - Absolute path to the JavaScript/TypeScript config file
  * @returns Config object
  */
-export async function loadJsConfig(path: string): Promise<object> {
-  const config = await importJsConfig(path, Date.now());
-
-  if (!isObject(config)) {
-    throw new Error("Configuration file must have a default export that is an object.");
-  }
-
-  return config as object;
+export function loadJsConfig(path: string): Promise<object> {
+  return importJsConfig(path, Date.now());
 }
 
 /**
