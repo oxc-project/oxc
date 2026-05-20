@@ -589,6 +589,7 @@ jobs:
         id: filter
         with:
           packages: oxc_track_memory_allocations
+          paths: tasks/track_memory_allocations/
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
