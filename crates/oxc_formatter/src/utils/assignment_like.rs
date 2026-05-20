@@ -354,12 +354,6 @@ impl<'a> AssignmentLike<'a, '_> {
                     declaration.id.span.end
                 };
 
-                format_left_trailing_comments(
-                    start,
-                    matches!(&declaration.type_annotation, TSType::TSTypeLiteral(_)),
-                    f,
-                );
-
                 // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
                 // Prettier relocates the single leading comment to after the identifier,
                 // producing `type A /*1*/ = C;`. Skip complex nested cases.
@@ -368,25 +362,43 @@ impl<'a> AssignmentLike<'a, '_> {
                     let comments_in_span =
                         f.context().comments().comments_in_range(start, declaration.span.end);
 
+                    let mut start_index = 0;
+                    let mut end_index = 0;
+
                     for i in 0..comments_in_span.len() {
                         let comment = comments_in_span[i];
 
-                        if comment.preceded_by_newline() {
-                            // Own-line comments are leading.
-                        } else if comment.followed_by_newline() {
-                            // Non block end-of-line comments are trailing.
-                            if !comment.is_block() {
-                                write!(
-                                    f,
-                                    [FormatTrailingComments::Comments(&comments_in_span[i..=i])]
-                                );
-                            }
-                        } else if comment.span.end <= declaration.type_annotation.span().start {
-                            // Inline-comments before the `&` or `|` symbol are
-                            // trailing comments.
-                            write!(f, [FormatTrailingComments::Comments(&comments_in_span[i..=i])]);
+                        if !comment.preceded_by_newline()
+                            && (comment.followed_by_newline() && !comment.is_block()
+                                || (!comment.followed_by_newline()
+                                    && comment.span.end
+                                        <= declaration.type_annotation.span().start))
+                        {
+                            end_index += 1;
+                        } else {
+                            write!(
+                                f,
+                                [FormatTrailingComments::Comments(
+                                    &comments_in_span[start_index..end_index]
+                                )]
+                            );
+                            start_index = end_index + 1;
+                            end_index = start_index;
                         }
                     }
+
+                    write!(
+                        f,
+                        [FormatTrailingComments::Comments(
+                            &comments_in_span[start_index..end_index]
+                        )]
+                    );
+                } else {
+                    format_left_trailing_comments(
+                        start,
+                        matches!(&declaration.type_annotation, TSType::TSTypeLiteral(_)),
+                        f,
+                    );
                 }
 
                 false
