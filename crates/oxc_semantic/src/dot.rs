@@ -25,6 +25,7 @@ pub trait DebugDot {
 
 #[derive(Clone, Copy)]
 pub struct DebugDotContext<'a, 'b> {
+    /// REVERT ME
     nodes: &'b AstNodes<'a>,
     verbose: bool,
 }

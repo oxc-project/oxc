@@ -321,6 +321,7 @@ fn format_table_row(
     fixture_width: usize,
     width: usize,
 ) -> String {
+    dbg!(file_name, file_size, format_size(file_size, DECIMAL));
     format!(
         "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$}\n\n",
         file_name,
