@@ -420,11 +420,7 @@ fn today_string() -> String {
 /// Casts here are all safe within the documented `i64` input range used by
 /// `today_string` — the intermediate values stay within their bounded ranges
 /// (shown in inline comments).
-#[expect(
-    clippy::cast_sign_loss,
-    clippy::cast_possible_wrap,
-    clippy::cast_possible_truncation
-)]
+#[expect(clippy::cast_sign_loss, clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
 fn days_to_ymd(days_since_epoch: i64) -> (i32, u32, u32) {
     let z = days_since_epoch + 719_468;
     let era = z.div_euclid(146_097);
