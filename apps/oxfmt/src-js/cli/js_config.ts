@@ -19,30 +19,29 @@ export async function loadJsConfig(path: string): Promise<object> {
   return config as object;
 }
 
-const VITE_OXFMT_CONFIG_FIELD = "fmt";
+const VP_OXFMT_CONFIG_FIELD = "fmt";
+let vitePlusCache = null as typeof import("vite-plus") | null;
+
 /**
- * Load a Vite+ config file (`vite.config.ts`) and extract the `.fmt` field.
+ * Load a Vite+ config file (`vite.config.ts`) via `vite-plus`'s `resolveConfig` and extract the `.fmt` field.
  *
  * @param path - Absolute path to the Vite config file
  * @returns Config object from `.fmt` field, or `null` to signal "skip"
  */
 export async function loadVitePlusConfig(path: string): Promise<object | null> {
-  const config = await importJsConfig(path, Date.now());
+  vitePlusCache ??= await import("vite-plus");
+  const config = await vitePlusCache.resolveConfig({ configFile: path }, "build");
 
-  // NOTE: Vite configs may export a function via `defineConfig(() => ({ ... }))`,
-  // but we don't know the arguments to call the function.
-  // Treat non-object exports as "no config" and skip for now.
-  if (!isObject(config)) return null;
+  // NOTE: return `null` if `.fmt` is missing (signals "skip" to Rust side)
+  if (VP_OXFMT_CONFIG_FIELD in config === false) return null;
 
-  const fmtConfig = (config as Record<string, unknown>)[VITE_OXFMT_CONFIG_FIELD];
-  // NOTE: return `null` if missing (signals "skip" to Rust side)
-  if (fmtConfig === undefined) return null;
+  const fmtConfig = config[VP_OXFMT_CONFIG_FIELD];
 
   if (!isObject(fmtConfig)) {
     throw new Error(
-      `The \`${VITE_OXFMT_CONFIG_FIELD}\` field in the default export must be an object.`,
+      `The \`${VP_OXFMT_CONFIG_FIELD}\` field in the default export must be an object.`,
     );
   }
 
-  return fmtConfig;
+  return fmtConfig as object;
 }
