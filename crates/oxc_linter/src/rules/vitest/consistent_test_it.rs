@@ -96,6 +96,14 @@ fn test() {
             "describe(\"suite\", () => { it(\"foo\") })",
             Some(serde_json::json!([{ "withinDescribe": "it" }])),
         ),
+        (
+            "
+                describe('foo', (): void => {});
+
+                test('hello', async (): Promise<void> => {});
+            ",
+            Some(serde_json::json!([{ "withinDescribe": "it" }])),
+        ),
         ("test(\"foo\")", Some(serde_json::json!([{ "withinDescribe": "test" }]))),
         (
             "describe(\"suite\", () => { test(\"foo\") })",
