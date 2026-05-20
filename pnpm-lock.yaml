@@ -213,6 +213,9 @@ importers:
       type-fest:
         specifier: ^5.2.0
         version: 5.6.0
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.1.21(@arethetypeswrong/core@0.18.2)(@types/node@24.1.0)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.0)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.0))
       vitest:
         specifier: 'catalog:'
         version: 4.1.6(@types/node@24.1.0)(@vitest/browser-playwright@4.1.6)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.0))
@@ -364,6 +367,9 @@ importers:
       oxlint-tsgolint:
         specifier: '>=0.22.1'
         version: 0.23.0
+      vite-plus:
+        specifier: '*'
+        version: 0.1.21(@arethetypeswrong/core@0.18.2)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(terser@5.44.1)(tsx@4.22.0)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.0))
 
   npm/oxlint-plugin-eslint: {}
 
