@@ -113,6 +113,11 @@ fn is_ambient_namespace_without_explicit_exports(namespace: &TSModuleDeclaration
     true
 }
 
+pub(super) enum FunctionParameterKind<'a> {
+    Normal(&'a FormalParameter<'a>),
+    Rest,
+}
+
 impl NoUnusedVars {
     #[expect(clippy::unused_self)]
     pub(super) fn is_allowed_ts_namespace<'a>(
@@ -207,7 +212,7 @@ impl NoUnusedVars {
         semantic: &Semantic<'a>,
         module_record: &ModuleRecord,
         symbol: &Symbol<'_, 'a>,
-        param: &FormalParameter<'a>,
+        argument: &FunctionParameterKind<'a>,
     ) -> bool {
         // early short-circuit when no argument checking should be performed
         if self.args.is_none() {
@@ -216,15 +221,23 @@ impl NoUnusedVars {
 
         // find FormalParameters. Should be the next parent of param, but this
         // is safer.
-        let Some((params, params_id)) = symbol.iter_parents().find_map(|p| {
+        let Some(params) = symbol.iter_parents().find_map(|p| {
             let params = p.kind().as_formal_parameters()?;
-            Some((params, p.id()))
+            Some(params)
         }) else {
             debug_assert!(false, "FormalParameter should always have a parent FormalParameters");
             return false;
         };
 
-        if Self::is_allowed_param_because_of_method(semantic, param, params_id) {
+        if let FunctionParameterKind::Normal(param) = argument
+            && Self::is_allowed_param_because_of_method(semantic, param, params.node_id())
+        {
+            return true;
+        }
+
+        if matches!(argument, FunctionParameterKind::Rest)
+            && Self::is_allowed_binding_rest_element(symbol)
+        {
             return true;
         }
 
@@ -236,6 +249,11 @@ impl NoUnusedVars {
         }
 
         debug_assert_eq!(self.args, ArgsOption::AfterUsed);
+
+        let FunctionParameterKind::Normal(param) = argument else {
+            // Rest parameters are always last, so `after-used` checks them.
+            return false;
+        };
 
         // from eslint rule documentation:
         // after-used - unused positional arguments that occur before the last
