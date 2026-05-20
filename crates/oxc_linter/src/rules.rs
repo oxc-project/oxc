@@ -850,6 +850,7 @@ pub(crate) mod vue {
     pub mod no_watch_after_await;
     pub mod prefer_import_from_vue;
     pub mod require_default_export;
+    pub mod require_render_return;
     pub mod require_slots_as_functions;
     pub mod require_typed_ref;
     pub mod return_in_computed_property;

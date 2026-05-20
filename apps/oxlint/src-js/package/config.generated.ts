@@ -1311,6 +1311,7 @@ export interface DummyRuleMap {
   "vue/no-watch-after-await"?: DummyRule;
   "vue/prefer-import-from-vue"?: DummyRule;
   "vue/require-default-export"?: DummyRule;
+  "vue/require-render-return"?: DummyRule;
   "vue/require-slots-as-functions"?: DummyRule;
   "vue/require-typed-ref"?: DummyRule;
   "vue/return-in-computed-property"?: DummyRule;
