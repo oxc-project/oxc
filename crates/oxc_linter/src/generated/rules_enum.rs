@@ -808,6 +808,7 @@ pub use crate::rules::vue::no_required_prop_with_default::NoRequiredPropWithDefa
 pub use crate::rules::vue::no_shared_component_data::NoSharedComponentData as VueNoSharedComponentData;
 pub use crate::rules::vue::no_this_in_before_route_enter::NoThisInBeforeRouteEnter as VueNoThisInBeforeRouteEnter;
 pub use crate::rules::vue::no_watch_after_await::NoWatchAfterAwait as VueNoWatchAfterAwait;
+pub use crate::rules::vue::one_component_per_file::OneComponentPerFile as VueOneComponentPerFile;
 pub use crate::rules::vue::prefer_import_from_vue::PreferImportFromVue as VuePreferImportFromVue;
 pub use crate::rules::vue::require_default_export::RequireDefaultExport as VueRequireDefaultExport;
 pub use crate::rules::vue::require_render_return::RequireRenderReturn as VueRequireRenderReturn;
@@ -1637,6 +1638,7 @@ pub enum RuleEnum {
     VueNoSharedComponentData(VueNoSharedComponentData),
     VueNoThisInBeforeRouteEnter(VueNoThisInBeforeRouteEnter),
     VueNoWatchAfterAwait(VueNoWatchAfterAwait),
+    VueOneComponentPerFile(VueOneComponentPerFile),
     VuePreferImportFromVue(VuePreferImportFromVue),
     VueRequireDefaultExport(VueRequireDefaultExport),
     VueRequireRenderReturn(VueRequireRenderReturn),
@@ -2551,7 +2553,8 @@ const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = VUE_NO_MULTIPLE_SLOT_ARGS_ID
 const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID + 1usize;
 const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = VUE_NO_SHARED_COMPONENT_DATA_ID + 1usize;
 const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID + 1usize;
-const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_NO_WATCH_AFTER_AWAIT_ID + 1usize;
+const VUE_ONE_COMPONENT_PER_FILE_ID: usize = VUE_NO_WATCH_AFTER_AWAIT_ID + 1usize;
+const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_ONE_COMPONENT_PER_FILE_ID + 1usize;
 const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
 const VUE_REQUIRE_RENDER_RETURN_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
 const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = VUE_REQUIRE_RENDER_RETURN_ID + 1usize;
@@ -3491,6 +3494,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(_) => VUE_NO_SHARED_COMPONENT_DATA_ID,
             Self::VueNoThisInBeforeRouteEnter(_) => VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID,
             Self::VueNoWatchAfterAwait(_) => VUE_NO_WATCH_AFTER_AWAIT_ID,
+            Self::VueOneComponentPerFile(_) => VUE_ONE_COMPONENT_PER_FILE_ID,
             Self::VuePreferImportFromVue(_) => VUE_PREFER_IMPORT_FROM_VUE_ID,
             Self::VueRequireDefaultExport(_) => VUE_REQUIRE_DEFAULT_EXPORT_ID,
             Self::VueRequireRenderReturn(_) => VUE_REQUIRE_RENDER_RETURN_ID,
@@ -4416,6 +4420,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::NAME,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::NAME,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::NAME,
+            Self::VueOneComponentPerFile(_) => VueOneComponentPerFile::NAME,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::NAME,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::NAME,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::NAME,
@@ -5399,6 +5404,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::CATEGORY,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::CATEGORY,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::CATEGORY,
+            Self::VueOneComponentPerFile(_) => VueOneComponentPerFile::CATEGORY,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::CATEGORY,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::CATEGORY,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::CATEGORY,
@@ -6325,6 +6331,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::FIX,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::FIX,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::FIX,
+            Self::VueOneComponentPerFile(_) => VueOneComponentPerFile::FIX,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FIX,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::FIX,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::FIX,
@@ -7501,6 +7508,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::documentation(),
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::documentation(),
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::documentation(),
+            Self::VueOneComponentPerFile(_) => VueOneComponentPerFile::documentation(),
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::documentation(),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::documentation(),
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::documentation(),
@@ -9819,6 +9827,8 @@ impl RuleEnum {
             }
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::config_schema(generator)
                 .or_else(|| VueNoWatchAfterAwait::schema(generator)),
+            Self::VueOneComponentPerFile(_) => VueOneComponentPerFile::config_schema(generator)
+                .or_else(|| VueOneComponentPerFile::schema(generator)),
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::config_schema(generator)
                 .or_else(|| VuePreferImportFromVue::schema(generator)),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::config_schema(generator)
@@ -10651,6 +10661,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(_) => "vue",
             Self::VueNoThisInBeforeRouteEnter(_) => "vue",
             Self::VueNoWatchAfterAwait(_) => "vue",
+            Self::VueOneComponentPerFile(_) => "vue",
             Self::VuePreferImportFromVue(_) => "vue",
             Self::VueRequireDefaultExport(_) => "vue",
             Self::VueRequireRenderReturn(_) => "vue",
@@ -13249,6 +13260,9 @@ impl RuleEnum {
             Self::VueNoWatchAfterAwait(_) => {
                 Ok(Self::VueNoWatchAfterAwait(VueNoWatchAfterAwait::from_configuration(value)?))
             }
+            Self::VueOneComponentPerFile(_) => {
+                Ok(Self::VueOneComponentPerFile(VueOneComponentPerFile::from_configuration(value)?))
+            }
             Self::VuePreferImportFromVue(_) => {
                 Ok(Self::VuePreferImportFromVue(VuePreferImportFromVue::from_configuration(value)?))
             }
@@ -14090,6 +14104,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(rule) => rule.to_configuration(),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.to_configuration(),
             Self::VueNoWatchAfterAwait(rule) => rule.to_configuration(),
+            Self::VueOneComponentPerFile(rule) => rule.to_configuration(),
             Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
             Self::VueRequireDefaultExport(rule) => rule.to_configuration(),
             Self::VueRequireRenderReturn(rule) => rule.to_configuration(),
@@ -14915,6 +14930,7 @@ impl RuleEnum {
                 Self::VueNoSharedComponentData(rule) => rule.run(node, ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run(node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run(node, ctx),
+                Self::VueOneComponentPerFile(rule) => rule.run(node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run(node, ctx),
@@ -15733,6 +15749,7 @@ impl RuleEnum {
                 Self::VueNoSharedComponentData(rule) => rule.run(node, ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run(node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run(node, ctx),
+                Self::VueOneComponentPerFile(rule) => rule.run(node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run(node, ctx),
@@ -16558,6 +16575,7 @@ impl RuleEnum {
                 Self::VueNoSharedComponentData(rule) => rule.run_once(ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_once(ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_once(ctx),
+                Self::VueOneComponentPerFile(rule) => rule.run_once(ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run_once(ctx),
@@ -17376,6 +17394,7 @@ impl RuleEnum {
                 Self::VueNoSharedComponentData(rule) => rule.run_once(ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_once(ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_once(ctx),
+                Self::VueOneComponentPerFile(rule) => rule.run_once(ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run_once(ctx),
@@ -18456,6 +18475,7 @@ impl RuleEnum {
                 Self::VueNoSharedComponentData(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueOneComponentPerFile(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19528,6 +19548,7 @@ impl RuleEnum {
                 Self::VueNoSharedComponentData(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueOneComponentPerFile(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20344,6 +20365,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(rule) => rule.should_run(ctx),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.should_run(ctx),
             Self::VueNoWatchAfterAwait(rule) => rule.should_run(ctx),
+            Self::VueOneComponentPerFile(rule) => rule.should_run(ctx),
             Self::VuePreferImportFromVue(rule) => rule.should_run(ctx),
             Self::VueRequireDefaultExport(rule) => rule.should_run(ctx),
             Self::VueRequireRenderReturn(rule) => rule.should_run(ctx),
@@ -21519,6 +21541,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::IS_TSGOLINT_RULE,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::IS_TSGOLINT_RULE,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::IS_TSGOLINT_RULE,
+            Self::VueOneComponentPerFile(_) => VueOneComponentPerFile::IS_TSGOLINT_RULE,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::IS_TSGOLINT_RULE,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::IS_TSGOLINT_RULE,
@@ -22504,6 +22527,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::VERSION,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::VERSION,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::VERSION,
+            Self::VueOneComponentPerFile(_) => VueOneComponentPerFile::VERSION,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::VERSION,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::VERSION,
@@ -23524,6 +23548,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::HAS_CONFIG,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::HAS_CONFIG,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::HAS_CONFIG,
+            Self::VueOneComponentPerFile(_) => VueOneComponentPerFile::HAS_CONFIG,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::HAS_CONFIG,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::HAS_CONFIG,
@@ -24339,6 +24364,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(rule) => rule.types_info(),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.types_info(),
             Self::VueNoWatchAfterAwait(rule) => rule.types_info(),
+            Self::VueOneComponentPerFile(rule) => rule.types_info(),
             Self::VuePreferImportFromVue(rule) => rule.types_info(),
             Self::VueRequireDefaultExport(rule) => rule.types_info(),
             Self::VueRequireRenderReturn(rule) => rule.types_info(),
@@ -25154,6 +25180,7 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(rule) => rule.run_info(),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_info(),
             Self::VueNoWatchAfterAwait(rule) => rule.run_info(),
+            Self::VueOneComponentPerFile(rule) => rule.run_info(),
             Self::VuePreferImportFromVue(rule) => rule.run_info(),
             Self::VueRequireDefaultExport(rule) => rule.run_info(),
             Self::VueRequireRenderReturn(rule) => rule.run_info(),
@@ -26101,6 +26128,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueNoSharedComponentData(VueNoSharedComponentData::default()),
         RuleEnum::VueNoThisInBeforeRouteEnter(VueNoThisInBeforeRouteEnter::default()),
         RuleEnum::VueNoWatchAfterAwait(VueNoWatchAfterAwait::default()),
+        RuleEnum::VueOneComponentPerFile(VueOneComponentPerFile::default()),
         RuleEnum::VuePreferImportFromVue(VuePreferImportFromVue::default()),
         RuleEnum::VueRequireDefaultExport(VueRequireDefaultExport::default()),
         RuleEnum::VueRequireRenderReturn(VueRequireRenderReturn::default()),

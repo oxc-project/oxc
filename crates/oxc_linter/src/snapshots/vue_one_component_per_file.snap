@@ -1,0 +1,53 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:2:43]
+ 1 │ 
+ 2 │                     Vue.component('name', {})
+   ·                                           ──
+ 3 │                     Vue.component('name', {})
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:3:43]
+ 2 │                     Vue.component('name', {})
+ 3 │                     Vue.component('name', {})
+   ·                                           ──
+ 4 │                   
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:2:47]
+ 1 │     
+ 2 │ ╭─▶                     Vue.component('TodoList', {
+ 3 │ │                         // ...
+ 4 │ ╰─▶                     })
+ 5 │     
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:6:47]
+ 5 │     
+ 6 │ ╭─▶                     Vue.component('TodoItem', {
+ 7 │ │                         // ...
+ 8 │ ╰─▶                     })
+ 9 │                         export default {}
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:2:41]
+ 1 │ <script>
+ 2 │                   Vue.component('name', {})
+   ·                                         ──
+ 3 │                   export default {}
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:3:34]
+ 2 │                   Vue.component('name', {})
+ 3 │                   export default {}
+   ·                                  ──
+ 4 │                   </script>
+   ╰────

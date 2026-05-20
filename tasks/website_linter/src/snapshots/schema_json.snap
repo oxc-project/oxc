@@ -2642,6 +2642,9 @@ expression: json
         "vue/no-watch-after-await": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/one-component-per-file": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/prefer-import-from-vue": {
           "$ref": "#/definitions/DummyRule"
         },

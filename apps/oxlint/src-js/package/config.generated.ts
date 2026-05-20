@@ -1309,6 +1309,7 @@ export interface DummyRuleMap {
   "vue/no-shared-component-data"?: DummyRule;
   "vue/no-this-in-before-route-enter"?: DummyRule;
   "vue/no-watch-after-await"?: DummyRule;
+  "vue/one-component-per-file"?: DummyRule;
   "vue/prefer-import-from-vue"?: DummyRule;
   "vue/require-default-export"?: DummyRule;
   "vue/require-render-return"?: DummyRule;
