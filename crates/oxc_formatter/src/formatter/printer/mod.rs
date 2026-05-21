@@ -41,13 +41,28 @@ pub struct Printer<'a> {
 
 impl<'a> Printer<'a> {
     pub fn new(options: PrinterOptions, sorted_tailwind_classes: &'a [String]) -> Self {
+        Self::with_capacity(0, options, sorted_tailwind_classes)
+    }
+
+    /// Construct a [`Printer`] with the underlying output buffer pre-sized to
+    /// at least `capacity` bytes.
+    ///
+    /// Use the source-text length as the hint when known — formatted output is
+    /// typically within a small factor of the input size, so this eliminates
+    /// the doubling-growth reallocations of a multi-megabyte buffer (each of
+    /// which copies the full buffer's bytes).
+    pub fn with_capacity(
+        capacity: usize,
+        options: PrinterOptions,
+        sorted_tailwind_classes: &'a [String],
+    ) -> Self {
         let (indent_char, indent_width) = match options.indent_style() {
             IndentStyle::Tab => (code_buffer::IndentChar::Tab, 1),
             IndentStyle::Space => {
                 (code_buffer::IndentChar::Space, options.indent_width().value() as usize)
             }
         };
-        let buffer = CodeBuffer::with_indent(indent_char, indent_width);
+        let buffer = CodeBuffer::with_capacity_and_indent(capacity, indent_char, indent_width);
         Self { options, state: PrinterState::new(buffer, sorted_tailwind_classes) }
     }
 
