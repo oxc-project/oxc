@@ -32,7 +32,7 @@ where
     }
 }
 
-enum RegexFlagsParseResult {
+pub enum RegexFlagsParseResult {
     // The flags argument is either missing, or successfully parsed, with the span of the flags if present.
     Valid(Option<Span>),
     // If the flags argument is a template literal, but impossible to parse (e.g. with substitutions)
@@ -41,7 +41,7 @@ enum RegexFlagsParseResult {
     NoValidArgument,
 }
 
-fn get_regex_flags_span(arg: Option<&Argument>) -> RegexFlagsParseResult {
+pub fn get_regex_flags_span(arg: Option<&Argument>) -> RegexFlagsParseResult {
     let Some(arg) = arg else {
         return RegexFlagsParseResult::Valid(None);
     };
@@ -62,36 +62,37 @@ fn get_regex_flags_span(arg: Option<&Argument>) -> RegexFlagsParseResult {
     }
 }
 
+pub fn get_regex_pattern_span(arg: Option<&Argument>) -> Option<Span> {
+    // note: improvements required for strings used via identifier references
+    // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
+    let arg = arg?.as_expression()?.get_inner_expression();
+    match arg {
+        Expression::StringLiteral(pattern) => Some(pattern.span),
+        Expression::TemplateLiteral(pattern) if pattern.is_no_substitution_template() => {
+            Some(pattern.span)
+        }
+        _ => None,
+    }
+}
+
 fn run_on_arguments<M>(arg1: Option<&Argument>, arg2: Option<&Argument>, ctx: &LintContext, cb: M)
 where
     M: FnOnce(&Pattern<'_>, Span),
 {
-    let arg1 = arg1.and_then(Argument::as_expression).map(Expression::get_inner_expression);
+    let Some(pattern_span) = get_regex_pattern_span(arg1) else {
+        return;
+    };
+
     let flag_span = match get_regex_flags_span(arg2) {
         RegexFlagsParseResult::Valid(span) => span,
         RegexFlagsParseResult::NoValidArgument => None,
         // we should not attempt to parse the pattern, as the flags may affect the validity of the pattern.
         RegexFlagsParseResult::TemplateLiteralNotResolvable => return,
     };
-    // note: improvements required for strings used via identifier references
-    // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
-    match arg1 {
-        Some(Expression::StringLiteral(pattern)) => {
-            let allocator = Allocator::default();
-            if let Some(pat) = parse_regex(&allocator, pattern.span, flag_span, ctx) {
-                cb(&pat, pattern.span);
-            }
-        }
-        Some(Expression::TemplateLiteral(pattern)) => {
-            if !pattern.is_no_substitution_template() {
-                return;
-            }
-            let allocator = Allocator::default();
-            if let Some(pat) = parse_regex(&allocator, pattern.span, flag_span, ctx) {
-                cb(&pat, pattern.span);
-            }
-        }
-        _ => {}
+
+    let allocator = Allocator::default();
+    if let Some(pat) = parse_regex(&allocator, pattern_span, flag_span, ctx) {
+        cb(&pat, pattern_span);
     }
 }
 
