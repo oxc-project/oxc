@@ -1,8 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        AssignmentTarget, ChainElement, Expression, IdentifierReference, StaticMemberExpression,
-    },
+    ast::{AssignmentTarget, ChainElement, Expression, StaticMemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,8 +8,10 @@ use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, ast_util::get_declaration_from_reference_id, context::LintContext, rule::Rule,
-    utils::is_vue_component_options_object,
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{is_this_object, is_vue_component_options_object},
 };
 
 fn require_slots_as_functions_diagnostic(span: Span) -> OxcDiagnostic {
@@ -100,23 +100,6 @@ fn inner_static_member_expression<'a, 'b>(
         },
         _ => None,
     }
-}
-
-fn is_this_object(expr: &Expression, ctx: &LintContext<'_>) -> bool {
-    match expr.get_inner_expression() {
-        Expression::ThisExpression(_) => true,
-        Expression::Identifier(ident) => is_this_alias(ident, ctx),
-        _ => false,
-    }
-}
-
-fn is_this_alias(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
-        .and_then(|node| match node.kind() {
-            AstKind::VariableDeclarator(var) => var.init.as_ref(),
-            _ => None,
-        })
-        .is_some_and(|init| matches!(init.get_inner_expression(), Expression::ThisExpression(_)))
 }
 
 fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
@@ -243,6 +226,21 @@ fn test() {
                       var children = this.$slots.default.filter(test)
 
                       return h('div', [...children])
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"
+                  <script>
+                  export default {
+                    render(h) {
+                      const { vm } = this
+                      return h('div', vm.$slots.default.filter(test))
                     }
                   }
                   </script>
