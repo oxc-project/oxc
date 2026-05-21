@@ -562,8 +562,32 @@ impl Tester {
                             failures.push(FixFailure {
                                 source: source.clone(),
                                 expected: expect.expected.clone(),
-                                actual: fixed_str,
+                                actual: fixed_str.clone(),
+                                diagnostic: None,
                             });
+                        } else {
+                            // After fixing, re-lint the fixed code to verify the rule no longer reports diagnostics
+                            let relint_result = self.run(
+                                &fixed_str,
+                                config.clone(),
+                                eslint_config.clone(),
+                                path.clone(),
+                                ExpectFixKind::None,
+                                0,
+                            );
+
+                            if relint_result != TestResult::Passed {
+                                // The fixed code still triggers the rule - this is a fixer bug
+                                failures.push(FixFailure {
+                                    source: source.clone(),
+                                    expected: expect.expected.clone(),
+                                    actual: fixed_str,
+                                    diagnostic: Some(format!(
+                                        "Fix did not resolve the diagnostic for rule '{}/{}'",
+                                        self.plugin_name, self.rule_name
+                                    )),
+                                });
+                            }
                         }
                     }
                     TestResult::Passed => {
@@ -571,6 +595,7 @@ impl Tester {
                             source: source.clone(),
                             expected: expect.expected.clone(),
                             actual: String::from("<test passed, no fix applied>"),
+                            diagnostic: None,
                         });
                     }
                     TestResult::Failed => {
@@ -578,6 +603,7 @@ impl Tester {
                             source: source.clone(),
                             expected: expect.expected.clone(),
                             actual: String::from("<test failed, no fix applied>"),
+                            diagnostic: None,
                         });
                     }
                 }
@@ -708,6 +734,8 @@ struct FixFailure {
     expected: String,
     /// Actual source code after fix
     actual: String,
+    /// Optional diagnostic message for when the fix didn't resolve the issue
+    diagnostic: Option<String>,
 }
 
 enum TestFailure {
@@ -834,6 +862,9 @@ fn format_fix_failures(failures: &[FixFailure]) -> String {
         format_code_block(&mut output, &failure.expected);
         let _ = write!(output, "        Actual: ");
         format_code_block(&mut output, &failure.actual);
+        if let Some(diagnostic) = &failure.diagnostic {
+            let _ = writeln!(output, "      Error: {}", diagnostic);
+        }
         let _ = writeln!(output);
     }
     output
