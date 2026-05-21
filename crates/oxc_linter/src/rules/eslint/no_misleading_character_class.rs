@@ -352,8 +352,30 @@ fn is_surrogate_pair(hi: u32, lo: u32) -> bool {
 }
 
 // Returns true if the character was written as a Unicode code point escape (e.g., \u{1F44D})
-fn is_unicode_code_point_escape(char: &Character) -> bool {
-    matches!(char.kind, CharacterKind::UnicodeEscape)
+// tries to align how `oxc_parser` uses `unicode_code_point`
+fn is_unicode_code_point_escape(char: &Character, source_text: &str) -> bool {
+    let char_source = char.span.source_text(source_text);
+    let Some(hex) = char_source.strip_prefix("\\u{").and_then(|s| s.strip_suffix('}')) else {
+        return false;
+    };
+
+    if hex.is_empty() {
+        return false;
+    }
+
+    let mut value: u32 = 0;
+    for ch in hex.chars() {
+        let Some(digit) = ch.to_digit(16) else {
+            return false;
+        };
+
+        let Some(next) = value.checked_mul(16).and_then(|v| v.checked_add(digit)) else {
+            return false;
+        };
+        value = next;
+    }
+
+    value <= 0x10_FFFF
 }
 
 // Find surrogate pairs where neither character is a Unicode code point escape
@@ -364,8 +386,8 @@ fn surrogate_pair_sequences_without_flag(chars: &[&Character], ctx: &LintContext
         }
         let previous = chars[index - 1];
         if is_surrogate_pair(previous.value, char.value)
-            && !is_unicode_code_point_escape(previous)
-            && !is_unicode_code_point_escape(char)
+            && !is_unicode_code_point_escape(previous, ctx.source_text())
+            && !is_unicode_code_point_escape(char, ctx.source_text())
         {
             ctx.diagnostic(surrogate_pair_without_flag_diagnostic(Span::new(
                 previous.span.start,
@@ -383,7 +405,8 @@ fn surrogate_pair_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
         }
         let previous = chars[index - 1];
         if is_surrogate_pair(previous.value, char.value)
-            && (is_unicode_code_point_escape(previous) || is_unicode_code_point_escape(char))
+            && (is_unicode_code_point_escape(previous, ctx.source_text())
+                || is_unicode_code_point_escape(char, ctx.source_text()))
         {
             ctx.diagnostic(surrogate_pair_diagnostic(Span::new(
                 previous.span.start,

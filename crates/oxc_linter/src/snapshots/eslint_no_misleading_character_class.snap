@@ -14,14 +14,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = /[\uD83D\uDC4D]/
    ·           ────────────
    ╰────
-  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\uD83D\uDC4D-\uffff]/
    ·           ────────────
    ╰────
-  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
@@ -35,21 +35,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = /before[\uD83D\uDC4D]after/
    ·                 ────────────
    ╰────
-  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:17]
  1 │ var r = /[before\uD83D\uDC4Dafter]/
    ·                 ────────────
    ╰────
-  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:17]
  1 │ var r = /\uDC4D[\uD83D\uDC4D]/
    ·                 ────────────
    ╰────
-  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
@@ -493,21 +493,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = RegExp("[\\uD83D\\uDC4D]", "")
    ·                  ──────────────
    ╰────
-  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:24]
  1 │ var r = RegExp("before[\\uD83D\\uDC4D]after", "")
    ·                        ──────────────
    ╰────
-  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:24]
  1 │ var r = RegExp("[before\\uD83D\\uDC4Dafter]", "")
    ·                        ──────────────
    ╰────
-  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:28]
@@ -521,7 +521,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = new RegExp("\u1234[\\uD83D\\uDC4D]")
    ·                            ──────────────
    ╰────
-  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:40]
