@@ -386,12 +386,8 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
     fn leading_zero(s: Option<Str>) -> bool {
         if let Some(s) = s {
-            let mut chars = s.bytes();
-            if let Some(first) = chars.next()
-                && let Some(second) = chars.next()
-            {
-                return first == b'0' && second.is_ascii_digit();
-            }
+            let bytes = s.as_bytes();
+            return bytes.len() >= 2 && bytes[0] == b'0' && bytes[1].is_ascii_digit();
         }
         false
     }
