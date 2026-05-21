@@ -476,34 +476,44 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         }
     }
 
-    /// `A.B` -> `typeof (_a$b = typeof A !== "undefined" && A.B) == "function" ? _a$b : Object`
+    /// Serializes a type reference for `design:type` / `design:paramtypes` / `design:returntype`.
     ///
-    /// NOTE: This function only ports `unknown` part from [TypeScript](https://github.com/microsoft/TypeScript/blob/d85767abfd83880cea17cea70f9913e9c4496dcc/src/compiler/transformers/typeSerializer.ts#L499-L506)
+    /// Ports the [`Unknown`] branch of [TypeScript's `serializeTypeReferenceNode`]
+    /// (the `typeof (_ref = typeof A !== "undefined" && A) === "function" ? _ref : Object`
+    /// guard) and, for resolved class and value-side import bindings, the
+    /// [`TypeWithConstructSignatureAndValue`] branch (a bare identifier).
+    ///
+    /// [TypeScript's `serializeTypeReferenceNode`]: https://github.com/microsoft/TypeScript/blob/d85767abfd83880cea17cea70f9913e9c4496dcc/src/compiler/transformers/typeSerializer.ts#L490-L544
+    /// [`Unknown`]: https://github.com/microsoft/TypeScript/blob/d85767abfd83880cea17cea70f9913e9c4496dcc/src/compiler/transformers/typeSerializer.ts#L493-L507
+    /// [`TypeWithConstructSignatureAndValue`]: https://github.com/microsoft/TypeScript/blob/d85767abfd83880cea17cea70f9913e9c4496dcc/src/compiler/transformers/typeSerializer.ts#L509-L510
     fn serialize_type_reference_node(
         &mut self,
         name: &TSTypeName<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        if let TSTypeName::IdentifierReference(ident) = name {
-            let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
-            if let Some(symbol_id) = symbol_id {
-                if let Some(enum_type) = self.enum_types.get(&symbol_id) {
-                    return match enum_type {
-                        EnumType::String => Self::global_string(ctx),
-                        EnumType::Number => Self::global_number(ctx),
-                        EnumType::Object => Self::global_object(ctx),
-                    };
-                }
-                // Class declarations and value imports: emit bare identifier so TDZ
-                // throws on forward refs (matching tsc/babel) and cross-file enum
-                // imports evaluate to the enum object instead of falling through
-                // the `typeof === "function"` guard to `Object`.
-                let flags = ctx.scoping().symbol_flags(symbol_id);
-                if flags.is_class() || flags.contains(SymbolFlags::Import) {
-                    let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-                    let ref_flags = Self::get_reference_flags(&binding, ctx);
-                    return binding.create_expression(ref_flags, ctx);
-                }
+        if let TSTypeName::IdentifierReference(ident) = name
+            && let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+        {
+            if let Some(enum_type) = self.enum_types.get(&symbol_id) {
+                return match enum_type {
+                    EnumType::String => Self::global_string(ctx),
+                    EnumType::Number => Self::global_number(ctx),
+                    EnumType::Object => Self::global_object(ctx),
+                };
+            }
+            // Class declarations and value-side imports: emit bare identifier so TDZ
+            // throws on forward refs (matching tsc/babel), and cross-file enum
+            // imports evaluate to the enum object instead of degrading to `Object`
+            // via the `typeof === "function"` guard. `TypeImport` is intentionally
+            // excluded — type-only imports keep the guard.
+            if ctx
+                .scoping()
+                .symbol_flags(symbol_id)
+                .intersects(SymbolFlags::Class | SymbolFlags::Import)
+            {
+                let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
+                let ref_flags = Self::get_reference_flags(&binding, ctx);
+                return binding.create_expression(ref_flags, ctx);
             }
         }
 

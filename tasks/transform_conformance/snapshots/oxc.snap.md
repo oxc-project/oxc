@@ -1,6 +1,6 @@
 commit: 3d34928e
 
-Passed: 237/386
+Passed: 237/390
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -663,7 +663,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (9/98)
+# legacy-decorators (9/100)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -754,6 +754,20 @@ Symbol span mismatch for "AbstractClass":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 69, end: 82 }
 
+* oxc/metadata/ambient-declared-class/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Ambient", "Source", "dec"]
+rebuilt        : ScopeId(0): ["Source"]
+Reference symbol mismatch for "dec":
+after transform: SymbolId(1) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "Ambient":
+after transform: SymbolId(0) "Ambient"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["babelHelpers"]
+rebuilt        : ["Ambient", "babelHelpers", "dec"]
+
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(3), ReferenceId(1), ReferenceId(4), ReferenceId(5)]
@@ -772,6 +786,32 @@ rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 Symbol span mismatch for "Problem":
 after transform: SymbolId(5): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(5): Span { start: 90, end: 97 }
+
+* oxc/metadata/class-expression-via-const/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "Source", "_ref", "dec"]
+rebuilt        : ScopeId(0): ["C", "Source", "_ref"]
+Symbol reference IDs mismatch for "C":
+after transform: SymbolId(0): []
+rebuilt        : SymbolId(1): [ReferenceId(4), ReferenceId(5)]
+Reference symbol mismatch for "dec":
+after transform: SymbolId(1) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "C":
+after transform: <None>
+rebuilt        : SymbolId(1) "C"
+Reference flags mismatch for "C":
+after transform: ReferenceId(2): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read)
+Reference symbol mismatch for "C":
+after transform: <None>
+rebuilt        : SymbolId(1) "C"
+Reference flags mismatch for "C":
+after transform: ReferenceId(3): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["C", "Object", "babelHelpers"]
+rebuilt        : ["Object", "babelHelpers", "dec"]
 
 * oxc/metadata/constructor-overload/input.ts
 Bindings mismatch:
