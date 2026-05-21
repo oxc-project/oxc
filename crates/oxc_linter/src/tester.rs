@@ -568,6 +568,7 @@ impl Tester {
                         } else if source != fixed_str {
                             // After fixing, re-lint the fixed code to verify the rule no longer reports diagnostics
                             // Only check when the fix actually changed something (source != fixed_str)
+                            let snapshot_before = self.snapshot.len();
                             let relint_result = self.run(
                                 &fixed_str,
                                 config.clone(),
@@ -578,15 +579,14 @@ impl Tester {
                             );
 
                             if relint_result != TestResult::Passed {
-                                // The fixed code still triggers the rule - this is a fixer bug
+                                // The fixed code still triggers the rule - capture the diagnostic
+                                let diagnostic_output =
+                                    self.snapshot[snapshot_before..].to_string();
                                 failures.push(FixFailure {
                                     source: source.clone(),
                                     expected: expect.expected.clone(),
                                     actual: fixed_str,
-                                    diagnostic: Some(format!(
-                                        "Fix did not resolve the diagnostic for rule '{}/{}'",
-                                        self.plugin_name, self.rule_name
-                                    )),
+                                    diagnostic: Some(diagnostic_output),
                                 });
                             }
                         }
@@ -864,7 +864,8 @@ fn format_fix_failures(failures: &[FixFailure]) -> String {
         let _ = write!(output, "        Actual: ");
         format_code_block(&mut output, &failure.actual);
         if let Some(diagnostic) = &failure.diagnostic {
-            let _ = writeln!(output, "      Error: {}", diagnostic);
+            let _ = writeln!(output, "      Diagnostic after fix:");
+            let _ = writeln!(output, "{}", diagnostic.cow_replace('\n', "\n      "));
         }
         let _ = writeln!(output);
     }
