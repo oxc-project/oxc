@@ -32,60 +32,62 @@ where
     }
 }
 
+enum RegexFlagsParseResult {
+    // The flags argument is either missing, or successfully parsed, with the span of the flags if present.
+    Valid(Option<Span>),
+    // If the flags argument is a template literal, but impossible to parse (e.g. with substitutions)
+    TemplateLiteralNotResolvable,
+    // The flags argument is present but not a string literal or template literal expression.
+    NoValidArgument,
+}
+
+fn get_regex_flags_span(arg: Option<&Argument>) -> RegexFlagsParseResult {
+    let Some(arg) = arg else {
+        return RegexFlagsParseResult::Valid(None);
+    };
+    let Some(arg) = Argument::as_expression(arg).map(Expression::get_inner_expression) else {
+        return RegexFlagsParseResult::NoValidArgument;
+    };
+
+    match arg {
+        Expression::StringLiteral(flags) => RegexFlagsParseResult::Valid(Some(flags.span)),
+        Expression::TemplateLiteral(flags) => {
+            if flags.is_no_substitution_template() {
+                RegexFlagsParseResult::Valid(Some(flags.span))
+            } else {
+                RegexFlagsParseResult::TemplateLiteralNotResolvable
+            }
+        }
+        _ => RegexFlagsParseResult::NoValidArgument,
+    }
+}
+
 fn run_on_arguments<M>(arg1: Option<&Argument>, arg2: Option<&Argument>, ctx: &LintContext, cb: M)
 where
     M: FnOnce(&Pattern<'_>, Span),
 {
     let arg1 = arg1.and_then(Argument::as_expression).map(Expression::get_inner_expression);
-    let arg2 = arg2.and_then(Argument::as_expression).map(Expression::get_inner_expression);
+    let flag_span = match get_regex_flags_span(arg2) {
+        RegexFlagsParseResult::Valid(span) => span,
+        RegexFlagsParseResult::NoValidArgument => None,
+        // we should not attempt to parse the pattern, as the flags may affect the validity of the pattern.
+        RegexFlagsParseResult::TemplateLiteralNotResolvable => return,
+    };
     // note: improvements required for strings used via identifier references
     // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
-    match (arg1, arg2) {
-        (Some(Expression::StringLiteral(pattern)), Some(Expression::StringLiteral(flags))) => {
+    match arg1 {
+        Some(Expression::StringLiteral(pattern)) => {
             let allocator = Allocator::default();
-            if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx) {
+            if let Some(pat) = parse_regex(&allocator, pattern.span, flag_span, ctx) {
                 cb(&pat, pattern.span);
             }
         }
-        (Some(Expression::StringLiteral(pattern)), Some(Expression::TemplateLiteral(flags))) => {
-            if !flags.is_no_substitution_template() {
-                return;
-            }
-            let allocator = Allocator::default();
-            if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx) {
-                cb(&pat, pattern.span);
-            }
-        }
-        (Some(Expression::StringLiteral(pattern)), _) => {
-            let allocator = Allocator::default();
-            if let Some(pat) = parse_regex(&allocator, pattern.span, None, ctx) {
-                cb(&pat, pattern.span);
-            }
-        }
-        (Some(Expression::TemplateLiteral(pattern)), Some(Expression::TemplateLiteral(flags))) => {
-            if !pattern.is_no_substitution_template() || !flags.is_no_substitution_template() {
-                return;
-            }
-            let allocator = Allocator::default();
-            if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx) {
-                cb(&pat, pattern.span);
-            }
-        }
-        (Some(Expression::TemplateLiteral(pattern)), Some(Expression::StringLiteral(flags))) => {
+        Some(Expression::TemplateLiteral(pattern)) => {
             if !pattern.is_no_substitution_template() {
                 return;
             }
             let allocator = Allocator::default();
-            if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx) {
-                cb(&pat, pattern.span);
-            }
-        }
-        (Some(Expression::TemplateLiteral(pattern)), _) => {
-            if !pattern.is_no_substitution_template() {
-                return;
-            }
-            let allocator = Allocator::default();
-            if let Some(pat) = parse_regex(&allocator, pattern.span, None, ctx) {
+            if let Some(pat) = parse_regex(&allocator, pattern.span, flag_span, ctx) {
                 cb(&pat, pattern.span);
             }
         }

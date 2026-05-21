@@ -37,7 +37,38 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        // Normalise the key before checking shorthand: `try_compress_property_key`
+        // can turn `{ "x": x }` into `{ x: x }`, which then becomes a candidate
+        // for shorthand normalisation in the same visit.
         Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::normalize_object_property_shorthand(prop);
+    }
+
+    /// `{ x: x }` is observationally equivalent to `{ x }`, and codegen always
+    /// prints it as `{ x }`. Set `shorthand = true` so the AST matches the
+    /// printed output; otherwise content-equality checks (e.g. when merging
+    /// adjacent `if` statements with identical jump bodies) treat the two
+    /// forms as different on the first pass and only converge on the second.
+    ///
+    /// Output text is unchanged, so we deliberately do not flip
+    /// `ctx.state.changed`.
+    fn normalize_object_property_shorthand(prop: &mut ObjectProperty<'a>) {
+        if prop.shorthand {
+            return;
+        }
+        let Expression::Identifier(value) = &prop.value else { return };
+        if prop.computed || prop.method || prop.kind != PropertyKind::Init {
+            return;
+        }
+        let PropertyKey::StaticIdentifier(key) = &prop.key else { return };
+        // `{ __proto__: __proto__ }` triggers the Annex B.3.1 proto setter
+        // (literal `__proto__` key, non-computed, non-shorthand, non-method),
+        // but `{ __proto__ }` is a plain shorthand `IdentifierReference` that
+        // creates a regular own data property and does NOT set `[[Prototype]]`.
+        // Converting would change observable behaviour, so bail out.
+        if key.name == value.name && key.name != "__proto__" {
+            prop.shorthand = true;
+        }
     }
 
     pub fn substitute_assignment_target_property_property(
@@ -1856,18 +1887,16 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Take the IIFE body out for inlining, propagating the outer `pure`
-    /// annotation onto a call/new body. Propagation runs in both DCE and
-    /// full-minify modes; only the bail-out (via
-    /// [`Self::iife_inline_would_lose_pure`]) is gated to DCE mode, where
-    /// preserving the IIFE wrapper matters for downstream tools.
+    /// Take the IIFE body out for inlining and propagate `pure` onto a
+    /// call/new body. Bails in DCE-only mode — see the
+    /// `preserve_iife_in_dce_mode` test.
     /// Returns `None` to signal the caller should leave the IIFE intact.
     fn try_take_iife_body(
         body: &mut Expression<'a>,
         is_pure: bool,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if Self::iife_inline_would_lose_pure(is_pure, body, ctx) {
+        if ctx.state.dce {
             return None;
         }
         let mut taken = body.take_in(ctx.ast);
@@ -1879,23 +1908,6 @@ impl<'a> PeepholeOptimizations {
             }
         }
         Some(taken)
-    }
-
-    /// Whether inlining the IIFE body would weaken the outer pure assertion.
-    /// Fires only in DCE-only mode (rolldown's per-module preprocess): the
-    /// outer call has no arguments, so its `pure` flag covers the entire
-    /// body. Inlining any side-effectful body surfaces sub-effects at the
-    /// outer call site, where rolldown's side-effect detector treats them
-    /// as real side effects regardless of the inlined node's `pure` flag.
-    fn iife_inline_would_lose_pure(
-        is_pure: bool,
-        body: &Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> bool {
-        if !is_pure || !ctx.state.dce {
-            return false;
-        }
-        body.may_have_side_effects(ctx)
     }
 }
 

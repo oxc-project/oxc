@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use num_bigint::BigInt;
 use num_traits::Zero;
 
+use super::value_type::ValueType;
 use crate::{GlobalContext, ToBoolean, ToJsString, ToNumber};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -38,6 +39,17 @@ impl<'a> ConstantValue<'a> {
 
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
+    }
+
+    pub fn value_type(&self) -> ValueType {
+        match self {
+            Self::Number(_) => ValueType::Number,
+            Self::BigInt(_) => ValueType::BigInt,
+            Self::String(_) => ValueType::String,
+            Self::Boolean(_) => ValueType::Boolean,
+            Self::Undefined => ValueType::Undefined,
+            Self::Null => ValueType::Null,
+        }
     }
 
     pub fn into_string(self) -> Option<Cow<'a, str>> {

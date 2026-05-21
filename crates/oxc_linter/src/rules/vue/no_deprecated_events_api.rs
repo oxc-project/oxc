@@ -1,13 +1,14 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, IdentifierReference, MemberExpression},
+    ast::{Expression, IdentifierReference, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{
     AstNode, ast_util::get_declaration_from_reference_id, context::LintContext, rule::Rule,
+    utils::is_in_vue_component_instance_method,
 };
 
 const DEPRECATED_EVENTS_API_METHODS: [&str; 3] = ["$on", "$off", "$once"];
@@ -122,79 +123,6 @@ fn is_this(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
             _ => None,
         })
         .is_some_and(|init| matches!(init, Expression::ThisExpression(_)))
-}
-
-fn is_in_vue_component_instance_method(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let Some(function_node) = ctx
-        .nodes()
-        .ancestors(node.id())
-        .find(|ancestor| matches!(ancestor.kind(), AstKind::Function(_)))
-    else {
-        return false;
-    };
-
-    let property_node = ctx.nodes().parent_node(function_node.id());
-    let AstKind::ObjectProperty(_) = property_node.kind() else {
-        return false;
-    };
-
-    let object_node = ctx.nodes().parent_node(property_node.id());
-    if is_vue_component_options_object(object_node, ctx) {
-        return true;
-    }
-
-    let container_property_node = ctx.nodes().parent_node(object_node.id());
-    if !matches!(container_property_node.kind(), AstKind::ObjectProperty(_)) {
-        return false;
-    }
-
-    let Some(container_name) = container_property_node
-        .kind()
-        .as_object_property()
-        .and_then(|prop| if prop.computed { None } else { prop.key.static_name() })
-    else {
-        return false;
-    };
-
-    matches!(container_name.as_ref(), "computed" | "methods" | "watch")
-        && is_vue_component_options_object(
-            ctx.nodes().parent_node(container_property_node.id()),
-            ctx,
-        )
-}
-
-fn is_vue_component_options_object(object_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let AstKind::ObjectExpression(object_expr) = object_node.kind() else {
-        return false;
-    };
-
-    ctx.nodes().ancestors(object_node.id()).any(|ancestor| match ancestor.kind() {
-        AstKind::ExportDefaultDeclaration(export_default_decl) => {
-            export_default_decl.declaration.span() == object_expr.span
-        }
-        AstKind::CallExpression(call_expr) => {
-            call_expr
-                .arguments
-                .iter()
-                .any(|arg| arg.as_expression().is_some_and(|expr| expr.span() == object_expr.span))
-                && is_vue_component_options_call(call_expr)
-        }
-        _ => false,
-    })
-}
-
-fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
-    if call_expr
-        .callee
-        .get_identifier_reference()
-        .is_some_and(|ident| matches!(ident.name.as_str(), "createApp" | "defineComponent"))
-    {
-        return true;
-    }
-
-    call_expr.callee.get_member_expr().is_some_and(|member_expr| {
-        member_expr.static_property_name().is_some_and(|name| name == "component")
-    })
 }
 
 #[test]
@@ -403,6 +331,30 @@ fn test() {
                 ;(this?.$on)('start')
                 ;(this?.$off)('start')
                 ;(this?.$once)('start')
+              }
+            })
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            r"
+            Vue.mixin({
+              mounted() {
+                this.$on('start', foo)
+              }
+            })
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            r"
+            new Vue({
+              mounted() {
+                this.$on('start', foo)
               }
             })
             ",

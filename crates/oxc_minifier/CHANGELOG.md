@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- 0f26de6 ecmascript: Resolve identifier value type via tracked constants (#22234) (Alexander Lichter)
+- c27a8cf minifier: Normalize `{ x: x }` shorthand so adjacent-if merge is idempotent (#22401) (Dunqing)
+- e9ec7c6 minifier: Fold optional chains by base nullishness (#22236) (Alexander Lichter)
+
+### ⚡ Performance
+
+- 217d7d8 minifier: Index `SymbolValues` by `SymbolId` (#22441) (Dunqing)
+- d782b78 minifier: Use BitSet for LiveUsageCollector live references (#22425) (Boshen)
+
 ## [0.131.0] - 2026-05-15
 
 ### 🐛 Bug Fixes

@@ -288,6 +288,7 @@ impl<'a> SemanticBuilder<'a> {
             stats.references as usize,
             stats.scopes as usize,
         );
+        self.unresolved_references.reserve_exact(stats.references as usize);
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
@@ -622,19 +623,27 @@ impl<'a> SemanticBuilder<'a> {
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
     fn resolve_references_for_current_scope(&mut self) {
+        // Process in-place using a retain-style write-cursor — no temporary
+        // `Vec`. Reads each `(name, reference_id)` by value out of the flat
+        // list (both fields are `Copy`), so calling `walk_up_resolve_reference`
+        // (which takes `&mut self`) doesn't conflict with the index read.
         let checkpoint = self.unresolved_references_checkpoint;
-        let refs = self.unresolved_references.slice_from(checkpoint).to_vec();
-        if refs.is_empty() {
+        let end = self.unresolved_references.len();
+        if end <= checkpoint {
             return;
         }
-        self.unresolved_references.truncate(checkpoint);
-
-        for (name, reference_id) in refs {
+        let mut write_idx = checkpoint;
+        for read_idx in checkpoint..end {
+            let (name, reference_id) = self.unresolved_references.get(read_idx);
             if !self.walk_up_resolve_reference(name, reference_id) {
-                // Keep in the flat list — may resolve later via forward declarations
-                self.unresolved_references.push(name, reference_id);
+                // Keep in the flat list — may resolve later via forward declarations.
+                if write_idx != read_idx {
+                    self.unresolved_references.set(write_idx, name, reference_id);
+                }
+                write_idx += 1;
             }
         }
+        self.unresolved_references.truncate(write_idx);
     }
 
     pub(crate) fn add_redeclare_variable(

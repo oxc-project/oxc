@@ -13,10 +13,10 @@ use crate::{
 };
 
 fn prefer_expect_type_of_diagnostic(span: Span, help: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Type assertions should be done using `expectTypeOf`.")
+    OxcDiagnostic::warn("Type assertions should be done using `toBeTypeOf`.")
         .with_help(format!("Substitute the assertion with `{help}`."))
         .with_label(span)
-        .with_note("https://vitest.dev/api/expect-typeof")
+        .with_note("https://vitest.dev/api/expect#tobetypeof")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -25,11 +25,12 @@ pub struct PreferExpectTypeOf;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce using [`expectTypeOf`](https://vitest.dev/api/expect-typeof) instead of `expect(typeof ...)`.
+    /// Enforce using [`toBeTypeOf`](https://vitest.dev/api/expect#tobetypeof) instead of `expect(typeof ...).toBe(...)`.
     ///
     /// ### Why is this bad?
     ///
-    /// Vitest provides a more expressive, type-safe way to test types than using `expect(typeof ...)`.
+    /// `expect(typeof value).toBe(type)` works but is awkward and produces poor failure messages.
+    /// Vitest's built-in `toBeTypeOf` matcher performs the same `typeof` comparison with a clearer API and better error output.
     ///
     /// ### Examples
     ///
@@ -40,7 +41,7 @@ declare_oxc_lint!(
     ///   expect(typeof 42).toBe('number')
     ///   expect(typeof true).toBe('boolean')
     ///   expect(typeof {}).toBe('object')
-    ///   expect(typeof () => {}).toBe('function')
+    ///   expect(typeof (() => {})).toBe('function')
     ///   expect(typeof Symbol()).toBe('symbol')
     ///   expect(typeof 123n).toBe('bigint')
     ///   expect(typeof undefined).toBe('undefined')
@@ -50,14 +51,14 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```js
     /// test('type checking', () => {
-    ///   expectTypeOf('hello').toBeString()
-    ///   expectTypeOf(42).toBeNumber()
-    ///   expectTypeOf(true).toBeBoolean()
-    ///   expectTypeOf({}).toBeObject()
-    ///   expectTypeOf(() => {}).toBeFunction()
-    ///   expectTypeOf(Symbol()).toBeSymbol()
-    ///   expectTypeOf(123n).toBeBigInt()
-    ///   expectTypeOf(undefined).toBeUndefined()
+    ///   expect('hello').toBeTypeOf('string')
+    ///   expect(42).toBeTypeOf('number')
+    ///   expect(true).toBeTypeOf('boolean')
+    ///   expect({}).toBeTypeOf('object')
+    ///   expect(() => {}).toBeTypeOf('function')
+    ///   expect(Symbol()).toBeTypeOf('symbol')
+    ///   expect(123n).toBeTypeOf('bigint')
+    ///   expect(undefined).toBeTypeOf('undefined')
     /// })
     /// ```
     PreferExpectTypeOf,
@@ -100,33 +101,23 @@ impl PreferExpectTypeOf {
             return;
         }
 
-        if !expect_call
-            .members
-            .iter()
-            .any(|member| member.is_name_equal("toBe") || member.is_name_equal("toEqual"))
-        {
+        let Some(matcher) = expect_call.matcher() else {
+            return;
+        };
+
+        if !(matcher.is_name_equal("toBe") || matcher.is_name_equal("toEqual")) {
             return;
         }
 
-        let Some(Argument::StringLiteral(type_expected)) =
+        let Some(type_expected) =
             expect_call.matcher_arguments.and_then(|arguments| arguments.first())
         else {
             return;
         };
 
-        let method = {
-            match type_expected.value.as_ref() {
-                "string" => "toBeString",
-                "number" => "toBeNumber",
-                "boolean" => "toBeBoolean",
-                "object" => "toBeObject",
-                "function" => "toBeFunction",
-                "symbol" => "toBeSymbol",
-                "bigint" => "toBeBigInt",
-                "undefined" => "toBeUndefined",
-                _ => return,
-            }
-        };
+        if matches!(type_expected, Argument::SpreadElement(_)) {
+            return;
+        }
 
         let modifier_text =
             expect_call.modifiers().iter().fold(String::new(), |mut acc, modifier| {
@@ -145,8 +136,9 @@ impl PreferExpectTypeOf {
             });
 
         let param = ctx.source_range(GetSpan::span(&typeof_expression.argument));
+        let type_text = ctx.source_range(type_expected.span());
 
-        let code = format!("expectTypeOf({param}){modifier_text}.{method}()");
+        let code = format!("expect({param}){modifier_text}.toBeTypeOf({type_text})");
 
         ctx.diagnostic_with_fix(
             prefer_expect_type_of_diagnostic(call_expr.span, code.as_ref()),
@@ -160,18 +152,18 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"expectTypeOf("name").toBeString()"#,
-        r#"expectTypeOf("name").not.toBeString()"#,
-        "expectTypeOf(12).toBeNumber()",
-        "expectTypeOf(12).not.toBeNumber()",
-        "expectTypeOf(true).toBeBoolean()",
-        "expectTypeOf({a: 1}).toBeObject()",
-        "expectTypeOf(() => {}).toBeFunction()",
-        "expectTypeOf(sym).toBeSymbol()",
-        "expectTypeOf(BigInt(123)).toBeBigInt()",
-        "expectTypeOf(undefined).toBeUndefined()",
+        r#"expect("name").toBeTypeOf("string")"#,
+        r#"expect("name").not.toBeTypeOf("string")"#,
+        r#"expect(12).toBeTypeOf("number")"#,
+        r#"expect(true).toBeTypeOf("boolean")"#,
+        r#"expect({a: 1}).toBeTypeOf("object")"#,
+        r#"expect(() => {}).toBeTypeOf("function")"#,
+        r#"expect(sym).toBeTypeOf("symbol")"#,
+        r#"expect(BigInt(123)).toBeTypeOf("bigint")"#,
+        r#"expect(undefined).toBeTypeOf("undefined")"#,
         "expect(value).not.toBe(42)",
         "expect(value).not.toEqual(42)",
+        "expect(typeof value).toBe(...typeNames)",
     ];
 
     let fail = vec![
@@ -180,23 +172,33 @@ fn test() {
         r#"expect(typeof true).toBe("boolean")"#,
         r#"expect(typeof variable).toBe("object")"#,
         r#"expect(typeof fn).toBe("function")"#,
+        r#"expect(typeof sym).toBe("symbol")"#,
+        r#"expect(typeof big).toBe("bigint")"#,
+        r#"expect(typeof value).toBe("undefined")"#,
         r#"expect(typeof value).toEqual("string")"#,
         r#"expect(typeof value).not.toBe("string")"#,
         r#"expect(typeof value)["not"].toBe("string")"#,
+        r#"expect(typeof value).toBe("unknown")"#,
+        "expect(typeof value).toBe(typeName)",
     ];
 
     let fix = vec![
-        (r#"expect(typeof 12).toBe("number")"#, "expectTypeOf(12).toBeNumber()"),
-        (r#"expect(typeof "name").toBe("string")"#, r#"expectTypeOf("name").toBeString()"#),
-        (r#"expect(typeof true).toBe("boolean")"#, "expectTypeOf(true).toBeBoolean()"),
-        (r#"expect(typeof variable).toBe("object")"#, "expectTypeOf(variable).toBeObject()"),
-        (r#"expect(typeof fn).toBe("function")"#, "expectTypeOf(fn).toBeFunction()"),
-        (r#"expect(typeof value).toEqual("string")"#, "expectTypeOf(value).toBeString()"),
-        (r#"expect(typeof value).not.toBe("string")"#, "expectTypeOf(value).not.toBeString()"),
+        (r#"expect(typeof 12).toBe("number")"#, r#"expect(12).toBeTypeOf("number")"#),
+        (r#"expect(typeof "name").toBe("string")"#, r#"expect("name").toBeTypeOf("string")"#),
+        (r#"expect(typeof true).toBe("boolean")"#, r#"expect(true).toBeTypeOf("boolean")"#),
+        (r#"expect(typeof variable).toBe("object")"#, r#"expect(variable).toBeTypeOf("object")"#),
+        (r#"expect(typeof fn).toBe("function")"#, r#"expect(fn).toBeTypeOf("function")"#),
+        (r#"expect(typeof sym).toBe("symbol")"#, r#"expect(sym).toBeTypeOf("symbol")"#),
+        (r#"expect(typeof big).toBe("bigint")"#, r#"expect(big).toBeTypeOf("bigint")"#),
+        (r#"expect(typeof value).toBe("undefined")"#, r#"expect(value).toBeTypeOf("undefined")"#),
+        (r#"expect(typeof value).toEqual("string")"#, r#"expect(value).toBeTypeOf("string")"#),
+        (r#"expect(typeof value).not.toBe("string")"#, r#"expect(value).not.toBeTypeOf("string")"#),
         (
             r#"expect(typeof value)["not"].toBe("string")"#,
-            r#"expectTypeOf(value)["not"].toBeString()"#,
+            r#"expect(value)["not"].toBeTypeOf("string")"#,
         ),
+        (r#"expect(typeof value).toBe("unknown")"#, r#"expect(value).toBeTypeOf("unknown")"#),
+        ("expect(typeof value).toBe(typeName)", "expect(value).toBeTypeOf(typeName)"),
     ];
 
     Tester::new(PreferExpectTypeOf::NAME, PreferExpectTypeOf::PLUGIN, pass, fail)

@@ -1,5 +1,5 @@
 use memchr::memchr_iter;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
@@ -81,8 +81,9 @@ pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
     classes.iter_enumerated().for_each(|(class_id, _)| {
-        let mut defined_elements = FxHashMap::default();
         let elements = &classes.elements[class_id];
+        let mut defined_elements =
+            FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher);
         for (element_id, element) in elements.iter_enumerated() {
             if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
                 let prev_element = &elements[prev_element_id];
@@ -385,12 +386,8 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
     fn leading_zero(s: Option<Str>) -> bool {
         if let Some(s) = s {
-            let mut chars = s.bytes();
-            if let Some(first) = chars.next()
-                && let Some(second) = chars.next()
-            {
-                return first == b'0' && second.is_ascii_digit();
-            }
+            let bytes = s.as_bytes();
+            return bytes.len() >= 2 && bytes[0] == b'0' && bytes[1].is_ascii_digit();
         }
         false
     }

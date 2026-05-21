@@ -531,6 +531,7 @@ export interface DummyRuleMap {
   "grouped-accessor-pairs"?: DummyRule;
   "guard-for-in"?: DummyRule;
   "id-length"?: DummyRule;
+  "id-match"?: DummyRule;
   "import/consistent-type-specifier-style"?: DummyRule;
   "import/default"?: DummyRule;
   "import/export"?: DummyRule;
@@ -755,6 +756,7 @@ export interface DummyRuleMap {
   "no-global-assign"?: DummyRule;
   "no-implicit-coercion"?: DummyRule;
   "no-implicit-globals"?: DummyRule;
+  "no-implied-eval"?: DummyRule;
   "no-import-assign"?: DummyRule;
   "no-inline-comments"?: DummyRule;
   "no-inner-declarations"?: DummyRule;
@@ -834,6 +836,7 @@ export interface DummyRuleMap {
   "no-void"?: DummyRule;
   "no-warning-comments"?: DummyRule;
   "no-with"?: DummyRule;
+  "node/callback-return"?: DummyRule;
   "node/global-require"?: DummyRule;
   "node/handle-callback-err"?: DummyRule;
   "node/no-exports-assign"?: DummyRule;
@@ -941,6 +944,7 @@ export interface DummyRuleMap {
   "react/no-is-mounted"?: DummyRule;
   "react/no-multi-comp"?: DummyRule;
   "react/no-namespace"?: DummyRule;
+  "react/no-object-type-as-default-prop"?: DummyRule;
   "react/no-react-children"?: DummyRule;
   "react/no-redundant-should-component-update"?: DummyRule;
   "react/no-render-return-value"?: DummyRule;
@@ -1092,6 +1096,7 @@ export interface DummyRuleMap {
   "unicorn/escape-case"?: DummyRule;
   "unicorn/explicit-length-check"?: DummyRule;
   "unicorn/filename-case"?: DummyRule;
+  "unicorn/import-style"?: DummyRule;
   "unicorn/new-for-builtins"?: DummyRule;
   "unicorn/no-abusive-eslint-disable"?: DummyRule;
   "unicorn/no-accessor-recursion"?: DummyRule;
@@ -1294,21 +1299,29 @@ export interface DummyRuleMap {
   "vue/no-deprecated-destroyed-lifecycle"?: DummyRule;
   "vue/no-deprecated-events-api"?: DummyRule;
   "vue/no-deprecated-model-definition"?: DummyRule;
+  "vue/no-deprecated-props-default-this"?: DummyRule;
   "vue/no-deprecated-vue-config-keycodes"?: DummyRule;
   "vue/no-export-in-script-setup"?: DummyRule;
   "vue/no-import-compiler-macros"?: DummyRule;
   "vue/no-lifecycle-after-await"?: DummyRule;
   "vue/no-multiple-slot-args"?: DummyRule;
   "vue/no-required-prop-with-default"?: DummyRule;
+  "vue/no-shared-component-data"?: DummyRule;
   "vue/no-this-in-before-route-enter"?: DummyRule;
+  "vue/no-watch-after-await"?: DummyRule;
   "vue/prefer-import-from-vue"?: DummyRule;
   "vue/require-default-export"?: DummyRule;
+  "vue/require-render-return"?: DummyRule;
+  "vue/require-slots-as-functions"?: DummyRule;
   "vue/require-typed-ref"?: DummyRule;
   "vue/return-in-computed-property"?: DummyRule;
+  "vue/return-in-emits-validator"?: DummyRule;
   "vue/valid-define-emits"?: DummyRule;
+  "vue/valid-define-options"?: DummyRule;
   "vue/valid-define-props"?: DummyRule;
+  "vue/valid-next-tick"?: DummyRule;
   yoda?: DummyRule;
-  [k: string]: DummyRule;
+  [k: string]: DummyRule | undefined;
 }
 /**
  * Configure the behavior of linter plugins.
