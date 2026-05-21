@@ -565,8 +565,9 @@ impl Tester {
                                 actual: fixed_str.clone(),
                                 diagnostic: None,
                             });
-                        } else {
+                        } else if source != fixed_str {
                             // After fixing, re-lint the fixed code to verify the rule no longer reports diagnostics
+                            // Only check when the fix actually changed something (source != fixed_str)
                             let relint_result = self.run(
                                 &fixed_str,
                                 config.clone(),
