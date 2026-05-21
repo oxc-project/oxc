@@ -504,6 +504,12 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             };
         }
 
+        // `ReadonlyArray<T>` is a TS-only utility type; tsc emits `Array`. Skip
+        // when shadowed by any local declaration so the user's binding wins.
+        if properties.is_empty() && root_ident.name == "ReadonlyArray" && symbol_id.is_none() {
+            return Self::global_array(ctx);
+        }
+
         // Type-only references have no runtime binding either.
         if Self::is_type_symbol(symbol_id, ctx) {
             return Self::global_object(ctx);
