@@ -361,9 +361,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 {
                     let comments_in_span =
                         f.context().comments().comments_in_range(start, declaration.span.end);
-
-                    let mut start_index = 0;
-                    let mut end_index = 0;
+                    let mut previous_comment: Option<Comment> = None;
 
                     for i in 0..comments_in_span.len() {
                         let comment = comments_in_span[i];
@@ -374,25 +372,18 @@ impl<'a> AssignmentLike<'a, '_> {
                                     && comment.span.end
                                         <= declaration.type_annotation.span().start))
                         {
-                            end_index += 1;
-                        } else {
+                            if previous_comment.is_some_and(|prev_comment| prev_comment.is_line()) {
+                              write!(f, [&line_suffix(&hard_line_break())]);
+                            }
                             write!(
                                 f,
                                 [FormatTrailingComments::Comments(
-                                    &comments_in_span[start_index..end_index]
+                                    &comments_in_span[i..=i]
                                 )]
                             );
-                            start_index = end_index + 1;
-                            end_index = start_index;
+                            previous_comment = Some(comment);
                         }
                     }
-
-                    write!(
-                        f,
-                        [FormatTrailingComments::Comments(
-                            &comments_in_span[start_index..end_index]
-                        )]
-                    );
                 } else {
                     format_left_trailing_comments(
                         start,
