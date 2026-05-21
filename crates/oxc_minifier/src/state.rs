@@ -31,6 +31,10 @@ pub struct MinifierState<'a> {
     pub proto_write_symbols: FxHashSet<SymbolId>,
 
     pub changed: bool,
+
+    /// Scratch buffer reused by `try_fold_concat` to build template literal
+    /// quasis without allocating a fresh `String` per call.
+    pub concat_scratch: String,
 }
 
 impl MinifierState<'_> {
@@ -49,6 +53,7 @@ impl MinifierState<'_> {
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
             changed: false,
+            concat_scratch: String::new(),
         }
     }
 }
