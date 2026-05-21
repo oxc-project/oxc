@@ -380,6 +380,18 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            "<script>export default {
+                    mounted() {
+                      let vm = this
+                      vm = other
+                      vm.$nextTick()
+                    }
+                  }</script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![

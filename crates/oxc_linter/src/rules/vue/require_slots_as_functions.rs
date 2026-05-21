@@ -249,6 +249,22 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            r"
+                  <script>
+                  export default {
+                    render(h) {
+                      let vm = this
+                      vm = other
+                      return h('div', vm.$slots.default.filter(test))
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![

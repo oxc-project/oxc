@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingPattern, Expression, Function, IdentifierReference, PropertyDefinition, StaticBlock,
-        ThisExpression,
+        ThisExpression, VariableDeclarationKind,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -65,14 +65,17 @@ impl<'a> Visit<'a> for ThisExpressionFinder {
 }
 
 /// Detects `this` aliases like `vm` in `const vm = this`.
-/// Strips `Parenthesized`/`TSAs`/`TSNonNull`/`TSSatisfies` wrappers; destructuring patterns are excluded.
+/// Strips `Parenthesized`/`TSAs`/`TSNonNull`/`TSSatisfies` wrappers; only `const` bindings with a plain `BindingIdentifier` qualify.
 pub fn is_this_alias(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
     get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
         .and_then(|node| match node.kind() {
             AstKind::VariableDeclarator(var) => Some(var),
             _ => None,
         })
-        .filter(|var| matches!(&var.id, BindingPattern::BindingIdentifier(_)))
+        .filter(|var| {
+            var.kind == VariableDeclarationKind::Const
+                && matches!(&var.id, BindingPattern::BindingIdentifier(_))
+        })
         .and_then(|var| var.init.as_ref())
         .is_some_and(|init| matches!(init.get_inner_expression(), Expression::ThisExpression(_)))
 }

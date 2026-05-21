@@ -325,6 +325,22 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            r"
+                <script>
+                export default {
+                  mounted() {
+                    let vm = this
+                    vm = other
+                    vm.$set(obj, key, value)
+                  }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![

@@ -249,6 +249,20 @@ fn test() {
             None,
             Some(PathBuf::from("test.js")),
         ),
+        (
+            r"
+            app.component('some-comp', {
+              mounted() {
+                let vm = this
+                vm = other
+                vm.$on('start', foo)
+              }
+            })
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
     ];
 
     let fail = vec![
