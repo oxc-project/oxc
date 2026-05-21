@@ -372,7 +372,7 @@ impl<'a> AssignmentLike<'a, '_> {
                                     && comment.span.end
                                         <= declaration.type_annotation.span().start))
                         {
-                            if previous_comment.is_some_and(|prev_comment| prev_comment.is_line()) {
+                            if previous_comment.is_some_and(Comment::is_line) {
                                 write!(f, [&line_suffix(&hard_line_break())]);
                             }
                             write!(f, [FormatTrailingComments::Comments(&comments_in_span[i..=i])]);
