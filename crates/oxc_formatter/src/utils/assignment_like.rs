@@ -373,14 +373,9 @@ impl<'a> AssignmentLike<'a, '_> {
                                         <= declaration.type_annotation.span().start))
                         {
                             if previous_comment.is_some_and(|prev_comment| prev_comment.is_line()) {
-                              write!(f, [&line_suffix(&hard_line_break())]);
+                                write!(f, [&line_suffix(&hard_line_break())]);
                             }
-                            write!(
-                                f,
-                                [FormatTrailingComments::Comments(
-                                    &comments_in_span[i..=i]
-                                )]
-                            );
+                            write!(f, [FormatTrailingComments::Comments(&comments_in_span[i..=i])]);
                             previous_comment = Some(comment);
                         }
                     }
