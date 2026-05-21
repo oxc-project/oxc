@@ -444,11 +444,17 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        let symbol_id =
-            self.scoping.create_symbol(span, name, includes, scope_id, self.current_node_id);
-
-        self.scoping.add_binding(scope_id, name, symbol_id);
-        symbol_id
+        // Create the symbol and bind it in `scope_id` in one operation,
+        // sharing a single `clone_in` of `name` between `symbol_names` and the
+        // bindings map.
+        self.scoping.create_symbol_with_binding(
+            span,
+            name,
+            includes,
+            scope_id,
+            scope_id,
+            self.current_node_id,
+        )
     }
 
     /// Declare a new symbol on the current scope.
@@ -522,15 +528,17 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id = self.scoping.create_symbol(
+        // `current_scope_id` is the symbol's home scope; `scope_id` is where
+        // the shadowing binding goes (for catch parameters, the binding lives
+        // in the body scope but the symbol is created in the catch param scope).
+        self.scoping.create_symbol_with_binding(
             span,
             name,
             includes,
             self.current_scope_id,
+            scope_id,
             self.current_node_id,
-        );
-        self.scoping.insert_binding(scope_id, name, symbol_id);
-        symbol_id
+        )
     }
 
     /// Resolve all collected references by walking up the scope chain from each

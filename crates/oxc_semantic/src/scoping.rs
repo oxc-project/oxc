@@ -446,6 +446,43 @@ impl Scoping {
         self.symbol_table.push(span, flags, scope_id, node_id)
     }
 
+    /// Create a new symbol AND insert it as a binding in a scope, cloning
+    /// `name` into the arena only once. Equivalent to calling [`create_symbol`]
+    /// followed by [`add_binding`] / [`insert_binding`], but avoids the second
+    /// `clone_in` of the same identifier into the same arena.
+    ///
+    /// `symbol_scope_id` is recorded in the symbol table as the symbol's owner
+    /// scope. `binding_scope_id` is the scope whose `bindings` map gets the
+    /// `name -> symbol_id` entry. Usually these are the same; they differ for
+    /// shadow symbols (e.g. `catch` parameters).
+    ///
+    /// [`create_symbol`]: Scoping::create_symbol
+    /// [`add_binding`]: Scoping::add_binding
+    /// [`insert_binding`]: Scoping::insert_binding
+    pub(crate) fn create_symbol_with_binding(
+        &mut self,
+        span: Span,
+        name: Ident<'_>,
+        flags: SymbolFlags,
+        symbol_scope_id: ScopeId,
+        binding_scope_id: ScopeId,
+        node_id: NodeId,
+    ) -> SymbolId {
+        // The id of the symbol we're about to push. `symbol_table.push` returns
+        // an id equal to its `len` before the push, and `symbol_names` is kept
+        // in lock-step with `symbol_table`, so this matches the id eventually
+        // returned by `symbol_table.push` below.
+        let symbol_id = SymbolId::new(self.symbol_table.len());
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let cloned_name = name.clone_in(allocator);
+            cell.symbol_names.push(cloned_name);
+            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.bindings[binding_scope_id].insert(cloned_name, symbol_id);
+        });
+        self.symbol_table.push(span, flags, symbol_scope_id, node_id);
+        symbol_id
+    }
+
     /// Record a redeclaration for an existing symbol.
     pub fn add_symbol_redeclaration(
         &mut self,
@@ -840,19 +877,6 @@ impl Scoping {
     #[inline]
     pub fn iter_bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
         self.cell.borrow_dependent().bindings[scope_id].values().copied()
-    }
-
-    #[inline]
-    pub(crate) fn insert_binding(
-        &mut self,
-        scope_id: ScopeId,
-        name: Ident<'_>,
-        symbol_id: SymbolId,
-    ) {
-        self.cell.with_dependent_mut(|allocator, cell| {
-            let name = name.clone_in(allocator);
-            cell.bindings[scope_id].insert(name, symbol_id);
-        });
     }
 
     /// Create a scope.
