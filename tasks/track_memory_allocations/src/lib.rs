@@ -28,7 +28,7 @@ struct TrackedAllocator;
 /// doesn't wrap around if counter reaches `usize::MAX`.
 /// This is practically infeasible on 64-bit systems, but might just be possible on 32-bit.
 ///
-/// NOTE: `SeqCst` ordering may be stronger than required, but performance is not the primary concern here,
+/// Note: `SeqCst` ordering may be stronger than required, but performance is not the primary concern here,
 /// so play it safe.
 struct AtomicCounter(AtomicUsize);
 
