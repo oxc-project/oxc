@@ -1,6 +1,6 @@
 commit: 3d34928e
 
-Passed: 237/392
+Passed: 237/394
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -663,7 +663,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (9/102)
+# legacy-decorators (9/104)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -1134,6 +1134,17 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Array", "ReadonlyArray", "babelHelpers"]
 rebuilt        : ["Array", "babelHelpers", "dec"]
+
+* oxc/metadata/readonly-array-interface-shadow/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Source", "dec"]
+rebuilt        : ScopeId(0): ["Source"]
+Reference symbol mismatch for "dec":
+after transform: SymbolId(2) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Object", "babelHelpers"]
+rebuilt        : ["Object", "babelHelpers", "dec"]
 
 * oxc/metadata/static-anonymous-class-expression/input.ts
 Bindings mismatch:
