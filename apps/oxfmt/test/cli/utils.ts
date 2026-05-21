@@ -320,6 +320,7 @@ function normalizeOutput(output: string, cwd: string): string {
       .replace(/\x1b\[[0-9;]*m/g, "")
       .replace(/\d+(?:\.\d+)?s|\d+ms/g, "<time>")
       .replace(/\.timestamp-[0-9a-f-]+/g, ".timestamp-<timestamp-hash>")
+      .replace(/vite\.config\.ts \(\d+:\d+\) [\s\S]*?─╯\n?/g, "<Vite+ diagnostic>\n")
       .replace(/\\/g, "/")
       .replace(new RegExp(RegExp.escape(cwdPath), "g"), "<cwd>")
       .replace(new RegExp(RegExp.escape(rootPath), "g"), "<root>")
