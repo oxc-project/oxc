@@ -7,6 +7,7 @@ use oxc_syntax::{
 
 use crate::lexer::Kind;
 
+#[inline]
 pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
     match kind {
         Kind::Question2 => Some(Precedence::NullishCoalescing),
@@ -28,6 +29,7 @@ pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
     }
 }
 
+#[inline]
 pub fn map_binary_operator(kind: Kind) -> BinaryOperator {
     match kind {
         Kind::Eq2 => BinaryOperator::Equality,
@@ -56,6 +58,7 @@ pub fn map_binary_operator(kind: Kind) -> BinaryOperator {
     }
 }
 
+#[inline]
 pub fn map_unary_operator(kind: Kind) -> UnaryOperator {
     match kind {
         Kind::Minus => UnaryOperator::UnaryNegation,
@@ -69,6 +72,7 @@ pub fn map_unary_operator(kind: Kind) -> UnaryOperator {
     }
 }
 
+#[inline]
 pub fn map_logical_operator(kind: Kind) -> LogicalOperator {
     match kind {
         Kind::Pipe2 => LogicalOperator::Or,
@@ -78,6 +82,7 @@ pub fn map_logical_operator(kind: Kind) -> LogicalOperator {
     }
 }
 
+#[inline]
 pub fn map_update_operator(kind: Kind) -> UpdateOperator {
     match kind {
         Kind::Plus2 => UpdateOperator::Increment,
@@ -86,6 +91,7 @@ pub fn map_update_operator(kind: Kind) -> UpdateOperator {
     }
 }
 
+#[inline]
 pub fn map_assignment_operator(kind: Kind) -> AssignmentOperator {
     match kind {
         Kind::Eq => AssignmentOperator::Assign,
