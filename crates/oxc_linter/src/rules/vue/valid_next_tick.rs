@@ -526,6 +526,17 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            "<script>export default {
+                    mounted() {
+                      const vm = this
+                      vm.$nextTick()
+                    }
+                  }</script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fix = vec![

@@ -320,6 +320,21 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            r"
+                  <script>
+                  export default {
+                    render(h) {
+                      const vm = this
+                      return h('div', vm.$slots.default.filter(test))
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     Tester::new(RequireSlotsAsFunctions::NAME, RequireSlotsAsFunctions::PLUGIN, pass, fail)
