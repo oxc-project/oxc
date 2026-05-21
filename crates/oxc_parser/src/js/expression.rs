@@ -56,11 +56,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// `PrimaryExpression`: Identifier Reference
+    #[inline]
     pub(crate) fn parse_identifier_expression(&mut self) -> Expression<'a> {
         let ident = self.parse_identifier_reference();
         Expression::Identifier(self.alloc(ident))
     }
 
+    #[inline]
     pub(crate) fn parse_identifier_reference(&mut self) -> IdentifierReference<'a> {
         // allow `await` and `yield`, let semantic analysis report error
         let kind = self.cur_kind();
@@ -103,6 +105,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.label_identifier(span, name)
     }
 
+    #[inline]
     pub(crate) fn parse_identifier_name(&mut self) -> IdentifierName<'a> {
         if !self.cur_kind().is_identifier_name() {
             return self.unexpected();
@@ -125,6 +128,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (span, Ident::from(name))
     }
 
+    #[inline]
     pub(crate) fn check_identifier(&mut self, kind: Kind, ctx: Context) {
         self.check_identifier_with_span(kind, ctx, self.cur_token().span());
     }
@@ -715,6 +719,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 13.3 Left-Hand-Side Expression
+    #[inline]
     pub(crate) fn parse_lhs_expression_or_higher(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let mut in_optional_chain = false;
@@ -896,6 +901,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.3 `MemberExpression`
     /// static member `a.b`
+    #[inline]
     fn parse_static_member_expression(
         &mut self,
         lhs_span: u32,
