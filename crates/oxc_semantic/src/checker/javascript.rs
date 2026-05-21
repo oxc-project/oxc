@@ -1144,8 +1144,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                 previous_scope_id = Some(scope_id);
 
                 // We're now in the parent class
-                let parent_class_id =
-                    ctx.class_table_builder.classes.parent_ids.get(&class_id).copied();
+                let parent_class_id = ctx.class_table_builder.classes.parent_id(class_id);
                 (class_scope_id, class_id) = get_class_details(parent_class_id, ctx);
 
                 continue 'scopes;

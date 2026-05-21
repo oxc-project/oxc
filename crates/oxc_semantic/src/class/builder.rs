@@ -154,6 +154,6 @@ impl<'a> ClassTableBuilder<'a> {
     pub fn pop_class(&mut self) {
         self.current_class_id = self
             .current_class_id
-            .and_then(|current_class_id| self.classes.parent_ids.get(&current_class_id).copied());
+            .and_then(|current_class_id| self.classes.parent_id(current_class_id));
     }
 }

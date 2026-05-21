@@ -1,7 +1,5 @@
 use std::borrow::Cow;
 
-use rustc_hash::FxHashMap;
-
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::Ident;
@@ -50,7 +48,7 @@ impl<'a> PrivateIdentifierReference<'a> {
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
 pub struct ClassTable<'a> {
-    pub parent_ids: FxHashMap<ClassId, ClassId>,
+    pub parent_ids: IndexVec<ClassId, Option<ClassId>>,
     pub declarations: IndexVec<ClassId, NodeId>,
     pub elements: IndexVec<ClassId, IndexVec<ElementId, Element<'a>>>,
     pub private_identifier_references: IndexVec<ClassId, Vec<PrivateIdentifierReference<'a>>>,
@@ -58,7 +56,7 @@ pub struct ClassTable<'a> {
 
 impl<'a> ClassTable<'a> {
     pub fn ancestors(&self, class_id: ClassId) -> impl Iterator<Item = ClassId> + '_ {
-        std::iter::successors(Some(class_id), |class_id| self.parent_ids.get(class_id).copied())
+        std::iter::successors(Some(class_id), |&class_id| self.parent_id(class_id))
     }
 
     pub fn len(&self) -> usize {
@@ -78,6 +76,10 @@ impl<'a> ClassTable<'a> {
 
     pub fn get_node_id(&self, class_id: ClassId) -> NodeId {
         self.declarations[class_id]
+    }
+
+    pub fn parent_id(&self, class_id: ClassId) -> Option<ClassId> {
+        self.parent_ids[class_id]
     }
 
     pub fn get_element_ids(
@@ -112,9 +114,8 @@ impl<'a> ClassTable<'a> {
 
     pub fn declare_class(&mut self, parent_id: Option<ClassId>, node_id: NodeId) -> ClassId {
         let class_id = self.declarations.push(node_id);
-        if let Some(parent_id) = parent_id {
-            self.parent_ids.insert(class_id, parent_id);
-        }
+        let parent_id_class_id = self.parent_ids.push(parent_id);
+        debug_assert_eq!(class_id, parent_id_class_id);
         self.elements.push(IndexVec::default());
         self.private_identifier_references.push(Vec::new());
         class_id
