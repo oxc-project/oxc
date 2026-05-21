@@ -9,7 +9,7 @@ use oxc_formatter::FormatOptions;
 use super::super::oxfmtrc::{
     ArrowParensConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
     HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, ProseWrapConfig, QuotePropsConfig,
-    SortTailwindcssUserConfig, TrailingCommaConfig,
+    SortTailwindcssUserConfig, SvelteConfig, SvelteUserConfig, TrailingCommaConfig,
 };
 
 /// Build base Prettier-compatible options from a typed `FormatConfig`.
@@ -204,6 +204,33 @@ pub fn inject_tailwind_plugin_payload(opts: &mut Value, config: &FormatConfig) {
         map.insert("tailwindPreserveDuplicates".to_string(), Value::from(v));
     }
     map.insert("_useTailwindPlugin".to_string(), Value::Number(1.into()));
+}
+
+/// Inject Svelte plugin keys derived from `config.svelte`.
+///
+/// No-ops when `svelte` is disabled (unset or `false`) — `Bool(true)` falls back to defaults.
+/// The caller gates this on capability (`supports_svelte`):
+/// `.svelte` is the primary target, plus `markdown`/`mdx` for code blocks.
+///
+/// See: <https://github.com/sveltejs/prettier-plugin-svelte#options>
+pub fn inject_svelte_plugin_payload(opts: &mut Value, config: &FormatConfig) {
+    let Some(SvelteConfig { sort_order, allow_shorthand, indent_script_and_style }) =
+        config.svelte.clone().and_then(SvelteUserConfig::into_config)
+    else {
+        return;
+    };
+    let map = as_object_mut(opts);
+
+    if let Some(v) = sort_order {
+        map.insert("svelteSortOrder".to_string(), Value::from(v));
+    }
+    if let Some(v) = allow_shorthand {
+        map.insert("svelteAllowShorthand".to_string(), Value::from(v));
+    }
+    if let Some(v) = indent_script_and_style {
+        map.insert("svelteIndentScriptAndStyle".to_string(), Value::from(v));
+    }
+    map.insert("_useSveltePlugin".to_string(), Value::Number(1.into()));
 }
 
 /// Inject `_oxfmtPluginOptionsJson` carrying the typed [`FormatConfig`] plus

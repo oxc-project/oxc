@@ -662,6 +662,115 @@ fn test() {
         (r"/[\u200c\u200d\p{ID_Continue}.]/", None),
     ];
 
+    let _fix = vec![
+        ("var r = /[👍]/", "var r = /[👍]/u", None),
+        (r"var r = /[\uD83D\uDC4D]/", r"var r = /[\uD83D\uDC4D]/u", None),
+        (r"var r = /before[\uD83D\uDC4D]after/", r"var r = /before[\uD83D\uDC4D]after/u", None),
+        (r"var r = /[before\uD83D\uDC4Dafter]/", r"var r = /[before\uD83D\uDC4Dafter]/u", None),
+        (r"var r = /\uDC4D[\uD83D\uDC4D]/", r"var r = /\uDC4D[\uD83D\uDC4D]/u", None),
+        ("var r = /(?<=[👍])/", "var r = /(?<=[👍])/u", None),
+        ("var r = /[👶🏻]/", "var r = /[👶🏻]/u", None),
+        ("var r = /[🇯🇵]/", "var r = /[🇯🇵]/u", None),
+        ("var r = /[🇯🇵]/i", "var r = /[🇯🇵]/iu", None),
+        ("var r = /[👨‍👩‍👦]/", "var r = /[👨‍👩‍👦]/u", None),
+        (r#"var r = RegExp("[👍]", "")"#, r#"var r = RegExp("[👍]", "u")"#, None),
+        (r#"var r = new RegExp("[👍]", "")"#, r#"var r = new RegExp("[👍]", "u")"#, None),
+        (r#"var r = RegExp("[👍]", ``)"#, r#"var r = RegExp("[👍]", `u`)"#, None),
+        (
+            "var r = new RegExp(`
+                [👍]`)",
+            r#"var r = new RegExp(`
+                [👍]`, "u")"#,
+            None,
+        ),
+        (
+            r#"const flags = ""; var r = new RegExp("[👍]", flags)"#,
+            r#"const flags = ""; var r = new RegExp("[👍]", flags)"#, // no fix, regex would be invalid
+            None,
+        ),
+        (
+            r#"var r = RegExp("[\\uD83D\\uDC4D]", "")"#,
+            r#"var r = RegExp("[\\uD83D\\uDC4D]", "u")"#,
+            None,
+        ),
+        (
+            r#"var r = RegExp("before[\\uD83D\\uDC4D]after", "")"#,
+            r#"var r = RegExp("before[\\uD83D\\uDC4D]after", "u")"#,
+            None,
+        ),
+        (
+            r#"var r = RegExp("[before\\uD83D\\uDC4Dafter]", "")"#,
+            r#"var r = RegExp("[before\\uD83D\\uDC4Dafter]", "u")"#,
+            None,
+        ),
+        (r#"var r = RegExp("\t\t\t👍[👍]")"#, r#"var r = RegExp("\t\t\t👍[👍]", "u")"#, None),
+        (
+            r#"var r = new RegExp("\u1234[\\uD83D\\uDC4D]")"#,
+            r#"var r = new RegExp("\u1234[\\uD83D\\uDC4D]", "u")"#,
+            None,
+        ),
+        (
+            r#"var r = new RegExp("\\u1234\\u5678👎[👍]")"#,
+            r#"var r = new RegExp("\\u1234\\u5678👎[👍]", "u")"#,
+            None,
+        ),
+        (
+            r#"var r = new RegExp("\\u1234\\u5678👍[👍]")"#,
+            r#"var r = new RegExp("\\u1234\\u5678👍[👍]", "u")"#,
+            None,
+        ),
+        (
+            r#"var r = new RegExp("/(?<=[👍])", "")"#,
+            r#"var r = new RegExp("/(?<=[👍])", "u")"#,
+            None,
+        ),
+        (r#"var r = new RegExp("[👶🏻]", "")"#, r#"var r = new RegExp("[👶🏻]", "u")"#, None),
+        (r"var r = RegExp(`\t\t\t👍[👍]`)", r#"var r = RegExp(`\t\t\t👍[👍]`, "u")"#, None),
+        (r"var r = RegExp(`\\t\\t\\t👍[👍]`)", r#"var r = RegExp(`\\t\\t\\t👍[👍]`, "u")"#, None),
+        (r#"var r = new RegExp("[🇯🇵]", "")"#, r#"var r = new RegExp("[🇯🇵]", "u")"#, None),
+        (r#"var r = new RegExp("[🇯🇵]", "i")"#, r#"var r = new RegExp("[🇯🇵]", "iu")"#, None),
+        ("var r = new RegExp('[🇯🇵]', `i`)", "var r = new RegExp('[🇯🇵]', `iu`)", None),
+        (r#"var r = new RegExp("[🇯🇵]")"#, r#"var r = new RegExp("[🇯🇵]", "u")"#, None),
+        (r#"var r = new RegExp("[🇯🇵]",)"#, r#"var r = new RegExp("[🇯🇵]", "u",)"#, None),
+        (r#"var r = new RegExp(("[🇯🇵]"))"#, r#"var r = new RegExp(("[🇯🇵]"), "u")"#, None),
+        (r#"var r = new RegExp((("[🇯🇵]")))"#, r#"var r = new RegExp((("[🇯🇵]")), "u")"#, None),
+        (r#"var r = new RegExp(("[🇯🇵]"),)"#, r#"var r = new RegExp(("[🇯🇵]"), "u",)"#, None),
+        (r#"var r = new RegExp("[👨‍👩‍👦]", "")"#, r#"var r = new RegExp("[👨‍👩‍👦]", "u")"#, None),
+        (
+            r#"var r = new globalThis.RegExp("[🇯🇵]", "")"#,
+            r#"var r = new globalThis.RegExp("[🇯🇵]", "u")"#,
+            None,
+        ),
+        (r#"new RegExp(`${"[👍🇯🇵]"}[😊]`);"#, r#"new RegExp(`${"[👍🇯🇵]"}[😊]`, "u");"#, None),
+        // references from variables
+        // (
+        //     r#"const pattern = "[👍]"; new RegExp(pattern);"#,
+        //     r#"const pattern = "[👍]"; new RegExp(pattern, "u");"#,
+        //     None,
+        // ),
+        //
+        // see https://github.com/oxc-project/oxc/issues/13436
+        // ("RegExp(/[a👍z]/u, '');", "RegExp(/[a👍z]/u, 'u');", None),
+        // ("RegExp(/[👍]/)", "RegExp(/[👍]/u)", None),
+        // ("RegExp(/[👍]/, 'i');", "RegExp(/[👍]/, 'iu');", None),
+        // ("RegExp(/[👍]/, 'g')", "RegExp(/[👍]/u, 'g');", None), // languageOptions: { globals: { RegExp: "off" } },
+        // ("new RegExp(/^[👍]$/v, '')", "new RegExp(/^[👍]$/v, 'u')", None),
+        (r"/[\👍]/", r"/[\👍]/", Some(serde_json::json!([{ "allowEscape": true }]))), // no fix, regex would be invalid
+        (r"RegExp('[\👍]')", r#"RegExp('[\👍]', "u")"#, None),
+        (
+            r"RegExp('[\\👍]')",
+            r"RegExp('[\\👍]')", // no fix, regex would be invalid
+            Some(serde_json::json!([{ "allowEscape": true }])),
+        ),
+        // Backslash + U+D83D + U+DC4D
+        (
+            r"RegExp(`[\\👍]`)",
+            r#"RegExp(`[\\👍]`, "u")"#,
+            Some(serde_json::json!([{ "allowEscape": true }])),
+        ),
+    ];
+
     Tester::new(NoMisleadingCharacterClass::NAME, NoMisleadingCharacterClass::PLUGIN, pass, fail)
+        // .expect_fix(fix)
         .test_and_snapshot();
 }

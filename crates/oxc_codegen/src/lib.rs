@@ -11,7 +11,7 @@ use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
@@ -22,6 +22,7 @@ use oxc_syntax::{
 use rustc_hash::FxHashMap;
 
 mod binary_expr_visitor;
+mod cjs_module_lexer;
 mod comment;
 mod context;
 mod r#gen;
@@ -123,6 +124,16 @@ pub struct Codegen<'a> {
     // Builders
     comments: CommentsMap,
 
+    /// Pure / no-side-effects annotation comments keyed by `attached_to`,
+    /// so the emission site can recover verbatim source text instead of a
+    /// canonicalised literal (rolldown#9408). The emission site falls back
+    /// to the canonical literal when (a) no comment is stashed, (b) the
+    /// stashed comment's kind doesn't match the emission site (mixed
+    /// `@__PURE__` and `@__NO_SIDE_EFFECTS__` on the same `attached_to`),
+    /// (c) the comment is a line comment but the site can't break the line,
+    /// or (d) source text isn't available.
+    annotation_comments: FxHashMap<u32, Comment>,
+
     /// Sorted, deduped `attached_to` keys for pending legal comments. Lets
     /// `print_legal_orphans_before` flush via `partition_point` + `drain`.
     legal_comment_keys: Vec<u32>,
@@ -179,6 +190,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            annotation_comments: FxHashMap::default(),
             legal_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]
             sourcemap_builder: None,
@@ -198,6 +210,13 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_source_text(mut self, source_text: &'a str) -> Self {
         self.source_text = Some(source_text);
+        self
+    }
+
+    /// Sets the source type for code fragments printed without a [`Program`].
+    #[must_use]
+    pub fn with_source_type(mut self, source_type: SourceType) -> Self {
+        self.is_jsx = source_type.is_jsx();
         self
     }
 
@@ -400,10 +419,12 @@ impl<'a> Codegen<'a> {
 
 // Private APIs
 impl<'a> Codegen<'a> {
+    #[inline]
     fn code(&self) -> &CodeBuffer {
         &self.code
     }
 
+    #[inline]
     fn code_len(&self) -> usize {
         self.code().len()
     }
@@ -770,6 +791,7 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    #[inline]
     fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
         if let Some(scoping) = &self.scoping
             && let Some(reference_id) = reference.reference_id.get()
@@ -781,6 +803,7 @@ impl<'a> Codegen<'a> {
         reference.name.as_str()
     }
 
+    #[inline]
     fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
         if let Some(scoping) = &self.scoping
             && let Some(symbol_id) = ident.symbol_id.get()

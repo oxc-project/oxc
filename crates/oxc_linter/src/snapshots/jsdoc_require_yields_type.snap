@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsdoc(require-yields-type): Missing JSDoc `@yields` type.
+   ╭─[require_yields_type.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @yields
+   ·                        ───────
+ 4 │                      */
+   ╰────
+  help: Add {type} to `@yields` tag.
+
+  ⚠ jsdoc(require-yields-type): Missing JSDoc `@yields` type.
+   ╭─[require_yields_type.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @yield
+   ·                        ──────
+ 4 │                      */
+   ╰────
+  help: Add {type} to `@yields` tag.
+
+  ⚠ jsdoc(require-yields-type): Missing JSDoc `@yields` type.
+   ╭─[require_yields_type.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @yield Foo.
+   ·                        ──────
+ 4 │                      */
+   ╰────
+  help: Add {type} to `@yields` tag.

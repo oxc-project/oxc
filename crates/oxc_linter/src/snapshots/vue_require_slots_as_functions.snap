@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(require-slots-as-functions): Property in `$slots` should be used as function.
+   ╭─[require_slots_as_functions.tsx:5:50]
+ 4 │                     render (h) {
+ 5 │                       var children = this.$slots.default
+   ·                                                  ───────
+ 6 │                       var children = this.$slots.default.filter(test)
+   ╰────
+
+  ⚠ vue(require-slots-as-functions): Property in `$slots` should be used as function.
+   ╭─[require_slots_as_functions.tsx:6:50]
+ 5 │                       var children = this.$slots.default
+ 6 │                       var children = this.$slots.default.filter(test)
+   ·                                                  ───────
+ 7 │ 
+   ╰────
+
+  ⚠ vue(require-slots-as-functions): Property in `$slots` should be used as function.
+   ╭─[require_slots_as_functions.tsx:5:45]
+ 4 │                     render (h) {
+ 5 │                       var bar = this.$slots.foo?.bar // NG
+   ·                                             ───
+ 6 │                       var bar = this.$slots.foo?.() // OK
+   ╰────
+
+  ⚠ vue(require-slots-as-functions): Property in `$slots` should be used as function.
+   ╭─[require_slots_as_functions.tsx:7:47]
+ 6 │                       var bar = this.$slots.foo?.() // OK
+ 7 │                       var bar = (this.$slots?.foo)?.bar // NG
+   ·                                               ───
+ 8 │                       var bar = (this.$slots?.foo)?.() // OK
+   ╰────
+
+  ⚠ vue(require-slots-as-functions): Property in `$slots` should be used as function.
+    ╭─[require_slots_as_functions.tsx:9:49]
+  8 │                       var bar = (this.$slots?.foo)?.() // OK
+  9 │                       var bar = (this?.$slots)?.foo?.bar // NG
+    ·                                                 ───
+ 10 │                       var bar = (this?.$slots)?.foo?.() // OK
+    ╰────
+
+  ⚠ vue(require-slots-as-functions): Property in `$slots` should be used as function.
+   ╭─[require_slots_as_functions.tsx:5:50]
+ 4 │                     render (h) {
+ 5 │                       var children = this.$slots.default
+   ·                                                  ───────
+ 6 │                       return h('div', [...children])
+   ╰────

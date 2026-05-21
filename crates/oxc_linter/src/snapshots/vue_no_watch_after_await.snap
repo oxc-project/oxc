@@ -1,0 +1,102 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
+   ╭─[no_watch_after_await.tsx:8:23]
+ 7 │             
+ 8 │                       watch(foo, () => { /* ... */ }) // error
+   ·                       ───────────────────────────────
+ 9 │                     }
+   ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.
+
+  ⚠ vue(no-watch-after-await): `watchEffect` is forbidden after an `await` expression.
+   ╭─[no_watch_after_await.tsx:8:23]
+ 7 │             
+ 8 │                       watchEffect(() => { /* ... */ })
+   ·                       ────────────────────────────────
+ 9 │                       watch(foo, () => { /* ... */ })
+   ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.
+
+  ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
+    ╭─[no_watch_after_await.tsx:9:23]
+  8 │                       watchEffect(() => { /* ... */ })
+  9 │                       watch(foo, () => { /* ... */ })
+    ·                       ───────────────────────────────
+ 10 │                     }
+    ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.
+
+  ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
+   ╭─[no_watch_after_await.tsx:8:23]
+ 7 │ 
+ 8 │                       watch(foo, () => { /* ... */ })
+   ·                       ───────────────────────────────
+ 9 │ 
+   ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.
+
+  ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
+    ╭─[no_watch_after_await.tsx:12:23]
+ 11 │ 
+ 12 │                       watch(foo, () => { /* ... */ })
+    ·                       ───────────────────────────────
+ 13 │                     }
+    ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.
+
+  ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
+   ╭─[no_watch_after_await.tsx:7:23]
+ 6 │                       await doSomething();
+ 7 │                       (watch)(foo, () => { /* ... */ })
+   ·                       ─────────────────────────────────
+ 8 │                     }
+   ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.
+
+  ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
+   ╭─[no_watch_after_await.tsx:7:23]
+ 6 │                       await doSomething()
+ 7 │                       watch(foo, () => { /* ... */ })
+   ·                       ───────────────────────────────
+ 8 │                     }
+   ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.
+
+  ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
+   ╭─[no_watch_after_await.tsx:7:23]
+ 6 │                       await doSomething()
+ 7 │                       watch(foo, () => { /* ... */ })
+   ·                       ───────────────────────────────
+ 8 │                     }
+   ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.
+
+  ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
+   ╭─[no_watch_after_await.tsx:7:23]
+ 6 │                       await doSomething()
+ 7 │                       watch(foo, () => { /* ... */ })
+   ·                       ───────────────────────────────
+ 8 │                     }
+   ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.
+
+  ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
+   ╭─[no_watch_after_await.tsx:7:23]
+ 6 │                       await doSomething()
+ 7 │                       watch?.(foo, () => { /* ... */ })
+   ·                       ─────────────────────────────────
+ 8 │                     }
+   ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.
+
+  ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
+   ╭─[no_watch_after_await.tsx:7:23]
+ 6 │                       await doSomething()
+ 7 │                       A(foo, () => { /* ... */ })
+   ·                       ───────────────────────────
+ 8 │                     }
+   ╰────
+  help: `watch` and `watchEffect` should be called synchronously in `setup()`. Move the call before the first `await`.

@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(require-render-return): Expected to return a value in render function.
+   ╭─[require_render_return.tsx:3:21]
+ 2 │                   export default {
+ 3 │                     render() {
+   ·                     ──────
+ 4 │                     }
+   ╰────
+  help: All code paths inside a render function must return a value.
+
+  ⚠ vue(require-render-return): Expected to return a value in render function.
+   ╭─[require_render_return.tsx:3:21]
+ 2 │                   export default {
+ 3 │                     render: function () {
+   ·                     ──────
+ 4 │                       if (foo) {
+   ╰────
+  help: All code paths inside a render function must return a value.
+
+  ⚠ vue(require-render-return): Expected to return a value in render function.
+   ╭─[require_render_return.tsx:2:21]
+ 1 │ Vue.component('test', {
+ 2 │                     render: function () {
+   ·                     ──────
+ 3 │                       if (a) {
+   ╰────
+  help: All code paths inside a render function must return a value.
+
+  ⚠ vue(require-render-return): Expected to return a value in render function.
+   ╭─[require_render_return.tsx:2:21]
+ 1 │ app.component('test', {
+ 2 │                     render: function () {
+   ·                     ──────
+ 3 │                       if (a) {
+   ╰────
+  help: All code paths inside a render function must return a value.
+
+  ⚠ vue(require-render-return): Expected to return a value in render function.
+   ╭─[require_render_return.tsx:2:21]
+ 1 │ Vue.component('test2', {
+ 2 │                     render: function () {
+   ·                     ──────
+ 3 │                       if (a) {
+   ╰────
+  help: All code paths inside a render function must return a value.
+
+  ⚠ vue(require-render-return): Expected to return a value in render function.
+   ╭─[require_render_return.tsx:2:21]
+ 1 │ Vue.component('test2', {
+ 2 │                     render: function () {
+   ·                     ──────
+ 3 │                       if (a) {
+   ╰────
+  help: All code paths inside a render function must return a value.

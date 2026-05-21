@@ -1,10 +1,12 @@
 //! Declare symbol for `BindingIdentifier`s
 
+use smallvec::SmallVec;
+
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_str::Ident;
-use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
+use oxc_syntax::{node::NodeId, scope::ScopeFlags, scope::ScopeId, symbol::SymbolFlags};
 
 use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};
 
@@ -45,7 +47,10 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
         } else {
             // ------------------ var hosting ------------------
             let mut target_scope_id = builder.current_scope_id;
-            let mut var_scope_ids = vec![];
+            // Stack-allocated: nesting depth from a `var`/`let`/`const` to the
+            // enclosing function (or program) scope is small in practice — 8
+            // covers almost all real-world cases without heap allocation.
+            let mut var_scope_ids: SmallVec<[ScopeId; 8]> = SmallVec::new();
 
             // Collect all scopes where variable hoisting can occur
             for scope_id in builder.scoping.scope_ancestors(target_scope_id) {
@@ -173,8 +178,11 @@ impl<'a> Binder<'a> for Function<'a> {
                 if let Some(var_scope_id) = var_scope_id
                     && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
                 {
-                    builder.scoping.move_binding(block_scope_id, var_scope_id, ident.name);
-                    builder.scoping.set_symbol_scope_id(symbol_id, var_scope_id);
+                    builder.scoping.move_binding_by_symbol_id(
+                        block_scope_id,
+                        var_scope_id,
+                        symbol_id,
+                    );
                     builder
                         .hoisting_variables
                         .entry(block_scope_id)

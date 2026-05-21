@@ -1,6 +1,6 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr, sync::OnceLock};
 
-use bpaf::Bpaf;
+use bpaf::{Bpaf, doc::Style};
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 
 use crate::output_formatter::OutputFormat;
@@ -76,11 +76,11 @@ pub struct LintCommand {
 #[derive(Debug, Clone, Bpaf)]
 pub struct SuppressionOptions {
     /// Generate suppressions for all current violations
-    #[bpaf(switch, hide_usage)]
+    #[bpaf(switch, hide)]
     pub suppress_all: bool,
 
     /// Remove entries for violations that no longer exist
-    #[bpaf(switch, hide_usage)]
+    #[bpaf(switch, hide)]
     pub prune_suppressions: bool,
 }
 
@@ -93,8 +93,16 @@ impl LintCommand {
     ///
     /// If `--threads` option is not used, or `--threads 0` is given,
     /// default to the number of available CPU cores.
+    ///
+    /// Idempotent: rayon's global pool can only be initialized once per
+    /// process. The `OnceLock` guarantees we only call `build_global` once,
+    /// so the napi `lint()` entry point can be invoked more than once in
+    /// the same Node process. The thread count from the first call wins;
+    /// subsequent calls keep that pool.
     #[expect(clippy::print_stderr)]
     fn init_rayon_thread_pool(threads: Option<usize>) {
+        static RAYON_INIT: OnceLock<()> = OnceLock::new();
+
         // Always initialize thread pool, even if using default thread count,
         // to ensure thread pool's thread count is locked after this point.
         // `rayon::current_num_threads()` will always return the same number after this point.
@@ -124,7 +132,9 @@ impl LintCommand {
             1
         };
 
-        rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+        RAYON_INIT.get_or_init(|| {
+            rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+        });
     }
 }
 
@@ -270,12 +280,99 @@ pub struct OutputOptions {
     /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
+
+    #[bpaf(
+        long("debug"),
+        argument::<DebugOptions>("OPTIONS"),
+        fallback(DebugOptions::default()),
+        help(DebugOptions::HELP),
+        hide_usage
+    )]
+    pub debug: DebugOptions,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DebugOption {
+    /// Print the list of files that will be linted
+    Files,
+
+    /// Enable per-rule timing information
+    Timings,
+}
+
+impl DebugOption {
+    const FILES_NAME: &str = "files";
+    const FILES_HELP: &str = "Print the list of files that will be linted, then exit";
+    const TIMINGS_NAME: &str = "timings";
+    const TIMINGS_HELP: &str = "Enable per-rule timing information";
+}
+
+impl FromStr for DebugOption {
+    type Err = String;
+
+    fn from_str(option: &str) -> Result<Self, Self::Err> {
+        match option {
+            Self::FILES_NAME => Ok(Self::Files),
+            Self::TIMINGS_NAME => Ok(Self::Timings),
+            _ => Err(format!("'{option}' is not a known debug option")),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct DebugOptions {
+    options: Vec<DebugOption>,
+}
+
+impl DebugOptions {
+    const HELP: &'static [(&'static str, Style)] = &[
+        (
+            "Enable debug output options. Options are comma-separated. Possible values:\n",
+            Style::Text,
+        ),
+        ("  * `", Style::Text),
+        (DebugOption::FILES_NAME, Style::Text),
+        ("` - ", Style::Text),
+        (DebugOption::FILES_HELP, Style::Text),
+        (".\n", Style::Text),
+        ("  * `", Style::Text),
+        (DebugOption::TIMINGS_NAME, Style::Text),
+        ("` - ", Style::Text),
+        (DebugOption::TIMINGS_HELP, Style::Text),
+        (".", Style::Text),
+    ];
+
+    pub fn contains(&self, option: DebugOption) -> bool {
+        self.options.contains(&option)
+    }
+}
+
+impl FromStr for DebugOptions {
+    type Err = String;
+
+    fn from_str(options: &str) -> Result<Self, Self::Err> {
+        let options = options
+            .split(',')
+            .filter(|option| !option.is_empty())
+            .map(DebugOption::from_str)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        if options.contains(&DebugOption::Files)
+            && options.iter().any(|option| *option != DebugOption::Files)
+        {
+            return Err("debug option 'files' cannot be combined with other debug options".into());
+        }
+
+        Ok(Self { options })
+    }
 }
 
 #[expect(clippy::unnecessary_wraps)]
 fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
     if cfg!(debug_assertions) {
         Ok(OutputFormat::Default)
+    } else if !cfg!(test) && crate::agent_detection::is_agent() {
+        Ok(OutputFormat::Agent)
     } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
         Ok(OutputFormat::Github)
     } else {
@@ -429,11 +526,6 @@ impl EnablePlugins {
         self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
         self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
         self.vue_plugin.inspect(|yes| plugins.set(LintPlugins::VUE, yes));
-
-        // Without this, jest plugins adapted to vitest will not be enabled.
-        if self.vitest_plugin.is_enabled() && self.jest_plugin.is_not_set() {
-            plugins.set(LintPlugins::JEST, true);
-        }
     }
 }
 
@@ -502,7 +594,7 @@ mod plugins {
         let mut plugins = LintPlugins::default();
         let enable =
             EnablePlugins { vitest_plugin: OverrideToggle::Enable, ..EnablePlugins::default() };
-        let expected = LintPlugins::default() | LintPlugins::VITEST | LintPlugins::JEST;
+        let expected = LintPlugins::default() | LintPlugins::VITEST;
 
         enable.apply_overrides(&mut plugins);
         assert_eq!(plugins, expected);
@@ -544,7 +636,7 @@ mod lint_options {
 
     use oxc_linter::AllowWarnDeny;
 
-    use super::{LintCommand, OutputFormat, lint_command};
+    use super::{DebugOption, DebugOptions, LintCommand, OutputFormat, lint_command};
 
     fn get_lint_options(arg: &str) -> LintCommand {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -558,6 +650,7 @@ mod lint_options {
         assert!(!options.fix_options.fix);
         assert!(!options.list_rules);
         assert_eq!(options.output_options.format, OutputFormat::Default);
+        assert_eq!(options.output_options.debug, DebugOptions::default());
     }
 
     #[test]
@@ -622,6 +715,39 @@ mod lint_options {
 
         let options = get_lint_options("-f agent");
         assert_eq!(options.output_options.format, OutputFormat::Agent);
+    }
+
+    #[test]
+    fn debug() {
+        let options = get_lint_options("--debug timings src");
+        assert!(options.output_options.debug.contains(DebugOption::Timings));
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
+
+        let options = get_lint_options("--debug files src");
+        assert!(options.output_options.debug.contains(DebugOption::Files));
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
+    }
+
+    #[test]
+    fn debug_files_is_exclusive() {
+        let args = "--debug files,timings"
+            .split(' ')
+            .map(std::string::ToString::to_string)
+            .collect::<Vec<_>>();
+        let result = lint_command().run_inner(args.as_slice());
+        assert!(result.is_err_and(|err| err.unwrap_stderr()
+            == "couldn't parse `files,timings`: debug option 'files' cannot be combined with other debug options"));
+    }
+
+    #[test]
+    fn debug_error() {
+        let args =
+            "--debug foo".split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
+        let result = lint_command().run_inner(args.as_slice());
+        assert!(
+            result.is_err_and(|err| err.unwrap_stderr()
+                == "couldn't parse `foo`: 'foo' is not a known debug option")
+        );
     }
 
     #[test]

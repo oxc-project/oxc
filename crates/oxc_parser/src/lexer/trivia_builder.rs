@@ -105,19 +105,27 @@ impl<'a> TriviaBuilder<'a> {
         self.saw_newline_for_comment = true;
     }
 
+    #[inline]
     pub fn handle_token(&mut self, token: Token) {
-        let len = self.comments.len();
         self.previous_kind = token.kind();
-        if self.processed < len {
-            // All unprocessed preceding comments are leading comments attached to this token start.
-            for comment in &mut self.comments[self.processed..] {
-                comment.position = CommentPosition::Leading;
-                comment.attached_to = token.start();
-            }
-            self.processed = len;
-        }
         self.saw_newline = false;
         self.saw_newline_for_comment = false;
+        // Cold path: any unprocessed comments since the last token become leading comments
+        // of this one. For files with no comments (or once all comments are consumed)
+        // `processed == comments.len()`, so this branch is skipped.
+        let len = self.comments.len();
+        if self.processed < len {
+            self.attach_pending_leading_comments(token.start(), len);
+        }
+    }
+
+    #[cold]
+    fn attach_pending_leading_comments(&mut self, attached_to: u32, len: usize) {
+        for comment in &mut self.comments[self.processed..] {
+            comment.position = CommentPosition::Leading;
+            comment.attached_to = attached_to;
+        }
+        self.processed = len;
     }
 
     /// Determines if the current line comment should be treated as a trailing comment.
@@ -629,6 +637,26 @@ function bar() {}";
         let source_text = "export const X = /* @__PURE__ */ foo();";
         let comments = get_comments(source_text);
         assert_eq!(comments[0].content, CommentContent::Pure, "{source_text}");
+    }
+
+    #[test]
+    fn pure_comment_applied_on_member_chain() {
+        // Rollup/esbuild treat PURE as applying to the innermost call/new even when
+        // member access wraps it; member-access side effects are a separate concern.
+        let cases = [
+            "/*#__PURE__*/ test().a.b.c;",
+            "/*#__PURE__*/ new Foo().a;",
+            "/*#__PURE__*/ test()[0].b;",
+            "class C { #bar; m() { /*#__PURE__*/ this.foo().#bar; } }",
+            // Chain expressions with member root
+            "/*#__PURE__*/ foo()?.a.b;",
+            "/*#__PURE__*/ foo?.().a.b;",
+            "/*#__PURE__*/ foo?.()[0];",
+        ];
+        for source_text in cases {
+            let comments = get_comments(source_text);
+            assert_eq!(comments[0].content, CommentContent::Pure, "{source_text}");
+        }
     }
 
     #[test]
