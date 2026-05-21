@@ -18,7 +18,13 @@ use crate::{
 
 fn surrogate_pair_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected surrogate pair in character class.")
-        .with_help("Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \\u{1F44D}) instead of surrogate pairs.")
+        .with_help("Use Unicode code point escapes (e.g., \\u{1F44D}) instead of surrogate pairs.")
+        .with_label(span)
+}
+
+fn surrogate_pair_without_flag_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected surrogate pair in character class.")
+        .with_help("Add the Unicode flag 'u'.")
         .with_label(span)
 }
 
@@ -361,7 +367,7 @@ fn surrogate_pair_sequences_without_flag(chars: &[&Character], ctx: &LintContext
             && !is_unicode_code_point_escape(previous)
             && !is_unicode_code_point_escape(char)
         {
-            ctx.diagnostic(surrogate_pair_diagnostic(Span::new(
+            ctx.diagnostic(surrogate_pair_without_flag_diagnostic(Span::new(
                 previous.span.start,
                 char.span.end,
             )));
