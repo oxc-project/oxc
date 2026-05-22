@@ -1455,20 +1455,23 @@ dependencies = [
 [[package]]
 name = "napi"
 version = "3.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1d395473824516f38dd1071a1a37bc57daa7be65b293ebba4ead5f7abb017a2"
 dependencies = [
  "bitflags",
  "ctor",
  "futures",
- "napi-build",
+ "napi-build 2.3.2",
  "napi-sys",
  "nohash-hasher",
+ "pollster",
  "rustc-hash",
  "serde",
  "serde_json",
  "tokio",
 ]
+
+[[package]]
+name = "napi-build"
+version = "2.3.2"
 
 [[package]]
 name = "napi-build"
@@ -1506,8 +1509,6 @@ dependencies = [
 [[package]]
 name = "napi-sys"
 version = "3.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8eb602b84d7c1edae45e50bbf1374696548f36ae179dfa667f577e384bb90c2b"
 dependencies = [
  "libloading",
 ]
@@ -2199,7 +2200,7 @@ version = "0.132.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
- "napi-build",
+ "napi-build 2.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "napi-derive",
  "oxc_allocator",
  "oxc_codegen",
@@ -2237,7 +2238,7 @@ name = "oxc_napi"
 version = "0.132.0"
 dependencies = [
  "napi",
- "napi-build",
+ "napi-build 2.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "napi-derive",
  "oxc_ast",
  "oxc_ast_visit",
@@ -2276,7 +2277,7 @@ version = "0.132.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
- "napi-build",
+ "napi-build 2.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "napi-derive",
  "oxc",
  "oxc_ast_macros",
@@ -2292,7 +2293,7 @@ name = "oxc_playground_napi"
 version = "0.0.1"
 dependencies = [
  "napi",
- "napi-build",
+ "napi-build 2.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "napi-derive",
  "oxc",
  "oxc_compat",
@@ -2413,7 +2414,7 @@ dependencies = [
  "base64-simd",
  "json-escape-simd",
  "napi",
- "napi-build",
+ "napi-build 2.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "napi-derive",
  "rustc-hash",
  "serde",
@@ -2525,7 +2526,7 @@ version = "0.132.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
- "napi-build",
+ "napi-build 2.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "napi-derive",
  "oxc",
  "oxc_napi",
@@ -2621,7 +2622,7 @@ dependencies = [
  "json-strip-comments",
  "mimalloc-safe",
  "napi",
- "napi-build",
+ "napi-build 2.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "napi-derive",
  "oxc-miette",
  "oxc-schemars",
@@ -2661,7 +2662,7 @@ dependencies = [
  "lazy-regex",
  "mimalloc-safe",
  "napi",
- "napi-build",
+ "napi-build 2.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "napi-derive",
  "oxc-miette",
  "oxc-schemars",
@@ -2838,6 +2839,12 @@ name = "pin-project-lite"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b"
+
+[[package]]
+name = "pollster"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f3a9f18d041e6d0e102a0a46750538147e5e8992d3b4873aaafee2520b00ce3"
 
 [[package]]
 name = "postcard"

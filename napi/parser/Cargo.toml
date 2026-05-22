@@ -31,7 +31,7 @@ oxc_str = { workspace = true }
 
 rustc-hash = { workspace = true }
 
-napi = { workspace = true, features = ["async"] }
+napi = { workspace = true }
 napi-derive = { workspace = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]

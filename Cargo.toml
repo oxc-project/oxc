@@ -152,7 +152,10 @@ oxc_tasks_transform_checker = { path = "tasks/transform_checker" } # Transform v
 oxlint = { path = "apps/oxlint" } # Linter CLI
 
 # Relaxed version so the user can decide which version to use.
-napi = { version = "3", features = ["tokio_rt"] } # Node.js native bindings
+# `runtime_executor` drives Rust futures on a `futures::executor::ThreadPool`
+# instead of pulling in `tokio` — keeps the oxc dependency tree async-runtime
+# agnostic for downstream consumers like rolldown.
+napi = { version = "3", features = ["runtime_executor"] } # Node.js native bindings
 napi-build = "2" # NAPI build tool
 napi-derive = "3" # NAPI proc macros
 
@@ -308,3 +311,10 @@ overflow-checks = true # Catch arithmetic overflow errors
 [profile.dev-no-debug-assertions]
 inherits = "dev"
 debug-assertions = false
+
+# Temporary patch while the `runtime_executor` feature lives on a napi-rs
+# branch that has not been published.
+# https://github.com/Boshen/napi-rs/tree/runtime-executor-feature
+# Remove once that feature ships in a released napi version.
+[patch.crates-io]
+napi = { git = "https://github.com/Boshen/napi-rs", branch = "runtime-executor-feature" }

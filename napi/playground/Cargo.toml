@@ -40,7 +40,7 @@ oxc_linter = { workspace = true }
 oxc_napi = { workspace = true }
 oxc_transformer_plugins = { workspace = true }
 
-napi = { workspace = true, features = ["async"] }
+napi = { workspace = true }
 napi-derive = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
