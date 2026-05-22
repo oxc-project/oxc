@@ -133,20 +133,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn check_identifier_with_span(&mut self, kind: Kind, ctx: Context, span: Span) {
-        // It is a Syntax Error if this production has an [Await] parameter.
-        if ctx.has_await() && kind == Kind::Await {
-            self.error(diagnostics::identifier_async("await", span));
-        }
-        // It is a Syntax Error if this production has a [Yield] parameter.
-        if ctx.has_yield() && kind == Kind::Yield {
-            let next_token = self.lexer.peek_token();
-            let looks_like_yield_expression =
-                !next_token.is_on_new_line() && next_token.kind().is_after_await_or_yield();
-            self.error(diagnostics::identifier_generator(
-                "yield",
-                span,
-                looks_like_yield_expression,
-            ));
+        match kind {
+            // It is a Syntax Error if this production has an [Await] parameter.
+            Kind::Await if ctx.has_await() => {
+                self.error(diagnostics::identifier_async("await", span));
+            }
+            // It is a Syntax Error if this production has a [Yield] parameter.
+            Kind::Yield if ctx.has_yield() => {
+                let next_token = self.lexer.peek_token();
+                let looks_like_yield_expression =
+                    !next_token.is_on_new_line() && next_token.kind().is_after_await_or_yield();
+                self.error(diagnostics::identifier_generator(
+                    "yield",
+                    span,
+                    looks_like_yield_expression,
+                ));
+            }
+            _ => {}
         }
     }
 
