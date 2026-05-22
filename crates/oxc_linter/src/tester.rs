@@ -37,6 +37,7 @@ const KNOWN_FIXER_FAILURES: &[(&str, &str)] = &[
     ("eslint", "curly"),
     ("eslint", "no-else-return"),
     ("eslint", "no-empty"),
+    ("eslint", "no-misleading-character-class"),
     ("eslint", "no-regex-spaces"),
     ("eslint", "no-unused-labels"),
     ("eslint", "no-unused-vars"),
