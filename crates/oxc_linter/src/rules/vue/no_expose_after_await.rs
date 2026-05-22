@@ -2,8 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, BindingPattern, CallExpression, ChainElement,
-        ExportDefaultDeclarationKind, Expression, ExpressionStatement, Function, ObjectExpression,
-        ObjectPropertyKind, Program, Statement,
+        ExportDefaultDeclarationKind, Expression, Function, ObjectExpression, ObjectPropertyKind,
+        Program, Statement,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -250,22 +250,17 @@ impl<'a> Visit<'a> for ExposeAfterAwaitVisitor<'a> {
         self.found = true;
     }
 
-    // Only `ExpressionStatement` direct children are reported. Stop handles such
-    // as `var a = expose()`, `c = expose()`, `d(expose())`, `{ foo: expose() }`,
-    // `[expose()]` are wrapped in another expression and are intentionally ignored.
-    fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
+    fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if !self.found {
-            walk::walk_expression_statement(self, stmt);
+            walk::walk_call_expression(self, call_expr);
             return;
         }
 
-        if let Some(call_expr) = extract_call_expression(&stmt.expression)
-            && self.matches_target(call_expr)
-        {
+        if self.matches_target(call_expr) {
             self.errors.push((call_expr.span, "expose".to_string()));
         }
 
-        walk::walk_expression_statement(self, stmt);
+        walk::walk_call_expression(self, call_expr);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
@@ -407,6 +402,22 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            "
+                  <script>
+                  export default {
+                    async setup(_, ctx) {
+                      await doSomething()
+                      const expose = ctx.expose
+                      expose({ /* ... */ })
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
@@ -445,6 +456,38 @@ fn test() {
                   <script setup>
                   await doSomething()
                   defineExpose({ /* ... */ })
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                  <script>
+                  export default {
+                    async setup(_, {expose}) {
+                      await doSomething()
+                      const a = expose({ /* ... */ })
+                      b(expose())
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                  <script>
+                  export default {
+                    async setup(_, ctx) {
+                      await doSomething()
+                      const a = ctx.expose({ /* ... */ })
+                      b(ctx.expose())
+                    }
+                  }
                   </script>
                   ",
             None,
