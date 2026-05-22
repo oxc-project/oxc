@@ -80,8 +80,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         declare: bool,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        // Most `var`/`let`/`const` declarations only have 1-2 declarators.
-        let mut declarations = self.ast.vec_with_capacity(2);
+        let mut declarations = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(decl_parent, kind);
             declarations.push(declaration);
@@ -198,7 +197,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations = self.ast.vec_with_capacity(2);
+        let mut declarations = self.ast.vec();
         loop {
             let decl_parent = if matches!(statement_ctx, StatementContext::For) {
                 VariableDeclarationParent::For

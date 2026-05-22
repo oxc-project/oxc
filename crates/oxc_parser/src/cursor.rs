@@ -375,18 +375,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        // Only reserve capacity once we know there's at least one element. An empty `{}` would
-        // otherwise reserve four arena slots that are never used.
-        let kind = self.cur_kind();
-        if kind == close
-            || matches!(kind, Kind::Eof | Kind::Undetermined)
-            || self.fatal_error.is_some()
-        {
-            self.expect_closing(close, opening_span);
-            return self.ast.vec();
-        }
-        let mut list = self.ast.vec_with_capacity(4);
-        list.push(f(self));
+        let mut list = self.ast.vec();
         loop {
             let kind = self.cur_kind();
             if kind == close
@@ -412,11 +401,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        if self.at(close) || self.has_fatal_error() {
-            self.expect_closing(close, opening_span);
-            return self.ast.vec();
-        }
-        let mut list = self.ast.vec_with_capacity(4);
+        let mut list = self.ast.vec();
         loop {
             if self.at(close) || self.has_fatal_error() {
                 break;
@@ -441,17 +426,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: FnMut(&mut Self) -> T,
     {
+        let mut list = self.ast.vec();
         // Cache cur_kind() to avoid redundant calls in compound checks
         let kind = self.cur_kind();
         if kind == close
             || matches!(kind, Kind::Eof | Kind::Undetermined)
             || self.fatal_error.is_some()
         {
-            return (self.ast.vec(), None);
+            return (list, None);
         }
-        // Most delimited lists (call args, array literals, object literals, parameters) hold a
-        // small number of elements. Presize to avoid the first arena realloc on push.
-        let mut list = self.ast.vec_with_capacity(4);
         list.push(f(self));
         loop {
             let kind = self.cur_kind();

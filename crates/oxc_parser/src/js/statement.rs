@@ -36,15 +36,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let is_top_level = self.ctx.has_top_level();
 
         let mut directives = self.ast.vec();
-        // Pre-size the statements vec to skip the first few doublings.
-        // Keep this capped to avoid over-reserving in the arena (cache pollution downstream).
+        // Pre-size the top-level statements vec — it tends to be the largest growing list in
+        // the whole parse. Function/block bodies are usually short, so leave those at default 0
+        // capacity to avoid wasting arena space for short bodies.
         let mut statements = if is_top_level {
-            // Top-level scope is typically the largest; rough heuristic of 1 statement per 64 bytes,
-            // capped so arena footprint stays modest.
+            // Rough heuristic: 1 statement per 64 bytes of source. Clamp to keep upfront
+            // reservation modest.
             let cap = (self.source_text.len() / 64).clamp(8, 512);
             self.ast.vec_with_capacity(cap)
         } else {
-            self.ast.vec_with_capacity(8)
+            self.ast.vec()
         };
 
         let stmt_ctx = StatementContext::StatementList;
@@ -708,7 +709,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let mut consequent = self.ast.vec_with_capacity(4);
+        let mut consequent = self.ast.vec();
         loop {
             let kind = self.cur_kind();
             if matches!(
