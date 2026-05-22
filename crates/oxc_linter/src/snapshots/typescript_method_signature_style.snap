@@ -1,0 +1,504 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       f(a: string): number;
+   ·                       ─────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       ['f'](a: boolean): void;
+   ·                       ────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       f<T>(a: T): T;
+   ·                       ──────────────
+ 4 │                     }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       ['f']<T extends {}>(a: T, b: T): T;
+   ·                       ───────────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       'f!'</* a */ T>(/* b */ x: any /* c */): void;
+   ·                       ──────────────────────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { f(a: string): number };
+   ·                                   ────────────────────
+ 3 │                   
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { ['f']?(a: boolean): void };
+   ·                                   ────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { f?<T>(a?: T): T };
+   ·                                   ───────────────
+ 3 │                   
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { ['f']?<T>(a: T, b: T): T };
+   ·                                   ────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       f: (a: string) => number;
+   ·                       ─────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       ['f']: (a: boolean) => void;
+   ·                       ────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       f: <T>(a: T) => T;
+   ·                       ──────────────────
+ 4 │                     }
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       ['f']: <T extends {}>(a: T, b: T) => T;
+   ·                       ───────────────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       'f!': </* a */ T>(/* b */ x: any /* c */) => void;
+   ·                       ──────────────────────────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { f: (a: string) => number };
+   ·                                   ────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { ['f']?: (a: boolean) => void };
+   ·                                   ────────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { f?: <T>(a?: T) => T };
+   ·                                   ───────────────────
+ 3 │                   
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { ['f']?: <T>(a: T, b: T) => T };
+   ·                                   ────────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               semi(arg: string): void;
+   ·               ────────────────────────
+ 4 │               comma(arg: string): void,
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               semi(arg: string): void;
+ 4 │               comma(arg: string): void,
+   ·               ─────────────────────────
+ 5 │               none(arg: string): void
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               comma(arg: string): void,
+ 5 │               none(arg: string): void
+   ·               ───────────────────────
+ 6 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               semi: (arg: string) => void;
+   ·               ────────────────────────────
+ 4 │               comma: (arg: string) => void,
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               semi: (arg: string) => void;
+ 4 │               comma: (arg: string) => void,
+   ·               ─────────────────────────────
+ 5 │               none: (arg: string) => void
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               comma: (arg: string) => void,
+ 5 │               none: (arg: string) => void
+   ·               ───────────────────────────
+ 6 │             }
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │                 interface Foo {
+ 3 │ ╭─▶               x(
+ 4 │ │                   args: Pick<
+ 5 │ │                     Bar,
+ 6 │ │                     'one' | 'two' | 'three'
+ 7 │ │                   >,
+ 8 │ ╰─▶               ): Baz;
+ 9 │                   y(
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+    ╭─[method_signature_style.tsx:9:15]
+  8 │                   ): Baz;
+  9 │ ╭─▶               y(
+ 10 │ │                   foo: string,
+ 11 │ │                   bar: number,
+ 12 │ ╰─▶               ): void;
+ 13 │                 }
+    ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               foo(): one;
+   ·               ───────────
+ 4 │               foo(): two;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               foo(): one;
+ 4 │               foo(): two;
+   ·               ───────────
+ 5 │               foo(): three;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               foo(): two;
+ 5 │               foo(): three;
+   ·               ─────────────
+ 6 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               foo(bar: string): one;
+   ·               ──────────────────────
+ 4 │               foo(bar: number, baz: string): two;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               foo(bar: string): one;
+ 4 │               foo(bar: number, baz: string): two;
+   ·               ───────────────────────────────────
+ 5 │               foo(): three;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               foo(bar: number, baz: string): two;
+ 5 │               foo(): three;
+   ·               ─────────────
+ 6 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               [foo](bar: string): one;
+   ·               ────────────────────────
+ 4 │               [foo](bar: number, baz: string): two;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               [foo](bar: string): one;
+ 4 │               [foo](bar: number, baz: string): two;
+   ·               ─────────────────────────────────────
+ 5 │               [foo](): three;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               [foo](bar: number, baz: string): two;
+ 5 │               [foo](): three;
+   ·               ───────────────
+ 6 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               [foo](bar: string): one;
+   ·               ────────────────────────
+ 4 │               [foo](bar: number, baz: string): two;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               [foo](bar: string): one;
+ 4 │               [foo](bar: number, baz: string): two;
+   ·               ─────────────────────────────────────
+ 5 │               [foo](): three;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               [foo](bar: number, baz: string): two;
+ 5 │               [foo](): three;
+   ·               ───────────────
+ 6 │               bar(arg: string): void;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:6:15]
+ 5 │               [foo](): three;
+ 6 │               bar(arg: string): void;
+   ·               ───────────────────────
+ 7 │               bar(baz: number): Foo;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:7:15]
+ 6 │               bar(arg: string): void;
+ 7 │               bar(baz: number): Foo;
+   ·               ──────────────────────
+ 8 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:6:27]
+ 5 │                           // Add overloads specific to the DOM
+ 6 │                           toHaveProp<K extends keyof DomPropsOf<T>>(name: K, value?: DomPropsOf<T>[K]): R;
+   ·                           ────────────────────────────────────────────────────────────────────────────────
+ 7 │                           toHaveProps(props: Partial<DomPropsOf<T>>): R;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:7:27]
+ 6 │                           toHaveProp<K extends keyof DomPropsOf<T>>(name: K, value?: DomPropsOf<T>[K]): R;
+ 7 │                           toHaveProps(props: Partial<DomPropsOf<T>>): R;
+   ·                           ──────────────────────────────────────────────
+ 8 │                         }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             type Foo = {
+ 3 │               foo(): one;
+   ·               ───────────
+ 4 │               foo(): two;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               foo(): one;
+ 4 │               foo(): two;
+   ·               ───────────
+ 5 │               foo(): three;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               foo(): two;
+ 5 │               foo(): three;
+   ·               ─────────────
+ 6 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             declare const Foo: {
+ 3 │               foo(): one;
+   ·               ───────────
+ 4 │               foo(): two;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               foo(): one;
+ 4 │               foo(): two;
+   ·               ───────────
+ 5 │               foo(): three;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               foo(): two;
+ 5 │               foo(): three;
+   ·               ─────────────
+ 6 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface MyInterface {
+ 3 │               methodReturningImplicitAny();
+   ·               ─────────────────────────────
+ 4 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Test {
+ 3 │               f(value: number): this;
+   ·               ───────────────────────
+ 4 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Test {
+ 3 │               foo(): this;
+   ·               ────────────
+ 4 │               foo(): Promise<this>;
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               foo(): this;
+ 4 │               foo(): Promise<this>;
+   ·               ─────────────────────
+ 5 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Test {
+ 3 │               f(value: number): this | undefined;
+   ·               ───────────────────────────────────
+ 4 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Test {
+ 3 │               f(value: number): Promise<this>;
+   ·               ────────────────────────────────
+ 4 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.
+
+  ⚠ typescript(method-signature-style): Use a property signature instead of a method signature.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Test {
+ 3 │               f(value: number): Promise<this | undefined>;
+   ·               ────────────────────────────────────────────
+ 4 │             }
+   ╰────
+  help: Replace the method signature with a property whose type is a function type.

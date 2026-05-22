@@ -248,6 +248,7 @@ pub(crate) mod typescript {
     pub mod explicit_function_return_type;
     pub mod explicit_member_accessibility;
     pub mod explicit_module_boundary_types;
+    pub mod method_signature_style;
     pub mod no_array_delete;
     pub mod no_base_to_string;
     pub mod no_confusing_non_null_assertion;

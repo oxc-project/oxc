@@ -1694,6 +1694,9 @@ expression: json
         "typescript/explicit-module-boundary-types": {
           "$ref": "#/definitions/DummyRule"
         },
+        "typescript/method-signature-style": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "typescript/no-array-delete": {
           "$ref": "#/definitions/DummyRule"
         },
