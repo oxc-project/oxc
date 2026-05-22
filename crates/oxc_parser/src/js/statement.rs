@@ -36,12 +36,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let is_top_level = self.ctx.has_top_level();
 
         let mut directives = self.ast.vec();
-        // Pre-size the statements vec to avoid repeated reallocations as it grows.
-        // For top-level scopes (the largest case), pick a rough heuristic based on source size
-        // — roughly 1 statement per 64 bytes of source on real-world code.
-        // For function/block bodies, start small.
+        // Pre-size the statements vec to skip the first few doublings.
+        // Keep this capped to avoid over-reserving in the arena (cache pollution downstream).
         let mut statements = if is_top_level {
-            self.ast.vec_with_capacity((self.source_text.len() / 64).max(8))
+            // Top-level scope is typically the largest; rough heuristic of 1 statement per 64 bytes,
+            // capped so arena footprint stays modest.
+            let cap = (self.source_text.len() / 64).clamp(8, 512);
+            self.ast.vec_with_capacity(cap)
         } else {
             self.ast.vec_with_capacity(8)
         };
