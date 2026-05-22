@@ -2654,6 +2654,9 @@ expression: json
         "vue/require-default-export": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/require-prop-type-constructor": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/require-render-return": {
           "$ref": "#/definitions/DummyRule"
         },
