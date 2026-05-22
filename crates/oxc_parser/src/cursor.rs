@@ -375,7 +375,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = self.ast.vec();
+        // Most class bodies / blocks have a few elements; presize to avoid the first realloc.
+        let mut list = self.ast.vec_with_capacity(4);
         loop {
             let kind = self.cur_kind();
             if kind == close
@@ -401,7 +402,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let opening_span = self.cur_token().span();
         self.expect(open);
-        let mut list = self.ast.vec();
+        let mut list = self.ast.vec_with_capacity(4);
         loop {
             if self.at(close) || self.has_fatal_error() {
                 break;
@@ -426,7 +427,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: FnMut(&mut Self) -> T,
     {
-        let mut list = self.ast.vec();
+        // Most delimited lists (call args, array literals, object literals, parameters) hold a
+        // small number of elements. Presize to avoid the first arena realloc on push.
+        let mut list = self.ast.vec_with_capacity(4);
         // Cache cur_kind() to avoid redundant calls in compound checks
         let kind = self.cur_kind();
         if kind == close

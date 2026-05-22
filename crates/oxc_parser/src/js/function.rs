@@ -70,7 +70,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         opening_span: Span,
     ) -> (oxc_allocator::Vec<'a, FormalParameter<'a>>, Option<Box<'a, FormalParameterRest<'a>>>)
     {
-        let mut list = self.ast.vec();
+        let mut list = self.ast.vec_with_capacity(4);
         let mut rest: Option<Box<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
 

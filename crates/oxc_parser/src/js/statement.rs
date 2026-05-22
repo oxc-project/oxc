@@ -33,10 +33,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_directives_and_statements(
         &mut self,
     ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
-        let mut directives = self.ast.vec();
-        let mut statements = self.ast.vec();
-
         let is_top_level = self.ctx.has_top_level();
+
+        let mut directives = self.ast.vec();
+        // Pre-size the statements vec to avoid repeated reallocations as it grows.
+        // For top-level scopes (the largest case), pick a rough heuristic based on source size
+        // — roughly 1 statement per 64 bytes of source on real-world code.
+        // For function/block bodies, start small.
+        let mut statements = if is_top_level {
+            self.ast.vec_with_capacity((self.source_text.len() / 64).max(8))
+        } else {
+            self.ast.vec_with_capacity(8)
+        };
+
         let stmt_ctx = StatementContext::StatementList;
 
         // Check if we need to track potential await reparsing.
@@ -698,7 +707,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let mut consequent = self.ast.vec();
+        let mut consequent = self.ast.vec_with_capacity(4);
         loop {
             let kind = self.cur_kind();
             if matches!(
