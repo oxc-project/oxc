@@ -804,36 +804,78 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return lhs;
             }
 
-            let mut question_dot = false;
-            let is_property_access = if allow_optional_chain && self.at(Kind::QuestionDot) {
-                // ?.
-                // Fast check to avoid checkpoint/rewind in common cases
+            // Read current kind once and dispatch on it. Plain `.member` access is by far the
+            // most common follow-up to a primary expression, so check that case first.
+            let kind = self.cur_kind();
+
+            if kind == Kind::Dot {
+                self.advance(Kind::Dot);
+                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
+                    self.error(
+                        diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
+                            self.end_span(lhs_span),
+                        ),
+                    );
+                }
+                lhs = self.parse_static_member_expression(lhs_span, lhs, false);
+                continue;
+            }
+
+            if allow_optional_chain && kind == Kind::QuestionDot {
+                // Fast check to avoid checkpoint/rewind in common cases.
                 let next_kind = self.lexer.peek_token().kind();
                 if next_kind == Kind::LBrack
                     || next_kind.is_identifier_or_keyword()
                     || next_kind.is_template_start_of_tagged_template()
                 {
-                    // This is likely a valid optional chain, proceed with normal parsing
-                    self.bump_any(); // consume ?.
-                    let kind = self.cur_kind();
-                    let is_identifier_or_keyword = kind.is_identifier_or_keyword();
-                    // ?.[
-                    // ?.something
-                    // ?.template`...`
+                    self.bump_any(); // consume `?.`
                     *in_optional_chain = true;
-                    question_dot = true;
-                    is_identifier_or_keyword
-                } else {
-                    // This is not a valid optional chain pattern, don't consume ?.
-                    // Should be a cold branch here, as most real-world optional chaining will look like
-                    // `?.something` or `?.[expr]`
-                    false
+                    let after_kind = self.cur_kind();
+                    if after_kind.is_identifier_or_keyword() {
+                        if matches!(lhs, Expression::TSInstantiationExpression(_)) {
+                            self.error(
+                                diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
+                                    self.end_span(lhs_span),
+                                ),
+                            );
+                        }
+                        lhs = self.parse_static_member_expression(lhs_span, lhs, true);
+                        continue;
+                    }
+                    if after_kind == Kind::LBrack {
+                        if matches!(lhs, Expression::TSInstantiationExpression(_)) {
+                            self.error(
+                                diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
+                                    self.end_span(lhs_span),
+                                ),
+                            );
+                        }
+                        lhs = self.parse_computed_member_expression(lhs_span, lhs, true);
+                        continue;
+                    }
+                    if after_kind.is_template_start_of_tagged_template() {
+                        let (expr, type_arguments) = if let Expression::TSInstantiationExpression(
+                            instantiation_expr,
+                        ) = lhs
+                        {
+                            let expr = instantiation_expr.unbox();
+                            (expr.expression, Some(expr.type_arguments))
+                        } else {
+                            (lhs, None)
+                        };
+                        lhs = self.parse_tagged_template(
+                            lhs_span,
+                            expr,
+                            *in_optional_chain,
+                            type_arguments,
+                        );
+                        continue;
+                    }
                 }
-            } else {
-                self.eat(Kind::Dot)
-            };
+                return lhs;
+            }
 
-            if is_property_access {
+            if kind == Kind::LBrack && !self.ctx.has_decorator() {
                 if matches!(lhs, Expression::TSInstantiationExpression(_)) {
                     self.error(
                         diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
@@ -841,23 +883,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         ),
                     );
                 }
-                lhs = self.parse_static_member_expression(lhs_span, lhs, question_dot);
+                lhs = self.parse_computed_member_expression(lhs_span, lhs, false);
                 continue;
             }
 
-            if (question_dot || !self.ctx.has_decorator()) && self.at(Kind::LBrack) {
-                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
-                    self.error(
-                        diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
-                            self.end_span(lhs_span),
-                        ),
-                    );
-                }
-                lhs = self.parse_computed_member_expression(lhs_span, lhs, question_dot);
-                continue;
-            }
-
-            if self.cur_kind().is_template_start_of_tagged_template() {
+            if kind.is_template_start_of_tagged_template() {
                 let (expr, type_arguments) =
                     if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
                         let expr = instantiation_expr.unbox();
@@ -870,13 +900,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 continue;
             }
 
-            if !question_dot && self.is_ts {
-                if !self.cur_token().is_on_new_line() && self.eat(Kind::Bang) {
+            if self.is_ts {
+                if kind == Kind::Bang && !self.cur_token().is_on_new_line() {
+                    self.bump_any();
                     lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
                     continue;
                 }
 
-                if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
+                if matches!(kind, Kind::LAngle | Kind::ShiftLeft) {
                     if let Some(arguments) = self.parse_type_arguments_in_expression() {
                         lhs = self.ast.expression_ts_instantiation(
                             self.end_span(lhs_span),
