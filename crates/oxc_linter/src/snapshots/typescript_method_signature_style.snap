@@ -95,6 +95,15 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
    ╭─[method_signature_style.tsx:3:23]
  2 │                     interface Test {
+ 3 │                       f: (((a: string) => number));
+   ·                       ─────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace the property signature with method shorthand syntax.
+
+  ⚠ typescript(method-signature-style): Use a method signature instead of a property signature.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
  3 │                       ['f']: (a: boolean) => void;
    ·                       ────────────────────────────
  4 │                     }

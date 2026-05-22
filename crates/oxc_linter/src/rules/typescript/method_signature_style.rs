@@ -163,7 +163,10 @@ impl Rule for MethodSignatureStyle {
             }
             AstKind::TSPropertySignature(ts_property) if self.is_method_style() => {
                 if !ts_property.type_annotation.as_ref().is_some_and(|type_annotation| {
-                    matches!(&type_annotation.type_annotation, TSType::TSFunctionType(_))
+                    matches!(
+                        type_annotation.type_annotation.without_parenthesized(),
+                        TSType::TSFunctionType(_)
+                    )
                 }) {
                     return;
                 }
@@ -381,6 +384,11 @@ fn test() {
 ("
                     interface Test {
                       f: (a: string) => number;
+                    }
+                  ", Some(serde_json::json!(["method"]))),
+("
+                    interface Test {
+                      f: (((a: string) => number));
                     }
                   ", Some(serde_json::json!(["method"]))),
 ("
