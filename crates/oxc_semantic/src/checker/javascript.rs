@@ -153,13 +153,17 @@ pub fn check_identifier(
     ctx: &SemanticBuilder<'_>,
 ) {
     // reserved keywords are allowed in ambient contexts
-    if ctx.source_type.is_typescript_definition() || is_current_node_ambient_binding(symbol_id, ctx)
-    {
-        return;
+    fn is_allowed_context(symbol_id: Option<SymbolId>, ctx: &SemanticBuilder<'_>) -> bool {
+        ctx.source_type.is_typescript_definition()
+            || is_current_node_ambient_binding(symbol_id, ctx)
     }
 
     match name {
         "await" => {
+            if is_allowed_context(symbol_id, ctx) {
+                return;
+            }
+
             // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
             if ctx.source_type.is_module() {
                 ctx.error(diagnostics::reserved_keyword(name, span));
@@ -172,9 +176,10 @@ pub fn check_identifier(
         // TODO: Revisit this match arm when we add `Ident` and pre-hash the identifier names and see if a HashSet
         // becomes better for performance again.
         "implements" | "interface" | "let" | "package" | "private" | "protected" | "public"
-        | "static" | "yield"
-            if ctx.strict_mode() =>
-        {
+        | "static" | "yield" => {
+            if !ctx.strict_mode() || is_allowed_context(symbol_id, ctx) {
+                return;
+            }
             // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
             ctx.error(diagnostics::reserved_keyword(name, span));
         }
