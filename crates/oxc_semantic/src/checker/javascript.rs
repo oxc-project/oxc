@@ -397,16 +397,14 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
         false
     }
 
-    if ctx.strict_mode() {
-        match lit.base {
-            NumberBase::Octal if leading_zero(lit.raw) => {
-                ctx.error(diagnostics::legacy_octal(lit.span));
-            }
-            NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) => {
-                ctx.error(diagnostics::leading_zero_decimal(lit.span));
-            }
-            _ => {}
+    match lit.base {
+        NumberBase::Octal if leading_zero(lit.raw) && ctx.strict_mode() => {
+            ctx.error(diagnostics::legacy_octal(lit.span));
         }
+        NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) && ctx.strict_mode() => {
+            ctx.error(diagnostics::leading_zero_decimal(lit.span));
+        }
+        _ => {}
     }
 }
 
