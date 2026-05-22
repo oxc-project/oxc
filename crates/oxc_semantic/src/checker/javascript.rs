@@ -211,9 +211,9 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
         return;
     }
 
-    if ctx.strict_mode() {
+    match ident.name.as_str() {
         // In strict mode, `eval` and `arguments` are banned as identifiers.
-        if matches!(ident.name.as_str(), "eval" | "arguments") {
+        "eval" | "arguments" if ctx.strict_mode() => {
             // `eval` and `arguments` are allowed as the names of declare functions as well as their arguments.
             //
             // declare function eval(): void; // OK
@@ -249,10 +249,9 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                 ctx.error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
             }
         }
-    } else {
-        // LexicalDeclaration : LetOrConst BindingList ;
-        // * It is a Syntax Error if the BoundNames of BindingList contains "let".
-        if ident.name == "let" {
+        "let" if !ctx.strict_mode() => {
+            // LexicalDeclaration : LetOrConst BindingList ;
+            // * It is a Syntax Error if the BoundNames of BindingList contains "let".
             for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
                 match node_kind {
                     AstKind::VariableDeclarator(decl) => {
@@ -269,6 +268,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                 }
             }
         }
+        _ => {}
     }
 }
 
