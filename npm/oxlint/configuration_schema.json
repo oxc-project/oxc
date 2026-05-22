@@ -2620,6 +2620,9 @@
         "vue/no-export-in-script-setup": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/no-expose-after-await": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/no-import-compiler-macros": {
           "$ref": "#/definitions/DummyRule"
         },
