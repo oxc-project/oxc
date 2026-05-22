@@ -305,6 +305,7 @@ pub use crate::rules::jsdoc::require_returns_type::RequireReturnsType as JsdocRe
 pub use crate::rules::jsdoc::require_throws_description::RequireThrowsDescription as JsdocRequireThrowsDescription;
 pub use crate::rules::jsdoc::require_throws_type::RequireThrowsType as JsdocRequireThrowsType;
 pub use crate::rules::jsdoc::require_yields::RequireYields as JsdocRequireYields;
+pub use crate::rules::jsdoc::require_yields_description::RequireYieldsDescription as JsdocRequireYieldsDescription;
 pub use crate::rules::jsdoc::require_yields_type::RequireYieldsType as JsdocRequireYieldsType;
 pub use crate::rules::jsx_a11y::alt_text::AltText as JsxA11YAltText;
 pub use crate::rules::jsx_a11y::anchor_ambiguous_text::AnchorAmbiguousText as JsxA11YAnchorAmbiguousText;
@@ -1523,6 +1524,7 @@ pub enum RuleEnum {
     JsdocRequireThrowsDescription(JsdocRequireThrowsDescription),
     JsdocRequireThrowsType(JsdocRequireThrowsType),
     JsdocRequireYields(JsdocRequireYields),
+    JsdocRequireYieldsDescription(JsdocRequireYieldsDescription),
     JsdocRequireYieldsType(JsdocRequireYieldsType),
     PromiseAlwaysReturn(PromiseAlwaysReturn),
     PromiseAvoidNew(PromiseAvoidNew),
@@ -2431,7 +2433,8 @@ const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = JSDOC_REQUIRE_RETURNS_DESCRIPTION_I
 const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = JSDOC_REQUIRE_RETURNS_TYPE_ID + 1usize;
 const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = JSDOC_REQUIRE_THROWS_DESCRIPTION_ID + 1usize;
 const JSDOC_REQUIRE_YIELDS_ID: usize = JSDOC_REQUIRE_THROWS_TYPE_ID + 1usize;
-const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = JSDOC_REQUIRE_YIELDS_ID + 1usize;
+const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = JSDOC_REQUIRE_YIELDS_ID + 1usize;
+const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID + 1usize;
 const PROMISE_ALWAYS_RETURN_ID: usize = JSDOC_REQUIRE_YIELDS_TYPE_ID + 1usize;
 const PROMISE_AVOID_NEW_ID: usize = PROMISE_ALWAYS_RETURN_ID + 1usize;
 const PROMISE_CATCH_OR_RETURN_ID: usize = PROMISE_AVOID_NEW_ID + 1usize;
@@ -3376,6 +3379,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JSDOC_REQUIRE_THROWS_DESCRIPTION_ID,
             Self::JsdocRequireThrowsType(_) => JSDOC_REQUIRE_THROWS_TYPE_ID,
             Self::JsdocRequireYields(_) => JSDOC_REQUIRE_YIELDS_ID,
+            Self::JsdocRequireYieldsDescription(_) => JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID,
             Self::JsdocRequireYieldsType(_) => JSDOC_REQUIRE_YIELDS_TYPE_ID,
             Self::PromiseAlwaysReturn(_) => PROMISE_ALWAYS_RETURN_ID,
             Self::PromiseAvoidNew(_) => PROMISE_AVOID_NEW_ID,
@@ -4308,6 +4312,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::NAME,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::NAME,
             Self::JsdocRequireYields(_) => JsdocRequireYields::NAME,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::NAME,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::NAME,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::NAME,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::NAME,
@@ -5280,6 +5285,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::CATEGORY,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::CATEGORY,
             Self::JsdocRequireYields(_) => JsdocRequireYields::CATEGORY,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::CATEGORY,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::CATEGORY,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::CATEGORY,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::CATEGORY,
@@ -6223,6 +6229,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::FIX,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::FIX,
             Self::JsdocRequireYields(_) => JsdocRequireYields::FIX,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::FIX,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::FIX,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::FIX,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::FIX,
@@ -7366,6 +7373,9 @@ impl RuleEnum {
             }
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::documentation(),
             Self::JsdocRequireYields(_) => JsdocRequireYields::documentation(),
+            Self::JsdocRequireYieldsDescription(_) => {
+                JsdocRequireYieldsDescription::documentation()
+            }
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::documentation(),
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::documentation(),
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::documentation(),
@@ -9524,6 +9534,10 @@ impl RuleEnum {
                 .or_else(|| JsdocRequireThrowsType::schema(generator)),
             Self::JsdocRequireYields(_) => JsdocRequireYields::config_schema(generator)
                 .or_else(|| JsdocRequireYields::schema(generator)),
+            Self::JsdocRequireYieldsDescription(_) => {
+                JsdocRequireYieldsDescription::config_schema(generator)
+                    .or_else(|| JsdocRequireYieldsDescription::schema(generator))
+            }
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::config_schema(generator)
                 .or_else(|| JsdocRequireYieldsType::schema(generator)),
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::config_schema(generator)
@@ -10575,6 +10589,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => "jsdoc",
             Self::JsdocRequireThrowsType(_) => "jsdoc",
             Self::JsdocRequireYields(_) => "jsdoc",
+            Self::JsdocRequireYieldsDescription(_) => "jsdoc",
             Self::JsdocRequireYieldsType(_) => "jsdoc",
             Self::PromiseAlwaysReturn(_) => "promise",
             Self::PromiseAvoidNew(_) => "promise",
@@ -12922,6 +12937,9 @@ impl RuleEnum {
             Self::JsdocRequireYields(_) => {
                 Ok(Self::JsdocRequireYields(JsdocRequireYields::from_configuration(value)?))
             }
+            Self::JsdocRequireYieldsDescription(_) => Ok(Self::JsdocRequireYieldsDescription(
+                JsdocRequireYieldsDescription::from_configuration(value)?,
+            )),
             Self::JsdocRequireYieldsType(_) => {
                 Ok(Self::JsdocRequireYieldsType(JsdocRequireYieldsType::from_configuration(value)?))
             }
@@ -14024,6 +14042,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(rule) => rule.to_configuration(),
             Self::JsdocRequireThrowsType(rule) => rule.to_configuration(),
             Self::JsdocRequireYields(rule) => rule.to_configuration(),
+            Self::JsdocRequireYieldsDescription(rule) => rule.to_configuration(),
             Self::JsdocRequireYieldsType(rule) => rule.to_configuration(),
             Self::PromiseAlwaysReturn(rule) => rule.to_configuration(),
             Self::PromiseAvoidNew(rule) => rule.to_configuration(),
@@ -14852,6 +14871,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run(node, ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run(node, ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run(node, ctx),
                 Self::PromiseAvoidNew(rule) => rule.run(node, ctx),
@@ -15673,6 +15693,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run(node, ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run(node, ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run(node, ctx),
                 Self::PromiseAvoidNew(rule) => rule.run(node, ctx),
@@ -16501,6 +16522,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYields(rule) => rule.run_once(ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_once(ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run_once(ctx),
                 Self::PromiseAvoidNew(rule) => rule.run_once(ctx),
@@ -17322,6 +17344,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYields(rule) => rule.run_once(ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_once(ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run_once(ctx),
                 Self::PromiseAvoidNew(rule) => rule.run_once(ctx),
@@ -18375,6 +18398,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::PromiseAvoidNew(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19450,6 +19474,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::PromiseAvoidNew(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20301,6 +20326,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(rule) => rule.should_run(ctx),
             Self::JsdocRequireThrowsType(rule) => rule.should_run(ctx),
             Self::JsdocRequireYields(rule) => rule.should_run(ctx),
+            Self::JsdocRequireYieldsDescription(rule) => rule.should_run(ctx),
             Self::JsdocRequireYieldsType(rule) => rule.should_run(ctx),
             Self::PromiseAlwaysReturn(rule) => rule.should_run(ctx),
             Self::PromiseAvoidNew(rule) => rule.should_run(ctx),
@@ -21437,6 +21463,9 @@ impl RuleEnum {
             }
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::IS_TSGOLINT_RULE,
             Self::JsdocRequireYields(_) => JsdocRequireYields::IS_TSGOLINT_RULE,
+            Self::JsdocRequireYieldsDescription(_) => {
+                JsdocRequireYieldsDescription::IS_TSGOLINT_RULE
+            }
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::IS_TSGOLINT_RULE,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::IS_TSGOLINT_RULE,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::IS_TSGOLINT_RULE,
@@ -22451,6 +22480,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::VERSION,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::VERSION,
             Self::JsdocRequireYields(_) => JsdocRequireYields::VERSION,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::VERSION,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::VERSION,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::VERSION,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::VERSION,
@@ -23468,6 +23498,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::HAS_CONFIG,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::HAS_CONFIG,
             Self::JsdocRequireYields(_) => JsdocRequireYields::HAS_CONFIG,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::HAS_CONFIG,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::HAS_CONFIG,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::HAS_CONFIG,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::HAS_CONFIG,
@@ -24312,6 +24343,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(rule) => rule.types_info(),
             Self::JsdocRequireThrowsType(rule) => rule.types_info(),
             Self::JsdocRequireYields(rule) => rule.types_info(),
+            Self::JsdocRequireYieldsDescription(rule) => rule.types_info(),
             Self::JsdocRequireYieldsType(rule) => rule.types_info(),
             Self::PromiseAlwaysReturn(rule) => rule.types_info(),
             Self::PromiseAvoidNew(rule) => rule.types_info(),
@@ -25130,6 +25162,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(rule) => rule.run_info(),
             Self::JsdocRequireThrowsType(rule) => rule.run_info(),
             Self::JsdocRequireYields(rule) => rule.run_info(),
+            Self::JsdocRequireYieldsDescription(rule) => rule.run_info(),
             Self::JsdocRequireYieldsType(rule) => rule.run_info(),
             Self::PromiseAlwaysReturn(rule) => rule.run_info(),
             Self::PromiseAvoidNew(rule) => rule.run_info(),
@@ -26074,6 +26107,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsdocRequireThrowsDescription(JsdocRequireThrowsDescription::default()),
         RuleEnum::JsdocRequireThrowsType(JsdocRequireThrowsType::default()),
         RuleEnum::JsdocRequireYields(JsdocRequireYields::default()),
+        RuleEnum::JsdocRequireYieldsDescription(JsdocRequireYieldsDescription::default()),
         RuleEnum::JsdocRequireYieldsType(JsdocRequireYieldsType::default()),
         RuleEnum::PromiseAlwaysReturn(PromiseAlwaysReturn::default()),
         RuleEnum::PromiseAvoidNew(PromiseAvoidNew::default()),
