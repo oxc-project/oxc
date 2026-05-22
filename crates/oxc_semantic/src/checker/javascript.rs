@@ -28,7 +28,9 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
 
     let mut available_names: Option<Vec<&str>> = None;
     for stmt in &program.body {
-        if let Statement::ExportNamedDeclaration(decl) = stmt {
+        if let Statement::ExportNamedDeclaration(decl) = stmt
+            && decl.source.is_none()
+        {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
