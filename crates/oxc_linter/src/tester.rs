@@ -26,6 +26,7 @@ use crate::{
     service::RuntimeFileSystem,
     utils::read_to_arena_str,
 };
+
 /// Rules with known fixer issues where the fix doesn't fully resolve the fix,
 /// or expect multiple diagnostic (including fixes).
 /// These rules are excluded from the fixer validation check until their fixers are corrected.
