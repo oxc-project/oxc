@@ -275,7 +275,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
 
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
-    if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
+    if matches!(ident.name.as_str(), "arguments" | "eval") && ctx.strict_mode() {
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
             match node_kind {
                 // Only check for actual assignment contexts, not member expression access
