@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, ObjectExpression, ObjectPropertyKind},
@@ -7,7 +9,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
 
 use crate::{
     AstNode,
@@ -73,10 +74,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoComputedPropertiesInData {
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_extension().is_some_and(|ext| ext == "vue")
-    }
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::StaticMemberExpression(member) = node.kind() else { return };
         if !is_this_object(&member.object, ctx) {
@@ -90,6 +87,10 @@ impl Rule for NoComputedPropertiesInData {
         }
 
         ctx.diagnostic(no_computed_properties_in_data_diagnostic(member.span()));
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.file_extension().is_some_and(|ext| ext == "vue")
     }
 }
 
