@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-expose-after-await): `expose` is forbidden after an `await` expression.
+   ╭─[no_expose_after_await.tsx:6:23]
+ 5 │                       await doSomething()
+ 6 │                       expose({ /* ... */ })
+   ·                       ─────────────────────
+ 7 │                     }
+   ╰────
+  help: `expose` should be called synchronously in `setup()` (or `defineExpose()` in `<script setup>`). Move the call before the first `await`.
+
+  ⚠ vue(no-expose-after-await): `expose` is forbidden after an `await` expression.
+   ╭─[no_expose_after_await.tsx:6:23]
+ 5 │                       await doSomething()
+ 6 │                       ctx.expose({ /* ... */ })
+   ·                       ─────────────────────────
+ 7 │                     }
+   ╰────
+  help: `expose` should be called synchronously in `setup()` (or `defineExpose()` in `<script setup>`). Move the call before the first `await`.
+
+  ⚠ vue(no-expose-after-await): `defineExpose` is forbidden after an `await` expression.
+   ╭─[no_expose_after_await.tsx:4:19]
+ 3 │                   await doSomething()
+ 4 │                   defineExpose({ /* ... */ })
+   ·                   ───────────────────────────
+ 5 │                   </script>
+   ╰────
+  help: `expose` should be called synchronously in `setup()` (or `defineExpose()` in `<script setup>`). Move the call before the first `await`.
