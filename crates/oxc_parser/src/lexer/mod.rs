@@ -191,11 +191,8 @@ impl<'a, C: Config> Lexer<'a, C> {
         };
         // Skip `self.tokens.len()` when tokens are statically disabled (`NoTokensLexerConfig`).
         // In that case `self.tokens` is always empty, so saving/restoring its length is dead work.
-        let tokens_len = if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
-            0
-        } else {
-            self.tokens.len()
-        };
+        let tokens_len =
+            if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() { 0 } else { self.tokens.len() };
         LexerCheckpoint {
             source_position: self.source.position(),
             token: self.token,
@@ -214,11 +211,8 @@ impl<'a, C: Config> Lexer<'a, C> {
         } else {
             ErrorSnapshot::Full(self.errors.clone())
         };
-        let tokens_len = if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
-            0
-        } else {
-            self.tokens.len()
-        };
+        let tokens_len =
+            if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() { 0 } else { self.tokens.len() };
         LexerCheckpoint {
             source_position: self.source.position(),
             token: self.token,
