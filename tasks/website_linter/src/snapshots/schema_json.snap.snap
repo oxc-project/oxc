@@ -1,5 +1,6 @@
 ---
 source: tasks/website_linter/src/json_schema.rs
+assertion_line: 23
 expression: json
 ---
 {
@@ -7191,6 +7192,9 @@ expression: json
         },
         "unicorn/prefer-event-target": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/prefer-export-from": {
+          "$ref": "#/definitions/DummyRule"
         },
         "unicorn/prefer-global-this": {
           "$ref": "#/definitions/RuleNoConfig"
