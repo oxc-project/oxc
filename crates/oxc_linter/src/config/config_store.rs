@@ -1,9 +1,10 @@
 use std::{
+    hash::BuildHasherDefault,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
 
 use crate::{
     AllowWarnDeny,
@@ -288,6 +289,18 @@ pub struct ConfigStore {
     base: Config,
     nested_configs: FxHashMap<PathBuf, Config>,
     external_plugin_store: Arc<ExternalPluginStore>,
+
+    /// Cache from directory path to the key of the nearest enclosing config in
+    /// `nested_configs`,
+    /// or `None` when the base config applies.
+    ///
+    /// `get_nearest_config` walks parent directories until it finds a match
+    /// in `nested_configs`.
+    /// For large projects with many files sharing the same directory, this
+    /// avoids repeating the walk-up for every file. The map is populated lazily
+    /// on first access per directory.
+    dir_config_cache:
+        Option<papaya::HashMap<PathBuf, Option<PathBuf>, BuildHasherDefault<FxHasher>>>,
 }
 
 impl ConfigStore {
@@ -296,10 +309,22 @@ impl ConfigStore {
         nested_configs: FxHashMap<PathBuf, Config>,
         external_plugin_store: ExternalPluginStore,
     ) -> Self {
+        // Only allocate the directory cache when nested configs exist ...
+        let dir_config_cache = if nested_configs.is_empty() {
+            None
+        } else {
+            Some(
+                papaya::HashMap::builder()
+                    .hasher(BuildHasherDefault::default())
+                    .build(),
+            )
+        };
+
         Self {
             base: base_config,
             nested_configs,
             external_plugin_store: Arc::new(external_plugin_store),
+            dir_config_cache,
         }
     }
 
@@ -406,16 +431,35 @@ impl ConfigStore {
     }
 
     fn get_nearest_config(&self, path: &Path) -> Option<&Config> {
-        // TODO(perf): should we cache the computed nearest config for every directory,
-        // so we don't have to recompute it for every file?
-        let mut current = path.parent();
-        while let Some(dir) = current {
-            if let Some(config) = self.nested_configs.get(dir) {
-                return Some(config);
-            }
-            current = dir.parent();
+        let dir = path.parent()?;
+
+        let Some(cache) = &self.dir_config_cache else {
+            // No nested configs ...
+            return None;
+        };
+
+        // Fast path: directory already resolved.
+        if let Some(cached_key) = cache.pin().get(dir) {
+            return cached_key.as_deref().and_then(|k| self.nested_configs.get(k));
         }
-        None
+
+        // Slow path: walk parent directories until a nested config is found.
+        let found_key = {
+            let mut current = Some(dir);
+            let mut result = None;
+
+            while let Some(d) = current {
+                if self.nested_configs.contains_key(d) {
+                    result = Some(d.to_path_buf());
+                    break;
+                }
+                current = d.parent();
+            }
+            result
+        };
+
+        cache.pin().insert(dir.to_path_buf(), found_key.clone());
+        found_key.as_deref().and_then(|k| self.nested_configs.get(k))
     }
 
     pub(crate) fn resolve_plugin_rule_names(
