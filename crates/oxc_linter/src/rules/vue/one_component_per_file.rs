@@ -1,15 +1,15 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression},
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{VueComponentObjectKind, vue_component_options_kind},
+    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule,
+    utils::is_vue_component_options_call,
 };
 
 fn one_component_per_file_diagnostic(span: Span) -> OxcDiagnostic {
@@ -52,37 +52,57 @@ declare_oxc_lint!(
 );
 
 impl Rule for OneComponentPerFile {
-    fn run_once(&self, ctx: &LintContext) {
-        let component_spans: Vec<Span> = ctx
-            .nodes()
-            .iter()
-            .filter(|node| matches!(node.kind(), AstKind::ObjectExpression(_)))
-            .filter_map(|node| match vue_component_options_kind(node, ctx) {
-                Some(VueComponentObjectKind::Export) => Some(node.kind().span()),
-                Some(VueComponentObjectKind::Definition) if !is_mixin_definition(node, ctx) => {
-                    Some(node.kind().span())
-                }
-                _ => None,
-            })
-            .collect();
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::Program(program) = node.kind() else {
+            return;
+        };
 
-        if component_spans.len() > 1 {
-            for span in component_spans {
-                ctx.diagnostic(one_component_per_file_diagnostic(span));
+        let mut visitor = ComponentCollector {
+            component_spans: Vec::new(),
+            is_vue_file: ctx.file_extension().is_some_and(|ext| ext == "vue"),
+            is_script_setup: ctx.frameworks_options() == FrameworkOptions::VueSetup,
+        };
+        visitor.visit_program(program);
+
+        if visitor.component_spans.len() > 1 {
+            for span in &visitor.component_spans {
+                ctx.diagnostic(one_component_per_file_diagnostic(*span));
             }
         }
     }
 }
 
-/// Whether the `Definition`-kind options object is the argument of a `*.mixin(...)`
-/// call — these are mixins, not components, so they shouldn't count toward the
-/// "more than one component" check.
-fn is_mixin_definition(node: &crate::AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    ctx.nodes().ancestors(node.id()).any(
-        |ancestor| matches!(ancestor.kind(), AstKind::CallExpression(call) if is_mixin_call(call)),
-    )
+struct ComponentCollector {
+    component_spans: Vec<Span>,
+    is_vue_file: bool,
+    is_script_setup: bool,
 }
 
+impl<'a> Visit<'a> for ComponentCollector {
+    fn visit_call_expression(&mut self, call: &CallExpression<'a>) {
+        if is_vue_component_options_call(call)
+            && !is_mixin_call(call)
+            && let Some(last_arg) = call.arguments.last().and_then(|arg| arg.as_expression())
+            && matches!(last_arg, Expression::ObjectExpression(_))
+        {
+            self.component_spans.push(last_arg.span());
+        }
+        walk::walk_call_expression(self, call);
+    }
+
+    fn visit_export_default_declaration(&mut self, export: &ExportDefaultDeclaration<'a>) {
+        if self.is_vue_file
+            && !self.is_script_setup
+            && let ExportDefaultDeclarationKind::ObjectExpression(obj) = &export.declaration
+        {
+            self.component_spans.push(obj.span);
+        }
+        walk::walk_export_default_declaration(self, export);
+    }
+}
+
+/// Whether the call is a `*.mixin(...)` — these are mixins, not components,
+/// so they shouldn't count toward the "more than one component" check.
 fn is_mixin_call(call: &CallExpression<'_>) -> bool {
     let Some(member_expr) = call.callee.get_member_expr() else {
         return false;
