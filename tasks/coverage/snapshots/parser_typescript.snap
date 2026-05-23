@@ -21019,11 +21019,27 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·      ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.5.ts:2:14]
+ 1 │ // await in exported class name should fail
+ 2 │ export class await {
+   ·              ─────
+ 3 │ }
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.5.ts:2:14]
  1 │ // await in exported class name should fail
  2 │ export class await {
    ·              ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.6.ts:2:17]
+ 1 │ // await in exported function name should fail
+ 2 │ export function await() {
+   ·                 ─────
  3 │ }
    ╰────
 
