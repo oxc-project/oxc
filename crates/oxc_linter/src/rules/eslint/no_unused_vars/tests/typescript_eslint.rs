@@ -1472,6 +1472,17 @@ fn test() {
             ",
             None,
         ),
+        (
+            "
+        const foo = { KEY: 'token' };
+        declare function Inject(token: unknown): ParameterDecorator;
+
+        export class C {
+          constructor(@Inject(foo.KEY) private readonly foo: number) {}
+        }
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![

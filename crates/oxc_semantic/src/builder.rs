@@ -656,6 +656,38 @@ impl<'a> SemanticBuilder<'a> {
     ) {
         self.scoping.add_symbol_redeclaration(symbol_id, flags, self.current_node_id, span);
     }
+
+    fn visit_parameter_decorators(&mut self, decorators: &oxc_allocator::Vec<'a, Decorator<'a>>) {
+        if decorators.is_empty() {
+            return;
+        }
+
+        // TypeScript resolves parameter decorators in the enclosing class scope,
+        // skipping the constructor scope and any earlier parameters that may
+        // shadow outer names:
+        //
+        // ```ts
+        // constructor(
+        //   @Inject(foo.KEY) private readonly foo: number,
+        //   @Inject(foo.KEY) private readonly foo2: number,
+        // ) {}
+        // ```
+        //
+        // Both `foo` references should resolve to the outer binding, not to the
+        // first parameter. Temporarily swap `current_scope_id` to the parent
+        // scope while visiting the decorator, then restore it.
+        //
+        // Mirrors the `Decorator` case in TypeScript's `resolveName`:
+        // <https://github.com/microsoft/TypeScript/blob/0105bbb63689372f2cbeec7c884c27906ac0ef7f/src/compiler/utilities.ts#L11772-L11800>.
+        let parent_scope_id = self
+            .scoping
+            .scope_parent_id(self.current_scope_id)
+            .expect("parameter decorators should always be visited from a function scope");
+        let function_scope_id = self.current_scope_id;
+        self.current_scope_id = parent_scope_id;
+        self.visit_decorators(decorators);
+        self.current_scope_id = function_scope_id;
+    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
@@ -2360,7 +2392,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         param.bind(self);
         self.visit_span(&param.span);
-        self.visit_decorators(&param.decorators);
+        self.visit_parameter_decorators(&param.decorators);
         self.visit_binding_pattern(&param.pattern);
         if let Some(type_annotation) = &param.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
@@ -2376,7 +2408,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         param.bind(self);
         self.visit_span(&param.span);
-        self.visit_decorators(&param.decorators);
+        self.visit_parameter_decorators(&param.decorators);
         self.visit_binding_rest_element(&param.rest);
         if let Some(type_annotation) = &param.type_annotation {
             self.visit_ts_type_annotation(type_annotation);

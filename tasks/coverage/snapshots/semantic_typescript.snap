@@ -5445,14 +5445,11 @@ rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
 after transform: SymbolId(10): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 198, end: 199 }
-Symbol reference IDs mismatch for "y":
-after transform: SymbolId(6): [ReferenceId(5)]
-rebuilt        : SymbolId(6): []
 Reference symbol mismatch for "y":
 after transform: SymbolId(0) "y"
 rebuilt        : <None>
 Reference symbol mismatch for "y":
-after transform: SymbolId(6) "y"
+after transform: SymbolId(0) "y"
 rebuilt        : <None>
 Reference symbol mismatch for "y":
 after transform: SymbolId(0) "y"
@@ -20287,7 +20284,7 @@ Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(5))
+after transform: ScopeId(6): Some(ScopeId(4))
 rebuilt        : ScopeId(8): Some(ScopeId(0))
 Symbol reference IDs mismatch for "C1":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(14)]
@@ -20422,19 +20419,19 @@ Scope flags mismatch:
 after transform: ScopeId(20): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
-after transform: ScopeId(20): Some(ScopeId(19))
+after transform: ScopeId(20): Some(ScopeId(2))
 rebuilt        : ScopeId(23): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(22): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
-after transform: ScopeId(22): Some(ScopeId(21))
+after transform: ScopeId(22): Some(ScopeId(2))
 rebuilt        : ScopeId(24): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
+after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(26): Some(ScopeId(0))
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 20, end: 21 }
