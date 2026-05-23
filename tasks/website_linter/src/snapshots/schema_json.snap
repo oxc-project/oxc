@@ -2597,6 +2597,9 @@ expression: json
         "vue/no-arrow-functions-in-watch": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/no-computed-properties-in-data": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/no-deprecated-data-object-declaration": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -2619,6 +2622,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "vue/no-export-in-script-setup": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/no-expose-after-await": {
           "$ref": "#/definitions/DummyRule"
         },
         "vue/no-import-compiler-macros": {

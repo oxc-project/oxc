@@ -7,84 +7,84 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = /[👍]/
    ·           ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\uD83D\uDC4D]/
    ·           ────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\uD83D\uDC4D-\uffff]/
    ·           ────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👍]/
    ·           ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:17]
  1 │ var r = /before[\uD83D\uDC4D]after/
    ·                 ────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:17]
  1 │ var r = /[before\uD83D\uDC4Dafter]/
    ·                 ────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:17]
  1 │ var r = /\uDC4D[\uD83D\uDC4D]/
    ·                 ────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👍]/
    ·           ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👍]\a/
    ·           ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:13]
  1 │ var r = /\a[👍]\a/
    ·             ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:15]
  1 │ var r = /(?<=[👍])/
    ·               ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:15]
  1 │ var r = /(?<=[👍])/
    ·               ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
@@ -161,14 +161,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = /[👶🏻]/
    ·           ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:15]
  1 │ var r = /[👶🏻]/
    ·             ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
@@ -203,28 +203,28 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = /[🇯🇵]/
    ·           ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:15]
  1 │ var r = /[🇯🇵]/
    ·            ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[🇯🇵]/i
    ·           ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:15]
  1 │ var r = /[🇯🇵]/i
    ·            ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
@@ -266,21 +266,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = /[👨‍👩‍👦]/
    ·           ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:18]
  1 │ var r = /[👨‍👩‍👦]/
    ·             ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:25]
  1 │ var r = /[👨‍👩‍👦]/
    ·             ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
@@ -441,21 +441,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = RegExp("[👍]", "")
    ·                  ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👍]", "")
    ·                      ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp('[👍]', ``)
    ·                      ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:2:21]
@@ -463,7 +463,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                             [👍]`)
    ·                              ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:2:21]
@@ -486,91 +486,91 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const flags = ""; var r = new RegExp("[👍]", flags)
    ·                                        ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:18]
  1 │ var r = RegExp("[\\uD83D\\uDC4D]", "")
    ·                  ──────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:24]
  1 │ var r = RegExp("before[\\uD83D\\uDC4D]after", "")
    ·                        ──────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:24]
  1 │ var r = RegExp("[before\\uD83D\\uDC4Dafter]", "")
    ·                        ──────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:28]
  1 │ var r = RegExp("\t\t\t👍[👍]")
    ·                          ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:28]
  1 │ var r = new RegExp("\u1234[\\uD83D\\uDC4D]")
    ·                            ──────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:40]
  1 │ var r = new RegExp("\\u1234\\u5678👎[👍]")
    ·                                      ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:40]
  1 │ var r = new RegExp("\\u1234\\u5678👍[👍]")
    ·                                      ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👍]", "")
    ·                      ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👍]", "")
    ·                      ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👍]\\a", "")
    ·                      ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:27]
  1 │ var r = new RegExp("/(?<=[👍])", "")
    ·                           ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:27]
  1 │ var r = new RegExp("/(?<=[👍])", "")
    ·                           ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
@@ -675,14 +675,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = new RegExp("[👶🏻]", "")
    ·                      ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:26]
  1 │ var r = new RegExp("[👶🏻]", "")
    ·                        ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
@@ -710,126 +710,126 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = RegExp(`            👍[👍]`)
    ·                             ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:28]
  1 │ var r = RegExp(`\t\t\t👍[👍]`)
    ·                          ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[🇯🇵]", "")
    ·                      ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:26]
  1 │ var r = new RegExp("[🇯🇵]", "")
    ·                       ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[🇯🇵]", "i")
    ·                      ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:26]
  1 │ var r = new RegExp("[🇯🇵]", "i")
    ·                       ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp('[🇯🇵]', `i`)
    ·                      ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:26]
  1 │ var r = new RegExp('[🇯🇵]', `i`)
    ·                       ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[🇯🇵]")
    ·                      ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:26]
  1 │ var r = new RegExp("[🇯🇵]")
    ·                       ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[🇯🇵]",)
    ·                      ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:26]
  1 │ var r = new RegExp("[🇯🇵]",)
    ·                       ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:23]
  1 │ var r = new RegExp(("[🇯🇵]"))
    ·                       ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:27]
  1 │ var r = new RegExp(("[🇯🇵]"))
    ·                        ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:24]
  1 │ var r = new RegExp((("[🇯🇵]")))
    ·                        ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:28]
  1 │ var r = new RegExp((("[🇯🇵]")))
    ·                         ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:23]
  1 │ var r = new RegExp(("[🇯🇵]"),)
    ·                       ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:27]
  1 │ var r = new RegExp(("[🇯🇵]"),)
    ·                        ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
@@ -871,21 +871,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = new RegExp("[👨‍👩‍👦]", "")
    ·                      ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:29]
  1 │ var r = new RegExp("[👨‍👩‍👦]", "")
    ·                        ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:36]
  1 │ var r = new RegExp("[👨‍👩‍👦]", "")
    ·                        ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
@@ -1018,14 +1018,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = new globalThis.RegExp("[🇯🇵]", "")
    ·                                 ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:37]
  1 │ var r = new globalThis.RegExp("[🇯🇵]", "")
    ·                                  ─
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:33]
@@ -1046,49 +1046,49 @@ source: crates/oxc_linter/src/tester.rs
  1 │ /[\ud83d\u{dc4d}]/u
    ·   ──────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\u{d83d}\udc4d]/u
    ·   ──────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\u{d83d}\u{dc4d}]/u
    ·   ────────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\uD83D\u{DC4d}]/u
    ·   ──────────────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp(/[👍]/)
    ·          ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp(/[👍]/, 'i');
    ·          ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp(/[👍]/, 'g');
    ·          ──
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:17]
@@ -1165,7 +1165,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ /[\👍]/
    ·   ───
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:10]
@@ -1179,14 +1179,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ RegExp('[\👍]')
    ·          ───
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp('[\\👍]')
    ·          ────
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:10]
@@ -1200,7 +1200,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ RegExp(`[\👍]`) // Backslash + U+D83D + U+DC4D
    ·          ───
    ╰────
-  help: Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:3]

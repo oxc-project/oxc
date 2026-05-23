@@ -61,7 +61,7 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
     }
 
     if name.starts_with('f') {
-        ctx.diagnostic_with_fix(
+        ctx.diagnostic_with_suggestion(
             no_focused_tests_diagnostic(Span::sized(
                 call_expr.span.start,
                 u32::try_from(name.len()).unwrap_or(1),
@@ -74,7 +74,7 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
 
     let only_node = members.iter().find(|member| member.is_name_equal("only"));
     if let Some(only_node) = only_node {
-        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(only_node.span), |fixer| {
+        ctx.diagnostic_with_suggestion(no_focused_tests_diagnostic(only_node.span), |fixer| {
             let mut span = only_node.span.expand_left(1);
             if !matches!(only_node.element, MemberExpressionElement::IdentName(_)) {
                 span = span.expand_right(1);

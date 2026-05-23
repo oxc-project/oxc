@@ -1,4 +1,4 @@
-import { importJsConfig } from "@oxapps/shared";
+import { importJsConfig, loadViteConfigField } from "@oxapps/shared";
 import { getErrorMessage } from "./utils/utils.ts";
 import { DateNow, JSONStringify } from "./utils/globals.ts";
 
@@ -86,42 +86,18 @@ function validateConfigExtends(root: object): void {
  */
 async function resolveJsConfig(path: string, cacheKey: number): Promise<JsConfigResult> {
   const config = await importJsConfig(path, cacheKey);
-
-  if (!isObject(config)) {
-    throw new Error(`Configuration file must have a default export that is an object.`);
-  }
-  validateConfigExtends(config as object);
+  validateConfigExtends(config);
   return { path, config };
 }
 
-const VITE_OXLINT_CONFIG_FIELD = "lint";
-
 /**
  * Resolve a single Vite+ config path to a `JsConfigResult`.
- * Extracts the `.lint` field. Returns `null` config when missing (signals "skip").
+ * Extracts the `.lint` field via `vite-plus`. Returns `null` config when missing (signals "skip").
  */
-async function resolveVitePlusConfig(path: string, cacheKey: number): Promise<JsConfigResult> {
-  const config = await importJsConfig(path, cacheKey);
-
-  // NOTE: Vite configs may export a function via `defineConfig(() => ({ ... }))`,
-  // but we don't know the arguments to call the function.
-  // Treat non-object exports as "no config" and skip.
-  if (!isObject(config)) {
-    return { path, config: null };
-  }
-
-  const lintConfig = (config as Record<string, unknown>)[VITE_OXLINT_CONFIG_FIELD];
-  // NOTE: return `null` if `.lint` is missing which signals "skip" this
-  if (lintConfig === undefined) {
-    return { path, config: null };
-  }
-
-  if (!isObject(lintConfig)) {
-    throw new Error(
-      `The \`${VITE_OXLINT_CONFIG_FIELD}\` field in the default export must be an object.`,
-    );
-  }
-  validateConfigExtends(lintConfig as object);
+async function resolveVitePlusConfig(path: string): Promise<JsConfigResult> {
+  const lintConfig = await loadViteConfigField(path, "lint");
+  if (lintConfig === null) return { path, config: null };
+  validateConfigExtends(lintConfig);
   return { path, config: lintConfig };
 }
 
@@ -130,11 +106,10 @@ async function resolveVitePlusConfig(path: string, cacheKey: number): Promise<Js
  */
 async function loadConfigs(
   paths: string[],
-  resolver: (path: string, cacheKey: number) => Promise<JsConfigResult>,
+  resolver: (path: string) => Promise<JsConfigResult>,
 ): Promise<string> {
   try {
-    const cacheKey = DateNow();
-    const results = await Promise.allSettled(paths.map((path) => resolver(path, cacheKey)));
+    const results = await Promise.allSettled(paths.map(resolver));
 
     const successes: JsConfigResult[] = [];
     const errors: { path: string; error: string }[] = [];
@@ -168,7 +143,12 @@ export type ConfigLoader = (paths: string[]) => Promise<string>;
 /**
  * Load standard oxlint JS/TS config files in parallel.
  */
-export const loadJsConfigs: ConfigLoader = (paths) => loadConfigs(paths, resolveJsConfig);
+export const loadJsConfigs: ConfigLoader = (paths) => {
+  // Share one cache-busting key across the batch so that `?cache=<key>` is identical
+  // for every path resolved in this call (consistent reload semantics for LSP).
+  const cacheKey = DateNow();
+  return loadConfigs(paths, (path) => resolveJsConfig(path, cacheKey));
+};
 
 /**
  * Load Vite+ config files in parallel, extracting the `.lint` field from each.

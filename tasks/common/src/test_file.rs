@@ -66,6 +66,12 @@ impl TestFiles {
                 "https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js",
                 "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx",
                 "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
+                // Hand-written synthetic fixture covering every AST node, transformer plugin,
+                // minifier optimization, and semantic step in oxc — pinned to a revision so
+                // bench results are reproducible. To bump, update both call sites and re-run
+                // `cargo allocs`.
+                // <https://github.com/oxc-project/benchmark-files/blob/main/kitchen-sink.tsx>
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@ac5609a8fe9ae8d1a1de0f2ef251d562630c77e0/kitchen-sink.tsx",
             ].into_iter().map(TestFile::new).collect(),
         }
     }
@@ -85,6 +91,10 @@ impl TestFiles {
                 "https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js",
                 // TypeScript syntax (189K)
                 "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
+                // Hand-written synthetic fixture covering every AST node, transformer plugin,
+                // minifier optimization, and semantic step (~733K, ~21k lines, ~133k AST nodes)
+                // — pinned for reproducibility.
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@ac5609a8fe9ae8d1a1de0f2ef251d562630c77e0/kitchen-sink.tsx",
             ].into_iter().map(TestFile::new).collect(),
         }
     }

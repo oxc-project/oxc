@@ -444,11 +444,14 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        let symbol_id =
-            self.scoping.create_symbol(span, name, includes, scope_id, self.current_node_id);
-
-        self.scoping.add_binding(scope_id, name, symbol_id);
-        symbol_id
+        self.scoping.create_symbol_with_binding(
+            span,
+            name,
+            includes,
+            scope_id,
+            scope_id,
+            self.current_node_id,
+        )
     }
 
     /// Declare a new symbol on the current scope.
@@ -522,15 +525,14 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id = self.scoping.create_symbol(
+        self.scoping.create_symbol_with_binding(
             span,
             name,
             includes,
             self.current_scope_id,
+            scope_id,
             self.current_node_id,
-        );
-        self.scoping.insert_binding(scope_id, name, symbol_id);
-        symbol_id
+        )
     }
 
     /// Resolve all collected references by walking up the scope chain from each
@@ -623,19 +625,27 @@ impl<'a> SemanticBuilder<'a> {
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
     fn resolve_references_for_current_scope(&mut self) {
+        // Process in-place using a retain-style write-cursor — no temporary
+        // `Vec`. Reads each `(name, reference_id)` by value out of the flat
+        // list (both fields are `Copy`), so calling `walk_up_resolve_reference`
+        // (which takes `&mut self`) doesn't conflict with the index read.
         let checkpoint = self.unresolved_references_checkpoint;
-        let refs = self.unresolved_references.slice_from(checkpoint).to_vec();
-        if refs.is_empty() {
+        let end = self.unresolved_references.len();
+        if end <= checkpoint {
             return;
         }
-        self.unresolved_references.truncate(checkpoint);
-
-        for (name, reference_id) in refs {
+        let mut write_idx = checkpoint;
+        for read_idx in checkpoint..end {
+            let (name, reference_id) = self.unresolved_references.get(read_idx);
             if !self.walk_up_resolve_reference(name, reference_id) {
-                // Keep in the flat list — may resolve later via forward declarations
-                self.unresolved_references.push(name, reference_id);
+                // Keep in the flat list — may resolve later via forward declarations.
+                if write_idx != read_idx {
+                    self.unresolved_references.set(write_idx, name, reference_id);
+                }
+                write_idx += 1;
             }
         }
+        self.unresolved_references.truncate(write_idx);
     }
 
     pub(crate) fn add_redeclare_variable(

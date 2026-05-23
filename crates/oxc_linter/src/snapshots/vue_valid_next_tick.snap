@@ -241,3 +241,11 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     }
    ╰────
   help: Insert `()`
+
+  ⚠ vue(valid-next-tick): Await the Promise returned by `nextTick` or pass a callback function.
+   ╭─[valid_next_tick.tsx:4:26]
+ 3 │                       const vm = this
+ 4 │                       vm.$nextTick()
+   ·                          ─────────
+ 5 │                     }
+   ╰────

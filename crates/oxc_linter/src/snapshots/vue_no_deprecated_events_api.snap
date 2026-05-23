@@ -39,6 +39,33 @@ source: crates/oxc_linter/src/tester.rs
   help: Using external library instead, for example mitt.
 
   ⚠ vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:5:20]
+ 4 │                 const vm = (this)
+ 5 │                 vm.$on('start', foo)
+   ·                    ───
+ 6 │               }
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:6:20]
+ 5 │                 const vm = this as any
+ 6 │                 vm.$on('start', foo)
+   ·                    ───
+ 7 │               }
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
+   ╭─[no_deprecated_events_api.tsx:6:20]
+ 5 │                 const vm = this!
+ 6 │                 vm.$on('start', foo)
+   ·                    ───
+ 7 │               }
+   ╰────
+  help: Using external library instead, for example mitt.
+
+  ⚠ vue(no-deprecated-events-api): The Events api `$on`, `$off`, `$once` is deprecated.
    ╭─[no_deprecated_events_api.tsx:4:23]
  3 │               mounted() {
  4 │                 this?.$on('start')
