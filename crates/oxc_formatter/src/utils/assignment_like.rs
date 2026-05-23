@@ -361,24 +361,17 @@ impl<'a> AssignmentLike<'a, '_> {
                 {
                     let comments_in_span =
                         f.context().comments().comments_in_range(start, declaration.span.end);
-                    let mut previous_comment: Option<Comment> = None;
-
-                    for i in 0..comments_in_span.len() {
-                        let comment = comments_in_span[i];
-
-                        if !comment.preceded_by_newline()
-                            && (comment.followed_by_newline() && !comment.is_block()
-                                || (!comment.followed_by_newline()
-                                    && comment.span.end
-                                        <= declaration.type_annotation.span().start))
-                        {
-                            if previous_comment.is_some_and(Comment::is_line) {
-                                write!(f, [&line_suffix(&hard_line_break())]);
-                            }
-                            write!(f, [FormatTrailingComments::Comments(&comments_in_span[i..=i])]);
-                            previous_comment = Some(comment);
-                        }
-                    }
+                    let end_index = comments_in_span
+                        .iter()
+                        .take_while(|comment| {
+                            !comment.preceded_by_newline()
+                                && (comment.followed_by_newline() && !comment.is_block()
+                                    || (!comment.followed_by_newline()
+                                        && comment.span.end
+                                            <= declaration.type_annotation.span().start))
+                        })
+                        .count();
+                    write!(f, [FormatTrailingComments::Comments(&comments_in_span[..end_index])]);
                 } else {
                     format_left_trailing_comments(
                         start,
