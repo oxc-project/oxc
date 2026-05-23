@@ -1455,11 +1455,12 @@ dependencies = [
 [[package]]
 name = "napi"
 version = "3.9.0"
+source = "git+https://github.com/Boshen/napi-rs?branch=runtime-executor-feature#d3056bfb2f9d34f5cf824641ad591ab562e59b03"
 dependencies = [
  "bitflags",
  "ctor",
  "futures",
- "napi-build 2.3.2",
+ "napi-build 2.3.2 (git+https://github.com/Boshen/napi-rs?branch=runtime-executor-feature)",
  "napi-sys",
  "nohash-hasher",
  "pollster",
@@ -1472,12 +1473,13 @@ dependencies = [
 [[package]]
 name = "napi-build"
 version = "2.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c9c366d2c8c60b86fa632df75f745509b52f9128f91a6bad4c796e44abb505e1"
 
 [[package]]
 name = "napi-build"
 version = "2.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9c366d2c8c60b86fa632df75f745509b52f9128f91a6bad4c796e44abb505e1"
+source = "git+https://github.com/Boshen/napi-rs?branch=runtime-executor-feature#d3056bfb2f9d34f5cf824641ad591ab562e59b03"
 
 [[package]]
 name = "napi-derive"
@@ -1509,6 +1511,7 @@ dependencies = [
 [[package]]
 name = "napi-sys"
 version = "3.2.1"
+source = "git+https://github.com/Boshen/napi-rs?branch=runtime-executor-feature#d3056bfb2f9d34f5cf824641ad591ab562e59b03"
 dependencies = [
  "libloading",
 ]
