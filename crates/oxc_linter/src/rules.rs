@@ -480,8 +480,7 @@ pub(crate) mod react_perf {
 
 /// <https://github.com/sindresorhus/eslint-plugin-unicorn>
 pub(crate) mod unicorn {
-        pub mod prefer_export_from;
-pub mod catch_error_name;
+    pub mod catch_error_name;
     pub mod consistent_assert;
     pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;
@@ -569,6 +568,7 @@ pub mod catch_error_name;
     pub mod prefer_dom_node_remove;
     pub mod prefer_dom_node_text_content;
     pub mod prefer_event_target;
+    pub mod prefer_export_from;
     pub mod prefer_global_this;
     pub mod prefer_import_meta_properties;
     pub mod prefer_includes;
