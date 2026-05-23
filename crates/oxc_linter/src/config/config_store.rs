@@ -313,11 +313,7 @@ impl ConfigStore {
         let dir_config_cache = if nested_configs.is_empty() {
             None
         } else {
-            Some(
-                papaya::HashMap::builder()
-                    .hasher(BuildHasherDefault::default())
-                    .build(),
-            )
+            Some(papaya::HashMap::builder().hasher(BuildHasherDefault::default()).build())
         };
 
         Self {
