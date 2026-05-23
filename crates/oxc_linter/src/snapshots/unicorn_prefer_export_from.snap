@@ -1,0 +1,904 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ unicorn(prefer-export-from): export { default } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:28]
+ 1 │ import defaultExport from 'foo';
+ 2 │             export default defaultExport;
+   ·                            ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import defaultExport from 'foo';
+ 2 │                 export {defaultExport as default};
+   ·                         ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as named } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import defaultExport from 'foo';
+ 2 │                 export {defaultExport as named};
+   ·                         ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as variable } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:37]
+ 1 │ import defaultExport from 'foo';
+ 2 │             export const variable = defaultExport;
+   ·                                     ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:32]
+ 1 │ import {default as defaultExport} from 'foo';
+ 2 │                 export default defaultExport;
+   ·                                ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as named } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import {default as defaultExport} from 'foo';
+ 2 │                 export {defaultExport as named};
+   ·                         ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as named, default, default as variable } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:3:25]
+ 2 │                 defaultExport.bar = 1;
+ 3 │                 export {defaultExport as named};
+   ·                         ─────────────
+ 4 │                 export {defaultExport as default};
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as named, default, default as variable } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:4:25]
+ 3 │                 export {defaultExport as named};
+ 4 │                 export {defaultExport as default};
+   ·                         ─────────────
+ 5 │                 export const variable = defaultExport;
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as named, default, default as variable } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:5:41]
+ 4 │                 export {defaultExport as default};
+ 5 │                 export const variable = defaultExport;
+   ·                                         ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named as default } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:28]
+ 1 │ import {named} from 'foo';
+ 2 │             export default named;
+   ·                            ─────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named as default } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import {named} from 'foo';
+ 2 │                 export {named as default};
+   ·                         ─────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import {named} from 'foo';
+ 2 │                 export {named as named};
+   ·                         ─────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named as renamed } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import {named} from 'foo';
+ 2 │                 export {named as renamed};
+   ·                         ─────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named as variable } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:37]
+ 1 │ import {named} from 'foo';
+ 2 │             export const variable = named;
+   ·                                     ─────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named, named as default, named as variable } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:3:21]
+ 2 │             named.bar = 1;
+ 3 │             export {named as named};
+   ·                     ─────
+ 4 │             export {named as default};
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named, named as default, named as variable } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:4:21]
+ 3 │             export {named as named};
+ 4 │             export {named as default};
+   ·                     ─────
+ 5 │             export const variable = named;
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named, named as default, named as variable } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:5:37]
+ 4 │             export {named as default};
+ 5 │             export const variable = named;
+   ·                                     ─────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as namespace from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import * as namespace from 'foo';
+ 2 │             export {namespace as namespace};
+   ·                     ─────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as renamed from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import * as namespace from 'foo';
+ 2 │             export {namespace as renamed};
+   ·                     ─────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as variable from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:37]
+ 1 │ import * as namespace from 'foo';
+ 2 │             export const variable = namespace;
+   ·                                     ─────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as named from 'foo';
+  │ export * as variable from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:3:21]
+ 2 │             namespace.bar = 1;
+ 3 │             export {namespace as named};
+   ·                     ─────────
+ 4 │             export {namespace as default};
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as named from 'foo';
+  │ export * as variable from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:5:37]
+ 4 │             export {namespace as default};
+ 5 │             export const variable = namespace;
+   ·                                     ─────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named1 } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {named1, named2} from 'foo';
+ 2 │             export {named1};
+   ·                     ──────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as defaultExport } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import defaultExport, {named} from 'foo';
+ 2 │             export {defaultExport};
+   ·                     ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import defaultExport, {named} from 'foo';
+ 2 │             export {named};
+   ·                     ─────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as defaultExport } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import defaultExport, * as namespace from 'foo';
+ 2 │             export {defaultExport};
+   ·                     ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import * as foo from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │             export * as bar from 'foo';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import * as foo from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │             export {bar} from 'foo';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import * as foo from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │             export {} from 'foo';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import * as foo from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │             export * from 'foo';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import foo from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │             export * as bar from 'foo';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import foo from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │             export {bar} from 'foo';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import foo from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │             export {bar,} from 'foo';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import foo from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │             export {} from 'foo';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import foo from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │             export * from 'foo';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named1, named2 } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import {named1, named2} from 'foo';
+ 2 │                 export {named1, named2};
+   ·                         ──────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named1, named2 } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:33]
+ 1 │ import {named1, named2} from 'foo';
+ 2 │                 export {named1, named2};
+   ·                                 ──────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named as default, named } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import {named} from 'foo';
+ 2 │                 export {named as default, named};
+   ·                         ─────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named as default, named } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:43]
+ 1 │ import {named} from 'foo';
+ 2 │                 export {named as default, named};
+   ·                                           ─────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named, named as renamed } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import {named, named as renamed} from 'foo';
+ 2 │                 export {named, renamed};
+   ·                         ─────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { named, named as renamed } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:32]
+ 1 │ import {named, named as renamed} from 'foo';
+ 2 │                 export {named, renamed};
+   ·                                ───────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as defaultExport, named1 as default, named2 } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:4:25]
+ 3 │                 export {named2};
+ 4 │                 export {defaultExport};
+   ·                         ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as defaultExport, named1 as default, named2 } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import defaultExport, {named1, named2} from 'foo';
+ 2 │                 export {named1 as default};
+   ·                         ──────
+ 3 │                 export {named2};
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default as defaultExport, named1 as default, named2 } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:3:25]
+ 2 │                 export {named1 as default};
+ 3 │                 export {named2};
+   ·                         ──────
+ 4 │                 export {defaultExport};
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:3:18]
+ 2 │         import * as bar from 'foo';
+ 3 │          export {foo, bar};
+   ·                  ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as bar from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:3:23]
+ 2 │         import * as bar from 'foo';
+ 3 │          export {foo, bar};
+   ·                       ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
+  │ export * as bar from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import * as foo from 'foo';
+ 2 │                 export {foo, foo as bar};
+   ·                         ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
+  │ export * as bar from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:30]
+ 1 │ import * as foo from 'foo';
+ 2 │                 export {foo, foo as bar};
+   ·                              ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:3:25]
+ 2 │         export * from 'foo';
+ 3 │          export default defaultExport;
+   ·                         ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:4:28]
+ 3 │             export * from 'foo';
+ 4 │             export default defaultExport;
+   ·                            ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default } from './foo.js';
+  │ 
+   ╭─[prefer_export_from.tsx:3:32]
+ 2 │                 export {named} from './foo.js';
+ 3 │                 export default defaultExport;
+   ·                                ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default } from './foo.js';
+  │ 
+   ╭─[prefer_export_from.tsx:3:32]
+ 2 │                 export {named} from './foo.js?query';
+ 3 │                 export default defaultExport;
+   ·                                ─────────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as namespace from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:3:25]
+ 2 │                 export default namespace;
+ 3 │                 export {namespace};
+   ·                         ─────────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as namespace from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import * as namespace from 'foo';
+ 2 │                 export {namespace};
+   ·                         ─────────
+ 3 │                 export default namespace;
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { 'foo' as default } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:28]
+ 1 │ import {'foo' as foo} from 'foo';
+ 2 │             export default foo;
+   ·                            ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { 'foo' as foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {'foo' as foo} from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { 'foo' as bar } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:32]
+ 1 │ import {'foo' as foo} from 'foo';
+ 2 │             export const bar = foo;
+   ·                                ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { 'foo' } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {'foo' as foo} from 'foo';
+ 2 │             export {foo as 'foo'};
+   ·                     ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { "foo" } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {'foo' as foo} from 'foo';
+ 2 │             export {foo as "foo"};
+   ·                     ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { "fo o" } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {'fo o' as foo} from 'foo';
+ 2 │             export {foo as "fo o"};
+   ·                     ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { "fo\u000ao" } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:20]
+ 1 │ import {'fo\no' as foo} from 'foo';
+ 2 │            export {foo as "fo\u000ao"};
+   ·                    ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { 'default' as foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {'default' as foo} from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { 'default' as default } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:28]
+ 1 │ import {'default' as foo} from 'foo';
+ 2 │             export default foo;
+   ·                            ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { '*' as foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {'*' as foo} from 'foo';
+ 2 │             export {foo};
+   ·                     ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:22]
+ 1 │ import { foo } from "foo";
+ 2 │             export { foo };
+   ·                      ───
+ 3 │             export type { bar } from "foo";
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:22]
+ 1 │ import { foo } from "foo";
+ 2 │             export { foo };
+   ·                      ───
+ 3 │             export { type bar } from "foo";
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:22]
+ 1 │ import { foo } from 'foo';
+ 2 │             export { foo };
+   ·                      ───
+ 3 │             export type { bar } from "foo";
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:22]
+ 1 │ import { foo } from 'foo';
+ 2 │             export { foo };
+   ·                      ───
+ 3 │             export { type bar } from "foo";
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:27]
+ 1 │ import type { foo } from "foo";
+ 2 │             export type { foo };
+   ·                           ───
+ 3 │             export type { bar } from "foo";
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:22]
+ 1 │ import { foo } from 'foo';
+ 2 │             export { foo };
+   ·                      ───
+ 3 │             export { baz } from "foo" ;
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:27]
+ 1 │ import type { foo } from 'foo';
+ 2 │             export type { foo };
+   ·                           ───
+ 3 │             export { type bar } from "foo";
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:27]
+ 1 │ import type { foo } from 'foo';
+ 2 │             export type { foo };
+   ·                           ───
+ 3 │             export type { bar } from "foo";
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:27]
+ 1 │ import type { foo } from 'foo';
+ 2 │             export type { foo };
+   ·                           ───
+ 3 │             export { baz } from "foo";
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:27]
+ 1 │ import type { foo } from 'foo';
+ 2 │             export type { foo };
+   ·                           ───
+ 3 │             export { type bar } from "foo";
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:27]
+ 1 │ import { type foo } from 'foo';
+ 2 │             export type { foo };
+   ·                           ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:27]
+ 1 │ import { foo } from 'foo';
+ 2 │             export type { foo };
+   ·                           ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:27]
+ 1 │ import type { foo } from 'foo';
+ 2 │             export { type foo };
+   ·                           ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type default } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:28]
+ 1 │ import type foo from "foo";
+ 2 │             export default foo
+   ·                            ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo as bar } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:26]
+ 1 │ import {type foo} from 'foo';
+ 2 │             export {type foo as bar};
+   ·                          ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo as bar } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:26]
+ 1 │ import {type foo} from 'foo';
+ 2 │             export {type foo as bar};
+   ·                          ───
+ 3 │             export {type bar} from 'foo';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo as baz } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:26]
+ 1 │ import {type foo as bar} from 'foo';
+ 2 │             export {type bar as baz};
+   ·                          ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo as bar } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:26]
+ 1 │ import {type foo as foo} from 'foo';
+ 2 │             export {type foo as bar};
+   ·                          ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo as bar } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:26]
+ 1 │ import {type foo as bar} from 'foo';
+ 2 │             export {type bar as bar};
+   ·                          ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:26]
+ 1 │ import {type foo as bar} from 'foo';
+ 2 │             export {type bar as foo};
+   ·                          ───
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default } from './foo.json' assert { type: 'json' };
+  │ 
+   ╭─[prefer_export_from.tsx:2:32]
+ 1 │ import json from './foo.json' assert { type: 'json' };
+ 2 │                 export default json;
+   ·                                ────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as json from './foo.json' assert { type: 'json' };
+  │ 
+   ╭─[prefer_export_from.tsx:2:25]
+ 1 │ import * as json from './foo.json' assert { type: 'json' };
+ 2 │                 export {json};
+   ·                         ────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { foo } from './foo.json' assert { type: 'unknown' };
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {foo} from './foo.json' assert { type: 'unknown' };
+ 2 │             export {foo};
+   ·                     ───
+ 3 │                 export {bar} from './foo.json';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { foo } from './foo.json';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {foo} from './foo.json';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │                 export {bar} from './foo.json' assert { type: 'unknown' };
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export type * as X from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:26]
+ 1 │ import type * as X from 'foo';
+ 2 │                 export { X };
+   ·                          ─
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export type * as X from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:31]
+ 1 │ import * as X from 'foo';
+ 2 │                 export type { X };
+   ·                               ─
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export type * as X from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:31]
+ 1 │ import type * as X from 'foo';
+ 2 │                 export type { X };
+   ·                               ─
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as X from 'foo';
+  │ 
+   ╭─[prefer_export_from.tsx:2:26]
+ 1 │ import * as X from 'foo';
+ 2 │                 export { X };
+   ·                          ─
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { default } from './foo.json' with { type: 'json' };
+  │ 
+   ╭─[prefer_export_from.tsx:2:32]
+ 1 │ import json from './foo.json' with { type: 'json' };
+ 2 │                 export default json;
+   ·                                ────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export * as json from './foo.json' with { type: 'json' };
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import * as json from './foo.json' with { type: 'json' };
+ 2 │             export {json};
+   ·                     ────
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { foo } from './foo.json' with { type: 'unknown' };
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {foo} from './foo.json' with { type: 'unknown' };
+ 2 │             export {foo};
+   ·                     ───
+ 3 │                 export {bar} from './foo.json';
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): export { foo } from './foo.json';
+  │ 
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {foo} from './foo.json';
+ 2 │             export {foo};
+   ·                     ───
+ 3 │                 export {bar} from './foo.json' with { type: 'unknown' };
+   ╰────
+  help: use `export ... from ...;`
