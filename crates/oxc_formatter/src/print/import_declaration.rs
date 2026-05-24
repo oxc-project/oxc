@@ -45,6 +45,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let decl = &format_with(|f| {
             write!(f, ["import", space(), self.import_kind]);
+            if let Some(phase) = self.phase() {
+                write!(f, [phase.as_str(), space()]);
+            }
 
             if let Some(specifiers) = self.specifiers() {
                 write!(f, [specifiers, space(), "from", space()]);
