@@ -126,6 +126,7 @@ impl Default for Scoping {
                 resolved_references: ArenaVec::new_in(allocator),
                 symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
+                references_by_scope: IndexVec::new(),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
             }),
         }
@@ -284,6 +285,8 @@ pub struct ScopingInner<'cell> {
     ///
     /// A binding is a mapping from an identifier name to its [`SymbolId`]
     pub(crate) bindings: IndexVec<ScopeId, Bindings<'cell>>,
+    /// Identifier references that occur directly in each scope.
+    references_by_scope: IndexVec<ScopeId, ArenaVec<'cell, ReferenceId>>,
 
     pub(crate) root_unresolved_references: UnresolvedReferences<'cell>,
 }
@@ -506,7 +509,14 @@ impl Scoping {
     #[inline]
     /// Create and store a reference entry.
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
-        self.references.push(reference)
+        let scope_id = reference.scope_id();
+        let reference_id = self.references.push(reference);
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            if scope_id.index() < cell.references_by_scope.len() {
+                cell.references_by_scope[scope_id].push(reference_id);
+            }
+        });
+        reference_id
     }
 
     /// Get a resolved or unresolved reference.
@@ -632,6 +642,7 @@ impl Scoping {
         self.scope_table.reserve(additional_scopes);
         self.cell.with_dependent_mut(|_allocator, cell| {
             cell.bindings.reserve(additional_scopes);
+            cell.references_by_scope.reserve(additional_scopes);
         });
     }
 
@@ -870,9 +881,23 @@ impl Scoping {
         node_id: NodeId,
         flags: ScopeFlags,
     ) -> ScopeId {
+        self.add_scope_with_reference_capacity(parent_id, node_id, flags, 0)
+    }
+
+    /// Create a scope with capacity for references created directly in that scope.
+    #[inline]
+    pub(crate) fn add_scope_with_reference_capacity(
+        &mut self,
+        parent_id: Option<ScopeId>,
+        node_id: NodeId,
+        flags: ScopeFlags,
+        reference_capacity: usize,
+    ) -> ScopeId {
         let scope_id = self.scope_table.push(parent_id, node_id, flags);
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.bindings.push(Bindings::new_in(allocator));
+            cell.references_by_scope
+                .push(ArenaVec::with_capacity_in(reference_capacity, allocator));
         });
         scope_id
     }
@@ -1019,6 +1044,11 @@ impl Scoping {
                         .bindings
                         .iter()
                         .map(|map| map.clone_in_with_semantic_ids(allocator))
+                        .collect(),
+                    references_by_scope: cell
+                        .references_by_scope
+                        .iter()
+                        .map(|references| references.clone_in_with_semantic_ids(allocator))
                         .collect(),
                     root_unresolved_references: cell
                         .root_unresolved_references

@@ -104,6 +104,7 @@ pub struct SemanticBuilder<'a> {
     #[cfg(feature = "jsdoc")]
     jsdoc: JSDocBuilder<'a>,
     stats: Option<Stats>,
+    scope_reference_counts: Box<[u32]>,
     excess_capacity: f64,
 
     /// Should enum member values be evaluated?
@@ -165,6 +166,7 @@ impl<'a> SemanticBuilder<'a> {
             #[cfg(feature = "jsdoc")]
             jsdoc: JSDocBuilder::default(),
             stats: None,
+            scope_reference_counts: Box::default(),
             excess_capacity: 0.0,
             enum_eval: false,
             check_syntax_error: false,
@@ -275,14 +277,20 @@ impl<'a> SemanticBuilder<'a> {
         //
         // If user did not provide existing `Stats`, calculate them by visiting AST.
         #[cfg_attr(not(debug_assertions), expect(unused_variables))]
-        let (stats, check_stats) = if let Some(stats) = self.stats {
-            (stats, None)
+        let (stats, scope_reference_counts, check_stats) = if let Some(stats) = self.stats.take() {
+            (stats, Box::default(), None)
         } else {
-            let stats = Stats::count(program);
-            let stats_with_excess = stats.increase_by(self.excess_capacity);
-            (stats_with_excess, Some(stats))
+            let stats = Stats::count_with_scope_reference_counts(program);
+            let check_stats = stats.stats;
+            let stats = stats.increase_by(self.excess_capacity);
+            (stats.stats, stats.scope_reference_counts, Some(check_stats))
         };
         self.nodes.reserve(stats.nodes as usize);
+        self.scope_reference_counts = scope_reference_counts;
+        #[cfg(debug_assertions)]
+        if let Some(stats) = &check_stats {
+            debug_assert_eq!(self.scope_reference_counts.len(), stats.scopes as usize);
+        }
         self.scoping.reserve(
             stats.symbols as usize,
             stats.references as usize,
@@ -452,6 +460,13 @@ impl<'a> SemanticBuilder<'a> {
             scope_id,
             self.current_node_id,
         )
+    }
+
+    #[inline]
+    fn next_scope_reference_capacity(&self) -> usize {
+        self.scope_reference_counts
+            .get(self.scoping.scopes_len())
+            .map_or(0, |count| *count as usize)
     }
 
     /// Declare a new symbol on the current scope.
@@ -695,8 +710,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let parent_scope_id = self.current_scope_id;
         let flags = self.scoping.get_new_scope_flags(flags, parent_scope_id);
-        self.current_scope_id =
-            self.scoping.add_scope(Some(parent_scope_id), self.current_node_id, flags);
+        self.current_scope_id = self.scoping.add_scope_with_reference_capacity(
+            Some(parent_scope_id),
+            self.current_node_id,
+            flags,
+            self.next_scope_reference_capacity(),
+        );
         scope_id.set(Some(self.current_scope_id));
     }
 
@@ -767,7 +786,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.source_type.is_strict() || program.has_use_strict_directive() {
             flags |= ScopeFlags::StrictMode;
         }
-        self.current_scope_id = self.scoping.add_scope(None, self.current_node_id, flags);
+        self.current_scope_id = self.scoping.add_scope_with_reference_capacity(
+            None,
+            self.current_node_id,
+            flags,
+            self.next_scope_reference_capacity(),
+        );
         program.scope_id.set(Some(self.current_scope_id));
         // NB: Don't call `self.unresolved_references.increment_scope_depth()`
         // as scope depth is initialized as 1 already (the scope depth for `Program`).

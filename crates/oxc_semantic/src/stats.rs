@@ -98,6 +98,15 @@ impl Stats {
         counter.stats
     }
 
+    /// Gather [`Stats`] and per-scope identifier reference counts by visiting AST.
+    pub(crate) fn count_with_scope_reference_counts(
+        program: &Program,
+    ) -> StatsWithScopeReferenceCounts {
+        let mut counter = Counter::with_scope_reference_counts();
+        counter.visit_program(program);
+        counter.finish()
+    }
+
     /// Increase scope, symbol, and reference counts by provided `excess`.
     ///
     /// `excess` is provided as a fraction.
@@ -137,9 +146,46 @@ impl Stats {
     }
 }
 
+pub struct StatsWithScopeReferenceCounts {
+    pub stats: Stats,
+    /// Number of identifier references created while visiting each scope.
+    ///
+    /// The index order matches [`ScopeId`] allocation order during semantic analysis.
+    pub scope_reference_counts: Box<[u32]>,
+}
+
+impl StatsWithScopeReferenceCounts {
+    /// Increase scope, symbol, reference, and per-scope reference counts by provided `excess`.
+    #[must_use]
+    pub fn increase_by(mut self, excess: f64) -> Self {
+        if excess == 0.0 {
+            return self;
+        }
+
+        let factor = excess + 1.0;
+        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
+        let increase = |n: u32| (n as f64 * factor) as u32;
+
+        self.stats = self.stats.increase_by(excess);
+        for count in &mut self.scope_reference_counts {
+            *count = increase(*count);
+        }
+
+        self
+    }
+}
+
 #[derive(Default)]
 struct Counter {
     stats: Stats,
+    scope_stack: Vec<usize>,
+    scope_reference_counts: Option<Vec<u32>>,
+}
+
+impl Counter {
+    fn with_scope_reference_counts() -> Self {
+        Self { scope_reference_counts: Some(Vec::new()), ..Self::default() }
+    }
 }
 
 /// Visitor to count nodes, scopes, symbols and references in AST
@@ -152,6 +198,18 @@ impl<'a> Visit<'a> for Counter {
     #[inline]
     fn enter_scope(&mut self, _: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         self.stats.scopes += 1;
+        if let Some(scope_reference_counts) = &mut self.scope_reference_counts {
+            let scope_index = scope_reference_counts.len();
+            scope_reference_counts.push(0);
+            self.scope_stack.push(scope_index);
+        }
+    }
+
+    #[inline]
+    fn leave_scope(&mut self) {
+        if self.scope_reference_counts.is_some() {
+            self.scope_stack.pop();
+        }
     }
 
     #[inline]
@@ -164,11 +222,28 @@ impl<'a> Visit<'a> for Counter {
     fn visit_identifier_reference(&mut self, _: &IdentifierReference<'a>) {
         self.stats.nodes += 1;
         self.stats.references += 1;
+        if let Some(scope_reference_counts) = &mut self.scope_reference_counts
+            && let Some(scope_index) = self.scope_stack.last()
+        {
+            scope_reference_counts[*scope_index] += 1;
+        }
     }
 
     #[inline]
     fn visit_ts_enum_member_name(&mut self, it: &TSEnumMemberName<'a>) {
         self.stats.symbols += 1;
         walk_ts_enum_member_name(self, it);
+    }
+}
+
+impl Counter {
+    fn finish(self) -> StatsWithScopeReferenceCounts {
+        StatsWithScopeReferenceCounts {
+            stats: self.stats,
+            scope_reference_counts: self
+                .scope_reference_counts
+                .unwrap_or_default()
+                .into_boxed_slice(),
+        }
     }
 }
