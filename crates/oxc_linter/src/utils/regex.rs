@@ -1,9 +1,9 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, RegExpFlags},
 };
-use oxc_regular_expression::{ConstructorParser, Options, ast::Pattern};
+use oxc_regular_expression::{ConstructorParser, LiteralParser, Options, ast::Pattern};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 use oxc_str::static_ident;
@@ -16,6 +16,22 @@ where
 {
     match node.kind() {
         AstKind::RegExpLiteral(reg) => {
+            // We need to make sure that this regex literal is not part of a `new RegExp()` or `RegExp()` call, as those are handled separately.
+            // the flags of a regex literal will be overridden by the flags argument of the `new RegExp()` or `RegExp()` call.
+            for ancestor_kind in ctx.nodes().ancestor_kinds(node.id()) {
+                match ancestor_kind {
+                    AstKind::ParenthesizedExpression(_)
+                    | AstKind::TSAsExpression(_)
+                    | AstKind::TSSatisfiesExpression(_)
+                    | AstKind::TSInstantiationExpression(_)
+                    | AstKind::TSNonNullExpression(_)
+                    | AstKind::TSTypeAssertion(_) => { /* continue */ }
+                    AstKind::NewExpression(expr) if is_regexp_callee(&expr.callee, ctx) => return,
+                    AstKind::CallExpression(expr) if is_regexp_callee(&expr.callee, ctx) => return,
+                    _ => break,
+                }
+            }
+
             if let Some(pat) = &reg.regex.pattern.pattern {
                 cb(pat, reg.span);
             }
@@ -67,6 +83,9 @@ pub fn get_regex_pattern_span(arg: Option<&Argument>) -> Option<Span> {
     // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
     let arg = arg?.as_expression()?.get_inner_expression();
     match arg {
+        Expression::RegExpLiteral(reg) => {
+            reg.regex.pattern.pattern.as_ref().map(|pattern| pattern.span)
+        }
         Expression::StringLiteral(pattern) => Some(pattern.span),
         Expression::TemplateLiteral(pattern) if pattern.is_no_substitution_template() => {
             Some(pattern.span)
@@ -90,8 +109,41 @@ where
         RegexFlagsParseResult::TemplateLiteralNotResolvable => return,
     };
 
+    // the argument is a regex literal
+    let mut is_regex_literal = false;
+    if let Some(Argument::RegExpLiteral(reg)) = arg1 {
+        let Some(pat) = &reg.regex.pattern.pattern else {
+            return;
+        };
+
+        // If new flags are added that can affect the pattern (e.g. "u" or "v"), we need to re-parse the pattern.
+        let needs_reparse = flag_span.is_some_and(|flag_span| {
+            let flag_text = ctx.source_range(flag_span);
+            let same_unicode_mode =
+                reg.regex.flags.contains(RegExpFlags::U) == flag_text.contains('u');
+            let same_unicode_set_mode =
+                reg.regex.flags.contains(RegExpFlags::V) == flag_text.contains('v');
+
+            !same_unicode_mode || !same_unicode_set_mode
+        });
+
+        // we can directly use the pattern produced by the parser, without re-parsing the pattern text
+        if !needs_reparse {
+            cb(pat, reg.span);
+            return;
+        }
+
+        is_regex_literal = true;
+    }
+
     let allocator = Allocator::default();
-    if let Some(pat) = parse_regex(&allocator, pattern_span, flag_span, ctx) {
+    if is_regex_literal {
+        if let Some(pat) =
+            parse_regex_literal(&allocator, pattern_span, flag_span.map(|span| span.shrink(1)), ctx)
+        {
+            cb(&pat, pattern_span);
+        }
+    } else if let Some(pat) = parse_regex_string(&allocator, pattern_span, flag_span, ctx) {
         cb(&pat, pattern_span);
     }
 }
@@ -114,7 +166,7 @@ pub fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>
     false
 }
 
-fn parse_regex<'a>(
+fn parse_regex_string<'a>(
     allocator: &'a Allocator,
     pattern_span: Span,
     flags_span: Option<Span>,
@@ -122,6 +174,26 @@ fn parse_regex<'a>(
 ) -> Option<Pattern<'a>> {
     let flags_text = flags_span.map(|span| span.source_text(ctx.source_text()));
     let parser = ConstructorParser::new(
+        allocator,
+        pattern_span.source_text(ctx.source_text()),
+        flags_text,
+        Options {
+            pattern_span_offset: pattern_span.start,
+            flags_span_offset: flags_span.map_or(0, |span| span.start),
+        },
+    );
+    let Ok(pattern) = parser.parse() else { return None };
+    Some(pattern)
+}
+
+fn parse_regex_literal<'a>(
+    allocator: &'a Allocator,
+    pattern_span: Span,
+    flags_span: Option<Span>,
+    ctx: &'a LintContext<'_>,
+) -> Option<Pattern<'a>> {
+    let flags_text = flags_span.map(|span| span.source_text(ctx.source_text()));
+    let parser = LiteralParser::new(
         allocator,
         pattern_span.source_text(ctx.source_text()),
         flags_text,

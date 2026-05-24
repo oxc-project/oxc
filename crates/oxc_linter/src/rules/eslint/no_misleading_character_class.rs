@@ -588,6 +588,8 @@ fn test() {
         // Separate character classes should not trigger warnings for cross-class sequences
         (r"/[\u200c][\u200d][a]/", None),
         (r"/[\uD83D][\uDC4D]/", None), // Solo surrogates in separate classes
+        // with overridden flags it is valid
+        ("RegExp(/[👍]/, 'u');", None),
     ];
 
     let fail = vec![
@@ -724,8 +726,7 @@ fn test() {
         // (r#"new RegExp(`${"[👍🇯🇵]"}[😊]`);"#, None),
         // references from variables
         // (r#"const pattern = "[👍]"; new RegExp(pattern);"#, None),
-        // flag overrides, see oxc-project/oxc#13436
-        // ("RegExp(/[a👍z]/u, '');", None),
+        ("RegExp(/[a👍z]/u, '');", None),
         ("RegExp(/[👍]/)", None),
         ("RegExp(/[👍]/, 'i');", None),
         ("RegExp(/[👍]/, 'g');", None), // { "globals": { "RegExp": "off" } },
@@ -757,9 +758,8 @@ fn test() {
             r"new RegExp(`[.\\\x75200D.]`)", // "u" escaped as "\x75"
             None,
         ),
-        ("var r = /[[👶🏻]]/v", None), // { "ecmaVersion": 2024 },
-        // flag overrides, see oxc-project/oxc#13436
-        // ("new RegExp(/^[👍]$/v, '')", None), // { "ecmaVersion": 2024, },
+        ("var r = /[[👶🏻]]/v", None),         // { "ecmaVersion": 2024 },
+        ("new RegExp(/^[👍]$/v, '')", None), // { "ecmaVersion": 2024, },
         (r"/[Á]/", Some(serde_json::json!([{ "allowEscape": false }]))),
         (r"/[\\̶]/", Some(serde_json::json!([{ "allowEscape": true }]))),
         (r"/[\n̅]/", Some(serde_json::json!([{ "allowEscape": true }]))),
