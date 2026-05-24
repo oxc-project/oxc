@@ -150,7 +150,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@e1c4cd42111751368541a7cb5db3522bd1f846a4 # v2.78.0
+        uses: taiki-e/install-action@65851e10cd6c377f11a60e600abc07cb08643468 # v2.79.3
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -223,7 +223,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Build
         id: build
-        uses: cross-platform-actions/action@233156312992f3f169d8d0c633c21d12a5d30455 # v1.0.0
+        uses: cross-platform-actions/action@0c165ad7eb2d6a7e8552d6af5aad2bbedfc646b0 # v1.1.0
         env:
           DEBUG: napi:*
           RUSTUP_IO_THREADS: 1
@@ -458,7 +458,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@e1c4cd42111751368541a7cb5db3522bd1f846a4 # v2.78.0
+        uses: taiki-e/install-action@65851e10cd6c377f11a60e600abc07cb08643468 # v2.79.3
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -531,7 +531,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Build
         id: build
-        uses: cross-platform-actions/action@233156312992f3f169d8d0c633c21d12a5d30455 # v1.0.0
+        uses: cross-platform-actions/action@0c165ad7eb2d6a7e8552d6af5aad2bbedfc646b0 # v1.1.0
         env:
           DEBUG: napi:*
           RUSTUP_IO_THREADS: 1
@@ -794,7 +794,7 @@ jobs:
             mirrors-oxfmt
 
       - name: Bump oxc-project/eslint-plugin-oxlint
-        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
+        uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml
@@ -803,7 +803,7 @@ jobs:
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
       - name: Bump oxc-project/oxlint-migrate
-        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
+        uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
         with:
           repo: oxc-project/oxlint-migrate
           workflow: bump_oxlint.yml
@@ -812,7 +812,7 @@ jobs:
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
       - name: Bump oxc-project/mirrors-oxlint
-        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
+        uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
         with:
           repo: oxc-project/mirrors-oxlint
           workflow: main.yml
@@ -820,7 +820,7 @@ jobs:
           ref: main
 
       - name: Bump oxc-project/mirrors-oxfmt
-        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
+        uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
         with:
           repo: oxc-project/mirrors-oxfmt
           workflow: main.yml
