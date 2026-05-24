@@ -304,7 +304,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@ab97f03642370d79a7e96dd286bd02a1be40e0ba # v1.3.0
-        if: steps.filter.outputs.changed == 'true'
+        if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
       - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -330,7 +330,7 @@ jobs:
         name: Run conformance tests
         run: pnpm --filter "./apps/oxfmt" conformance
       # --- Conformance
-      - if: steps.filter.outputs.changed == 'true'
+      - if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
         run: |
           git diff --exit-code # Must commit everything
 
