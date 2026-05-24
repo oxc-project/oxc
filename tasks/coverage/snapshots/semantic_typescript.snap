@@ -2,7 +2,7 @@ commit: e5509e21
 
 semantic_typescript Summary:
 AST Parsed     : 4773/4773 (100.00%)
-Positive Passed: 2677/4773 (56.09%)
+Positive Passed: 2678/4773 (56.11%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -213,6 +213,12 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "M":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4)]
+Reference symbol mismatch for "N":
+after transform: SymbolId(1) "N"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["N"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/accessorsEmit.ts
 Symbol reference IDs mismatch for "Result":
@@ -237,6 +243,12 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Reference symbol mismatch for "N":
+after transform: SymbolId(1) "N"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["N"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/aliasInaccessibleModule2.ts
 Scope flags mismatch:
@@ -1434,9 +1446,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M2":
 after transform: SymbolId(2): Span { start: 74, end: 76 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Unresolved references mismatch:
-after transform: ["M1"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/classImplementsMethodWIthTupleArgs.ts
 Bindings mismatch:
@@ -6229,9 +6238,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "a":
 after transform: SymbolId(0): [Span { start: 50, end: 51 }, Span { start: 76, end: 77 }]
 rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["M"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateVariablesByScope.ts
 Scope flags mismatch:
@@ -7363,6 +7369,12 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "B":
 after transform: SymbolId(2): [ReferenceId(1), ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4)]
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["A"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportNamespaceDeclarationRetainsVisibility.ts
 Bindings mismatch:
@@ -8824,11 +8836,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["json"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierInAmbientContext.ts
-Unresolved references mismatch:
-after transform: ["x"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importElisionEnum.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["MyEnum", "a", "b", "c", "d"]
@@ -9865,6 +9872,12 @@ rebuilt        : ScopeId(0): ["b", "x"]
 Symbol reference IDs mismatch for "b":
 after transform: SymbolId(2): [ReferenceId(1)]
 rebuilt        : SymbolId(0): []
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["a"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModule.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -9879,9 +9892,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUnin
 Bindings mismatch:
 after transform: ScopeId(0): ["a", "x"]
 rebuilt        : ScopeId(0): ["x"]
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasVar.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -9906,9 +9916,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "B":
 after transform: SymbolId(2): Span { start: 64, end: 65 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(3): [ReferenceId(0)]
-rebuilt        : SymbolId(2): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/intersectionConstraintReduction.ts
 Unresolved references mismatch:
@@ -15251,9 +15258,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/reservedNameOnMod
 Bindings mismatch:
 after transform: ScopeId(0): ["test"]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["mstring"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/resolveInterfaceNameWithSameLetDeclarationName1.ts
 Bindings mismatch:
@@ -27146,7 +27150,7 @@ Reference symbol mismatch for "mod2":
 after transform: SymbolId(7) "mod2"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["mod1"]
+after transform: []
 rebuilt        : ["mod2", "pack2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag1.ts

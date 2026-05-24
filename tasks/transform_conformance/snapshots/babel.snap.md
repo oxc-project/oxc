@@ -2004,9 +2004,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "a":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol reference IDs mismatch for "a":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
-rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 Symbol flags mismatch for "c":
 after transform: SymbolId(2): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
