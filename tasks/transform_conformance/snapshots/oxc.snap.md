@@ -1046,9 +1046,21 @@ rebuilt        : <None>
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Boolean", "Number", "String", "babelHelpers"]
-rebuilt        : ["Boolean", "Number", "String", "babelHelpers", "dec"]
+after transform: ["Boolean", "Number", "Object", "String", "babelHelpers"]
+rebuilt        : ["Boolean", "Number", "Object", "String", "babelHelpers", "dec"]
+Unresolved reference IDs mismatch for "String":
+after transform: [ReferenceId(5), ReferenceId(20)]
+rebuilt        : [ReferenceId(3)]
+Unresolved reference IDs mismatch for "Number":
+after transform: [ReferenceId(9), ReferenceId(21)]
+rebuilt        : [ReferenceId(8)]
 
 * oxc/metadata/params/input.ts
 Bindings mismatch:

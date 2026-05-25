@@ -4,4 +4,6 @@ class Source {
   @dec a!: string | null;
   @dec b!: number | undefined;
   @dec c!: boolean | null | undefined;
+  @dec d!: null | undefined;
+  @dec e!: string | number;
 }
