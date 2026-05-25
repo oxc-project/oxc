@@ -422,19 +422,21 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
-            return;
+        if !ctx.state.dce {
+            Self::substitute_call_expression(e, ctx);
+            Self::remove_empty_spread_arguments(&mut e.arguments);
         }
-        Self::substitute_call_expression(e, ctx);
-        Self::remove_empty_spread_arguments(&mut e.arguments);
+        // Re-evaluate each iteration: peephole folding/inlining may expose a
+        // pure-eligible arg shape that `Normalize`'s one-shot pass missed.
+        Normalize::set_no_side_effects_to_call_expr(e, ctx);
     }
 
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
-            return;
+        if !ctx.state.dce {
+            Self::substitute_new_expression(e, ctx);
+            Self::remove_empty_spread_arguments(&mut e.arguments);
         }
-        Self::substitute_new_expression(e, ctx);
-        Self::remove_empty_spread_arguments(&mut e.arguments);
+        Normalize::set_pure_or_no_side_effects_to_new_expr(e, ctx);
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
