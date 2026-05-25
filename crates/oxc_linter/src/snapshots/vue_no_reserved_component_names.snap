@@ -1,0 +1,99 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-reserved-component-names): Name "div" is reserved in HTML.
+   ╭─[no_reserved_component_names.tsx:1:32]
+ 1 │ <script>export default { name: 'div' }</script>
+   ·                                ─────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "div" is reserved in HTML.
+   ╭─[no_reserved_component_names.tsx:1:23]
+ 1 │ <script>Vue.component('div', component)</script>
+   ·                       ─────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "div" is reserved in HTML.
+   ╭─[no_reserved_component_names.tsx:1:23]
+ 1 │ <script>app.component('div', component)</script>
+   ·                       ─────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "div" is reserved in HTML.
+   ╭─[no_reserved_component_names.tsx:1:23]
+ 1 │ <script>Vue.component(`div`, {})</script>
+   ·                       ─────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "div" is reserved in HTML.
+   ╭─[no_reserved_component_names.tsx:1:23]
+ 1 │ <script>app.component(`div`, {})</script>
+   ·                       ─────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "div" is reserved in HTML.
+   ╭─[no_reserved_component_names.tsx:1:40]
+ 1 │ <script>export default { components: { 'div': {} } }</script>
+   ·                                        ─────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "div" is reserved in HTML.
+   ╭─[no_reserved_component_names.tsx:1:37]
+ 1 │ <script setup>defineOptions({ name: 'div' })</script>
+   ·                                     ─────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "div" is reserved in HTML.
+   ╭─[no_reserved_component_names.tsx:1:37]
+ 1 │ <script setup>defineOptions({ name: 'div' })</script>
+   ·                                     ─────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "Transition" is reserved in Vue.js.
+   ╭─[no_reserved_component_names.tsx:1:32]
+ 1 │ <script>export default { name: 'Transition' }</script>
+   ·                                ────────────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "Transition" is reserved in Vue.js.
+   ╭─[no_reserved_component_names.tsx:1:32]
+ 1 │ <script>export default { name: 'Transition' }</script>
+   ·                                ────────────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "Teleport" is reserved in Vue.js 3.x.
+   ╭─[no_reserved_component_names.tsx:1:32]
+ 1 │ <script>export default { name: 'Teleport' }</script>
+   ·                                ──────────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "Div" is reserved in HTML.
+   ╭─[no_reserved_component_names.tsx:1:32]
+ 1 │ <script>export default { name: 'Div' }</script>
+   ·                                ─────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "annotation-xml" is reserved.
+   ╭─[no_reserved_component_names.tsx:1:32]
+ 1 │ <script>export default { name: 'annotation-xml' }</script>
+   ·                                ────────────────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "AnnotationXml" is reserved.
+   ╭─[no_reserved_component_names.tsx:1:32]
+ 1 │ <script>export default { name: 'AnnotationXml' }</script>
+   ·                                ───────────────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "circle" is reserved.
+   ╭─[no_reserved_component_names.tsx:1:32]
+ 1 │ <script>export default { name: 'circle' }</script>
+   ·                                ────────
+   ╰────
+
+  ⚠ vue(no-reserved-component-names): Name "marquee" is reserved.
+   ╭─[no_reserved_component_names.tsx:1:32]
+ 1 │ <script>export default { name: 'marquee' }</script>
+   ·                                ─────────
+   ╰────
