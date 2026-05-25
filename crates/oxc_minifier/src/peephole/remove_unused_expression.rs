@@ -261,11 +261,14 @@ impl<'a> PeepholeOptimizations {
         if expressions.is_empty() {
             return true;
         } else if expressions.len() == 1 {
-            *e = expressions.pop().unwrap();
+            let new_expr = expressions.pop().unwrap();
+            ctx.replace_expression(e, new_expr);
             return false;
         }
 
-        *e = ctx.ast.expression_sequence(array_expr.span, expressions);
+        let span = array_expr.span;
+        let new_expr = ctx.ast.expression_sequence(span, expressions);
+        ctx.replace_expression(e, new_expr);
         false
     }
 
@@ -797,7 +800,9 @@ impl<'a> PeepholeOptimizations {
             if exprs.is_empty() {
                 return true;
             }
-            *e = ctx.ast.expression_sequence(c.span, exprs);
+            let span = c.span;
+            let new_expr = ctx.ast.expression_sequence(span, exprs);
+            ctx.replace_expression(e, new_expr);
         }
         false
     }
