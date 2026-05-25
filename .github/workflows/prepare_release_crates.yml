@@ -45,7 +45,7 @@ jobs:
         id: run
         run: |
           cargo ck
-          cargo release-oxc update --release crates
+          cargo release-oxc update --changelog --release crates
           echo "CRATES_VERSION=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
 
       - uses: oxc-project/setup-node@ab97f03642370d79a7e96dd286bd02a1be40e0ba # v1.3.0
