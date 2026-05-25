@@ -2,7 +2,7 @@ commit: 7e115f46
 
 semantic_test262 Summary:
 AST Parsed     : 47210/47210 (100.00%)
-Positive Passed: 46978/47210 (99.51%)
+Positive Passed: 46990/47210 (99.53%)
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(Function)
@@ -707,54 +707,6 @@ Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Constructor)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function | Constructor | DirectEval)
 
-semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-field-shadowed-by-getter-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(6): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-field-shadowed-by-method-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-field-shadowed-by-setter-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(6): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-method-shadowed-by-getter-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(1))
-rebuilt        : ScopeId(6): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-method-shadowed-by-method-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(1))
-rebuilt        : ScopeId(6): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-method-shadowed-by-setter-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(1))
-rebuilt        : ScopeId(6): Some(ScopeId(0))
-
 semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-init-with-this.js
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | DirectEval)
@@ -1246,54 +1198,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/class/elements/p
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Constructor)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function | Constructor | DirectEval)
-
-semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-field-shadowed-by-getter-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-field-shadowed-by-method-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-field-shadowed-by-setter-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-method-shadowed-by-getter-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-method-shadowed-by-method-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(0))
-
-semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-method-shadowed-by-setter-on-nested-class.js
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/elements/privatename-not-valid-eval-earlyerr-3.js
 Scope flags mismatch:

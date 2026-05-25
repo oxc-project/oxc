@@ -8,6 +8,7 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
+use oxc_traverse::Ancestor;
 
 use crate::{Helper, common::helper_loader::helper_call_expr, context::TraverseCtx};
 
@@ -64,9 +65,13 @@ impl<'a> ClassProperties<'a> {
         // Change parent scope of function to current scope id and remove
         // strict mode flag if parent scope is not strict mode.
         let scope_id = function.scope_id();
-        let new_parent_id = ctx.current_scope_id();
+        let new_parent_id = if Self::is_inside_static_initializer(ctx) {
+            ctx.current_hoist_scope_id()
+        } else {
+            ctx.current_scope_id()
+        };
         ctx.scoping_mut().change_scope_parent_id(scope_id, Some(new_parent_id));
-        let make_sloppy_mode = !ctx.current_scope_flags().is_strict_mode();
+        let make_sloppy_mode = !ctx.scoping().scope_flags(new_parent_id).is_strict_mode();
         let flags = ctx.scoping_mut().scope_flags_mut(scope_id);
         *flags -= ScopeFlags::GetAccessor | ScopeFlags::SetAccessor;
 
@@ -74,6 +79,10 @@ impl<'a> ClassProperties<'a> {
             .visit_function(&mut function, ScopeFlags::Function);
 
         Some(Statement::FunctionDeclaration(function))
+    }
+
+    fn is_inside_static_initializer(ctx: &TraverseCtx<'a>) -> bool {
+        ctx.ancestors().any(|ancestor| matches!(ancestor, Ancestor::PropertyDefinitionValue(_)))
     }
 
     // `_classPrivateMethodInitSpec(this, brand)`
