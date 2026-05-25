@@ -6,7 +6,7 @@
 
 ## 1. Problem
 
-`MinifierState::changed: bool` (`state.rs:33`) is set by **188** manual
+`MinifierState::changed: bool` (`state.rs:33`) is set by **187** manual
 `ctx.state.changed = true` lines across 16 files in `crates/oxc_minifier/src/peephole/`,
 plus one reset (`ctx.state.changed = false`) at `peephole/mod.rs:165` cleared from
 `enter_program`.
@@ -21,7 +21,7 @@ The flag does three jobs:
 3. **Implicit contract** — every rewrite that mutates the AST must self-report.
 
 Job 3 is the failure mode. Forgetting a single `= true` silently disables fixed-point
-convergence: the downstream pass that *would* have fired never runs, the AST is left
+convergence: the downstream pass that _would_ have fired never runs, the AST is left
 under-optimized, and the test suite catches nothing because the output is still valid JS.
 The active branch `fix/minifier-mark-changed-on-dead-stmt-drop` is a recent instance of
 exactly this bug class.
@@ -32,7 +32,7 @@ refresh, the loop driver semantics, or `exit_program`. See §6 for what's deferr
 ## 2. Why a narrow scope
 
 Earlier iterations of this spec attempted a larger redesign — making scoping refresh
-*incremental* by collecting dirty references at mutation time. Two rounds of Codex
+_incremental_ by collecting dirty references at mutation time. Two rounds of Codex
 adversarial review surfaced six real issues with the incremental design, including a
 release-mode correctness bug (cross-call resurrection of `ReferenceId`s preserved by
 clone-with-semantic-ids rewrites) and unresolved edge cases around mid-pass reference
@@ -88,11 +88,13 @@ no bitset, no overflow, no walk-and-collect. The existing
 ### What this is and isn't
 
 It IS:
+
 - A typed API for "I mutated the AST." The natural-feeling method writes the bool.
 - A reduction of the failure mode from "silent missed `= true`" to "must use the helper to
   replace a slot." Reviewing for adherence is easier than scanning for missing assignments.
 
 It is NOT:
+
 - A change to how `Scoping` data is refreshed.
 - A change to the fixed-point loop algorithm.
 - A change to the cost profile of any pass (the same `LiveUsageCollector` walk runs on
@@ -150,7 +152,7 @@ corresponding helper call. Verification per PR:
 
 PR description includes the `just minsize` diff (expected empty).
 
-The migration is *additive* throughout: `MinifierState::changed` stays put, helpers and
+The migration is _additive_ throughout: `MinifierState::changed` stays put, helpers and
 legacy writes both write to it. There is no two-bit migration invariant to manage, no
 intermediate state where the loop signal could break.
 
@@ -158,31 +160,31 @@ PR order is **smallest first**, generated from
 `grep -c "ctx.state.changed = true" crates/oxc_minifier/src/peephole/*.rs`
 as of the date of this spec (re-run before starting to catch drift):
 
-| # | File | Sites |
-|---|---|---|
-| 1 | (PR 1 also adds helpers + `reset_changed()` migration) | — |
-| 2 | `inline.rs` | 1 |
-| 3 | `remove_unused_private_members.rs` | 1 |
-| 4 | `minimize_for_statement.rs` | 2 |
-| 5 | `peephole/mod.rs` (visitor body itself) | 2 |
-| 6 | `minimize_logical_expression.rs` | 3 |
-| 7 | `minimize_not_expression.rs` | 3 |
-| 8 | `minimize_if_statement.rs` | 5 |
-| 9 | `remove_unused_declaration.rs` | 5 |
-| 10 | `minimize_conditions.rs` | 6 |
-| 11 | `minimize_expression_in_boolean_context.rs` | 6 |
-| 12 | `replace_known_methods.rs` | 6 |
-| 13 | `fold_constants.rs` | 14 |
-| 14 | `remove_dead_code.rs` | 19 |
-| 15 | `remove_unused_expression.rs` | 27 |
-| 16 | `substitute_alternate_syntax.rs` | 43 |
-| 17 | `minimize_statements.rs` (special care for `dead_drop_mutates_ast`) | 45 |
-| 18 | Final lockdown PR (§5.1) | — |
+| #   | File                                                                | Sites |
+| --- | ------------------------------------------------------------------- | ----- |
+| 1   | (PR 1 also adds helpers + `reset_changed()` migration)              | —     |
+| 2   | `inline.rs`                                                         | 1     |
+| 3   | `remove_unused_private_members.rs`                                  | 1     |
+| 4   | `minimize_for_statement.rs`                                         | 2     |
+| 5   | `peephole/mod.rs` (visitor body itself)                             | 2     |
+| 6   | `minimize_logical_expression.rs`                                    | 3     |
+| 7   | `minimize_not_expression.rs`                                        | 3     |
+| 8   | `minimize_if_statement.rs`                                          | 5     |
+| 9   | `remove_unused_declaration.rs`                                      | 5     |
+| 10  | `minimize_conditions.rs`                                            | 6     |
+| 11  | `minimize_expression_in_boolean_context.rs`                         | 6     |
+| 12  | `replace_known_methods.rs`                                          | 6     |
+| 13  | `fold_constants.rs`                                                 | 14    |
+| 14  | `remove_dead_code.rs`                                               | 19    |
+| 15  | `remove_unused_expression.rs`                                       | 27    |
+| 16  | `substitute_alternate_syntax.rs`                                    | 43    |
+| 17  | `minimize_statements.rs` (special care for `dead_drop_mutates_ast`) | 44    |
+| 18  | Final lockdown PR (§5.1)                                            | —     |
 
 Files with 0 sites that get a free pass: `convert_to_dotted_properties.rs`,
 `minimize_conditional_expression.rs`, `normalize.rs`.
 
-Total: **188 sites across 16 files**. Each per-file PR should run `grep -c` on its target
+Total: **187 sites across 16 files**. Each per-file PR should run `grep -c` on its target
 file before and after to verify zero remaining direct writes. The final lockdown PR (§5.1)
 re-runs `grep -rc "state.changed = true" crates/oxc_minifier/src/` across the whole crate
 and asserts zero hits.
@@ -200,6 +202,7 @@ After the last call-site migration:
    > `replace_expression`, `replace_statement`, `notice_change`, or `reset_changed`.
 
    Concretely:
+
    ```bash
    # CI check (fails if any unauthorized write is found)
    rg -n 'state\.changed\s*=' crates/oxc_minifier/ \
@@ -211,7 +214,7 @@ After the last call-site migration:
 
 This bans every direct write to `state.changed` — both the `= true` mutations AND the
 `= false` reset. The reset migrates to `ctx.reset_changed()` (a new helper, see §3)
-*before* the lockdown is enabled, so the CI check passes from PR 1 onward.
+_before_ the lockdown is enabled, so the CI check passes from PR 1 onward.
 
 The check covers the original missed-change failure mode permanently: any future rewrite
 that wants to signal a mutation must use a helper.
@@ -229,7 +232,7 @@ is **deferred**, not rejected. It needs:
    maintenance?
 3. **A solution for cross-call resurrection** (Codex high-severity finding from review
    round 2). When rewrite A drops a subtree containing `R` and rewrite B later builds a
-   new subtree that preserves `R` via `clone_in_with_semantic_ids`, `R` is *live* despite
+   new subtree that preserves `R` via `clone_in_with_semantic_ids`, `R` is _live_ despite
    appearing in A's dropped subtree. The incremental design has no clean way to know.
 4. **Direct-eval refresh.** Either keep the AST walk (gated more cleverly than today) or
    build a maintained per-scope direct-eval counter. The latter requires a one-time
@@ -330,7 +333,7 @@ exists for grep to find.
    language: rust
    rule:
      any:
-       - pattern: '*$E = $X'  # expression slot
+       - pattern: "*$E = $X" # expression slot
    files:
      - crates/oxc_minifier/src/peephole/**/*.rs
    ```
@@ -338,6 +341,7 @@ exists for grep to find.
    (Allowlist mechanism: `// ast-grep-ignore: peephole-direct-slot-assignment — reason: …`
    on the line above each justified exception. The final PR description lists every
    allowlist entry.)
+
 5. `cargo test -p oxc_minifier` passes with no expected-output changes.
 6. `cargo coverage -- minifier` shows no conformance regression.
 7. `just minsize` produces zero size deltas across the migration (any non-zero delta is

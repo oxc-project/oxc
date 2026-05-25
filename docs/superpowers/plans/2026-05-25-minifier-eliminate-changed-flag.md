@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace 188 manual `ctx.state.changed = true` writes across `crates/oxc_minifier/` with four typed mutation helpers (`replace_expression`, `replace_statement`, `notice_change`, `reset_changed`), and add CI checks that prevent regressions.
+**Goal:** Replace 187 manual `ctx.state.changed = true` writes across `crates/oxc_minifier/` with four typed mutation helpers (`replace_expression`, `replace_statement`, `notice_change`, `reset_changed`), and add CI checks that prevent regressions.
 
 **Architecture:** Pure refactor. The `MinifierState::changed: bool` field and the `LiveUsageCollector`-based `exit_program` refresh are unchanged. Helpers are thin `#[inline]` wrappers on `TraverseCtx<'a, MinifierState<'a>>` that bump `state.changed`. The migration is additive — helpers and legacy writes both target the same field, so any mid-migration state is correct.
 
@@ -14,15 +14,15 @@
 
 ## File Structure
 
-| Path | Action | Responsibility |
-|---|---|---|
-| `crates/oxc_minifier/src/traverse_context/ecma_context.rs` | **Modify** (Task 1, Task 18) | Add helpers (Task 1) and tighten allowlist comments (Task 18). Existing impl block at line 167. |
-| `crates/oxc_minifier/src/state.rs` | **Modify** (Task 18) | Change `MinifierState::changed: pub bool` → `pub(crate) bool`. |
-| `crates/oxc_minifier/src/peephole/mod.rs` | **Modify** (Task 1, Task 5) | Task 1: migrate `enter_program`'s `ctx.state.changed = false;` reset to `ctx.reset_changed()`. Task 5: migrate the 2 `= true` writes in `exit_statement` and `exit_expression`. |
-| `crates/oxc_minifier/src/peephole/*.rs` (15 other files) | **Modify** (Tasks 2-4, 6-17) | One task per file; mechanical conversion from `state.changed = true` to helper calls. |
-| `tools/check_state_changed.sh` | **Create** (Task 18) | Bash script invoked from `just ready` that fails CI on any unauthorized `state.changed =` write. |
-| `justfile` | **Modify** (Task 18) | Wire `check_state_changed.sh` into `just ready`. |
-| `crates/oxc_minifier/sgconfig.yml` + `crates/oxc_minifier/rules/peephole-direct-slot-assignment.yml` | **Create** (Task 18) | ast-grep configuration and rule that prevents direct `*expr = …` / `*stmt = …` in peephole code without an allowlist comment. |
+| Path                                                                                                 | Action                       | Responsibility                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crates/oxc_minifier/src/traverse_context/ecma_context.rs`                                           | **Modify** (Task 1, Task 18) | Add helpers (Task 1) and tighten allowlist comments (Task 18). Existing impl block at line 167.                                                                                 |
+| `crates/oxc_minifier/src/state.rs`                                                                   | **Modify** (Task 18)         | Change `MinifierState::changed: pub bool` → `pub(crate) bool`.                                                                                                                  |
+| `crates/oxc_minifier/src/peephole/mod.rs`                                                            | **Modify** (Task 1, Task 5)  | Task 1: migrate `enter_program`'s `ctx.state.changed = false;` reset to `ctx.reset_changed()`. Task 5: migrate the 2 `= true` writes in `exit_statement` and `exit_expression`. |
+| `crates/oxc_minifier/src/peephole/*.rs` (15 other files)                                             | **Modify** (Tasks 2-4, 6-17) | One task per file; mechanical conversion from `state.changed = true` to helper calls.                                                                                           |
+| `tools/check_state_changed.sh`                                                                       | **Create** (Task 18)         | Bash script invoked from `just ready` that fails CI on any unauthorized `state.changed =` write.                                                                                |
+| `justfile`                                                                                           | **Modify** (Task 18)         | Wire `check_state_changed.sh` into `just ready`.                                                                                                                                |
+| `crates/oxc_minifier/sgconfig.yml` + `crates/oxc_minifier/rules/peephole-direct-slot-assignment.yml` | **Create** (Task 18)         | ast-grep configuration and rule that prevents direct `*expr = …` / `*stmt = …` in peephole code without an allowlist comment.                                                   |
 
 ---
 
@@ -31,6 +31,7 @@
 These five patterns cover every site. Tasks 2-17 reference this section.
 
 ### Pattern A — slot replace (expression)
+
 ```rust
 - *expr = new;
 - ctx.state.changed = true;
@@ -38,6 +39,7 @@ These five patterns cover every site. Tasks 2-17 reference this section.
 ```
 
 ### Pattern B — slot replace (statement)
+
 ```rust
 - *stmt = new;
 - ctx.state.changed = true;
@@ -45,6 +47,7 @@ These five patterns cover every site. Tasks 2-17 reference this section.
 ```
 
 ### Pattern C — collection mutation
+
 ```rust
   let old_len = elems.len();
   elems.retain_mut(|e| !Self::remove_unused_expression(e, ctx));
@@ -53,6 +56,7 @@ These five patterns cover every site. Tasks 2-17 reference this section.
 ```
 
 ### Pattern D — in-place tweak (operand swap, field flip)
+
 ```rust
   e.right = left;
   e.left = right;
@@ -61,21 +65,26 @@ These five patterns cover every site. Tasks 2-17 reference this section.
 ```
 
 ### Pattern E — conditional semantic gate (`dead_drop_mutates_ast`)
+
 ```rust
   if dead_drop_mutates_ast(&stmt) {
 -     ctx.state.changed = true;
 +     ctx.notice_change();
   }
 ```
+
 The `if` STAYS. The mechanical sweep transforms only the body. **Verify by reading the surrounding code** before applying.
 
 ### Site classification rule
+
 1. If the line above sets `*expr = X` or `*stmt = X`, use Pattern A or B (collapse two lines into one helper call).
 2. Else, use Pattern C/D/E with `ctx.notice_change()`.
 3. **Never** call `ctx.notice_change()` when `replace_expression`/`replace_statement` applies — Task 18's ast-grep rule will fail the build.
 
 ### Per-task verification commands
+
 After applying the patterns to a file:
+
 ```bash
 # Should print 0 (the file is fully migrated)
 grep -c "ctx.state.changed = true" crates/oxc_minifier/src/peephole/<file>.rs
@@ -89,6 +98,7 @@ grep -rc "ctx.state.changed = true" crates/oxc_minifier/src/peephole/ | sort -t:
 ## Task 1: Add the four helpers and migrate the reset (PR 1)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/traverse_context/ecma_context.rs` (extend impl block at line 167)
 - Modify: `crates/oxc_minifier/src/peephole/mod.rs:165` (migrate the reset)
 
@@ -97,6 +107,7 @@ grep -rc "ctx.state.changed = true" crates/oxc_minifier/src/peephole/ | sort -t:
 ```bash
 cargo test -p oxc_minifier
 ```
+
 Expected: PASS.
 
 - [ ] **Step 2: Record baseline `state.changed = true` count**
@@ -104,7 +115,8 @@ Expected: PASS.
 ```bash
 grep -rc "ctx.state.changed = true" crates/oxc_minifier/src/peephole/ | awk -F: '{s+=$2} END {print s}'
 ```
-Expected: `188`. If different, the spec is stale — STOP and update the spec.
+
+Expected: `187`. If different, the spec is stale — STOP and update the spec.
 
 - [ ] **Step 3: Add the four helpers**
 
@@ -160,6 +172,7 @@ Edit `crates/oxc_minifier/src/peephole/mod.rs:165`:
 ```bash
 cargo build -p oxc_minifier
 ```
+
 Expected: clean build.
 
 - [ ] **Step 6: Run tests**
@@ -167,6 +180,7 @@ Expected: clean build.
 ```bash
 cargo test -p oxc_minifier
 ```
+
 Expected: PASS, no snapshot diffs.
 
 - [ ] **Step 7: Verify inlining (one-time check)**
@@ -174,6 +188,7 @@ Expected: PASS, no snapshot diffs.
 Build the release binary and inspect a known call site. Pick any peephole call site that will be migrated in a later task (e.g. one of the two sites in `peephole/mod.rs` migrated by Task 5) and confirm the call lowers to `mov` + `mov $1, …` with no `call` to the helper body.
 
 Tooling options (use whichever is installed in your environment):
+
 - `cargo-show-asm`: `cargo asm --rust -p oxc_minifier "<symbol>"`
 - `rustc` direct: `cargo rustc -p oxc_minifier --release -- --emit asm` and grep the output in `target/release/deps/*.s`.
 
@@ -201,6 +216,7 @@ check."
 ## Task 2: Migrate `inline.rs` (PR 2)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/inline.rs`
 
 - [ ] **Step 1: Confirm count before**
@@ -208,6 +224,7 @@ check."
 ```bash
 grep -c "ctx.state.changed = true" crates/oxc_minifier/src/peephole/inline.rs
 ```
+
 Expected: `1`.
 
 - [ ] **Step 2: Locate the site**
@@ -225,6 +242,7 @@ Read the lines surrounding the site, classify per Reference §"Site classificati
 ```bash
 grep -c "ctx.state.changed = true" crates/oxc_minifier/src/peephole/inline.rs
 ```
+
 Expected: `0`.
 
 - [ ] **Step 5: Build + test**
@@ -232,6 +250,7 @@ Expected: `0`.
 ```bash
 cargo build -p oxc_minifier && cargo test -p oxc_minifier
 ```
+
 Expected: clean build, all tests pass, no snapshot diffs.
 
 - [ ] **Step 6: Run size snapshot check**
@@ -240,6 +259,7 @@ Expected: clean build, all tests pass, no snapshot diffs.
 just minsize
 git diff --stat tasks/minsize/
 ```
+
 Expected: empty diff (no `tasks/minsize/` changes).
 
 - [ ] **Step 7: Commit**
@@ -254,6 +274,7 @@ git commit -m "refactor(minifier): migrate inline.rs to mutation helpers"
 ## Task 3: Migrate `remove_unused_private_members.rs` (PR 3)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/remove_unused_private_members.rs`
 
 - [ ] **Step 1: Confirm count before**
@@ -261,6 +282,7 @@ git commit -m "refactor(minifier): migrate inline.rs to mutation helpers"
 ```bash
 grep -c "ctx.state.changed = true" crates/oxc_minifier/src/peephole/remove_unused_private_members.rs
 ```
+
 Expected: `1`.
 
 - [ ] **Step 2: Locate and classify the site**
@@ -278,6 +300,7 @@ Then read the surrounding 4 lines to classify per Reference §"Site classificati
 ```bash
 grep -c "ctx.state.changed = true" crates/oxc_minifier/src/peephole/remove_unused_private_members.rs
 ```
+
 Expected: `0`.
 
 - [ ] **Step 5: Build + test**
@@ -291,6 +314,7 @@ cargo build -p oxc_minifier && cargo test -p oxc_minifier
 ```bash
 just minsize && git diff --stat tasks/minsize/
 ```
+
 Expected: empty diff.
 
 - [ ] **Step 7: Commit**
@@ -305,6 +329,7 @@ git commit -m "refactor(minifier): migrate remove_unused_private_members.rs to m
 ## Task 4: Migrate `minimize_for_statement.rs` (PR 4)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/minimize_for_statement.rs`
 
 - [ ] **Step 1: Confirm count before**
@@ -312,6 +337,7 @@ git commit -m "refactor(minifier): migrate remove_unused_private_members.rs to m
 ```bash
 grep -c "ctx.state.changed = true" crates/oxc_minifier/src/peephole/minimize_for_statement.rs
 ```
+
 Expected: `2`.
 
 - [ ] **Step 2: Locate and classify all sites**
@@ -327,6 +353,7 @@ grep -n -B1 -A1 "ctx.state.changed = true" crates/oxc_minifier/src/peephole/mini
 ```bash
 grep -c "ctx.state.changed = true" crates/oxc_minifier/src/peephole/minimize_for_statement.rs
 ```
+
 Expected: `0`.
 
 - [ ] **Step 5: Build + test**
@@ -340,6 +367,7 @@ cargo build -p oxc_minifier && cargo test -p oxc_minifier
 ```bash
 just minsize && git diff --stat tasks/minsize/
 ```
+
 Expected: empty diff.
 
 - [ ] **Step 7: Commit**
@@ -354,6 +382,7 @@ git commit -m "refactor(minifier): migrate minimize_for_statement.rs to mutation
 ## Task 5: Migrate `peephole/mod.rs` (PR 5)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/mod.rs`
 
 The 2 sites in this file are inside the `exit_statement`/`exit_expression` visitor methods at lines 229 and 385. Both fit Pattern A (slot replace).
@@ -363,6 +392,7 @@ The 2 sites in this file are inside the `exit_statement`/`exit_expression` visit
 ```bash
 grep -c "ctx.state.changed = true" crates/oxc_minifier/src/peephole/mod.rs
 ```
+
 Expected: `2`.
 
 - [ ] **Step 2: Locate the sites**
@@ -374,6 +404,7 @@ grep -n -B3 "ctx.state.changed = true" crates/oxc_minifier/src/peephole/mod.rs
 - [ ] **Step 3: Apply Pattern A to both sites**
 
 Line 229 region (currently):
+
 ```rust
                     if let Statement::IfStatement(if_stmt) = stmt
                         && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
@@ -384,6 +415,7 @@ Line 229 region (currently):
 ```
 
 Becomes:
+
 ```rust
                     if let Statement::IfStatement(if_stmt) = stmt
                         && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
@@ -393,6 +425,7 @@ Becomes:
 ```
 
 Line 385 region (currently):
+
 ```rust
                     if let Some(changed) = Self::minimize_conditional_expression(logical_expr, ctx)
                     {
@@ -402,6 +435,7 @@ Line 385 region (currently):
 ```
 
 Becomes:
+
 ```rust
                     if let Some(changed) = Self::minimize_conditional_expression(logical_expr, ctx)
                     {
@@ -414,6 +448,7 @@ Becomes:
 ```bash
 grep -c "ctx.state.changed = true" crates/oxc_minifier/src/peephole/mod.rs
 ```
+
 Expected: `0`.
 
 - [ ] **Step 5: Build + test**
@@ -427,6 +462,7 @@ cargo build -p oxc_minifier && cargo test -p oxc_minifier
 ```bash
 just minsize && git diff --stat tasks/minsize/
 ```
+
 Expected: empty diff.
 
 - [ ] **Step 7: Commit**
@@ -441,6 +477,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 6: Migrate `minimize_logical_expression.rs` (PR 6)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/minimize_logical_expression.rs`
 
 - [ ] **Step 1: Count before — expected `3`.**
@@ -460,6 +497,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 7: Migrate `minimize_not_expression.rs` (PR 7)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/minimize_not_expression.rs`
 
 - [ ] **Step 1: Count before — expected `3`.**
@@ -479,6 +517,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 8: Migrate `minimize_if_statement.rs` (PR 8)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/minimize_if_statement.rs`
 
 - [ ] **Step 1: Count before — expected `5`.**
@@ -498,6 +537,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 9: Migrate `remove_unused_declaration.rs` (PR 9)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/remove_unused_declaration.rs`
 
 - [ ] **Step 1: Count before — expected `5`.**
@@ -517,6 +557,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 10: Migrate `minimize_conditions.rs` (PR 10)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/minimize_conditions.rs`
 
 - [ ] **Step 1: Count before — expected `6`.**
@@ -536,6 +577,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 11: Migrate `minimize_expression_in_boolean_context.rs` (PR 11)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/minimize_expression_in_boolean_context.rs`
 
 - [ ] **Step 1: Count before — expected `6`.**
@@ -555,6 +597,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 12: Migrate `replace_known_methods.rs` (PR 12)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/replace_known_methods.rs`
 
 - [ ] **Step 1: Count before — expected `6`.**
@@ -574,6 +617,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 13: Migrate `fold_constants.rs` (PR 13)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/fold_constants.rs`
 
 - [ ] **Step 1: Count before — expected `14`.**
@@ -593,6 +637,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 14: Migrate `remove_dead_code.rs` (PR 14)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/remove_dead_code.rs`
 
 - [ ] **Step 1: Count before — expected `19`.**
@@ -612,6 +657,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 15: Migrate `remove_unused_expression.rs` (PR 15)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/remove_unused_expression.rs`
 
 - [ ] **Step 1: Count before — expected `27`.**
@@ -631,6 +677,7 @@ git commit -m "refactor(minifier): migrate peephole/mod.rs to mutation helpers"
 ## Task 16: Migrate `substitute_alternate_syntax.rs` (PR 16)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/substitute_alternate_syntax.rs`
 
 This is the largest single-file migration. Most sites are Pattern A; a notable few are Pattern D (the binary-operand swap around line 419).
@@ -638,9 +685,9 @@ This is the largest single-file migration. Most sites are Pattern A; a notable f
 - [ ] **Step 1: Count before — expected `43`.**
 - [ ] **Step 2: Locate sites with `grep -n -B3 "ctx.state.changed = true"`.**
 - [ ] **Step 3: Apply Reference patterns to each site. Special cases to verify:**
-   - The operand swap at line ~419 (`e.right = left; e.left = right;`) is Pattern D → `ctx.notice_change()`.
-   - The `substitute_chain_call_expression` at line ~1305 (creates a new reference via `create_unbound_reference`, no slot replacement) is Pattern D → `ctx.notice_change()`.
-   - The `substitute_is_object_and_not_null_for_left_and_right` at lines ~447 and ~470 is Pattern A despite the rebuilt `new_expr` preserving semantic IDs from the old — this is fine because the helpers do not walk for refs.
+  - The operand swap at line ~419 (`e.right = left; e.left = right;`) is Pattern D → `ctx.notice_change()`.
+  - The `substitute_chain_call_expression` at line ~1305 (creates a new reference via `create_unbound_reference`, no slot replacement) is Pattern D → `ctx.notice_change()`.
+  - The `substitute_is_object_and_not_null_for_left_and_right` at lines ~447 and ~470 is Pattern A despite the rebuilt `new_expr` preserving semantic IDs from the old — this is fine because the helpers do not walk for refs.
 - [ ] **Step 4: Count after — expected `0`.**
 - [ ] **Step 5: `cargo build -p oxc_minifier && cargo test -p oxc_minifier` — expected PASS.**
 - [ ] **Step 6: `just minsize && git diff --stat tasks/minsize/` — expected empty diff.**
@@ -655,11 +702,12 @@ This is the largest single-file migration. Most sites are Pattern A; a notable f
 ## Task 17: Migrate `minimize_statements.rs` — SPECIAL CARE for `dead_drop_mutates_ast` (PR 17)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/minimize_statements.rs`
 
 This is the largest single-file migration and has the `dead_drop_mutates_ast` gate at line 22. **Pattern E (conditional semantic gate) applies to one or more sites in this file.** Removing the `if dead_drop_mutates_ast(...)` wrapper would cause the peephole loop to spin forever; the existing `Ran loop more than 10 times` `debug_assert!` in `compressor.rs:86` would catch it in tests, but only after wasted iterations — easier to get it right.
 
-- [ ] **Step 1: Count before — expected `45`.**
+- [ ] **Step 1: Count before — expected `44`.**
 - [ ] **Step 2: Locate sites with `grep -n -B3 "ctx.state.changed = true"`.**
 - [ ] **Step 3: Locate the `dead_drop_mutates_ast` gate**
 
@@ -669,7 +717,7 @@ grep -n -A3 "dead_drop_mutates_ast" crates/oxc_minifier/src/peephole/minimize_st
 
 For every site INSIDE an `if dead_drop_mutates_ast(...)` block (or otherwise gated by a `dead_drop_mutates_ast` call), apply **Pattern E** — keep the `if`, replace only the body.
 
-- [ ] **Step 4: Apply Reference patterns to all 45 sites**
+- [ ] **Step 4: Apply Reference patterns to all 44 sites**
 
 Most sites in this file are Pattern A (slot replace, e.g. line 269 region where a sequence of throw statements is merged into one). Be careful with Pattern E sites; verify each by reading the surrounding 6 lines.
 
@@ -679,6 +727,7 @@ Most sites in this file are Pattern A (slot replace, e.g. line 269 region where 
 ```bash
 cargo build -p oxc_minifier && cargo test -p oxc_minifier
 ```
+
 Expected: PASS. If a test fails with `Ran loop more than 10 times`, a `dead_drop_mutates_ast` gate was inadvertently removed — revisit step 4.
 
 - [ ] **Step 7: Size snapshot check**
@@ -686,6 +735,7 @@ Expected: PASS. If a test fails with `Ran loop more than 10 times`, a `dead_drop
 ```bash
 just minsize && git diff --stat tasks/minsize/
 ```
+
 Expected: empty diff.
 
 - [ ] **Step 8: Commit:**
@@ -702,6 +752,7 @@ that gate would let the peephole fixed-point loop spin forever on
 ## Task 18: Final lockdown — make field `pub(crate)` and add CI checks (PR 18)
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/state.rs:33` (`pub changed: bool` → `pub(crate) changed: bool`)
 - Create: `tools/check_state_changed.sh`
 - Modify: `justfile` (wire the check into `just ready`)
@@ -714,6 +765,7 @@ that gate would let the peephole fixed-point loop spin forever on
 rg -n 'state\.changed\s*=' crates/oxc_minifier/ \
   --glob '!crates/oxc_minifier/src/traverse_context/ecma_context.rs'
 ```
+
 Expected: **no output**. If any lines print, a previous task missed a site — go back to the task that owns that file and complete it before continuing.
 
 - [ ] **Step 2: Tighten field visibility**
@@ -762,6 +814,7 @@ chmod +x tools/check_state_changed.sh
 ```bash
 ./tools/check_state_changed.sh && echo OK
 ```
+
 Expected: `OK`.
 
 - [ ] **Step 5: Wire into `just ready`**
@@ -785,6 +838,7 @@ Then run:
 ```bash
 just ready
 ```
+
 Expected: full ready pipeline passes including the new check.
 
 - [ ] **Step 6: Add the ast-grep structural check**
@@ -814,7 +868,7 @@ message: |
 
 rule:
   any:
-    - pattern: '*$SLOT = $VALUE'
+    - pattern: "*$SLOT = $VALUE"
 
 files:
   - src/peephole/**/*.rs
@@ -825,6 +879,7 @@ files:
 ```bash
 cd crates/oxc_minifier && ast-grep scan && cd ../..
 ```
+
 Expected: zero violations. If any are flagged, they are real bypass attempts hiding in the codebase — investigate, decide whether to use `replace_*` or add the allowlist comment with a written justification, then re-run.
 
 - [ ] **Step 8: Wire the ast-grep check into `just ready`**
@@ -843,6 +898,7 @@ Then run:
 ```bash
 just ready
 ```
+
 Expected: full pipeline passes.
 
 - [ ] **Step 9: Full regression suite**
@@ -853,6 +909,7 @@ cargo test -p oxc_mangler
 cargo coverage -- minifier
 just minsize && git diff --stat tasks/minsize/
 ```
+
 Expected: all pass, no size diffs.
 
 - [ ] **Step 10: Commit:**
@@ -909,6 +966,7 @@ cargo coverage -- minifier
 just minsize && git diff --stat tasks/minsize/
 just ready
 ```
+
 All expected to pass with no diffs.
 
 ---
