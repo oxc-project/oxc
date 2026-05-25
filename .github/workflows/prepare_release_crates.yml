@@ -30,9 +30,6 @@ jobs:
     if: github.repository == 'oxc-project/oxc'
     name: Prepare Release
     runs-on: ubuntu-latest
-    outputs:
-      pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
-      version: ${{ steps.run.outputs.CRATES_VERSION }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -84,36 +81,4 @@ jobs:
           base: main
           body-path: ./target/CRATES_CHANGELOG
           assignees: Boshen
-
-  ecosystem-ci:
-    needs: prepare
-    name: Trigger Monitor Oxc
-    runs-on: ubuntu-slim
-    permissions:
-      issues: write
-      pull-requests: write
-    steps:
-      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-
-      - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
-        id: comment
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ needs.prepare.outputs.pull-request-number }}
-          body: Triggering Monitor Oxc https://github.com/oxc-project/monitor-oxc/actions/workflows/ci.yml
-
-      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        id: app-token
-        with:
-          client-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: oxc-project
-          repositories: monitor-oxc
-
-      - uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
-        with:
-          repo: oxc-project/monitor-oxc
-          workflow: ci.yml
-          token: ${{ steps.app-token.outputs.token }}
-          ref: main
-          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'
+          labels: run-monitor-oxc
