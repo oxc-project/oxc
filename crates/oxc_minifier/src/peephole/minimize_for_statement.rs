@@ -60,8 +60,8 @@ impl<'a> PeepholeOptimizations {
             }
 
             let alternate = if_stmt.alternate.take();
-            for_stmt.body = Self::drop_first_statement(span, body, alternate, ctx);
-            ctx.notice_change();
+            let new_body = Self::drop_first_statement(span, body, alternate, ctx);
+            ctx.replace_statement(&mut for_stmt.body, new_body);
             return;
         }
         // "for (;;) if (x) y(); else break;" => "for (; x;) y();"
@@ -97,8 +97,8 @@ impl<'a> PeepholeOptimizations {
             }
 
             let consequent = if_stmt.consequent.take_in(ctx.ast);
-            for_stmt.body = Self::drop_first_statement(span, body, Some(consequent), ctx);
-            ctx.notice_change();
+            let new_body = Self::drop_first_statement(span, body, Some(consequent), ctx);
+            ctx.replace_statement(&mut for_stmt.body, new_body);
         }
     }
 
