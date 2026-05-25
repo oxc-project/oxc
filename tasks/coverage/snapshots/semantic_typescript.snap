@@ -2,7 +2,7 @@ commit: f350b523
 
 semantic_typescript Summary:
 AST Parsed     : 4773/4773 (100.00%)
-Positive Passed: 2671/4773 (55.96%)
+Positive Passed: 2677/4773 (56.09%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -19430,14 +19430,6 @@ Unresolved references mismatch:
 after transform: ["require", "undefined"]
 rebuilt        : ["B", "require", "undefined"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameAccessorsCallExpression.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameClassExpressionLoop.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["_C_brand", "_classPrivateFieldInitSpec", "_classPrivateMethodInitSpec", "_myField", "array"]
@@ -19481,47 +19473,10 @@ Symbol reference IDs mismatch for "Test":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(5): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameMethodAsync.ts
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticAccessorsCallExpression.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldDestructuredBinding.ts
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(12), ReferenceId(0), ReferenceId(25), ReferenceId(28)]
 rebuilt        : SymbolId(2): [ReferenceId(3), ReferenceId(16), ReferenceId(19)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticsAndStaticMethods.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesAndStaticMethods.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesAssertion.ts
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(10): ScopeFlags(0x0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.ts
 Bindings mismatch:

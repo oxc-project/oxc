@@ -1,6 +1,6 @@
 commit: 3d34928e
 
-Passed: 700/1165
+Passed: 703/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -192,7 +192,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (212/269)
+# babel-plugin-transform-class-properties (213/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -277,14 +277,6 @@ x Output mismatch
 
 * private/static-infer-name/input.js
 x Output mismatch
-
-* private/static-self-method/input.js
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 
 * private/static-shadow/input.js
 x Output mismatch
@@ -415,12 +407,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-methods (46/148)
-* accessors/tagged-template/input.js
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-
+# babel-plugin-transform-private-methods (48/148)
 * accessors-loose/basic/input.js
 x Output mismatch
 
@@ -698,11 +685,6 @@ x Output mismatch
 
 * static-accessors/set-only-getter/input.js
 x Output mismatch
-
-* static-accessors/tagged-template/input.js
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 * static-accessors-loose/basic/input.js
 x Output mismatch
