@@ -35,8 +35,8 @@ impl<'a> PeepholeOptimizations {
                     || parent.is_program()
                 {
                     // Remove the block if it is empty and the parent is a block statement.
-                    *stmt = ctx.ast.statement_empty(s.span);
-                    ctx.state.changed = true;
+                    let new_stmt = ctx.ast.statement_empty(s.span);
+                    ctx.replace_statement(stmt, new_stmt);
                 }
             }
             1 => {
@@ -47,8 +47,8 @@ impl<'a> PeepholeOptimizations {
                 {
                     return;
                 }
-                *stmt = s.body.remove(0);
-                ctx.state.changed = true;
+                let new_stmt = s.body.remove(0);
+                ctx.replace_statement(stmt, new_stmt);
             }
             _ => {}
         }
@@ -112,14 +112,14 @@ impl<'a> PeepholeOptimizations {
                 }
                 return;
             }
-            *stmt = if boolean {
+            let new_stmt = if boolean {
                 if_stmt.consequent.take_in(ctx.ast)
             } else if let Some(alternate) = if_stmt.alternate.take() {
                 alternate
             } else {
                 ctx.ast.statement_empty(if_stmt.span)
             };
-            ctx.state.changed = true;
+            ctx.replace_statement(stmt, new_stmt);
         }
     }
 
@@ -130,13 +130,13 @@ impl<'a> PeepholeOptimizations {
             && Self::remove_unused_expression(init, ctx)
         {
             for_stmt.init = None;
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
         if let Some(update) = &mut for_stmt.update
             && Self::remove_unused_expression(update, ctx)
         {
             for_stmt.update = None;
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
 
         let test_boolean =
@@ -163,27 +163,27 @@ impl<'a> PeepholeOptimizations {
                             var_decl = Some(var_init.take_in_box(ctx.ast));
                         }
                     }
-                    *stmt = var_decl.map_or_else(
+                    let new_stmt = var_decl.map_or_else(
                         || ctx.ast.statement_empty(for_stmt.span),
                         Statement::VariableDeclaration,
                     );
-                    ctx.state.changed = true;
+                    ctx.replace_statement(stmt, new_stmt);
                 }
                 None => {
                     let mut keep_var = KeepVar::new(ctx.ast);
                     keep_var.visit_statement(&for_stmt.body);
-                    *stmt = keep_var.get_variable_declaration().map_or_else(
+                    let new_stmt = keep_var.get_variable_declaration().map_or_else(
                         || ctx.ast.statement_empty(for_stmt.span),
                         Statement::VariableDeclaration,
                     );
-                    ctx.state.changed = true;
+                    ctx.replace_statement(stmt, new_stmt);
                 }
                 _ => {}
             },
             Some(true) => {
                 // Remove the test expression.
                 for_stmt.test = None;
-                ctx.state.changed = true;
+                ctx.notice_change();
             }
             None => {}
         }
@@ -199,8 +199,8 @@ impl<'a> PeepholeOptimizations {
         let id = s.label.name.as_str();
 
         if ctx.options().drop_labels.contains(id) {
-            *stmt = ctx.ast.statement_empty(s.span);
-            ctx.state.changed = true;
+            let new_stmt = ctx.ast.statement_empty(s.span);
+            ctx.replace_statement(stmt, new_stmt);
             return;
         }
 
@@ -211,8 +211,8 @@ impl<'a> PeepholeOptimizations {
                 if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
             Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
             Statement::EmptyStatement(_) => {
-                *stmt = ctx.ast.statement_empty(s.span);
-                ctx.state.changed = true;
+                let new_stmt = ctx.ast.statement_empty(s.span);
+                ctx.replace_statement(stmt, new_stmt);
                 return;
             }
             _ => return
@@ -220,8 +220,8 @@ impl<'a> PeepholeOptimizations {
         let mut var = KeepVar::new(ctx.ast);
         var.visit_statement(&s.body);
         let var_decl = var.get_variable_declaration_statement();
-        *stmt = var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span));
-        ctx.state.changed = true;
+        let new_stmt = var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span));
+        ctx.replace_statement(stmt, new_stmt);
     }
 
     pub fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -235,8 +235,8 @@ impl<'a> PeepholeOptimizations {
         }
 
         if Self::remove_unused_expression(&mut expr_stmt.expression, ctx) {
-            *stmt = ctx.ast.statement_empty(expr_stmt.span);
-            ctx.state.changed = true;
+            let new_stmt = ctx.ast.statement_empty(expr_stmt.span);
+            ctx.replace_statement(stmt, new_stmt);
         }
     }
 
@@ -264,14 +264,14 @@ impl<'a> PeepholeOptimizations {
         if s.block.body.is_empty()
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
-            *stmt = if let Some(finalizer) = &mut s.finalizer {
+            let new_stmt = if let Some(finalizer) = &mut s.finalizer {
                 let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
                 std::mem::swap(&mut **finalizer, &mut block);
                 Statement::BlockStatement(ctx.ast.alloc(block))
             } else {
                 ctx.ast.statement_empty(s.span)
             };
-            ctx.state.changed = true;
+            ctx.replace_statement(stmt, new_stmt);
         }
     }
 
@@ -279,8 +279,7 @@ impl<'a> PeepholeOptimizations {
     pub fn try_fold_conditional_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ConditionalExpression(e) = expr else { return };
         let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
-        ctx.state.changed = true;
-        *expr = if e.test.may_have_side_effects(ctx) {
+        let new_expr = if e.test.may_have_side_effects(ctx) {
             // "(a, true) ? b : c" => "a, b"
             let exprs = ctx.ast.vec_from_array([
                 {
@@ -308,6 +307,7 @@ impl<'a> PeepholeOptimizations {
                 result_expr
             }
         };
+        ctx.replace_expression(expr, new_expr);
     }
 
     pub fn remove_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -328,13 +328,13 @@ impl<'a> PeepholeOptimizations {
             i += 1;
             if should_keep_as_sequence_expr && i == old_len - 1 {
                 if Self::remove_unused_expression(e, ctx) {
-                    *e = ctx.ast.expression_numeric_literal(
+                    let new_expr = ctx.ast.expression_numeric_literal(
                         e.span(),
                         0.0,
                         None,
                         NumberBase::Decimal,
                     );
-                    ctx.state.changed = true;
+                    ctx.replace_expression(e, new_expr);
                 }
                 return true;
             }
@@ -344,11 +344,11 @@ impl<'a> PeepholeOptimizations {
             !Self::remove_unused_expression(e, ctx)
         });
         if e.expressions.len() != old_len {
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
         if e.expressions.len() == 1 {
-            *expr = e.expressions.pop().unwrap();
-            ctx.state.changed = true;
+            let new_expr = e.expressions.pop().unwrap();
+            ctx.replace_expression(expr, new_expr);
         }
     }
 
@@ -440,13 +440,13 @@ impl<'a> PeepholeOptimizations {
             {
                 let mut exprs = Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
                 if exprs.is_empty() {
-                    *expr = ctx.ast.void_0(e.span);
-                    ctx.state.changed = true;
+                    let new_expr = ctx.ast.void_0(e.span);
+                    ctx.replace_expression(expr, new_expr);
                     return;
                 }
                 exprs.push(ctx.ast.void_0(e.span));
-                *expr = ctx.ast.expression_sequence(e.span, exprs);
-                ctx.state.changed = true;
+                let new_expr = ctx.ast.expression_sequence(e.span, exprs);
+                ctx.replace_expression(expr, new_expr);
             }
         }
     }
