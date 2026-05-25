@@ -361,4 +361,38 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
         (options.class && is_class) || (options.function && !is_class)
     }
+
+    /// Replace an expression slot. Marks the pass as having mutated the AST.
+    ///
+    /// Prefer this over a direct `*slot = new; ctx.state.changed = true;` pair —
+    /// the helper is enforced by CI (see `tools/check_state_changed.sh`).
+    #[inline]
+    pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
+        *slot = new;
+        self.state.changed = true;
+    }
+
+    /// Replace a statement slot. Marks the pass as having mutated the AST.
+    #[inline]
+    pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
+        *slot = new;
+        self.state.changed = true;
+    }
+
+    /// Mark the pass as having mutated the AST in place (operand swap, in-place
+    /// field flip, collection element removal, etc.) where no slot replacement
+    /// happened. Prefer the `replace_*` helpers when the mutation IS a slot
+    /// replacement.
+    #[inline]
+    pub fn notice_change(&mut self) {
+        self.state.changed = true;
+    }
+
+    /// Clear the per-pass mutation signal. Called once at the top of each
+    /// peephole traversal in `enter_program`. This is the only sanctioned
+    /// way to write `state.changed = false`.
+    #[inline]
+    pub fn reset_changed(&mut self) {
+        self.state.changed = false;
+    }
 }
