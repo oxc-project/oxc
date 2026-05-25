@@ -58,6 +58,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Make sure there is an empty new line before the afterAll block
 
+  ⚠ vitest(padding-around-after-all-blocks): Missing padding after afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:2:20]
+ 1 │ describe('foo', () => {
+ 2 │ afterAll(() => {});
+   ·                    ▲
+ 3 │ afterAll(() => {});
+   ╰────
+  help: Make sure there is an empty new line after the afterAll block
+
   ⚠ vitest(padding-around-after-all-blocks): Missing padding before afterAll block
    ╭─[padding_around_after_all_blocks.tsx:3:1]
  2 │ afterAll(() => {});
