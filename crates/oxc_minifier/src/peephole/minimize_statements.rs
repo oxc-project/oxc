@@ -924,9 +924,9 @@ impl<'a> PeepholeOptimizations {
             && let Some(argument) = &mut ret_stmt.argument
         {
             let a = &mut prev_expr_stmt.expression;
-            *argument = Self::join_sequence(a, argument, ctx);
+            let new_arg = Self::join_sequence(a, argument, ctx);
+            ctx.replace_expression(argument, new_arg);
             result.pop();
-            ctx.notice_change();
         }
         result.push(Statement::ReturnStatement(ret_stmt));
         *is_control_flow_dead = true;
@@ -1024,9 +1024,9 @@ impl<'a> PeepholeOptimizations {
                     if let Some(init) = &mut for_stmt.init {
                         if let Some(init) = init.as_expression_mut() {
                             let a = &mut prev_expr_stmt.expression;
-                            *init = Self::join_sequence(a, init, ctx);
+                            let new_init = Self::join_sequence(a, init, ctx);
+                            ctx.replace_expression(init, new_init);
                             result.pop();
-                            ctx.notice_change();
                         }
                     } else {
                         for_stmt.init = Some(ForStatementInit::from(
