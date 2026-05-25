@@ -225,8 +225,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     if let Statement::IfStatement(if_stmt) = stmt
                         && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
                     {
-                        *stmt = folded_stmt;
-                        ctx.state.changed = true;
+                        ctx.replace_statement(stmt, folded_stmt);
                     }
                 }
                 Statement::WhileStatement(s) => {
@@ -381,8 +380,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::minimize_expression_in_boolean_context(&mut logical_expr.test, ctx);
                     if let Some(changed) = Self::minimize_conditional_expression(logical_expr, ctx)
                     {
-                        *expr = changed;
-                        ctx.state.changed = true;
+                        ctx.replace_expression(expr, changed);
                     }
                     Self::try_fold_conditional_expression(expr, ctx);
                 }
