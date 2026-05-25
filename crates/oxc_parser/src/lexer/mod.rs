@@ -35,6 +35,9 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
+// Visibility is conditional via the `benchmarking` feature in `lib.rs`; suppress
+// the redundant-pub-crate lint that fires only in the non-benchmarking build.
+#[expect(clippy::redundant_pub_crate)]
 pub(crate) use byte_handlers::{ByteHandler, ByteHandlers, byte_handler_tables};
 pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
