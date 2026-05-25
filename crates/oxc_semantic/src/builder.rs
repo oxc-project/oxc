@@ -663,8 +663,9 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         // TypeScript resolves parameter decorators in the enclosing class scope,
-        // skipping the constructor scope and any earlier parameters that may
-        // shadow outer names:
+        // not the constructor scope. Both `foo` references below therefore
+        // resolve to the outer binding — the first decorator must not see its
+        // own parameter, and the second must not see the first parameter:
         //
         // ```ts
         // constructor(
@@ -673,9 +674,12 @@ impl<'a> SemanticBuilder<'a> {
         // ) {}
         // ```
         //
-        // Both `foo` references should resolve to the outer binding, not to the
-        // first parameter. Temporarily swap `current_scope_id` to the parent
-        // scope while visiting the decorator, then restore it.
+        // `reference_identifier` stamps each new reference with `current_scope_id`,
+        // and `walk_up_resolve_reference` later walks from that recorded scope
+        // via `scope_parent_id`. Pointing `current_scope_id` at the class scope
+        // for the decorator visit brands every reference inside it with the
+        // class scope, so resolution skips the constructor's bindings entirely.
+        // Restore on the way back.
         //
         // Mirrors the `Decorator` case in TypeScript's `resolveName`:
         // <https://github.com/microsoft/TypeScript/blob/0105bbb63689372f2cbeec7c884c27906ac0ef7f/src/compiler/utilities.ts#L11772-L11800>.
