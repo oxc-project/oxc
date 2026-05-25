@@ -24,14 +24,14 @@ jobs:
         with:
           restore-cache: true
           cache-key: warm
-          tools: just,cargo-shear@1.11.2
+          tools: just,cargo-shear@1.12.4
           components: rustfmt
 
       - name: cargo-shear
         id: shear
         shell: bash
         run: |
-          if ! cargo shear --fix; then
+          if ! cargo shear --fix --check-test-targets --deny-warnings --format=github; then
             echo "shear=true" >> $GITHUB_OUTPUT
           fi
 
