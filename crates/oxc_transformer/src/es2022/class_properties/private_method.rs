@@ -65,7 +65,7 @@ impl<'a> ClassProperties<'a> {
         // Change parent scope of function to current scope id and remove
         // strict mode flag if parent scope is not strict mode.
         let scope_id = function.scope_id();
-        let new_parent_id = if Self::is_inside_static_initializer(ctx) {
+        let new_parent_id = if Self::is_inside_static_property_initializer(ctx) {
             ctx.current_hoist_scope_id()
         } else {
             ctx.current_scope_id()
@@ -81,8 +81,10 @@ impl<'a> ClassProperties<'a> {
         Some(Statement::FunctionDeclaration(function))
     }
 
-    fn is_inside_static_initializer(ctx: &TraverseCtx<'a>) -> bool {
-        ctx.ancestors().any(|ancestor| matches!(ancestor, Ancestor::PropertyDefinitionValue(_)))
+    fn is_inside_static_property_initializer(ctx: &TraverseCtx<'a>) -> bool {
+        ctx.ancestors().any(|ancestor| {
+            matches!(ancestor, Ancestor::PropertyDefinitionValue(property) if *property.r#static())
+        })
     }
 
     // `_classPrivateMethodInitSpec(this, brand)`
