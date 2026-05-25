@@ -1,0 +1,1124 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || b
+   · ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (&&=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a && b
+   · ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a ?? b
+   · ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ foo = foo || bar
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || fn()
+   · ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || b && c
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || (b || c)
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || (b ? c : d)
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:14]
+ 1 │ /* before */ a = a || b
+   ·              ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || b // after
+   · ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a /* between */ = a || b
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = /** @type */ a || b
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || /* between */ b
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ (a) = a || b
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = (a) || b
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || (b)
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || ((b))
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:2]
+ 1 │ (a = a || b)
+   ·  ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || (f(), b)
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a.b = a.b ?? c
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a.b.c = a.b.c ?? d
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a[b] = a[b] ?? c
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a['b'] = a['b'] ?? c
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a.b = a['b'] ?? c
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a['b'] = a.b ?? c
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ this.prop = this.prop ?? {}
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:15]
+ 1 │ with (object) a = a || b
+   ·               ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:17]
+ 1 │ with (object) { a = a || b }
+   ·                 ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:32]
+ 1 │ with (object) { if (condition) a = a || b }
+   ·                                ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:7]
+ 1 │ with (a = a || b) {}
+   ·       ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:18]
+ 1 │ with (object) {} a = a || b
+   ·                  ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || b; with (object) {}
+   · ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:16]
+ 1 │ if (condition) a = a || b
+   ·                ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:3:16]
+ 2 │               "use strict";
+ 3 │                a = a || b
+   ·                ──────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:4]
+ 1 │ fn(a = a || b)
+   ·    ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:5]
+ 1 │ fn((a = a || b))
+   ·     ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:2]
+ 1 │ (a = a || b) ? c : d
+   ·  ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:5]
+ 1 │ a = b = b || c
+   ·     ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || (a = b)
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (&&=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a && (a = b)
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ?? (a = b)
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ foo ?? (foo = bar)
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || (a = 0)
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || (a = fn())
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || (a = (b || c))
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ (a) || (a = b)
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || ((a) = b)
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || (a = (b))
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || ((a = b))
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || (((a = b)))
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || ( ( a = b ) )
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:14]
+ 1 │ /* before */ a || (a = b)
+   ·              ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || (a = b) // after
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a /* between */ || (a = b)
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || /* between */ (a = b)
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a.b || (a.b = c)
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:38]
+ 1 │ class Class { #prop; constructor() { this.#prop || (this.#prop = value) } }
+   ·                                      ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a['b'] || (a['b'] = c)
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a[0] || (a[0] = b)
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a[this] || (a[this] = b)
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ foo.bar || (foo.bar = baz)
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a.b.c || (a.b.c = d)
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a[b.c] || (a[b.c] = d)
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a[b?.c] || (a[b?.c] = d)
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:15]
+ 1 │ with (object) a.b || (a.b = c)
+   ·               ────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:5]
+ 1 │ a = a.b || (a.b = {})
+   ·     ─────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || (a = 0) || b
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:2]
+ 1 │ (a || (a = 0)) || b
+   ·  ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:7]
+ 1 │ a || (b || (b = 0))
+   ·       ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:5]
+ 1 │ a = b || (b = c)
+   ·     ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a || (a = 0) ? b : c
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:4]
+ 1 │ fn(a || (a = 0))
+   ·    ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) a = b
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (Boolean(a)) a = b
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (!!a) a = b
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `||=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (!a) a = b
+   · ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `||=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (!Boolean(a)) a = b
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a == undefined) a = b
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a == null) a = b
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a === null || a === undefined) a = b
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a === undefined || a === null) a = b
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a === null || a === void 0) a = b
+   · ─────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a === void 0 || a === null) a = b
+   · ─────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) { a = b; }
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:2:13]
+ 1 │ { const undefined = 0; }
+ 2 │             if (a == undefined) a = b
+   ·             ─────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a == undefined) a = b
+   · ─────────────────────────
+ 2 │             { const undefined = 0; }
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (null == a) a = b
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (undefined == a) a = b
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (undefined === a || a === null) a = b
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a === undefined || null === a) a = b
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (undefined === a || null === a) a = b
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (null === a || a === undefined) a = b
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a === null || undefined === a) a = b
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (null === a || undefined === a) a = b
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if ((a)) a = b
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) (a) = b
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) a = (b)
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) (a = b)
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:2]
+ 1 │ ;if (a) (a) = b
+   ·  ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:3]
+ 1 │ { if (a) (a) = b }
+   ·   ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:6]
+ 1 │ fn();if (a) (a) = b
+   ·      ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:2:13]
+ 1 │ fn()
+ 2 │             if (a) a = b
+   ·             ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:2:13]
+ 1 │ id
+ 2 │             if (a) (a) = b
+   ·             ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:2:13]
+ 1 │ object.prop
+ 2 │             if (a) (a) = b
+   ·             ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:2:13]
+ 1 │ object[computed]
+ 2 │             if (a) (a) = b
+   ·             ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:2:13]
+ 1 │ fn()
+ 2 │             if (a) (a) = b
+   ·             ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) a = b; fn();
+   · ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) { a = b }
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) { a = b; }
+   · ─────────────────
+ 2 │             fn();
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) { a = b }
+   · ────────────────
+ 2 │             fn();
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) { a = b } fn();
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ ╭─▶ if (a) { a = b
+ 2 │ ╰─▶             } fn();
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) a  =  b
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ ╭─▶ if (a)
+ 2 │ ╰─▶              a = b
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ ╭─▶ if (a) {
+ 2 │ │                a = b; 
+ 3 │ ╰─▶             }
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:14]
+ 1 │ /* before */ if (a) a = b
+   ·              ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) a = b /* after */
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) /* between */ a = b
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a) a = /* between */ b
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a.b) a.b = c
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a[b]) a[b] = c
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a['b']) a['b'] = c
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (this.prop) this.prop = value
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:40]
+ 1 │ (class extends SuperClass { method() { if (super.prop) super.prop = value } })
+   ·                                        ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:15]
+ 1 │ with (object) if (a) a = b
+   ·               ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `??=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a.b === undefined || a.b === null) a.b = c
+   · ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a.b.c) a.b.c = d
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a.b.c.d) a.b.c.d = e
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (a[b].c) a[b].c = d
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:15]
+ 1 │ with (object) if (a.b) a.b = c
+   ·               ────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:24]
+ 1 │ if (unrelated) {} else if (a) a = b;
+   ·                        ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:31]
+ 1 │ if (a) {} else if (b) {} else if (a) a = b;
+   ·                               ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:2:13]
+ 1 │ if (unrelated) {} else
+ 2 │             if (a) a = b;
+   ·             ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:3:18]
+ 2 │                 }
+ 3 │ ╭─▶             else if (a) {
+ 4 │ │               a = b;
+ 5 │ ╰─▶             }
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:32]
+ 1 │ if (unrelated) statement; else if (a) a = b;
+   ·                                ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:2:18]
+ 1 │ if (unrelated) id
+ 2 │             else if (a) (a) = b
+   ·                  ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:43]
+ 1 │ if (unrelated) {} else if (a) a = b; else if (c) c = d
+   ·                                           ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:36]
+ 1 │ if (unrelated) { /* body */ } else if (a) a = b;
+   ·                                    ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:42]
+ 1 │ if (unrelated) {} /* before else */ else if (a) a = b;
+   ·                                          ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:2:13]
+ 1 │ if (unrelated) {} else // Line
+ 2 │             if (a) a = b;
+   ·             ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:36]
+ 1 │ if (unrelated) {} else /* Block */ if (a) a = b;
+   ·                                    ─────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): `if` statement can be replaced with a logical operator assignment with operator `&&=`.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ if (array) array = array.filter(predicate)
+   · ──────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ||= b
+   · ───────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (&&=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a &&= b
+   · ───────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (??=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ??= b
+   · ───────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ foo ||= bar
+   · ───────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a.b ||= c
+   · ─────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a[b] ||= c
+   · ──────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a['b'] ||= c
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ this.prop ||= 0
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:15]
+ 1 │ with (object) a ||= b
+   ·               ───────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ (a) ||= b
+   · ─────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ||= (b)
+   · ─────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:2]
+ 1 │ (a ||= b)
+   ·  ───────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:14]
+ 1 │ /* before */ a ||= b
+   ·              ───────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ||= b // after
+   · ───────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a /* before */ ||= b
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ||= /* after */ b
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ||= b && c
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (&&=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a &&= b || c
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ||= b || c
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (&&=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a &&= b && c
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (??=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ??= b || c
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (??=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ??= b && c
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (??=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ??= b ?? c
+   · ────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (??=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ??= (b || c)
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (??=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ??= b + c
+   · ───────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Unexpected logical operator assignment (||=) shorthand.
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a ||= b as number;
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a.b.c || (a.b.c = d as number)
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a.b.c || (a.b.c = (d as number))
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Logical expression can be replaced with an assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:2]
+ 1 │ (a.b.c || (a.b.c = d)) as number
+   ·  ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || b || c
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (&&=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a && b && c
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a ?? b ?? c
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || b && c
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || b || c || d
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (&&=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a && b && c && d
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (??=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a ?? b ?? c ?? d
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || b || c && d
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || b && c || d
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = (a) || b || c
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = a || (b || c) || d
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = (a || b || c)
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(logical-assignment-operators): Assignment (=) can be replaced with operator assignment (||=).
+   ╭─[logical_assignment_operators.tsx:1:1]
+ 1 │ a = ((a) || (b || c) || d)
+   · ──────────────────────────
+   ╰────

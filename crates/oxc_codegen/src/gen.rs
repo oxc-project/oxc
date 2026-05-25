@@ -12,11 +12,9 @@ use oxc_syntax::{
 use crate::{
     Codegen, Context, Operator, Quote,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
+    cjs_module_lexer,
+    comment::AnnotationKind,
 };
-
-const PURE_COMMENT: &str = "/* @__PURE__ */ ";
-const NO_SIDE_EFFECTS_NEW_LINE_COMMENT: &str = "/* @__NO_SIDE_EFFECTS__ */\n";
-const NO_SIDE_EFFECTS_COMMENT: &str = "/* @__NO_SIDE_EFFECTS__ */ ";
 
 /// Generate source code for an AST node.
 pub trait Gen: GetSpan {
@@ -51,7 +49,7 @@ impl Gen for Program<'_> {
         if let Some(hashbang) = &self.hashbang {
             hashbang.print(p, ctx);
         }
-        p.print_directives_and_statements(&self.directives, &self.body, ctx);
+        p.print_directives_and_statements(&self.directives, &self.body, self.span.end, ctx);
         p.print_semicolon_if_needed();
         // Print trailing statement comments.
         p.print_comments_at(self.span.end);
@@ -69,8 +67,8 @@ impl Gen for Hashbang<'_> {
 impl Gen for Directive<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
         // See https://github.com/babel/babel/blob/v7.26.2/packages/babel-generator/src/generators/base.ts#L64
@@ -123,7 +121,11 @@ impl Gen for Statement<'_> {
                 p.print_comments_at(decl.span.start);
                 if decl.pure && p.options.print_annotation_comment() {
                     p.print_indent();
-                    p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
+                    p.print_annotation_comment(
+                        decl.span.start,
+                        AnnotationKind::NoSideEffects,
+                        true,
+                    );
                 }
                 p.print_indent();
                 decl.print(p, ctx);
@@ -530,17 +532,17 @@ impl Gen for SwitchCase<'_> {
         }
         p.print_colon();
 
-        if self.consequent.len() == 1 {
+        // Force multi-line if a legal orphan is pending; the inline path skips the flush.
+        let single_line = self.consequent.len() == 1
+            && !p.has_legal_orphans_before(self.consequent[0].span().start);
+        if single_line {
             p.print_body(&self.consequent[0], false, ctx);
             return;
         }
 
         p.print_soft_newline();
         p.indent();
-        for item in &self.consequent {
-            p.print_semicolon_if_needed();
-            item.print(p, ctx);
-        }
+        p.print_stmts_with_orphan_flush(&self.consequent, self.span.end, ctx);
         p.dedent();
     }
 }
@@ -614,10 +616,10 @@ impl Gen for CatchClause<'_> {
         }
         p.print_soft_space();
         p.print_comments_at(self.body.span.start);
-        // Consume the space flag set by comment printing to ensure proper spacing before the opening brace
-        if !p.options.minify && p.print_next_indent_as_space {
-            p.print_hard_space();
-            p.print_next_indent_as_space = false;
+        // Flush the pending-indent-as-space flag so `/* */ {` doesn't
+        // collapse to `/* */{`.
+        if !p.options.minify {
+            p.consume_pending_indent_space();
         }
         p.print_block_statement(&self.body, ctx);
     }
@@ -759,18 +761,24 @@ impl Gen for FunctionBody<'_> {
         let span_end = self.span.end;
         let comments_at_end = if span_end > 0 { p.get_comments(span_end - 1) } else { None };
         let single_line = if self.is_empty() {
-            comments_at_end
-                .as_ref()
-                .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
+            !p.has_legal_orphans_before(self.span.end)
+                && comments_at_end
+                    .as_ref()
+                    .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
         } else {
             false
         };
         p.print_curly_braces(self.span, single_line, |p| {
-            p.print_directives_and_statements(&self.directives, &self.statements, ctx);
+            p.print_directives_and_statements(
+                &self.directives,
+                &self.statements,
+                self.span.end,
+                ctx,
+            );
             // Print trailing statement comments.
             if let Some(comments) = comments_at_end {
                 p.print_comments(&comments);
-                p.print_next_indent_as_space = false;
+                p.clear_pending_indent_space();
             }
         });
         p.needs_semicolon = false;
@@ -843,8 +851,8 @@ impl Gen for FormalParameters<'_> {
 impl Gen for ImportDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_space_before_identifier();
         p.print_str("import");
         if self.import_kind.is_type() {
@@ -995,10 +1003,13 @@ impl Gen for ExportNamedDeclaration<'_> {
             && func.pure
             && p.options.print_annotation_comment()
         {
-            p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
+            // Recover the verbatim annotation only when it sits before the
+            // `export` keyword; an annotation between `export` and `function`
+            // attaches to the inner function span and falls back to canonical.
+            p.print_annotation_comment(self.span.start, AnnotationKind::NoSideEffects, true);
         }
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_str("export");
         if let Some(decl) = &self.declaration {
             p.print_hard_space();
@@ -1091,7 +1102,7 @@ impl Gen for ExportSpecifier<'_> {
         if let Some(comments) = p.get_comments(self.local.span().start) {
             p.print_comments(&comments);
             p.print_soft_space();
-            p.print_next_indent_as_space = false;
+            p.clear_pending_indent_space();
         }
         self.local.print(p, ctx);
         let local_name = get_module_export_name(&self.local, p);
@@ -1101,7 +1112,7 @@ impl Gen for ExportSpecifier<'_> {
             if let Some(comments) = p.get_comments(self.exported.span().start) {
                 p.print_comments(&comments);
                 p.print_soft_space();
-                p.print_next_indent_as_space = false;
+                p.clear_pending_indent_space();
             }
             self.exported.print(p, ctx);
         }
@@ -1121,8 +1132,8 @@ impl Gen for ModuleExportName<'_> {
 impl Gen for ExportAllDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_str("export");
         if self.export_kind.is_type() {
             p.print_str(" type ");
@@ -1158,10 +1169,11 @@ impl Gen for ExportDefaultDeclaration<'_> {
             && func.pure
             && p.options.print_annotation_comment()
         {
-            p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
+            // See [`ExportNamedDeclaration`] for the rationale.
+            p.print_annotation_comment(self.span.start, AnnotationKind::NoSideEffects, true);
         }
-        p.add_source_mapping(self.span);
         p.print_indent();
+        p.add_source_mapping(self.span);
         p.print_str("export default ");
         self.declaration.print(p, ctx);
     }
@@ -1216,13 +1228,21 @@ impl GenExpr for Expression<'_> {
             // Function expressions
             Self::ArrowFunctionExpression(func) => {
                 if func.pure && p.options.print_annotation_comment() {
-                    p.print_str(NO_SIDE_EFFECTS_COMMENT);
+                    p.print_annotation_comment(
+                        func.span.start,
+                        AnnotationKind::NoSideEffects,
+                        false,
+                    );
                 }
                 func.print_expr(p, precedence, ctx);
             }
             Self::FunctionExpression(func) => {
                 if func.pure && p.options.print_annotation_comment() {
-                    p.print_str(NO_SIDE_EFFECTS_COMMENT);
+                    p.print_annotation_comment(
+                        func.span.start,
+                        AnnotationKind::NoSideEffects,
+                        false,
+                    );
                 }
                 func.print(p, ctx);
             }
@@ -1482,7 +1502,7 @@ impl GenExpr for CallExpression<'_> {
         p.wrap(wrap, |p| {
             if pure {
                 p.add_source_mapping(self.span);
-                p.print_str(PURE_COMMENT);
+                p.print_annotation_comment(self.span.start, AnnotationKind::Pure, false);
             }
             if is_export_default {
                 p.start_of_default_export = p.code_len();
@@ -1496,7 +1516,11 @@ impl GenExpr for CallExpression<'_> {
             if let Some(type_parameters) = &self.type_arguments {
                 type_parameters.print(p, ctx);
             }
-            p.print_arguments(self.span, &self.arguments, ctx);
+            if !cjs_module_lexer::try_print_define_property_call(p, self, ctx)
+                && !cjs_module_lexer::try_print_require_call(p, self)
+            {
+                p.print_arguments(self.span, &self.arguments, ctx);
+            }
         });
     }
 }
@@ -1556,8 +1580,8 @@ impl Gen for ArrayExpression<'_> {
             p.dedent();
             p.print_indent();
         }
-        p.print_ascii_byte(b']');
         p.add_source_mapping_end(self.span);
+        p.print_ascii_byte(b']');
     }
 }
 
@@ -1592,10 +1616,7 @@ impl GenExpr for ObjectExpression<'_> {
                     p.print_soft_space();
                     if let Some(comments) = p.get_comments(item.span().start) {
                         p.print_comments(&comments);
-                        if p.print_next_indent_as_space {
-                            p.print_hard_space();
-                            p.print_next_indent_as_space = false;
-                        }
+                        p.consume_pending_indent_space();
                     }
                 }
                 item.print(p, ctx);
@@ -1607,8 +1628,8 @@ impl GenExpr for ObjectExpression<'_> {
             } else if len > 0 {
                 p.print_soft_space();
             }
-            p.print_ascii_byte(b'}');
             p.add_source_mapping_end(self.span);
+            p.print_ascii_byte(b'}');
         });
     }
 }
@@ -1918,10 +1939,7 @@ impl GenExpr for ConditionalExpression<'_> {
             p.print_soft_space();
             if let Some(comments) = p.get_comments(self.alternate.span().start) {
                 p.print_comments(&comments);
-                if p.print_next_indent_as_space {
-                    p.print_hard_space();
-                    p.print_next_indent_as_space = false;
-                }
+                p.consume_pending_indent_space();
             }
             self.alternate.print_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
         });
@@ -1936,7 +1954,9 @@ impl GenExpr for AssignmentExpression<'_> {
             && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_));
         p.wrap(wrap || precedence >= self.precedence(), |p| {
             p.add_source_mapping(self.span);
-            self.left.print(p, ctx);
+            if !cjs_module_lexer::try_print_exports_computed_target(p, &self.left, ctx) {
+                self.left.print(p, ctx);
+            }
             p.print_soft_space();
             p.print_str(self.operator.as_str());
             p.print_soft_space();
@@ -2268,7 +2288,7 @@ impl GenExpr for NewExpression<'_> {
         }
         p.wrap(wrap, |p| {
             if pure {
-                p.print_str(PURE_COMMENT);
+                p.print_annotation_comment(self.span.start, AnnotationKind::Pure, false);
             }
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -2671,11 +2691,9 @@ impl Gen for StaticBlock<'_> {
         p.add_source_mapping(self.span);
         p.print_str("static");
         p.print_soft_space();
-        p.print_curly_braces(self.span, self.body.is_empty(), |p| {
-            for stmt in &self.body {
-                p.print_semicolon_if_needed();
-                stmt.print(p, ctx);
-            }
+        let single_line = self.body.is_empty() && !p.has_legal_orphans_before(self.span.end);
+        p.print_curly_braces(self.span, single_line, |p| {
+            p.print_stmts_with_orphan_flush(&self.body, self.span.end, ctx);
         });
         p.needs_semicolon = false;
     }
@@ -3808,7 +3826,7 @@ impl Gen for TSModuleBlock<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let is_empty = self.directives.is_empty() && self.body.is_empty();
         p.print_curly_braces(self.span, is_empty, |p| {
-            p.print_directives_and_statements(&self.directives, &self.body, ctx);
+            p.print_directives_and_statements(&self.directives, &self.body, self.span.end, ctx);
         });
         p.needs_semicolon = false;
     }

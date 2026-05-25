@@ -29,7 +29,11 @@ fn bench_minifier(criterion: &mut Criterion) {
 
                 // Create fresh AST + semantic data for each iteration
                 let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+                let scoping = SemanticBuilder::new()
+                    .with_enum_eval(true)
+                    .build(&program)
+                    .semantic
+                    .into_scoping();
 
                 // Minifier only works on esnext.
                 let transform_options = TransformOptions::from_target("esnext").unwrap();
@@ -78,10 +82,12 @@ fn bench_mangler(criterion: &mut Criterion) {
         let id = BenchmarkId::from_parameter(format!("{}_keep_names", &first_file.file_name));
         let source_type = SourceType::from_path(&first_file.file_name).unwrap();
         let source_text = first_file.source_text.as_str();
-        let allocator = Allocator::default();
-        let temp_allocator = Allocator::default();
+        let mut allocator = Allocator::default();
+        let mut temp_allocator = Allocator::default();
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
+                allocator.reset();
+                temp_allocator.reset();
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
                 let mut semantic = SemanticBuilder::new().build(&program).semantic;
                 runner.run(|| {

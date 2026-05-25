@@ -12638,7 +12638,10 @@ function constructStr(pos, ast) {
   if (len === 0) return "";
 
   pos = int32[pos32];
-  if (ast.sourceIsAscii && pos < ast.sourceByteLen) return ast.sourceText.substr(pos, len);
+  if (ast.sourceIsAscii) {
+    const { sourceStartPos } = ast;
+    if (pos >= sourceStartPos) return ast.sourceText.substr(pos - sourceStartPos, len);
+  }
 
   // Longer strings use `TextDecoder`
   // TODO: Find best switch-over point

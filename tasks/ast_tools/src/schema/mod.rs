@@ -107,6 +107,7 @@ impl Schema {
         StructsMut::new(self)
     }
 
+    /// Get iterator over all enums.
     pub fn enums(&self) -> Enums<'_> {
         Enums::new(self)
     }

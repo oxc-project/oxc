@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression, ForInStatement,
-        ForOfStatement, ForStatement, VariableDeclarationKind,
+        Argument, AssignmentExpression, AssignmentTarget, BindingPattern, CallExpression,
+        Expression, ForInStatement, ForOfStatement, ForStatement, VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -246,7 +246,7 @@ fn check_loop_usage<'a>(
 fn find_assignment_expression<'a>(
     referenced_symbol_id: SymbolId,
     ctx: &LintContext<'a>,
-) -> Option<&'a oxc_ast::ast::AssignmentExpression<'a>> {
+) -> Option<&'a AssignmentExpression<'a>> {
     let write_reference =
         ctx.semantic().symbol_references(referenced_symbol_id).find(|r| r.is_write())?;
     let parent_node = ctx.nodes().parent_node(write_reference.node_id());

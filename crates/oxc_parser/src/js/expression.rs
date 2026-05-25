@@ -119,8 +119,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[inline]
     pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Ident<'a>) {
-        let span = self.cur_token().span();
-        let name = self.cur_string();
+        let token = self.cur_token();
+        let span = token.span();
+        // Fast path: most identifiers are not escaped, so we can slice directly
+        // from source text without going through `get_string`'s kind matching.
+        let name = if token.escaped() { self.cur_string() } else { self.token_source(&token) };
         self.advance(kind);
         (span, Ident::from(name))
     }
@@ -130,20 +133,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn check_identifier_with_span(&mut self, kind: Kind, ctx: Context, span: Span) {
-        // It is a Syntax Error if this production has an [Await] parameter.
-        if ctx.has_await() && kind == Kind::Await {
-            self.error(diagnostics::identifier_async("await", span));
-        }
-        // It is a Syntax Error if this production has a [Yield] parameter.
-        if ctx.has_yield() && kind == Kind::Yield {
-            let next_token = self.lexer.peek_token();
-            let looks_like_yield_expression =
-                !next_token.is_on_new_line() && next_token.kind().is_after_await_or_yield();
-            self.error(diagnostics::identifier_generator(
-                "yield",
-                span,
-                looks_like_yield_expression,
-            ));
+        match kind {
+            // It is a Syntax Error if this production has an [Await] parameter.
+            Kind::Await if ctx.has_await() => {
+                self.error(diagnostics::identifier_async("await", span));
+            }
+            // It is a Syntax Error if this production has a [Yield] parameter.
+            Kind::Yield if ctx.has_yield() => {
+                let next_token = self.lexer.peek_token();
+                let looks_like_yield_expression =
+                    !next_token.is_on_new_line() && next_token.kind().is_after_await_or_yield();
+                self.error(diagnostics::identifier_generator(
+                    "yield",
+                    span,
+                    looks_like_yield_expression,
+                ));
+            }
+            _ => {}
         }
     }
 
@@ -1448,14 +1454,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Expression::ConditionalExpression(conditional_expr) => {
                 Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test)
             }
-            Expression::ChainExpression(chain_expr) => {
-                if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
+            // Recurse through member-access chains: `/* #__PURE__ */ foo().a.b.c`
+            // applies PURE to the underlying call/new (Rollup/esbuild semantics).
+            expr @ match_member_expression!(Expression) => {
+                Self::set_pure_on_call_or_new_expr(expr.to_member_expression_mut().object_mut())
+            }
+            Expression::ChainExpression(chain_expr) => match &mut chain_expr.expression {
+                ChainElement::CallExpression(call_expr) => {
                     call_expr.pure = true;
                     true
-                } else {
-                    false
                 }
-            }
+                element @ match_member_expression!(ChainElement) => {
+                    Self::set_pure_on_call_or_new_expr(
+                        element.to_member_expression_mut().object_mut(),
+                    )
+                }
+                ChainElement::TSNonNullExpression(non_null_expr) => {
+                    Self::set_pure_on_call_or_new_expr(&mut non_null_expr.expression)
+                }
+            },
             _ => false,
         }
     }
@@ -1505,7 +1522,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         first_expression: Expression<'a>,
     ) -> Expression<'a> {
-        let mut expressions = self.ast.vec1(first_expression);
+        let mut expressions = self.ast.vec_with_capacity(2);
+        expressions.push(first_expression);
         while self.eat(Kind::Comma) {
             let expression = self.parse_assignment_expression_or_higher();
             expressions.push(expression);

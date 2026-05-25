@@ -152,35 +152,27 @@ impl Rule for MediaHasCaption {
             return;
         };
 
-        let has_caption = if parent.children.is_empty() {
-            ctx.diagnostic(media_has_caption_diagnostic(parent.opening_element.span));
-            false
-        } else {
-            parent.children.iter().any(|child| match child {
-                JSXChild::Element(child_el) => {
-                    let child_name = get_element_type(ctx, &child_el.opening_element);
+        let has_caption = parent.children.iter().any(|child| match child {
+            JSXChild::Element(child_el) => {
+                let child_name = get_element_type(ctx, &child_el.opening_element);
 
-                    self.0.track.contains(&child_name)
-                        && child_el.opening_element.attributes.iter().any(|attr| {
-                            let JSXAttributeItem::Attribute(attr) = attr else { return false };
-                            let JSXAttributeName::Identifier(iden) = &attr.name else {
-                                return false;
-                            };
-                            if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
-                                return iden.name == "kind"
-                                    && s.value.eq_ignore_ascii_case("captions");
-                            }
-                            false
-                        })
-                }
-                _ => false,
-            })
-        };
-
-        let span = parent.span;
+                self.0.track.contains(&child_name)
+                    && child_el.opening_element.attributes.iter().any(|attr| {
+                        let JSXAttributeItem::Attribute(attr) = attr else { return false };
+                        let JSXAttributeName::Identifier(iden) = &attr.name else {
+                            return false;
+                        };
+                        if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
+                            return iden.name == "kind" && s.value.eq_ignore_ascii_case("captions");
+                        }
+                        false
+                    })
+            }
+            _ => false,
+        });
 
         if !has_caption {
-            ctx.diagnostic(media_has_caption_diagnostic(span));
+            ctx.diagnostic(media_has_caption_diagnostic(parent.span));
         }
     }
 }
@@ -269,6 +261,8 @@ fn test() {
         (r"<Audio><Track kind='subtitles' /></Audio>", None, Some(settings())),
         (r"<Video><Track kind='subtitles' /></Video>", None, Some(settings())),
         (r"<Box as='audio'><Track kind='subtitles' /></Box>", None, Some(settings())),
+        (r#"<audio src="talk.mp3" controls />"#, None, None),
+        (r#"<video src="movie.mp4" controls />"#, None, None),
     ];
 
     Tester::new(MediaHasCaption::NAME, MediaHasCaption::PLUGIN, pass, fail).test_and_snapshot();

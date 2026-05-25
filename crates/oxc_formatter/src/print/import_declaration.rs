@@ -25,6 +25,12 @@ impl<'a> Format<'a> for ImportOrExportKind {
     }
 }
 
+impl<'a> Format<'a> for ImportPhase {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        write!(f, [self.as_str(), space()]);
+    }
+}
+
 pub fn format_import_and_export_source_with_clause<'a>(
     source: &AstNode<'a, StringLiteral>,
     with_clause: Option<&AstNode<'a, WithClause>>,
@@ -44,7 +50,12 @@ pub fn format_import_and_export_source_with_clause<'a>(
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let decl = &format_with(|f| {
-            write!(f, ["import", space(), self.import_kind]);
+            write!(f, ["import", space()]);
+            if let Some(phase) = self.phase() {
+                write!(f, phase);
+            } else {
+                write!(f, self.import_kind);
+            }
 
             if let Some(specifiers) = self.specifiers() {
                 write!(f, [specifiers, space(), "from", space()]);
@@ -231,11 +242,12 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
                             let trailing_separator =
                                 FormatTrailingCommas::ES5.trailing_separator(f.options());
 
-                            f.join_with(soft_line_break()).entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                trailing_separator,
-                            );
+                            f.join_with(soft_line_break_or_space())
+                                .entries_with_trailing_separator(
+                                    self.iter(),
+                                    ",",
+                                    trailing_separator,
+                                );
                         },),
                         should_insert_space_around_brackets
                     )]

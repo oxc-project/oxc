@@ -362,13 +362,33 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
         // Special handling for array expressions - force flat mode
         let format_expression = format_once(|f| match self.expression {
             TemplateExpression::Expression(e) => {
-                let leading_comments = f.context().comments().comments_before(e.span().start);
-                FormatLeadingComments::Comments(leading_comments).fmt(f);
-                FormatNodeWithoutTrailingComments(e).fmt(f);
+                let has_leading_comments =
+                    !f.context().comments().comments_before(e.span().start).is_empty();
+                // Detect trailing-comment existence BEFORE formatting.
+                // JSX may consume its trailing comments during `e.fmt(f)` (inside its `WrapOnBreak` parens),
+                // so checking afterward would miss them and skip the indent at the template level.
+                // Scanning from `e.span().end` until the next `}` keeps the check scoped to this interpolation.
+                // (`comments_after` would over-detect by including later `${...}` comments)
+                let has_trailing_comment = !f
+                    .context()
+                    .comments()
+                    .comments_before_character(e.span().end, b'}')
+                    .is_empty();
+                has_comment_in_expression = has_leading_comments || has_trailing_comment;
+                if e.as_ref().is_jsx() {
+                    // JSX wraps itself in `WrapOnBreak` parens;
+                    // Let it own its leading and trailing comments so line-sensitive directives
+                    // (e.g. `eslint-disable-next-line`) stay inside those parens.
+                    // `AnyJsxTagWithChildren::format_trailing_comments` handles
+                    // the closing `}` boundary when the parent is a template literal.
+                    e.fmt(f);
+                } else {
+                    FormatNodeWithoutTrailingComments(e).fmt(f);
+                }
+                // Print any comments the expression did not claim so they still land before
+                // the closing `}` of the interpolation.
                 let trailing_comments =
                     f.context().comments().comments_before_character(e.span().start, b'}');
-                has_comment_in_expression =
-                    !leading_comments.is_empty() || !trailing_comments.is_empty();
                 FormatTrailingComments::Comments(trailing_comments).fmt(f);
             }
             TemplateExpression::TSType(t) => write!(f, t),

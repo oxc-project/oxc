@@ -95,8 +95,9 @@ impl<'a> TriviaBuilder<'a> {
         // The last unprocessed comment is on a newline.
         let len = self.comments.len();
         if self.processed < len {
-            self.comments[len - 1].set_followed_by_newline(true);
-            if !self.saw_newline {
+            let comment = &mut self.comments[len - 1];
+            comment.set_followed_by_newline(true);
+            if !self.saw_newline && !Self::should_stay_leading(comment) {
                 self.processed = self.comments.len();
             }
         }
@@ -104,19 +105,27 @@ impl<'a> TriviaBuilder<'a> {
         self.saw_newline_for_comment = true;
     }
 
+    #[inline]
     pub fn handle_token(&mut self, token: Token) {
-        let len = self.comments.len();
         self.previous_kind = token.kind();
-        if self.processed < len {
-            // All unprocessed preceding comments are leading comments attached to this token start.
-            for comment in &mut self.comments[self.processed..] {
-                comment.position = CommentPosition::Leading;
-                comment.attached_to = token.start();
-            }
-            self.processed = len;
-        }
         self.saw_newline = false;
         self.saw_newline_for_comment = false;
+        // Cold path: any unprocessed comments since the last token become leading comments
+        // of this one. For files with no comments (or once all comments are consumed)
+        // `processed == comments.len()`, so this branch is skipped.
+        let len = self.comments.len();
+        if self.processed < len {
+            self.attach_pending_leading_comments(token.start(), len);
+        }
+    }
+
+    #[cold]
+    fn attach_pending_leading_comments(&mut self, attached_to: u32, len: usize) {
+        for comment in &mut self.comments[self.processed..] {
+            comment.position = CommentPosition::Leading;
+            comment.attached_to = attached_to;
+        }
+        self.processed = len;
     }
 
     /// Determines if the current line comment should be treated as a trailing comment.
@@ -148,6 +157,11 @@ impl<'a> TriviaBuilder<'a> {
         !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
     }
 
+    fn should_stay_leading(comment: &Comment) -> bool {
+        // Match esbuild's model where legal comments are preserved before the following token/statement.
+        matches!(comment.content, CommentContent::Legal | CommentContent::JsdocLegal)
+    }
+
     /// Update `pure_comment` / `has_no_side_effects_comment` to point to the comment at `index`.
     fn set_annotation_flags(&mut self, comment: &Comment, index: usize) {
         if comment.is_pure() {
@@ -177,7 +191,8 @@ impl<'a> TriviaBuilder<'a> {
         if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.set_followed_by_newline(true);
-            if self.should_be_treated_as_trailing_comment() {
+            if self.should_be_treated_as_trailing_comment() && !Self::should_stay_leading(&comment)
+            {
                 self.processed = self.comments.len() + 1; // +1 to include this comment.
             }
             self.saw_newline = true;
@@ -503,6 +518,35 @@ token /* Trailing 1 */
     }
 
     #[test]
+    fn legal_comment_after_code_is_attached_to_next_token() {
+        let source_text = "foo();/**
+ * @license MIT
+ **/
+function bar() {}";
+        let comments = get_comments(source_text);
+        let function_start = u32::try_from(source_text.find("function").unwrap()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].attached_to, function_start);
+        assert!(comments[0].is_legal());
+        assert!(comments[0].followed_by_newline());
+    }
+
+    #[test]
+    fn legal_line_comment_after_code_is_attached_to_next_token() {
+        let source_text = "foo();//! @license MIT\nfunction bar() {}";
+        let comments = get_comments(source_text);
+        let function_start = u32::try_from(source_text.find("function").unwrap()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].attached_to, function_start);
+        assert!(comments[0].is_legal());
+        assert!(comments[0].followed_by_newline());
+    }
+
+    #[test]
     fn leading_comments_after_eq() {
         let source_text = "
             const v1 = // Leading comment 1
@@ -593,6 +637,26 @@ token /* Trailing 1 */
         let source_text = "export const X = /* @__PURE__ */ foo();";
         let comments = get_comments(source_text);
         assert_eq!(comments[0].content, CommentContent::Pure, "{source_text}");
+    }
+
+    #[test]
+    fn pure_comment_applied_on_member_chain() {
+        // Rollup/esbuild treat PURE as applying to the innermost call/new even when
+        // member access wraps it; member-access side effects are a separate concern.
+        let cases = [
+            "/*#__PURE__*/ test().a.b.c;",
+            "/*#__PURE__*/ new Foo().a;",
+            "/*#__PURE__*/ test()[0].b;",
+            "class C { #bar; m() { /*#__PURE__*/ this.foo().#bar; } }",
+            // Chain expressions with member root
+            "/*#__PURE__*/ foo()?.a.b;",
+            "/*#__PURE__*/ foo?.().a.b;",
+            "/*#__PURE__*/ foo?.()[0];",
+        ];
+        for source_text in cases {
+            let comments = get_comments(source_text);
+            assert_eq!(comments[0].content, CommentContent::Pure, "{source_text}");
+        }
     }
 
     #[test]

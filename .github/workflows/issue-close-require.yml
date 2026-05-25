@@ -13,9 +13,12 @@ jobs:
       pull-requests: write
     steps:
       - name: needs reproduction
-        uses: actions-cool/issues-helper@200c78641dbf33838311e5a1e0c31bbdb92d7cf0 # v3.8.0
-        with:
-          actions: "close-issues"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          labels: "needs reproduction"
-          inactive-day: 3
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cutoff="$(date -u --date '72 hours ago' +%Y-%m-%dT%H:%M:%SZ)"
+          gh search issues --repo "$GH_REPO" --state open --label "needs reproduction" --updated "<=$cutoff" --limit 1000 --json number --jq '.[].number' \
+            | while read -r issue_number; do
+              gh issue close "$issue_number"
+            done

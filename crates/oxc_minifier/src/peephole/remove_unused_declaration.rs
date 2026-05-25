@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 
 impl<'a> PeepholeOptimizations {
-    fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
+    pub(super) fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
         ctx.state.options.unused != CompressOptionsUnused::Keep
             && !Self::keep_top_level_var_in_script_mode(ctx)
             && !ctx.scoping().root_scope_flags().contains_direct_eval()

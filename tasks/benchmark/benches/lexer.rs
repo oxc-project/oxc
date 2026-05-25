@@ -96,6 +96,8 @@ fn lex_whole_file<'a, C: LexerConfig>(
 /// So replace these syntaxes with strings so that lexer can complete without error:
 /// * `RegExpLiteral`
 /// * `TemplateLiteral`
+/// * `TSTemplateLiteralType` (TypeScript type-level template literal, lexically identical
+///   to `TemplateLiteral` so the lexer cannot tell them apart without parser context)
 /// * `JSXText`
 fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Allocator) -> String {
     // Parse
@@ -158,6 +160,18 @@ impl<'a> Visit<'a> for SourceCleaner<'a> {
     }
 
     fn visit_template_literal(&mut self, lit: &TemplateLiteral<'a>) {
+        let span = lit.span;
+        let text = span.shrink(1).source_text(self.source_text);
+        let text = convert_to_string(&text.cow_replace('\n', " "));
+        self.replace(span, text);
+    }
+
+    fn visit_ts_template_literal_type(&mut self, lit: &TSTemplateLiteralType<'a>) {
+        // TS type-level template literals (e.g. `${T}-${U}` in conditional/mapped types) are
+        // lexically identical to value-level template literals. Without parser context, the
+        // bench-mode lexer can swallow large spans as a single `TemplateHead` when adjacent
+        // type templates are separated by other type syntax. Replace with a string just like
+        // `visit_template_literal` does.
         let span = lit.span;
         let text = span.shrink(1).source_text(self.source_text);
         let text = convert_to_string(&text.cow_replace('\n', " "));

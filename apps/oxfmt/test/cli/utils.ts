@@ -70,7 +70,7 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
 
   // Read all files before execution (for diff detection and tree)
   const filesBefore = await readAllFiles(fixture.fixturesPath);
-  const tree = [...filesBefore.keys()];
+  const tree = new Set(filesBefore.keys());
 
   // Setup: create .gitignore files if specified
   const gitignoreFiles: string[] = [];
@@ -79,6 +79,8 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
       const fullPath = join(fixture.fixturesPath, path);
       await fs.writeFile(fullPath, content);
       gitignoreFiles.push(fullPath);
+      // Show generated files in the tree
+      tree.add(path);
     }
   }
 
@@ -207,7 +209,7 @@ interface SnapshotData {
   args: string[];
   env: Record<string, string> | undefined;
   cwdRelative: string | null; // relative path from fixtures/ to cwd, null if fixtures/ is cwd
-  tree: string[];
+  tree: Set<string>;
   stdout: string;
   stderr: string;
   exitCode: number;
@@ -253,7 +255,7 @@ function buildSnapshot(data: SnapshotData): string {
   return snapshot;
 }
 
-function buildTreeView(files: string[], cwdRelative: string | null): string {
+function buildTreeView(files: Set<string>, cwdRelative: string | null): string {
   // Build a nested structure from flat file paths
   interface TreeNode {
     children: Map<string, TreeNode>;
@@ -314,12 +316,14 @@ function normalizeOutput(output: string, cwd: string): string {
 
   return (
     output
+      // oxlint-disable-next-line no-control-regex
+      .replace(/\x1b\[[0-9;]*m/g, "")
       .replace(/\d+(?:\.\d+)?s|\d+ms/g, "<time>")
+      .replace(/\.timestamp-[0-9a-f-]+/g, ".timestamp-<timestamp-hash>")
+      .replace(/vite\.config\.ts \(\d+:\d+\) [\s\S]*?─╯\n?/g, "<Vite+ diagnostic>\n")
       .replace(/\\/g, "/")
       .replace(new RegExp(RegExp.escape(cwdPath), "g"), "<cwd>")
       .replace(new RegExp(RegExp.escape(rootPath), "g"), "<root>")
-      // oxlint-disable-next-line no-control-regex
-      .replace(/\x1b\[[0-9;]*m/g, "")
       .replace(/×/g, "x")
       .replace(/╭/g, ",")
       .replace(/─/g, "-")

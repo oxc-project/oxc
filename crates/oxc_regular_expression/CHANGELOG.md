@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.132.0] - 2026-05-18
+
+### ⚡ Performance
+
+- 98be95c regular_expression: Track regex flags via bitflags (#22427) (Boshen)
+
 ## [0.125.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES
