@@ -5,6 +5,7 @@ use smallvec::SmallVec;
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
+use oxc_span::GetSpan;
 use oxc_str::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, scope::ScopeId, symbol::SymbolFlags};
 
@@ -434,7 +435,7 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
             _ => Ident::from(self.id.static_name()),
         };
         builder.declare_symbol(
-            self.span,
+            self.id.span(),
             name,
             SymbolFlags::EnumMember,
             SymbolFlags::EnumMemberExcludes,
