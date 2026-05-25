@@ -6,7 +6,9 @@ use oxc_ecmascript::{
     side_effects::is_valid_regexp,
 };
 use oxc_semantic::IsGlobalReference;
+use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
+use rustc_hash::FxHashSet;
 
 use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
 
@@ -39,11 +41,52 @@ pub struct NormalizeOptions {
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Normalize.java>
 pub struct Normalize {
     options: NormalizeOptions,
+    /// `attached_to` positions of every `program.comments` entry, populated at
+    /// `build` time and consulted during paren-stripping. When the parser
+    /// anchored a comment at a `ParenthesizedExpression`'s `(` (e.g. on a
+    /// re-parsed `: /* c */ ((x) => …)` output), stripping the paren leaves
+    /// the comment orphaned — codegen looks comments up by exact node start
+    /// position and the inner expression's start is past the `(`. We migrate
+    /// the comment's `attached_to` to the inner expression's start as we
+    /// strip, so the lookup still finds it.
+    comment_anchors: FxHashSet<u32>,
+    /// (paren_start, inner_start) re-anchoring pairs collected during
+    /// traversal. Applied to `program.comments` in `exit_program`.
+    comment_remaps: std::collections::HashMap<u32, u32>,
 }
 
 impl<'a> Normalize {
     pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+        // Only remap normal (free-form) comments. JSDoc and annotation
+        // comments (`/* @__PURE__ */`, type casts) are intentionally tied to
+        // the paren position by tooling. Legal comments (`@license`,
+        // `@preserve`) have their own statement-level emission pipeline in
+        // codegen and re-anchoring them across parens shifts their print
+        // position from a statement boundary to inside a call callee.
+        self.comment_anchors = program
+            .comments
+            .iter()
+            .filter(|c| c.is_normal())
+            .map(|c| c.attached_to)
+            .collect();
+        self.comment_remaps.clear();
         traverse_mut_with_ctx(self, program, ctx);
+        if !self.comment_remaps.is_empty() {
+            // Resolve transitively: nested `((x))` strips both parens, so a
+            // comment anchored at the outer `(` may remap to the middle `(`
+            // (now also stripped), which remaps to `x`.
+            for comment in &mut program.comments {
+                if !comment.is_normal() {
+                    continue;
+                }
+                while let Some(&next) = self.comment_remaps.get(&comment.attached_to) {
+                    if next == comment.attached_to {
+                        break;
+                    }
+                    comment.attached_to = next;
+                }
+            }
+        }
     }
 }
 
@@ -86,6 +129,22 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
+            let paren_start = paren_expr.span.start;
+            let inner_start = paren_expr.expression.span().start;
+            // Only remap when the parent is `ConditionalExpression`'s alternate.
+            // That site has a custom `get_comments(alternate.span.start)` lookup
+            // (`crates/oxc_codegen/src/gen.rs` in `ConditionalExpression::gen_expr`)
+            // so when we strip the paren the lookup moves from the outer `(` to
+            // the inner expression's start — without the remap the comment is
+            // orphaned. Other parent contexts (statements, var declarators, …)
+            // already pull comments via their own `print_comments_at(span.start)`
+            // at the paren start position, so remapping there *loses* the comment.
+            if paren_start != inner_start
+                && self.comment_anchors.contains(&paren_start)
+                && matches!(ctx.parent(), Ancestor::ConditionalExpressionAlternate(_))
+            {
+                self.comment_remaps.insert(paren_start, inner_start);
+            }
             *expr = paren_expr.expression.take_in(ctx.ast);
         }
         if let Some(e) = match expr {
@@ -128,7 +187,11 @@ impl<'a> Traverse<'a> for Normalize {
 
 impl<'a> Normalize {
     pub fn new(options: NormalizeOptions) -> Self {
-        Self { options }
+        Self {
+            options,
+            comment_anchors: FxHashSet::default(),
+            comment_remaps: std::collections::HashMap::new(),
+        }
     }
 
     fn recover_arrow_expression_after_drop_console(

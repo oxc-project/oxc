@@ -235,6 +235,20 @@ fn pure_comment_re_evaluated_after_variable_inline() {
     );
 }
 
+// `Normalize` strips redundant `ParenthesizedExpression`s, but the parser
+// anchors leading comments at the next token — which on a *re-parse* of
+// `: /* c */ ((x) => …)` is the outer `(`, not the inner arrow. Without
+// remapping the anchor on strip, the second DCE pass loses the comment
+// (orphaned at the now-defunct paren start; codegen's `get_comments` is keyed
+// on the inner expression's start).
+#[test]
+fn comment_preserved_when_paren_around_arrow_alternate_is_stripped() {
+    test(
+        "export const x = foo ? bar : (\n  // explanatory comment\n  (a, b) => a + b\n);",
+        "export const x = foo ? bar : \n// explanatory comment\n((a, b) => a + b);",
+    );
+}
+
 #[test]
 fn fold_number_nan() {
     test("foo(Number.NaN)", "foo(NaN)");
