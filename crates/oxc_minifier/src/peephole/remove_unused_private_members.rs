@@ -50,7 +50,7 @@ impl<'a> PeepholeOptimizations {
             }
         });
         if body.body.len() != old_len {
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
     }
 
