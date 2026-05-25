@@ -50,7 +50,6 @@
     "jest/no-error-equal": "Requires type information. Not currently possible to implement in oxlint.",
     "jest/valid-expect-with-promise": "Requires type information. Not currently possible to implement in oxlint.",
     "vitest/unbound-method": "Requires type information. Not currently possible to implement in oxlint.",
-    "vitest/prefer-vi-mocked": "Requires type information. Not currently possible to implement in oxlint.",
 
     "eslint/no-process-env": "Deprecated, replaced by `node/no-process-env`, which we already support.",
     "eslint/no-new-require": "Deprecated, replaced by `node/no-new-require`, which we already support.",
@@ -100,6 +99,8 @@
     "react/use-memo": "React Compiler rules will not be implemented in oxlint for now, as they require integration with the react compiler itself. These rules can be used via JS Plugins if desired.",
     "react/incompatible-library": "React Compiler rules will not be implemented in oxlint for now, as they require integration with the react compiler itself. These rules can be used via JS Plugins if desired.",
     "react/automatic-effect-dependencies": "React Compiler rules will not be implemented in oxlint for now, as they require integration with the react compiler itself. These rules can be used via JS Plugins if desired.",
+    "react/memo-dependencies": "React Compiler rules will not be implemented in oxlint for now, as they require integration with the react compiler itself. These rules can be used via JS Plugins if desired.",
+    "react/exhaustive-effect-dependencies": "React Compiler rules will not be implemented in oxlint for now, as they require integration with the react compiler itself. These rules can be used via JS Plugins if desired.",
     "react/capitalized-calls": "React Compiler rules will not be implemented in oxlint for now, as they require integration with the react compiler itself. These rules can be used via JS Plugins if desired.",
     "react/fbt": "React Compiler rules will not be implemented in oxlint for now, as they require integration with the react compiler itself. These rules can be used via JS Plugins if desired.",
     "react/fire": "React Compiler rules will not be implemented in oxlint for now, as they require integration with the react compiler itself. These rules can be used via JS Plugins if desired.",
@@ -127,6 +128,7 @@
     "react/require-optimization": "This rule only applies to legacy class components, which are not widely used in modern React.",
     "react/prefer-read-only-props": "This rule is niche and primarily applies to legacy class components, which are not widely used in modern React.",
     "react/prop-types": "PropTypes are ignored in React 19, and TypeScript + the `no-unsafe-xxx` rules already catches unsafe props in most cases.",
+    "react/prefer-stateless-function": "Superseded by `react/prefer-function-component`, which we support.",
 
     "typescript/sort-type-constituents": "Deprecated, replaced by `perfectionist/sort-intersection-types` and `perfectionist/sort-union-types` rules.",
     "typescript/no-type-alias": "Deprecated, replaced by `typescript-eslint/consistent-type-definitions` rule.",
