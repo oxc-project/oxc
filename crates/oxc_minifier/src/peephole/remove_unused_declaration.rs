@@ -95,8 +95,8 @@ impl<'a> PeepholeOptimizations {
         if !ctx.scoping().symbol_is_unused(symbol_id) {
             return;
         }
-        *stmt = ctx.ast.statement_empty(f.span);
-        ctx.state.changed = true;
+        let new_stmt = ctx.ast.statement_empty(f.span);
+        ctx.replace_statement(stmt, new_stmt);
     }
 
     pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -122,8 +122,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.ast.statement_expression(c.span, expr)
             }
         }) {
-            *stmt = changed;
-            ctx.state.changed = true;
+            ctx.replace_statement(stmt, changed);
         }
     }
 
@@ -176,8 +175,8 @@ impl<'a> PeepholeOptimizations {
             if ctx.scoping().symbol_is_unused(
                 import_decl.specifiers.as_ref().unwrap().first().unwrap().local().symbol_id(),
             ) {
-                *stmt = ctx.ast.statement_empty(import_decl.span);
-                ctx.state.changed = true;
+                let new_stmt = ctx.ast.statement_empty(import_decl.span);
+                ctx.replace_statement(stmt, new_stmt);
             }
 
             return;
@@ -201,12 +200,12 @@ impl<'a> PeepholeOptimizations {
         });
 
         if specifiers.len() != original_len {
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
 
         if specifiers.is_empty() {
             import_decl.specifiers = None;
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
     }
 }
