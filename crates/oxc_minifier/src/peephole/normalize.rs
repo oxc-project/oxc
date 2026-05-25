@@ -63,12 +63,8 @@ impl<'a> Normalize {
         // `@preserve`) have their own statement-level emission pipeline in
         // codegen and re-anchoring them across parens shifts their print
         // position from a statement boundary to inside a call callee.
-        self.comment_anchors = program
-            .comments
-            .iter()
-            .filter(|c| c.is_normal())
-            .map(|c| c.attached_to)
-            .collect();
+        self.comment_anchors =
+            program.comments.iter().filter(|c| c.is_normal()).map(|c| c.attached_to).collect();
         self.comment_remaps.clear();
         traverse_mut_with_ctx(self, program, ctx);
         if !self.comment_remaps.is_empty() {
