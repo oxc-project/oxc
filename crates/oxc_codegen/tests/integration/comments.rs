@@ -3,6 +3,27 @@ use crate::{
     tester::{test, test_same},
 };
 
+// A leading comment inside a `pife` arrow alternate of a `?:` must stay
+// inside the paren wrap on every codegen pass; otherwise the parser re-
+// anchors the shifted comment and the next pass drops it.
+#[test]
+fn test_comment_inside_pife_arrow_alternate_of_conditional() {
+    test(
+        "export const x = foo ? bar : (\n  // explanatory comment\n  (a, b) => a + b\n);",
+        "export const x = foo ? bar : (\n// explanatory comment\n(a, b) => a + b);\n",
+    );
+    test_idempotency(
+        "export const x = foo ? bar : (\n  // explanatory comment\n  (a, b) => a + b\n);",
+    );
+}
+
+#[test]
+fn test_comment_inside_pife_function_alternate_of_conditional() {
+    test_idempotency(
+        "export const x = foo ? bar : (\n  // explanatory comment\n  function(c) { return c }\n);",
+    );
+}
+
 #[test]
 fn test_comment_at_top_of_file() {
     use oxc_allocator::Allocator;
@@ -683,4 +704,14 @@ fn test_legal_comment_after_code_minify_with_comments_idempotency() {
             ..CodegenOptions::default()
         },
     );
+}
+
+#[test]
+fn test_comment_inside_parenthesized_expression_with_pife_arrow() {
+    test_idempotency("export const x = foo ? bar : (\n  // comment\n  (a, b) => a + b\n);");
+}
+
+#[test]
+fn test_comment_inside_double_parenthesized_pife_arrow() {
+    test_idempotency("const x = foo ? bar : ( ( ( a ) => a ) );");
 }

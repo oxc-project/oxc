@@ -217,6 +217,24 @@ fn pure_comment_for_pure_global_constructors() {
     test("var x = new WeakSet([]); foo(x)", "var x = /* @__PURE__ */ new WeakSet([]);\nfoo(x)");
 }
 
+// `Normalize` sets pure flags before the peephole loop runs, so it misses
+// args that the loop later folds/inlines into pure-eligible shapes.
+#[test]
+fn pure_comment_re_evaluated_after_string_concat_fold() {
+    test(
+        "var r = new RegExp('foo' + 'bar'); foo(r)",
+        "var r = /* @__PURE__ */ new RegExp(\"foobar\");\nfoo(r)",
+    );
+}
+
+#[test]
+fn pure_comment_re_evaluated_after_variable_inline() {
+    test(
+        "export function f() { var ab = new ArrayBuffer(1); var dv = new DataView(ab); foo(dv); }",
+        "export function f() {\n\tvar dv = /* @__PURE__ */ new DataView(/* @__PURE__ */ new ArrayBuffer(1));\n\tfoo(dv);\n}",
+    );
+}
+
 #[test]
 fn fold_number_nan() {
     test("foo(Number.NaN)", "foo(NaN)");
@@ -545,4 +563,98 @@ fn remove_pure_function_calls() {
     test("var foo = () => 1; foo(), foo()", "");
     test("var foo = function() {}; foo()", "");
     test_same("function foo() { bar() } foo()");
+}
+
+#[test]
+fn preserve_iife_in_dce_mode() {
+    // https://github.com/oxc-project/oxc/issues/17480
+    // https://github.com/rolldown/rolldown/issues/9437
+    //
+    // IIFE body extraction is a peephole / strength-reduction rewrite, not
+    // DCE. In DCE-only mode (rolldown's per-module preprocess) the IIFE
+    // structure is preserved entirely — matching Rollup, esbuild
+    // `--tree-shaking=true`, Terser (no compress), and SWC (no minify).
+    //
+    // The only DCE-relevant IIFE rewrites that still run: dropping
+    // pure-annotated IIFEs whose result is unused (handled separately via
+    // `is_expression_result_unused` → `void 0`), and replacing fully-empty
+    // IIFEs with `void 0`.
+
+    // Pure-annotated IIFEs preserved across all body shapes.
+    test_same("export const exec = /* @__PURE__ */ (() => _M.exec)();");
+    test_same("export const x = /* @__PURE__ */ (() => foo()?.bar())();");
+    test_same("export const x = /* @__PURE__ */ (() => foo`tpl`)();");
+    test_same("export const x = /* @__PURE__ */ (() => (a(), b()))();");
+    test_same("export const x = /* @__PURE__ */ (() => c ? a() : b())();");
+    test_same("export const x = /* @__PURE__ */ (() => a ? b : c)();");
+    test_same("export const x = /* @__PURE__ */ (() => foo())();");
+    test_same("export const x = /* @__PURE__ */ (() => new Foo())();");
+    test_same("export const x = /* @__PURE__ */ (() => foo(bar()))();");
+    test_same("export const x = /* @__PURE__ */ (() => new Foo(bar()))();");
+    test_same("export const x = /* @__PURE__ */ (() => 42)();");
+    test_same("export const x = /* @__PURE__ */ (() => [1, 2, 3])();");
+    test_same("export const x = /* @__PURE__ */ (() => ({ a: 1 }))();");
+
+    // Non-pure IIFEs are also preserved — inlining is not DCE.
+    test_same("export const x = (() => foo())();");
+    test_same("export const x = (() => [1, 2, 3])();");
+    test_same("export const x = (() => 42)();");
+    test_same("export const x = (() => { foo(); })();");
+    test_same("export const x = (() => { return foo(); })();");
+}
+
+#[test]
+fn drop_optional_chain_on_non_nullish_base() {
+    // https://github.com/oxc-project/oxc/issues/21923
+    // ObjectExpression at statement start needs to stay parenthesised; codegen
+    // already handles that, so the fold is safe in statement position.
+    test("({})?.foo;", "({}).foo;");
+    // Side effects on the base are preserved when the `?.` is dropped.
+    test("export const v = (foo(), {})?.bar", "export const v = (foo(), {}).bar");
+    // Nested: the optional is on the inner access, the outer access is
+    // non-optional. Both folds (collapse + drop) reach the deepest `?.`.
+    test("export const v = null?.foo.bar", "export const v = void 0");
+    test("export const v = []?.foo.bar", "export const v = [].foo.bar");
+}
+
+#[test]
+fn fold_optional_chain_on_undefined_let_binding() {
+    // https://github.com/rolldown/rolldown/issues/9281
+    // A `let` binding with no writes is statically known to be `undefined`,
+    // so optional calls / member accesses on it should fold to `void 0`.
+    test("let slot; export function call() { slot?.() }", "export function call() {}");
+    test("let slot; export function call() { slot?.foo }", "export function call() {}");
+    test("let slot; export function call() { slot?.[foo()] }", "export function call() {}");
+    // A binding that is written somewhere is not nullish-known: leave it alone.
+    test_same(
+        "let slot; export function setSlot(v) { slot = v } export function call() { slot?.() }",
+    );
+}
+
+#[test]
+fn fold_optional_chain_on_null_const_binding() {
+    // A `const` initialized to `null` resolves to `ValueType::Null`, so the
+    // optional chain folds the same way the `undefined` case does.
+    test("const slot = null; export function call() { slot?.() }", "export function call() {}");
+    test("const slot = null; export function call() { slot?.foo }", "export function call() {}");
+}
+
+#[test]
+fn fold_coalesce_on_tracked_non_nullish_binding() {
+    // The new value_type lookup also resolves non-nullish constants, so the
+    // right-hand side of `??` can be dropped.
+    //
+    // Two reads + a string the inliner skips (length > 3) prevents
+    // `inline_identifier_reference` from short-circuiting the test by
+    // substituting the literal value before the coalesce fold runs.
+    test(
+        "let s = 'hello'; export function a() { return s ?? other() } export function b() { return s ?? other() }",
+        "let s = 'hello'; export function a() { return s } export function b() { return s }",
+    );
+    // BigInt is never inlined, so a single read is enough to exercise the
+    // value-type path here.
+    test(
+        "let n = 5n; export function a() { return n ?? other() } export function b() { return n ?? other() }",
+        "let n = 5n; export function a() { return n } export function b() { return n }",
+    );
 }

@@ -16,6 +16,7 @@ use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 mod comment;
 mod config;
+mod control_flow;
 mod express;
 mod jest;
 mod jsdoc;
@@ -32,9 +33,9 @@ mod vitest;
 mod vue;
 
 pub use self::{
-    comment::*, config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*,
-    react_perf::*, regex::*, this_expression::*, typescript::*, unicorn::*, url::*, vitest::*,
-    vue::*,
+    comment::*, config::*, control_flow::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*,
+    react::*, react_perf::*, regex::*, this_expression::*, typescript::*, unicorn::*, url::*,
+    vitest::*, vue::*,
 };
 
 /// List of Eslint rules that have TypeScript equivalents.

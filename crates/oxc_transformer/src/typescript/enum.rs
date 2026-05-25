@@ -102,7 +102,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
             return;
         }
 
-        let inlined = match expr {
+        // Peek through TS-only wrappers and parens so `E.X as T`, `E.X satisfies T`,
+        // `E.X!`, `<T>E.X`, `E.X` (with `preserveParens`) all inline. `annotations.rs`
+        // strips these wrappers, but only after this hook returns — by then the outer
+        // node has been replaced and `enter_expression` is not re-invoked on it.
+        let inlined = match expr.get_inner_expression_mut() {
             Expression::StaticMemberExpression(member_expr) => {
                 self.try_inline_enum_member(member_expr, ctx)
             }
@@ -428,12 +432,21 @@ impl<'a> TypeScriptEnum {
     }
 
     /// Check if an enum declaration can be safely removed (post-inlining).
-    /// Const enums are always removed when `optimize_const_enums` is set.
-    /// Regular enums are removed only if all references were inlined away by `enter_expression`.
+    ///
+    /// The decl is removable when no value references (`Read`/`Write`) remain —
+    /// `enter_expression` inlines member accesses and deletes those references. Type
+    /// references (e.g. from `as E` / `: E`) are kept here and stripped later by
+    /// `annotations.rs`, so they don't block removal.
+    ///
+    /// If a non-inlinable value reference remains (e.g. `export default E`, `E.toString()`),
+    /// we emit the IIFE form so the binding still exists at runtime — matching tsc under
+    /// `--isolatedModules`. Babel drops the declaration in this case, leaving dangling
+    /// references; oxc diverges intentionally to preserve runtime correctness.
     fn can_remove_enum(&self, decl: &TSEnumDeclaration<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        self.may_remove_enum(decl, ctx)
-            && (decl.r#const
-                || ctx.scoping().get_resolved_reference_ids(decl.id.symbol_id()).is_empty())
+        if !self.may_remove_enum(decl, ctx) {
+            return false;
+        }
+        ctx.scoping().get_resolved_references(decl.id.symbol_id()).all(|r| !r.is_value())
     }
 
     /// Check if all members of an enum declaration have known constant values.

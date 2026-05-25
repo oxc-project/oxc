@@ -270,7 +270,10 @@ impl<'a> Normalize {
         Some(ctx.ast.nan(ident.span))
     }
 
-    fn set_no_side_effects_to_call_expr(call_expr: &mut CallExpression<'a>, ctx: &TraverseCtx<'a>) {
+    pub(crate) fn set_no_side_effects_to_call_expr(
+        call_expr: &mut CallExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
         if call_expr.pure {
             return;
         }
@@ -287,7 +290,7 @@ impl<'a> Normalize {
 
     /// Set `pure` on side effect free `new Expr()`s.
     /// `PC` or `PC_WITH_ARRAY` in <https://github.com/rollup/rollup/blob/v4.42.0/src/ast/nodes/shared/knownGlobals.ts>
-    fn set_pure_or_no_side_effects_to_new_expr(
+    pub(crate) fn set_pure_or_no_side_effects_to_new_expr(
         new_expr: &mut NewExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) {

@@ -118,9 +118,10 @@ pub(crate) enum JsLabels {
     /// For `ir_transform/sort_imports`
     ImportDeclaration,
     /// For `ir_transform/sort_imports`
-    /// Marks `alignable_comment` (Block comment where each line starts with `*`)
-    /// to distinguish from other text content like template literals that may contain `/*`.
-    AlignableBlockComment,
+    /// Wraps a single emitted comment so the transform can identify it without
+    /// inspecting element shape (which varies by comment kind / `jsdoc` formatting).
+    /// Also suppresses internal line breaks for multi-line block comments.
+    Comment,
 }
 
 impl Label for JsLabels {
@@ -132,7 +133,7 @@ impl Label for JsLabels {
         match self {
             Self::MemberChain => "MemberChain",
             Self::ImportDeclaration => "ImportDeclaration",
-            Self::AlignableBlockComment => "AlignableBlockComment",
+            Self::Comment => "Comment",
         }
     }
 }

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression, ObjectExpression, ObjectPropertyKind},
+    ast::{Expression, ObjectExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -14,6 +14,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::is_vue_component_options_object,
 };
 
 fn deprecated_model_diagnostic(span: Span) -> OxcDiagnostic {
@@ -109,14 +110,12 @@ impl Rule for NoDeprecatedModelDefinition {
             return;
         };
 
-        let mut ancestors = ctx.nodes().ancestors(node.id());
-        let Some(parent) = ancestors.next() else { return };
+        let parent = ctx.nodes().parent_node(node.id());
         if !matches!(parent.kind(), AstKind::ObjectExpression(_)) {
             return;
         }
 
-        let Some(grand) = ancestors.next() else { return };
-        if !is_vue_component_root(grand.kind()) {
+        if !is_vue_component_options_object(parent, ctx) {
             return;
         }
 
@@ -138,41 +137,6 @@ impl Rule for NoDeprecatedModelDefinition {
             ctx.diagnostic(vue3_compat_diagnostic(prop.span));
         }
     }
-}
-
-fn is_vue_component_root(grand_kind: AstKind<'_>) -> bool {
-    match grand_kind {
-        AstKind::ExportDefaultDeclaration(_) => true,
-        AstKind::CallExpression(call) => is_vue_component_definition_call(call),
-        AstKind::NewExpression(new_expr) => {
-            new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "Vue")
-        }
-        _ => false,
-    }
-}
-
-fn is_vue_component_definition_call(call: &CallExpression<'_>) -> bool {
-    let callee = call.callee.get_inner_expression();
-
-    if let Expression::Identifier(ident) = callee {
-        return matches!(
-            ident.name.as_str(),
-            "defineComponent" | "component" | "createApp" | "defineNuxtComponent"
-        );
-    }
-
-    let Some(MemberExpression::StaticMemberExpression(static_member)) =
-        callee.as_member_expression()
-    else {
-        return false;
-    };
-    let prop_name = static_member.property.name.as_str();
-    if let Expression::Identifier(obj_ident) = static_member.object.get_inner_expression()
-        && obj_ident.name == "Vue"
-    {
-        return matches!(prop_name, "component" | "mixin" | "extend");
-    }
-    matches!(prop_name, "component" | "mixin")
 }
 
 fn find_string_property_value(obj: &ObjectExpression<'_>, key: &str) -> Option<String> {
@@ -386,6 +350,21 @@ fn test() {
                 </script>
             ",
             Some(serde_json::json!([{ "allowVue3Compat": true }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  model: {
+                    prop: 'checked',
+                    event: 'change'
+                  }
+                })
+                </script>
+            ",
+            None,
             None,
             Some(PathBuf::from("test.vue")),
         ),

@@ -166,7 +166,7 @@ impl ServerLinterBuilder {
         let lint_options = LintOptions {
             fix: fix_kind,
             report_unused_directive: match options.unused_disable_directives {
-                Some(UnusedDisableDirectives::Allow) => Some(AllowWarnDeny::Allow),
+                Some(UnusedDisableDirectives::Allow) => None,
                 Some(UnusedDisableDirectives::Warn) => Some(AllowWarnDeny::Warn),
                 Some(UnusedDisableDirectives::Deny) => Some(AllowWarnDeny::Deny),
                 None => match config_store.report_unused_disable_directives() {
@@ -1385,6 +1385,17 @@ mod test {
             "fixtures/lsp/unused_disabled_directives",
             json!({
                 "unusedDisableDirectives": "deny"
+            }),
+        )
+        .test_and_snapshot_single_file("test.js");
+    }
+
+    #[test]
+    fn test_allow_unused_directives() {
+        Tester::new(
+            "fixtures/lsp/allow_unused_disabled_directives",
+            json!({
+                "unusedDisableDirectives": "allow"
             }),
         )
         .test_and_snapshot_single_file("test.js");

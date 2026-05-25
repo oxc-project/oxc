@@ -71,6 +71,7 @@ impl CliRunner {
     /// # Panics
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
+        let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
         let output_formatter = OutputFormatter::new(format_str);
 
@@ -161,6 +162,14 @@ impl CliRunner {
             // If explicit paths were provided, but all have been
             // filtered, return early.
             if provided_path_count > 0 {
+                if debug_files {
+                    return crate::mode::run_debug_files(
+                        std::iter::empty::<&Path>(),
+                        &self.cwd,
+                        stdout,
+                    );
+                }
+
                 return Self::handle_no_files_found(
                     stdout,
                     &output_formatter,
@@ -327,6 +336,19 @@ impl CliRunner {
         let ignore_matcher =
             { LintIgnoreMatcher::new(&base_ignore_patterns, &self.cwd, nested_ignore_patterns) };
 
+        let files_to_lint = paths
+            .into_iter()
+            .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
+            .collect::<Vec<Arc<OsStr>>>();
+
+        if debug_files {
+            return crate::mode::run_debug_files(
+                files_to_lint.iter().map(|path| Path::new(path.as_ref())),
+                &self.cwd,
+                stdout,
+            );
+        }
+
         // If no external rules, discard `ExternalLinter`
         let mut external_linter = self.external_linter;
         if external_plugin_store.is_empty() {
@@ -408,11 +430,6 @@ impl CliRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         }
-
-        let files_to_lint = paths
-            .into_iter()
-            .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
-            .collect::<Vec<Arc<OsStr>>>();
 
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
@@ -1005,6 +1022,11 @@ mod test {
             "no-debugger",
             "fixtures/cli/linter/debugger.js",
         ]);
+    }
+
+    #[test]
+    fn debug_files() {
+        Tester::new().test_and_snapshot(&["--debug", "files", "fixtures/cli/linter"]);
     }
 
     #[test]

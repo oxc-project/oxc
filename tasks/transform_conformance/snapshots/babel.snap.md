@@ -1,6 +1,6 @@
-commit: 4079bcda
+commit: d9fe348c
 
-Passed: 699/1165
+Passed: 703/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -167,11 +167,8 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (24/28)
+# babel-plugin-transform-explicit-resource-management (25/28)
 * integration/commonjs-transform/input.js
-x Output mismatch
-
-* transform-sync/for-head-shadow/input.js
 x Output mismatch
 
 * transform-sync/named-evaluation/input.js
@@ -195,7 +192,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (212/269)
+# babel-plugin-transform-class-properties (213/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -280,14 +277,6 @@ x Output mismatch
 
 * private/static-infer-name/input.js
 x Output mismatch
-
-* private/static-self-method/input.js
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 
 * private/static-shadow/input.js
 x Output mismatch
@@ -418,12 +407,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-methods (46/148)
-* accessors/tagged-template/input.js
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-
+# babel-plugin-transform-private-methods (48/148)
 * accessors-loose/basic/input.js
 x Output mismatch
 
@@ -701,11 +685,6 @@ x Output mismatch
 
 * static-accessors/set-only-getter/input.js
 x Output mismatch
-
-* static-accessors/tagged-template/input.js
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 * static-accessors-loose/basic/input.js
 x Output mismatch
@@ -2306,26 +2285,35 @@ x Output mismatch
 x Output mismatch
 
 * optimize-const-enums/local/input.ts
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["A"]
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "x", "y"]
+rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "A":
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 * optimize-const-enums/merged/input.ts
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Reference symbol mismatch for "A":
-after transform: SymbolId(0) "A"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["A"]
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "x", "y"]
+rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["A", "z"]
+rebuilt        : ScopeId(2): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "A":
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol redeclarations mismatch for "A":
+after transform: SymbolId(0): [Span { start: 11, end: 12 }, Span { start: 36, end: 37 }]
+rebuilt        : SymbolId(0): []
 
 * optimize-const-enums/merged-exported/input.ts
 x Output mismatch

@@ -1,0 +1,71 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
+   ╭─[no_shared_component_data.tsx:3:19]
+ 2 │                     Vue.component('some-comp', {
+ 3 │ ╭─▶                   data: {
+ 4 │ │                       foo: 'bar'
+ 5 │ ╰─▶                   }
+ 6 │                     })
+   ╰────
+
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
+   ╭─[no_shared_component_data.tsx:3:19]
+ 2 │                     app.component('some-comp', {
+ 3 │ ╭─▶                   data: {
+ 4 │ │                       foo: 'bar'
+ 5 │ ╰─▶                   }
+ 6 │                     })
+   ╰────
+
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
+   ╭─[no_shared_component_data.tsx:4:19]
+ 3 │                     export default {
+ 4 │ ╭─▶                   data: {
+ 5 │ │                       foo: 'bar'
+ 6 │ ╰─▶                   }
+ 7 │                     }
+   ╰────
+
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
+   ╭─[no_shared_component_data.tsx:4:19]
+ 3 │                     export default {
+ 4 │ ╭─▶                   data: /*a*/ (/*b*/{
+ 5 │ │                       foo: 'bar'
+ 6 │ ╰─▶                   })
+ 7 │                     }
+   ╰────
+
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
+   ╭─[no_shared_component_data.tsx:4:19]
+ 3 │                 Vue.extend({
+ 4 │                   data: { foo: 'bar' }
+   ·                   ────────────────────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
+   ╭─[no_shared_component_data.tsx:4:19]
+ 3 │                 createApp({
+ 4 │                   data: { foo: 'bar' }
+   ·                   ────────────────────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
+   ╭─[no_shared_component_data.tsx:4:19]
+ 3 │                 defineComponent({
+ 4 │                   data: { foo: 'bar' }
+   ·                   ────────────────────
+ 5 │                 })
+   ╰────
+
+  ⚠ vue(no-shared-component-data): `data` property in component must be a function.
+   ╭─[no_shared_component_data.tsx:4:19]
+ 3 │                 Vue.mixin({
+ 4 │                   data: { foo: 'bar' }
+   ·                   ────────────────────
+ 5 │                 })
+   ╰────

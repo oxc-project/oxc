@@ -154,6 +154,7 @@ pub fn run() -> Result<(), io::Error> {
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
         let scoping = SemanticBuilder::new()
+            .with_excess_capacity(2.0)
             .with_enum_eval(true)
             .build(&parsed.program)
             .semantic
@@ -197,12 +198,8 @@ pub fn run() -> Result<(), io::Error> {
             width,
         ));
 
-        let (scoping, semantic_stats) = record_stats_in(&allocator, || {
-            SemanticBuilder::new()
-                .with_enum_eval(true)
-                .build(&parsed.program)
-                .semantic
-                .into_scoping()
+        let ((), semantic_stats) = record_stats_in(&allocator, || {
+            let _ = SemanticBuilder::new().with_enum_eval(true).build(&parsed.program);
         });
 
         semantic_out.push_str(&format_table_row(
@@ -212,6 +209,15 @@ pub fn run() -> Result<(), io::Error> {
             fixture_width,
             width,
         ));
+
+        // Match the production compiler path for transforms: transformers add scopes, symbols, and
+        // references, so semantic analysis reserves excess capacity up front.
+        let scoping = SemanticBuilder::new()
+            .with_excess_capacity(2.0)
+            .with_enum_eval(true)
+            .build(&parsed.program)
+            .semantic
+            .into_scoping();
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
         let transform_options = TransformOptions::from_target("esnext").unwrap();

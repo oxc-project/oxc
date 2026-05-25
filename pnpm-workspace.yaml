@@ -15,12 +15,14 @@ catalog:
   "@napi-rs/wasm-runtime": 1.1.4
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  eslint: 10.3.0
+  degit: 3.0.0
+  eslint: 10.4.0
   json-schema-to-typescript: ^15.0.4
-  publint: 0.3.19
-  rolldown: 1.0.1
+  publint: 0.3.21
+  rolldown: 1.0.2
   tsdown: 0.22.0
-  vitest: 4.1.5
+  vite-plus: 0.1.22
+  vitest: 4.1.7
 
 allowBuilds:
   "@vscode/vsce-sign@2.0.8": true

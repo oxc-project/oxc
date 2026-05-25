@@ -288,6 +288,7 @@ impl<'a> SemanticBuilder<'a> {
             stats.references as usize,
             stats.scopes as usize,
         );
+        self.unresolved_references.reserve_exact(stats.references as usize);
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
@@ -443,11 +444,14 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        let symbol_id =
-            self.scoping.create_symbol(span, name, includes, scope_id, self.current_node_id);
-
-        self.scoping.add_binding(scope_id, name, symbol_id);
-        symbol_id
+        self.scoping.create_symbol_with_binding(
+            span,
+            name,
+            includes,
+            scope_id,
+            scope_id,
+            self.current_node_id,
+        )
     }
 
     /// Declare a new symbol on the current scope.
@@ -521,15 +525,14 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id = self.scoping.create_symbol(
+        self.scoping.create_symbol_with_binding(
             span,
             name,
             includes,
             self.current_scope_id,
+            scope_id,
             self.current_node_id,
-        );
-        self.scoping.insert_binding(scope_id, name, symbol_id);
-        symbol_id
+        )
     }
 
     /// Resolve all collected references by walking up the scope chain from each
@@ -622,19 +625,27 @@ impl<'a> SemanticBuilder<'a> {
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
     fn resolve_references_for_current_scope(&mut self) {
+        // Process in-place using a retain-style write-cursor — no temporary
+        // `Vec`. Reads each `(name, reference_id)` by value out of the flat
+        // list (both fields are `Copy`), so calling `walk_up_resolve_reference`
+        // (which takes `&mut self`) doesn't conflict with the index read.
         let checkpoint = self.unresolved_references_checkpoint;
-        let refs = self.unresolved_references.slice_from(checkpoint).to_vec();
-        if refs.is_empty() {
+        let end = self.unresolved_references.len();
+        if end <= checkpoint {
             return;
         }
-        self.unresolved_references.truncate(checkpoint);
-
-        for (name, reference_id) in refs {
+        let mut write_idx = checkpoint;
+        for read_idx in checkpoint..end {
+            let (name, reference_id) = self.unresolved_references.get(read_idx);
             if !self.walk_up_resolve_reference(name, reference_id) {
-                // Keep in the flat list — may resolve later via forward declarations
-                self.unresolved_references.push(name, reference_id);
+                // Keep in the flat list — may resolve later via forward declarations.
+                if write_idx != read_idx {
+                    self.unresolved_references.set(write_idx, name, reference_id);
+                }
+                write_idx += 1;
             }
         }
+        self.unresolved_references.truncate(write_idx);
     }
 
     pub(crate) fn add_redeclare_variable(
@@ -644,6 +655,42 @@ impl<'a> SemanticBuilder<'a> {
         span: Span,
     ) {
         self.scoping.add_symbol_redeclaration(symbol_id, flags, self.current_node_id, span);
+    }
+
+    fn visit_parameter_decorators(&mut self, decorators: &oxc_allocator::Vec<'a, Decorator<'a>>) {
+        if decorators.is_empty() {
+            return;
+        }
+
+        // TypeScript resolves parameter decorators in the enclosing class scope,
+        // not the constructor scope. Both `foo` references below therefore
+        // resolve to the outer binding — the first decorator must not see its
+        // own parameter, and the second must not see the first parameter:
+        //
+        // ```ts
+        // constructor(
+        //   @Inject(foo.KEY) private readonly foo: number,
+        //   @Inject(foo.KEY) private readonly foo2: number,
+        // ) {}
+        // ```
+        //
+        // `reference_identifier` stamps each new reference with `current_scope_id`,
+        // and `walk_up_resolve_reference` later walks from that recorded scope
+        // via `scope_parent_id`. Pointing `current_scope_id` at the class scope
+        // for the decorator visit brands every reference inside it with the
+        // class scope, so resolution skips the constructor's bindings entirely.
+        // Restore on the way back.
+        //
+        // Mirrors the `Decorator` case in TypeScript's `resolveName`:
+        // <https://github.com/microsoft/TypeScript/blob/0105bbb63689372f2cbeec7c884c27906ac0ef7f/src/compiler/utilities.ts#L11772-L11800>.
+        let parent_scope_id = self
+            .scoping
+            .scope_parent_id(self.current_scope_id)
+            .expect("parameter decorators should always be visited from a function scope");
+        let function_scope_id = self.current_scope_id;
+        self.current_scope_id = parent_scope_id;
+        self.visit_decorators(decorators);
+        self.current_scope_id = function_scope_id;
     }
 }
 
@@ -2349,7 +2396,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         param.bind(self);
         self.visit_span(&param.span);
-        self.visit_decorators(&param.decorators);
+        self.visit_parameter_decorators(&param.decorators);
         self.visit_binding_pattern(&param.pattern);
         if let Some(type_annotation) = &param.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
@@ -2365,7 +2412,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         param.bind(self);
         self.visit_span(&param.span);
-        self.visit_decorators(&param.decorators);
+        self.visit_parameter_decorators(&param.decorators);
         self.visit_binding_rest_element(&param.rest);
         if let Some(type_annotation) = &param.type_annotation {
             self.visit_ts_type_annotation(type_annotation);

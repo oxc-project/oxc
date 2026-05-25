@@ -404,6 +404,17 @@ pub struct DecoratorOptions {
     /// @see https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata
     /// @default false
     pub emit_decorator_metadata: Option<bool>,
+
+    /// Aligns nullable-union `design:type` emission with `--strictNullChecks`.
+    ///
+    /// When `true` (default), `T | null` and `T | undefined` emit `Object`, matching tsc strict.
+    /// When `false`, `null` and `undefined` are elided from the union so the underlying
+    /// primitive constructor is emitted, matching tsc with `--strictNullChecks=false`
+    /// and `babel-plugin-transform-typescript-metadata`.
+    ///
+    /// @see https://www.typescriptlang.org/tsconfig/#strictNullChecks
+    /// @default true
+    pub strict_null_checks: Option<bool>,
 }
 
 impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
@@ -411,6 +422,7 @@ impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
         oxc::transformer::DecoratorOptions {
             legacy: options.legacy.unwrap_or_default(),
             emit_decorator_metadata: options.emit_decorator_metadata.unwrap_or_default(),
+            strict_null_checks: options.strict_null_checks.unwrap_or(true),
         }
     }
 }

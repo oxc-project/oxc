@@ -21,6 +21,9 @@ export default defineConfig({
     // They are not installed and not needed for us,
     // mark as external to suppress "UNRESOLVED_IMPORT" warnings.
     neverBundle: [
+      // Optional peer dependency; must be installed by the user
+      "vite-plus",
+      // Optional peer plugins that `prettier-plugin-tailwindcss` tries to dynamic import.
       "@prettier/plugin-oxc",
       "@prettier/plugin-hermes",
       "@prettier/plugin-pug",

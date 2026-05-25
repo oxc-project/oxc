@@ -3,11 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    context::{ContextHost, LintContext},
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_find_dom_node_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected call to `findDOMNode`.")
@@ -79,18 +75,16 @@ impl Rule for NoFindDomNode {
         };
         ctx.diagnostic(no_find_dom_node_diagnostic(span));
     }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
-    }
 }
 
 #[test]
 fn test() {
+    use std::path::PathBuf;
+
     use crate::tester::Tester;
 
     let pass = vec![
-        ("var Hello = function() {};", None),
+        ("var Hello = function() {};", None, None, None),
         (
             r"
             var Hello = createReactClass({
@@ -99,6 +93,8 @@ fn test() {
               }
             });
             ",
+            None,
+            None,
             None,
         ),
         (
@@ -114,6 +110,8 @@ fn test() {
             });
             ",
             None,
+            None,
+            None,
         ),
         (
             r"
@@ -127,6 +125,8 @@ fn test() {
             });
             ",
             None,
+            None,
+            None,
         ),
         (
             r"
@@ -139,6 +139,8 @@ fn test() {
               }
             });
             ",
+            None,
+            None,
             None,
         ),
     ];
@@ -156,6 +158,8 @@ fn test() {
             });
             ",
             None,
+            None,
+            None,
         ),
         (
             r"
@@ -168,6 +172,8 @@ fn test() {
               }
             });
             ",
+            None,
+            None,
             None,
         ),
         (
@@ -182,6 +188,8 @@ fn test() {
             });
             ",
             None,
+            None,
+            None,
         ),
         (
             r"
@@ -194,6 +202,8 @@ fn test() {
               }
             }
             ",
+            None,
+            None,
             None,
         ),
         (
@@ -208,6 +218,21 @@ fn test() {
             }
             ",
             None,
+            None,
+            None,
+        ),
+        (
+            r"
+            import ReactDOM from 'react-dom';
+            class Demo extends React.Component {
+              foo() {
+                ReactDOM.findDOMNode(this);
+              }
+            }
+            ",
+            None,
+            None,
+            Some(PathBuf::from("demo.ts")),
         ),
     ];
 

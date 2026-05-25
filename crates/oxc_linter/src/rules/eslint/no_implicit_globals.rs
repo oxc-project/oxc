@@ -82,7 +82,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoImplicitGlobals,
-    version = "next",
+    version = "1.65.0",
 );
 
 impl Rule for NoImplicitGlobals {

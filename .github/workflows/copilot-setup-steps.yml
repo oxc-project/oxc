@@ -28,11 +28,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
           cache-key: warm
           save-cache: false
-          tools: just,cargo-insta,typos-cli,cargo-shear@1.11.2,ast-grep
+          tools: just,cargo-insta,typos-cli,cargo-shear@1.12.4,ast-grep
           components: clippy rust-docs rustfmt rust-analyzer
 
       - uses: oxc-project/setup-node@ab97f03642370d79a7e96dd286bd02a1be40e0ba # v1.3.0

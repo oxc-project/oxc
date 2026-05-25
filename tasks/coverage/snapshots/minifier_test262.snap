@@ -1,14 +1,8 @@
-commit: ccaac100
+commit: 7e115f46
 
 minifier_test262 Summary:
-AST Parsed     : 44704/44704 (100.00%)
-Positive Passed: 44697/44704 (99.98%)
-Compress: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/toLocaleString/lone-options-accepted.js
-
-Compress: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/toLocaleString/lone-options-accepted.js
-
-Compress: tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/prototype/toLocaleString/lone-options-accepted.js
-
+AST Parsed     : 44799/44799 (100.00%)
+Positive Passed: 44795/44799 (99.99%)
 Compress: tasks/coverage/test262/test/language/statements/class/elements/private-accessor-is-visible-in-computed-properties.js
 
 Compress: tasks/coverage/test262/test/language/statements/class/elements/private-field-is-visible-in-computed-properties.js

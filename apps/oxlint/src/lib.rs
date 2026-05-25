@@ -1,6 +1,7 @@
 // Ignore dead code warnings when building `tasks/website`, which disables `napi` Cargo feature
 #![cfg_attr(not(feature = "napi"), allow(dead_code))]
 
+mod agent_detection;
 mod command;
 mod config_loader;
 mod init;

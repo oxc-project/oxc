@@ -9,6 +9,7 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
+    utils::has_ambient_typescript_ancestor,
 };
 
 fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
@@ -136,7 +137,7 @@ impl Rule for NoNamespace {
         }
 
         if self.allow_declarations
-            && (declaration.declare || is_any_ancestor_declaration(node, ctx))
+            && (declaration.declare || has_ambient_typescript_ancestor(node.id(), ctx.nodes()))
         {
             return;
         }
@@ -155,15 +156,6 @@ impl Rule for NoNamespace {
         }
         ctx.source_type().is_typescript()
     }
-}
-
-fn is_any_ancestor_declaration(node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes().ancestors(node.id()).any(|node| match node.kind() {
-        AstKind::TSModuleDeclaration(decl) => decl.declare,
-        // No need to check `declare` field, as `global` is only valid in ambient context
-        AstKind::TSGlobalDeclaration(_) => true,
-        _ => false,
-    })
 }
 
 #[test]
@@ -241,6 +233,12 @@ fn test() {
         (
             "module foo {}",
             Some(serde_json::json!([{ "allowDefinitionFiles": true }])),
+            None,
+            Some(PathBuf::from("test.d.ts")),
+        ),
+        (
+            "global { namespace foo {} }",
+            Some(serde_json::json!([{ "allowDeclarations": true, "allowDefinitionFiles": false }])),
             None,
             Some(PathBuf::from("test.d.ts")),
         ),

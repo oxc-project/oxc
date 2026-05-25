@@ -37,7 +37,38 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        // Normalise the key before checking shorthand: `try_compress_property_key`
+        // can turn `{ "x": x }` into `{ x: x }`, which then becomes a candidate
+        // for shorthand normalisation in the same visit.
         Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::normalize_object_property_shorthand(prop);
+    }
+
+    /// `{ x: x }` is observationally equivalent to `{ x }`, and codegen always
+    /// prints it as `{ x }`. Set `shorthand = true` so the AST matches the
+    /// printed output; otherwise content-equality checks (e.g. when merging
+    /// adjacent `if` statements with identical jump bodies) treat the two
+    /// forms as different on the first pass and only converge on the second.
+    ///
+    /// Output text is unchanged, so we deliberately do not flip
+    /// `ctx.state.changed`.
+    fn normalize_object_property_shorthand(prop: &mut ObjectProperty<'a>) {
+        if prop.shorthand {
+            return;
+        }
+        let Expression::Identifier(value) = &prop.value else { return };
+        if prop.computed || prop.method || prop.kind != PropertyKind::Init {
+            return;
+        }
+        let PropertyKey::StaticIdentifier(key) = &prop.key else { return };
+        // `{ __proto__: __proto__ }` triggers the Annex B.3.1 proto setter
+        // (literal `__proto__` key, non-computed, non-shorthand, non-method),
+        // but `{ __proto__ }` is a plain shorthand `IdentifierReference` that
+        // creates a regular own data property and does NOT set `[[Prototype]]`.
+        // Converting would change observable behaviour, so bail out.
+        if key.name == value.name && key.name != "__proto__" {
+            prop.shorthand = true;
+        }
     }
 
     pub fn substitute_assignment_target_property_property(
@@ -1709,9 +1740,51 @@ impl<'a> PeepholeOptimizations {
         )
     }
 
-    /// Checks if the expression result is unused (i.e., in an expression statement context).
+    /// Whether the expression's result will be discarded — bare expression
+    /// statement, or the init of a `var`/`let`/`const` whose binding has no
+    /// references and isn't exported. Used by the IIFE inliner to short-circuit
+    /// pure-annotated IIFEs to `void 0` so they drop regardless of body shape,
+    /// and to allow `(async () => {})()` / `(function* () {})()` (whose return
+    /// value isn't a meaningful result) to collapse in those positions too.
+    /// Fixes <https://github.com/oxc-project/oxc/issues/17480>.
     fn is_expression_result_unused(ctx: &TraverseCtx<'a>) -> bool {
-        matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_))
+        match ctx.parent() {
+            Ancestor::ExpressionStatementExpression(_) => true,
+            Ancestor::VariableDeclaratorInit(decl) => {
+                if !Self::can_remove_unused_declarators(ctx) {
+                    return false;
+                }
+                // `using` runs `[Symbol.dispose]` at scope exit.
+                if decl.kind().is_using() {
+                    return false;
+                }
+                let BindingPattern::BindingIdentifier(ident) = decl.id() else {
+                    return false;
+                };
+                if !ctx.scoping().symbol_is_unused(ident.symbol_id()) {
+                    return false;
+                }
+                !Self::var_declaration_is_exported(ctx)
+            }
+            _ => false,
+        }
+    }
+
+    /// `true` if the `VariableDeclaration` that contains the current expression
+    /// (entered via `VariableDeclaratorInit`) sits directly under an `export`
+    /// wrapper. Exports are cross-module reachable, and the inner
+    /// `VariableDeclaration` never routes through `handle_variable_declaration`
+    /// — dropping its init would silently break the export's runtime value.
+    ///
+    /// Checks the exact ancestor slot above `VariableDeclaration` only;
+    /// walking the full chain would over-broaden the guard to function-local
+    /// vars inside exported functions.
+    fn var_declaration_is_exported(ctx: &TraverseCtx<'a>) -> bool {
+        // Only `ExportNamedDeclaration`'s `declaration` field can hold a
+        // `VariableDeclaration`. `export default` wraps a function / class /
+        // expression — never a `VariableDeclaration` — so no arm is needed
+        // for it.
+        matches!(ctx.ancestors().nth(2), Some(Ancestor::ExportNamedDeclarationDeclaration(_)))
     }
 
     /// Optimizes the usage of Immediately Invoked Function Expressions (IIFEs)
@@ -1725,7 +1798,12 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_iife_call(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::CallExpression(call_expr) = e else { return };
 
-        if !call_expr.arguments.is_empty() || !call_expr.callee.is_function() {
+        if !call_expr.callee.is_function() {
+            return;
+        }
+
+        if !call_expr.arguments.is_empty() {
+            Self::substitute_empty_body_iife_call_with_args(e, ctx);
             return;
         }
 
@@ -1753,55 +1831,135 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let is_pure =
-            (call_expr.pure && ctx.annotations()) || ctx.manual_pure_functions(&call_expr.callee);
+        // The callee here is always a function/arrow literal, so
+        // `manual_pure_functions` (which matches named paths like `styled`)
+        // can never apply — only an explicit `/* @__PURE__ */` annotation can.
+        let is_pure = call_expr.pure && ctx.annotations();
 
         if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee
             && !f.r#async
             && !f.params.has_parameter()
             && f.body.statements.len() == 1
         {
-            if f.expression {
+            if let Some(expr) = f.get_expression_mut() {
                 // Replace "(() => foo())()" with "foo()"
-                let expr = f.get_expression_mut().unwrap();
-                if is_pure && Self::is_expression_result_unused(ctx) {
-                    *e = ctx.ast.void_0(call_expr.span);
+                *e = if is_pure && Self::is_expression_result_unused(ctx) {
+                    ctx.ast.void_0(call_expr.span)
+                } else if let Some(taken) = Self::try_take_iife_body(expr, is_pure, ctx) {
+                    taken
                 } else {
-                    *e = expr.take_in(ctx.ast);
-                }
+                    return;
+                };
                 ctx.state.changed = true;
                 return;
             }
             match &mut f.body.statements[0] {
                 Statement::ExpressionStatement(expr_stmt) => {
                     // Replace "(() => { foo() })()" with "(foo(), undefined)"
-                    if is_pure && Self::is_expression_result_unused(ctx) {
-                        *e = ctx.ast.void_0(call_expr.span);
-                    } else {
-                        *e = ctx.ast.expression_sequence(expr_stmt.span, {
+                    *e = if is_pure && Self::is_expression_result_unused(ctx) {
+                        ctx.ast.void_0(call_expr.span)
+                    } else if let Some(taken) =
+                        Self::try_take_iife_body(&mut expr_stmt.expression, is_pure, ctx)
+                    {
+                        ctx.ast.expression_sequence(expr_stmt.span, {
                             let mut sequence = ctx.ast.vec();
-                            sequence.push(expr_stmt.expression.take_in(ctx.ast));
+                            sequence.push(taken);
                             sequence.push(ctx.ast.void_0(call_expr.span));
                             sequence
-                        });
-                    }
+                        })
+                    } else {
+                        return;
+                    };
 
                     ctx.state.changed = true;
                 }
                 Statement::ReturnStatement(ret_stmt) => {
                     if let Some(argument) = &mut ret_stmt.argument {
                         // Replace "(() => { return foo() })()" with "foo()"
-                        if is_pure && Self::is_expression_result_unused(ctx) {
-                            *e = ctx.ast.void_0(call_expr.span);
+                        *e = if is_pure && Self::is_expression_result_unused(ctx) {
+                            ctx.ast.void_0(call_expr.span)
+                        } else if let Some(taken) = Self::try_take_iife_body(argument, is_pure, ctx)
+                        {
+                            taken
                         } else {
-                            *e = argument.take_in(ctx.ast);
-                        }
+                            return;
+                        };
                         ctx.state.changed = true;
                     }
                 }
                 _ => {}
             }
         }
+    }
+
+    /// `(() => {})(a, b)` → `(a, b, void 0)` — drop the wrapper when the body
+    /// is empty and every param is a bare identifier; spread args become
+    /// `[...a]` to keep the iterator-protocol invocation.
+    fn substitute_empty_body_iife_call_with_args(
+        e: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::CallExpression(call_expr) = e else { return };
+
+        // Looser than the spec's `IsSimpleParameterList` (which forbids rest):
+        // a rest binding to an identifier is safe here — the empty body never
+        // observes the collected array.
+        let params_simple = |p: &FormalParameters<'a>| {
+            p.items
+                .iter()
+                .all(|item| item.pattern.is_binding_identifier() && item.initializer.is_none())
+                && p.rest.as_ref().is_none_or(|r| r.rest.argument.is_binding_identifier())
+        };
+
+        let is_drop_candidate = match &call_expr.callee {
+            Expression::FunctionExpression(f) => {
+                !f.r#async
+                    && !f.generator
+                    && f.body.as_ref().is_some_and(|b| b.is_empty())
+                    && params_simple(&f.params)
+            }
+            Expression::ArrowFunctionExpression(f) => {
+                !f.r#async && f.body.is_empty() && params_simple(&f.params)
+            }
+            _ => false,
+        };
+
+        if !is_drop_candidate {
+            return;
+        }
+
+        let span = call_expr.span;
+        let mut exprs = Self::fold_arguments_into_needed_expressions(&mut call_expr.arguments, ctx);
+        *e = if exprs.is_empty() {
+            ctx.ast.void_0(span)
+        } else {
+            exprs.push(ctx.ast.void_0(span));
+            ctx.ast.expression_sequence(span, exprs)
+        };
+        ctx.state.changed = true;
+    }
+
+    /// Take the IIFE body out for inlining and propagate `pure` onto a
+    /// call/new body. Bails in DCE-only mode — see the
+    /// `preserve_iife_in_dce_mode` test.
+    /// Returns `None` to signal the caller should leave the IIFE intact.
+    fn try_take_iife_body(
+        body: &mut Expression<'a>,
+        is_pure: bool,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if ctx.state.dce {
+            return None;
+        }
+        let mut taken = body.take_in(ctx.ast);
+        if is_pure {
+            match &mut taken {
+                Expression::CallExpression(c) => c.pure = true,
+                Expression::NewExpression(n) => n.pure = true,
+                _ => {}
+            }
+        }
+        Some(taken)
     }
 }
 

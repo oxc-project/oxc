@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- e6090e7 transformer: Keep enum IIFE when a non-inlinable value reference remains (#22501) (Dunqing)
+- 931b7d6 transformer: Inline const enum members through type-cast wrappers (#22500) (Dunqing)
+- c73c159 transformer/async-to-generator: Reparent parameter initializer scopes (#22507) (camc314)
+- ecfd3ca transformer/async-to-generator: Move only parameter bindings (#22503) (camc314)
+- 3ce3431 transformer/explicit-resource-managment: Preserve shadowed for-head block (#22451) (camc314)
+
+## [0.131.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- b8fbc1f transformer/object-rest-spread: Correct scope id when moving bindings (#22419) (camc314)
+- dda33de transformer/explicit-resource-management: Align lexical binding scopes (#22320) (camc314)
+- 8e79de8 transformer: Preserve for-await statement bodies (#22361) (camc314)
+- 0cba210 transformer/class: Replace `new.target` in static blocks (#22360) (camc314)
+- 67ab1c9 transformer/es2018/for-await: Hoist for-await generated bindings (#22355) (camc314)
+- c3ceb4a transformer/object-rest-spread: Use hoisted scope for `for-of` temp refs (#22347) (camc314)
+
+### ⚡ Performance
+
+- 8b2f4f9 transformer/object-rest-spread: Collect `Vec<SymbolId` over `Vec<BindingIdentifier>` (#22418) (camc314)
+
 ## [0.130.0] - 2026-05-11
 
 ### 🚀 Features

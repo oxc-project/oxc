@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.50.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- 43b9978 formatter/sort_imports: Treat subpath imports as internal (#22440) (leaysgur)
+
 ## [0.49.0] - 2026-05-11
 
 ### 🚀 Features
