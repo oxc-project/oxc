@@ -44,7 +44,11 @@ pub fn format_import_and_export_source_with_clause<'a>(
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let decl = &format_with(|f| {
-            write!(f, ["import", space(), self.import_kind]);
+            write!(f, "import");
+            if let Some(phase) = self.phase() {
+                write!(f, [space(), phase.as_str()]);
+            }
+            write!(f, [space(), self.import_kind]);
 
             if let Some(specifiers) = self.specifiers() {
                 write!(f, [specifiers, space(), "from", space()]);
