@@ -77,9 +77,10 @@ The `if` STAYS. The mechanical sweep transforms only the body. **Verify by readi
 
 ### Site classification rule
 
-1. If the line above sets `*expr = X` or `*stmt = X`, use Pattern A or B (collapse two lines into one helper call).
-2. Else, use Pattern C/D/E with `ctx.notice_change()`.
-3. **Never** call `ctx.notice_change()` when `replace_expression`/`replace_statement` applies — Task 18's ast-grep rule will fail the build.
+1. If the line above sets `*expr = X` or `*stmt = X` (deref slot replace), use Pattern A or B (collapse two lines into one helper call).
+1a. **Field assignment to a `Statement<'a>` / `Expression<'a>` field also counts as a slot replacement** — e.g. `for_stmt.body = X`, `if_stmt.test = X`, `cond.consequent = X`, `member.object = X`. Use Pattern A/B with `&mut <field>` and (if needed) a temp local for the value. The fact that the syntax is field-write rather than deref-write does not change the semantics: a fresh value is being installed into an AST slot of matching type.
+2. Else (collection mutation, multi-field in-place tweak like operand swap, conditional `dead_drop_mutates_ast` gate), use Pattern C/D/E with `ctx.notice_change()`.
+3. **Never** call `ctx.notice_change()` when `replace_expression`/`replace_statement` applies. Task 18's ast-grep rule only catches deref-write bypasses, but rule 1a above defines the broader semantic contract that all peephole code must follow — reviewers enforce it.
 
 ### Per-task verification commands
 
