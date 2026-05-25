@@ -5672,39 +5672,40 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                                ╰── It can not be redeclared here
    ╰────
 
-  × Invalid rest element
+  × Invalid rest element target in destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/16/input.js:1:9]
  1 │ var {...{z}} = { z: 1};
    ·         ───
    ╰────
-  help: Expected identifier in rest element
+  help: Expected an identifier, like `...rest`.
 
-  × Invalid rest element
+  × Invalid rest element target in destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/17/input.js:1:10]
  1 │ var { ...{ x = 5 } } = {x : 1};
    ·          ─────────
    ╰────
-  help: Expected identifier in rest element
+  help: Expected an identifier, like `...rest`.
 
-  × Invalid rest element
+  × Invalid rest element target in destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/19/input.js:1:19]
  1 │ function test({...{}}) {}
    ·                   ──
    ╰────
-  help: Expected identifier in rest element
+  help: Expected an identifier, like `...rest`.
 
-  × Invalid rest element
+  × Invalid rest element target in destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/20/input.js:1:19]
  1 │ function test({...{a}}) {}
    ·                   ───
    ╰────
-  help: Expected identifier in rest element
+  help: Expected an identifier, like `...rest`.
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/21/input.js:1:6]
  1 │ ({...x = 1} = {})
    ·      ─────
    ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/21/input.js:1:6]
@@ -5718,12 +5719,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ─────
    ╰────
 
-  × Invalid rest element
+  × Invalid rest element target in destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/22/input.js:1:9]
  1 │ var {...x = 1} = {}
    ·         ─────
    ╰────
-  help: Expected identifier in rest element
+  help: Expected an identifier, like `...rest`.
 
   × A rest element cannot have an initializer.
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/23/input.js:1:19]
@@ -5731,32 +5732,33 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                   ─────
    ╰────
 
-  × Invalid rest element
+  × Invalid rest element target in destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/23/input.js:1:19]
  1 │ function test({...x = 1}) {}
    ·                   ─────
    ╰────
-  help: Expected identifier in rest element
+  help: Expected an identifier, like `...rest`.
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/24/input.js:1:6]
  1 │ ({...[]} = {})
    ·      ──
    ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
-  × Invalid rest element
+  × Invalid rest element target in destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/25/input.js:1:9]
  1 │ var {...[]} = {}
    ·         ──
    ╰────
-  help: Expected identifier in rest element
+  help: Expected an identifier, like `...rest`.
 
-  × Invalid rest element
+  × Invalid rest element target in destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/26/input.js:1:19]
  1 │ function test({...[]}) {}
    ·                   ──
    ╰────
-  help: Expected identifier in rest element
+  help: Expected an identifier, like `...rest`.
 
   × A rest element must be last in a destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/7/input.js:1:7]
@@ -5804,17 +5806,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ───────
    ╰────
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/no-pattern-in-rest/input.js:1:6]
  1 │ ({...{}} = {})
    ·      ──
    ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js:1:6]
  1 │ ({...{}} = {})
    ·      ──
    ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/bigint/invalid-decimal/input.js:1:4]
@@ -12370,12 +12374,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/destructuring-assignent-rest-invalid/input.ts:1:9]
  1 │ 0, { ...{} as T} = b;
    ·         ───────
  2 │ [...[] as T] = b;
    ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/destructuring-assignent-rest-invalid/input.ts:1:9]

@@ -420,8 +420,8 @@ pub fn rest_element_trailing_comma(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn invalid_binding_rest_element(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid rest element")
-        .with_help("Expected identifier in rest element")
+    OxcDiagnostic::error("Invalid rest element target in destructuring pattern")
+        .with_help("Expected an identifier, like `...rest`.")
         .with_label(span)
 }
 
@@ -1238,7 +1238,9 @@ pub fn invalid_assignment_target_default_value_operator(span: Span) -> OxcDiagno
 
 #[cold]
 pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid rest operator's argument.").with_label(span)
+    OxcDiagnostic::error("Invalid rest element target in destructuring assignment")
+        .with_help("Expected an identifier or member expression, like `...rest` or `...obj.prop`.")
+        .with_label(span)
 }
 
 #[cold]

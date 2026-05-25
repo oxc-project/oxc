@@ -17671,12 +17671,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ─────
    ╰────
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer2.ts:3:5]
  2 │ var x: number[];
  3 │ [...x = a] = a;  // Error, rest element cannot have initializer
    ·     ─────
    ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer2.ts:3:5]
@@ -17685,20 +17686,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─────
    ╰────
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restPropertyWithBindingPattern.ts:1:6]
  1 │ ({...{}} = {});
    ·      ──
  2 │ ({...({})} = {});
    ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restPropertyWithBindingPattern.ts:2:6]
  1 │ ({...{}} = {});
  2 │ ({...({})} = {});
    ·      ────
  3 │ ({...[]} = {});
    ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restPropertyWithBindingPattern.ts:2:6]
