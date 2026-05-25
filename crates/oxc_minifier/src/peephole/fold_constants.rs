@@ -30,8 +30,7 @@ impl<'a> PeepholeOptimizations {
             _ if e.may_have_side_effects(ctx) => {}
             _ => {
                 if let Some(changed) = e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v)) {
-                    *expr = changed;
-                    ctx.state.changed = true;
+                    ctx.replace_expression(expr, changed);
                 }
             }
         }
@@ -44,8 +43,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
-            *expr = changed;
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, changed);
         }
     }
 
@@ -56,8 +54,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
-            *expr = changed;
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, changed);
         }
     }
 
@@ -67,8 +64,7 @@ impl<'a> PeepholeOptimizations {
             LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(e, ctx),
             LogicalOperator::Coalesce => Self::try_fold_coalesce(e, ctx),
         } {
-            *expr = changed;
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, changed);
         }
     }
 
@@ -80,13 +76,15 @@ impl<'a> PeepholeOptimizations {
             ChainFold::Flipped { has_optional } => {
                 // For `(known_obj)?.foo?.bar` the inner `?.` flips, but the
                 // outer `?.bar` keeps the wrapper alive.
-                if !has_optional {
-                    *expr = Expression::from(e.expression.take_in(ctx.ast));
+                if has_optional {
+                    ctx.notice_change();
+                } else {
+                    let new_expr = Expression::from(e.expression.take_in(ctx.ast));
+                    ctx.replace_expression(expr, new_expr);
                 }
-                ctx.state.changed = true;
             }
             ChainFold::Collapse { base, base_has_side_effects } => {
-                *expr = if base_has_side_effects {
+                let new_expr = if base_has_side_effects {
                     ctx.ast.expression_sequence(
                         span,
                         ctx.ast.vec_from_array([base, ctx.ast.void_0(span)]),
@@ -94,7 +92,7 @@ impl<'a> PeepholeOptimizations {
                 } else {
                     ctx.value_to_expr(span, ConstantValue::Undefined)
                 };
-                ctx.state.changed = true;
+                ctx.replace_expression(expr, new_expr);
             }
         }
     }
@@ -341,8 +339,7 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::In => None,
         };
         if let Some(changed) = changed {
-            *expr = changed;
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, changed);
         }
     }
 
@@ -558,20 +555,20 @@ impl<'a> PeepholeOptimizations {
                 if let Some(n) = arg.evaluate_value_to_number(ctx) {
                     n
                 } else {
-                    *expr = ctx.ast.expression_unary(
+                    let new_expr = ctx.ast.expression_unary(
                         e.span,
                         UnaryOperator::UnaryPlus,
                         ctx.ast.expression_string_literal(n.span, n.value, n.raw),
                     );
-                    ctx.state.changed = true;
+                    ctx.replace_expression(expr, new_expr);
                     return;
                 }
             }
             e if e.is_void_0() => f64::NAN,
             _ => return,
         });
-        *expr = ctx.value_to_expr(e.span, value);
-        ctx.state.changed = true;
+        let new_expr = ctx.value_to_expr(e.span, value);
+        ctx.replace_expression(expr, new_expr);
     }
 
     pub fn fold_binary_typeof_comparison(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -587,8 +584,8 @@ impl<'a> PeepholeOptimizations {
             && left_ident.name == right_ident.name
         {
             let b = matches!(e.operator, BinaryOperator::StrictEquality | BinaryOperator::Equality);
-            *expr = ctx.ast.expression_boolean_literal(e.span, b);
-            ctx.state.changed = true;
+            let new_expr = ctx.ast.expression_boolean_literal(e.span, b);
+            ctx.replace_expression(expr, new_expr);
             return;
         }
 
@@ -601,12 +598,12 @@ impl<'a> PeepholeOptimizations {
             let right_ty = e.right.value_type(ctx);
 
             if !right_ty.is_undetermined() && right_ty != ValueType::String {
-                *expr = ctx.ast.expression_boolean_literal(
+                let new_expr = ctx.ast.expression_boolean_literal(
                     e.span,
                     e.operator == BinaryOperator::Inequality
                         || e.operator == BinaryOperator::StrictInequality,
                 );
-                ctx.state.changed = true;
+                ctx.replace_expression(expr, new_expr);
                 return;
             }
             if let Expression::StringLiteral(string_lit) = &e.right
@@ -623,12 +620,12 @@ impl<'a> PeepholeOptimizations {
                         | "unknown" // IE
                 )
             {
-                *expr = ctx.ast.expression_boolean_literal(
+                let new_expr = ctx.ast.expression_boolean_literal(
                     e.span,
                     e.operator == BinaryOperator::Inequality
                         || e.operator == BinaryOperator::StrictInequality,
                 );
-                ctx.state.changed = true;
+                ctx.replace_expression(expr, new_expr);
             }
         }
     }
@@ -702,7 +699,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         e.properties = new_properties;
-        ctx.state.changed = true;
+        ctx.notice_change();
     }
 
     fn is_spread_inlineable_object_literal(
@@ -775,7 +772,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        ctx.state.changed = true;
+        ctx.notice_change();
     }
 }
 
