@@ -5840,7 +5840,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·       ─
    ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/direct-calls-only/input.js:2:10]
  1 │ function failsParse() {
  2 │   return import.then();
@@ -5879,7 +5879,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ────────
    ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/direct-calls-only/input.js:2:10]
  1 │ function failsParse() {
  2 │   return import.then();
@@ -5925,7 +5925,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: import.meta is only allowed in module code
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/import-meta/no-other-prop-names/input.js:1:1]
  1 │ import.notMeta;
    · ──────────────

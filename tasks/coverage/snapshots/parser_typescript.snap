@@ -16860,7 +16860,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ const z = tag`\u{hello} \xtraordinary wonderful \uworld` // should work with Tagged NoSubstitutionTemplate
    ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
    ╭─[typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts:2:16]
  1 │ export let x = import.meta;
  2 │ export let y = import.metal;
@@ -21359,7 +21359,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                   ─
    ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
    ╭─[typescript/tests/cases/conformance/importDefer/importMetaPropertyInvalidInCall.ts:1:1]
  1 │ import.foo();
    · ──────────

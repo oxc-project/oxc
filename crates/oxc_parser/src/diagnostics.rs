@@ -804,8 +804,11 @@ pub fn duplicate_default_export(spans: impl IntoIterator<Item = Span>) -> OxcDia
 }
 
 #[cold]
-pub fn import_meta(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span)
+pub fn invalid_import_property(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`",
+    )
+    .with_label(span)
 }
 
 #[cold]

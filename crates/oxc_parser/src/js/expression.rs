@@ -681,7 +681,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     _ => {
                         self.bump_any();
-                        self.fatal_error(diagnostics::import_meta(self.end_span(span)))
+                        self.fatal_error(diagnostics::invalid_import_property(self.end_span(span)))
                     }
                 }
             }
