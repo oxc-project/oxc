@@ -19,6 +19,7 @@ jobs:
     if: github.repository == 'oxc-project/oxc'
     name: Release crates
     runs-on: ubuntu-latest
+    environment: crates
     permissions:
       contents: write # For git tag push
       id-token: write # Required for OIDC token exchange
