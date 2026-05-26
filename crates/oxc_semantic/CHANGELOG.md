@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.133.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- fa7c463 semantic: Correct TS enum member symbol spans (#22689) (camc314)
+- 26b9396 semantic: Resolve parameter decorators outside parameter scope (#22623) (camc314)
+- dfa931d semantic: Propagate unresolved auto-increment enum value instead of defaulting to 0 (#22646) (Dunqing)
+
+### ⚡ Performance
+
+- 2f623b0 semantic: Skip unresolved checks for re-exports (#22660) (camc314)
+- 0d9553d semantic: Early-exit `check_object_expression` for objects with <2 properties (#22668) (Dunqing)
+- d721ad9 semantic: Use direct grandparent lookup for TS type parameters (#22658) (camc314)
+- 0aff288 semantic: Reorder numeric literal strict mode checks (#22657) (camc314)
+- 4d5ddb1 semantic: Reorder binding identifier checks (#22656) (camc314)
+- e32acd8 semantic: Reorder identifier ambient binding check (#22653) (camc314)
+- 09fe178 semantic: Reorder ident reference strict mode check (#22652) (camc314)
+- 4b6add2 semantic: Avoid duplicate ident clone for bindings (#22663) (camc314)
+- 7b84314 semantic: Use direct byte access for numeric leading-zero check (#22642) (camc314)
+- 0345a31 semantic: Pre-size class elements hash map (#22618) (camc314)
+- 4f289f1 semantic: Resolve_references_for_current_scope without a temp Vec (#22599) (Dunqing)
+- e862c15 semantic: Avoid heap alloc for var hoist scope ids (#22603) (Dunqing)
+- 8ff8674 semantic: Early return if `excess` is `0` in `Stats::increase_by` (#22616) (camc314)
+- 7a4120e semantic: Pre-reserve unresolved_references using Stats::references (#22580) (Dunqing)
+
 ## [0.132.0] - 2026-05-18
 
 ### ⚡ Performance
