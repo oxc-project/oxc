@@ -12,7 +12,8 @@ use oxc_span::{SPAN, SourceType};
 use oxc_str::CompactStr;
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_syntax::node::NodeId;
-use oxc_syntax::reference::Reference;
+use oxc_syntax::reference::{Reference, ReferenceId};
+use oxc_syntax::symbol::SymbolId;
 
 /// Configuration for [ReplaceGlobalDefines].
 ///
@@ -211,6 +212,16 @@ pub struct ReplaceGlobalDefinesReturn {
     pub changed: bool,
 }
 
+/// Captures the data needed to delete an identifier reference from `Scoping`
+/// after a successful AST replacement.
+struct IdentifierReferenceInfo<'a> {
+    reference_id: ReferenceId,
+    /// `Some` when the reference resolves to a symbol (e.g. ambient `declare const`);
+    /// `None` when the reference is in the root-unresolved set (truly global).
+    symbol_id: Option<SymbolId>,
+    name: oxc_str::Ident<'a>,
+}
+
 /// Replace Global Defines.
 ///
 /// References:
@@ -368,8 +379,15 @@ impl<'a> ReplaceGlobalDefines<'a> {
     fn replace_identifier_defines(&mut self, expr: &mut Expression<'a>) -> bool {
         match expr {
             Expression::Identifier(ident) => {
+                let ident_ref_info = Self::identifier_reference_info(ident, self.scoping());
                 if let Some(new_expr) = self.replace_identifier_define_impl(ident) {
                     *expr = new_expr;
+                    // Drop the original identifier's reference from `Scoping`
+                    // now that the replacement is committed. Downstream consumers
+                    // (e.g. the minifier's DCE pass) rely on this so that an
+                    // ambient `declare const` whose every reference is replaced
+                    // is recognised as truly unused.
+                    self.delete_identifier_reference(ident_ref_info);
                     return true;
                 }
             }
@@ -390,6 +408,29 @@ impl<'a> ReplaceGlobalDefines<'a> {
             _ => {}
         }
         false
+    }
+
+    /// Capture the data needed to delete an identifier reference from `Scoping`,
+    /// keyed on whether the reference is resolved to a symbol or remains in the
+    /// root-unresolved set. Captured BEFORE the replacement so the callers can
+    /// delete the reference only after they've committed the replacement.
+    fn identifier_reference_info(
+        ident: &IdentifierReference<'a>,
+        scoping: &Scoping,
+    ) -> Option<IdentifierReferenceInfo<'a>> {
+        let reference_id = ident.reference_id.get()?;
+        let symbol_id = scoping.get_reference(reference_id).symbol_id();
+        Some(IdentifierReferenceInfo { reference_id, symbol_id, name: ident.name })
+    }
+
+    fn delete_identifier_reference(&mut self, info: Option<IdentifierReferenceInfo<'a>>) {
+        let Some(info) = info else { return };
+        let scoping = self.scoping.as_mut().unwrap();
+        if info.symbol_id.is_some() {
+            scoping.delete_reference(info.reference_id);
+        } else {
+            scoping.delete_root_unresolved_reference(info.name, info.reference_id);
+        }
     }
 
     fn replace_identifier_define_impl(
@@ -419,6 +460,17 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_define_with_assignment_expr(&mut self, node: &mut AssignmentExpression<'a>) -> bool {
+        // Capture the identifier reference info BEFORE invoking the replace
+        // helper so we can delete the reference from `Scoping` only after the
+        // replacement actually commits (an identifier define replacement may
+        // yield a literal that `assignment_target_from_expr` rejects, in which
+        // case the AST mutation never happens and the reference must stay).
+        let ident_ref_info = node.left.as_simple_assignment_target().and_then(|item| match item {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                Self::identifier_reference_info(ident, self.scoping())
+            }
+            _ => None,
+        });
         let new_left = node
             .left
             .as_simple_assignment_target_mut()
@@ -437,6 +489,8 @@ impl<'a> ReplaceGlobalDefines<'a> {
             .and_then(assignment_target_from_expr);
         if let Some(new_left) = new_left {
             node.left = new_left;
+            // Only delete the reference now that the replacement is committed.
+            self.delete_identifier_reference(ident_ref_info);
             return true;
         }
         false

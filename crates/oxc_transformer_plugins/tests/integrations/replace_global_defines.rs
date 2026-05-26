@@ -282,6 +282,21 @@ fn declare_const() {
     test("declare const IS_PROD: boolean; if (IS_PROD) {} foo(IS_PROD)", "foo(true)", &config);
 }
 
+#[test]
+fn declare_const_assignment_target_bailout() {
+    // `IS_PROD = 0` cannot be rewritten to `true = 0` (literals are not valid
+    // assignment targets), so the LHS replacement bails out and the original
+    // identifier stays in the AST. We must NOT have eagerly deleted the
+    // reference, otherwise downstream DCE would treat IS_PROD as unused and
+    // drop the `declare const`.
+    let config = config(&[("IS_PROD", "true")]);
+    test(
+        "declare const IS_PROD: boolean; IS_PROD = 0;",
+        "declare const IS_PROD: boolean; IS_PROD = 0;",
+        &config,
+    );
+}
+
 #[cfg(not(miri))]
 #[test]
 fn test_sourcemap() {
