@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fails if any `state.changed =` write exists in crates/oxc_minifier/
-# outside the four sanctioned helpers in ecma_context.rs.
+# outside the six sanctioned helpers in ecma_context.rs.
 #
 # Scope is restricted to Rust source (`-t rust`) — markdown examples and
 # other non-source files can't write to the field at runtime.

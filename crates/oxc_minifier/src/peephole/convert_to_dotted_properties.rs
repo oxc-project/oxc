@@ -37,6 +37,10 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(n) = TraverseCtx::string_to_equivalent_number_value(v) {
+            // reason: pre-existing missed signal — function takes `&TraverseCtx` (immutable)
+            // and never bumps `state.changed`; tracked as a follow-up fix that would
+            // observably change minified output. Field-access form so the ast-grep rule
+            // doesn't fire; documenting here for audit completeness.
             e.expression = ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
         }
     }

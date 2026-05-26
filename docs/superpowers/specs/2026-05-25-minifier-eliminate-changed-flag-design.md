@@ -340,7 +340,7 @@ exists for grep to find.
    `replace_expression`, `replace_statement`, `replace_assignment_target_property`,
    `replace_property_key`, `notice_change`, `reset_changed`.
 2. Zero occurrences of `state.changed =` (either polarity) anywhere in
-   `crates/oxc_minifier/` after the final migration PR EXCEPT inside the four helper
+   `crates/oxc_minifier/` after the final migration PR EXCEPT inside the six helper
    bodies in `ecma_context.rs`. Enforced by the §5.1 CI check.
 3. `MinifierState::changed` is `pub(crate)` (was `pub`).
 4. **Structural-audit criterion (from Codex round 3):** Every `*slot = …` in
