@@ -34,6 +34,8 @@ install-hook:
 
 # When ready, run the same CI commands
 ready:
+  ./tools/check_state_changed.sh
+  cd crates/oxc_minifier && ast-grep scan
   git diff --exit-code --quiet
   pnpm install
   typos

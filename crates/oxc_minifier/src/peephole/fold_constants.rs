@@ -897,6 +897,8 @@ fn try_fold_at_optional<'a>(
         }
         ValueType::Undetermined => None,
         _ => {
+            // reason: bool field flip on existing AST node, not slot replacement
+            // ast-grep-ignore: peephole-direct-slot-assignment
             *optional = false;
             Some(ChainFold::Flipped { has_optional: false })
         }

@@ -521,10 +521,11 @@ impl<'a> PeepholeOptimizations {
             ctx,
         ) {
             if !matches!(expr, Expression::ChainExpression(_)) {
-                *expr = ctx.ast.expression_chain(
+                let new_expr = ctx.ast.expression_chain(
                     expr.span(),
                     expr.take_in(ctx.ast).into_chain_element().unwrap(),
                 );
+                ctx.replace_expression(expr, new_expr);
             }
             true
         } else {

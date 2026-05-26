@@ -364,10 +364,14 @@ impl<'a> PeepholeOptimizations {
         match stmt {
             Statement::EmptyStatement(_) => (),
             Statement::BreakStatement(s) => {
+                // reason: local &mut bool flag, not an AST slot
+                // ast-grep-ignore: peephole-direct-slot-assignment
                 *is_control_flow_dead = true;
                 result.push(Statement::BreakStatement(s));
             }
             Statement::ContinueStatement(s) => {
+                // reason: local &mut bool flag, not an AST slot
+                // ast-grep-ignore: peephole-direct-slot-assignment
                 *is_control_flow_dead = true;
                 result.push(Statement::ContinueStatement(s));
             }
@@ -915,6 +919,8 @@ impl<'a> PeepholeOptimizations {
             }
             ret_stmt.argument = None;
             result.push(Statement::ReturnStatement(ret_stmt));
+            // reason: local &mut bool flag, not an AST slot
+            // ast-grep-ignore: peephole-direct-slot-assignment
             *is_control_flow_dead = true;
             return;
         }
@@ -929,6 +935,8 @@ impl<'a> PeepholeOptimizations {
             result.pop();
         }
         result.push(Statement::ReturnStatement(ret_stmt));
+        // reason: local &mut bool flag, not an AST slot
+        // ast-grep-ignore: peephole-direct-slot-assignment
         *is_control_flow_dead = true;
     }
 
@@ -959,6 +967,8 @@ impl<'a> PeepholeOptimizations {
             ctx.notice_change();
         }
         result.push(Statement::ThrowStatement(throw_stmt));
+        // reason: local &mut bool flag, not an AST slot
+        // ast-grep-ignore: peephole-direct-slot-assignment
         *is_control_flow_dead = true;
     }
 
@@ -1405,7 +1415,14 @@ impl<'a> PeepholeOptimizations {
                     // with the replacement expression.
                     // https://github.com/rolldown/rolldown/issues/8248
                     let target_span = target_expr.span();
+                    // reason: caller-tracked. substitute_single_use_symbol_in_expression
+                    // takes &TraverseCtx (immutable) and returns Option<bool>; every caller
+                    // (substitute_single_use_symbol_in_statement family) translates the bool
+                    // into ctx.notice_change(), preserving the change signal.
+                    // ast-grep-ignore: peephole-direct-slot-assignment
                     *target_expr = replacement.take_in(ctx.ast);
+                    // reason: span field mutation on the already-replaced node, not slot replacement
+                    // ast-grep-ignore: peephole-direct-slot-assignment
                     *target_expr.span_mut() = target_span;
                     return Some(true);
                 }

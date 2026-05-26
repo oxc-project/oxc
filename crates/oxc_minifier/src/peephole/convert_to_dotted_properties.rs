@@ -19,6 +19,10 @@ impl<'a> PeepholeOptimizations {
         let Expression::StringLiteral(s) = &e.expression else { return };
         if is_identifier_name_patched(&s.value) {
             let property = ctx.ast.identifier_name(s.span, s.value);
+            // reason: pre-existing missed signal — function takes &TraverseCtx and
+            // has never bumped state.changed for this rewrite. NOT introduced by
+            // the lockdown PR; should be tracked separately.
+            // ast-grep-ignore: peephole-direct-slot-assignment
             *expr =
                 MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                     e.span,

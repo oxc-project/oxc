@@ -45,8 +45,12 @@ references.
 
 ## 3. API
 
-Four helpers on `TraverseCtx<'a, MinifierState<'a>>` (existing impl block at
-`traverse_context/ecma_context.rs:167`):
+Six helpers on `TraverseCtx<'a, MinifierState<'a>>` (existing impl block at
+`traverse_context/ecma_context.rs:167`). The first two and the last two cover
+the bulk of sites; the two extra `replace_*` helpers were added in the lockdown
+PR to eliminate the genuine structural bypasses surfaced by the ast-grep audit
+(§9 #4) — there is no `Expression`/`Statement` overlap for `*prop = …` and
+`*key = …` slot writes.
 
 ```rust
 impl<'a> TraverseCtx<'a, MinifierState<'a>> {
@@ -60,6 +64,24 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a statement slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
+        *slot = new;
+        self.state.changed = true;
+    }
+
+    /// Replace an assignment-target-property slot. Marks the pass as having mutated the AST.
+    #[inline]
+    pub fn replace_assignment_target_property(
+        &mut self,
+        slot: &mut AssignmentTargetProperty<'a>,
+        new: AssignmentTargetProperty<'a>,
+    ) {
+        *slot = new;
+        self.state.changed = true;
+    }
+
+    /// Replace a property-key slot. Marks the pass as having mutated the AST.
+    #[inline]
+    pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
         *slot = new;
         self.state.changed = true;
     }
@@ -314,33 +336,40 @@ exists for grep to find.
 
 ## 9. Acceptance criteria
 
-1. `replace_expression`, `replace_statement`, `notice_change`, `reset_changed` exist on
-   `TraverseCtx<'a, MinifierState<'a>>`, all `#[inline]`.
+1. Six helpers exist on `TraverseCtx<'a, MinifierState<'a>>`, all `#[inline]`:
+   `replace_expression`, `replace_statement`, `replace_assignment_target_property`,
+   `replace_property_key`, `notice_change`, `reset_changed`.
 2. Zero occurrences of `state.changed =` (either polarity) anywhere in
    `crates/oxc_minifier/` after the final migration PR EXCEPT inside the four helper
    bodies in `ecma_context.rs`. Enforced by the §5.1 CI check.
 3. `MinifierState::changed` is `pub(crate)` (was `pub`).
-4. **Structural-audit criterion (from Codex round 3):** Every `*expr = …` and `*stmt = …`
-   in `crates/oxc_minifier/src/peephole/` either (a) goes through
-   `ctx.replace_expression` / `ctx.replace_statement`, or (b) appears in an explicit
-   allowlist documented in the final-PR description with a justification per site.
-   Verified by an ast-grep rule run from CI:
+4. **Structural-audit criterion (from Codex round 3):** Every `*slot = …` in
+   `crates/oxc_minifier/src/peephole/` either (a) goes through one of the
+   `ctx.replace_*` helpers, or (b) appears in an explicit allowlist documented in
+   the final-PR description with a justification per site. Verified by an ast-grep
+   rule run from CI:
 
    ```yaml
    id: peephole-direct-slot-assignment
-   message: Direct slot assignment in peephole code must use ctx.replace_expression / ctx.replace_statement
+   message: Direct slot assignment in peephole code must use ctx.replace_expression / ctx.replace_statement / ctx.replace_assignment_target_property / ctx.replace_property_key
    severity: error
    language: rust
    rule:
      any:
-       - pattern: "*$E = $X" # expression slot
+       - pattern: "*$SLOT = $VALUE"
    files:
-     - crates/oxc_minifier/src/peephole/**/*.rs
+     - src/peephole/**/*.rs
+   ignores:
+     # `normalize.rs` is the Normalize pass — runs ONCE before the
+     # `PeepholeOptimizations` fixed-point loop and does NOT consume
+     # `state.changed`. Slot writes here have no signal to bypass.
+     - src/peephole/normalize.rs
    ```
 
-   (Allowlist mechanism: `// ast-grep-ignore: peephole-direct-slot-assignment — reason: …`
-   on the line above each justified exception. The final PR description lists every
-   allowlist entry.)
+   (Allowlist mechanism: a reason comment followed by `// ast-grep-ignore:
+   peephole-direct-slot-assignment` on the two lines directly above the
+   exception. The directive line must contain ONLY the rule id — ast-grep parses
+   it literally. The final PR description lists every allowlist entry.)
 
 5. `cargo test -p oxc_minifier` passes with no expected-output changes.
 6. `cargo coverage -- minifier` shows no conformance regression.

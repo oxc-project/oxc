@@ -1,0 +1,28 @@
+id: peephole-direct-slot-assignment
+language: rust
+severity: error
+message: |
+  Direct slot assignment in peephole code must use ctx.replace_expression
+  or ctx.replace_statement instead of a raw `*slot = …; ctx.notice_change();`
+  pair. The typed helper is enforced by CI; see
+  docs/superpowers/specs/2026-05-25-minifier-eliminate-changed-flag-design.md.
+
+  To explicitly allowlist a justified exception, put a reason comment then
+  the ignore directive on the two lines directly above the assignment:
+    // reason: <why this site is exempt>
+    // ast-grep-ignore: peephole-direct-slot-assignment
+  (The directive must be on the line immediately above the assignment, with
+  nothing else on the directive line — ast-grep parses the line literally.)
+
+rule:
+  any:
+    - pattern: '*$SLOT = $VALUE'
+
+files:
+  - src/peephole/**/*.rs
+
+ignores:
+  # `normalize.rs` is the Normalize pass — runs ONCE before the
+  # `PeepholeOptimizations` fixed-point loop and does NOT consume `state.changed`.
+  # Slot writes here have no signal to bypass, so the lockdown rule does not apply.
+  - src/peephole/normalize.rs

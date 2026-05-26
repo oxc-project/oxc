@@ -56,9 +56,10 @@ pub fn optimize_something(expr: &mut Expression, ctx: &mut Ctx) {
         return;
     }
 
-    // Apply transformation
-    *expr = create_optimized_form(ctx);
-    ctx.state.changed = true;
+    // Apply transformation via the typed helper — this is the only sanctioned
+    // way to signal a mutation. Direct `*expr = …; ctx.state.changed = true;`
+    // is rejected by CI (`tools/check_state_changed.sh`).
+    ctx.replace_expression(expr, create_optimized_form(ctx));
 }
 ```
 

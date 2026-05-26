@@ -379,6 +379,24 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.changed = true;
     }
 
+    /// Replace an assignment-target-property slot. Marks the pass as having mutated the AST.
+    #[inline]
+    pub fn replace_assignment_target_property(
+        &mut self,
+        slot: &mut AssignmentTargetProperty<'a>,
+        new: AssignmentTargetProperty<'a>,
+    ) {
+        *slot = new;
+        self.state.changed = true;
+    }
+
+    /// Replace a property-key slot. Marks the pass as having mutated the AST.
+    #[inline]
+    pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
+        *slot = new;
+        self.state.changed = true;
+    }
+
     /// Mark the pass as having mutated the AST in place (operand swap, in-place
     /// field flip, collection element removal, etc.) where no slot replacement
     /// happened. Prefer the `replace_*` helpers when the mutation IS a slot

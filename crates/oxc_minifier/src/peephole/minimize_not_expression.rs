@@ -46,8 +46,9 @@ impl<'a> PeepholeOptimizations {
             // "!(a, b)" => "a, !b"
             Expression::SequenceExpression(sequence_expr) => {
                 if let Some(last_expr) = sequence_expr.expressions.last_mut() {
-                    *last_expr =
+                    let new_last =
                         Self::minimize_not(last_expr.span(), last_expr.take_in(ctx.ast), ctx);
+                    ctx.replace_expression(last_expr, new_last);
                     let new_expr = e.argument.take_in(ctx.ast);
                     ctx.replace_expression(expr, new_expr);
                 }

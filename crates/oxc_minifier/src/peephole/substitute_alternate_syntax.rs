@@ -98,12 +98,13 @@ impl<'a> PeepholeOptimizations {
                 return;
             };
             if prop_name == ident.name {
-                *prop = ctx.ast.assignment_target_property_assignment_target_property_identifier(
-                    ident.span,
-                    ident.take_in(ctx.ast),
-                    None,
-                );
-                ctx.notice_change();
+                let new_prop =
+                    ctx.ast.assignment_target_property_assignment_target_property_identifier(
+                        ident.span,
+                        ident.take_in(ctx.ast),
+                        None,
+                    );
+                ctx.replace_assignment_target_property(prop, new_prop);
             }
         }
     }
@@ -1328,32 +1329,40 @@ impl<'a> PeepholeOptimizations {
     ) {
         match key {
             PropertyKey::NumericLiteral(_) if *computed => {
+                // reason: bool field flip on existing AST node, not slot replacement
+                // ast-grep-ignore: peephole-direct-slot-assignment
                 *computed = false;
             }
             PropertyKey::StringLiteral(s) => {
                 let value = s.value.as_str();
                 if is_identifier_name_patched(value) {
+                    // reason: bool field flip on existing AST node, not slot replacement
+                    // ast-grep-ignore: peephole-direct-slot-assignment
                     *computed = false;
-                    *key = PropertyKey::StaticIdentifier(
+                    let new_key = PropertyKey::StaticIdentifier(
                         ctx.ast.alloc_identifier_name(s.span, s.value),
                     );
-                    ctx.notice_change();
+                    ctx.replace_property_key(key, new_key);
                     return;
                 }
                 if let Some(value) = TraverseCtx::string_to_equivalent_number_value(value)
                     && value >= 0.0
                 {
+                    // reason: bool field flip on existing AST node, not slot replacement
+                    // ast-grep-ignore: peephole-direct-slot-assignment
                     *computed = false;
-                    *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
+                    let new_key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
                         s.span,
                         value,
                         None,
                         NumberBase::Decimal,
                     ));
-                    ctx.notice_change();
+                    ctx.replace_property_key(key, new_key);
                     return;
                 }
                 if *computed {
+                    // reason: bool field flip on existing AST node, not slot replacement
+                    // ast-grep-ignore: peephole-direct-slot-assignment
                     *computed = false;
                 }
             }

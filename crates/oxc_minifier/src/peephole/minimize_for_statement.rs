@@ -53,8 +53,9 @@ impl<'a> PeepholeOptimizations {
                 let left = test.take_in(ctx.ast);
                 let mut logical_expr =
                     ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
-                *test = Self::try_fold_and_or(&mut logical_expr, ctx)
+                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx)
                     .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
+                ctx.replace_expression(test, new_test);
             } else {
                 for_stmt.test = Some(expr);
             }
@@ -90,8 +91,9 @@ impl<'a> PeepholeOptimizations {
                 let left = test.take_in(ctx.ast);
                 let mut logical_expr =
                     ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
-                *test = Self::try_fold_and_or(&mut logical_expr, ctx)
+                let new_test = Self::try_fold_and_or(&mut logical_expr, ctx)
                     .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
+                ctx.replace_expression(test, new_test);
             } else {
                 for_stmt.test = Some(expr);
             }
