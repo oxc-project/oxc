@@ -86,13 +86,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the redundant role `complementary` from the element `aside`.
 
-  ⚠ jsx-a11y(no-redundant-roles): The `footer` element has an implicit role of `contentinfo`. Defining this explicitly is redundant and should be avoided.
-   ╭─[no_redundant_roles.tsx:1:9]
- 1 │ <footer role="contentinfo" />
-   ·         ──────────────────
-   ╰────
-  help: Remove the redundant role `contentinfo` from the element `footer`.
-
   ⚠ jsx-a11y(no-redundant-roles): The `form` element has an implicit role of `form`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:7]
  1 │ <form role="form" />
@@ -113,13 +106,6 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────
    ╰────
   help: Remove the redundant role `heading` from the element `h2`.
-
-  ⚠ jsx-a11y(no-redundant-roles): The `header` element has an implicit role of `banner`. Defining this explicitly is redundant and should be avoided.
-   ╭─[no_redundant_roles.tsx:1:9]
- 1 │ <header role="banner" />
-   ·         ─────────────
-   ╰────
-  help: Remove the redundant role `banner` from the element `header`.
 
   ⚠ jsx-a11y(no-redundant-roles): The `hr` element has an implicit role of `separator`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:5]
@@ -267,3 +253,31 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the redundant role `row` from the element `tr`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `textbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:8]
+ 1 │ <input role="textbox" />
+   ·        ──────────────
+   ╰────
+  help: Remove the redundant role `textbox` from the element `input`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:27]
+ 1 │ <input list="datalist-id" role="combobox" />
+   ·                           ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `input`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `checkbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:24]
+ 1 │ <input type="checkbox" role="checkbox" />
+   ·                        ───────────────
+   ╰────
+  help: Remove the redundant role `checkbox` from the element `input`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `radio`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:21]
+ 1 │ <input type="radio" role="radio" />
+   ·                     ────────────
+   ╰────
+  help: Remove the redundant role `radio` from the element `input`.
