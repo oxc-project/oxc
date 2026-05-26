@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.52.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- 5a26479 formatter: Preserve import phases (#22692) (Cameron)
+
+### ⚡ Performance
+
+- 78cf83f formatter: Pre-size output buffer using source text length (#22594) (Dunqing)
+
 ## [0.51.0] - 2026-05-18
 
 ### 🐛 Bug Fixes
