@@ -1279,6 +1279,38 @@ fn test_inline_values_in_template_literal() {
     fold_same("foo`foo${1}bar`");
 }
 
+// Regression: when `fold_object_exp` drops or folds a spread, the dropped
+// subtree must be walked through `drop_expression` so identifier references
+// inside don't leak across passes. The discriminating signal is an
+// otherwise-inlineable symbol that stays uninlined because a stale
+// write-ref hangs around in `Scoping`. Surfaced by Codex adversarial
+// review of #22736.
+//
+// Test options keep unused declarations (`CompressOptionsUnused::Keep`), so
+// `let x` survives — but with `write_references_count == 0` the inline pass
+// replaces `return x` with the constant value. Without the drop walk, the
+// dropped subtree's stale write-ref leaves the count at 1 and inline is
+// blocked.
+#[test]
+fn test_fold_object_spread_drop_walks_argument_refs() {
+    // Path 2: spread argument is a side-effect-free function expression,
+    // folded away entirely. The write to `x` inside the function body must
+    // be cleared from `Scoping`, otherwise the constant inline of `x`
+    // below is blocked by a stale write-reference.
+    test(
+        "function f() { let x = 'a'; ({...function(){ x = 'b' }}); return x; }",
+        "function f() { let x = 'a'; return 'a'; }",
+    );
+    // Path 3: non-computed `__proto__` from an inlined object literal is
+    // elided because it would set the prototype rather than become a
+    // regular property. The dropped property's value subtree must be
+    // walked for the same reason.
+    test(
+        "function f() { let x = 'a'; ({...{__proto__: function(){ x = 'b' }}}); return x; }",
+        "function f() { let x = 'a'; return 'a'; }",
+    );
+}
+
 mod bigint {
     use super::{
         MAX_SAFE_FLOAT, MAX_SAFE_INT, NEG_MAX_SAFE_FLOAT, NEG_MAX_SAFE_INT, fold, fold_same,

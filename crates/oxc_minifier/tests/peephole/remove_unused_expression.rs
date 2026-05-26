@@ -155,6 +155,26 @@ fn test_array_literal_containing_spread() {
     test_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
 }
 
+// Regression: when `remove_unused_array_expr` elides a side-effect-free
+// `SpreadElement`, the argument subtree must be walked through
+// `drop_expression` so identifier references inside don't leak across
+// passes. Surfaced by Codex adversarial review of #22736.
+//
+// In the current `MayHaveSideEffects` rules every spread shape that retains
+// identifier references (e.g. `[...ident]`, `[...`${ident}`]`) is treated
+// as side-effecting and so the leak does not trigger on existing source
+// inputs — the dropped-spread branch is reached for nested array literals
+// whose contents are all themselves side-effect-free, e.g.
+// `[...[function(){}]]`. The recursive element walk inside the inner array
+// already routes through `drop_expression`, so the explicit walk added
+// here is a defensive fix mirroring `remove_unused_object_expr`. Output
+// stays identical; conformance is the live discriminator.
+#[test]
+fn test_array_spread_drop_walks_argument_refs() {
+    test("([...[function(){}]])", "");
+    test("([4, ...[function(){}], a])", "a");
+}
+
 #[test]
 fn test_fold_unary_expression_statement() {
     test("typeof x", "");

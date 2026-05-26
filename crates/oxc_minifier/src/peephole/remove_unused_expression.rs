@@ -232,12 +232,24 @@ impl<'a> PeepholeOptimizations {
 
         let old_len = array_expr.elements.len();
         array_expr.elements.retain_mut(|el| match el {
-            // `ArrayExpressionElement::SpreadElement` and `Elision` aren't
-            // `Expression` / `Statement` so we still record the drop via
-            // `notice_change()` below; only the typed-Expression branch uses
-            // the `drop_expression` helper for now.
-            ArrayExpressionElement::SpreadElement(_) => el.may_have_side_effects(ctx),
+            // `Elision` carries no subtree, so it can be dropped through the
+            // outer `notice_change` accounting below.
             ArrayExpressionElement::Elision(_) => false,
+            ArrayExpressionElement::SpreadElement(_) => {
+                // Use the `ArrayExpressionElement` `may_have_side_effects`
+                // impl (NOT `spread.argument.may_have_side_effects`) so that
+                // the iterator-protocol invocation of `[...ident]` is
+                // counted as a side effect and the spread is kept.
+                if el.may_have_side_effects(ctx) {
+                    return true;
+                }
+                // The spread is being elided — walk its argument so any
+                // identifier refs inside are marked dead in `PassDirty`
+                // and don't leak across passes.
+                let ArrayExpressionElement::SpreadElement(spread) = el else { unreachable!() };
+                ctx.drop_expression(&spread.argument);
+                false
+            }
             match_expression!(ArrayExpressionElement) => {
                 let el_expr = el.to_expression_mut();
                 if Self::remove_unused_expression(el_expr, ctx) {

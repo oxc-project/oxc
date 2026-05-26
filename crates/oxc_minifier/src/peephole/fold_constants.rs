@@ -671,28 +671,44 @@ impl<'a> PeepholeOptimizations {
         let mut new_properties = ctx.ast.vec_with_capacity::<ObjectPropertyKind>(new_size);
         for p in e.properties.drain(..) {
             if let ObjectPropertyKind::SpreadProperty(mut spread_element) = p {
-                let e = &mut spread_element.argument;
-                if ctx.is_expression_undefined(e) {
+                if ctx.is_expression_undefined(&spread_element.argument) {
+                    // The spread argument is being dropped — walk it so refs
+                    // inside don't leak past this pass.
+                    ctx.drop_expression(&spread_element.argument);
                     continue;
                 }
-                match e {
+                match &mut spread_element.argument {
                     Expression::ObjectExpression(o)
                         if Self::is_spread_inlineable_object_literal(o, ctx) =>
                     {
-                        new_properties.extend(o.properties.drain(..).filter(|prop| {
-                            match prop {
-                                ObjectPropertyKind::SpreadProperty(_) => true,
-                                ObjectPropertyKind::ObjectProperty(p) => {
-                                    // non-computed __proto__ property sets the prototype of the object instead
-                                    p.computed
+                        for prop in o.properties.drain(..) {
+                            match &prop {
+                                ObjectPropertyKind::SpreadProperty(_) => {
+                                    new_properties.push(prop);
+                                }
+                                ObjectPropertyKind::ObjectProperty(p)
+                                    if p.computed
                                         || p.method
-                                        || !p.key.is_specific_static_name("__proto__")
+                                        || !p.key.is_specific_static_name("__proto__") =>
+                                {
+                                    new_properties.push(prop);
+                                }
+                                ObjectPropertyKind::ObjectProperty(p) => {
+                                    // Non-computed `__proto__` is being elided
+                                    // because it would set the prototype rather
+                                    // than become a regular property. The key is
+                                    // a static name with no refs, but the value
+                                    // subtree must be walked to drop its refs.
+                                    ctx.drop_expression(&p.value);
                                 }
                             }
-                        }));
+                        }
                     }
                     e if should_fold_spread_element(e, ctx) => {
-                        // skip
+                        // The spread argument is being folded away (e.g.
+                        // `...function(){}`); walk it so refs inside don't
+                        // leak past this pass.
+                        ctx.drop_expression(&spread_element.argument);
                     }
                     _ => {
                         new_properties.push(ObjectPropertyKind::SpreadProperty(spread_element));
