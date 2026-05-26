@@ -35,9 +35,11 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
-// Visibility is conditional via the `benchmarking` feature in `lib.rs`; suppress
-// the redundant-pub-crate lint that fires only in the non-benchmarking build.
-#[expect(clippy::redundant_pub_crate)]
+// `mod lexer` is `pub(crate)` in the default build but `pub` under the
+// `benchmarking` feature. That means clippy's `redundant_pub_crate` only fires
+// in the non-benchmarking build, so the `#[expect]` must also be gated to
+// avoid an unfulfilled-expectation error under `--all-features`.
+#[cfg_attr(not(feature = "benchmarking"), expect(clippy::redundant_pub_crate))]
 pub(crate) use byte_handlers::{ByteHandler, ByteHandlers, byte_handler_tables};
 pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
