@@ -454,4 +454,12 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.dirty_diff().walk_old_statement(stmt);
         self.state.mutations += 1;
     }
+
+    /// Mark a class element subtree as about to be dropped. Same contract as
+    /// `drop_expression`.
+    #[inline]
+    pub fn drop_class_element(&mut self, element: &ClassElement<'a>) {
+        self.dirty_diff().walk_old_class_element(element);
+        self.state.mutations += 1;
+    }
 }

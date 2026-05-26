@@ -15,43 +15,53 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let old_len = body.body.len();
-        body.body.retain(|element| match element {
-            ClassElement::PropertyDefinition(prop) => {
-                let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {
-                    return true;
-                };
-                let name: Str = private_id.name.into();
-                if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name) {
-                    return true;
+        body.body.retain(|element| {
+            let keep = match element {
+                ClassElement::PropertyDefinition(prop) => {
+                    let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {
+                        return true;
+                    };
+                    let name: Str = private_id.name.into();
+                    if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
+                    {
+                        return true;
+                    }
+                    prop.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
                 }
-                prop.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
-            }
-            ClassElement::MethodDefinition(method) => {
-                let PropertyKey::PrivateIdentifier(private_id) = &method.key else {
-                    return true;
-                };
-                let name: Str = private_id.name.into();
-                ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
-            }
-            ClassElement::AccessorProperty(accessor) => {
-                let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
-                    return true;
-                };
-                let name: Str = private_id.name.into();
-                if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name) {
-                    return true;
+                ClassElement::MethodDefinition(method) => {
+                    let PropertyKey::PrivateIdentifier(private_id) = &method.key else {
+                        return true;
+                    };
+                    let name: Str = private_id.name.into();
+                    ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
                 }
-                accessor.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
+                ClassElement::AccessorProperty(accessor) => {
+                    let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
+                        return true;
+                    };
+                    let name: Str = private_id.name.into();
+                    if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
+                    {
+                        return true;
+                    }
+                    accessor.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
+                }
+                ClassElement::StaticBlock(_) => true,
+                ClassElement::TSIndexSignature(_) => {
+                    unreachable!("TypeScript syntax should be transformed away")
+                }
+            };
+            if !keep {
+                // The element is being silently dropped from the vector. Walk
+                // its subtree so identifier references inside (e.g. a method
+                // body) are recorded in `PassDirty::dead_refs` and pruned by
+                // `exit_program`. Without this, refs leak across passes and
+                // break idempotency. `drop_class_element` also bumps the
+                // mutation counter for the fixed-point loop driver.
+                ctx.drop_class_element(element);
             }
-            ClassElement::StaticBlock(_) => true,
-            ClassElement::TSIndexSignature(_) => {
-                unreachable!("TypeScript syntax should be transformed away")
-            }
+            keep
         });
-        if body.body.len() != old_len {
-            ctx.notice_change();
-        }
     }
 
     pub fn get_declared_private_symbols(body: &ClassBody<'a>) -> impl Iterator<Item = Str<'a>> {

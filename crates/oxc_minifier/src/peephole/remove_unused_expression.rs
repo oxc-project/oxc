@@ -423,13 +423,23 @@ impl<'a> PeepholeOptimizations {
                         PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => {}
                         match_expression!(PropertyKey) => {
                             let mut prop_key = key.into_expression();
-                            if !Self::remove_unused_expression(&mut prop_key, ctx) {
+                            if Self::remove_unused_expression(&mut prop_key, ctx) {
+                                // Mark refs in the dropped key as dead so the per-pass
+                                // scoping refresh removes them; otherwise refs inside
+                                // (e.g. computed-key identifier references) leak.
+                                ctx.drop_expression(&prop_key);
+                            } else {
                                 transformed_elements.push(prop_key);
                             }
                         }
                     }
 
-                    if !Self::remove_unused_expression(&mut value, ctx) {
+                    if Self::remove_unused_expression(&mut value, ctx) {
+                        // Same rationale as the key branch above — the property
+                        // value is being dropped without a `replace_*` helper,
+                        // so its references must be walked into `dirty.dead_refs`.
+                        ctx.drop_expression(&value);
+                    } else {
                         transformed_elements.push(value);
                     }
                 }

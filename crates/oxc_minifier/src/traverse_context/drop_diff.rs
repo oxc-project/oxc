@@ -74,6 +74,12 @@ impl<'a, 's> DropDiff<'a, 's> {
         self
     }
 
+    pub(crate) fn walk_old_class_element(mut self, element: &ClassElement<'a>) -> Self {
+        self.mode = DropDiffMode::MarkDead;
+        self.visit_class_element(element);
+        self
+    }
+
     pub(crate) fn resurrect_from_expression(mut self, expr: &Expression<'a>) -> Self {
         self.mode = DropDiffMode::Resurrect;
         self.visit_expression(expr);
