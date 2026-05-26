@@ -4,10 +4,57 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
-use oxc_str::Str;
-use oxc_syntax::symbol::SymbolId;
+use oxc_str::{Ident, Str};
+use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
+
+/// Per-pass dirty data accumulated by walking-helper calls. Consumed by
+/// `exit_program` (in commit 5) and reset there.
+pub struct PassDirty<'a> {
+    /// `ReferenceId`s whose AST node has been removed and not re-installed
+    /// in any later mutation this pass.
+    pub(crate) dead_refs: FxHashSet<ReferenceId>,
+
+    /// Names of unresolved references whose last AST occurrence has been
+    /// removed. Pruning `Scoping::root_unresolved_references` is name-keyed
+    /// (and a name can have many references); confirming the prune is safe
+    /// requires a small walk in `exit_program`.
+    pub(crate) dead_unresolved: FxHashSet<Ident<'a>>,
+
+    /// At least one direct `eval(...)` call was dropped this pass. Gates
+    /// the small `LiveDirectEvalCollector` walk at `exit_program`.
+    pub(crate) eval_dropped: bool,
+}
+
+impl PassDirty<'_> {
+    pub fn new() -> Self {
+        Self {
+            dead_refs: FxHashSet::default(),
+            dead_unresolved: FxHashSet::default(),
+            eval_dropped: false,
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.dead_refs.clear();
+        self.dead_unresolved.clear();
+        self.eval_dropped = false;
+    }
+
+    /// Future API: commit 5's `exit_program` will short-circuit when the
+    /// per-pass accumulator is empty (no AST mutation observed).
+    #[expect(dead_code)]
+    pub fn is_empty(&self) -> bool {
+        self.dead_refs.is_empty() && self.dead_unresolved.is_empty() && !self.eval_dropped
+    }
+}
+
+impl Default for PassDirty<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub struct MinifierState<'a> {
     pub source_type: SourceType,
@@ -37,6 +84,11 @@ pub struct MinifierState<'a> {
     /// `changed` is removed in commit 5.
     pub(crate) mutations: u64,
 
+    /// Per-pass dirty accumulator populated by `replace_*` / `drop_*` helpers.
+    /// Will be consumed by `exit_program` in commit 5 to drive incremental
+    /// scoping refresh; this commit only builds the data (no-op observable).
+    pub(crate) dirty: PassDirty<'a>,
+
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
@@ -59,6 +111,7 @@ impl MinifierState<'_> {
             proto_write_symbols: FxHashSet::default(),
             changed: false,
             mutations: 0,
+            dirty: PassDirty::new(),
             concat_scratch: String::new(),
         }
     }

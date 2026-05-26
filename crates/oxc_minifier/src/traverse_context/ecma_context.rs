@@ -19,7 +19,7 @@ use crate::{
     symbol_value::SymbolValue,
 };
 
-use super::TraverseCtx;
+use super::{DropDiff, TraverseCtx};
 
 pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
@@ -362,12 +362,22 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         (options.class && is_class) || (options.function && !is_class)
     }
 
+    /// Construct a `DropDiff` borrowing the per-pass dirty accumulator and
+    /// the current scoping snapshot. Used by walking helpers.
+    #[inline]
+    fn dirty_diff(&mut self) -> DropDiff<'a, '_> {
+        // Field-level borrowing: state and scoping are disjoint fields of self.
+        let TraverseCtx { state, scoping, .. } = self;
+        DropDiff::new(&mut state.dirty, scoping.scoping())
+    }
+
     /// Replace an expression slot. Marks the pass as having mutated the AST.
     ///
     /// Prefer this over a direct `*slot = new; ctx.state.changed = true;` pair —
     /// the helper is enforced by CI (see `tools/check_state_changed.sh`).
     #[inline]
     pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
+        self.dirty_diff().walk_old_expression(slot).resurrect_from_expression(&new);
         *slot = new;
         self.state.changed = true;
         self.state.mutations += 1;
@@ -376,6 +386,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a statement slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
+        self.dirty_diff().walk_old_statement(slot).resurrect_from_statement(&new);
         *slot = new;
         self.state.changed = true;
         self.state.mutations += 1;
@@ -388,6 +399,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut AssignmentTargetProperty<'a>,
         new: AssignmentTargetProperty<'a>,
     ) {
+        self.dirty_diff()
+            .walk_old_assignment_target_property(slot)
+            .resurrect_from_assignment_target_property(&new);
         *slot = new;
         self.state.changed = true;
         self.state.mutations += 1;
@@ -396,6 +410,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a property-key slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
+        self.dirty_diff().walk_old_property_key(slot).resurrect_from_property_key(&new);
         *slot = new;
         self.state.changed = true;
         self.state.mutations += 1;
@@ -409,6 +424,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut ForStatementLeft<'a>,
         new: ForStatementLeft<'a>,
     ) {
+        self.dirty_diff().walk_old_for_statement_left(slot).resurrect_from_for_statement_left(&new);
         *slot = new;
         self.state.changed = true;
         self.state.mutations += 1;
@@ -425,15 +441,15 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     }
 
     /// Mark an expression subtree as about to be dropped (popped from a collection,
-    /// taken out of an Option, etc.). For now, only bumps `state.changed` and
-    /// `state.mutations`; a later commit teaches this helper to walk the subtree
-    /// for dead references that feed the per-pass `PassDirty` accumulator.
+    /// taken out of an Option, etc.). Walks the subtree to record dead references
+    /// and dropped direct-eval calls into the per-pass `PassDirty` accumulator.
     ///
     /// Use this helper at every site where a subtree is being removed from the AST
     /// without an immediate slot-replacement helper (e.g. inside a `retain_mut`
     /// predicate, before `field = None`, after `vec.pop()`).
     #[inline]
-    pub fn drop_expression(&mut self, _expr: &Expression<'a>) {
+    pub fn drop_expression(&mut self, expr: &Expression<'a>) {
+        self.dirty_diff().walk_old_expression(expr);
         self.state.changed = true;
         self.state.mutations += 1;
     }
@@ -441,7 +457,8 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Mark a statement subtree as about to be dropped. Same contract as
     /// `drop_expression`.
     #[inline]
-    pub fn drop_statement(&mut self, _stmt: &Statement<'a>) {
+    pub fn drop_statement(&mut self, stmt: &Statement<'a>) {
+        self.dirty_diff().walk_old_statement(stmt);
         self.state.changed = true;
         self.state.mutations += 1;
     }

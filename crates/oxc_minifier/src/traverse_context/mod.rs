@@ -20,6 +20,7 @@ use crate::{
 
 mod ancestry;
 mod bound_identifier;
+mod drop_diff;
 mod ecma_context;
 mod maybe_bound_identifier;
 mod reusable;
@@ -29,6 +30,7 @@ mod uid;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 pub use bound_identifier::BoundIdentifier;
+pub use drop_diff::DropDiff;
 pub use maybe_bound_identifier::MaybeBoundIdentifier;
 pub use reusable::ReusableTraverseCtx;
 pub use scoping::TraverseScoping;
