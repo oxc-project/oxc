@@ -125,7 +125,7 @@ declare_oxc_lint!(
     CallbackReturn,
     node,
     style,
-    version = "next",
+    version = "1.67.0",
     config = CallbackReturn,
 );
 

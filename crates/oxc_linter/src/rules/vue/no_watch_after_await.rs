@@ -68,7 +68,7 @@ declare_oxc_lint!(
     NoWatchAfterAwait,
     vue,
     correctness,
-    version = "next",
+    version = "1.67.0",
 );
 
 const WATCH_FUNCTIONS: &[&str] = &["watch", "watchEffect"];

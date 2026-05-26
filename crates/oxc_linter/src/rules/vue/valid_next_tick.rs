@@ -80,7 +80,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     fix,
-    version = "next",
+    version = "1.67.0",
 );
 
 impl Rule for ValidNextTick {

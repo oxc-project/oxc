@@ -70,7 +70,7 @@ declare_oxc_lint!(
     ValidDefineOptions,
     vue,
     correctness,
-    version = "next",
+    version = "1.67.0",
 );
 
 const DISALLOWED_PROPS: &[(&str, &str)] = &[
