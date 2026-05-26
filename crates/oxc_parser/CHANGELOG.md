@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- 661132d parser: More friendly error messages for rest assignment target and rest binding element (#22719) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- e184f74 parser: Improve invalid `import` property access diagnostic (#22693) (camc314)
+- a9ad27e parser: Keep annotation comments leading without preceding newline (#22711) (Dunqing)
+- b284045 parser: Switch to module goal eagerly on `export` (#22684) (Boshen)
+- 917da24 parser: Apply PURE comment through member-access chains (#22566) (Dunqing)
+
+### ⚡ Performance
+
+- 82f9662 parser: Check identifier kind before context flag (#22662) (camc314)
+- d7cd951 parser: Fast path identifier parsing and inline operator helpers (#22650) (Boshen)
+
 ## [0.132.0] - 2026-05-18
 
 ### 🐛 Bug Fixes

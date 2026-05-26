@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.133.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- 2f7b210 codegen: Emit pife-arrow/function leading comments inside the wrap (#22720) (Dunqing)
+- d61e1d7 codegen: Preserve verbatim text of pure/no-side-effects comments (#22525) (Dunqing)
+- 917da24 parser: Apply PURE comment through member-access chains (#22566) (Dunqing)
+- a069b1c codegen: Preserve quotes for cjs-module-lexer equality strings (#22551) (Dunqing)
+
 ## [0.132.0] - 2026-05-18
 
 ### 🐛 Bug Fixes
