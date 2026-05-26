@@ -57,13 +57,12 @@ impl<'a> PeepholeOptimizations {
                 // the block (see `keep_var.get_variable_declaration_statement`
                 // below).
                 keep_var.visit_statement(&stmt);
-                // Re-flag the peephole loop so the next iteration's
-                // `LiveUsageCollector` refreshes scope counts and the
-                // unused-declarator pass can remove bindings that this
-                // drop just orphaned (e.g. `var x = {}` after dropping
-                // `module.exports = x;`).
+                // Re-flag the peephole loop so the next iteration refreshes
+                // dirty scope counts and the unused-declarator pass can
+                // remove bindings that this drop just orphaned (e.g.
+                // `var x = {}` after dropping `module.exports = x;`).
                 if dead_drop_mutates_ast(&stmt) {
-                    ctx.state.changed = true;
+                    ctx.drop_statement(&stmt);
                 } else {
                     identity_drops += 1;
                 }
@@ -91,13 +90,13 @@ impl<'a> PeepholeOptimizations {
                 Some(stmt) => {
                     stmts.push(stmt);
                     if identity_drops > 1 {
-                        ctx.state.changed = true;
+                        ctx.notice_change();
                     }
                 }
                 // The harvested `var` was entirely unused; the net effect of
                 // drop + re-hoist + remove is removing the declaration, even
                 // though every individual drop was classified as identity.
-                None => ctx.state.changed = true,
+                None => ctx.notice_change(),
             }
         }
 
