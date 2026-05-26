@@ -44,9 +44,11 @@ helper becomes obsolete.
 2. Reduce the direct-eval refresh from "every changed pass" to "only when an eval was
    actually dropped this pass."
 3. Replace `state.changed: bool` with `state.mutations: u64` driven by snapshot compare.
-4. Preserve current minified output exactly. Success criteria: `cargo test -p oxc_minifier`
-   passes, `cargo coverage -- minifier` shows no conformance regression, `just minsize`
-   produces zero deltas.
+4. Preserve current minified output exactly, EXCEPT for the latent-bug fixes in PR 1
+   (Task #28 + `minimize_statements.rs:1387`) which by design enable previously-skipped
+   optimizations. Success criteria: `cargo test -p oxc_minifier` passes, `cargo coverage
+   -- minifier` shows no conformance regression, `just minsize` produces zero deltas in
+   PRs 2-5 (any delta is investigated and must trace to a fix in PR 1).
 
 Explicitly NOT goals:
 - Measured wall-clock speedup. The user has chosen to ship the architectural win even if
@@ -61,10 +63,18 @@ Explicitly NOT goals:
 
 Each `replace_*` helper walks both `*slot` and `new`, accumulates
 `dead = walk(old) − walk(new)` into a per-pass `PassDirty` structure. Refs that appear in
-`new` are also REMOVED from the accumulator on every helper call — this handles the
-cross-call resurrection case that prior spec iterations got wrong (rewrite A drops a
-subtree containing ref X, then rewrite B builds a subtree that preserves ref X via
-`clone_in_with_semantic_ids`; the second walk re-marks X as live).
+`new` are also REMOVED from the accumulator on every helper call. This handles:
+
+- **Within-call preservation** — the case Codex flagged in v3 review:
+  `substitute_is_object_and_not_null_for_left_and_right` rebuilds `new_expr` from
+  `clone_in_with_semantic_ids` calls. The same `ReferenceId`s appear in both `*slot` and
+  `new` simultaneously. The walk of `*slot` would mark them dead; the walk of `new`
+  removes them, net live.
+- **Cross-call preservation** — same `ReferenceId` appears in helper A's dropped
+  subtree (marked dead) and later helper B's replacement value (the "remove from
+  accumulator" step on B's `new` resurrects it). This case requires
+  `clone_in_with_semantic_ids` to share IDs across distinct AST positions; rare in
+  practice but the design handles it for free.
 
 `drop_*` helpers walk only the dropped subtree; everything found is dead.
 
@@ -357,6 +367,75 @@ O(total mutated region size), same big-O as today's single LiveUsageCollector wa
 the whole program. Cache locality is better (walks happen on hot subtrees) but per-call
 overhead is real. Per §2 we accept this.
 
+### 6.7 Prerequisite: migrate Pattern C/D sites that silently drop references
+
+The prior migration deliberately left a class of mutations using `notice_change()` because
+no slot-typed helper applied:
+
+- **`Option<Expression>` / `Option<Statement>` field clears** — `for_stmt.init = None`,
+  `for_stmt.update = None`, `for_stmt.test = None`, `stmt.argument = None`, `decl.init = None`,
+  `*func.id = None` and `*class.id = None` (×4 in `substitute_alternate_syntax.rs`),
+  `import_decl.specifiers = None` (in `remove_unused_declaration.rs`).
+- **Collection mutations that drop elements** — `array_expr.elements.retain_mut(|e| !remove_unused_expression(e, ctx))`,
+  `sequence_expr.expressions.retain_mut(...)`, `stmts.pop()` / `stmts.drain(...)` /
+  `stmts.truncate(...)` / `stmts.splice(...)` in `minimize_statements.rs` and
+  `remove_dead_code.rs`.
+- **Class field `take()`** — `super_class.take()` and `def.value.take()` inside
+  `remove_unused_expression.rs::remove_unused_class`.
+
+Today these are correct because `LiveUsageCollector` walks the live program after the
+pass and finds what survived; anything missing is dead. After this design deletes
+`LiveUsageCollector`, these silent drops leak dead references into `Scoping` (resolved
+and unresolved both), corrupting downstream mangler/codegen reads.
+
+**Must fix before this design ships.** Migration pattern for each shape:
+
+```rust
+// Option<Expression> clear:
+- field = None;
++ if let Some(old) = field.take() {
++     ctx.drop_expression(&old);
++ }
+
+// retain_mut with predicate that decides to drop:
+- vec.retain_mut(|e| !remove_unused_expression(e, ctx));
+- if vec.len() != old_len { ctx.notice_change(); }
++ vec.retain_mut(|e| {
++     if remove_unused_expression(e, ctx) {
++         ctx.drop_expression(e);
++         false
++     } else {
++         true
++     }
++ });
++ // notice_change is now redundant — drop_expression already bumped the counter
+
+// stmts.pop() of a Statement:
+- let dropped = stmts.pop().unwrap();
+- ctx.notice_change();
++ let dropped = stmts.pop().unwrap();
++ ctx.drop_statement(&dropped);
+
+// Class field take():
+- e.super_class.take();
+- ctx.notice_change();
++ if let Some(old) = e.super_class.take() {
++     ctx.drop_expression(&old);
++ }
+```
+
+**Scope:** Audit all `notice_change()` call sites in `crates/oxc_minifier/src/peephole/`
+(grep for `ctx.notice_change` after the prior migration lands). Categorize each:
+- **Drops nothing** (operand swap, operator-only tweak, bool/span field flip) → keep as
+  `notice_change()`.
+- **Drops a subtree** (Option clear, collection element removal, take()) → migrate to
+  `ctx.drop_expression(&dropped)` / `ctx.drop_statement(&dropped)` BEFORE the actual
+  drop; remove the redundant `notice_change()` (the `drop_*` helper bumps the counter).
+
+This migration is mechanical but touches every Pattern C/D site that drops references.
+Rough estimate: 15-25 sites across 5-7 files. Added to PR 1 of the migration plan
+(§8).
+
 ## 7. Acceptance criteria
 
 1. `MinifierState::changed` field is REMOVED.
@@ -381,6 +460,11 @@ overhead is real. Per §2 we accept this.
    resolved as prerequisite).
 9. `minimize_statements.rs:1387` no longer caller-tracked; the enclosing function takes
    `&mut TraverseCtx` and uses `replace_expression` directly.
+9a. All Pattern C/D sites that drop references (§6.7) are migrated to use
+    `ctx.drop_expression` / `ctx.drop_statement` BEFORE the drop. After PR 2 of the
+    migration plan, `grep` for `notice_change()` returns only sites where no AST subtree
+    is being dropped (operand swap, operator-only tweak, bool/span flip). Verified by
+    audit.
 10. `cargo test -p oxc_minifier` passes with no expected-output changes.
 11. `cargo coverage -- minifier` shows no conformance regression.
 12. `just minsize` produces zero size deltas (any non-zero delta is investigated; the
@@ -392,38 +476,57 @@ overhead is real. Per §2 we accept this.
 
 ## 8. Migration strategy
 
-The work decomposes into 4 stacked PRs in order:
+The work decomposes into 5 stacked PRs in order:
 
-1. **PR 1: Prerequisites.** Fix `convert_to_dotted_properties.rs:26, 40` (Task #28) and
-   refactor `minimize_statements.rs:1387`. After this, EVERY peephole mutation goes
-   through a helper. `just minsize` may have non-zero deltas here — these are the latent
-   bugs surfacing as correct optimizations that previously didn't fire. Document each in
-   the PR description.
+1. **PR 1: Latent-bug fixes (Task #28 + `minimize_statements.rs:1387`).** Fix the two
+   `convert_to_dotted_properties.rs:26, 40` silent bypasses and refactor
+   `substitute_single_use_symbol_in_expression` to take `&mut TraverseCtx`. **`just
+   minsize` is expected to show non-zero deltas here** — these are the latent bugs
+   surfacing as correct optimizations that previously didn't fire. Document each diff in
+   the PR description with the underlying optimization that's now firing.
 
-2. **PR 2: Counter + remove `reset_changed`.** Add `MinifierState::mutations: u64`, keep
+2. **PR 2: Add `drop_expression` / `drop_statement` helpers and migrate Pattern C/D drop
+   sites (§6.7).** Add the two new helpers (bumping `state.changed` for now). Migrate
+   every site that silently drops references via Option-clear, collection mutation, or
+   `take()`. After this PR, every reference-dropping mutation goes through a helper.
+   `just minsize` MUST be zero deltas here — these migrations are pure refactor (helpers
+   bump the same `state.changed` bool the silent sites previously skipped, but the
+   live-program walk in `exit_program` was authoritative so output is unchanged).
+
+3. **PR 3: Counter + remove `reset_changed`.** Add `MinifierState::mutations: u64`, keep
    `changed: bool` in parallel (helpers bump both). Loop driver switches to
-   snapshot-compare. `reset_changed()` removed. Verify behavior unchanged.
+   snapshot-compare. `reset_changed()` removed. `just minsize` MUST be zero deltas —
+   pure refactor.
 
-3. **PR 3: DropDiff infrastructure.** Add `PassDirty` struct, `DropDiff` collector, the
-   walk-and-diff methods on each helper. Don't yet consume in `exit_program` —
+4. **PR 4: DropDiff infrastructure.** Add `PassDirty` struct, `DropDiff` collector, the
+   walk-and-diff methods on each helper. Do NOT yet consume in `exit_program` —
    `LiveUsageCollector` continues to run authoritatively. This PR is a no-op observable;
-   it builds the data without consuming it.
+   it builds the data without consuming it. `just minsize` MUST be zero deltas.
 
-4. **PR 4: Switch `exit_program` consumer and delete `LiveUsageCollector`.** Add
+5. **PR 5: Switch `exit_program` consumer and delete `LiveUsageCollector`.** Add
    `Scoping::retain_resolved_references_excluding`. Rewrite `exit_program` to consume
    `dirty.*`. Delete `LiveUsageCollector` and the bool field. This is the load-bearing
-   PR — if `just minsize` regresses, the bug is here.
+   PR — if anything regresses, the bug is here. `just minsize` MUST be zero deltas; any
+   non-zero delta means PassDirty under-tracked something.
 
 Each PR includes `cargo test`, `cargo coverage -- minifier`, `just minsize`, and the
 existing CI gates. Per the prior migration's discipline, mid-stack PRs should keep the
-build green.
+build green. PR 1 is the only PR where `just minsize` deltas are expected.
 
 ## 9. Rollback
 
-PR 4 is the only PR with semantic risk. Revert PR 4 alone restores the previous
-`LiveUsageCollector` behavior; the helper-instrumentation in PR 3 stays harmless. PR 1's
-fixes are independent and should not be reverted (they remove latent bugs). PR 2 is a
-pure refactor with no semantic impact.
+- **PR 1 (latent-bug fixes)** changes minified output by enabling previously-skipped
+  optimizations. Should NOT be reverted; if a specific minsize diff is judged
+  unacceptable, file as a separate bug investigation rather than rolling back the helper
+  contract restoration.
+- **PR 2 (Pattern C/D drop migrations)** is pure refactor (output bit-identical). Revert
+  if borrow-checker friction or test failure surfaces, but no semantic risk.
+- **PR 3 (counter + remove `reset_changed`)** is pure refactor. Safe to revert.
+- **PR 4 (DropDiff infrastructure)** is no-op observable (data built but not consumed).
+  Safe to revert in isolation.
+- **PR 5 (switch consumer, delete LiveUsageCollector)** is the only PR with semantic
+  risk. Revert PR 5 alone restores `LiveUsageCollector` and the pre-existing
+  `exit_program` flow; PRs 1-4 stay harmless.
 
 ## 10. Out of scope
 
