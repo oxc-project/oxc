@@ -373,13 +373,12 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     /// Replace an expression slot. Marks the pass as having mutated the AST.
     ///
-    /// Prefer this over a direct `*slot = new; ctx.state.changed = true;` pair —
+    /// Prefer this over a direct `*slot = new; ctx.notice_change();` pair —
     /// the helper is enforced by CI (see `tools/check_state_changed.sh`).
     #[inline]
     pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
         self.dirty_diff().walk_old_expression(slot).resurrect_from_expression(&new);
         *slot = new;
-        self.state.changed = true;
         self.state.mutations += 1;
     }
 
@@ -388,7 +387,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
         self.dirty_diff().walk_old_statement(slot).resurrect_from_statement(&new);
         *slot = new;
-        self.state.changed = true;
         self.state.mutations += 1;
     }
 
@@ -403,7 +401,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             .walk_old_assignment_target_property(slot)
             .resurrect_from_assignment_target_property(&new);
         *slot = new;
-        self.state.changed = true;
         self.state.mutations += 1;
     }
 
@@ -412,7 +409,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
         self.dirty_diff().walk_old_property_key(slot).resurrect_from_property_key(&new);
         *slot = new;
-        self.state.changed = true;
         self.state.mutations += 1;
     }
 
@@ -426,7 +422,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     ) {
         self.dirty_diff().walk_old_for_statement_left(slot).resurrect_from_for_statement_left(&new);
         *slot = new;
-        self.state.changed = true;
         self.state.mutations += 1;
     }
 
@@ -436,7 +431,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// replacement.
     #[inline]
     pub fn notice_change(&mut self) {
-        self.state.changed = true;
         self.state.mutations += 1;
     }
 
@@ -450,7 +444,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn drop_expression(&mut self, expr: &Expression<'a>) {
         self.dirty_diff().walk_old_expression(expr);
-        self.state.changed = true;
         self.state.mutations += 1;
     }
 
@@ -459,17 +452,6 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn drop_statement(&mut self, stmt: &Statement<'a>) {
         self.dirty_diff().walk_old_statement(stmt);
-        self.state.changed = true;
         self.state.mutations += 1;
-    }
-
-    /// Clear the per-pass `changed` bool, kept only because `LiveUsageCollector`
-    /// in `exit_program` still reads it. The fixed-point loop driver no longer
-    /// consults this bool — it snapshot-compares `state.mutations` (monotonic).
-    /// This helper and the bool are both removed in commit 5 alongside
-    /// `LiveUsageCollector`.
-    #[inline]
-    pub fn reset_changed(&mut self) {
-        self.state.changed = false;
     }
 }

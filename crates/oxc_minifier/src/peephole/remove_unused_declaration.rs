@@ -67,13 +67,26 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_variable_declaration(
         mut stmt: Statement<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let Statement::VariableDeclaration(var_decl) = &mut stmt else { return Some(stmt) };
         if !Self::can_remove_unused_declarators(ctx) {
             return Some(stmt);
         }
-        var_decl.declarations.retain(|decl| !Self::should_remove_unused_declarator(decl, ctx));
+        var_decl.declarations.retain_mut(|decl| {
+            if Self::should_remove_unused_declarator(decl, ctx) {
+                // Mark refs in the discarded init as dead so the per-pass
+                // scoping refresh removes them. The `retain_mut` predicate
+                // silently drops the declarator, so we lose the chance to
+                // walk it via `replace_*`.
+                if let Some(init) = &decl.init {
+                    ctx.drop_expression(init);
+                }
+                false
+            } else {
+                true
+            }
+        });
         if var_decl.declarations.is_empty() {
             return None;
         }

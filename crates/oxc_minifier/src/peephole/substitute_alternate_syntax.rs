@@ -50,8 +50,8 @@ impl<'a> PeepholeOptimizations {
     /// adjacent `if` statements with identical jump bodies) treat the two
     /// forms as different on the first pass and only converge on the second.
     ///
-    /// Output text is unchanged, so we deliberately do not flip
-    /// `ctx.state.changed`.
+    /// Output text is unchanged, so we deliberately do not bump
+    /// `ctx.state.mutations`.
     fn normalize_object_property_shorthand(prop: &mut ObjectProperty<'a>) {
         if prop.shorthand {
             return;
@@ -960,7 +960,7 @@ impl<'a> PeepholeOptimizations {
             // folding becomes an empty statement.
             // `for_stmt.init` is `Option<ForStatementInit>` — no typed helper for that
             // enum slot this commit. The `replace_statement` for `for_stmt.body`
-            // below bumps `state.changed`, covering this drop's mutation signal.
+            // below bumps `state.mutations`, covering this drop's mutation signal.
             for_stmt.init = None;
         }
         if let Some(old) = for_stmt.test.take() {

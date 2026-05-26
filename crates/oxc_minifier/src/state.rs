@@ -77,11 +77,9 @@ pub struct MinifierState<'a> {
     /// setters that make subsequent property writes side-effectful.
     pub proto_write_symbols: FxHashSet<SymbolId>,
 
-    pub(crate) changed: bool,
-
-    /// Monotonic mutation counter. Bumped by every helper call.
-    /// Together with `changed: bool` during this transition commit;
-    /// `changed` is removed in commit 5.
+    /// Monotonic mutation counter. Bumped by every helper call (`replace_*`,
+    /// `drop_*`, `notice_change`). The fixed-point loop driver snapshots this
+    /// value, runs a pass, and re-runs while the counter advanced.
     pub(crate) mutations: u64,
 
     /// Per-pass dirty accumulator populated by `replace_*` / `drop_*` helpers.
@@ -109,7 +107,6 @@ impl MinifierState<'_> {
             symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
-            changed: false,
             mutations: 0,
             dirty: PassDirty::new(),
             concat_scratch: String::new(),

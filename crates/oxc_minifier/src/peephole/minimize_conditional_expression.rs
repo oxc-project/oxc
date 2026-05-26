@@ -18,9 +18,19 @@ impl<'a> PeepholeOptimizations {
         alternate: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
-        Self::minimize_conditional_expression(&mut cond_expr, ctx)
-            .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
+        // Wrap the fresh conditional in an `Expression` slot so that, if the
+        // fold returns a replacement, `ctx.replace_expression` can walk the
+        // mutated transient conditional and mark its leaked refs dead. Without
+        // the slot wrapping, refs left in untouched slots of the discarded
+        // transient `ConditionalExpression` (e.g. the leftover `b` in
+        // `b == null ? c : b` -> `b ?? c`) would never reach `PassDirty`.
+        let mut as_expr = ctx.ast.expression_conditional(span, test, consequent, alternate);
+        let Expression::ConditionalExpression(cond_box) = &mut as_expr else { unreachable!() };
+        let folded = Self::minimize_conditional_expression(cond_box, ctx);
+        if let Some(new_expr) = folded {
+            ctx.replace_expression(&mut as_expr, new_expr);
+        }
+        as_expr
     }
 
     /// `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>

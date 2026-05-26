@@ -90,6 +90,11 @@ impl<'a> PeepholeOptimizations {
                         ctx.ast.vec_from_array([base, ctx.ast.void_0(span)]),
                     )
                 } else {
+                    // `base` was `take_in`'d out of the old chain into our
+                    // local variable, so `replace_expression`'s walk over the
+                    // old subtree won't see its references. Mark them dead
+                    // explicitly before discarding `base`.
+                    ctx.drop_expression(&base);
                     ctx.value_to_expr(span, ConstantValue::Undefined)
                 };
                 ctx.replace_expression(expr, new_expr);

@@ -988,9 +988,19 @@ impl<'a> PeepholeOptimizations {
 
         if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &mut for_stmt.init {
             let old_len = var_decl.declarations.len();
-            var_decl.declarations.retain(|decl| {
-                !Self::should_remove_unused_declarator(decl, ctx)
-                    || decl.init.as_ref().is_some_and(|init| init.may_have_side_effects(ctx))
+            var_decl.declarations.retain_mut(|decl| {
+                let should_keep = !Self::should_remove_unused_declarator(decl, ctx)
+                    || decl.init.as_ref().is_some_and(|init| init.may_have_side_effects(ctx));
+                if !should_keep
+                    && let Some(init) = &decl.init
+                {
+                    // Same leak hazard as `remove_unused_variable_declaration`:
+                    // the `retain` silently drops the declarator + init, so the
+                    // init's refs need an explicit `drop_expression` to reach
+                    // `PassDirty`.
+                    ctx.drop_expression(init);
+                }
+                should_keep
             });
             if old_len != var_decl.declarations.len() {
                 if var_decl.declarations.is_empty() {

@@ -615,6 +615,27 @@ impl Scoping {
         });
     }
 
+    /// Remove every `ReferenceId` in `excluded` from each symbol's
+    /// resolved-references list. O(total_references) in the worst case;
+    /// short-circuits when `excluded` is empty.
+    pub fn retain_resolved_references_excluding(&mut self, excluded: &FxHashSet<ReferenceId>) {
+        if excluded.is_empty() {
+            return;
+        }
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            for reference_ids in &mut cell.resolved_references {
+                reference_ids.retain(|id| !excluded.contains(id));
+            }
+        });
+    }
+
+    /// Remove all references for `name` from the root-unresolved set.
+    pub fn remove_unresolved_reference(&mut self, name: &str) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            cell.root_unresolved_references.remove(name);
+        });
+    }
+
     /// Reserve additional capacity for symbols, references, and scopes.
     pub fn reserve(
         &mut self,
