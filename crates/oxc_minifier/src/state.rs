@@ -32,6 +32,11 @@ pub struct MinifierState<'a> {
 
     pub(crate) changed: bool,
 
+    /// Monotonic mutation counter. Bumped by every helper call.
+    /// Together with `changed: bool` during this transition commit;
+    /// `changed` is removed in commit 5.
+    pub(crate) mutations: u64,
+
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
@@ -53,6 +58,7 @@ impl MinifierState<'_> {
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
             changed: false,
+            mutations: 0,
             concat_scratch: String::new(),
         }
     }

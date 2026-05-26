@@ -370,6 +370,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
         *slot = new;
         self.state.changed = true;
+        self.state.mutations += 1;
     }
 
     /// Replace a statement slot. Marks the pass as having mutated the AST.
@@ -377,6 +378,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
         *slot = new;
         self.state.changed = true;
+        self.state.mutations += 1;
     }
 
     /// Replace an assignment-target-property slot. Marks the pass as having mutated the AST.
@@ -388,6 +390,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     ) {
         *slot = new;
         self.state.changed = true;
+        self.state.mutations += 1;
     }
 
     /// Replace a property-key slot. Marks the pass as having mutated the AST.
@@ -395,6 +398,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
         *slot = new;
         self.state.changed = true;
+        self.state.mutations += 1;
     }
 
     /// Replace a `for-in` / `for-of` statement's `left` slot. Same contract
@@ -407,6 +411,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     ) {
         *slot = new;
         self.state.changed = true;
+        self.state.mutations += 1;
     }
 
     /// Mark the pass as having mutated the AST in place (operand swap, in-place
@@ -416,12 +421,13 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn notice_change(&mut self) {
         self.state.changed = true;
+        self.state.mutations += 1;
     }
 
     /// Mark an expression subtree as about to be dropped (popped from a collection,
-    /// taken out of an Option, etc.). For now, only bumps `state.changed`; a later
-    /// commit teaches this helper to walk the subtree for dead references that feed
-    /// the per-pass `PassDirty` accumulator.
+    /// taken out of an Option, etc.). For now, only bumps `state.changed` and
+    /// `state.mutations`; a later commit teaches this helper to walk the subtree
+    /// for dead references that feed the per-pass `PassDirty` accumulator.
     ///
     /// Use this helper at every site where a subtree is being removed from the AST
     /// without an immediate slot-replacement helper (e.g. inside a `retain_mut`
@@ -429,6 +435,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn drop_expression(&mut self, _expr: &Expression<'a>) {
         self.state.changed = true;
+        self.state.mutations += 1;
     }
 
     /// Mark a statement subtree as about to be dropped. Same contract as
@@ -436,11 +443,14 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn drop_statement(&mut self, _stmt: &Statement<'a>) {
         self.state.changed = true;
+        self.state.mutations += 1;
     }
 
-    /// Clear the per-pass mutation signal. Called once at the top of each
-    /// peephole traversal in `enter_program`. This is the only sanctioned
-    /// way to write `state.changed = false`.
+    /// Clear the per-pass `changed` bool, kept only because `LiveUsageCollector`
+    /// in `exit_program` still reads it. The fixed-point loop driver no longer
+    /// consults this bool — it snapshot-compares `state.mutations` (monotonic).
+    /// This helper and the bool are both removed in commit 5 alongside
+    /// `LiveUsageCollector`.
     #[inline]
     pub fn reset_changed(&mut self) {
         self.state.changed = false;

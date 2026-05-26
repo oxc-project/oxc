@@ -74,8 +74,9 @@ impl<'a> Compressor<'a> {
     ) -> u8 {
         let mut iteration = 0u8;
         loop {
+            let snapshot = ctx.state().mutations;
             PeepholeOptimizations.run_once(program, ctx);
-            if !ctx.state().changed {
+            if ctx.state().mutations == snapshot {
                 break;
             }
             if let Some(max) = max_iterations {
