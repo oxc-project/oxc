@@ -14,22 +14,27 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
-    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn convert_to_dotted_properties(
+        expr: &mut MemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
         if is_identifier_name_patched(&s.value) {
             let property = ctx.ast.identifier_name(s.span, s.value);
-            // reason: pre-existing missed signal — function takes &TraverseCtx and
-            // has never bumped state.changed for this rewrite. NOT introduced by
-            // the lockdown PR; should be tracked separately.
+            let new_member = ctx.ast.alloc_static_member_expression(
+                e.span,
+                e.object.take_in(ctx.ast),
+                property,
+                e.optional,
+            );
+            // No typed helper exists for the `MemberExpression` enum slot;
+            // the direct write is followed by `notice_change()` so the
+            // mutation signal is preserved.
+            // reason: no typed helper for `MemberExpression` enum slot; sibling `notice_change()` preserves signal
             // ast-grep-ignore: peephole-direct-slot-assignment
-            *expr =
-                MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
-                    e.span,
-                    e.object.take_in(ctx.ast),
-                    property,
-                    e.optional,
-                ));
+            *expr = MemberExpression::StaticMemberExpression(new_member);
+            ctx.notice_change();
             return;
         }
         let v = s.value.as_str();
@@ -37,11 +42,9 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(n) = TraverseCtx::string_to_equivalent_number_value(v) {
-            // reason: pre-existing missed signal — function takes `&TraverseCtx` (immutable)
-            // and never bumps `state.changed`; tracked as a follow-up fix that would
-            // observably change minified output. Field-access form so the ast-grep rule
-            // doesn't fire; documenting here for audit completeness.
-            e.expression = ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
+            let new_expr =
+                ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
+            ctx.replace_expression(&mut e.expression, new_expr);
         }
     }
 }

@@ -453,23 +453,18 @@ impl<'a> PeepholeOptimizations {
         if let Some(first_decl) = var_decl.declarations.first_mut()
             && let Some(first_decl_init) = first_decl.init.as_mut()
         {
-            let changed = Self::substitute_single_use_symbol_in_statement(
+            Self::substitute_single_use_symbol_in_statement(
                 first_decl_init,
                 result,
                 ctx,
                 false,
             );
-            if changed {
-                ctx.notice_change();
-            }
         }
-        if Self::substitute_single_use_symbol_within_declaration(
+        Self::substitute_single_use_symbol_within_declaration(
             var_decl.kind,
             &mut var_decl.declarations,
             ctx,
-        ) {
-            ctx.notice_change();
-        }
+        );
 
         // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if !ctx.options().join_vars
@@ -527,15 +522,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let changed = Self::substitute_single_use_symbol_in_statement(
+        Self::substitute_single_use_symbol_in_statement(
             &mut expr_stmt.expression,
             result,
             ctx,
             false,
         );
-        if changed {
-            ctx.notice_change();
-        }
 
         // In a derived constructor, `this` after an unconditional `super()` is safe to drop.
         // Walk backwards through preceding sibling statements looking for `super()`.
@@ -673,15 +665,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let changed = Self::substitute_single_use_symbol_in_statement(
+        Self::substitute_single_use_symbol_in_statement(
             &mut switch_stmt.discriminant,
             result,
             ctx,
             false,
         );
-        if changed {
-            ctx.notice_change();
-        }
 
         if ctx.options().sequences
             && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
@@ -734,11 +723,7 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
-        let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
-        if changed {
-            ctx.notice_change();
-        }
+        Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
 
         // Absorb a previous expression statement
         if ctx.options().sequences {
@@ -888,15 +873,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(ret_argument_expr) = &mut ret_stmt.argument {
-            let changed = Self::substitute_single_use_symbol_in_statement(
+            Self::substitute_single_use_symbol_in_statement(
                 ret_argument_expr,
                 result,
                 ctx,
                 false,
             );
-            if changed {
-                ctx.notice_change();
-            }
         }
 
         if let Some(argument) = &mut ret_stmt.argument
@@ -947,15 +929,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let changed = Self::substitute_single_use_symbol_in_statement(
+        Self::substitute_single_use_symbol_in_statement(
             &mut throw_stmt.argument,
             result,
             ctx,
             false,
         );
-        if changed {
-            ctx.notice_change();
-        }
 
         if ctx.options().sequences
             && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
@@ -985,31 +964,22 @@ impl<'a> PeepholeOptimizations {
                         && let Some(first_decl_init) = first_decl.init.as_mut()
                     {
                         let is_block_scoped_decl = !first_decl.kind.is_var();
-                        let changed = Self::substitute_single_use_symbol_in_statement(
+                        Self::substitute_single_use_symbol_in_statement(
                             first_decl_init,
                             result,
                             ctx,
                             is_block_scoped_decl,
                         );
-                        if changed {
-                            ctx.notice_change();
-                        }
                     }
-                    if Self::substitute_single_use_symbol_within_declaration(
+                    Self::substitute_single_use_symbol_within_declaration(
                         var_decl.kind,
                         &mut var_decl.declarations,
                         ctx,
-                    ) {
-                        ctx.notice_change();
-                    }
+                    );
                 }
                 match_expression!(ForStatementInit) => {
                     let init = init.to_expression_mut();
-                    let changed =
-                        Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
-                    if changed {
-                        ctx.notice_change();
-                    }
+                    Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
                 }
             }
         }
@@ -1085,15 +1055,12 @@ impl<'a> PeepholeOptimizations {
         if !matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if var_decl.has_init())
         {
             let is_block_scoped_decl = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
-            let changed = Self::substitute_single_use_symbol_in_statement(
+            Self::substitute_single_use_symbol_in_statement(
                 &mut for_in_stmt.right,
                 result,
                 ctx,
                 is_block_scoped_decl,
             );
-            if changed {
-                ctx.notice_change();
-            }
         }
 
         if ctx.options().sequences {
@@ -1173,15 +1140,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let is_block_scoped_decl = matches!(&for_of_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
-        let changed = Self::substitute_single_use_symbol_in_statement(
+        Self::substitute_single_use_symbol_in_statement(
             &mut for_of_stmt.right,
             result,
             ctx,
             is_block_scoped_decl,
         );
-        if changed {
-            ctx.notice_change();
-        }
 
         // "var a; for (a of b) c" => "for (var a of b) c"
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()
@@ -1267,7 +1231,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_in_statement(
         expr_in_stmt: &mut Expression<'a>,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx)
@@ -1305,7 +1269,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_within_declaration(
         kind: VariableDeclarationKind,
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx)
             || ctx.current_scope_flags().contains_direct_eval()
@@ -1341,7 +1305,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_in_expression_from_declarators(
         target_expr: &mut Expression<'a>,
         declarators: &mut [VariableDeclarator<'a>],
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> usize {
         let last_non_inlined_index = declarators.iter_mut().rposition(|prev_decl| {
@@ -1405,7 +1369,7 @@ impl<'a> PeepholeOptimizations {
         search_for: &str,
         replacement: &mut Expression<'a>,
         replacement_has_side_effect: bool,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<bool> {
         match target_expr {
             Expression::Identifier(id) => {
@@ -1415,15 +1379,11 @@ impl<'a> PeepholeOptimizations {
                     // with the replacement expression.
                     // https://github.com/rolldown/rolldown/issues/8248
                     let target_span = target_expr.span();
-                    // reason: caller-tracked. substitute_single_use_symbol_in_expression
-                    // takes &TraverseCtx (immutable) and returns Option<bool>; every caller
-                    // (substitute_single_use_symbol_in_statement family) translates the bool
-                    // into ctx.notice_change(), preserving the change signal.
+                    let mut new_expr = replacement.take_in(ctx.ast);
+                    // reason: span field fix-up on the still-owned new node before slot replacement, not slot replacement itself
                     // ast-grep-ignore: peephole-direct-slot-assignment
-                    *target_expr = replacement.take_in(ctx.ast);
-                    // reason: span field mutation on the already-replaced node, not slot replacement
-                    // ast-grep-ignore: peephole-direct-slot-assignment
-                    *target_expr.span_mut() = target_span;
+                    *new_expr.span_mut() = target_span;
+                    ctx.replace_expression(target_expr, new_expr);
                     return Some(true);
                 }
                 // If the identifier is not a getter and the identifier is read-only,
