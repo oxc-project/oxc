@@ -1,16 +1,16 @@
 File                       | File size      || Sys allocs     | Sys reallocs   || Arena allocs   | Arena reallocs 
 ---------------------------------------------------------------------------------------------------------------------------
-checker.ts                 | 2.92 MB        ||            185 |              7 ||         152740 |          28244
+checker.ts                 | 2.92 MB        ||            172 |              7 ||         152745 |          28244
 
-App.tsx                    | 415.34 kB      ||            130 |             13 ||          17010 |           2702
+App.tsx                    | 415.34 kB      ||            123 |             13 ||          17014 |           2702
 
-RadixUIAdoptionSection.jsx | 2.52 kB        ||             24 |              0 ||             30 |              6
+RadixUIAdoptionSection.jsx | 2.52 kB        ||             24 |              0 ||             33 |              6
 
-pdf.mjs                    | 567.30 kB      ||           3951 |            399 ||          47482 |           7740
+pdf.mjs                    | 567.30 kB      ||           3937 |            399 ||          47486 |           7740
 
-antd.js                    | 6.69 MB        ||           3115 |             53 ||         337248 |          69349
+antd.js                    | 6.69 MB        ||           3093 |             53 ||         337254 |          69349
 
-binder.ts                  | 193.08 kB      ||             45 |              1 ||           7081 |            824
+binder.ts                  | 193.08 kB      ||             41 |              1 ||           7084 |            824
 
-kitchen-sink.tsx           | 732.90 kB      ||           1782 |            348 ||          53640 |           8616
+kitchen-sink.tsx           | 732.90 kB      ||           1766 |            348 ||          53645 |           8616
 

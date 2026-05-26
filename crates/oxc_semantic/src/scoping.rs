@@ -615,16 +615,27 @@ impl Scoping {
         });
     }
 
-    /// Remove every `ReferenceId` in `excluded` from each symbol's
-    /// resolved-references list. O(total_references) in the worst case;
-    /// short-circuits when `excluded` is empty.
-    pub fn retain_resolved_references_excluding(&mut self, excluded: &FxHashSet<ReferenceId>) {
+    /// Remove every `ReferenceId` whose bit is set in `excluded` from each
+    /// symbol's resolved-references list. O(total_references) in the worst
+    /// case; short-circuits when `excluded` has no bits set.
+    ///
+    /// `excluded` should be sized to at least [`Self::references_len`] at the
+    /// time references were added — i.e. when the bitset was constructed at
+    /// the start of the pass. References minted after that point have
+    /// indices beyond `excluded.capacity()` and are treated as live (never
+    /// excluded), which is correct: a freshly-created reference cannot also
+    /// be dead in this pass through this set.
+    pub fn retain_resolved_references_excluding(&mut self, excluded: &BitSet<'_>) {
         if excluded.is_empty() {
             return;
         }
+        let capacity = excluded.capacity();
         self.cell.with_dependent_mut(|_allocator, cell| {
             for reference_ids in &mut cell.resolved_references {
-                reference_ids.retain(|id| !excluded.contains(id));
+                reference_ids.retain(|id| {
+                    let idx = id.index();
+                    idx >= capacity || !excluded.has_bit(idx)
+                });
             }
         });
     }

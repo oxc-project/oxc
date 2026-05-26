@@ -186,7 +186,12 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.reset();
         ctx.state.proto_write_symbols.clear();
-        ctx.state.dirty.reset();
+        // (Re-)allocate `dead_refs` sized to current `references_len()`.
+        // `references_len` can grow between passes as helpers mint fresh refs,
+        // so we allocate a new bitset each pass rather than `clear()`-ing.
+        // Arena reclaims the prior allocation at program end.
+        let refs_len = ctx.scoping().references_len();
+        ctx.state.dirty.init(refs_len, ctx.ast.allocator);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -194,8 +199,13 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         //     Per-pass dirty data is built by `replace_*` / `drop_*` helpers as
         //     subtrees are removed and is consumed here in one batch.
         if !ctx.state.dirty.dead_refs.is_empty() {
-            let dead = std::mem::take(&mut ctx.state.dirty.dead_refs);
-            ctx.scoping_mut().retain_resolved_references_excluding(&dead);
+            // SAFETY-equivalent: split borrows so we can pass `&dead_refs`
+            // into `scoping_mut()`. Both borrow disjoint fields of
+            // `MinifierState`/`TraverseCtx`, so we use a local rebinding to
+            // satisfy the borrow checker.
+            let state = &mut ctx.state;
+            let scoping = ctx.scoping.scoping_mut();
+            scoping.retain_resolved_references_excluding(&state.dirty.dead_refs);
         }
 
         // (2) Unresolved references — gated confirmation walk by name.

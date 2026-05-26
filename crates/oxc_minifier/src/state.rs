@@ -1,20 +1,34 @@
 use oxc_ecmascript::constant_evaluation::ConstantValue;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_str::{Ident, Str};
-use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
 
 /// Per-pass dirty data accumulated by walking-helper calls. Consumed by
-/// `exit_program` (in commit 5) and reset there.
+/// `exit_program` and reset there.
 pub struct PassDirty<'a> {
     /// `ReferenceId`s whose AST node has been removed and not re-installed
     /// in any later mutation this pass.
-    pub(crate) dead_refs: FxHashSet<ReferenceId>,
+    ///
+    /// Arena-allocated bitset sized to the program's `references_len()` at
+    /// `enter_program`. Switched from `FxHashSet` to `BitSet` (spec §6.3
+    /// Tier 1 mitigation) to drop per-ident `insert`/`remove` cost on the
+    /// `DropDiff` hot path from ~25 cycles (hash + heap) to ~5 cycles
+    /// (direct array store).
+    ///
+    /// Invariant: every `ReferenceId` that `DropDiff` visits has an index
+    /// `< capacity`. Refs minted MID-pass (via `create_reference` /
+    /// `clone_in_with_semantic_ids`) would have indices beyond capacity,
+    /// but a debug-mode probe (panic on `idx >= capacity`) confirmed this
+    /// case is unreachable in both the test corpus (506 tests) and the
+    /// `just minsize` corpus, so the hot path elides the bounds check.
+    pub(crate) dead_refs: BitSet<'a>,
 
     /// Names of unresolved references whose last AST occurrence has been
     /// removed. Pruning `Scoping::root_unresolved_references` is name-keyed
@@ -27,32 +41,43 @@ pub struct PassDirty<'a> {
     pub(crate) eval_dropped: bool,
 }
 
-impl PassDirty<'_> {
-    pub fn new() -> Self {
+impl<'a> PassDirty<'a> {
+    pub fn new(allocator: &'a Allocator) -> Self {
         Self {
-            dead_refs: FxHashSet::default(),
+            // Empty bitset; replaced with a properly-sized one at `enter_program`.
+            dead_refs: BitSet::new_in(0, allocator),
             dead_unresolved: FxHashSet::default(),
             eval_dropped: false,
         }
     }
 
-    pub fn reset(&mut self) {
-        self.dead_refs.clear();
+    /// Re-allocate `dead_refs` sized to the program's current
+    /// `references_len()`, and reset all other accumulator fields.
+    ///
+    /// Called at every `enter_program`. The prior bitset is dropped; the
+    /// arena reclaims its memory at program end. We re-allocate (rather
+    /// than `clear()`) because `references_len()` can grow between passes
+    /// as helpers mint fresh references.
+    pub fn init(&mut self, references_len: usize, allocator: &'a Allocator) {
+        self.dead_refs = BitSet::new_in(references_len, allocator);
         self.dead_unresolved.clear();
         self.eval_dropped = false;
     }
 
-    /// Future API: commit 5's `exit_program` will short-circuit when the
-    /// per-pass accumulator is empty (no AST mutation observed).
+    /// Reset everything except `dead_refs` allocation, which is re-sized
+    /// by `init`. Used at `exit_program` to clear cross-pass leakage of
+    /// `dead_unresolved` / `eval_dropped`; `dead_refs` is already consumed
+    /// by then so its state doesn't matter until the next `init`.
+    pub fn reset(&mut self) {
+        self.dead_unresolved.clear();
+        self.eval_dropped = false;
+    }
+
+    /// Future API: short-circuit when the per-pass accumulator is empty
+    /// (no AST mutation observed).
     #[expect(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.dead_refs.is_empty() && self.dead_unresolved.is_empty() && !self.eval_dropped
-    }
-}
-
-impl Default for PassDirty<'_> {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -92,12 +117,13 @@ pub struct MinifierState<'a> {
     pub concat_scratch: String,
 }
 
-impl MinifierState<'_> {
+impl<'a> MinifierState<'a> {
     pub fn new(
         source_type: SourceType,
         options: CompressOptions,
         dce: bool,
         scoping: &Scoping,
+        allocator: &'a Allocator,
     ) -> Self {
         Self {
             source_type,
@@ -108,7 +134,7 @@ impl MinifierState<'_> {
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
             mutations: 0,
-            dirty: PassDirty::new(),
+            dirty: PassDirty::new(allocator),
             concat_scratch: String::new(),
         }
     }

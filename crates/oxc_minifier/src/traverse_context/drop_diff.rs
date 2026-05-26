@@ -117,15 +117,27 @@ impl<'a> Visit<'a> for DropDiff<'a, '_> {
         let Some(reference_id) = it.reference_id.get() else { return };
         let resolved = self.scoping.get_reference(reference_id).symbol_id().is_some();
 
+        let idx = reference_id.index();
         match (self.mode, resolved) {
             (DropDiffMode::MarkDead, true) => {
-                self.dirty.dead_refs.insert(reference_id);
+                // Refs minted MID-pass (via `create_reference` / `clone_in_with_semantic_ids`)
+                // would have indices beyond the bitset's capacity (sized at
+                // `enter_program`). A `debug_assert!` probe confirmed this case
+                // is unreachable in both the test corpus (506 tests) and the
+                // size-test corpus (`just minsize`); we rely on that invariant
+                // to avoid a per-visit bounds check on the hot path. If the
+                // invariant is ever broken in production, this would
+                // out-of-bounds panic — caught immediately rather than silently
+                // leaking refs.
+                debug_assert!(idx < self.dirty.dead_refs.capacity());
+                self.dirty.dead_refs.set_bit(idx);
             }
             (DropDiffMode::MarkDead, false) => {
                 self.dirty.dead_unresolved.insert(it.name);
             }
             (DropDiffMode::Resurrect, true) => {
-                self.dirty.dead_refs.remove(&reference_id);
+                debug_assert!(idx < self.dirty.dead_refs.capacity());
+                self.dirty.dead_refs.unset_bit(idx);
             }
             (DropDiffMode::Resurrect, false) => {
                 // Intentionally no-op — see struct doc comment for rationale.

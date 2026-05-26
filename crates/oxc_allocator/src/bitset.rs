@@ -39,6 +39,20 @@ impl<'alloc> BitSet<'alloc> {
         Self { entries, max_bit_count }
     }
 
+    /// Returns the maximum number of bits this set can hold.
+    #[inline]
+    pub fn capacity(&self) -> usize {
+        self.max_bit_count
+    }
+
+    /// Returns `true` if no bits are set.
+    ///
+    /// Scans the underlying word array; short-circuits at the first non-zero word.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.entries.iter().all(|word| *word == 0)
+    }
+
     /// Returns `true` if the bit at the given position is set.
     #[inline]
     pub fn has_bit(&self, bit: usize) -> bool {
@@ -333,5 +347,22 @@ mod tests {
         bs.set_bit(0);
         bs.set_bit(2);
         assert_eq!(bs.ones().collect::<Vec<_>>(), [0, 2]);
+    }
+
+    #[test]
+    fn capacity_and_is_empty() {
+        let allocator = Allocator::default();
+        let mut bs = BitSet::new_in(128, &allocator);
+        assert_eq!(bs.capacity(), 128);
+        assert!(bs.is_empty());
+        bs.set_bit(100);
+        assert!(!bs.is_empty());
+        bs.unset_bit(100);
+        assert!(bs.is_empty());
+
+        // Zero-capacity bitset is always empty.
+        let bs0 = BitSet::new_in(0, &allocator);
+        assert_eq!(bs0.capacity(), 0);
+        assert!(bs0.is_empty());
     }
 }
