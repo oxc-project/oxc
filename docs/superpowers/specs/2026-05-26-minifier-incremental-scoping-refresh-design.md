@@ -433,7 +433,7 @@ and unresolved both), corrupting downstream mangler/codegen reads.
   drop; remove the redundant `notice_change()` (the `drop_*` helper bumps the counter).
 
 This migration is mechanical but touches every Pattern C/D site that drops references.
-Rough estimate: 15-25 sites across 5-7 files. Added to PR 1 of the migration plan
+Rough estimate: 15-25 sites across 5-7 files. Done as Commit 2 of the migration sequence
 (§8).
 
 ## 7. Acceptance criteria
@@ -461,10 +461,10 @@ Rough estimate: 15-25 sites across 5-7 files. Added to PR 1 of the migration pla
 9. `minimize_statements.rs:1387` no longer caller-tracked; the enclosing function takes
    `&mut TraverseCtx` and uses `replace_expression` directly.
 9a. All Pattern C/D sites that drop references (§6.7) are migrated to use
-    `ctx.drop_expression` / `ctx.drop_statement` BEFORE the drop. After PR 2 of the
-    migration plan, `grep` for `notice_change()` returns only sites where no AST subtree
-    is being dropped (operand swap, operator-only tweak, bool/span flip). Verified by
-    audit.
+    `ctx.drop_expression` / `ctx.drop_statement` BEFORE the drop. After Commit 2 of the
+    migration sequence, `grep` for `notice_change()` returns only sites where no AST
+    subtree is being dropped (operand swap, operator-only tweak, bool/span flip).
+    Verified by audit.
 10. `cargo test -p oxc_minifier` passes with no expected-output changes.
 11. `cargo coverage -- minifier` shows no conformance regression.
 12. `just minsize` produces zero size deltas (any non-zero delta is investigated; the
@@ -476,57 +476,70 @@ Rough estimate: 15-25 sites across 5-7 files. Added to PR 1 of the migration pla
 
 ## 8. Migration strategy
 
-The work decomposes into 5 stacked PRs in order:
+All work ships on a single branch (`spec/minifier-incremental-scoping`, stacked on
+`spec/minifier-eliminate-changed-flag`), as one PR. The work is internally sequenced as
+5 logical commits so review can follow the build-up; the commits are NOT separate PRs.
 
-1. **PR 1: Latent-bug fixes (Task #28 + `minimize_statements.rs:1387`).** Fix the two
-   `convert_to_dotted_properties.rs:26, 40` silent bypasses and refactor
+1. **Commit 1: Latent-bug fixes (Task #28 + `minimize_statements.rs:1387`).** Fix the
+   two `convert_to_dotted_properties.rs:26, 40` silent bypasses and refactor
    `substitute_single_use_symbol_in_expression` to take `&mut TraverseCtx`. **`just
    minsize` is expected to show non-zero deltas here** — these are the latent bugs
-   surfacing as correct optimizations that previously didn't fire. Document each diff in
-   the PR description with the underlying optimization that's now firing.
+   surfacing as correct optimizations that previously didn't fire. Document each delta
+   in the commit body with the underlying optimization that's now firing.
 
-2. **PR 2: Add `drop_expression` / `drop_statement` helpers and migrate Pattern C/D drop
-   sites (§6.7).** Add the two new helpers (bumping `state.changed` for now). Migrate
-   every site that silently drops references via Option-clear, collection mutation, or
-   `take()`. After this PR, every reference-dropping mutation goes through a helper.
-   `just minsize` MUST be zero deltas here — these migrations are pure refactor (helpers
-   bump the same `state.changed` bool the silent sites previously skipped, but the
-   live-program walk in `exit_program` was authoritative so output is unchanged).
+2. **Commit 2: Add `drop_expression` / `drop_statement` helpers and migrate Pattern C/D
+   drop sites (§6.7).** Add the two new helpers (bumping `state.changed` for now).
+   Migrate every site that silently drops references via Option-clear, collection
+   mutation, or `take()`. After this commit, every reference-dropping mutation goes
+   through a helper. `just minsize` MUST be zero deltas — these migrations are pure
+   refactor (helpers bump the same `state.changed` bool the silent sites previously
+   skipped, but the live-program walk in `exit_program` was authoritative so output is
+   unchanged).
 
-3. **PR 3: Counter + remove `reset_changed`.** Add `MinifierState::mutations: u64`, keep
-   `changed: bool` in parallel (helpers bump both). Loop driver switches to
+3. **Commit 3: Counter + remove `reset_changed`.** Add `MinifierState::mutations: u64`,
+   keep `changed: bool` in parallel (helpers bump both). Loop driver switches to
    snapshot-compare. `reset_changed()` removed. `just minsize` MUST be zero deltas —
    pure refactor.
 
-4. **PR 4: DropDiff infrastructure.** Add `PassDirty` struct, `DropDiff` collector, the
-   walk-and-diff methods on each helper. Do NOT yet consume in `exit_program` —
-   `LiveUsageCollector` continues to run authoritatively. This PR is a no-op observable;
-   it builds the data without consuming it. `just minsize` MUST be zero deltas.
+4. **Commit 4: DropDiff infrastructure.** Add `PassDirty` struct, `DropDiff` collector,
+   the walk-and-diff methods on each helper. Do NOT yet consume in `exit_program` —
+   `LiveUsageCollector` continues to run authoritatively. This commit is a no-op
+   observable; it builds the data without consuming it. `just minsize` MUST be zero
+   deltas.
 
-5. **PR 5: Switch `exit_program` consumer and delete `LiveUsageCollector`.** Add
+5. **Commit 5: Switch `exit_program` consumer and delete `LiveUsageCollector`.** Add
    `Scoping::retain_resolved_references_excluding`. Rewrite `exit_program` to consume
-   `dirty.*`. Delete `LiveUsageCollector` and the bool field. This is the load-bearing
-   PR — if anything regresses, the bug is here. `just minsize` MUST be zero deltas; any
-   non-zero delta means PassDirty under-tracked something.
+   `dirty.*`. Delete `LiveUsageCollector` and the `changed` field. This is the
+   load-bearing commit — if anything regresses, the bug is here. `just minsize` MUST be
+   zero deltas; any non-zero delta means PassDirty under-tracked something.
 
-Each PR includes `cargo test`, `cargo coverage -- minifier`, `just minsize`, and the
-existing CI gates. Per the prior migration's discipline, mid-stack PRs should keep the
-build green. PR 1 is the only PR where `just minsize` deltas are expected.
+Each commit must individually pass `cargo test`, `cargo coverage -- minifier`, `just
+minsize`, and the existing CI gates from the prior migration. Per the prior migration's
+discipline, mid-series commits keep the build green. Commit 1 is the only commit where
+`just minsize` deltas are expected.
+
+The final PR title and body summarize the whole series (see writing-commits-and-prs
+skill).
 
 ## 9. Rollback
 
-- **PR 1 (latent-bug fixes)** changes minified output by enabling previously-skipped
-  optimizations. Should NOT be reverted; if a specific minsize diff is judged
-  unacceptable, file as a separate bug investigation rather than rolling back the helper
-  contract restoration.
-- **PR 2 (Pattern C/D drop migrations)** is pure refactor (output bit-identical). Revert
-  if borrow-checker friction or test failure surfaces, but no semantic risk.
-- **PR 3 (counter + remove `reset_changed`)** is pure refactor. Safe to revert.
-- **PR 4 (DropDiff infrastructure)** is no-op observable (data built but not consumed).
-  Safe to revert in isolation.
-- **PR 5 (switch consumer, delete LiveUsageCollector)** is the only PR with semantic
-  risk. Revert PR 5 alone restores `LiveUsageCollector` and the pre-existing
-  `exit_program` flow; PRs 1-4 stay harmless.
+Single PR; if a regression surfaces post-merge, revert the merge commit. For partial
+rollback (e.g. keeping the latent-bug fixes but reverting the architectural change), the
+internal commit sequence supports targeted `git revert` of individual commits — the
+order was chosen so each commit is individually revertable:
+
+- **Commit 1 (latent-bug fixes)** changes minified output by enabling previously-skipped
+  optimizations. Should NOT be reverted in isolation; if a specific minsize diff is
+  judged unacceptable, file as a separate bug investigation rather than rolling back the
+  helper contract restoration.
+- **Commit 2 (Pattern C/D drop migrations)** is pure refactor (output bit-identical).
+  Revert if borrow-checker friction or test failure surfaces, but no semantic risk.
+- **Commit 3 (counter + remove `reset_changed`)** is pure refactor. Safe to revert.
+- **Commit 4 (DropDiff infrastructure)** is no-op observable (data built but not
+  consumed). Safe to revert in isolation.
+- **Commit 5 (switch consumer, delete LiveUsageCollector)** is the only commit with
+  semantic risk. Revert commit 5 alone restores `LiveUsageCollector` and the
+  pre-existing `exit_program` flow; commits 1-4 stay harmless.
 
 ## 10. Out of scope
 
