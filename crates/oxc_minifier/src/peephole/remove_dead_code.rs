@@ -54,6 +54,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    #[expect(clippy::float_cmp)]
     pub fn try_fold_if(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::IfStatement(if_stmt) = stmt else { return };
         // Descend and remove `else` blocks first.
@@ -74,13 +75,26 @@ impl<'a> PeepholeOptimizations {
             let test_has_side_effects = if_stmt.test.may_have_side_effects(ctx);
             // Use "1" and "0" instead of "true" and "false" to be shorter.
             // And also prevent swapping consequent and alternate when `!0` is encountered.
-            if !test_has_side_effects {
-                if_stmt.test = ctx.ast.expression_numeric_literal(
+            //
+            // Idempotency: skip the rewrite when `if_stmt.test` is already the canonical
+            // numeric form (NumericLiteral 1.0 / 0.0). Without this gate, the typed
+            // `replace_expression` helper would re-bump `state.mutations` on every loop
+            // iteration (NumericLiteral 1.0 still evaluates to Some(true) via the line-73
+            // predicate), preventing fixed-point convergence.
+            if !test_has_side_effects
+                && !matches!(
+                    &if_stmt.test,
+                    Expression::NumericLiteral(n)
+                        if (boolean && n.value == 1.0) || (!boolean && n.value == 0.0)
+                )
+            {
+                let new_test = ctx.ast.expression_numeric_literal(
                     if_stmt.test.span(),
                     if boolean { 1.0 } else { 0.0 },
                     None,
                     NumberBase::Decimal,
                 );
+                ctx.replace_expression(&mut if_stmt.test, new_test);
             }
             let mut keep_var = KeepVar::new(ctx.ast);
             if boolean {
@@ -95,19 +109,41 @@ impl<'a> PeepholeOptimizations {
                 .and_then(|stmt| Self::remove_unused_variable_declaration(stmt, ctx));
             let has_var_stmt = var_stmt.is_some();
             if let Some(var_stmt) = var_stmt {
+                // Idempotency: skip when the target slot is already in canonical KeepVar
+                // output shape (a `var` declaration whose declarators all lack initializers).
+                // On the next loop iteration `KeepVar` would re-extract the same names from
+                // that slot and produce a structurally-equivalent fresh allocation; routing
+                // through `replace_statement` would re-bump `state.mutations` indefinitely.
                 if boolean {
-                    if_stmt.alternate = Some(var_stmt);
-                } else {
-                    if_stmt.consequent = var_stmt;
+                    let already_canonical =
+                        if_stmt.alternate.as_ref().is_some_and(Self::is_keep_var_canonical);
+                    if !already_canonical {
+                        if let Some(alternate) = if_stmt.alternate.as_mut() {
+                            ctx.replace_statement(alternate, var_stmt);
+                        } else {
+                            // `KeepVar` only produced a stmt because it visited the alternate,
+                            // so the alternate must be Some. Defensive fall-through preserves
+                            // historical behaviour: install it without dropping anything.
+                            if_stmt.alternate = Some(var_stmt);
+                            ctx.notice_change();
+                        }
+                    }
+                } else if !Self::is_keep_var_canonical(&if_stmt.consequent) {
+                    ctx.replace_statement(&mut if_stmt.consequent, var_stmt);
                 }
                 return;
             }
             if test_has_side_effects {
                 if !has_var_stmt {
                     if boolean {
-                        if_stmt.alternate = None;
-                    } else {
-                        if_stmt.consequent = ctx.ast.statement_empty(if_stmt.consequent.span());
+                        // Idempotent: `Option::take` only fires when the slot still holds a value.
+                        if let Some(old) = if_stmt.alternate.take() {
+                            ctx.drop_statement(&old);
+                        }
+                    } else if !matches!(&if_stmt.consequent, Statement::EmptyStatement(_)) {
+                        // Idempotency: skip when consequent is already empty.
+                        let new_consequent = ctx.ast.statement_empty(if_stmt.consequent.span());
+                        ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
                     }
                 }
                 return;
@@ -121,6 +157,19 @@ impl<'a> PeepholeOptimizations {
             };
             ctx.replace_statement(stmt, new_stmt);
         }
+    }
+
+    /// True when `stmt` is already in the canonical shape produced by
+    /// `KeepVar::get_variable_declaration_statement`: a single `var` declaration
+    /// whose declarators all lack initializers. Used as an idempotency gate in
+    /// `try_fold_if` so the var-hoisting rewrite doesn't re-fire across loop
+    /// iterations when `KeepVar` would just re-emit the same shape.
+    fn is_keep_var_canonical(stmt: &Statement<'a>) -> bool {
+        matches!(
+            stmt,
+            Statement::VariableDeclaration(decl)
+                if decl.kind.is_var() && decl.declarations.iter().all(|d| d.init.is_none())
+        )
     }
 
     pub fn try_fold_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
