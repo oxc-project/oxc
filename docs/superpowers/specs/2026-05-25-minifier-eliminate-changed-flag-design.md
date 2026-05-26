@@ -367,7 +367,7 @@ exists for grep to find.
    ```
 
    (Allowlist mechanism: a reason comment followed by `// ast-grep-ignore:
-   peephole-direct-slot-assignment` on the two lines directly above the
+peephole-direct-slot-assignment` on the two lines directly above the
    exception. The directive line must contain ONLY the rule id — ast-grep parses
    it literally. The final PR description lists every allowlist entry.)
 

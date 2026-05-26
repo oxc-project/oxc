@@ -16,7 +16,7 @@ message: |
 
 rule:
   any:
-    - pattern: '*$SLOT = $VALUE'
+    - pattern: "*$SLOT = $VALUE"
 
 files:
   - src/peephole/**/*.rs

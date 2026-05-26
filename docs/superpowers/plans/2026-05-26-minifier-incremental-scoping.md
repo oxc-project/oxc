@@ -18,17 +18,17 @@
 
 ## File Structure
 
-| Path | Action | Responsibility |
-|---|---|---|
-| `crates/oxc_minifier/src/peephole/convert_to_dotted_properties.rs` | **Modify** (Commit 1) | Refactor `convert_to_dotted_properties` to take `&mut TraverseCtx<'a>` and use `replace_expression`. Removes 2 silent-bypass sites. |
-| `crates/oxc_minifier/src/peephole/minimize_statements.rs` | **Modify** (Commit 1, Commit 2) | Commit 1: refactor `substitute_single_use_symbol_in_expression` / `..._from_declarators` / `..._in_statement` to take `&mut TraverseCtx`, use `replace_expression` at line 1387, drop the caller-side `if changed { ctx.notice_change() }` chain. Commit 2: migrate Pattern C/D drop sites to `drop_*` helpers. |
-| `crates/oxc_minifier/src/peephole/mod.rs` | **Modify** (Commit 1, Commit 5) | Commit 1: update `exit_member_expression` caller site for the new signature. Commit 5: rewrite `exit_program` to consume `dirty.*`; delete `LiveUsageCollector`; add `LiveDirectEvalCollector`. |
-| `crates/oxc_minifier/src/peephole/*.rs` | **Modify** (Commit 2) | Migrate every Pattern C/D site that drops references via Option-clear, `retain_mut`-drop, `pop`/`drain`/`truncate`/`splice`, or Class field `take()`. |
-| `crates/oxc_minifier/src/traverse_context/ecma_context.rs` | **Modify** (Commits 2, 3, 4) | Commit 2: add `drop_expression` + `drop_statement` helpers. Commit 3: remove `reset_changed`. Commit 4: route the walking helpers through `DropDiff`. |
-| `crates/oxc_minifier/src/state.rs` | **Modify** (Commits 3, 4, 5) | Commit 3: add `mutations: u64`. Commit 4: add `dirty: PassDirty<'a>`. Commit 5: remove `changed: bool`. |
-| `crates/oxc_minifier/src/compressor.rs` | **Modify** (Commit 3) | Switch `run_in_loop` to snapshot-compare on `state.mutations`. |
-| `crates/oxc_minifier/src/traverse_context/drop_diff.rs` | **Create** (Commit 4) | `DropDiff` collector; `walk_old_*` / `resurrect_from_*` methods built on `oxc_ast_visit::Visit`. |
-| `crates/oxc_semantic/src/scoping.rs` | **Modify** (Commit 5) | Add `retain_resolved_references_excluding(&FxHashSet<ReferenceId>)`. Add `remove_unresolved_reference(name)` if not present. |
+| Path                                                               | Action                          | Responsibility                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------ | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crates/oxc_minifier/src/peephole/convert_to_dotted_properties.rs` | **Modify** (Commit 1)           | Refactor `convert_to_dotted_properties` to take `&mut TraverseCtx<'a>` and use `replace_expression`. Removes 2 silent-bypass sites.                                                                                                                                                                             |
+| `crates/oxc_minifier/src/peephole/minimize_statements.rs`          | **Modify** (Commit 1, Commit 2) | Commit 1: refactor `substitute_single_use_symbol_in_expression` / `..._from_declarators` / `..._in_statement` to take `&mut TraverseCtx`, use `replace_expression` at line 1387, drop the caller-side `if changed { ctx.notice_change() }` chain. Commit 2: migrate Pattern C/D drop sites to `drop_*` helpers. |
+| `crates/oxc_minifier/src/peephole/mod.rs`                          | **Modify** (Commit 1, Commit 5) | Commit 1: update `exit_member_expression` caller site for the new signature. Commit 5: rewrite `exit_program` to consume `dirty.*`; delete `LiveUsageCollector`; add `LiveDirectEvalCollector`.                                                                                                                 |
+| `crates/oxc_minifier/src/peephole/*.rs`                            | **Modify** (Commit 2)           | Migrate every Pattern C/D site that drops references via Option-clear, `retain_mut`-drop, `pop`/`drain`/`truncate`/`splice`, or Class field `take()`.                                                                                                                                                           |
+| `crates/oxc_minifier/src/traverse_context/ecma_context.rs`         | **Modify** (Commits 2, 3, 4)    | Commit 2: add `drop_expression` + `drop_statement` helpers. Commit 3: remove `reset_changed`. Commit 4: route the walking helpers through `DropDiff`.                                                                                                                                                           |
+| `crates/oxc_minifier/src/state.rs`                                 | **Modify** (Commits 3, 4, 5)    | Commit 3: add `mutations: u64`. Commit 4: add `dirty: PassDirty<'a>`. Commit 5: remove `changed: bool`.                                                                                                                                                                                                         |
+| `crates/oxc_minifier/src/compressor.rs`                            | **Modify** (Commit 3)           | Switch `run_in_loop` to snapshot-compare on `state.mutations`.                                                                                                                                                                                                                                                  |
+| `crates/oxc_minifier/src/traverse_context/drop_diff.rs`            | **Create** (Commit 4)           | `DropDiff` collector; `walk_old_*` / `resurrect_from_*` methods built on `oxc_ast_visit::Visit`.                                                                                                                                                                                                                |
+| `crates/oxc_semantic/src/scoping.rs`                               | **Modify** (Commit 5)           | Add `retain_resolved_references_excluding(&FxHashSet<ReferenceId>)`. Add `remove_unresolved_reference(name)` if not present.                                                                                                                                                                                    |
 
 ---
 
@@ -43,6 +43,7 @@ suppressing.
 ### Task 1.1: Refactor `convert_to_dotted_properties` to `&mut TraverseCtx`
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/convert_to_dotted_properties.rs`
 - Modify: `crates/oxc_minifier/src/peephole/mod.rs:517` (the one call site)
 
@@ -51,6 +52,7 @@ suppressing.
 ```bash
 cargo test -p oxc_minifier
 ```
+
 Expected: PASS.
 
 - [ ] **Step 2: Change the function signature and body**
@@ -114,6 +116,7 @@ impl<'a> PeepholeOptimizations {
 ```
 
 Two changes:
+
 - Signature: `&TraverseCtx<'a>` → `&mut TraverseCtx<'a>`.
 - Line 26-32 (was): keep the direct `*expr = …` for the enum slot (no typed helper
   exists for `MemberExpression` enum) but follow it with `ctx.notice_change()` so the
@@ -134,6 +137,7 @@ build.
 ```bash
 cargo build -p oxc_minifier
 ```
+
 Expected: clean build. If you get a borrow error at the call site, add an explicit
 reborrow: `Self::convert_to_dotted_properties(expr, &mut *ctx);`.
 
@@ -144,6 +148,7 @@ cargo test -p oxc_minifier
 just minsize
 git diff --stat tasks/minsize/
 ```
+
 Expected: tests PASS. `just minsize` may report non-zero diff in `tasks/minsize/` —
 that's the latent-bug fix surfacing as a correct optimization. Capture the diff (`git
 diff tasks/minsize/ > /tmp/minsize-1.1.diff`) for the commit body.
@@ -153,6 +158,7 @@ diff tasks/minsize/ > /tmp/minsize-1.1.diff`) for the commit body.
 ```bash
 ./tools/check_state_changed.sh && cd crates/oxc_minifier && ast-grep scan && cd ../..
 ```
+
 Expected: both pass. The ast-grep rule should now report zero violations from
 `convert_to_dotted_properties.rs` (the deref-write at line 26 is now followed by
 `notice_change`; the field-write at line 44 went through `replace_expression`).
@@ -160,9 +166,11 @@ Expected: both pass. The ast-grep rule should now report zero violations from
 ### Task 1.2: Refactor `substitute_single_use_symbol_*` family to `&mut TraverseCtx`
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/minimize_statements.rs`
 
 Three functions form a recursive group that all take `&TraverseCtx<'a>` today:
+
 - `substitute_single_use_symbol_in_statement` (line 1231)
 - `substitute_single_use_symbol_in_expression_from_declarators` (line 1305)
 - `substitute_single_use_symbol_in_expression` (line 1367)
@@ -225,11 +233,12 @@ need an explicit `&mut *ctx` reborrow.
 For each call to `substitute_single_use_symbol_in_statement` at lines 420, 494, 640,
 702, 855, 914, 952, 973, 1052, 1140, **remove the now-redundant** `if changed { ctx.notice_change(); }` pattern. The helper at line 1387 now bumps `state.changed` directly via `replace_expression`, so the caller's bool propagation is no longer the change signal.
 
-But wait — the bool return value is *also* used to control caller control flow
+But wait — the bool return value is _also_ used to control caller control flow
 (short-circuiting subsequent substitutions). So the return value stays; only the
 `if changed { ctx.notice_change(); }` line is removed.
 
 Concretely at line 420-428 (current):
+
 ```rust
 let changed = Self::substitute_single_use_symbol_in_statement(
     first_decl_init,
@@ -243,6 +252,7 @@ if changed {
 ```
 
 Becomes:
+
 ```rust
 // changed return value used purely for control flow; helper already bumped the counter
 let _ = Self::substitute_single_use_symbol_in_statement(
@@ -262,6 +272,7 @@ line.
 ```bash
 cargo build -p oxc_minifier
 ```
+
 Expected: clean build. If borrow-checker fights you persistently, the alternative
 fallback is to keep the `&TraverseCtx<'a>` signature and instead require callers to
 walk the dropped subtree before calling the function. See "If Task 1.2 escalation"
@@ -274,6 +285,7 @@ cargo test -p oxc_minifier
 just minsize
 git diff --stat tasks/minsize/
 ```
+
 Expected: tests PASS. `just minsize` may show additional non-zero diff — this is the
 `minimize_statements.rs:1387` fix surfacing. Capture as `/tmp/minsize-1.2.diff`.
 
@@ -282,6 +294,7 @@ Expected: tests PASS. `just minsize` may show additional non-zero diff — this 
 ```bash
 ./tools/check_state_changed.sh && cd crates/oxc_minifier && ast-grep scan && cd ../..
 ```
+
 Expected: both pass. The ast-grep rule should now report zero violations from
 `minimize_statements.rs:1387` (was previously allowlisted).
 
@@ -301,6 +314,7 @@ keeps the helper inversion. Document the choice in the commit body.
 git status --short
 git diff --stat
 ```
+
 Expected: only the files mentioned in Tasks 1.1 + 1.2.
 
 - [ ] **Step 2: Run final tests**
@@ -311,6 +325,7 @@ cargo test -p oxc_mangler
 cargo coverage -- minifier
 just minsize
 ```
+
 Expected: tests pass, coverage no regression, `just minsize` produces the documented
 deltas.
 
@@ -364,6 +379,7 @@ goes through a typed helper. `just minsize` MUST be zero deltas (live-program wa
 ### Task 2.1: Add `drop_expression` and `drop_statement` helpers
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/traverse_context/ecma_context.rs`
 
 - [ ] **Step 1: Add the two helpers**
@@ -398,6 +414,7 @@ shape — commit 4 only needs to change the helper bodies, not the call sites.
 ```bash
 cargo build -p oxc_minifier
 ```
+
 Expected: clean (helpers compile; no callers yet).
 
 ### Task 2.2: Find all Pattern C/D drop sites
@@ -408,20 +425,21 @@ Expected: clean (helpers compile; no callers yet).
 grep -n "ctx.notice_change()" crates/oxc_minifier/src/peephole/*.rs > /tmp/notice_change_sites.txt
 wc -l /tmp/notice_change_sites.txt
 ```
+
 Expected: ~30-40 lines. (Each line is one site; total count varies.)
 
 - [ ] **Step 2: Classify each site**
 
 For each site, read 5-10 lines of surrounding context and classify into one of:
 
-| Category | Pattern | Migration |
-|---|---|---|
-| Operand swap | `e.right = left; e.left = right;` | KEEP `notice_change()` — no drop |
-| Operator/bool/span flip | `e.operator = …`, `*computed = false`, `*span_mut() = …` | KEEP — no drop |
-| Option-clear | `field = None`, `field.take()` on `Option<Expression>`/`Option<Statement>` | MIGRATE → `drop_expression`/`drop_statement` before the drop |
-| Collection retain-mut | `vec.retain_mut(\|e\| !remove_unused_expression(e, ctx))` + length check | MIGRATE → `drop_expression` inside the predicate |
+| Category                             | Pattern                                                                       | Migration                                                       |
+| ------------------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Operand swap                         | `e.right = left; e.left = right;`                                             | KEEP `notice_change()` — no drop                                |
+| Operator/bool/span flip              | `e.operator = …`, `*computed = false`, `*span_mut() = …`                      | KEEP — no drop                                                  |
+| Option-clear                         | `field = None`, `field.take()` on `Option<Expression>`/`Option<Statement>`    | MIGRATE → `drop_expression`/`drop_statement` before the drop    |
+| Collection retain-mut                | `vec.retain_mut(\|e\| !remove_unused_expression(e, ctx))` + length check      | MIGRATE → `drop_expression` inside the predicate                |
 | Collection pop/drain/truncate/splice | `vec.pop()`, `vec.drain(…)`, etc. that returns a dropped Expression/Statement | MIGRATE → `drop_*` on the returned value before letting it fall |
-| Class field take | `super_class.take()`, `def.value.take()` | MIGRATE → `drop_expression` before the take |
+| Class field take                     | `super_class.take()`, `def.value.take()`                                      | MIGRATE → `drop_expression` before the take                     |
 
 Save the classification to `/tmp/c2-classification.md` for the commit body.
 
@@ -438,6 +456,7 @@ For each MIGRATE-class site, apply the corresponding pattern from spec §6.7. Th
 specific transformations:
 
 **Pattern: Option-clear**
+
 ```rust
 - field = None;
 - ctx.notice_change();
@@ -447,6 +466,7 @@ specific transformations:
 ```
 
 **Pattern: retain_mut with drop-predicate**
+
 ```rust
   let old_len = vec.len();
 - vec.retain_mut(|e| !remove_unused_expression(e, ctx));
@@ -462,6 +482,7 @@ specific transformations:
 ```
 
 **Pattern: pop/drain/truncate/splice of Statement**
+
 ```rust
 - let dropped = stmts.pop().unwrap();
 - ctx.notice_change();
@@ -470,6 +491,7 @@ specific transformations:
 ```
 
 **Pattern: Class field take()**
+
 ```rust
 - e.super_class.take();
 - ctx.notice_change();
@@ -481,9 +503,11 @@ specific transformations:
 - [ ] **Step 1: Apply patterns to all MIGRATE-class sites**
 
 Work file-by-file. For each file, after applying:
+
 ```bash
 cargo build -p oxc_minifier
 ```
+
 Should compile cleanly. Fix any borrow-checker friction by extracting locals (the
 pattern from PR 6/PR 10/etc. migrations).
 
@@ -495,6 +519,7 @@ Re-run the classification audit and confirm zero MIGRATE-class sites remain on
 ```bash
 grep -n "ctx.notice_change()" crates/oxc_minifier/src/peephole/*.rs
 ```
+
 For every remaining `notice_change()`, the surrounding code must clearly show NO
 subtree drop (operand swap / operator flip / bool/span field / etc.).
 
@@ -506,6 +531,7 @@ subtree drop (operand swap / operator flip / bool/span field / etc.).
 cargo test -p oxc_minifier
 cargo test -p oxc_mangler
 ```
+
 Expected: PASS unchanged.
 
 - [ ] **Step 2: minsize MUST be zero diff**
@@ -514,6 +540,7 @@ Expected: PASS unchanged.
 just minsize
 git diff --stat tasks/minsize/
 ```
+
 Expected: EMPTY. If any delta, the migration changed semantics — investigate before
 committing. Likely cause: a Pattern C/D site that needed Pattern A/B treatment
 instead. Re-classify.
@@ -523,6 +550,7 @@ instead. Re-classify.
 ```bash
 ./tools/check_state_changed.sh && cd crates/oxc_minifier && ast-grep scan && cd ../..
 ```
+
 Expected: both pass.
 
 - [ ] **Step 4: Commit**
@@ -561,6 +589,7 @@ EOF
 ### Task 3.1: Add `mutations: u64` field
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/state.rs`
 
 - [ ] **Step 1: Add the field**
@@ -585,6 +614,7 @@ walking helpers (`replace_expression`, `replace_statement`,
 existing `self.state.changed = true;`.
 
 Example for `replace_expression`:
+
 ```rust
     #[inline]
     pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
@@ -599,11 +629,13 @@ Example for `replace_expression`:
 ```bash
 cargo build -p oxc_minifier && cargo test -p oxc_minifier
 ```
+
 Expected: clean, all 504+ tests pass.
 
 ### Task 3.2: Switch loop driver to snapshot-compare
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/compressor.rs`
 
 - [ ] **Step 1: Read current `run_in_loop`**
@@ -615,6 +647,7 @@ grep -n -A20 "fn run_in_loop" crates/oxc_minifier/src/compressor.rs
 - [ ] **Step 2: Rewrite to use snapshot-compare**
 
 Current shape (uses `ctx.state.changed`):
+
 ```rust
 loop {
     PeepholeOptimizations.run_once(program, ctx);
@@ -624,6 +657,7 @@ loop {
 ```
 
 Becomes:
+
 ```rust
 loop {
     let snapshot = ctx.state().mutations;
@@ -638,17 +672,20 @@ loop {
 ```bash
 cargo build -p oxc_minifier && cargo test -p oxc_minifier
 ```
+
 Expected: clean, all tests pass.
 
 ### Task 3.3: Remove `reset_changed` and the `enter_program` reset
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/traverse_context/ecma_context.rs`
 - Modify: `crates/oxc_minifier/src/peephole/mod.rs:165`
 
 - [ ] **Step 1: Remove the `enter_program` call**
 
 In `crates/oxc_minifier/src/peephole/mod.rs:165`, remove:
+
 ```rust
 - ctx.reset_changed();
 ```
@@ -690,6 +727,7 @@ In `crates/oxc_minifier/src/traverse_context/ecma_context.rs`, delete the
 ```bash
 cargo build -p oxc_minifier && cargo test -p oxc_minifier
 ```
+
 Expected: clean. If anything else called `reset_changed()`, the build fails — fix the
 caller.
 
@@ -702,6 +740,7 @@ cargo test -p oxc_minifier
 just minsize
 git diff --stat tasks/minsize/
 ```
+
 Expected: tests pass, minsize EMPTY diff.
 
 - [ ] **Step 2: CI gates**
@@ -709,6 +748,7 @@ Expected: tests pass, minsize EMPTY diff.
 ```bash
 ./tools/check_state_changed.sh && cd crates/oxc_minifier && ast-grep scan && cd ../..
 ```
+
 Expected: pass.
 
 - [ ] **Step 3: Commit**
@@ -740,6 +780,7 @@ consuming it. `just minsize` MUST be zero deltas.
 ### Task 4.1: Add `PassDirty` struct to `MinifierState`
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/state.rs`
 
 - [ ] **Step 1: Add the struct and field**
@@ -797,6 +838,7 @@ impl<'a> Default for PassDirty<'a> {
 ```
 
 Add the field to `MinifierState`:
+
 ```rust
     pub(crate) dirty: PassDirty<'a>,
 ```
@@ -808,11 +850,13 @@ Initialize in `MinifierState::new`: `dirty: PassDirty::new(),`.
 ```bash
 cargo build -p oxc_minifier
 ```
+
 Expected: clean.
 
 ### Task 4.2: Add `DropDiff` collector
 
 **Files:**
+
 - Create: `crates/oxc_minifier/src/traverse_context/drop_diff.rs`
 - Modify: `crates/oxc_minifier/src/traverse_context/mod.rs` (add `mod drop_diff;`)
 
@@ -970,11 +1014,13 @@ pub(crate) use drop_diff::DropDiff;
 ```bash
 cargo build -p oxc_minifier
 ```
+
 Expected: clean — the file compiles but no callers yet.
 
 ### Task 4.3: Wire `DropDiff` into the helpers
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/traverse_context/ecma_context.rs`
 
 - [ ] **Step 1: Add a private `dirty_diff` accessor**
@@ -1028,6 +1074,7 @@ unchanged (no walk).
 ```bash
 cargo build -p oxc_minifier
 ```
+
 Expected: clean. If borrow-checker complains about simultaneous borrows of
 `self.state` and `self.scoping`, use a destructure pattern:
 
@@ -1044,6 +1091,7 @@ Expected: clean. If borrow-checker complains about simultaneous borrows of
 ### Task 4.4: Reset `PassDirty` in `enter_program`
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/mod.rs`
 
 - [ ] **Step 1: Add the reset call**
@@ -1069,6 +1117,7 @@ cargo test -p oxc_minifier
 just minsize
 git diff --stat tasks/minsize/
 ```
+
 Expected: tests pass, minsize EMPTY diff. (This commit is no-op observable —
 `LiveUsageCollector` still authoritative; `PassDirty` data is computed but unused.)
 
@@ -1080,6 +1129,7 @@ Add a debug print temporarily and rerun a test:
 // In exit_program, before the LiveUsageCollector walk:
 eprintln!("[debug] dirty.dead_refs.len() = {}", ctx.state.dirty.dead_refs.len());
 ```
+
 Run any minifier test with a non-trivial mutation. Confirm non-zero counts in stderr.
 REMOVE the debug print before committing.
 
@@ -1088,6 +1138,7 @@ REMOVE the debug print before committing.
 ```bash
 ./tools/check_state_changed.sh && cd crates/oxc_minifier && ast-grep scan && cd ../..
 ```
+
 Expected: pass.
 
 - [ ] **Step 4: Commit**
@@ -1120,6 +1171,7 @@ This is the load-bearing commit. `just minsize` MUST be zero deltas.
 ### Task 5.1: Add `Scoping::retain_resolved_references_excluding` to oxc_semantic
 
 **Files:**
+
 - Modify: `crates/oxc_semantic/src/scoping.rs`
 
 - [ ] **Step 1: Find the existing `retain_resolved_references`**
@@ -1158,6 +1210,7 @@ struct's field names.)
 ```bash
 cargo build -p oxc_semantic && cargo test -p oxc_semantic
 ```
+
 Expected: clean, no test regressions.
 
 ### Task 5.2: Add `Scoping::remove_unresolved_reference` if not present
@@ -1186,6 +1239,7 @@ Near the unresolved-references accessors:
 ### Task 5.3: Rewrite `exit_program` and create `LiveDirectEvalCollector`
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/peephole/mod.rs`
 
 - [ ] **Step 1: Add `LiveDirectEvalCollector` and `NamedRefCollector`**
@@ -1302,6 +1356,7 @@ phase.)
 ### Task 5.4: Delete `LiveUsageCollector` and `MinifierState::changed`
 
 **Files:**
+
 - Modify: `crates/oxc_minifier/src/state.rs`
 - Modify: `crates/oxc_minifier/src/peephole/mod.rs`
 
@@ -1321,6 +1376,7 @@ stays.
 - [ ] **Step 3: Remove the manual reset in `enter_program`**
 
 In `crates/oxc_minifier/src/peephole/mod.rs::enter_program`, remove:
+
 ```rust
 - ctx.state.changed = false;
 ```
@@ -1329,9 +1385,11 @@ In `crates/oxc_minifier/src/peephole/mod.rs::enter_program`, remove:
 
 Already replaced in Task 5.3 by `LiveDirectEvalCollector` and `NamedRefCollector`. Verify
 no references remain:
+
 ```bash
 grep -n "LiveUsageCollector" crates/oxc_minifier/
 ```
+
 Expected: zero matches. If any remain, remove them.
 
 - [ ] **Step 5: Build**
@@ -1339,6 +1397,7 @@ Expected: zero matches. If any remain, remove them.
 ```bash
 cargo build -p oxc_minifier
 ```
+
 Expected: clean. Any error means a leftover read of `state.changed` somewhere — find
 and remove.
 
@@ -1351,6 +1410,7 @@ cargo test -p oxc_minifier
 cargo test -p oxc_mangler
 cargo coverage -- minifier
 ```
+
 Expected: PASS unchanged.
 
 - [ ] **Step 2: minsize MUST be zero diff**
@@ -1359,7 +1419,9 @@ Expected: PASS unchanged.
 just minsize
 git diff --stat tasks/minsize/
 ```
+
 Expected: EMPTY. If any delta:
+
 - The `DropDiff` walks are missing some path. Investigate which optimization is now
   firing differently (or not firing).
 - Common cause: a Pattern C/D site missed in commit 2 that's actually dropping
@@ -1373,6 +1435,7 @@ Expected: EMPTY. If any delta:
 ```bash
 ./tools/check_state_changed.sh && cd crates/oxc_minifier && ast-grep scan && cd ../..
 ```
+
 Expected: BOTH pass. The grep gate becomes trivially satisfied (the field no longer
 exists). The ast-grep rule still meaningful.
 
@@ -1444,6 +1507,7 @@ cargo coverage -- minifier
 just minsize && git diff --stat tasks/minsize/
 just ready
 ```
+
 All expected to pass.
 
 ---
