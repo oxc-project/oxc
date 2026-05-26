@@ -35,7 +35,23 @@ fn control_has_associated_label_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct ControlHasAssociatedLabel(Box<ControlHasAssociatedLabelConfig>);
 
 /// Elements that are always ignored (cannot reliably determine label source).
-const DEFAULT_IGNORE_ELEMENTS: [&str; 1] = ["link"];
+const ALWAYS_IGNORE_ELEMENTS: [&str; 1] = ["link"];
+
+const DEFAULT_IGNORE_ELEMENTS: [&str; 7] =
+    ["audio", "canvas", "embed", "input", "textarea", "tr", "video"];
+
+const DEFAULT_IGNORE_ROLES: [&str; 10] = [
+    "grid",
+    "listbox",
+    "menu",
+    "menubar",
+    "radiogroup",
+    "row",
+    "tablist",
+    "toolbar",
+    "tree",
+    "treegrid",
+];
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
@@ -47,11 +63,11 @@ pub struct ControlHasAssociatedLabelConfig {
     label_attributes: Vec<CompactStr>,
     /// Custom JSX components to be treated as interactive controls.
     control_components: Vec<CompactStr>,
-    /// Elements to ignore (in addition to the default ignore list).
-    /// Defaults to `[]`.
+    /// Elements to ignore.
+    /// Defaults to `["audio", "canvas", "embed", "input", "textarea", "tr", "video"]`.
     ignore_elements: Vec<CompactStr>,
     /// Interactive roles to ignore.
-    /// Defaults to `[]`.
+    /// Defaults to `["grid", "listbox", "menu", "menubar", "radiogroup", "row", "tablist", "toolbar", "tree", "treegrid"]`.
     ignore_roles: Vec<CompactStr>,
 }
 
@@ -69,8 +85,8 @@ impl Default for ControlHasAssociatedLabelConfig {
             depth: 2,
             label_attributes: vec![],
             control_components: vec![],
-            ignore_elements: vec![],
-            ignore_roles: vec![],
+            ignore_elements: DEFAULT_IGNORE_ELEMENTS.into_iter().map(CompactStr::from).collect(),
+            ignore_roles: DEFAULT_IGNORE_ROLES.into_iter().map(CompactStr::from).collect(),
         }
     }
 }
@@ -91,7 +107,6 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// <button />
-    /// <input type="text" />
     /// <a href="/path" />
     /// <th />
     /// <div role="button" />
@@ -166,7 +181,7 @@ impl Rule for ControlHasAssociatedLabel {
 
         let element_type = get_element_type(ctx, &element.opening_element);
 
-        if DEFAULT_IGNORE_ELEMENTS.contains(&element_type.as_ref())
+        if ALWAYS_IGNORE_ELEMENTS.contains(&element_type.as_ref())
             || self.ignore_elements.iter().any(|e| e.as_str() == element_type.as_ref())
         {
             return;
@@ -3740,11 +3755,19 @@ fn test_no_config() {
 
     // Generated from jsx-eslint/eslint-plugin-jsx-a11y __tests__/src/rules/control-has-associated-label-test.js.
     let pass = vec![
+        (r#"<label>Name <input type="text" /></label>"#, None, None),
+        (r#"<input type="text" />"#, None, None),
+        (r#"<textarea />"#, None, None),
+        (r#"<div role="grid" />"#, None, None),
         (r#"<input type="hidden" />"#, None, None),
         (r#"<input type="text" aria-hidden="true" />"#, None, None),
     ];
 
-    let fail = vec![(r#"<input type="text" />"#, None, None)];
+    let fail = vec![
+        (r#"<button />"#, None, None),
+        (r##"<a href="#" />"##, None, None),
+        (r#"<div role="button" />"#, None, None),
+    ];
 
     Tester::new(ControlHasAssociatedLabel::NAME, ControlHasAssociatedLabel::PLUGIN, pass, fail)
         .with_snapshot_suffix("no_config")
