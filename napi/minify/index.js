@@ -587,7 +587,8 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { minify, minifySync, Severity } = nativeBinding
+const { LegalCommentsMode, minify, minifySync, Severity } = nativeBinding
+export { LegalCommentsMode }
 export { minify }
 export { minifySync }
 export { Severity }
