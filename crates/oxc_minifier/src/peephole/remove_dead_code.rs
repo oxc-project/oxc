@@ -126,17 +126,17 @@ impl<'a> PeepholeOptimizations {
     pub fn try_fold_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ForStatement(for_stmt) = stmt else { return };
         if let Some(init) = &mut for_stmt.init
-            && let Some(init) = init.as_expression_mut()
-            && Self::remove_unused_expression(init, ctx)
+            && let Some(init_expr) = init.as_expression_mut()
+            && Self::remove_unused_expression(init_expr, ctx)
         {
+            ctx.drop_expression(init_expr);
             for_stmt.init = None;
-            ctx.notice_change();
         }
         if let Some(update) = &mut for_stmt.update
             && Self::remove_unused_expression(update, ctx)
         {
+            ctx.drop_expression(update);
             for_stmt.update = None;
-            ctx.notice_change();
         }
 
         let test_boolean =
@@ -182,8 +182,9 @@ impl<'a> PeepholeOptimizations {
             },
             Some(true) => {
                 // Remove the test expression.
-                for_stmt.test = None;
-                ctx.notice_change();
+                if let Some(old) = for_stmt.test.take() {
+                    ctx.drop_expression(&old);
+                }
             }
             None => {}
         }
@@ -341,11 +342,13 @@ impl<'a> PeepholeOptimizations {
             if i == old_len {
                 return true;
             }
-            !Self::remove_unused_expression(e, ctx)
+            if Self::remove_unused_expression(e, ctx) {
+                ctx.drop_expression(e);
+                false
+            } else {
+                true
+            }
         });
-        if e.expressions.len() != old_len {
-            ctx.notice_change();
-        }
         if e.expressions.len() == 1 {
             let new_expr = e.expressions.pop().unwrap();
             ctx.replace_expression(expr, new_expr);

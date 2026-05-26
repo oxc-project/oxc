@@ -735,18 +735,18 @@ impl<'a> PeepholeOptimizations {
         }
 
         let mut inline_exprs = Vec::with_capacity(t.expressions.len());
-        let new_exprs =
-            ctx.ast.vec_from_iter(t.expressions.drain(..).enumerate().filter_map(|(idx, expr)| {
-                if expr.may_have_side_effects(ctx) {
-                    Some(expr)
-                } else if let Some(str) = expr.to_js_string(ctx) {
-                    inline_exprs.push((idx, str));
-                    None
-                } else {
-                    Some(expr)
-                }
-            }));
-        t.expressions = new_exprs;
+        let mut kept = ctx.ast.vec_with_capacity(t.expressions.len());
+        for (idx, expr) in t.expressions.drain(..).enumerate() {
+            if expr.may_have_side_effects(ctx) {
+                kept.push(expr);
+            } else if let Some(str) = expr.to_js_string(ctx) {
+                ctx.drop_expression(&expr);
+                inline_exprs.push((idx, str));
+            } else {
+                kept.push(expr);
+            }
+        }
+        t.expressions = kept;
 
         // inline the extracted inline-able expressions into quasis
         // "current_quasis + extracted_value + next_quasis"
@@ -771,8 +771,6 @@ impl<'a> PeepholeOptimizations {
                 quasi.tail = true;
             }
         }
-
-        ctx.notice_change();
     }
 }
 

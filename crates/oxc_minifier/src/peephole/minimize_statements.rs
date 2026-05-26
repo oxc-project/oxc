@@ -114,15 +114,15 @@ impl<'a> PeepholeOptimizations {
                                 | Ancestor::ForOfStatementBody(_),
                         )
                     ) {
-                        stmts.pop();
-                        ctx.notice_change();
+                        let dropped = stmts.pop().unwrap();
+                        ctx.drop_statement(&dropped);
                     }
                 }
                 // "function f() { x(); return; }" => "function f() { x(); }"
                 Statement::ReturnStatement(s) if s.argument.is_none() => {
                     if let Ancestor::FunctionBodyStatements(_) = ctx.parent() {
-                        stmts.pop();
-                        ctx.notice_change();
+                        let dropped = stmts.pop().unwrap();
+                        ctx.drop_statement(&dropped);
                     }
                 }
                 _ => {}
@@ -453,12 +453,7 @@ impl<'a> PeepholeOptimizations {
         if let Some(first_decl) = var_decl.declarations.first_mut()
             && let Some(first_decl_init) = first_decl.init.as_mut()
         {
-            Self::substitute_single_use_symbol_in_statement(
-                first_decl_init,
-                result,
-                ctx,
-                false,
-            );
+            Self::substitute_single_use_symbol_in_statement(first_decl_init, result, ctx, false);
         }
         Self::substitute_single_use_symbol_within_declaration(
             var_decl.kind,
@@ -482,13 +477,19 @@ impl<'a> PeepholeOptimizations {
         let VariableDeclaration { span, kind, declarations, declare, .. } = var_decl.unbox();
         for mut decl in declarations {
             if Self::should_remove_unused_declarator(&decl, ctx) {
+                // The whole `VariableDeclarator` is dropped here — including its
+                // `BindingPattern` `id`. There is no typed helper for
+                // `VariableDeclarator` / `BindingPattern` this commit, so we
+                // keep `notice_change()` as the drop marker for the declarator.
                 ctx.notice_change();
                 // `init` is `mut` because `remove_unused_expression` rewrites
                 // it in place (peeling pure-call wrappers, etc).
-                if let Some(mut init) = decl.init.take()
-                    && !Self::remove_unused_expression(&mut init, ctx)
-                {
-                    result.push(ctx.ast.statement_expression(init.span(), init));
+                if let Some(mut init) = decl.init.take() {
+                    if Self::remove_unused_expression(&mut init, ctx) {
+                        ctx.drop_expression(&init);
+                    } else {
+                        result.push(ctx.ast.statement_expression(init.span(), init));
+                    }
                 }
             } else {
                 if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()
@@ -543,7 +544,8 @@ impl<'a> PeepholeOptimizations {
                 )
             })
         {
-            ctx.notice_change();
+            let dropped = Statement::ExpressionStatement(expr_stmt);
+            ctx.drop_statement(&dropped);
             return;
         }
 
@@ -553,15 +555,16 @@ impl<'a> PeepholeOptimizations {
             let a = &mut prev_expr_stmt.expression;
             let b = &mut expr_stmt.expression;
             expr_stmt.expression = Self::join_sequence(a, b, ctx);
-            result.pop();
-            ctx.notice_change();
+            let dropped = result.pop().unwrap();
+            ctx.drop_statement(&dropped);
         }
         // "var a; a = b();" => "var a = b();"
         match &mut expr_stmt.expression {
             Expression::AssignmentExpression(assign_expr) => {
                 let merged = Self::merge_assignment_to_declaration(assign_expr, result, ctx);
                 if merged {
-                    ctx.notice_change();
+                    let dropped = Statement::ExpressionStatement(expr_stmt);
+                    ctx.drop_statement(&dropped);
                     return;
                 }
             }
@@ -582,22 +585,25 @@ impl<'a> PeepholeOptimizations {
                 match first_non_merged_index {
                     None => {
                         // all elements are merged
-                        ctx.notice_change();
+                        let dropped = Statement::ExpressionStatement(expr_stmt);
+                        ctx.drop_statement(&dropped);
                         return;
                     }
                     Some(val) if val == sequence_len - 1 => {
                         // all elements are merged except for the last expression
                         let last_expr = sequence_expr.expressions.pop().unwrap();
                         result.push(ctx.ast.statement_expression(last_expr.span(), last_expr));
-                        ctx.notice_change();
+                        let dropped = Statement::ExpressionStatement(expr_stmt);
+                        ctx.drop_statement(&dropped);
                         return;
                     }
                     Some(0) => {
                         // no elements are merged
                     }
                     Some(val) => {
-                        sequence_expr.expressions.drain(0..val);
-                        ctx.notice_change();
+                        for dropped in sequence_expr.expressions.drain(0..val) {
+                            ctx.drop_expression(&dropped);
+                        }
                     }
                 }
             }
@@ -678,8 +684,8 @@ impl<'a> PeepholeOptimizations {
             let a = &mut prev_expr_stmt.expression;
             let b = &mut switch_stmt.discriminant;
             switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
-            result.pop();
-            ctx.notice_change();
+            let dropped = result.pop().unwrap();
+            ctx.drop_statement(&dropped);
         }
 
         // Prune empty case clauses before a trailing default
@@ -731,8 +737,8 @@ impl<'a> PeepholeOptimizations {
                 let a = &mut prev_expr_stmt.expression;
                 let b = &mut if_stmt.test;
                 if_stmt.test = Self::join_sequence(a, b, ctx);
-                result.pop();
-                ctx.notice_change();
+                let dropped = result.pop().unwrap();
+                ctx.drop_statement(&dropped);
             }
 
             if if_stmt.consequent.is_jump_statement() {
@@ -752,8 +758,8 @@ impl<'a> PeepholeOptimizations {
                         if_stmt.test.take_in(ctx.ast),
                         ctx,
                     );
-                    result.pop();
-                    ctx.notice_change();
+                    let dropped = result.pop().unwrap();
+                    ctx.drop_statement(&dropped);
                 }
 
                 let mut optimize_implicit_jump = false;
@@ -873,12 +879,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(ret_argument_expr) = &mut ret_stmt.argument {
-            Self::substitute_single_use_symbol_in_statement(
-                ret_argument_expr,
-                result,
-                ctx,
-                false,
-            );
+            Self::substitute_single_use_symbol_in_statement(ret_argument_expr, result, ctx, false);
         }
 
         if let Some(argument) = &mut ret_stmt.argument
@@ -886,7 +887,6 @@ impl<'a> PeepholeOptimizations {
             // `return undefined` has a different semantic in async generator function.
             && !ctx.is_closest_function_scope_an_async_generator()
         {
-            ctx.notice_change();
             if argument.may_have_side_effects(ctx) {
                 if ctx.options().sequences
                     && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
@@ -899,7 +899,9 @@ impl<'a> PeepholeOptimizations {
                     );
                 }
             }
-            ret_stmt.argument = None;
+            if let Some(old) = ret_stmt.argument.take() {
+                ctx.drop_expression(&old);
+            }
             result.push(Statement::ReturnStatement(ret_stmt));
             // reason: local &mut bool flag, not an AST slot
             // ast-grep-ignore: peephole-direct-slot-assignment
@@ -942,8 +944,8 @@ impl<'a> PeepholeOptimizations {
             let a = &mut prev_expr_stmt.expression;
             let b = &mut throw_stmt.argument;
             throw_stmt.argument = Self::join_sequence(a, b, ctx);
-            result.pop();
-            ctx.notice_change();
+            let dropped = result.pop().unwrap();
+            ctx.drop_statement(&dropped);
         }
         result.push(Statement::ThrowStatement(throw_stmt));
         // reason: local &mut bool flag, not an AST slot
@@ -1006,14 +1008,15 @@ impl<'a> PeepholeOptimizations {
                             let a = &mut prev_expr_stmt.expression;
                             let new_init = Self::join_sequence(a, init, ctx);
                             ctx.replace_expression(init, new_init);
-                            result.pop();
+                            let dropped = result.pop().unwrap();
+                            ctx.drop_statement(&dropped);
                         }
                     } else {
                         for_stmt.init = Some(ForStatementInit::from(
                             prev_expr_stmt.expression.take_in(ctx.ast),
                         ));
-                        result.pop();
-                        ctx.notice_change();
+                        let dropped = result.pop().unwrap();
+                        ctx.drop_statement(&dropped);
                     }
                 }
                 Some(Statement::VariableDeclaration(prev_var_decl)) => {
@@ -1025,8 +1028,8 @@ impl<'a> PeepholeOptimizations {
                             var_decl
                                 .declarations
                                 .splice(0..0, prev_var_decl.declarations.drain(..));
-                            result.pop();
-                            ctx.notice_change();
+                            let dropped = result.pop().unwrap();
+                            ctx.drop_statement(&dropped);
                         }
                     } else if prev_var_decl.kind.is_var() {
                         let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
@@ -1097,8 +1100,8 @@ impl<'a> PeepholeOptimizations {
                     if !has_side_effectful_initializer && !is_block_scoped {
                         let a = &mut prev_expr_stmt.expression;
                         for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
-                        result.pop();
-                        ctx.notice_change();
+                        let dropped = result.pop().unwrap();
+                        ctx.drop_statement(&dropped);
                     }
                 }
                 // "var a; for (a in b) c" => "for (var a in b) c"

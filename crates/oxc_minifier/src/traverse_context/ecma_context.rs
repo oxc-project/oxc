@@ -406,6 +406,26 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.changed = true;
     }
 
+    /// Mark an expression subtree as about to be dropped (popped from a collection,
+    /// taken out of an Option, etc.). For now, only bumps `state.changed`; a later
+    /// commit teaches this helper to walk the subtree for dead references that feed
+    /// the per-pass `PassDirty` accumulator.
+    ///
+    /// Use this helper at every site where a subtree is being removed from the AST
+    /// without an immediate slot-replacement helper (e.g. inside a `retain_mut`
+    /// predicate, before `field = None`, after `vec.pop()`).
+    #[inline]
+    pub fn drop_expression(&mut self, _expr: &Expression<'a>) {
+        self.state.changed = true;
+    }
+
+    /// Mark a statement subtree as about to be dropped. Same contract as
+    /// `drop_expression`.
+    #[inline]
+    pub fn drop_statement(&mut self, _stmt: &Statement<'a>) {
+        self.state.changed = true;
+    }
+
     /// Clear the per-pass mutation signal. Called once at the top of each
     /// peephole traversal in `enter_program`. This is the only sanctioned
     /// way to write `state.changed = false`.

@@ -958,13 +958,20 @@ impl<'a> PeepholeOptimizations {
             // `for (var; 0;)` with an empty `VariableDeclaration` is invalid JS when printed and
             // makes `try_fold_for` hoist a bogus `var;`. Use `for (; 0;)` instead so dead-code
             // folding becomes an empty statement.
+            // `for_stmt.init` is `Option<ForStatementInit>` — no typed helper for that
+            // enum slot this commit. The `replace_statement` for `for_stmt.body`
+            // below bumps `state.changed`, covering this drop's mutation signal.
             for_stmt.init = None;
+        }
+        if let Some(old) = for_stmt.test.take() {
+            ctx.drop_expression(&old);
         }
         for_stmt.test =
             Some(ctx.ast.expression_numeric_literal(for_stmt.span, 0.0, None, NumberBase::Decimal));
-        for_stmt.update = None;
-        for_stmt.body = ctx.ast.statement_empty(SPAN);
-        ctx.notice_change();
+        if let Some(old) = for_stmt.update.take() {
+            ctx.drop_expression(&old);
+        }
+        ctx.replace_statement(&mut for_stmt.body, ctx.ast.statement_empty(SPAN));
     }
 
     /// Removes redundant argument of `ReturnStatement`
@@ -986,8 +993,9 @@ impl<'a> PeepholeOptimizations {
         if ctx.is_closest_function_scope_an_async_generator() {
             return;
         }
-        stmt.argument = None;
-        ctx.notice_change();
+        if let Some(old) = stmt.argument.take() {
+            ctx.drop_expression(&old);
+        }
     }
 
     fn compress_variable_declarator(decl: &mut VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -1003,9 +1011,9 @@ impl<'a> PeepholeOptimizations {
         }
         if !decl.kind.is_var()
             && decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init))
+            && let Some(old) = decl.init.take()
         {
-            decl.init = None;
-            ctx.notice_change();
+            ctx.drop_expression(&old);
         }
     }
 

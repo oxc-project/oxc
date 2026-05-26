@@ -84,11 +84,14 @@ impl<'a> PeepholeOptimizations {
 
     fn remove_unused_sequence_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::SequenceExpression(sequence_expr) = e else { return false };
-        let old_len = sequence_expr.expressions.len();
-        sequence_expr.expressions.retain_mut(|e| !Self::remove_unused_expression(e, ctx));
-        if sequence_expr.expressions.len() != old_len {
-            ctx.notice_change();
-        }
+        sequence_expr.expressions.retain_mut(|e| {
+            if Self::remove_unused_expression(e, ctx) {
+                ctx.drop_expression(e);
+                false
+            } else {
+                true
+            }
+        });
         sequence_expr.expressions.is_empty()
     }
 
@@ -229,11 +232,20 @@ impl<'a> PeepholeOptimizations {
 
         let old_len = array_expr.elements.len();
         array_expr.elements.retain_mut(|el| match el {
+            // `ArrayExpressionElement::SpreadElement` and `Elision` aren't
+            // `Expression` / `Statement` so we still record the drop via
+            // `notice_change()` below; only the typed-Expression branch uses
+            // the `drop_expression` helper for now.
             ArrayExpressionElement::SpreadElement(_) => el.may_have_side_effects(ctx),
             ArrayExpressionElement::Elision(_) => false,
             match_expression!(ArrayExpressionElement) => {
                 let el_expr = el.to_expression_mut();
-                !Self::remove_unused_expression(el_expr, ctx)
+                if Self::remove_unused_expression(el_expr, ctx) {
+                    ctx.drop_expression(el_expr);
+                    false
+                } else {
+                    true
+                }
             }
         });
         if array_expr.elements.len() != old_len {
