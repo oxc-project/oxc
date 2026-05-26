@@ -544,7 +544,8 @@ impl<'a> PeepholeOptimizations {
             Expression::StaticMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.object = expr_to_inject.take_in(ctx.ast);
+                    let new_object = expr_to_inject.take_in(ctx.ast);
+                    ctx.replace_expression(&mut e.object, new_object);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -559,7 +560,8 @@ impl<'a> PeepholeOptimizations {
             Expression::ComputedMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.object = expr_to_inject.take_in(ctx.ast);
+                    let new_object = expr_to_inject.take_in(ctx.ast);
+                    ctx.replace_expression(&mut e.object, new_object);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -574,7 +576,8 @@ impl<'a> PeepholeOptimizations {
             Expression::CallExpression(e) => {
                 if e.callee.is_specific_id(target_id_name) {
                     e.optional = true;
-                    e.callee = expr_to_inject.take_in(ctx.ast);
+                    let new_callee = expr_to_inject.take_in(ctx.ast);
+                    ctx.replace_expression(&mut e.callee, new_callee);
                     return true;
                 }
                 if Self::inject_optional_chaining_if_matched_inner(
@@ -590,7 +593,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::StaticMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.object = expr_to_inject.take_in(ctx.ast);
+                        let new_object = expr_to_inject.take_in(ctx.ast);
+                        ctx.replace_expression(&mut e.object, new_object);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -605,7 +609,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::ComputedMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.object = expr_to_inject.take_in(ctx.ast);
+                        let new_object = expr_to_inject.take_in(ctx.ast);
+                        ctx.replace_expression(&mut e.object, new_object);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(
@@ -620,7 +625,8 @@ impl<'a> PeepholeOptimizations {
                 ChainElement::CallExpression(e) => {
                     if e.callee.is_specific_id(target_id_name) {
                         e.optional = true;
-                        e.callee = expr_to_inject.take_in(ctx.ast);
+                        let new_callee = expr_to_inject.take_in(ctx.ast);
+                        ctx.replace_expression(&mut e.callee, new_callee);
                         return true;
                     }
                     if Self::inject_optional_chaining_if_matched_inner(

@@ -397,6 +397,18 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.changed = true;
     }
 
+    /// Replace a `for-in` / `for-of` statement's `left` slot. Same contract
+    /// as `replace_expression`.
+    #[inline]
+    pub fn replace_for_statement_left(
+        &mut self,
+        slot: &mut ForStatementLeft<'a>,
+        new: ForStatementLeft<'a>,
+    ) {
+        *slot = new;
+        self.state.changed = true;
+    }
+
     /// Mark the pass as having mutated the AST in place (operand swap, in-place
     /// field flip, collection element removal, etc.) where no slot replacement
     /// happened. Prefer the `replace_*` helpers when the mutation IS a slot

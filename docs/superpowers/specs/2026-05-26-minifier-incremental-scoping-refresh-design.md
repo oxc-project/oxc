@@ -21,8 +21,8 @@ runs once per fixed-point iteration that mutated anything. Its single purpose is
 `scoping.retain_resolved_references(&live)` and `refresh_direct_eval_flags(...)` so the
 `Scoping` data stays consistent with the rewritten AST.
 
-The walk exists because rewrites *destroy information* (which subtree was dropped, what
-references it contained), and `exit_program` *reconstructs* that information from the
+The walk exists because rewrites _destroy information_ (which subtree was dropped, what
+references it contained), and `exit_program` _reconstructs_ that information from the
 live AST. The dropped subtree is hot in cache at the moment of the rewrite; cold by
 `exit_program`. With helpers as the chokepoint for every mutation, the reconstruction
 becomes unnecessary — the helper can collect dirtiness at the mutation site.
@@ -47,10 +47,11 @@ helper becomes obsolete.
 4. Preserve current minified output exactly, EXCEPT for the latent-bug fixes in PR 1
    (Task #28 + `minimize_statements.rs:1387`) which by design enable previously-skipped
    optimizations. Success criteria: `cargo test -p oxc_minifier` passes, `cargo coverage
-   -- minifier` shows no conformance regression, `just minsize` produces zero deltas in
+-- minifier` shows no conformance regression, `just minsize` produces zero deltas in
    PRs 2-5 (any delta is investigated and must trace to a fix in PR 1).
 
 Explicitly NOT goals:
+
 - Measured wall-clock speedup. The user has chosen to ship the architectural win even if
   benchmarks show wash or marginal regression (see §6 risk #3 for fallback).
 - Per-rule telemetry (deferred — separate spec if ever needed).
@@ -131,10 +132,15 @@ pub struct PassDirty<'a> {
 
 ### 4.2 Helpers on `TraverseCtx`
 
-Final API has **7 helpers**: 4 existing `replace_*` + 2 NEW `drop_*` + the existing
-`notice_change`. The `reset_changed()` helper is REMOVED. The 6 walking helpers all
+Final API has **8 helpers**: 5 `replace_*` + 2 `drop_*` + the existing
+`notice_change`. The `reset_changed()` helper is REMOVED. The 7 walking helpers all
 update `state.dirty` via a private `DropDiff` collector; `notice_change` only bumps the
 counter.
+
+The 5th `replace_*` helper, `replace_for_statement_left`, was added in the
+Pattern-A field-write sweep between Commit 2 and Commit 3 (closing
+`minimize_statements.rs:1093, 1138` bypasses). The original spec listed 4
+`replace_*` helpers because the sweep had not yet been done.
 
 ```rust
 impl<'a> TraverseCtx<'a, MinifierState<'a>> {
@@ -159,6 +165,13 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     #[inline]
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) { /* … */ }
+
+    #[inline]
+    pub fn replace_for_statement_left(
+        &mut self,
+        slot: &mut ForStatementLeft<'a>,
+        new: ForStatementLeft<'a>,
+    ) { /* … */ }
 
     // NEW in this spec — added because helpers must walk every dropped subtree,
     // including those popped from collections or dropped without a replacement value.
@@ -196,8 +209,8 @@ existing `LiveUsageCollector`. The exact method chain (`walk_old_*` vs
 `resurrect_from_*`) controls whether refs are ADDED to or REMOVED from `dead_refs` —
 walks of dropped subtrees add; walks of replacement values remove.
 
-The 4 `walk_old_*` / `resurrect_from_*` method pairs (one per slot type) are mechanical
-but verbose; their existence is the price of providing typed helpers for 4 distinct AST
+The 5 `walk_old_*` / `resurrect_from_*` method pairs (one per slot type) are mechanical
+but verbose; their existence is the price of providing typed helpers for 5 distinct AST
 slot types.
 
 ### 4.3 Loop driver
@@ -304,6 +317,7 @@ incremental refresh, the dropped subtree is invisible to the helpers, so dead re
 leak into `Scoping` and cause downstream consumers (mangler, codegen) to see stale data.
 
 **Must fix before this design ships.** Two options:
+
 - **(a)** Refactor both function signatures to `&mut TraverseCtx` and use
   `replace_expression`. Cleanest.
 - **(b)** Propagate a bool return + caller helper-calls (the `substitute_single_use_*`
@@ -334,6 +348,7 @@ drop insert/contains cost from ~25 to ~5 cycles. `PassDirty::dead_refs` is
 doesn't support deletion).
 
 Mitigation tiers if benchmarks regress (in order of cost):
+
 1. **Profile.** Confirm `FxHashSet` insert is actually hot.
 2. **Hybrid structure.** `BitSet` for IDs known at pass start (most cases),
    `FxHashSet` overflow for IDs created mid-pass. Resurrection works by tombstoning bits.
@@ -426,6 +441,7 @@ and unresolved both), corrupting downstream mangler/codegen reads.
 
 **Scope:** Audit all `notice_change()` call sites in `crates/oxc_minifier/src/peephole/`
 (grep for `ctx.notice_change` after the prior migration lands). Categorize each:
+
 - **Drops nothing** (operand swap, operator-only tweak, bool/span field flip) → keep as
   `notice_change()`.
 - **Drops a subtree** (Option clear, collection element removal, take()) → migrate to
@@ -443,13 +459,15 @@ Rough estimate: 15-25 sites across 5-7 files. Done as Commit 2 of the migration 
    with `pub(crate)` visibility.
 3. `TraverseCtx::reset_changed()` is REMOVED. `compressor.rs::run_in_loop` uses
    snapshot-compare on `state.mutations`.
-4. Final API has 7 helpers. The 6 walking helpers (`replace_expression`,
+4. Final API has 8 helpers. The 7 walking helpers (`replace_expression`,
    `replace_statement`, `replace_assignment_target_property`, `replace_property_key`,
-   `drop_expression`, `drop_statement`) call `DropDiff::walk_old_*` on the
-   dropped/replaced subtree; the 4 `replace_*` variants additionally call
-   `resurrect_from_*` on `&new`. The 7th helper `notice_change` only bumps the counter.
-   `drop_expression` and `drop_statement` are NEW (introduced by this spec — the prior
-   migration only had `replace_*` variants).
+   `replace_for_statement_left`, `drop_expression`, `drop_statement`) call
+   `DropDiff::walk_old_*` on the dropped/replaced subtree; the 5 `replace_*` variants
+   additionally call `resurrect_from_*` on `&new`. The 8th helper `notice_change` only
+   bumps the counter. `drop_expression` and `drop_statement` are NEW (introduced by this
+   spec — the prior migration only had `replace_*` variants).
+   `replace_for_statement_left` was added in the Pattern-A field-write sweep done
+   between Commit 2 and Commit 3.
 5. `LiveUsageCollector` is deleted. `LiveDirectEvalCollector` (eval-only) replaces it.
 6. `peephole/mod.rs::exit_program` consumes `dirty.dead_refs`, `dirty.dead_unresolved`,
    and `dirty.eval_dropped` directly. Each consumer has its own early-exit when the
@@ -460,11 +478,11 @@ Rough estimate: 15-25 sites across 5-7 files. Done as Commit 2 of the migration 
    resolved as prerequisite).
 9. `minimize_statements.rs:1387` no longer caller-tracked; the enclosing function takes
    `&mut TraverseCtx` and uses `replace_expression` directly.
-9a. All Pattern C/D sites that drop references (§6.7) are migrated to use
-    `ctx.drop_expression` / `ctx.drop_statement` BEFORE the drop. After Commit 2 of the
-    migration sequence, `grep` for `notice_change()` returns only sites where no AST
-    subtree is being dropped (operand swap, operator-only tweak, bool/span flip).
-    Verified by audit.
+   9a. All Pattern C/D sites that drop references (§6.7) are migrated to use
+   `ctx.drop_expression` / `ctx.drop_statement` BEFORE the drop. After Commit 2 of the
+   migration sequence, `grep` for `notice_change()` returns only sites where no AST
+   subtree is being dropped (operand swap, operator-only tweak, bool/span flip).
+   Verified by audit.
 10. `cargo test -p oxc_minifier` passes with no expected-output changes.
 11. `cargo coverage -- minifier` shows no conformance regression.
 12. `just minsize` produces zero size deltas (any non-zero delta is investigated; the
@@ -483,7 +501,7 @@ All work ships on a single branch (`spec/minifier-incremental-scoping`, stacked 
 1. **Commit 1: Latent-bug fixes (Task #28 + `minimize_statements.rs:1387`).** Fix the
    two `convert_to_dotted_properties.rs:26, 40` silent bypasses and refactor
    `substitute_single_use_symbol_in_expression` to take `&mut TraverseCtx`. **`just
-   minsize` is expected to show non-zero deltas here** — these are the latent bugs
+minsize` is expected to show non-zero deltas here** — these are the latent bugs
    surfacing as correct optimizations that previously didn't fire. Document each delta
    in the commit body with the underlying optimization that's now firing.
 

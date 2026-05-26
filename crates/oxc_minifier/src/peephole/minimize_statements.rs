@@ -1126,8 +1126,8 @@ impl<'a> PeepholeOptimizations {
                             else {
                                 unreachable!()
                             };
-                            for_in_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
-                            ctx.notice_change();
+                            let new_left = ForStatementLeft::VariableDeclaration(prev_var_decl);
+                            ctx.replace_for_statement_left(&mut for_in_stmt.left, new_left);
                         }
                     }
                 }
@@ -1171,8 +1171,8 @@ impl<'a> PeepholeOptimizations {
                 let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop() else {
                     unreachable!()
                 };
-                for_of_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
-                ctx.notice_change();
+                let new_left = ForStatementLeft::VariableDeclaration(prev_var_decl);
+                ctx.replace_for_statement_left(&mut for_of_stmt.left, new_left);
             }
         }
         result.push(Statement::ForOfStatement(for_of_stmt));

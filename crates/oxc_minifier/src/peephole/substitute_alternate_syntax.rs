@@ -1311,12 +1311,12 @@ impl<'a> PeepholeOptimizations {
             {
                 let object = ctx.ast.ident("Object");
                 let reference_id = ctx.create_unbound_reference(object, ReferenceFlags::Read);
-                call_expr.callee = ctx.ast.expression_identifier_with_reference_id(
+                let new_callee = ctx.ast.expression_identifier_with_reference_id(
                     call_expr.callee.span(),
                     "Object",
                     reference_id,
                 );
-                ctx.notice_change();
+                ctx.replace_expression(&mut call_expr.callee, new_callee);
             }
         }
     }
