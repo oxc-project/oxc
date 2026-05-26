@@ -206,6 +206,22 @@ fn dce_var_hoisting() {
     );
 }
 
+// Dropping a dead-after-throw statement (`module.exports = x`) removes the
+// only reference to `x`. Without flagging that as a change, the peephole loop
+// terminates before `LiveUsageCollector` refreshes scoping, leaving the
+// unused-declarator pass to see a stale reference and keep `var x = {}`.
+#[test]
+fn dead_after_throw_drop_triggers_unused_declarator_removal() {
+    test(
+        "export function f() {
+            var x = {};
+            throw new Error('boom');
+            module.exports = x;
+         }",
+        "export function f() { throw new Error('boom'); }",
+    );
+}
+
 #[test]
 fn pure_comment_for_pure_global_constructors() {
     test("var x = new WeakSet; foo(x)", "var x = /* @__PURE__ */ new WeakSet();\nfoo(x)");
