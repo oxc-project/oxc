@@ -1307,6 +1307,7 @@ export interface DummyRuleMap {
   "vue/define-props-declaration"?: DummyRule;
   "vue/define-props-destructuring"?: DummyRule;
   "vue/max-props"?: DummyRule;
+  "vue/multi-word-component-names"?: DummyRule;
   "vue/no-arrow-functions-in-watch"?: DummyRule;
   "vue/no-computed-properties-in-data"?: DummyRule;
   "vue/no-deprecated-data-object-declaration"?: DummyRule;

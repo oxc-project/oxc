@@ -2602,6 +2602,9 @@
         "vue/max-props": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/multi-word-component-names": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/no-arrow-functions-in-watch": {
           "$ref": "#/definitions/DummyRule"
         },
