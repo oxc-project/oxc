@@ -1,7 +1,3 @@
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
@@ -15,48 +11,25 @@ use oxc_regular_expression::{
     visit::{RegExpAstKind, Visit},
 };
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::{DefaultRuleConfig, Rule},
-    utils::{is_regexp_callee, run_on_arguments, run_on_regex_node, static_string_value},
+    rule::Rule,
+    utils::{is_regexp_callee, run_on_regex_node, static_string_value},
 };
 
-fn prefer_named_capture_group_diagnostic(
-    span: Span,
-    unnamed_count: usize,
-    allowed: u32,
-) -> OxcDiagnostic {
+fn prefer_named_capture_group_diagnostic(span: Span, unnamed_count: usize) -> OxcDiagnostic {
     OxcDiagnostic::warn("Capture group should be named.")
         .with_help(format!(
-            "Use a named capture group like \"(?<name>...)\" \u{2014} this regex has {unnamed_count} unnamed group{} (allowed: {allowed}).",
+            "Use a named capture group like \"(?<name>...)\" — this regex has {unnamed_count} unnamed group{}.",
             if unnamed_count == 1 { "" } else { "s" }
         ))
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-struct PreferNamedCaptureGroupConfig {
-    /// Maximum number of unnamed capturing groups allowed per regex pattern.
-    ///
-    /// Default is `0`, which disallows any unnamed groups, matching ESLint's stock behavior.
-    /// Set to `1` to permit one unnamed capture per regex, and so on.
-    allow_unnamed_groups: u32,
-    /// Additional function names to treat as RegExp constructors.
-    ///
-    /// oxlint-only extension. When a call or `new` expression uses one of these names as
-    /// a bare identifier callee, its string or template-literal argument is parsed and
-    /// checked for unnamed capturing groups, just like `RegExp(...)`.
-    ///
-    /// Example: `{ "additionalRegExpFunctions": ["regEx"] }` makes `regEx('(foo)')` reportable.
-    additional_reg_exp_functions: FxHashSet<CompactStr>,
-}
-
-#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-pub struct PreferNamedCaptureGroup(Box<PreferNamedCaptureGroupConfig>);
+#[derive(Debug, Default, Clone)]
+pub struct PreferNamedCaptureGroup;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -92,18 +65,12 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "next",
-    config = PreferNamedCaptureGroup,
 );
 
 impl Rule for PreferNamedCaptureGroup {
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
-    }
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let allow_unnamed_count = self.0.allow_unnamed_groups;
         run_on_regex_node(node, ctx, |pattern, _span| {
-            check_pattern(pattern, allow_unnamed_count, ctx, None);
+            check_pattern(pattern, ctx, None);
         });
 
         let (callee, arguments) = match node.kind() {
@@ -113,58 +80,22 @@ impl Rule for PreferNamedCaptureGroup {
         };
 
         if is_regexp_callee(callee, ctx) {
-            check_static_arguments(arguments.first(), arguments.get(1), allow_unnamed_count, ctx);
+            check_static_arguments(arguments.first(), arguments.get(1), ctx);
         }
-
-        if self.0.additional_reg_exp_functions.is_empty() {
-            return;
-        }
-
-        let Expression::Identifier(ident) = callee.get_inner_expression() else { return };
-        if !self.0.additional_reg_exp_functions.contains(ident.name.as_str()) {
-            return;
-        }
-
-        let arg0 = arguments.first();
-        // Skip regex literals — they're already handled as their own AST node by run_on_regex_node.
-        if arg0.is_some_and(|a| matches!(a, oxc_ast::ast::Argument::RegExpLiteral(_))) {
-            return;
-        }
-
-        run_on_arguments(arg0, arguments.get(1), ctx, |pattern, _span| {
-            check_pattern(pattern, allow_unnamed_count, ctx, None);
-        });
-        check_static_arguments(arg0, arguments.get(1), allow_unnamed_count, ctx);
     }
 }
 
-fn check_pattern(
-    pattern: &Pattern<'_>,
-    allow_unnamed_count: u32,
-    ctx: &LintContext<'_>,
-    span_override: Option<Span>,
-) {
+fn check_pattern(pattern: &Pattern<'_>, ctx: &LintContext<'_>, span_override: Option<Span>) {
     let mut collector = UnnamedGroupCollector::default();
     collector.visit_pattern(pattern);
 
     let count = collector.unnamed_spans.len();
-    if count > allow_unnamed_count as usize {
-        for span in collector.unnamed_spans {
-            ctx.diagnostic(prefer_named_capture_group_diagnostic(
-                span_override.unwrap_or(span),
-                count,
-                allow_unnamed_count,
-            ));
-        }
+    for span in collector.unnamed_spans {
+        ctx.diagnostic(prefer_named_capture_group_diagnostic(span_override.unwrap_or(span), count));
     }
 }
 
-fn check_static_arguments(
-    arg0: Option<&Argument>,
-    arg1: Option<&Argument>,
-    allow_unnamed_count: u32,
-    ctx: &LintContext<'_>,
-) {
+fn check_static_arguments(arg0: Option<&Argument>, arg1: Option<&Argument>, ctx: &LintContext<'_>) {
     let Some(pattern_expr) = arg0
         .and_then(Argument::as_expression)
         .map(Expression::get_inner_expression)
@@ -193,7 +124,7 @@ fn check_static_arguments(
         return;
     };
 
-    check_pattern(&pattern, allow_unnamed_count, ctx, Some(pattern_expr.span()));
+    check_pattern(&pattern, ctx, Some(pattern_expr.span()));
 }
 
 fn is_directly_supported_regex_argument(expr: &Expression<'_>) -> bool {
@@ -277,36 +208,8 @@ fn test() {
         ("new RegExp('(?i:foo)bar')", None),
         ("/(?-i:foo)bar/", None),
         ("new RegExp('(?-i:foo)bar')", None),
-        // allowUnnamedGroups: 1 — one unnamed group is permitted
-        ("/(foo)/", Some(serde_json::json!([{ "allowUnnamedGroups": 1 }]))),
-        // allowUnnamedGroups: 1 — one unnamed alongside a named group is fine
-        ("/(?<a>x)(b)/", Some(serde_json::json!([{ "allowUnnamedGroups": 1 }]))),
-        // additionalRegExpFunctions — named group only, no diagnostic
-        (
-            "regEx('(?<x>foo)')",
-            Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }])),
-        ),
         // string arg but factory name not in the list → not inspected
         ("regEx('(foo)')", None),
-        // string arg but factory name doesn't match the configured name
-        ("regEx('(foo)')", Some(serde_json::json!([{ "additionalRegExpFunctions": ["other"] }]))),
-        // allowUnnamedGroups threshold met
-        (
-            "regEx('(foo)', 'g')",
-            Some(
-                serde_json::json!([{ "additionalRegExpFunctions": ["regEx"], "allowUnnamedGroups": 1 }]),
-            ),
-        ),
-        // new form with named group
-        (
-            "new MyRe('(?<a>x)')",
-            Some(serde_json::json!([{ "additionalRegExpFunctions": ["MyRe"] }])),
-        ),
-        // regex literal arg with named group — passes via literal arm, no false positive
-        (
-            "regEx(/(?<a>foo)/)",
-            Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }])),
-        ),
     ];
 
     let fail = vec![
@@ -358,27 +261,6 @@ fn test() {
         ),
         // v-flag with unnamed group in set notation
         ("new RegExp('([[A--B]])', 'v')", None),
-        // allowUnnamedGroups: 1 — two unnamed groups still fails (both are reported)
-        ("/(a)(b)/", Some(serde_json::json!([{ "allowUnnamedGroups": 1 }]))),
-        // allowUnnamedGroups: 1 — two unnamed + one named, still two unnamed → fail
-        ("/(a)(?<b>c)(d)/", Some(serde_json::json!([{ "allowUnnamedGroups": 1 }]))),
-        // additionalRegExpFunctions — string arg with unnamed group
-        (
-            "regEx('([0-9]+)')",
-            Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }])),
-        ),
-        // additionalRegExpFunctions — template literal (no substitution) with two unnamed groups
-        (
-            "regEx(`(foo)(bar)`)",
-            Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }])),
-        ),
-        // additionalRegExpFunctions — new form with unnamed group
-        (
-            "new MyRe('([0-9]+)')",
-            Some(serde_json::json!([{ "additionalRegExpFunctions": ["MyRe"] }])),
-        ),
-        // regex literal arg inside a custom factory: reported once (via literal arm), not twice
-        ("regEx(/(foo)/)", Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }]))),
     ];
 
     Tester::new(PreferNamedCaptureGroup::NAME, PreferNamedCaptureGroup::PLUGIN, pass, fail)
