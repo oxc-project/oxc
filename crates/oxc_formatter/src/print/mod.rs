@@ -765,18 +765,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
             );
         });
 
-        if !comments.is_empty()
-            && let ForStatementLeft::VariableDeclaration(left_declaration) = &**left
-            && let Some(first_decl) = left_declaration.declarations.first()
-            && matches!(
-                first_decl.id,
-                BindingPattern::ArrayPattern(_) | BindingPattern::ObjectPattern(_)
-            )
-        {
-            write!(f, group(&format_inner));
-            return;
+        if !comments.is_empty() && comments.first().unwrap().span.start > left.span().end {
+            write!(f, [FormatLeadingComments::Comments(comments), group(&format_inner)]);
         }
-        write!(f, [FormatLeadingComments::Comments(comments), group(&format_inner)]);
+
+        write!(f, group(&format_inner));
     }
 }
 
