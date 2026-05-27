@@ -156,111 +156,102 @@ fn test() {
 
     let pass = vec![
         // No capturing groups
-        ("/normal_regex/", None),
+        "/normal_regex/",
         // Non-capturing group — always fine
-        ("/(?:[0-9]{4})/", None),
+        "/(?:[0-9]{4})/",
         // Named capturing group — the good pattern
-        ("/(?<year>[0-9]{4})/", None),
+        "/(?<year>[0-9]{4})/",
         // No groups at all
-        (r"/\u{1F680}/u", None),
+        r"/\u{1F680}/u",
         // RegExp constructor with no arguments / non-static argument → can't check
-        ("new RegExp()", None),
-        ("new RegExp(foo)", None),
-        ("RegExp()", None),
-        ("RegExp(foo)", None),
+        "new RegExp()",
+        "new RegExp(foo)",
+        "RegExp()",
+        "RegExp(foo)",
         // Empty pattern — no groups
-        ("new RegExp('')", None),
-        ("RegExp('')", None),
+        "new RegExp('')",
+        "RegExp('')",
         // Named group via constructor
-        ("new RegExp('(?<year>[0-9]{4})')", None),
-        ("RegExp('(?<year>[0-9]{4})')", None),
+        "new RegExp('(?<year>[0-9]{4})')",
+        "RegExp('(?<year>[0-9]{4})')",
         // Invalid regex (parse error) → silently ignored
-        ("RegExp('(')", None),
+        "RegExp('(')",
         // Unicode escape, no groups
-        (r"RegExp('\\u{1F680}', 'u')", None),
+        r"RegExp('\\u{1F680}', 'u')",
         // globalThis.RegExp with non-static argument → can't check
-        ("new globalThis.RegExp()", None),    // ecmaVersion 2020
-        ("new globalThis.RegExp(foo)", None), // ecmaVersion 2020
-        ("globalThis.RegExp(foo)", None),     // ecmaVersion 2020
+        "new globalThis.RegExp()",    // ecmaVersion 2020
+        "new globalThis.RegExp(foo)", // ecmaVersion 2020
+        "globalThis.RegExp(foo)",     // ecmaVersion 2020
         // globalThis shadowed → not recognized as global RegExp constructor
-        (
-            "
+        "
             var globalThis = bar;
             globalThis.RegExp(foo);
             ",
-            None,
-        ),
-        (
-            "
+        "
             function foo () {
                 var globalThis = bar;
                 new globalThis.RegExp(baz);
             }
             ",
-            None,
-        ),
         // v-flag edge case: invalid escape inside character class in v mode → parse error → ignored
-        (r"new RegExp('([\\q])', 'v')", None),
+        r"new RegExp('([\\q])', 'v')",
         // Named group in v-flag pattern
-        ("new RegExp('(?<c>[[A--B]])', 'v')", None),
+        "new RegExp('(?<c>[[A--B]])', 'v')",
         // Inline flag groups (non-capturing, ecmaVersion 2025)
-        ("/(?i:foo)bar/", None),
-        ("new RegExp('(?i:foo)bar')", None),
-        ("/(?-i:foo)bar/", None),
-        ("new RegExp('(?-i:foo)bar')", None),
+        "/(?i:foo)bar/",
+        "new RegExp('(?i:foo)bar')",
+        "/(?-i:foo)bar/",
+        "new RegExp('(?-i:foo)bar')",
         // string arg but factory name not in the list → not inspected
-        ("regEx('(foo)')", None),
+        "regEx('(foo)')",
     ];
 
     let fail = vec![
         // Single unnamed group — simplest case
-        ("/([0-9]{4})/", None),
+        "/([0-9]{4})/",
         // Constructor forms
-        ("new RegExp('([0-9]{4})')", None),
-        ("RegExp('([0-9]{4})')", None),
+        "new RegExp('([0-9]{4})')",
+        "RegExp('([0-9]{4})')",
         // Template literal (no substitution)
-        ("new RegExp(`a(bc)d`)", None),
+        "new RegExp(`a(bc)d`)",
         // Unicode prefix in string, unnamed group
-        ("new RegExp('ሴ噸(?:a)(b)');", None),
-        (r"new RegExp('\\u1234\\u5678(?:a)(b)');", None),
+        "new RegExp('ሴ噸(?:a)(b)');",
+        r"new RegExp('\\u1234\\u5678(?:a)(b)');",
         // Multiple unnamed groups
-        (r"/([0-9]{4})-(\w{5})/", None),
-        ("/([0-9]{4})-(5)/", None),
+        r"/([0-9]{4})-(\w{5})/",
+        "/([0-9]{4})-(5)/",
         // Named outer group containing unnamed inner group
-        ("/(?<temp2>(a))/", None),
-        ("/(?<temp2>(a)(?<temp5>b))/", None),
+        "/(?<temp2>(a))/",
+        "/(?<temp2>(a)(?<temp5>b))/",
         // Mixed named and unnamed
-        (r"/(?<temp1>[0-9]{4})-(\w{5})/", None),
-        ("/(?<temp1>[0-9]{4})-(5)/", None),
-        ("/(?<temp1>a)(?<temp2>a)(a)(?<temp3>a)/", None),
+        r"/(?<temp1>[0-9]{4})-(\w{5})/",
+        "/(?<temp1>[0-9]{4})-(5)/",
+        "/(?<temp1>a)(?<temp2>a)(a)(?<temp3>a)/",
         // Constant RegExp constructor arguments
-        ("new RegExp('(' + 'a)')", None),
-        ("new RegExp('a(bc)d' + 'e')", None),
-        (r#"new RegExp("foo" + "(a)" + "(b)");"#, None),
-        (r#"new RegExp("foo" + "(?:a)" + "(b)");"#, None),
-        ("RegExp('(a)'+'')", None),
-        ("RegExp( '' + '(ab)')", None),
-        ("new RegExp(`(ab)${''}`)", None),
+        "new RegExp('(' + 'a)')",
+        "new RegExp('a(bc)d' + 'e')",
+        r#"new RegExp("foo" + "(a)" + "(b)");"#,
+        r#"new RegExp("foo" + "(?:a)" + "(b)");"#,
+        "RegExp('(a)'+'')",
+        "RegExp( '' + '(ab)')",
+        "new RegExp(`(ab)${''}`)",
         // Multi-line template literal (no substitution)
-        ("new RegExp(`(a)\n            `)", None),
-        ("RegExp(`a(b\n            c)d`)", None),
+        "new RegExp(`(a)\n            `)",
+        "RegExp(`a(b\n            c)d`)",
         // Escape sequences in string patterns
-        (r"new RegExp('a(b)\'')", None),
-        (r"RegExp('(a)\\d')", None),
-        (r"RegExp(`\a(b)`)", None),
+        r"new RegExp('a(b)\'')",
+        r"RegExp('(a)\\d')",
+        r"RegExp(`\a(b)`)",
         // globalThis.RegExp — always recognized in oxlint regardless of ecmaVersion
-        ("new globalThis.RegExp('([0-9]{4})')", None),
-        ("globalThis.RegExp('([0-9]{4})')", None),
+        "new globalThis.RegExp('([0-9]{4})')",
+        "globalThis.RegExp('([0-9]{4})')",
         // globalThis NOT shadowed in the outer scope
-        (
-            "
+        "
             function foo() { var globalThis = bar; }
             new globalThis.RegExp('([0-9]{4})');
             ",
-            None,
-        ),
         // v-flag with unnamed group in set notation
-        ("new RegExp('([[A--B]])', 'v')", None),
+        "new RegExp('([[A--B]])', 'v')",
     ];
 
     Tester::new(PreferNamedCaptureGroup::NAME, PreferNamedCaptureGroup::PLUGIN, pass, fail)
