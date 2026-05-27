@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BinaryOperator, Expression, IfStatement, MemberExpression, Statement},
+    ast::{AssignmentTarget, Expression, IfStatement, MemberExpression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -15,7 +15,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{is_same_expression, is_same_member_expression},
+    utils::{is_same_expression, is_same_member_expression, static_string_value},
 };
 
 fn prefer_ternary_diagnostic(span: Span) -> OxcDiagnostic {
@@ -328,21 +328,6 @@ fn member_static_property_name(member: &MemberExpression<'_>) -> Option<String> 
     };
 
     static_string_value(computed.expression.get_inner_expression())
-}
-
-fn static_string_value(expression: &Expression<'_>) -> Option<String> {
-    match expression {
-        Expression::StringLiteral(literal) => Some(literal.value.to_string()),
-        Expression::TemplateLiteral(literal) => {
-            literal.single_quasi().map(|quasi| quasi.to_string())
-        }
-        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
-            let left = static_string_value(binary.left.get_inner_expression())?;
-            let right = static_string_value(binary.right.get_inner_expression())?;
-            Some(format!("{left}{right}"))
-        }
-        _ => None,
-    }
 }
 
 #[test]

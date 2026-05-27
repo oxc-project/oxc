@@ -1340,6 +1340,9 @@ expression: json
         "prefer-exponentiation-operator": {
           "$ref": "#/definitions/DummyRule"
         },
+        "prefer-named-capture-group": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "prefer-numeric-literals": {
           "$ref": "#/definitions/DummyRule"
         },

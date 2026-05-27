@@ -202,6 +202,7 @@ pub(crate) mod eslint {
     pub mod prefer_const;
     pub mod prefer_destructuring;
     pub mod prefer_exponentiation_operator;
+    pub mod prefer_named_capture_group;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
     pub mod prefer_object_spread;
