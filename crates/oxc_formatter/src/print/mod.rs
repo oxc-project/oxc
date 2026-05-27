@@ -738,8 +738,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let comments = f.context().comments().own_line_comments_before(self.right.span().start);
-
         let r#await = self.r#await();
         let left = self.left();
         let right = self.right();
@@ -764,7 +762,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
                 ]
             );
         });
-        write!(f, [FormatLeadingComments::Comments(comments), group(&format_inner)]);
+        write!(f, group(&format_inner));
     }
 }
 
