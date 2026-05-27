@@ -1291,6 +1291,7 @@ export interface DummyRuleMap {
   "vitest/valid-expect-in-promise"?: DummyRule;
   "vitest/valid-title"?: DummyRule;
   "vitest/warn-todo"?: DummyRule;
+  "vue/component-definition-name-casing"?: DummyRule;
   "vue/define-emits-declaration"?: DummyRule;
   "vue/define-props-declaration"?: DummyRule;
   "vue/define-props-destructuring"?: DummyRule;

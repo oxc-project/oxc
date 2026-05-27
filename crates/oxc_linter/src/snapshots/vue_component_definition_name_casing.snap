@@ -1,0 +1,134 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ vue(component-definition-name-casing): Property name "foo-bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:3:29]
+ 2 │                     export default {
+ 3 │                       name: 'foo-bar'
+   ·                             ─────────
+ 4 │                     }
+   ╰────
+  help: Replace `foo-bar` with `FooBar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo  bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:3:29]
+ 2 │                     export default {
+ 3 │                       name: 'foo  bar'
+   ·                             ──────────
+ 4 │                     }
+   ╰────
+
+  ⚠ vue(component-definition-name-casing): Property name "foo!bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:3:29]
+ 2 │                     export default {
+ 3 │                       name: 'foo!bar'
+   ·                             ─────────
+ 4 │                     }
+   ╰────
+
+  ⚠ vue(component-definition-name-casing): Property name "foo!bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:3:29]
+ 2 │                     new Vue({
+ 3 │                       name: 'foo!bar'
+   ·                             ─────────
+ 4 │                     })
+   ╰────
+
+  ⚠ vue(component-definition-name-casing): Property name "foo_bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:3:29]
+ 2 │                     export default {
+ 3 │                       name: 'foo_bar'
+   ·                             ─────────
+ 4 │                     }
+   ╰────
+  help: Replace `foo_bar` with `FooBar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo_bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:3:29]
+ 2 │                     export default {
+ 3 │                       name: 'foo_bar'
+   ·                             ─────────
+ 4 │                     }
+   ╰────
+  help: Replace `foo_bar` with `FooBar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo_bar" is not kebab-case.
+   ╭─[component_definition_name_casing.tsx:3:29]
+ 2 │                     export default {
+ 3 │                       name: 'foo_bar'
+   ·                             ─────────
+ 4 │                     }
+   ╰────
+  help: Replace `foo_bar` with `foo-bar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo-bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:1:23]
+ 1 │ <script>Vue.component('foo-bar', component)</script>
+   ·                       ─────────
+   ╰────
+  help: Replace `foo-bar` with `FooBar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo-bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:1:23]
+ 1 │ <script>app.component('foo-bar', component)</script>
+   ·                       ─────────
+   ╰────
+  help: Replace `foo-bar` with `FooBar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo-bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:1:58]
+ 1 │ <script lang="ts">(Vue as VueConstructor<Vue>).component('foo-bar', component)</script>
+   ·                                                          ─────────
+   ╰────
+  help: Replace `foo-bar` with `FooBar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo-bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:1:23]
+ 1 │ <script>Vue.component('foo-bar', {})</script>
+   ·                       ─────────
+   ╰────
+  help: Replace `foo-bar` with `FooBar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo-bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:1:23]
+ 1 │ <script>app.component('foo-bar', {})</script>
+   ·                       ─────────
+   ╰────
+  help: Replace `foo-bar` with `FooBar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo_bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:1:15]
+ 1 │ Vue.component('foo_bar', {})
+   ·               ─────────
+   ╰────
+  help: Replace `foo_bar` with `FooBar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo_bar" is not kebab-case.
+   ╭─[component_definition_name_casing.tsx:1:23]
+ 1 │ <script>Vue.component('foo_bar', {})</script>
+   ·                       ─────────
+   ╰────
+  help: Replace `foo_bar` with `foo-bar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo_bar" is not kebab-case.
+   ╭─[component_definition_name_casing.tsx:1:23]
+ 1 │ <script>Vue.component(`foo_bar`, {})</script>
+   ·                       ─────────
+   ╰────
+  help: Replace `foo_bar` with `foo-bar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo-bar" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:1:37]
+ 1 │ <script setup> defineOptions({name: 'foo-bar'}) </script>
+   ·                                     ─────────
+   ╰────
+  help: Replace `foo-bar` with `FooBar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "FooBar" is not kebab-case.
+   ╭─[component_definition_name_casing.tsx:1:37]
+ 1 │ <script setup> defineOptions({name: 'FooBar'}) </script>
+   ·                                     ────────
+   ╰────
+  help: Replace `FooBar` with `foo-bar`.

@@ -842,6 +842,7 @@ pub(crate) mod node {
 
 /// <https://github.com/vuejs/eslint-plugin-vue>
 pub(crate) mod vue {
+    pub mod component_definition_name_casing;
     pub mod define_emits_declaration;
     pub mod define_props_declaration;
     pub mod define_props_destructuring;
