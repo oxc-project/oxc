@@ -31,3 +31,13 @@ for (const [
 ] of someIterable) {
   //
 }
+
+for (const {
+  item1, 
+  item2, 
+  item3, 
+  item4, 
+  // comment at the end
+} of someIterable) {
+  // 
+}

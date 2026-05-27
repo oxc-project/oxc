@@ -768,7 +768,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
         if let ForStatementLeft::VariableDeclaration(left_declaration) = &**left
             && matches!(
                 left_declaration.declarations.first().unwrap().id,
-                BindingPattern::ArrayPattern(_)
+                BindingPattern::ArrayPattern(_) | BindingPattern::ObjectPattern(_)
             )
         {
             write!(f, group(&format_inner));
