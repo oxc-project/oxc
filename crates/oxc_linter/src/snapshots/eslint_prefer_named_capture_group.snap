@@ -108,42 +108,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
 
   ⚠ eslint(prefer-named-capture-group): Capture group should be named.
-   ╭─[prefer_named_capture_group.tsx:1:13]
- 1 │ new RegExp(`(a)
-   ·             ───
- 2 │             `)
-   ╰────
-  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
-
-  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
-   ╭─[prefer_named_capture_group.tsx:1:10]
- 1 │ ╭─▶ RegExp(`a(b
- 2 │ ╰─▶             c)d`)
-   ╰────
-  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
-
-  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
-   ╭─[prefer_named_capture_group.tsx:1:14]
- 1 │ new RegExp('a(b)\'')
-   ·              ───
-   ╰────
-  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
-
-  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
-   ╭─[prefer_named_capture_group.tsx:1:9]
- 1 │ RegExp('(a)\\d')
-   ·         ───
-   ╰────
-  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
-
-  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
-   ╭─[prefer_named_capture_group.tsx:1:11]
- 1 │ RegExp(`\a(b)`)
-   ·           ───
-   ╰────
-  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
-
-  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
    ╭─[prefer_named_capture_group.tsx:1:12]
  1 │ new RegExp('(' + 'a)')
    ·            ──────────
@@ -196,6 +160,42 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_named_capture_group.tsx:1:12]
  1 │ new RegExp(`(ab)${''}`)
    ·            ───────────
+   ╰────
+  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
+
+  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
+   ╭─[prefer_named_capture_group.tsx:1:13]
+ 1 │ new RegExp(`(a)
+   ·             ───
+ 2 │             `)
+   ╰────
+  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
+
+  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
+   ╭─[prefer_named_capture_group.tsx:1:10]
+ 1 │ ╭─▶ RegExp(`a(b
+ 2 │ ╰─▶             c)d`)
+   ╰────
+  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
+
+  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
+   ╭─[prefer_named_capture_group.tsx:1:14]
+ 1 │ new RegExp('a(b)\'')
+   ·              ───
+   ╰────
+  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
+
+  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
+   ╭─[prefer_named_capture_group.tsx:1:9]
+ 1 │ RegExp('(a)\\d')
+   ·         ───
+   ╰────
+  help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
+
+  ⚠ eslint(prefer-named-capture-group): Capture group should be named.
+   ╭─[prefer_named_capture_group.tsx:1:11]
+ 1 │ RegExp(`\a(b)`)
+   ·           ───
    ╰────
   help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group (allowed: 0).
 
