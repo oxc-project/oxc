@@ -169,22 +169,15 @@ fn test() {
         "RegExp('(?<year>[0-9]{4})')",
         "RegExp('(')",
         r"RegExp('\\u{1F680}', 'u')",
-        "new globalThis.RegExp('([0-9]{4})')",
-        "new globalThis.RegExp('([0-9]{4})')", // { "ecmaVersion": 6 },
-        "new globalThis.RegExp('([0-9]{4})')", // { "ecmaVersion": 2017 },
-        "new globalThis.RegExp()",             // { "ecmaVersion": 2020 },
-        "new globalThis.RegExp(foo)",          // { "ecmaVersion": 2020 },
-        "globalThis.RegExp(foo)",              // { "ecmaVersion": 2020 },
-        "
-                            var globalThis = bar;
-                            globalThis.RegExp(foo);
-                            ", // { "ecmaVersion": 2020 },
-        "
-                            function foo () {
-                                var globalThis = bar;
-                                new globalThis.RegExp(baz);
-                            }
-                            ", // { "ecmaVersion": 2020 },
+        // Oxc recognizes globalThis.RegExp regardless of ecmaVersion, so upstream's pre-2020
+        // globalThis capture-group cases are intentionally covered as invalid below.
+        "new globalThis.RegExp()",    // { "ecmaVersion": 2020 },
+        "new globalThis.RegExp(foo)", // { "ecmaVersion": 2020 },
+        "globalThis.RegExp(foo)",     // { "ecmaVersion": 2020 },
+        // { "ecmaVersion": 2020 }
+        "var globalThis = bar; globalThis.RegExp(foo);",
+        // { "ecmaVersion": 2020 }
+        "function foo () { var globalThis = bar; new globalThis.RegExp(baz); }",
         "new RegExp('(?<c>[[A--B]])', 'v')",
         r"new RegExp('([\\q])', 'v')",
         "/(?i:foo)bar/", // { "ecmaVersion": 2025 },
@@ -223,10 +216,8 @@ fn test() {
         r"RegExp(`\a(b)`)",
         "new globalThis.RegExp('([0-9]{4})')", // { "ecmaVersion": 2020 },
         "globalThis.RegExp('([0-9]{4})')",     // { "ecmaVersion": 2020 },
-        "
-                            function foo() { var globalThis = bar; }
-                            new globalThis.RegExp('([0-9]{4})');
-                        ", // { "ecmaVersion": 2020 },
+        // { "ecmaVersion": 2020 }
+        "function foo() { var globalThis = bar; } new globalThis.RegExp('([0-9]{4})');",
         "new RegExp('([[A--B]])', 'v')",
     ];
 

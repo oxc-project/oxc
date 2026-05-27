@@ -38,9 +38,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group.
 
   ⚠ eslint(prefer-named-capture-group): Capture group should be named.
-   ╭─[prefer_named_capture_group.tsx:1:32]
- 1 │ new RegExp('\\u1234\\u5678(?:a)(b)');
-   ·                                ───
+   ╭─[prefer_named_capture_group.tsx:1:30]
+ 1 │ new RegExp('\u1234\u5678(?:a)(b)');
+   ·                              ───
    ╰────
   help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group.
 
@@ -214,11 +214,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group.
 
   ⚠ eslint(prefer-named-capture-group): Capture group should be named.
-   ╭─[prefer_named_capture_group.tsx:3:36]
- 2 │             function foo() { var globalThis = bar; }
- 3 │             new globalThis.RegExp('([0-9]{4})');
-   ·                                    ──────────
- 4 │             
+   ╭─[prefer_named_capture_group.tsx:1:65]
+ 1 │ function foo() { var globalThis = bar; } new globalThis.RegExp('([0-9]{4})');
+   ·                                                                 ──────────
    ╰────
   help: Use a named capture group like "(?<name>...)" — this regex has 1 unnamed group.
 
