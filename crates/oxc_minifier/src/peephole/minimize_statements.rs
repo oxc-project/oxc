@@ -689,7 +689,7 @@ impl<'a> PeepholeOptimizations {
                                 known_bool_symbols,
                                 function_decl_scopes,
                                 ctx,
-                            )
+                            );
                         }
                         match_expression!(Argument) => Self::update_known_booleans_for_expression(
                             arg.to_expression(),
