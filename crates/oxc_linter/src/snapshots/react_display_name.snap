@@ -299,6 +299,24 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a `displayName` property to the component.
 
   ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:2:27]
+ 1 │ 
+ 2 │                     const renderer = a => listItem => {
+   ·                           ────────
+ 3 │                       return <div>{a} {listItem}</div>;
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:2:27]
+ 1 │ 
+ 2 │                     const renderer = a => listItem =>
+   ·                           ────────
+ 3 │                       React.createElement('div', null, a, listItem);
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
    ╭─[display_name.tsx:4:34]
  3 │ 
  4 │                     export const Component = observer(() => {

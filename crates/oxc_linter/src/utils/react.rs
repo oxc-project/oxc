@@ -911,15 +911,36 @@ pub fn function_body_contains_jsx(body: &FunctionBody) -> bool {
     finder.found
 }
 
-/// Checks if a function-like expression (function or arrow function) contains JSX
+/// Checks if a function-like expression (function or arrow function) returns JSX.
+///
+/// For arrow functions this inspects only the **return position** (the concise body
+/// expression, or top-level `return` statements), so JSX that merely appears as a call
+/// argument (e.g. `() => { foo(<div />) }`) is *not* counted as a component. This differs
+/// from [`function_body_contains_jsx`], which detects JSX anywhere in the body via a full
+/// visitor walk.
 pub fn expression_contains_jsx(expr: &Expression) -> bool {
     match expr {
         Expression::FunctionExpression(func) => function_contains_jsx(func),
         Expression::ArrowFunctionExpression(arrow_func) => {
-            function_body_contains_jsx(&arrow_func.body)
+            if arrow_func.expression {
+                return arrow_func.body.statements.first().is_some_and(|stmt| {
+                    matches!(stmt, Statement::ExpressionStatement(es) if returns_jsx(&es.expression))
+                });
+            }
+
+            arrow_func.body.statements.iter().any(|stmt| {
+                matches!(stmt, Statement::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(returns_jsx))
+            })
         }
         _ => false,
     }
+}
+
+/// Whether an expression is (or directly yields) JSX
+fn returns_jsx(expr: &Expression) -> bool {
+    let expr = expr.get_inner_expression();
+    expr.is_jsx()
+        || matches!(expr, Expression::CallExpression(call) if crate::utils::is_create_element_call(call))
 }
 
 #[cfg(test)]

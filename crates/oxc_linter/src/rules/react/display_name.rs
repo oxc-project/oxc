@@ -1755,6 +1755,44 @@ fn test() {
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
+        (
+            "
+                const createHandler = () => () => {
+                  someGlobalFunc(<div />);
+                };
+                ",
+            None,
+            None,
+        ),
+        (
+            "
+                const createHandler = () => () => someGlobalFunc(<div />);
+                ",
+            None,
+            None,
+        ),
+        (
+            "
+                const createHandler = () => () => {
+                  const x = wrap(<div />);
+                  return x;
+                };
+                ",
+            None,
+            None,
+        ),
+        (
+            "
+                const createHandler = () => () => {
+                  if (cond) {
+                    log(<div />);
+                  }
+                  return null;
+                };
+                ",
+            None,
+            None,
+        )
     ];
 
     let fail = vec![
@@ -2114,6 +2152,23 @@ fn test() {
                     const renderer = a => listItem => (
                       <div>{a} {listItem}</div>
                     );
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    const renderer = a => listItem => {
+                      return <div>{a} {listItem}</div>;
+                    };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    const renderer = a => listItem =>
+                      React.createElement('div', null, a, listItem);
                   ",
             None,
             None,
