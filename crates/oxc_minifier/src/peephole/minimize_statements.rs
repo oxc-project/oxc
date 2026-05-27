@@ -3,17 +3,36 @@ use std::{iter, ops::ControlFlow};
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, walk::walk_function};
 use oxc_ecmascript::{
-    constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
+    constant_evaluation::{ConstantEvaluation, DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut};
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use rustc_hash::FxHashMap;
 
 use crate::{TraverseCtx, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
+
+struct FunctionDeclarationScopeCollector<'m> {
+    function_decl_scopes: &'m mut FxHashMap<SymbolId, ScopeId>,
+}
+
+impl<'a> Visit<'a> for FunctionDeclarationScopeCollector<'_> {
+    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
+        if it.r#type == FunctionType::FunctionDeclaration
+            && let Some(id) = &it.id
+            && let Some(symbol_id) = id.symbol_id.get()
+            && let Some(scope_id) = it.scope_id.get()
+        {
+            self.function_decl_scopes.insert(symbol_id, scope_id);
+        }
+        walk_function(self, it, flags);
+    }
+}
 
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
@@ -37,8 +56,20 @@ impl<'a> PeepholeOptimizations {
         let mut old_stmts = stmts.take_in(ctx.ast);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
+        let mut known_bool_symbols = FxHashMap::<SymbolId, bool>::default();
+        let mut function_decl_scopes = FxHashMap::<SymbolId, ScopeId>::default();
+        Self::collect_function_declaration_scopes(&old_stmts, &mut function_decl_scopes);
         for i in 0..old_stmts.len() {
-            let stmt = old_stmts[i].take_in(ctx.ast);
+            let mut stmt = old_stmts[i].take_in(ctx.ast);
+
+            Self::fold_if_with_known_booleans(&mut stmt, &known_bool_symbols, ctx);
+            Self::update_known_boolean_symbols(
+                &stmt,
+                &mut known_bool_symbols,
+                &function_decl_scopes,
+                ctx,
+            );
+
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -400,6 +431,315 @@ impl<'a> PeepholeOptimizations {
             return left.content_eq(right);
         }
         false
+    }
+
+    fn fold_if_with_known_booleans(
+        stmt: &mut Statement<'a>,
+        known_bool_symbols: &FxHashMap<SymbolId, bool>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Statement::IfStatement(if_stmt) = stmt else { return };
+        let known_boolean = match &if_stmt.test {
+            Expression::Identifier(ident) => ctx
+                .scoping()
+                .get_reference(ident.reference_id())
+                .symbol_id()
+                .and_then(|symbol_id| known_bool_symbols.get(&symbol_id))
+                .copied(),
+            Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                if let Expression::Identifier(ident) = &unary_expr.argument {
+                    ctx.scoping()
+                        .get_reference(ident.reference_id())
+                        .symbol_id()
+                        .and_then(|symbol_id| known_bool_symbols.get(&symbol_id))
+                        .map(|v| !v)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        };
+        let Some(known_boolean) = known_boolean else { return };
+        if_stmt.test = ctx.ast.expression_numeric_literal(
+            if_stmt.test.span(),
+            if known_boolean { 1.0 } else { 0.0 },
+            None,
+            NumberBase::Decimal,
+        );
+        Self::try_fold_if(stmt, ctx);
+    }
+
+    fn update_known_boolean_symbols(
+        stmt: &Statement<'a>,
+        known_bool_symbols: &mut FxHashMap<SymbolId, bool>,
+        function_decl_scopes: &FxHashMap<SymbolId, ScopeId>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        match stmt {
+            Statement::EmptyStatement(_) | Statement::FunctionDeclaration(_) => {}
+            Statement::VariableDeclaration(decl) if !decl.kind.is_var() => {
+                Self::update_known_booleans_for_variable_declaration(decl, known_bool_symbols, ctx);
+            }
+            Statement::ExpressionStatement(expr_stmt) => {
+                Self::update_known_booleans_for_expression(
+                    &expr_stmt.expression,
+                    known_bool_symbols,
+                    function_decl_scopes,
+                    ctx,
+                );
+            }
+            Statement::IfStatement(if_stmt) => {
+                Self::update_known_booleans_for_if_statement(
+                    if_stmt,
+                    known_bool_symbols,
+                    function_decl_scopes,
+                    ctx,
+                );
+            }
+            Statement::BlockStatement(block) => {
+                for stmt in &block.body {
+                    Self::update_known_boolean_symbols(
+                        stmt,
+                        known_bool_symbols,
+                        function_decl_scopes,
+                        ctx,
+                    );
+                }
+            }
+            _ => known_bool_symbols.clear(),
+        }
+    }
+
+    fn update_known_booleans_for_variable_declaration(
+        decl: &VariableDeclaration<'a>,
+        known_bool_symbols: &mut FxHashMap<SymbolId, bool>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        for declarator in &decl.declarations {
+            let BindingPattern::BindingIdentifier(id) = &declarator.id else { continue };
+            let Some(symbol_id) = id.symbol_id.get() else { continue };
+            let Some(init) = &declarator.init else {
+                known_bool_symbols.remove(&symbol_id);
+                continue;
+            };
+            if let Some(value) = init.evaluate_value_to_boolean(ctx) {
+                known_bool_symbols.insert(symbol_id, value);
+            } else {
+                known_bool_symbols.remove(&symbol_id);
+            }
+        }
+    }
+
+    fn update_known_booleans_for_if_statement(
+        if_stmt: &IfStatement<'a>,
+        known_bool_symbols: &mut FxHashMap<SymbolId, bool>,
+        function_decl_scopes: &FxHashMap<SymbolId, ScopeId>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        let mut entry_env = known_bool_symbols.clone();
+        Self::update_known_booleans_for_expression(
+            &if_stmt.test,
+            &mut entry_env,
+            function_decl_scopes,
+            ctx,
+        );
+
+        if let Some(boolean) = if_stmt.test.evaluate_value_to_boolean(ctx) {
+            let branch = if boolean {
+                &if_stmt.consequent
+            } else if let Some(alternate) = &if_stmt.alternate {
+                alternate
+            } else {
+                known_bool_symbols.clear();
+                return;
+            };
+            *known_bool_symbols = entry_env;
+            Self::update_known_boolean_symbols(
+                branch,
+                known_bool_symbols,
+                function_decl_scopes,
+                ctx,
+            );
+            return;
+        }
+
+        let mut consequent_env = entry_env.clone();
+        Self::update_known_boolean_symbols(
+            &if_stmt.consequent,
+            &mut consequent_env,
+            function_decl_scopes,
+            ctx,
+        );
+        let mut alternate_env = entry_env;
+        if let Some(alternate) = &if_stmt.alternate {
+            Self::update_known_boolean_symbols(
+                alternate,
+                &mut alternate_env,
+                function_decl_scopes,
+                ctx,
+            );
+        }
+        known_bool_symbols.retain(|symbol_id, value| {
+            alternate_env.get(symbol_id).is_some_and(|alternate| alternate == value)
+                && consequent_env.get(symbol_id).is_some_and(|consequent| consequent == value)
+        });
+    }
+
+    fn update_known_booleans_for_expression(
+        expr: &Expression<'a>,
+        known_bool_symbols: &mut FxHashMap<SymbolId, bool>,
+        function_decl_scopes: &FxHashMap<SymbolId, ScopeId>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        match expr {
+            Expression::SequenceExpression(seq) => {
+                for expr in &seq.expressions {
+                    Self::update_known_booleans_for_expression(
+                        expr,
+                        known_bool_symbols,
+                        function_decl_scopes,
+                        ctx,
+                    );
+                }
+            }
+            Expression::AssignmentExpression(assign_expr) => {
+                Self::update_known_booleans_for_expression(
+                    &assign_expr.right,
+                    known_bool_symbols,
+                    function_decl_scopes,
+                    ctx,
+                );
+                let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left else {
+                    known_bool_symbols.clear();
+                    return;
+                };
+                let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
+                else {
+                    known_bool_symbols.clear();
+                    return;
+                };
+                if assign_expr.operator == AssignmentOperator::Assign
+                    && let Some(value) = assign_expr.right.evaluate_value_to_boolean(ctx)
+                {
+                    known_bool_symbols.insert(symbol_id, value);
+                } else {
+                    known_bool_symbols.remove(&symbol_id);
+                }
+            }
+            Expression::UpdateExpression(update_expr) => {
+                let SimpleAssignmentTarget::AssignmentTargetIdentifier(id) = &update_expr.argument
+                else {
+                    known_bool_symbols.clear();
+                    return;
+                };
+                let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
+                else {
+                    known_bool_symbols.clear();
+                    return;
+                };
+                known_bool_symbols.remove(&symbol_id);
+            }
+            Expression::CallExpression(call_expr) => {
+                Self::update_known_booleans_for_expression(
+                    &call_expr.callee,
+                    known_bool_symbols,
+                    function_decl_scopes,
+                    ctx,
+                );
+                for arg in &call_expr.arguments {
+                    match arg {
+                        Argument::SpreadElement(spread) => {
+                            Self::update_known_booleans_for_expression(
+                                &spread.argument,
+                                known_bool_symbols,
+                                function_decl_scopes,
+                                ctx,
+                            )
+                        }
+                        match_expression!(Argument) => Self::update_known_booleans_for_expression(
+                            arg.to_expression(),
+                            known_bool_symbols,
+                            function_decl_scopes,
+                            ctx,
+                        ),
+                    }
+                }
+                // A function call only affects constants once it is reachable/executed.
+                // For direct calls to function declarations, kill only symbols that the callee may write.
+                if let Expression::Identifier(callee_ident) = &call_expr.callee
+                    && let Some(callee_symbol_id) =
+                        ctx.scoping().get_reference(callee_ident.reference_id()).symbol_id()
+                    && let Some(function_scope_id) = function_decl_scopes.get(&callee_symbol_id)
+                {
+                    let mutated = known_bool_symbols
+                        .keys()
+                        .copied()
+                        .filter(|symbol_id| {
+                            Self::function_call_may_write_symbol(
+                                *function_scope_id,
+                                *symbol_id,
+                                ctx,
+                            )
+                        })
+                        .collect::<std::vec::Vec<_>>();
+                    for symbol_id in mutated {
+                        known_bool_symbols.remove(&symbol_id);
+                    }
+                    return;
+                }
+                known_bool_symbols.clear();
+            }
+            _ => {
+                if expr.may_have_side_effects(ctx) {
+                    known_bool_symbols.clear();
+                }
+            }
+        }
+    }
+
+    fn collect_function_declaration_scopes(
+        stmts: &[Statement<'a>],
+        function_decl_scopes: &mut FxHashMap<SymbolId, ScopeId>,
+    ) {
+        let mut collector = FunctionDeclarationScopeCollector { function_decl_scopes };
+        for stmt in stmts {
+            collector.visit_statement(stmt);
+        }
+    }
+
+    fn function_call_may_write_symbol(
+        function_scope_id: ScopeId,
+        symbol_id: SymbolId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        ctx.scoping().get_resolved_references(symbol_id).any(|reference| {
+            reference.is_write()
+                && Self::is_scope_inside_function_execution(
+                    reference.scope_id(),
+                    function_scope_id,
+                    ctx,
+                )
+        })
+    }
+
+    fn is_scope_inside_function_execution(
+        scope_id: ScopeId,
+        function_scope_id: ScopeId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let mut seen_function_scope = false;
+        for ancestor_scope_id in ctx.scoping().scope_ancestors(scope_id) {
+            if ancestor_scope_id == function_scope_id {
+                seen_function_scope = true;
+                break;
+            }
+            if ancestor_scope_id != scope_id
+                && ctx.scoping().scope_flags(ancestor_scope_id).is_function()
+            {
+                return false;
+            }
+        }
+        seen_function_scope
     }
 
     /// For variable declarations:

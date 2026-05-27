@@ -121,6 +121,15 @@ fn dce_if_statement() {
     test("if (typeof false !== 'boolean') { REMOVE; }", "");
     test("if (typeof 1 === 'string') { REMOVE; }", "");
 
+    // remove code that relies on the value of itself
+    test(
+        "let foo = false;
+        function bar(val) { foo = val }
+        if (foo) { bar(true) }
+        console.log(foo);",
+        "console.log(false);",
+    );
+
     // Complicated
     test(
         "if (unknown)
@@ -131,6 +140,66 @@ fn dce_if_statement() {
         "if (unknown) {
             for (var x = 1; x-- > 0;) if (foo++, false);
            } else throw new Error();",
+    );
+}
+
+#[test]
+fn dce_if_statement_symbol_tracking_with_function_calls() {
+    // Direct reachable call only kills symbols written by the callee.
+    test(
+        "let foo = false;
+        let flag = true;
+        function setFoo(val) { foo = val }
+        setFoo(true);
+        if (flag) { keep() }
+        flag = side();",
+        "keep();
+        side();",
+    );
+
+    // Unknown calls still conservatively invalidate tracking.
+    test_same(
+        "let flag = true;
+        unknown();
+        if (flag) keep();
+        flag = false;",
+    );
+
+    // Function declaration nested in a loop block should still be tracked.
+    test(
+        "let foo = false;
+        let bar = true;
+        while (cond) {
+          function setFoo(v) { foo = v }
+          setFoo(true);
+          if (bar) keep();
+          break;
+        }",
+        "while (cond) {
+          keep();
+          break;
+        }",
+    );
+
+    // Unreachable call path in loop body: the call side effect should not apply.
+    test(
+        "let foo = false;
+        let bar = true;
+        while (cond) {
+          function setFoo(v) { foo = v }
+          if (foo) { setFoo(true) }
+          if (bar) keep();
+          break;
+        }",
+        "let foo = false;
+        while (cond) {
+          function setFoo(v) {
+          	foo = v;
+          }
+          if (foo) setFoo(true);
+          keep();
+          break;
+        }",
     );
 }
 
