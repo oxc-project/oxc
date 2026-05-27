@@ -169,6 +169,7 @@ pub use crate::rules::eslint::prefer_arrow_callback::PreferArrowCallback as Esli
 pub use crate::rules::eslint::prefer_const::PreferConst as EslintPreferConst;
 pub use crate::rules::eslint::prefer_destructuring::PreferDestructuring as EslintPreferDestructuring;
 pub use crate::rules::eslint::prefer_exponentiation_operator::PreferExponentiationOperator as EslintPreferExponentiationOperator;
+pub use crate::rules::eslint::prefer_named_capture_group::PreferNamedCaptureGroup as EslintPreferNamedCaptureGroup;
 pub use crate::rules::eslint::prefer_numeric_literals::PreferNumericLiterals as EslintPreferNumericLiterals;
 pub use crate::rules::eslint::prefer_object_has_own::PreferObjectHasOwn as EslintPreferObjectHasOwn;
 pub use crate::rules::eslint::prefer_object_spread::PreferObjectSpread as EslintPreferObjectSpread;
@@ -1025,6 +1026,7 @@ pub enum RuleEnum {
     EslintPreferConst(EslintPreferConst),
     EslintPreferDestructuring(EslintPreferDestructuring),
     EslintPreferExponentiationOperator(EslintPreferExponentiationOperator),
+    EslintPreferNamedCaptureGroup(EslintPreferNamedCaptureGroup),
     EslintPreferNumericLiterals(EslintPreferNumericLiterals),
     EslintPreferObjectHasOwn(EslintPreferObjectHasOwn),
     EslintPreferObjectSpread(EslintPreferObjectSpread),
@@ -1847,7 +1849,9 @@ const ESLINT_PREFER_ARROW_CALLBACK_ID: usize = ESLINT_OPERATOR_ASSIGNMENT_ID + 1
 const ESLINT_PREFER_CONST_ID: usize = ESLINT_PREFER_ARROW_CALLBACK_ID + 1usize;
 const ESLINT_PREFER_DESTRUCTURING_ID: usize = ESLINT_PREFER_CONST_ID + 1usize;
 const ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID: usize = ESLINT_PREFER_DESTRUCTURING_ID + 1usize;
-const ESLINT_PREFER_NUMERIC_LITERALS_ID: usize = ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID + 1usize;
+const ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID: usize =
+    ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID + 1usize;
+const ESLINT_PREFER_NUMERIC_LITERALS_ID: usize = ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID + 1usize;
 const ESLINT_PREFER_OBJECT_HAS_OWN_ID: usize = ESLINT_PREFER_NUMERIC_LITERALS_ID + 1usize;
 const ESLINT_PREFER_OBJECT_SPREAD_ID: usize = ESLINT_PREFER_OBJECT_HAS_OWN_ID + 1usize;
 const ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID: usize = ESLINT_PREFER_OBJECT_SPREAD_ID + 1usize;
@@ -2767,6 +2771,7 @@ impl RuleEnum {
             Self::EslintPreferConst(_) => ESLINT_PREFER_CONST_ID,
             Self::EslintPreferDestructuring(_) => ESLINT_PREFER_DESTRUCTURING_ID,
             Self::EslintPreferExponentiationOperator(_) => ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID,
+            Self::EslintPreferNamedCaptureGroup(_) => ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID,
             Self::EslintPreferNumericLiterals(_) => ESLINT_PREFER_NUMERIC_LITERALS_ID,
             Self::EslintPreferObjectHasOwn(_) => ESLINT_PREFER_OBJECT_HAS_OWN_ID,
             Self::EslintPreferObjectSpread(_) => ESLINT_PREFER_OBJECT_SPREAD_ID,
@@ -3708,6 +3713,7 @@ impl RuleEnum {
             Self::EslintPreferConst(_) => EslintPreferConst::NAME,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::NAME,
             Self::EslintPreferExponentiationOperator(_) => EslintPreferExponentiationOperator::NAME,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::NAME,
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::NAME,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::NAME,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::NAME,
@@ -4641,6 +4647,7 @@ impl RuleEnum {
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::CATEGORY
             }
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::CATEGORY,
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::CATEGORY,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::CATEGORY,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::CATEGORY,
@@ -5621,6 +5628,7 @@ impl RuleEnum {
             Self::EslintPreferConst(_) => EslintPreferConst::FIX,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::FIX,
             Self::EslintPreferExponentiationOperator(_) => EslintPreferExponentiationOperator::FIX,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::FIX,
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::FIX,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::FIX,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::FIX,
@@ -6578,6 +6586,9 @@ impl RuleEnum {
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::documentation(),
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::documentation()
+            }
+            Self::EslintPreferNamedCaptureGroup(_) => {
+                EslintPreferNamedCaptureGroup::documentation()
             }
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::documentation(),
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::documentation(),
@@ -8030,6 +8041,10 @@ impl RuleEnum {
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::config_schema(generator)
                     .or_else(|| EslintPreferExponentiationOperator::schema(generator))
+            }
+            Self::EslintPreferNamedCaptureGroup(_) => {
+                EslintPreferNamedCaptureGroup::config_schema(generator)
+                    .or_else(|| EslintPreferNamedCaptureGroup::schema(generator))
             }
             Self::EslintPreferNumericLiterals(_) => {
                 EslintPreferNumericLiterals::config_schema(generator)
@@ -10069,6 +10084,7 @@ impl RuleEnum {
             Self::EslintPreferConst(_) => "eslint",
             Self::EslintPreferDestructuring(_) => "eslint",
             Self::EslintPreferExponentiationOperator(_) => "eslint",
+            Self::EslintPreferNamedCaptureGroup(_) => "eslint",
             Self::EslintPreferNumericLiterals(_) => "eslint",
             Self::EslintPreferObjectHasOwn(_) => "eslint",
             Self::EslintPreferObjectSpread(_) => "eslint",
@@ -11277,6 +11293,9 @@ impl RuleEnum {
                     EslintPreferExponentiationOperator::from_configuration(value)?,
                 ))
             }
+            Self::EslintPreferNamedCaptureGroup(_) => Ok(Self::EslintPreferNamedCaptureGroup(
+                EslintPreferNamedCaptureGroup::from_configuration(value)?,
+            )),
             Self::EslintPreferNumericLiterals(_) => Ok(Self::EslintPreferNumericLiterals(
                 EslintPreferNumericLiterals::from_configuration(value)?,
             )),
@@ -13512,6 +13531,7 @@ impl RuleEnum {
             Self::EslintPreferConst(rule) => rule.to_configuration(),
             Self::EslintPreferDestructuring(rule) => rule.to_configuration(),
             Self::EslintPreferExponentiationOperator(rule) => rule.to_configuration(),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.to_configuration(),
             Self::EslintPreferNumericLiterals(rule) => rule.to_configuration(),
             Self::EslintPreferObjectHasOwn(rule) => rule.to_configuration(),
             Self::EslintPreferObjectSpread(rule) => rule.to_configuration(),
@@ -14339,6 +14359,7 @@ impl RuleEnum {
                 Self::EslintPreferConst(rule) => rule.run(node, ctx),
                 Self::EslintPreferDestructuring(rule) => rule.run(node, ctx),
                 Self::EslintPreferExponentiationOperator(rule) => rule.run(node, ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run(node, ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run(node, ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run(node, ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run(node, ctx),
@@ -15159,6 +15180,7 @@ impl RuleEnum {
                 Self::EslintPreferConst(rule) => rule.run(node, ctx),
                 Self::EslintPreferDestructuring(rule) => rule.run(node, ctx),
                 Self::EslintPreferExponentiationOperator(rule) => rule.run(node, ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run(node, ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run(node, ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run(node, ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run(node, ctx),
@@ -15986,6 +16008,7 @@ impl RuleEnum {
                 Self::EslintPreferConst(rule) => rule.run_once(ctx),
                 Self::EslintPreferDestructuring(rule) => rule.run_once(ctx),
                 Self::EslintPreferExponentiationOperator(rule) => rule.run_once(ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_once(ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run_once(ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run_once(ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run_once(ctx),
@@ -16806,6 +16829,7 @@ impl RuleEnum {
                 Self::EslintPreferConst(rule) => rule.run_once(ctx),
                 Self::EslintPreferDestructuring(rule) => rule.run_once(ctx),
                 Self::EslintPreferExponentiationOperator(rule) => rule.run_once(ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_once(ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run_once(ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run_once(ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run_once(ctx),
@@ -17650,6 +17674,7 @@ impl RuleEnum {
                 Self::EslintPreferExponentiationOperator(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18724,6 +18749,7 @@ impl RuleEnum {
                 Self::EslintPreferExponentiationOperator(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19784,6 +19810,7 @@ impl RuleEnum {
             Self::EslintPreferConst(rule) => rule.should_run(ctx),
             Self::EslintPreferDestructuring(rule) => rule.should_run(ctx),
             Self::EslintPreferExponentiationOperator(rule) => rule.should_run(ctx),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.should_run(ctx),
             Self::EslintPreferNumericLiterals(rule) => rule.should_run(ctx),
             Self::EslintPreferObjectHasOwn(rule) => rule.should_run(ctx),
             Self::EslintPreferObjectSpread(rule) => rule.should_run(ctx),
@@ -20630,6 +20657,9 @@ impl RuleEnum {
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::IS_TSGOLINT_RULE,
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::IS_TSGOLINT_RULE
+            }
+            Self::EslintPreferNamedCaptureGroup(_) => {
+                EslintPreferNamedCaptureGroup::IS_TSGOLINT_RULE
             }
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::IS_TSGOLINT_RULE,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::IS_TSGOLINT_RULE,
@@ -21788,6 +21818,7 @@ impl RuleEnum {
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::VERSION
             }
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::VERSION,
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::VERSION,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::VERSION,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::VERSION,
@@ -22780,6 +22811,7 @@ impl RuleEnum {
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::HAS_CONFIG
             }
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::HAS_CONFIG,
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::HAS_CONFIG,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::HAS_CONFIG,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::HAS_CONFIG,
@@ -23789,6 +23821,7 @@ impl RuleEnum {
             Self::EslintPreferConst(rule) => rule.types_info(),
             Self::EslintPreferDestructuring(rule) => rule.types_info(),
             Self::EslintPreferExponentiationOperator(rule) => rule.types_info(),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.types_info(),
             Self::EslintPreferNumericLiterals(rule) => rule.types_info(),
             Self::EslintPreferObjectHasOwn(rule) => rule.types_info(),
             Self::EslintPreferObjectSpread(rule) => rule.types_info(),
@@ -24606,6 +24639,7 @@ impl RuleEnum {
             Self::EslintPreferConst(rule) => rule.run_info(),
             Self::EslintPreferDestructuring(rule) => rule.run_info(),
             Self::EslintPreferExponentiationOperator(rule) => rule.run_info(),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.run_info(),
             Self::EslintPreferNumericLiterals(rule) => rule.run_info(),
             Self::EslintPreferObjectHasOwn(rule) => rule.run_info(),
             Self::EslintPreferObjectSpread(rule) => rule.run_info(),
@@ -25445,6 +25479,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintPreferConst(EslintPreferConst::default()),
         RuleEnum::EslintPreferDestructuring(EslintPreferDestructuring::default()),
         RuleEnum::EslintPreferExponentiationOperator(EslintPreferExponentiationOperator::default()),
+        RuleEnum::EslintPreferNamedCaptureGroup(EslintPreferNamedCaptureGroup::default()),
         RuleEnum::EslintPreferNumericLiterals(EslintPreferNumericLiterals::default()),
         RuleEnum::EslintPreferObjectHasOwn(EslintPreferObjectHasOwn::default()),
         RuleEnum::EslintPreferObjectSpread(EslintPreferObjectSpread::default()),

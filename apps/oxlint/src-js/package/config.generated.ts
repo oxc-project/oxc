@@ -875,6 +875,7 @@ export interface DummyRuleMap {
   "prefer-const"?: DummyRule;
   "prefer-destructuring"?: DummyRule;
   "prefer-exponentiation-operator"?: DummyRule;
+  "prefer-named-capture-group"?: DummyRule;
   "prefer-numeric-literals"?: DummyRule;
   "prefer-object-has-own"?: DummyRule;
   "prefer-object-spread"?: DummyRule;
