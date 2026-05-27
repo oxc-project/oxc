@@ -330,13 +330,6 @@ fn test() {
         (r"/(?<temp1>[0-9]{4})-(\w{5})/", None),
         ("/(?<temp1>[0-9]{4})-(5)/", None),
         ("/(?<temp1>a)(?<temp2>a)(a)(?<temp3>a)/", None),
-        // Multi-line template literal (no substitution)
-        ("new RegExp(`(a)\n            `)", None),
-        ("RegExp(`a(b\n            c)d`)", None),
-        // Escape sequences in string patterns
-        (r"new RegExp('a(b)\'')", None),
-        (r"RegExp('(a)\\d')", None),
-        (r"RegExp(`\a(b)`)", None),
         // Constant RegExp constructor arguments
         ("new RegExp('(' + 'a)')", None),
         ("new RegExp('a(bc)d' + 'e')", None),
@@ -345,6 +338,13 @@ fn test() {
         ("RegExp('(a)'+'')", None),
         ("RegExp( '' + '(ab)')", None),
         ("new RegExp(`(ab)${''}`)", None),
+        // Multi-line template literal (no substitution)
+        ("new RegExp(`(a)\n            `)", None),
+        ("RegExp(`a(b\n            c)d`)", None),
+        // Escape sequences in string patterns
+        (r"new RegExp('a(b)\'')", None),
+        (r"RegExp('(a)\\d')", None),
+        (r"RegExp(`\a(b)`)", None),
         // globalThis.RegExp — always recognized in oxlint regardless of ecmaVersion
         ("new globalThis.RegExp('([0-9]{4})')", None),
         ("globalThis.RegExp('([0-9]{4})')", None),
