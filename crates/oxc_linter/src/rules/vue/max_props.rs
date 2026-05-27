@@ -2,10 +2,10 @@ use oxc_allocator::Vec;
 use oxc_ast::{
     AstKind,
     ast::{
-        ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, TSSignature, TSType,
-        TSTypeName, TSTypeReference,
+        ExportDefaultDeclarationKind, Expression, TSSignature, TSType, TSTypeName, TSTypeReference,
     },
 };
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -21,6 +21,7 @@ use crate::{
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
+    utils::find_property,
 };
 
 fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
@@ -163,18 +164,11 @@ impl MaxProps {
             return;
         };
 
-        let Some(props_obj_expr) = obj_expr.properties.iter().find_map(|item| {
-            if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
-                && let Some(key) = obj_prop.key.static_name()
-                && key == "props"
-                && let Expression::ObjectExpression(props_expr) =
-                    obj_prop.value.get_inner_expression()
-            {
-                Some(props_expr)
-            } else {
-                None
-            }
-        }) else {
+        let Some(props_prop) = find_property(obj_expr, "props") else {
+            return;
+        };
+        let Expression::ObjectExpression(props_obj_expr) = props_prop.value.get_inner_expression()
+        else {
             return;
         };
 

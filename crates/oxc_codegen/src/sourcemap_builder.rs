@@ -80,8 +80,8 @@ impl<'a> SourcemapBuilder<'a> {
         }
     }
 
-    pub fn into_sourcemap(self) -> oxc_sourcemap::SourceMap {
-        self.sourcemap_builder.into_sourcemap()
+    pub fn into_sourcemap(self) -> oxc_sourcemap::OwnedSourceMap {
+        self.sourcemap_builder.into_owned_sourcemap()
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
@@ -572,13 +572,17 @@ mod test {
         let sm = builder.into_sourcemap();
         // The name `a` not change.
         assert_eq!(
-            sm.get_source_view_token(0_u32).as_ref().and_then(|token| token.get_name()),
+            sm.get_source_view_token(0_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
             None
         );
         // The name `b` -> `c`, save `b` to token.
         assert_eq!(
-            sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
-            Some(&"b".into())
+            sm.get_source_view_token(1_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            Some("b")
         );
     }
 

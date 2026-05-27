@@ -33,6 +33,14 @@ impl<'a> Visit<'a> for FunctionDeclarationScopeCollector<'_> {
         walk_function(self, it, flags);
     }
 }
+/// `false` when dropping `stmt` produces a byte-identical AST — a `var`
+/// with no initializers, which `KeepVar` re-emits unchanged at the end of
+/// the block. Flagging such an identity drop as a real change would
+/// oscillate the peephole fixed-point loop forever.
+fn dead_drop_mutates_ast(stmt: &Statement<'_>) -> bool {
+    !matches!(stmt, Statement::VariableDeclaration(decl)
+        if decl.kind.is_var() && decl.declarations.iter().all(|d| d.init.is_none()))
+}
 
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
@@ -59,6 +67,7 @@ impl<'a> PeepholeOptimizations {
         let mut known_bool_symbols = FxHashMap::<SymbolId, bool>::default();
         let mut function_decl_scopes = FxHashMap::<SymbolId, ScopeId>::default();
         Self::collect_function_declaration_scopes(&old_stmts, &mut function_decl_scopes);
+        let mut identity_drops = 0u32;
         for i in 0..old_stmts.len() {
             let mut stmt = old_stmts[i].take_in(ctx.ast);
 
@@ -74,8 +83,21 @@ impl<'a> PeepholeOptimizations {
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
             {
+                // Harvest any `var` bindings so they re-emit at the end of
+                // the block (see `keep_var.get_variable_declaration_statement`
+                // below).
                 keep_var.visit_statement(&stmt);
-                continue;
+                // Re-flag the peephole loop so the next iteration's
+                // `LiveUsageCollector` refreshes scope counts and the
+                // unused-declarator pass can remove bindings that this
+                // drop just orphaned (e.g. `var x = {}` after dropping
+                // `module.exports = x;`).
+                if dead_drop_mutates_ast(&stmt) {
+                    ctx.state.changed = true;
+                } else {
+                    identity_drops += 1;
+                }
+                continue; // drop: `stmt` is intentionally not pushed into `stmts`.
             }
             if Self::minimize_statement(
                 stmt,
@@ -90,10 +112,23 @@ impl<'a> PeepholeOptimizations {
                 break;
             }
         }
-        if let Some(stmt) = keep_var.get_variable_declaration_statement()
-            && let Some(stmt) = Self::remove_unused_variable_declaration(stmt, ctx)
-        {
-            stmts.push(stmt);
+        if let Some(stmt) = keep_var.get_variable_declaration_statement() {
+            match Self::remove_unused_variable_declaration(stmt, ctx) {
+                // Multiple identity-dropped `var x;`s coalesce into a single
+                // `var x, y;`. The individual drops looked byte-identical, but
+                // the combined re-emit is a real AST change — re-flag so the
+                // fixed-point loop doesn't terminate one iteration early.
+                Some(stmt) => {
+                    stmts.push(stmt);
+                    if identity_drops > 1 {
+                        ctx.state.changed = true;
+                    }
+                }
+                // The harvested `var` was entirely unused; the net effect of
+                // drop + re-hoist + remove is removing the declaration, even
+                // though every individual drop was classified as identity.
+                None => ctx.state.changed = true,
+            }
         }
 
         // Drop a trailing unconditional jump statement if applicable

@@ -1,11 +1,14 @@
 //! ES2022: Class Properties
 //! Transform of private method uses e.g. `this.#method()`.
 
+use std::cell::Cell;
+
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_semantic::ScopeFlags;
+use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
+use oxc_traverse::Ancestor;
 
 use crate::{Helper, common::helper_loader::helper_call_expr, context::TraverseCtx};
 
@@ -62,21 +65,26 @@ impl<'a> ClassProperties<'a> {
         // Change parent scope of function to current scope id and remove
         // strict mode flag if parent scope is not strict mode.
         let scope_id = function.scope_id();
-        let new_parent_id = ctx.current_scope_id();
+        let new_parent_id = if Self::is_inside_static_property_initializer(ctx) {
+            ctx.current_hoist_scope_id()
+        } else {
+            ctx.current_scope_id()
+        };
         ctx.scoping_mut().change_scope_parent_id(scope_id, Some(new_parent_id));
-        let is_strict_mode = ctx.current_scope_flags().is_strict_mode();
+        let make_sloppy_mode = !ctx.scoping().scope_flags(new_parent_id).is_strict_mode();
         let flags = ctx.scoping_mut().scope_flags_mut(scope_id);
         *flags -= ScopeFlags::GetAccessor | ScopeFlags::SetAccessor;
-        if !is_strict_mode {
-            // TODO: Needs to remove all child scopes' strict mode flag if child scope
-            // is inherited from this scope.
-            *flags -= ScopeFlags::StrictMode;
-        }
 
-        PrivateMethodVisitor::new(*r#static, self, ctx)
+        PrivateMethodVisitor::new(*r#static, make_sloppy_mode, self, ctx)
             .visit_function(&mut function, ScopeFlags::Function);
 
         Some(Statement::FunctionDeclaration(function))
+    }
+
+    fn is_inside_static_property_initializer(ctx: &TraverseCtx<'a>) -> bool {
+        ctx.ancestors().any(|ancestor| {
+            matches!(ancestor, Ancestor::PropertyDefinitionValue(property) if *property.r#static())
+        })
     }
 
     // `_classPrivateMethodInitSpec(this, brand)`
@@ -102,6 +110,8 @@ impl<'a> ClassProperties<'a> {
 /// 2. Transform `super` expressions.
 struct PrivateMethodVisitor<'a, 'v> {
     super_converter: ClassPropertiesSuperConverter<'a, 'v>,
+    make_sloppy_mode: bool,
+    strict_scope_depth: u32,
     /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
@@ -109,6 +119,7 @@ struct PrivateMethodVisitor<'a, 'v> {
 impl<'a, 'v> PrivateMethodVisitor<'a, 'v> {
     fn new(
         is_static: bool,
+        make_sloppy_mode: bool,
         class_properties: &'v mut ClassProperties<'a>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
@@ -117,7 +128,12 @@ impl<'a, 'v> PrivateMethodVisitor<'a, 'v> {
         } else {
             ClassPropertiesSuperConverterMode::PrivateMethod
         };
-        Self { super_converter: ClassPropertiesSuperConverter::new(mode, class_properties), ctx }
+        Self {
+            super_converter: ClassPropertiesSuperConverter::new(mode, class_properties),
+            make_sloppy_mode,
+            strict_scope_depth: 0,
+            ctx,
+        }
     }
 }
 
@@ -161,6 +177,7 @@ impl<'a> VisitMut<'a> for PrivateMethodVisitor<'a, '_> {
     #[inline]
     fn visit_class(&mut self, _class: &mut Class<'a>) {
         // Ignore because we don't need to transform `super` for other classes.
+        // Nested classes are strict mode, so keep their scopes' strict flags.
 
         // TODO: Actually we do need to transform `super` in:
         // 1. Class decorators
@@ -168,5 +185,24 @@ impl<'a> VisitMut<'a> for PrivateMethodVisitor<'a, '_> {
         // 3. Class property/method/accessor computed keys
         // 4. Class property/method/accessor decorators
         //    (or does `super` in a decorator refer to inner class?)
+    }
+
+    #[inline]
+    fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+        if !self.make_sloppy_mode {
+            return;
+        }
+
+        if self.strict_scope_depth > 0 || flags.is_strict_mode() {
+            self.strict_scope_depth += 1;
+        } else {
+            *self.ctx.scoping_mut().scope_flags_mut(scope_id.get().unwrap()) -=
+                ScopeFlags::StrictMode;
+        }
+    }
+
+    #[inline]
+    fn leave_scope(&mut self) {
+        self.strict_scope_depth = self.strict_scope_depth.saturating_sub(1);
     }
 }

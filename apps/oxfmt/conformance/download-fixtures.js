@@ -30,7 +30,7 @@ const sources = [
   {
     name: "plugin-svelte",
     repo: "sveltejs/prettier-plugin-svelte/test/formatting/samples",
-    version: `v${pkg.dependencies["prettier-plugin-svelte"]}`,
+    version: `prettier-plugin-svelte@${pkg.dependencies["prettier-plugin-svelte"]}`,
   },
 ];
 

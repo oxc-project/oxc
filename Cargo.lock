@@ -1641,7 +1641,7 @@ checksum = "9c6901729fa79e91a0913333229e9ca5dc725089d1c363b2f4b4760709dc4a52"
 
 [[package]]
 name = "oxc"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1722,7 +1722,7 @@ checksum = "d101351ce46bee825bad68f0f899431c66c2878124a8e0f0237d0d562e214ade"
 
 [[package]]
 name = "oxc_allocator"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "allocator-api2",
  "hashbrown 0.17.1",
@@ -1740,7 +1740,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "bitflags",
  "oxc_allocator",
@@ -1756,7 +1756,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "phf",
  "proc-macro2",
@@ -1801,7 +1801,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_visit"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1837,7 +1837,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "bitflags",
  "itertools",
@@ -1849,7 +1849,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -1872,7 +1872,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_compat"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "cow-utils",
  "oxc-browserslist",
@@ -1930,20 +1930,20 @@ dependencies = [
  "saphyr",
  "serde",
  "serde_json",
- "similar 3.1.0",
+ "similar 3.1.1",
  "walkdir",
 ]
 
 [[package]]
 name = "oxc_data_structures"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "ropey",
 ]
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "cow-utils",
  "oxc-miette",
@@ -1952,7 +1952,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ecmascript"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "cow-utils",
  "num-bigint",
@@ -1966,7 +1966,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_estree"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "dragonbox_ecma",
  "itoa",
@@ -1975,7 +1975,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_estree_tokens"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "itoa",
  "oxc_ast",
@@ -1988,7 +1988,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.51.0"
+version = "0.52.0"
 dependencies = [
  "cow-utils",
  "fast-glob",
@@ -2028,7 +2028,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "bitflags",
  "insta",
@@ -2047,7 +2047,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_jsdoc"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "oxc_ast",
  "oxc_span",
@@ -2071,7 +2071,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "1.66.0"
+version = "1.67.0"
 dependencies = [
  "bitflags",
  "constcat",
@@ -2149,7 +2149,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "itertools",
  "oxc_allocator",
@@ -2166,7 +2166,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2195,7 +2195,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minify_napi"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2234,7 +2234,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_napi"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -2248,7 +2248,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -2272,7 +2272,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser_napi"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2320,13 +2320,13 @@ dependencies = [
  "pico-args",
  "rustc-hash",
  "serde_json",
- "similar 3.1.0",
+ "similar 3.1.1",
  "walkdir",
 ]
 
 [[package]]
 name = "oxc_regular_expression"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "bitflags",
  "insta",
@@ -2342,9 +2342,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "11.19.1"
+version = "11.19.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5632fcd47d4fdaf7ef5ee150c7001fa8ed814ce38d1a073536a366dbfc239aad"
+checksum = "de26fd6c906418944e5b86a2442e8941c7c098eddfc9c6b8612de9947ac1237d"
 dependencies = [
  "cfg-if",
  "compact_str",
@@ -2354,6 +2354,7 @@ dependencies = [
  "nodejs-built-in-modules",
  "once_cell",
  "papaya",
+ "percent-encoding",
  "rustc-hash",
  "rustix",
  "self_cell",
@@ -2363,7 +2364,6 @@ dependencies = [
  "simdutf8",
  "thiserror",
  "tracing",
- "url",
  "windows",
 ]
 
@@ -2381,7 +2381,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "insta",
  "itertools",
@@ -2401,13 +2401,14 @@ dependencies = [
  "rustc-hash",
  "self_cell",
  "serde_json",
+ "smallvec",
 ]
 
 [[package]]
 name = "oxc_sourcemap"
-version = "6.1.1"
+version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d378eb8bad20e89d66276aebab51f6a5408571092cac94abdd3eabb773713d6"
+checksum = "db3866f9075027840e0711b52e15d2e1ba076fc5f5f01c96eeedd26375410641"
 dependencies = [
  "base64-simd",
  "json-escape-simd",
@@ -2421,7 +2422,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "compact_str",
  "oxc-miette",
@@ -2435,7 +2436,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_str"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "compact_str",
  "hashbrown 0.17.1",
@@ -2447,7 +2448,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -2471,7 +2472,7 @@ dependencies = [
  "console",
  "oxc_span",
  "project-root",
- "similar 3.1.0",
+ "similar 3.1.1",
  "ureq",
 ]
 
@@ -2520,7 +2521,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2534,7 +2535,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "base64",
  "compact_str",
@@ -2566,7 +2567,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer_plugins"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2593,7 +2594,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.132.0"
+version = "0.133.0"
 dependencies = [
  "itoa",
  "oxc_allocator",
@@ -2610,7 +2611,7 @@ dependencies = [
 
 [[package]]
 name = "oxfmt"
-version = "0.51.0"
+version = "0.52.0"
 dependencies = [
  "bpaf",
  "cow-utils",
@@ -2651,7 +2652,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "1.66.0"
+version = "1.67.0"
 dependencies = [
  "bpaf",
  "cow-utils",
@@ -3242,9 +3243,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.149"
+version = "1.0.150"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
+checksum = "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9"
 dependencies = [
  "indexmap",
  "itoa",
@@ -3332,9 +3333,9 @@ checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
 
 [[package]]
 name = "similar"
-version = "3.1.0"
+version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04d93e861ede2e497b47833469b8ec9d5c07fa4c78ce7a00f6eb7dd8168b4b3f"
+checksum = "e6505efef05804732ed8a3f2d4f279429eb485bd69d5b0cc6b19cc02005cda16"
 dependencies = [
  "bstr",
  "unicode-segmentation",
@@ -3347,7 +3348,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "997e6ca38e97437973fc9f7f50a50d1274cacd874341a4960fea90067291038c"
 dependencies = [
  "console",
- "similar 3.1.0",
+ "similar 3.1.1",
 ]
 
 [[package]]

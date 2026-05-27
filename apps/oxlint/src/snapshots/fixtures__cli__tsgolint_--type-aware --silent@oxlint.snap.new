@@ -1,0 +1,14 @@
+---
+source: apps/oxlint/src/tester.rs
+assertion_line: 163
+---
+########## 
+arguments: --type-aware --silent
+working directory: fixtures/cli/tsgolint
+----------
+
+Found 0 warnings and 82 errors.
+Finished in <variable>ms on 60 files with 59 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

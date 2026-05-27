@@ -275,6 +275,22 @@ fn dce_var_hoisting() {
     );
 }
 
+// Dropping a dead-after-throw statement (`module.exports = x`) removes the
+// only reference to `x`. Without flagging that as a change, the peephole loop
+// terminates before `LiveUsageCollector` refreshes scoping, leaving the
+// unused-declarator pass to see a stale reference and keep `var x = {}`.
+#[test]
+fn dead_after_throw_drop_triggers_unused_declarator_removal() {
+    test(
+        "export function f() {
+            var x = {};
+            throw new Error('boom');
+            module.exports = x;
+         }",
+        "export function f() { throw new Error('boom'); }",
+    );
+}
+
 #[test]
 fn pure_comment_for_pure_global_constructors() {
     test("var x = new WeakSet; foo(x)", "var x = /* @__PURE__ */ new WeakSet();\nfoo(x)");
@@ -284,6 +300,24 @@ fn pure_comment_for_pure_global_constructors() {
         "var x = /* @__PURE__ */ new WeakSet(void 0);\nfoo(x)",
     );
     test("var x = new WeakSet([]); foo(x)", "var x = /* @__PURE__ */ new WeakSet([]);\nfoo(x)");
+}
+
+// `Normalize` sets pure flags before the peephole loop runs, so it misses
+// args that the loop later folds/inlines into pure-eligible shapes.
+#[test]
+fn pure_comment_re_evaluated_after_string_concat_fold() {
+    test(
+        "var r = new RegExp('foo' + 'bar'); foo(r)",
+        "var r = /* @__PURE__ */ new RegExp(\"foobar\");\nfoo(r)",
+    );
+}
+
+#[test]
+fn pure_comment_re_evaluated_after_variable_inline() {
+    test(
+        "export function f() { var ab = new ArrayBuffer(1); var dv = new DataView(ab); foo(dv); }",
+        "export function f() {\n\tvar dv = /* @__PURE__ */ new DataView(/* @__PURE__ */ new ArrayBuffer(1));\n\tfoo(dv);\n}",
+    );
 }
 
 #[test]

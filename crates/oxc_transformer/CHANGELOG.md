@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- ee659b6 transformer/legacy-decorator: Add `strictNullChecks` option for nullable-union design:type (#22266) (Kyle Cannon)
+
+### 🐛 Bug Fixes
+
+- e1d064e transformer/class-properties: Reparent lifted private method helpers (#22716) (Cameron)
+- 7baed9c transformer/private-method: Clear inherited strict flags (#22508) (camc314)
+- 69a6ba6 transformer/legacy-decorator: Emit Array for ReadonlyArray<T> in decorator metadata (#22265) (Kyle Cannon)
+- e421ef0 transformer/legacy-decorator: Return runtime binding for design:type (#22640) (Dunqing)
+
 ## [0.132.0] - 2026-05-18
 
 ### 🐛 Bug Fixes

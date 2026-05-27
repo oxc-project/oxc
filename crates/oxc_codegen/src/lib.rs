@@ -56,7 +56,7 @@ pub struct CodegenReturn {
     ///
     /// You must set [`CodegenOptions::source_map_path`] for this to be [`Some`].
     #[cfg(feature = "sourcemap")]
-    pub map: Option<oxc_sourcemap::SourceMap>,
+    pub map: Option<oxc_sourcemap::OwnedSourceMap>,
 
     /// All the legal comments returned from [LegalComment::Linked] or [LegalComment::External].
     pub legal_comments: Vec<Comment>,

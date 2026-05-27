@@ -1,8 +1,8 @@
-commit: 78fc3f8e
+commit: 7e115f46
 
 formatter_test262 Summary:
-AST Parsed     : 47163/47163 (100.00%)
-Positive Passed: 47154/47163 (99.98%)
+AST Parsed     : 47210/47210 (100.00%)
+Positive Passed: 47201/47210 (99.98%)
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR-LF.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR.js

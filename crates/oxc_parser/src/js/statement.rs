@@ -50,9 +50,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 break;
             }
 
-            // Once ESM syntax is detected, enable await context for remaining statements
-            // and stop tracking (we'll reparse earlier statements at the end)
-            if track_await_reparse && self.module_record_builder.has_module_syntax() {
+            // Eagerly commit to Module goal on `export` so the statement is parsed
+            // under `Await` on the first pass; otherwise the reparse below runs it
+            // again and the export binding gets recorded twice.
+            // `import` is not eager: TypeScript's `import name = ns.foo` is a
+            // script-compatible namespace alias, not module syntax.
+            if track_await_reparse
+                && (self.module_record_builder.has_module_syntax() || self.at(Kind::Export))
+            {
                 track_await_reparse = false;
                 self.ctx = self.ctx.and_await(true);
             }

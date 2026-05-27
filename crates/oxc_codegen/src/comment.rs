@@ -158,6 +158,16 @@ impl Codegen<'_> {
         }
     }
 
+    /// Print leading comments at `start` and consume any pending indent-as-space,
+    /// so the next token glues to the comment instead of breaking onto a new line.
+    #[inline]
+    pub(crate) fn print_leading_comments_anchored_to_self(&mut self, start: u32) {
+        if let Some(comments) = self.get_comments(start) {
+            self.print_comments(&comments);
+            self.consume_pending_indent_space();
+        }
+    }
+
     /// Whether a legal-comment orphan with `attached_to < end` is still
     /// pending. Used by block emitters to keep an empty body multi-line.
     #[inline]

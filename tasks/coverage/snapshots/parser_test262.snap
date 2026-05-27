@@ -1,8 +1,8 @@
-commit: 78fc3f8e
+commit: 7e115f46
 
 parser_test262 Summary:
-AST Parsed     : 47163/47163 (100.00%)
-Positive Passed: 47163/47163 (100.00%)
+AST Parsed     : 47210/47210 (100.00%)
+Positive Passed: 47210/47210 (100.00%)
 Negative Passed: 4588/4588 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -4020,12 +4020,13 @@ Negative Passed: 4588/4588 (100.00%)
     ╰────
   help: Remove the trailing comma here
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-init.js:25:8]
  24 │ 
  25 │ 0, [...x = 1] = [];
     ·        ─────
     ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-init.js:25:8]
@@ -14870,7 +14871,7 @@ Negative Passed: 4588/4588 (100.00%)
  35 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-call-unknown.js:36:15]
  35 │ 
  36 │ let f = () => import.UNKNOWN('./empty_FIXTURE.js');
@@ -14972,7 +14973,7 @@ Negative Passed: 4588/4588 (100.00%)
  35 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-call-unknown.js:37:3]
  36 │ let f = () => {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -15089,7 +15090,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ });
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-call-unknown.js:37:9]
  36 │ (async () => {
  37 │   await import.UNKNOWN('./empty_FIXTURE.js')
@@ -15206,7 +15207,7 @@ Negative Passed: 4588/4588 (100.00%)
  35 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-call-unknown.js:36:20]
  35 │ 
  36 │ (async () => await import.UNKNOWN('./empty_FIXTURE.js'))
@@ -15324,7 +15325,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-call-unknown.js:37:9]
  36 │ async function f() {
  37 │   await import.UNKNOWN('./empty_FIXTURE.js');
@@ -15433,7 +15434,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-call-unknown.js:37:3]
  36 │ async function f() {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -15524,7 +15525,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-call-unknown.js:37:16]
  36 │ async function f() {
  37 │   return await import.UNKNOWN('./empty_FIXTURE.js');
@@ -15667,7 +15668,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-call-unknown.js:37:9]
  36 │ async function * f() {
  37 │   await import.UNKNOWN('./empty_FIXTURE.js')
@@ -15784,7 +15785,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ };
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-call-unknown.js:37:3]
  36 │ {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -15850,7 +15851,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ };
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-call-unknown.js:37:3]
  36 │ label: {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16018,7 +16019,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ } while (false);
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-call-unknown.js:37:3]
  36 │ do {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16143,7 +16144,7 @@ Negative Passed: 4588/4588 (100.00%)
  37 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-call-unknown.js:38:8]
  37 │ 
  38 │ } else import.UNKNOWN('./empty_FIXTURE.js');
@@ -16245,7 +16246,7 @@ Negative Passed: 4588/4588 (100.00%)
  37 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-call-unknown.js:39:3]
  38 │ } else {
  39 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16362,7 +16363,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-call-unknown.js:37:3]
  36 │ function fn() {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16453,7 +16454,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-call-unknown.js:37:10]
  36 │ function fn() {
  37 │   return import.UNKNOWN('./empty_FIXTURE.js');
@@ -16604,7 +16605,7 @@ Negative Passed: 4588/4588 (100.00%)
  35 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-call-unknown.js:36:11]
  35 │ 
  36 │ if (true) import.UNKNOWN('./empty_FIXTURE.js');
@@ -16706,7 +16707,7 @@ Negative Passed: 4588/4588 (100.00%)
  35 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-call-unknown.js:37:3]
  36 │ if (true) {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16823,7 +16824,7 @@ Negative Passed: 4588/4588 (100.00%)
  38 │ };
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-call-unknown.js:39:3]
  38 │   x++;
  39 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16948,7 +16949,7 @@ Negative Passed: 4588/4588 (100.00%)
  34 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-call-unknown.js:35:7]
  34 │ 
  35 │ with (import.UNKNOWN('./empty_FIXTURE.js')) {}
@@ -17050,7 +17051,7 @@ Negative Passed: 4588/4588 (100.00%)
  34 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-call-unknown.js:36:3]
  35 │ with ({}) {
  36 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -17167,7 +17168,7 @@ Negative Passed: 4588/4588 (100.00%)
  25 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-call-unknown.js:26:1]
  25 │ 
  26 │ import.UNKNOWN('./empty_FIXTURE.js');
@@ -18118,12 +18119,13 @@ Negative Passed: 4588/4588 (100.00%)
     ·  ───────────
     ╰────
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-array-rest-destructuring-expr.js:31:5]
  30 │ 
  31 │ [...import.meta] = [];
     ·     ───────────
     ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-array-rest-destructuring-expr.js:31:5]
@@ -18168,12 +18170,13 @@ Negative Passed: 4588/4588 (100.00%)
     ·      ───────────
     ╰────
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-object-rest-destructuring-expr.js:31:6]
  30 │ 
  31 │ ({...import.meta} = {});
     ·      ───────────
     ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-object-rest-destructuring-expr.js:31:6]
@@ -35785,12 +35788,13 @@ Negative Passed: 4588/4588 (100.00%)
     ╰────
   help: Remove the trailing comma here
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
  33 │ 
  34 │ for ([...x = 1] in [[]]) ;
     ·          ─────
     ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
@@ -36301,12 +36305,13 @@ Negative Passed: 4588/4588 (100.00%)
     ╰────
   help: Remove the trailing comma here
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
  33 │ 
  34 │ for ([...x = 1] of [[]]) ;
     ·          ─────
     ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
