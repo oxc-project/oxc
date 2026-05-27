@@ -767,8 +767,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
 
         if !comments.is_empty()
             && let ForStatementLeft::VariableDeclaration(left_declaration) = &**left
+            && let Some(first_decl) = left_declaration.declarations.first()
             && matches!(
-                left_declaration.declarations.first().unwrap().id,
+                first_decl.id,
                 BindingPattern::ArrayPattern(_) | BindingPattern::ObjectPattern(_)
             )
         {
