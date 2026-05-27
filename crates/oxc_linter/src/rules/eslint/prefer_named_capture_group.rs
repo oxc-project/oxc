@@ -148,10 +148,10 @@ struct UnnamedGroupCollector {
 
 impl<'a> Visit<'a> for UnnamedGroupCollector {
     fn enter_node(&mut self, kind: RegExpAstKind<'a>) {
-        if let RegExpAstKind::CapturingGroup(group) = kind {
-            if group.name.is_none() {
-                self.unnamed_spans.push(group.span);
-            }
+        if let RegExpAstKind::CapturingGroup(group) = kind
+            && group.name.is_none()
+        {
+            self.unnamed_spans.push(group.span);
         }
     }
 }
@@ -206,7 +206,7 @@ fn test() {
             None,
         ),
         // v-flag edge case: invalid escape inside character class in v mode → parse error → ignored
-        (r#"new RegExp('([\\q])', 'v')"#, None),
+        (r"new RegExp('([\\q])', 'v')", None),
         // Named group in v-flag pattern
         ("new RegExp('(?<c>[[A--B]])', 'v')", None),
         // Inline flag groups (non-capturing, ecmaVersion 2025)
