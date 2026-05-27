@@ -2,18 +2,26 @@ use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_allocator::Allocator;
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_regular_expression::visit::{RegExpAstKind, Visit};
-use oxc_span::Span;
+use oxc_regular_expression::{
+    LiteralParser, Options,
+    ast::Pattern,
+    visit::{RegExpAstKind, Visit},
+};
+use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{run_on_arguments, run_on_regex_node},
+    utils::{is_regexp_callee, run_on_arguments, run_on_regex_node, static_string_value},
 };
 
 fn prefer_named_capture_group_diagnostic(
@@ -93,20 +101,24 @@ impl Rule for PreferNamedCaptureGroup {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let allow_unnamed = self.0.allow_unnamed_groups;
+        let allow_unnamed_count = self.0.allow_unnamed_groups;
         run_on_regex_node(node, ctx, |pattern, _span| {
-            check_pattern(pattern, allow_unnamed, ctx);
+            check_pattern(pattern, allow_unnamed_count, ctx, None);
         });
-
-        if self.0.additional_reg_exp_functions.is_empty() {
-            return;
-        }
 
         let (callee, arguments) = match node.kind() {
             AstKind::CallExpression(expr) => (&expr.callee, &expr.arguments),
             AstKind::NewExpression(expr) => (&expr.callee, &expr.arguments),
             _ => return,
         };
+
+        if is_regexp_callee(callee, ctx) {
+            check_static_arguments(arguments.first(), arguments.get(1), allow_unnamed_count, ctx);
+        }
+
+        if self.0.additional_reg_exp_functions.is_empty() {
+            return;
+        }
 
         let Expression::Identifier(ident) = callee.get_inner_expression() else { return };
         if !self.0.additional_reg_exp_functions.contains(ident.name.as_str()) {
@@ -120,24 +132,75 @@ impl Rule for PreferNamedCaptureGroup {
         }
 
         run_on_arguments(arg0, arguments.get(1), ctx, |pattern, _span| {
-            check_pattern(pattern, allow_unnamed, ctx);
+            check_pattern(pattern, allow_unnamed_count, ctx, None);
         });
+        check_static_arguments(arg0, arguments.get(1), allow_unnamed_count, ctx);
     }
 }
 
 fn check_pattern(
-    pattern: &oxc_regular_expression::ast::Pattern<'_>,
-    allow_unnamed: u32,
+    pattern: &Pattern<'_>,
+    allow_unnamed_count: u32,
     ctx: &LintContext<'_>,
+    span_override: Option<Span>,
 ) {
     let mut collector = UnnamedGroupCollector::default();
     collector.visit_pattern(pattern);
 
     let count = collector.unnamed_spans.len();
-    if count > allow_unnamed as usize {
+    if count > allow_unnamed_count as usize {
         for span in collector.unnamed_spans {
-            ctx.diagnostic(prefer_named_capture_group_diagnostic(span, count, allow_unnamed));
+            ctx.diagnostic(prefer_named_capture_group_diagnostic(
+                span_override.unwrap_or(span),
+                count,
+                allow_unnamed_count,
+            ));
         }
+    }
+}
+
+fn check_static_arguments(
+    arg0: Option<&Argument>,
+    arg1: Option<&Argument>,
+    allow_unnamed_count: u32,
+    ctx: &LintContext<'_>,
+) {
+    let Some(pattern_expr) = arg0
+        .and_then(Argument::as_expression)
+        .map(Expression::get_inner_expression)
+        .filter(|expr| !is_directly_supported_regex_argument(expr))
+    else {
+        return;
+    };
+
+    let Some(pattern_text) = static_string_value(pattern_expr) else {
+        return;
+    };
+
+    let flags_text = arg1
+        .and_then(Argument::as_expression)
+        .map(Expression::get_inner_expression)
+        .and_then(static_string_value);
+
+    let allocator = Allocator::default();
+    let Ok(pattern) = LiteralParser::new(
+        &allocator,
+        &pattern_text,
+        flags_text.as_deref(),
+        Options { pattern_span_offset: pattern_expr.span().start, flags_span_offset: 0 },
+    )
+    .parse() else {
+        return;
+    };
+
+    check_pattern(&pattern, allow_unnamed_count, ctx, Some(pattern_expr.span()));
+}
+
+fn is_directly_supported_regex_argument(expr: &Expression<'_>) -> bool {
+    match expr {
+        Expression::RegExpLiteral(_) | Expression::StringLiteral(_) => true,
+        Expression::TemplateLiteral(template) => template.is_no_substitution_template(),
+        _ => false,
     }
 }
 
@@ -214,15 +277,6 @@ fn test() {
         ("new RegExp('(?i:foo)bar')", None),
         ("/(?-i:foo)bar/", None),
         ("new RegExp('(?-i:foo)bar')", None),
-        // Concatenated strings — not statically resolvable, ignored
-        ("new RegExp('(' + 'a)')", None),
-        ("new RegExp('a(bc)d' + 'e')", None),
-        (r#"new RegExp("foo" + "(a)" + "(b)");"#, None),
-        (r#"new RegExp("foo" + "(?:a)" + "(b)");"#, None),
-        ("RegExp('(a)'+'')", None),
-        ("RegExp( '' + '(ab)')", None),
-        // Template literal with substitution — not statically resolvable, ignored
-        ("new RegExp(`(ab)${''}`)", None),
         // allowUnnamedGroups: 1 — one unnamed group is permitted
         ("/(foo)/", Some(serde_json::json!([{ "allowUnnamedGroups": 1 }]))),
         // allowUnnamedGroups: 1 — one unnamed alongside a named group is fine
@@ -265,6 +319,7 @@ fn test() {
         ("new RegExp(`a(bc)d`)", None),
         // Unicode prefix in string, unnamed group
         ("new RegExp('ሴ噸(?:a)(b)');", None),
+        (r"new RegExp('\\u1234\\u5678(?:a)(b)');", None),
         // Multiple unnamed groups
         (r"/([0-9]{4})-(\w{5})/", None),
         ("/([0-9]{4})-(5)/", None),
@@ -282,6 +337,14 @@ fn test() {
         (r"new RegExp('a(b)\'')", None),
         (r"RegExp('(a)\\d')", None),
         (r"RegExp(`\a(b)`)", None),
+        // Constant RegExp constructor arguments
+        ("new RegExp('(' + 'a)')", None),
+        ("new RegExp('a(bc)d' + 'e')", None),
+        (r#"new RegExp("foo" + "(a)" + "(b)");"#, None),
+        (r#"new RegExp("foo" + "(?:a)" + "(b)");"#, None),
+        ("RegExp('(a)'+'')", None),
+        ("RegExp( '' + '(ab)')", None),
+        ("new RegExp(`(ab)${''}`)", None),
         // globalThis.RegExp — always recognized in oxlint regardless of ecmaVersion
         ("new globalThis.RegExp('([0-9]{4})')", None),
         ("globalThis.RegExp('([0-9]{4})')", None),
