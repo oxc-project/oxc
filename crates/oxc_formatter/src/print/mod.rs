@@ -766,7 +766,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
         });
 
         if !comments.is_empty() && comments.first().unwrap().span.start > left.span().end {
-            write!(f, [FormatLeadingComments::Comments(comments), group(&format_inner)]);
+            write!(f, FormatLeadingComments::Comments(comments));
         }
 
         write!(f, group(&format_inner));
