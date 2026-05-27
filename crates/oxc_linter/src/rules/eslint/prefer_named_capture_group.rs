@@ -155,79 +155,58 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // No capturing groups
         "/normal_regex/",
-        // Non-capturing group — always fine
         "/(?:[0-9]{4})/",
-        // Named capturing group — the good pattern
         "/(?<year>[0-9]{4})/",
-        // No groups at all
         r"/\u{1F680}/u",
-        // RegExp constructor with no arguments / non-static argument → can't check
         "new RegExp()",
         "new RegExp(foo)",
+        "new RegExp('')",
+        "new RegExp('(?<year>[0-9]{4})')",
         "RegExp()",
         "RegExp(foo)",
-        // Empty pattern — no groups
-        "new RegExp('')",
         "RegExp('')",
-        // Named group via constructor
-        "new RegExp('(?<year>[0-9]{4})')",
         "RegExp('(?<year>[0-9]{4})')",
-        // Invalid regex (parse error) → silently ignored
         "RegExp('(')",
-        // Unicode escape, no groups
         r"RegExp('\\u{1F680}', 'u')",
-        // globalThis.RegExp with non-static argument → can't check
-        "new globalThis.RegExp()",    // ecmaVersion 2020
-        "new globalThis.RegExp(foo)", // ecmaVersion 2020
-        "globalThis.RegExp(foo)",     // ecmaVersion 2020
-        // globalThis shadowed → not recognized as global RegExp constructor
+        "new globalThis.RegExp('([0-9]{4})')",
+        "new globalThis.RegExp('([0-9]{4})')", // { "ecmaVersion": 6 },
+        "new globalThis.RegExp('([0-9]{4})')", // { "ecmaVersion": 2017 },
+        "new globalThis.RegExp()",             // { "ecmaVersion": 2020 },
+        "new globalThis.RegExp(foo)",          // { "ecmaVersion": 2020 },
+        "globalThis.RegExp(foo)",              // { "ecmaVersion": 2020 },
         "
-            var globalThis = bar;
-            globalThis.RegExp(foo);
-            ",
+                            var globalThis = bar;
+                            globalThis.RegExp(foo);
+                            ", // { "ecmaVersion": 2020 },
         "
-            function foo () {
-                var globalThis = bar;
-                new globalThis.RegExp(baz);
-            }
-            ",
-        // v-flag edge case: invalid escape inside character class in v mode → parse error → ignored
-        r"new RegExp('([\\q])', 'v')",
-        // Named group in v-flag pattern
+                            function foo () {
+                                var globalThis = bar;
+                                new globalThis.RegExp(baz);
+                            }
+                            ", // { "ecmaVersion": 2020 },
         "new RegExp('(?<c>[[A--B]])', 'v')",
-        // Inline flag groups (non-capturing, ecmaVersion 2025)
-        "/(?i:foo)bar/",
+        r"new RegExp('([\\q])', 'v')",
+        "/(?i:foo)bar/", // { "ecmaVersion": 2025 },
         "new RegExp('(?i:foo)bar')",
-        "/(?-i:foo)bar/",
+        "/(?-i:foo)bar/", // { "ecmaVersion": 2025 },
         "new RegExp('(?-i:foo)bar')",
-        // string arg but factory name not in the list → not inspected
-        "regEx('(foo)')",
     ];
 
     let fail = vec![
-        // Single unnamed group — simplest case
         "/([0-9]{4})/",
-        // Constructor forms
         "new RegExp('([0-9]{4})')",
         "RegExp('([0-9]{4})')",
-        // Template literal (no substitution)
         "new RegExp(`a(bc)d`)",
-        // Unicode prefix in string, unnamed group
         "new RegExp('ሴ噸(?:a)(b)');",
-        r"new RegExp('\\u1234\\u5678(?:a)(b)');",
-        // Multiple unnamed groups
+        r"new RegExp('\u1234\u5678(?:a)(b)');",
         r"/([0-9]{4})-(\w{5})/",
         "/([0-9]{4})-(5)/",
-        // Named outer group containing unnamed inner group
         "/(?<temp2>(a))/",
         "/(?<temp2>(a)(?<temp5>b))/",
-        // Mixed named and unnamed
         r"/(?<temp1>[0-9]{4})-(\w{5})/",
         "/(?<temp1>[0-9]{4})-(5)/",
         "/(?<temp1>a)(?<temp2>a)(a)(?<temp3>a)/",
-        // Constant RegExp constructor arguments
         "new RegExp('(' + 'a)')",
         "new RegExp('a(bc)d' + 'e')",
         r#"new RegExp("foo" + "(a)" + "(b)");"#,
@@ -235,22 +214,19 @@ fn test() {
         "RegExp('(a)'+'')",
         "RegExp( '' + '(ab)')",
         "new RegExp(`(ab)${''}`)",
-        // Multi-line template literal (no substitution)
-        "new RegExp(`(a)\n            `)",
-        "RegExp(`a(b\n            c)d`)",
-        // Escape sequences in string patterns
+        "new RegExp(`(a)
+            `)",
+        "RegExp(`a(b
+            c)d`)",
         r"new RegExp('a(b)\'')",
         r"RegExp('(a)\\d')",
         r"RegExp(`\a(b)`)",
-        // globalThis.RegExp — always recognized in oxlint regardless of ecmaVersion
-        "new globalThis.RegExp('([0-9]{4})')",
-        "globalThis.RegExp('([0-9]{4})')",
-        // globalThis NOT shadowed in the outer scope
+        "new globalThis.RegExp('([0-9]{4})')", // { "ecmaVersion": 2020 },
+        "globalThis.RegExp('([0-9]{4})')",     // { "ecmaVersion": 2020 },
         "
-            function foo() { var globalThis = bar; }
-            new globalThis.RegExp('([0-9]{4})');
-            ",
-        // v-flag with unnamed group in set notation
+                            function foo() { var globalThis = bar; }
+                            new globalThis.RegExp('([0-9]{4})');
+                        ", // { "ecmaVersion": 2020 },
         "new RegExp('([[A--B]])', 'v')",
     ];
 
