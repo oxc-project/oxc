@@ -765,7 +765,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
             );
         });
 
-        if !comments.is_empty() && comments.first().unwrap().span.start > left.span().end {
+        if let Some(comment) = comments.first()
+            && comment.span.start > left.span().end
+        {
             write!(f, FormatLeadingComments::Comments(comments));
         }
 
