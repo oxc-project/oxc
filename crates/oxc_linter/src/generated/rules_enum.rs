@@ -169,6 +169,7 @@ pub use crate::rules::eslint::prefer_arrow_callback::PreferArrowCallback as Esli
 pub use crate::rules::eslint::prefer_const::PreferConst as EslintPreferConst;
 pub use crate::rules::eslint::prefer_destructuring::PreferDestructuring as EslintPreferDestructuring;
 pub use crate::rules::eslint::prefer_exponentiation_operator::PreferExponentiationOperator as EslintPreferExponentiationOperator;
+pub use crate::rules::eslint::prefer_named_capture_group::PreferNamedCaptureGroup as EslintPreferNamedCaptureGroup;
 pub use crate::rules::eslint::prefer_numeric_literals::PreferNumericLiterals as EslintPreferNumericLiterals;
 pub use crate::rules::eslint::prefer_object_has_own::PreferObjectHasOwn as EslintPreferObjectHasOwn;
 pub use crate::rules::eslint::prefer_object_spread::PreferObjectSpread as EslintPreferObjectSpread;
@@ -864,6 +865,7 @@ pub enum RuleEnum {
     ImportNoWebpackLoaderSyntax(ImportNoWebpackLoaderSyntax),
     ImportPreferDefaultExport(ImportPreferDefaultExport),
     ImportUnambiguous(ImportUnambiguous),
+    EslintPreferNamedCaptureGroup(EslintPreferNamedCaptureGroup),
     EslintAccessorPairs(EslintAccessorPairs),
     EslintArrayCallbackReturn(EslintArrayCallbackReturn),
     EslintArrowBodyStyle(EslintArrowBodyStyle),
@@ -1686,7 +1688,8 @@ const IMPORT_NO_UNASSIGNED_IMPORT_ID: usize = IMPORT_NO_SELF_IMPORT_ID + 1usize;
 const IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID: usize = IMPORT_NO_UNASSIGNED_IMPORT_ID + 1usize;
 const IMPORT_PREFER_DEFAULT_EXPORT_ID: usize = IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID + 1usize;
 const IMPORT_UNAMBIGUOUS_ID: usize = IMPORT_PREFER_DEFAULT_EXPORT_ID + 1usize;
-const ESLINT_ACCESSOR_PAIRS_ID: usize = IMPORT_UNAMBIGUOUS_ID + 1usize;
+const ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID: usize = IMPORT_UNAMBIGUOUS_ID + 1usize;
+const ESLINT_ACCESSOR_PAIRS_ID: usize = ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID + 1usize;
 const ESLINT_ARRAY_CALLBACK_RETURN_ID: usize = ESLINT_ACCESSOR_PAIRS_ID + 1usize;
 const ESLINT_ARROW_BODY_STYLE_ID: usize = ESLINT_ARRAY_CALLBACK_RETURN_ID + 1usize;
 const ESLINT_BLOCK_SCOPED_VAR_ID: usize = ESLINT_ARROW_BODY_STYLE_ID + 1usize;
@@ -2606,6 +2609,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID,
             Self::ImportPreferDefaultExport(_) => IMPORT_PREFER_DEFAULT_EXPORT_ID,
             Self::ImportUnambiguous(_) => IMPORT_UNAMBIGUOUS_ID,
+            Self::EslintPreferNamedCaptureGroup(_) => ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID,
             Self::EslintAccessorPairs(_) => ESLINT_ACCESSOR_PAIRS_ID,
             Self::EslintArrayCallbackReturn(_) => ESLINT_ARRAY_CALLBACK_RETURN_ID,
             Self::EslintArrowBodyStyle(_) => ESLINT_ARROW_BODY_STYLE_ID,
@@ -3547,6 +3551,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::NAME,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::NAME,
             Self::ImportUnambiguous(_) => ImportUnambiguous::NAME,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::NAME,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::NAME,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::NAME,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::NAME,
@@ -4476,6 +4481,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::CATEGORY,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::CATEGORY,
             Self::ImportUnambiguous(_) => ImportUnambiguous::CATEGORY,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::CATEGORY,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::CATEGORY,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::CATEGORY,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::CATEGORY,
@@ -5460,6 +5466,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::FIX,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::FIX,
             Self::ImportUnambiguous(_) => ImportUnambiguous::FIX,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::FIX,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::FIX,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::FIX,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::FIX,
@@ -6394,6 +6401,9 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::documentation(),
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::documentation(),
             Self::ImportUnambiguous(_) => ImportUnambiguous::documentation(),
+            Self::EslintPreferNamedCaptureGroup(_) => {
+                EslintPreferNamedCaptureGroup::documentation()
+            }
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::documentation(),
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::documentation(),
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::documentation(),
@@ -7622,6 +7632,10 @@ impl RuleEnum {
             }
             Self::ImportUnambiguous(_) => ImportUnambiguous::config_schema(generator)
                 .or_else(|| ImportUnambiguous::schema(generator)),
+            Self::EslintPreferNamedCaptureGroup(_) => {
+                EslintPreferNamedCaptureGroup::config_schema(generator)
+                    .or_else(|| EslintPreferNamedCaptureGroup::schema(generator))
+            }
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::config_schema(generator)
                 .or_else(|| EslintAccessorPairs::schema(generator)),
             Self::EslintArrayCallbackReturn(_) => {
@@ -9908,6 +9922,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => "import",
             Self::ImportPreferDefaultExport(_) => "import",
             Self::ImportUnambiguous(_) => "import",
+            Self::EslintPreferNamedCaptureGroup(_) => "eslint",
             Self::EslintAccessorPairs(_) => "eslint",
             Self::EslintArrayCallbackReturn(_) => "eslint",
             Self::EslintArrowBodyStyle(_) => "eslint",
@@ -10790,6 +10805,9 @@ impl RuleEnum {
             Self::ImportUnambiguous(_) => {
                 Ok(Self::ImportUnambiguous(ImportUnambiguous::from_configuration(value)?))
             }
+            Self::EslintPreferNamedCaptureGroup(_) => Ok(Self::EslintPreferNamedCaptureGroup(
+                EslintPreferNamedCaptureGroup::from_configuration(value)?,
+            )),
             Self::EslintAccessorPairs(_) => {
                 Ok(Self::EslintAccessorPairs(EslintAccessorPairs::from_configuration(value)?))
             }
@@ -13351,6 +13369,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.to_configuration(),
             Self::ImportPreferDefaultExport(rule) => rule.to_configuration(),
             Self::ImportUnambiguous(rule) => rule.to_configuration(),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.to_configuration(),
             Self::EslintAccessorPairs(rule) => rule.to_configuration(),
             Self::EslintArrayCallbackReturn(rule) => rule.to_configuration(),
             Self::EslintArrowBodyStyle(rule) => rule.to_configuration(),
@@ -14178,6 +14197,7 @@ impl RuleEnum {
                 Self::ImportNoWebpackLoaderSyntax(rule) => rule.run(node, ctx),
                 Self::ImportPreferDefaultExport(rule) => rule.run(node, ctx),
                 Self::ImportUnambiguous(rule) => rule.run(node, ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run(node, ctx),
                 Self::EslintAccessorPairs(rule) => rule.run(node, ctx),
                 Self::EslintArrayCallbackReturn(rule) => rule.run(node, ctx),
                 Self::EslintArrowBodyStyle(rule) => rule.run(node, ctx),
@@ -14998,6 +15018,7 @@ impl RuleEnum {
                 Self::ImportNoWebpackLoaderSyntax(rule) => rule.run(node, ctx),
                 Self::ImportPreferDefaultExport(rule) => rule.run(node, ctx),
                 Self::ImportUnambiguous(rule) => rule.run(node, ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run(node, ctx),
                 Self::EslintAccessorPairs(rule) => rule.run(node, ctx),
                 Self::EslintArrayCallbackReturn(rule) => rule.run(node, ctx),
                 Self::EslintArrowBodyStyle(rule) => rule.run(node, ctx),
@@ -15825,6 +15846,7 @@ impl RuleEnum {
                 Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_once(ctx),
                 Self::ImportPreferDefaultExport(rule) => rule.run_once(ctx),
                 Self::ImportUnambiguous(rule) => rule.run_once(ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_once(ctx),
                 Self::EslintAccessorPairs(rule) => rule.run_once(ctx),
                 Self::EslintArrayCallbackReturn(rule) => rule.run_once(ctx),
                 Self::EslintArrowBodyStyle(rule) => rule.run_once(ctx),
@@ -16645,6 +16667,7 @@ impl RuleEnum {
                 Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_once(ctx),
                 Self::ImportPreferDefaultExport(rule) => rule.run_once(ctx),
                 Self::ImportUnambiguous(rule) => rule.run_once(ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_once(ctx),
                 Self::EslintAccessorPairs(rule) => rule.run_once(ctx),
                 Self::EslintArrayCallbackReturn(rule) => rule.run_once(ctx),
                 Self::EslintArrowBodyStyle(rule) => rule.run_once(ctx),
@@ -17475,6 +17498,7 @@ impl RuleEnum {
                 Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportPreferDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportUnambiguous(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintArrayCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintArrowBodyStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18549,6 +18573,7 @@ impl RuleEnum {
                 Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportPreferDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportUnambiguous(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintArrayCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintArrowBodyStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19623,6 +19648,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.should_run(ctx),
             Self::ImportPreferDefaultExport(rule) => rule.should_run(ctx),
             Self::ImportUnambiguous(rule) => rule.should_run(ctx),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.should_run(ctx),
             Self::EslintAccessorPairs(rule) => rule.should_run(ctx),
             Self::EslintArrayCallbackReturn(rule) => rule.should_run(ctx),
             Self::EslintArrowBodyStyle(rule) => rule.should_run(ctx),
@@ -20446,6 +20472,9 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::IS_TSGOLINT_RULE,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::IS_TSGOLINT_RULE,
             Self::ImportUnambiguous(_) => ImportUnambiguous::IS_TSGOLINT_RULE,
+            Self::EslintPreferNamedCaptureGroup(_) => {
+                EslintPreferNamedCaptureGroup::IS_TSGOLINT_RULE
+            }
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::IS_TSGOLINT_RULE,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::IS_TSGOLINT_RULE,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::IS_TSGOLINT_RULE,
@@ -21623,6 +21652,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::VERSION,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::VERSION,
             Self::ImportUnambiguous(_) => ImportUnambiguous::VERSION,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::VERSION,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::VERSION,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::VERSION,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::VERSION,
@@ -22609,6 +22639,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::HAS_CONFIG,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::HAS_CONFIG,
             Self::ImportUnambiguous(_) => ImportUnambiguous::HAS_CONFIG,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::HAS_CONFIG,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::HAS_CONFIG,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::HAS_CONFIG,
             Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::HAS_CONFIG,
@@ -23628,6 +23659,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.types_info(),
             Self::ImportPreferDefaultExport(rule) => rule.types_info(),
             Self::ImportUnambiguous(rule) => rule.types_info(),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.types_info(),
             Self::EslintAccessorPairs(rule) => rule.types_info(),
             Self::EslintArrayCallbackReturn(rule) => rule.types_info(),
             Self::EslintArrowBodyStyle(rule) => rule.types_info(),
@@ -24445,6 +24477,7 @@ impl RuleEnum {
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_info(),
             Self::ImportPreferDefaultExport(rule) => rule.run_info(),
             Self::ImportUnambiguous(rule) => rule.run_info(),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.run_info(),
             Self::EslintAccessorPairs(rule) => rule.run_info(),
             Self::EslintArrayCallbackReturn(rule) => rule.run_info(),
             Self::EslintArrowBodyStyle(rule) => rule.run_info(),
@@ -25284,6 +25317,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ImportNoWebpackLoaderSyntax(ImportNoWebpackLoaderSyntax::default()),
         RuleEnum::ImportPreferDefaultExport(ImportPreferDefaultExport::default()),
         RuleEnum::ImportUnambiguous(ImportUnambiguous::default()),
+        RuleEnum::EslintPreferNamedCaptureGroup(EslintPreferNamedCaptureGroup::default()),
         RuleEnum::EslintAccessorPairs(EslintAccessorPairs::default()),
         RuleEnum::EslintArrayCallbackReturn(EslintArrayCallbackReturn::default()),
         RuleEnum::EslintArrowBodyStyle(EslintArrowBodyStyle::default()),

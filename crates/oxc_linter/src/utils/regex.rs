@@ -94,7 +94,7 @@ pub fn get_regex_pattern_span(arg: Option<&Argument>) -> Option<Span> {
     }
 }
 
-fn run_on_arguments<M>(arg1: Option<&Argument>, arg2: Option<&Argument>, ctx: &LintContext, cb: M)
+pub fn run_on_arguments<M>(arg1: Option<&Argument>, arg2: Option<&Argument>, ctx: &LintContext, cb: M)
 where
     M: FnOnce(&Pattern<'_>, Span),
 {
