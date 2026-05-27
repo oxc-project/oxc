@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.132.0",
+  "version": "0.133.0",
   "description": "Oxc Parser Node API",
   "keywords": [
     "ast",
@@ -85,8 +85,8 @@
     "@napi-rs/wasm-runtime": "catalog:",
     "@types/node": "catalog:",
     "@typescript-eslint/visitor-keys": "^8.54.0",
-    "@vitest/browser": "4.1.6",
-    "@vitest/browser-playwright": "4.1.6",
+    "@vitest/browser": "4.1.7",
+    "@vitest/browser-playwright": "4.1.7",
     "playwright": "^1.51.0",
     "publint": "catalog:",
     "rolldown": "catalog:",

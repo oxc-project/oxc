@@ -438,6 +438,32 @@ fn test_fold_iife() {
         "function foo(x) { if (x) { return (/* @__PURE__ */ (() => 42)(), foo) } return x }",
         "function foo(x) { return x && foo }",
     );
+
+    // Empty-body IIFE called with arguments: drop the wrapper, args still
+    // evaluate for side effects.
+    test("(() => {})(a);", "a;");
+    test("((x, y) => {})(a, b);", "a, b;");
+    test("((x) => {})(a, b);", "a, b;");
+    test("(function(x) {})(a);", "a;");
+    test("var u = (() => {})(a)", "var u = (a, void 0)");
+    // Rest binding to an identifier is safe (collected array unobserved).
+    test("((x, ...r) => {})(a, b)", "a, b;");
+    // Spread arg kept as `[...a]` to preserve iterator-protocol invocation.
+    test("(() => {})(...a)", "[...a];");
+    // All-pure args → `void 0` directly (no single-element sequence).
+    test("(() => {})(1, 2);", "");
+
+    // Negative cases — wrapper must NOT drop.
+    test_same("(([x]) => {})(a)");
+    test_same("(({z}) => {})(a)");
+    test_same("((x = side()) => {})(a)");
+    test_same("((...{x}) => {})(a)");
+    test_same("(async () => {})(a)");
+    test_same("(function*() {})(a)");
+    test_same("(() => { foo() })(a)");
+    // Directive-only body: in module source the redundant `'use strict'` is
+    // stripped upstream, then the empty-body path drops the wrapper.
+    test("(function() { 'use strict' })(a)", "a;");
 }
 
 #[test]

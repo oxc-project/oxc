@@ -40,6 +40,7 @@ pub(crate) mod import {
     pub mod unambiguous;
 }
 
+/// <https://github.com/eslint/eslint>
 pub(crate) mod eslint {
     pub mod accessor_pairs;
     pub mod array_callback_return;
@@ -202,6 +203,7 @@ pub(crate) mod eslint {
     pub mod prefer_const;
     pub mod prefer_destructuring;
     pub mod prefer_exponentiation_operator;
+    pub mod prefer_named_capture_group;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
     pub mod prefer_object_spread;
@@ -226,6 +228,7 @@ pub(crate) mod eslint {
     pub mod yoda;
 }
 
+/// <https://github.com/typescript-eslint/typescript-eslint>
 pub(crate) mod typescript {
     pub mod adjacent_overload_signatures;
     pub mod array_type;
@@ -338,6 +341,7 @@ pub(crate) mod typescript {
     pub mod use_unknown_in_catch_callback_variable;
 }
 
+/// <https://github.com/jest-community/eslint-plugin-jest>
 pub(crate) mod jest {
     pub mod consistent_test_it;
     pub mod expect_expect;
@@ -401,6 +405,7 @@ pub(crate) mod jest {
     pub mod valid_title;
 }
 
+/// <https://github.com/jsx-eslint/eslint-plugin-react>
 pub(crate) mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
@@ -465,6 +470,7 @@ pub(crate) mod react {
     pub mod void_dom_elements_no_children;
 }
 
+/// <https://github.com/cvazac/eslint-plugin-react-perf>
 pub(crate) mod react_perf {
     pub mod jsx_no_jsx_as_prop;
     pub mod jsx_no_new_array_as_prop;
@@ -472,6 +478,7 @@ pub(crate) mod react_perf {
     pub mod jsx_no_new_object_as_prop;
 }
 
+/// <https://github.com/sindresorhus/eslint-plugin-unicorn>
 pub(crate) mod unicorn {
     pub mod catch_error_name;
     pub mod consistent_assert;
@@ -606,6 +613,7 @@ pub(crate) mod unicorn {
     pub mod throw_new_error;
 }
 
+/// <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y>
 pub(crate) mod jsx_a11y {
     pub mod alt_text;
     pub mod anchor_ambiguous_text;
@@ -674,6 +682,7 @@ pub(crate) mod oxc {
     pub mod uninvoked_array_callback;
 }
 
+/// <https://github.com/vercel/next.js/tree/canary/packages/eslint-plugin-next>
 pub(crate) mod nextjs {
     pub mod google_font_display;
     pub mod google_font_preconnect;
@@ -723,6 +732,7 @@ pub(crate) mod jsdoc {
     pub mod require_yields_type;
 }
 
+/// <https://github.com/eslint-community/eslint-plugin-promise>
 pub(crate) mod promise {
     pub mod always_return;
     pub mod avoid_new;
@@ -742,6 +752,7 @@ pub(crate) mod promise {
     pub mod valid_params;
 }
 
+/// <https://github.com/vitest-dev/eslint-plugin-vitest>
 pub(crate) mod vitest {
     pub mod consistent_each_for;
     pub mod consistent_test_filename;
@@ -817,6 +828,7 @@ pub(crate) mod vitest {
     pub mod warn_todo;
 }
 
+/// <https://github.com/eslint-community/eslint-plugin-n>
 pub(crate) mod node {
     pub mod callback_return;
     pub mod global_require;
@@ -827,12 +839,14 @@ pub(crate) mod node {
     pub mod no_process_env;
 }
 
+/// <https://github.com/vuejs/eslint-plugin-vue>
 pub(crate) mod vue {
     pub mod define_emits_declaration;
     pub mod define_props_declaration;
     pub mod define_props_destructuring;
     pub mod max_props;
     pub mod no_arrow_functions_in_watch;
+    pub mod no_computed_properties_in_data;
     pub mod no_deprecated_data_object_declaration;
     pub mod no_deprecated_delete_set;
     pub mod no_deprecated_destroyed_lifecycle;
@@ -841,6 +855,7 @@ pub(crate) mod vue {
     pub mod no_deprecated_props_default_this;
     pub mod no_deprecated_vue_config_keycodes;
     pub mod no_export_in_script_setup;
+    pub mod no_expose_after_await;
     pub mod no_import_compiler_macros;
     pub mod no_lifecycle_after_await;
     pub mod no_multiple_slot_args;

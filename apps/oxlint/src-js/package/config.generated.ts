@@ -875,6 +875,7 @@ export interface DummyRuleMap {
   "prefer-const"?: DummyRule;
   "prefer-destructuring"?: DummyRule;
   "prefer-exponentiation-operator"?: DummyRule;
+  "prefer-named-capture-group"?: DummyRule;
   "prefer-numeric-literals"?: DummyRule;
   "prefer-object-has-own"?: DummyRule;
   "prefer-object-spread"?: DummyRule;
@@ -1294,6 +1295,7 @@ export interface DummyRuleMap {
   "vue/define-props-destructuring"?: DummyRule;
   "vue/max-props"?: DummyRule;
   "vue/no-arrow-functions-in-watch"?: DummyRule;
+  "vue/no-computed-properties-in-data"?: DummyRule;
   "vue/no-deprecated-data-object-declaration"?: DummyRule;
   "vue/no-deprecated-delete-set"?: DummyRule;
   "vue/no-deprecated-destroyed-lifecycle"?: DummyRule;
@@ -1302,6 +1304,7 @@ export interface DummyRuleMap {
   "vue/no-deprecated-props-default-this"?: DummyRule;
   "vue/no-deprecated-vue-config-keycodes"?: DummyRule;
   "vue/no-export-in-script-setup"?: DummyRule;
+  "vue/no-expose-after-await"?: DummyRule;
   "vue/no-import-compiler-macros"?: DummyRule;
   "vue/no-lifecycle-after-await"?: DummyRule;
   "vue/no-multiple-slot-args"?: DummyRule;

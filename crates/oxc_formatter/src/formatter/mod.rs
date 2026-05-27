@@ -95,9 +95,12 @@ impl Formatted<'_> {
     /// Returns `PrintError` if the document contains invalid structure.
     pub fn print(self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
+        let source_size_hint = self.context.source_text().len();
         let (elements, sorted_tailwind_classes) =
             self.document.into_elements_and_tailwind_classes();
-        let printed = Printer::new(print_options, &sorted_tailwind_classes).print(elements)?;
+        let printed =
+            Printer::with_capacity(source_size_hint, print_options, &sorted_tailwind_classes)
+                .print(elements)?;
         Ok(printed)
     }
 
@@ -107,10 +110,12 @@ impl Formatted<'_> {
     /// Returns `PrintError` if the document contains invalid structure.
     pub fn print_with_indent(self, indent: u16) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
+        let source_size_hint = self.context.source_text().len();
         let (elements, sorted_tailwind_classes) =
             self.document.into_elements_and_tailwind_classes();
-        let printed = Printer::new(print_options, &sorted_tailwind_classes)
-            .print_with_indent(elements, indent)?;
+        let printed =
+            Printer::with_capacity(source_size_hint, print_options, &sorted_tailwind_classes)
+                .print_with_indent(elements, indent)?;
         Ok(printed)
     }
 }

@@ -712,6 +712,11 @@ impl Gen for Function<'_> {
             && ((p.start_of_stmt == n || p.start_of_default_export == n) || self.pife);
         let ctx = ctx.and_forbid_call(false);
         p.wrap(wrap, |p| {
+            // `pife` wrap: emit leading comments inside the `(`, so the
+            // source position `(/* c */ function …)` is preserved.
+            if self.pife {
+                p.print_leading_comments_anchored_to_self(self.span.start);
+            }
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
             if self.declare {
@@ -1754,6 +1759,11 @@ impl Gen for PropertyKey<'_> {
 impl GenExpr for ArrowFunctionExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::Assign || self.pife, |p| {
+            // `pife` wrap: emit leading comments inside the `(`, so the
+            // source position `(/* c */ arrow)` is preserved.
+            if self.pife {
+                p.print_leading_comments_anchored_to_self(self.span.start);
+            }
             if self.r#async {
                 p.print_space_before_identifier();
                 p.add_source_mapping(self.span);
@@ -1937,12 +1947,24 @@ impl GenExpr for ConditionalExpression<'_> {
             p.print_soft_space();
             p.print_colon();
             p.print_soft_space();
-            if let Some(comments) = p.get_comments(self.alternate.span().start) {
-                p.print_comments(&comments);
-                p.consume_pending_indent_space();
+            // Skip when the alternate is a `pife` arrow/function — its own
+            // gen_expr prints the leading comment inside its `(` wrap so the
+            // source position `: ( /* c */ arrow )` is preserved.
+            if !is_pife_arrow_or_function(&self.alternate) {
+                p.print_leading_comments_anchored_to_self(self.alternate.span().start);
             }
             self.alternate.print_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
         });
+    }
+}
+
+/// `true` if `expr` is a `pife`-marked arrow or function expression — its
+/// own `gen_expr` adds a `(` wrap and prints leading comments inside it.
+fn is_pife_arrow_or_function(expr: &Expression<'_>) -> bool {
+    match expr {
+        Expression::ArrowFunctionExpression(arrow) => arrow.pife,
+        Expression::FunctionExpression(func) => func.pife,
+        _ => false,
     }
 }
 

@@ -420,8 +420,8 @@ pub fn rest_element_trailing_comma(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn invalid_binding_rest_element(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid rest element")
-        .with_help("Expected identifier in rest element")
+    OxcDiagnostic::error("Invalid rest element target in destructuring pattern")
+        .with_help("Expected an identifier, like `...rest`.")
         .with_label(span)
 }
 
@@ -804,8 +804,11 @@ pub fn duplicate_default_export(spans: impl IntoIterator<Item = Span>) -> OxcDia
 }
 
 #[cold]
-pub fn import_meta(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span)
+pub fn invalid_import_property(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`",
+    )
+    .with_label(span)
 }
 
 #[cold]
@@ -1235,7 +1238,9 @@ pub fn invalid_assignment_target_default_value_operator(span: Span) -> OxcDiagno
 
 #[cold]
 pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid rest operator's argument.").with_label(span)
+    OxcDiagnostic::error("Invalid rest element target in destructuring assignment")
+        .with_help("Expected an identifier or member expression, like `...rest` or `...obj.prop`.")
+        .with_label(span)
 }
 
 #[cold]

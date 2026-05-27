@@ -15,12 +15,10 @@ pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBu
     if param.r#in || param.out {
         let is_allowed_node = matches!(
             // skip parent TSTypeParameterDeclaration
-            ctx.nodes.ancestor_kinds(ctx.current_node_id).nth(1),
-            Some(
-                AstKind::TSInterfaceDeclaration(_)
-                    | AstKind::Class(_)
-                    | AstKind::TSTypeAliasDeclaration(_)
-            )
+            ctx.nodes.parent_kind(ctx.nodes.parent_id(ctx.current_node_id)),
+            AstKind::TSInterfaceDeclaration(_)
+                | AstKind::Class(_)
+                | AstKind::TSTypeAliasDeclaration(_)
         );
         if !is_allowed_node {
             if param.r#in {
