@@ -125,7 +125,11 @@ impl Rule for PreferNamedCaptureGroup {
     }
 }
 
-fn check_pattern(pattern: &oxc_regular_expression::ast::Pattern<'_>, allow_unnamed: u32, ctx: &LintContext<'_>) {
+fn check_pattern(
+    pattern: &oxc_regular_expression::ast::Pattern<'_>,
+    allow_unnamed: u32,
+    ctx: &LintContext<'_>,
+) {
     let mut collector = UnnamedGroupCollector::default();
     collector.visit_pattern(pattern);
 
@@ -224,17 +228,31 @@ fn test() {
         // allowUnnamedGroups: 1 — one unnamed alongside a named group is fine
         ("/(?<a>x)(b)/", Some(serde_json::json!([{ "allowUnnamedGroups": 1 }]))),
         // additionalRegExpFunctions — named group only, no diagnostic
-        ("regEx('(?<x>foo)')", Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }]))),
+        (
+            "regEx('(?<x>foo)')",
+            Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }])),
+        ),
         // string arg but factory name not in the list → not inspected
         ("regEx('(foo)')", None),
         // string arg but factory name doesn't match the configured name
         ("regEx('(foo)')", Some(serde_json::json!([{ "additionalRegExpFunctions": ["other"] }]))),
         // allowUnnamedGroups threshold met
-        ("regEx('(foo)', 'g')", Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"], "allowUnnamedGroups": 1 }]))),
+        (
+            "regEx('(foo)', 'g')",
+            Some(
+                serde_json::json!([{ "additionalRegExpFunctions": ["regEx"], "allowUnnamedGroups": 1 }]),
+            ),
+        ),
         // new form with named group
-        ("new MyRe('(?<a>x)')", Some(serde_json::json!([{ "additionalRegExpFunctions": ["MyRe"] }]))),
+        (
+            "new MyRe('(?<a>x)')",
+            Some(serde_json::json!([{ "additionalRegExpFunctions": ["MyRe"] }])),
+        ),
         // regex literal arg with named group — passes via literal arm, no false positive
-        ("regEx(/(?<a>foo)/)", Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }]))),
+        (
+            "regEx(/(?<a>foo)/)",
+            Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }])),
+        ),
     ];
 
     let fail = vec![
@@ -282,11 +300,20 @@ fn test() {
         // allowUnnamedGroups: 1 — two unnamed + one named, still two unnamed → fail
         ("/(a)(?<b>c)(d)/", Some(serde_json::json!([{ "allowUnnamedGroups": 1 }]))),
         // additionalRegExpFunctions — string arg with unnamed group
-        ("regEx('([0-9]+)')", Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }]))),
+        (
+            "regEx('([0-9]+)')",
+            Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }])),
+        ),
         // additionalRegExpFunctions — template literal (no substitution) with two unnamed groups
-        ("regEx(`(foo)(bar)`)", Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }]))),
+        (
+            "regEx(`(foo)(bar)`)",
+            Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }])),
+        ),
         // additionalRegExpFunctions — new form with unnamed group
-        ("new MyRe('([0-9]+)')", Some(serde_json::json!([{ "additionalRegExpFunctions": ["MyRe"] }]))),
+        (
+            "new MyRe('([0-9]+)')",
+            Some(serde_json::json!([{ "additionalRegExpFunctions": ["MyRe"] }])),
+        ),
         // regex literal arg inside a custom factory: reported once (via literal arm), not twice
         ("regEx(/(foo)/)", Some(serde_json::json!([{ "additionalRegExpFunctions": ["regEx"] }]))),
     ];
