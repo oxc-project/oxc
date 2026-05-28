@@ -52,6 +52,9 @@ catalogs:
       specifier: 4.1.7
       version: 4.1.7
 
+overrides:
+  rolldown: 1.0.3
+
 importers:
 
   .:
@@ -202,7 +205,7 @@ importers:
         specifier: ^0.133.0
         version: 0.133.0
       rolldown:
-        specifier: 'catalog:'
+        specifier: 1.0.3
         version: 1.0.3
       serialize-javascript:
         specifier: ^7.0.4
@@ -302,7 +305,7 @@ importers:
         specifier: 'catalog:'
         version: 0.3.21
       rolldown:
-        specifier: 'catalog:'
+        specifier: 1.0.3
         version: 1.0.3
       tinypool:
         specifier: ^2.0.0

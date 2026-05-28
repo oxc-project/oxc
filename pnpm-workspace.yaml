@@ -24,6 +24,9 @@ catalog:
   vite-plus: 0.1.22
   vitest: 4.1.7
 
+overrides:
+  rolldown: "catalog:"
+
 allowBuilds:
   "@vscode/vsce-sign@2.0.8": true
   esbuild@0.27.7: true
