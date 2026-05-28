@@ -574,12 +574,9 @@ impl<'a> SemanticBuilder<'a> {
         let flags = reference.flags_mut();
 
         // Determine whether the symbol can be referenced by this reference.
-        // For pure type references (not value or typeof) in qualified names,
-        // only resolve to namespaces (modules, namespaces, enums, imports).
-        // Type parameters and type aliases cannot have member access in type space.
-        // Value references (including typeof) can always have member access.
+        // Namespace-qualified references must resolve to namespace-capable symbols
+        // (modules, namespaces, enums, imports), not arbitrary values or types.
         let can_resolve = if flags.is_namespace()
-            && !flags.is_value()
             && !flags.is_value_as_type()
             && !symbol_flags.can_be_referenced_as_namespace()
         {
@@ -598,6 +595,10 @@ impl<'a> SemanticBuilder<'a> {
             // The non type-only ExportSpecifier can reference both type/value symbols,
             // if the symbol is a value symbol and reference flag is not type-only,
             // remove the type flag. For example: `const B = 1; export { B };`
+            *flags -= ReferenceFlags::Type;
+        } else if flags.is_namespace() && flags.is_read() {
+            // TS import-equals module references start as reads so downstream transforms
+            // can decide whether to preserve or erase them based on alias usage.
             *flags -= ReferenceFlags::Type;
         } else {
             // 1. ReferenceFlags::ValueAsType -> ReferenceFlags::Type
@@ -2346,6 +2347,22 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_ts_module_reference(&mut self, module_reference: &TSModuleReference<'a>) {
+        match module_reference {
+            TSModuleReference::ExternalModuleReference(reference) => {
+                self.visit_ts_external_module_reference(reference);
+            }
+            TSModuleReference::IdentifierReference(reference) => {
+                self.current_reference_flags =
+                    ReferenceFlags::Read | ReferenceFlags::Type | ReferenceFlags::Namespace;
+                self.visit_identifier_reference(reference);
+            }
+            TSModuleReference::QualifiedName(name) => {
+                self.visit_ts_qualified_name(name);
+            }
+        }
+    }
+
     fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
         let kind = AstKind::VariableDeclarator(self.alloc(decl));
         self.enter_node(kind);
@@ -2617,10 +2634,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // The left side of a qualified name (e.g., `Database` in `Database.Table`)
         // must resolve to a namespace/module, not a type parameter.
         // Add Namespace flag to skip type parameters during resolution.
-        // If no flags set yet (value context like `import foo = A.B.C`),
-        // also add Read as the default.
+        // If no flags set yet (namespace context like `import foo = A.B.C`),
+        // also add Read and Type as the default.
         if self.current_reference_flags.is_empty() {
-            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Namespace;
+            self.current_reference_flags =
+                ReferenceFlags::Read | ReferenceFlags::Type | ReferenceFlags::Namespace;
         } else {
             self.current_reference_flags |= ReferenceFlags::Namespace;
         }
