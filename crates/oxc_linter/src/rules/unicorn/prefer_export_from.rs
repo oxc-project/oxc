@@ -224,12 +224,10 @@ impl PreferExportFrom {
 
         let source = import_decl.source.value.as_str();
         let with_clause = if let Some(with_clause) = import_decl.with_clause.as_ref() {
-            let assert_type: &str =
-                if matches!(with_clause.keyword, oxc_ast::ast::WithClauseKeyword::Assert) {
-                    "assert"
-                } else {
-                    "with"
-                };
+            let assert_type = match with_clause.keyword {
+                oxc_ast::ast::WithClauseKeyword::With => "with",
+                oxc_ast::ast::WithClauseKeyword::Assert => "assert",
+            };
             let with_clause_str = with_clause
                 .with_entries
                 .iter()
