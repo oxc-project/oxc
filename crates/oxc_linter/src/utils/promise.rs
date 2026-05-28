@@ -10,7 +10,7 @@ use crate::context::LintContext;
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 pub const PROMISE_STATIC_METHODS: [&str; 7] =
-    ["all", "allSettled", "any", "race", "reject", "resolve", "withResolvers"];
+    ["all", "allSettled", "any", "race", "reject", "resolve", "try", "withResolvers"];
 
 pub fn is_promise(call_expr: &CallExpression) -> Option<String> {
     let member_expr = call_expr.callee.get_member_expr()?;

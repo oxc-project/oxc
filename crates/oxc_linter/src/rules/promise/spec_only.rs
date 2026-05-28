@@ -104,6 +104,7 @@ fn test() {
         ("Promise.all()", None),
         ("Promise.all()", Some(serde_json::json!([{ "allowedMethods": [] }]))),
         ("Promise.race()", None),
+        ("Promise.try()", None),
         ("Promise.withResolvers()", None),
         ("new Promise(function (resolve, reject) {})", None),
         ("SomeClass.resolve()", None),
