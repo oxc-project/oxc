@@ -27,6 +27,7 @@ use crate::{
 };
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
+
 fn prefer_export_from_diagnostic_with_details(
     import_span: Span,
     export_span: Span,
