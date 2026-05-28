@@ -387,3 +387,17 @@ source: crates/oxc_linter/src/tester.rs
  6 │                   
    ╰────
   help: Add a `displayName` property to the context.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:7]
+ 1 │ const renderer = a => listItem => cond ? <div>{listItem}</div> : null;
+   ·       ────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:7]
+ 1 │ const renderer = a => listItem => { const x = <div>{listItem}</div>; return x; };
+   ·       ────────
+   ╰────
+  help: Add a `displayName` property to the component.

@@ -2252,6 +2252,16 @@ fn test() {
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
+        (
+            "const renderer = a => listItem => cond ? <div>{listItem}</div> : null;",
+            None,
+            None
+        ),
+        (
+            "const renderer = a => listItem => { const x = <div>{listItem}</div>; return x; };",
+            None,
+            None
+        )
     ];
 
     Tester::new(DisplayName::NAME, DisplayName::PLUGIN, pass, fail).test_and_snapshot();

@@ -862,22 +862,33 @@ pub fn find_innermost_function_with_jsx<'a>(
 /// Stops at nested function boundaries to avoid detecting JSX from child components.
 struct JsxFinder {
     found: bool,
+    is_in_argument: bool,
 }
 
 impl JsxFinder {
     fn new() -> Self {
-        Self { found: false }
+        Self { found: false, is_in_argument: false }
     }
 }
 
 impl<'a> Visit<'a> for JsxFinder {
     fn visit_jsx_element(&mut self, _elem: &JSXElement<'a>) {
-        self.found = true;
+        if !self.is_in_argument {
+            self.found = true;
+        }
         // Don't walk children - we found what we need
     }
 
     fn visit_jsx_fragment(&mut self, _frag: &JSXFragment<'a>) {
-        self.found = true;
+        if !self.is_in_argument {
+            self.found = true;
+        }
+    }
+
+    fn visit_arguments(&mut self, it: &oxc_allocator::Vec<'a, oxc_ast::ast::Argument<'a>>) {
+        self.is_in_argument = true;
+        walk::walk_arguments(self, it);
+        self.is_in_argument = false;
     }
 
     fn visit_call_expression(&mut self, call: &CallExpression<'a>) {
@@ -912,35 +923,14 @@ pub fn function_body_contains_jsx(body: &FunctionBody) -> bool {
 }
 
 /// Checks if a function-like expression (function or arrow function) returns JSX.
-///
-/// For arrow functions this inspects only the **return position** (the concise body
-/// expression, or top-level `return` statements), so JSX that merely appears as a call
-/// argument (e.g. `() => { foo(<div />) }`) is *not* counted as a component. This differs
-/// from [`function_body_contains_jsx`], which detects JSX anywhere in the body via a full
-/// visitor walk.
 pub fn expression_contains_jsx(expr: &Expression) -> bool {
     match expr {
         Expression::FunctionExpression(func) => function_contains_jsx(func),
         Expression::ArrowFunctionExpression(arrow_func) => {
-            if arrow_func.expression {
-                return arrow_func.body.statements.first().is_some_and(|stmt| {
-                    matches!(stmt, Statement::ExpressionStatement(es) if returns_jsx(&es.expression))
-                });
-            }
-
-            arrow_func.body.statements.iter().any(|stmt| {
-                matches!(stmt, Statement::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(returns_jsx))
-            })
+            function_body_contains_jsx(&arrow_func.body)
         }
         _ => false,
     }
-}
-
-/// Whether an expression is (or directly yields) JSX
-fn returns_jsx(expr: &Expression) -> bool {
-    let expr = expr.get_inner_expression();
-    expr.is_jsx()
-        || matches!(expr, Expression::CallExpression(call) if crate::utils::is_create_element_call(call))
 }
 
 #[cfg(test)]
