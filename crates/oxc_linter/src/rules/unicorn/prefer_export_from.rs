@@ -40,7 +40,7 @@ fn prefer_export_from_diagnostic_with_details(
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferExportFrom {
-    ///When true, if an import is used in other places than just a re-export, all variables in the import declaration will be ignored.
+    /// When true, if an import is used in other places than just a re-export, all variables in the import declaration will be ignored.
     ignore_used_variables: bool,
 }
 
@@ -50,20 +50,20 @@ declare_oxc_lint!(
     ///
     /// When re-exporting from a module, it's unnecessary to import and then export.
     /// It can be done in a single export…from declaration.
-    ///This rule encourages using direct re-export syntax (export ... from) instead of importing and then exporting.
-    ///  It helps reduce boilerplate code and keeps the module scope clean by avoiding unnecessary local bindings.
+    /// This rule encourages using direct re-export syntax (export ... from) instead of importing and then exporting.
+    /// It helps reduce boilerplate code and keeps the module scope clean by avoiding unnecessary local bindings.
     ///
     /// ### Why is this bad?
     ///
-    ///Separating re-exports into import and export statements is discouraged because it
+    /// Separating re-exports into import and export statements is discouraged because it
     /// unnecessarily pollutes the current module's scope and adds redundant boilerplate code.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    ///import defaultExport from './foo.js';
-    ///export default defaultExport;
+    /// import defaultExport from './foo.js';
+    /// export default defaultExport;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -73,13 +73,13 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    ///import {named} from './foo.js';
-    /// export {named};
+    /// import { named } from './foo.js';
+    /// export { named };
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// export {named} from './foo.js';
+    /// export { named } from './foo.js';
     /// ```
     PreferExportFrom,
     unicorn,
