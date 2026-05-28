@@ -1,7 +1,7 @@
 commit: e5509e21
 
 parser_typescript Summary:
-AST Parsed     : 9829/9832 (99.97%)
+AST Parsed     : 9830/9832 (99.98%)
 Positive Passed: 9818/9832 (99.86%)
 Negative Passed: 1532/2587 (59.22%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
@@ -2306,7 +2306,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclaration
  19 │     const c5 = 0;
     ╰────
 
-Panicked: tasks/coverage/typescript/tests/cases/compiler/convertKeywordsYes.ts
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/convertKeywordsYes.ts
 
   × Classes can't have a field named 'constructor'
      ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:175:12]
@@ -2316,12 +2316,76 @@ Panicked: tasks/coverage/typescript/tests/cases/compiler/convertKeywordsYes.ts
  176 │     public any = 0;
      ╰────
 
-  × Unexpected token
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:292:22]
+  × The keyword 'implements' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:292:11]
  291 │     class constructor { }
  292 │     class implements { }
-     ·                      ─
+     ·           ──────────
  293 │     class interface { }
+     ╰────
+
+  × The keyword 'interface' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:293:11]
+ 292 │     class implements { }
+ 293 │     class interface { }
+     ·           ─────────
+ 294 │     class let { }
+     ╰────
+
+  × The keyword 'let' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:294:11]
+ 293 │     class interface { }
+ 294 │     class let { }
+     ·           ───
+ 295 │     class module { }
+     ╰────
+
+  × The keyword 'package' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:296:11]
+ 295 │     class module { }
+ 296 │     class package { }
+     ·           ───────
+ 297 │     class private { }
+     ╰────
+
+  × The keyword 'private' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:297:11]
+ 296 │     class package { }
+ 297 │     class private { }
+     ·           ───────
+ 298 │     class protected { }
+     ╰────
+
+  × The keyword 'protected' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:298:11]
+ 297 │     class private { }
+ 298 │     class protected { }
+     ·           ─────────
+ 299 │     class public { }
+     ╰────
+
+  × The keyword 'public' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:299:11]
+ 298 │     class protected { }
+ 299 │     class public { }
+     ·           ──────
+ 300 │     class set { }
+     ╰────
+
+  × The keyword 'static' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:301:11]
+ 300 │     class set { }
+ 301 │     class static { }
+     ·           ──────
+ 302 │     class get { }
+     ╰────
+
+  × The keyword 'yield' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:303:11]
+ 302 │     class get { }
+ 303 │     class yield { }
+     ·           ─────
+ 304 │     class declare { }
      ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts

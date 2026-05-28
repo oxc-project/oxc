@@ -4008,7 +4008,15 @@ rebuilt        : ["cond"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/convertKeywordsYes.ts
 Classes can't have a field named 'constructor'
-Unexpected token
+The keyword 'implements' is reserved
+The keyword 'interface' is reserved
+The keyword 'let' is reserved
+The keyword 'package' is reserved
+The keyword 'private' is reserved
+The keyword 'protected' is reserved
+The keyword 'public' is reserved
+The keyword 'static' is reserved
+The keyword 'yield' is reserved
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/correlatedUnions.ts
 Bindings mismatch:
