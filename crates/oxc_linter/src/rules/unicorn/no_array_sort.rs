@@ -1,3 +1,7 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, ArrayExpressionElement, Expression},
@@ -5,10 +9,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_syntax::operator::UnaryOperator;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -22,27 +22,6 @@ fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `Array#toSorted()` instead of `Array#sort()`.")
         .with_help("`Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.")
         .with_label(span)
-}
-
-/// Returns `true` when `arg` cannot be a valid `compareFn` for
-/// `Array.prototype.sort`. Used to filter out query-builder style calls such
-/// as Mongoose's `Model.find().sort({ field: 1 })` or
-/// `query.sort("-createdAt")` which are not `Array#sort` despite the shared
-/// method name.
-fn is_non_compare_fn_argument(arg: &Argument<'_>) -> bool {
-    match arg {
-        Argument::ObjectExpression(_)
-        | Argument::StringLiteral(_)
-        | Argument::TemplateLiteral(_)
-        | Argument::NumericLiteral(_)
-        | Argument::ArrayExpression(_) => true,
-        // `query.sort(-1)` / `query.sort(+1)` — unary on a numeric literal.
-        Argument::UnaryExpression(unary) => {
-            matches!(unary.operator, UnaryOperator::UnaryNegation | UnaryOperator::UnaryPlus)
-                && matches!(unary.argument, Expression::NumericLiteral(_))
-        }
-        _ => false,
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
@@ -167,6 +146,27 @@ impl Rule for NoArraySort {
     }
 }
 
+/// Returns `true` when `arg` cannot be a valid `compareFn` for
+/// `Array.prototype.sort`. Used to filter out query-builder style calls such
+/// as Mongoose's `Model.find().sort({ field: 1 })` or
+/// `query.sort("-createdAt")` which are not `Array#sort` despite the shared
+/// method name.
+fn is_non_compare_fn_argument(arg: &Argument<'_>) -> bool {
+    match arg {
+        Argument::ObjectExpression(_)
+        | Argument::StringLiteral(_)
+        | Argument::TemplateLiteral(_)
+        | Argument::NumericLiteral(_)
+        | Argument::ArrayExpression(_) => true,
+        // `query.sort(-1)` / `query.sort(+1)` — unary on a numeric literal.
+        Argument::UnaryExpression(unary) => {
+            unary.operator.is_arithmetic()
+                && unary.argument.without_parentheses().is_number_literal()
+        }
+        _ => false,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -185,9 +185,6 @@ fn test() {
         ("sorted = array.sort(compareFn, extraArgument)", None),
         (r#"import { Chunk } from "effect"; const sorted = Chunk.sort(compareFn)"#, None),
         (r#"import { Chunk as C } from "effect"; const sorted = C.sort(compareFn)"#, None),
-        // Query-builder style `.sort(...)` calls — single argument is not a
-        // valid `compareFn`, so the receiver is almost certainly a non-array
-        // (e.g. Mongoose, Mongo). See issue #22487.
         ("sorted = collection.sort({field: 1})", None),
         (r#"sorted = query.sort("field")"#, None),
         ("sorted = query.sort(1)", None),
@@ -201,7 +198,6 @@ fn test() {
             "collection.sort({field: 1})",
             Some(serde_json::json!([{ "allowExpressionStatement": false }])),
         ),
-        // Regression cases drawn directly from the issue body.
         ("User.find().sort({ createdAt: -1 })", None),
         (r#"User.find().sort("-createdAt")"#, None),
         (r#"Post.find({ published: true }).sort({ updatedAt: "desc" })"#, None),
