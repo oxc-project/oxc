@@ -59,6 +59,9 @@ impl Context {
         let default = if *turned_on_by_default { "true" } else { "false" };
         let type_aware = if *is_tsgolint_rule { "true" } else { "false" };
         let fix = autofix.to_string();
+        let upstream_line = upstream_docs_url(plugin, name)
+            .map(|url| format!("upstream: \"{url}\"\n"))
+            .unwrap_or_default();
 
         let file = file!();
         #[cfg(windows)]
@@ -67,7 +70,7 @@ impl Context {
 
         writeln!(
             self.page,
-            "---\ntitle: \"{rule_name} | Oxlint\"\nrule: \"{rule_name}\"\ncategory: \"{category}\"\nversion: \"{version}\"\ndefault: {default}\ntype_aware: {type_aware}\nfix: \"{fix}\"\n---\n"
+            "---\ntitle: \"{rule_name} | Oxlint\"\nrule: \"{rule_name}\"\ncategory: \"{category}\"\nversion: \"{version}\"\ndefault: {default}\ntype_aware: {type_aware}\nfix: \"{fix}\"\n{upstream_line}---\n"
         )?;
 
         writeln!(
@@ -283,6 +286,77 @@ fn full_rule_name(
     } else {
         format!("{}/{}", normalized_plugin_name, rule.name)
     }
+}
+
+/// Returns the upstream-plugin docs URL for `(plugin, name)`, where `name` is the
+/// rule's kebab-case identifier. Returns `None` for native `oxc` rules or unknown
+/// plugins. Per-rule overrides handle directories that do not match their true
+/// upstream (e.g. React Hooks rules under `react/` are sourced from
+/// `eslint-plugin-react-hooks`).
+fn upstream_docs_url(plugin: &str, name: &str) -> Option<String> {
+    let override_url: Option<&'static str> = match (plugin, name) {
+        ("react", "rules-of-hooks") => Some("https://react.dev/reference/rules/rules-of-hooks"),
+        ("react", "exhaustive-deps") => Some(
+            "https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/README.md",
+        ),
+        ("react", "only-export-components") => Some(
+            "https://github.com/ArnaudBarre/eslint-plugin-react-refresh/blob/main/docs/only-export-components.md",
+        ),
+        _ => None,
+    };
+    if let Some(url) = override_url {
+        return Some(url.to_owned());
+    }
+    Some(match plugin {
+        "eslint" => format!("https://eslint.org/docs/latest/rules/{name}"),
+        "typescript" => format!("https://typescript-eslint.io/rules/{name}/"),
+        "jest" => format!(
+            "https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/{name}.md"
+        ),
+        "unicorn" => format!(
+            "https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/docs/rules/{name}.md"
+        ),
+        "import" => format!(
+            "https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/{name}.md"
+        ),
+        "react" => format!(
+            "https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/{name}.md"
+        ),
+        "react_perf" => format!(
+            "https://github.com/cvazac/eslint-plugin-react-perf/blob/master/docs/rules/{name}.md"
+        ),
+        "jsx_a11y" => format!(
+            "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/{name}.md"
+        ),
+        "nextjs" => format!("https://nextjs.org/docs/messages/{name}"),
+        "jsdoc" => {
+            // jsdoc URLs use camelCase rule names.
+            let mut camel = String::with_capacity(name.len());
+            let mut upper = false;
+            for c in name.chars() {
+                if c == '-' {
+                    upper = true;
+                } else if upper {
+                    camel.extend(c.to_uppercase());
+                    upper = false;
+                } else {
+                    camel.push(c);
+                }
+            }
+            format!("https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/rules/{camel}.md")
+        }
+        "node" => format!(
+            "https://github.com/eslint-community/eslint-plugin-n/blob/master/docs/rules/{name}.md"
+        ),
+        "promise" => format!(
+            "https://github.com/eslint-community/eslint-plugin-promise/blob/main/docs/rules/{name}.md"
+        ),
+        "vitest" => format!(
+            "https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/{name}.md"
+        ),
+        "vue" => format!("https://eslint.vuejs.org/rules/{name}.html"),
+        _ => return None,
+    })
 }
 
 fn ordinal(n: usize) -> String {
