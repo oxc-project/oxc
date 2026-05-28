@@ -10,8 +10,10 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, ExportNamedDeclaration, ImportDeclaration, ImportDeclarationSpecifier,
-        ImportOrExportKind, Statement, VariableDeclarationKind,
+        BindingPattern, ExportNamedDeclaration, ExportSpecifier, ImportAttributeKey,
+        ImportDeclaration, ImportDeclarationSpecifier, ImportNamespaceSpecifier,
+        ImportOrExportKind, ImportSpecifier, ModuleExportName, Statement, VariableDeclarationKind,
+        VariableDeclarator, WithClauseKeyword,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -215,7 +217,7 @@ impl PreferExportFrom {
         &self,
         ctx: &LintContext<'a>,
         symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'a>>,
-        import_decl: &'a oxc_ast::ast::ImportDeclaration<'a>,
+        import_decl: &'a ImportDeclaration<'a>,
         re_export_decl: Option<&'a ExportNamedDeclaration<'a>>,
     ) {
         let import_node_id = import_decl.node_id();
@@ -225,18 +227,16 @@ impl PreferExportFrom {
         let source = import_decl.source.value.as_str();
         let with_clause = if let Some(with_clause) = import_decl.with_clause.as_ref() {
             let assert_type = match with_clause.keyword {
-                oxc_ast::ast::WithClauseKeyword::With => "with",
-                oxc_ast::ast::WithClauseKeyword::Assert => "assert",
+                WithClauseKeyword::With => "with",
+                WithClauseKeyword::Assert => "assert",
             };
             let with_clause_str = with_clause
                 .with_entries
                 .iter()
                 .map(|attribute| {
                     let key = match &attribute.key {
-                        oxc_ast::ast::ImportAttributeKey::Identifier(ident_name) => {
-                            ident_name.name.as_str()
-                        }
-                        oxc_ast::ast::ImportAttributeKey::StringLiteral(string_literal) => {
+                        ImportAttributeKey::Identifier(ident_name) => ident_name.name.as_str(),
+                        ImportAttributeKey::StringLiteral(string_literal) => {
                             string_literal.value.as_str()
                         }
                     };
@@ -432,7 +432,7 @@ impl PreferExportFrom {
         specifier_spec: &SpecifierSpec<'a>,
         symbol_id: SymbolId,
         reference_node_id: NodeId,
-        export_specifier: &oxc_ast::ast::ExportSpecifier,
+        export_specifier: &ExportSpecifier,
         import_decl: &ImportDeclaration<'a>,
     ) -> Option<(SymbolId, Violation)> {
         let export_parent_decl = ctx.nodes().parent_node(export_specifier.node_id());
@@ -514,7 +514,7 @@ impl PreferExportFrom {
         specifier_spec: &SpecifierSpec<'a>,
         symbol_id: SymbolId,
         reference_node_id: NodeId,
-        var_decl: &oxc_ast::ast::VariableDeclarator,
+        var_decl: &VariableDeclarator,
     ) -> Option<(SymbolId, Violation)> {
         let next_parent_node = ctx.nodes().parent_node(var_decl.node_id());
 
@@ -559,10 +559,7 @@ impl PreferExportFrom {
     }
 
     //Check if the exported variable is subsequently used
-    fn is_variable_used_elsewhere(
-        ctx: &LintContext<'_>,
-        var_decl: &oxc_ast::ast::VariableDeclarator,
-    ) -> bool {
+    fn is_variable_used_elsewhere(ctx: &LintContext<'_>, var_decl: &VariableDeclarator) -> bool {
         let var_decl_id_symbol_id =
             if let BindingPattern::BindingIdentifier(binding_identifier) = &var_decl.id {
                 Some(binding_identifier.symbol_id())
@@ -582,13 +579,9 @@ impl PreferExportFrom {
             ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => "default".to_string(),
             ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
                 let imported_name = match &import_specifier.imported {
-                    oxc_ast::ast::ModuleExportName::IdentifierName(ident_name) => {
-                        ident_name.name.as_str()
-                    }
-                    oxc_ast::ast::ModuleExportName::IdentifierReference(ident_ref) => {
-                        ident_ref.name.as_str()
-                    }
-                    oxc_ast::ast::ModuleExportName::StringLiteral(literal) => &literal.raw.unwrap(),
+                    ModuleExportName::IdentifierName(ident_name) => ident_name.name.as_str(),
+                    ModuleExportName::IdentifierReference(ident_ref) => ident_ref.name.as_str(),
+                    ModuleExportName::StringLiteral(literal) => &literal.raw.unwrap(),
                 };
                 let imported_local_name = import_specifier.local.name.as_str();
                 let temp_name = specifier_spec.name.as_str();
@@ -605,14 +598,11 @@ impl PreferExportFrom {
         }
     }
 
-    fn is_export_as_default(specifiers: &[oxc_ast::ast::ExportSpecifier]) -> bool {
+    fn is_export_as_default(specifiers: &[ExportSpecifier]) -> bool {
         specifiers.iter().any(|specifier| {
-            if let oxc_ast::ast::ModuleExportName::IdentifierName(ident_name) = &specifier.exported
-            {
+            if let ModuleExportName::IdentifierName(ident_name) = &specifier.exported {
                 ident_name.name.as_str() == "default"
-            } else if let oxc_ast::ast::ModuleExportName::IdentifierReference(ident_ref) =
-                &specifier.exported
-            {
+            } else if let ModuleExportName::IdentifierReference(ident_ref) = &specifier.exported {
                 ident_ref.name.as_str() == "default"
             } else {
                 false
@@ -625,13 +615,9 @@ impl PreferExportFrom {
             ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => "default".to_string(),
             ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
                 let imported_name = match &import_specifier.imported {
-                    oxc_ast::ast::ModuleExportName::IdentifierName(ident_name) => {
-                        ident_name.name.as_str()
-                    }
-                    oxc_ast::ast::ModuleExportName::IdentifierReference(ident_ref) => {
-                        ident_ref.name.as_str()
-                    }
-                    oxc_ast::ast::ModuleExportName::StringLiteral(literal) => &literal.raw.unwrap(),
+                    ModuleExportName::IdentifierName(ident_name) => ident_name.name.as_str(),
+                    ModuleExportName::IdentifierReference(ident_ref) => ident_ref.name.as_str(),
+                    ModuleExportName::StringLiteral(literal) => &literal.raw.unwrap(),
                 };
 
                 imported_name.to_string()
@@ -642,7 +628,7 @@ impl PreferExportFrom {
 
     fn get_export_name(
         specifier_spec: &SpecifierSpec<'_>,
-        export_specifier: &oxc_ast::ast::ExportSpecifier,
+        export_specifier: &ExportSpecifier,
     ) -> String {
         match specifier_spec.specifier {
             ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => {
@@ -655,22 +641,17 @@ impl PreferExportFrom {
             }
             ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
                 let imported_name = match &import_specifier.imported {
-                    oxc_ast::ast::ModuleExportName::IdentifierName(ident_name) => {
-                        ident_name.name.as_str()
-                    }
-                    oxc_ast::ast::ModuleExportName::IdentifierReference(ident_ref) => {
-                        ident_ref.name.as_str()
-                    }
-                    oxc_ast::ast::ModuleExportName::StringLiteral(literal) => &literal.raw.unwrap(),
+                    ModuleExportName::IdentifierName(ident_name) => ident_name.name.as_str(),
+                    ModuleExportName::IdentifierReference(ident_ref) => ident_ref.name.as_str(),
+                    ModuleExportName::StringLiteral(literal) => &literal.raw.unwrap(),
                 };
                 // let temp_export = export_specifier.exported.to_string();
-                let temp_export = if let oxc_ast::ast::ModuleExportName::StringLiteral(literal) =
-                    &export_specifier.exported
-                {
-                    literal.raw.as_ref().unwrap()
-                } else {
-                    export_specifier.exported.name().as_str()
-                };
+                let temp_export =
+                    if let ModuleExportName::StringLiteral(literal) = &export_specifier.exported {
+                        literal.raw.as_ref().unwrap()
+                    } else {
+                        export_specifier.exported.name().as_str()
+                    };
 
                 if imported_name == "default" {
                     format!("default as {temp_export}")
@@ -745,7 +726,7 @@ impl PreferExportFrom {
         violations: &Vec<Violation>,
         used_specifiers: &[SymbolId],
         symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'a>>,
-        import_decl: &'a oxc_ast::ast::ImportDeclaration<'a>,
+        import_decl: &'a ImportDeclaration<'a>,
         re_export_decl: Option<&'a ExportNamedDeclaration<'a>>,
         source: &str,
         with_clause: Option<&String>,
@@ -927,7 +908,7 @@ impl PreferExportFrom {
         fixer: RuleFixer<'_, '_>,
         used_specifiers: &[SymbolId],
         symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'a>>,
-        import_decl: &'a oxc_ast::ast::ImportDeclaration<'a>,
+        import_decl: &'a ImportDeclaration<'a>,
         re_export_decl: Option<&'a ExportNamedDeclaration<'a>>,
         re_export_source_text: &str,
         replace_span: Span,
@@ -977,7 +958,7 @@ impl PreferExportFrom {
     fn apply_complete_export_fix<'a>(
         fixer: RuleFixer<'_, '_>,
         rule_fixes: &mut RuleFix,
-        import_decl: &'a oxc_ast::ast::ImportDeclaration<'a>,
+        import_decl: &'a ImportDeclaration<'a>,
         re_export_decl: Option<&'a ExportNamedDeclaration<'a>>,
         re_export_source_text: &str,
         replace_span: Span,
@@ -1012,7 +993,7 @@ impl PreferExportFrom {
         rule_fixes: &mut RuleFix,
         re_export: &'a ExportNamedDeclaration<'a>,
         re_export_source_text: &str,
-        import_decl: &'a oxc_ast::ast::ImportDeclaration<'a>,
+        import_decl: &'a ImportDeclaration<'a>,
         replace_span: Span,
         replace_export_spans: &[Span],
         exports_str: &str,
@@ -1045,7 +1026,7 @@ impl PreferExportFrom {
     }
     /// Get the span of the last specifier in an export declaration
     fn get_last_export_span(
-        last_specifier: Option<&oxc_ast::ast::ExportSpecifier>,
+        last_specifier: Option<&ExportSpecifier>,
         re_export_source_text: &str,
         re_export: &ExportNamedDeclaration,
     ) -> Span {
@@ -1065,7 +1046,7 @@ impl PreferExportFrom {
         rule_fixes: &mut RuleFix,
         used_specifiers: &[SymbolId],
         symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'a>>,
-        import_decl: &'a oxc_ast::ast::ImportDeclaration<'a>,
+        import_decl: &'a ImportDeclaration<'a>,
         replace_span: Span,
         re_export_decl: Option<&'a ExportNamedDeclaration<'a>>,
         delete_span: Span,
@@ -1136,15 +1117,12 @@ impl PreferExportFrom {
         }
     }
     /// Add named import part to named imports vector
-    fn add_named_import_part(
-        named_imports: &mut Vec<String>,
-        import_spec: &oxc_ast::ast::ImportSpecifier,
-    ) {
+    fn add_named_import_part(named_imports: &mut Vec<String>, import_spec: &ImportSpecifier) {
         let local_name = &import_spec.local.name;
         let imported_name = match &import_spec.imported {
-            oxc_ast::ast::ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
-            oxc_ast::ast::ModuleExportName::IdentifierReference(ref_name) => ref_name.name.as_str(),
-            oxc_ast::ast::ModuleExportName::StringLiteral(_) => "",
+            ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
+            ModuleExportName::IdentifierReference(ref_name) => ref_name.name.as_str(),
+            ModuleExportName::StringLiteral(_) => "",
         };
 
         if imported_name == local_name.as_str() {
@@ -1157,7 +1135,7 @@ impl PreferExportFrom {
     /// Add namespace import part to import parts vector
     fn add_namespace_import_part(
         import_parts: &mut Vec<String>,
-        namespace_spec: &oxc_ast::ast::ImportNamespaceSpecifier,
+        namespace_spec: &ImportNamespaceSpecifier,
     ) {
         import_parts.push(format!(" * as {}", namespace_spec.local.name));
     }
@@ -1190,7 +1168,7 @@ impl PreferExportFrom {
     }
 
     fn get_insertion_text_for_regular_export(
-        last_specifier: Option<&oxc_ast::ast::ExportSpecifier>,
+        last_specifier: Option<&ExportSpecifier>,
         processed_exports_str: &str,
         re_export: &ExportNamedDeclaration,
         re_export_source_text: &str,
