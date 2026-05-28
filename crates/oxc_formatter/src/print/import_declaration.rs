@@ -198,19 +198,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
                 write!(f, [space(), FormatLeadingComments::Comments(comments)]);
             }
         });
-        write!(
-            f,
-            [
-                space(),
-                format_comment,
-                match self.keyword() {
-                    WithClauseKeyword::With => "with",
-                    WithClauseKeyword::Assert => "assert",
-                },
-                space(),
-                self.with_entries()
-            ]
-        );
+        write!(f, [space(), format_comment, self.keyword().as_str(), space(), self.with_entries()]);
 
         if f.options().quote_properties.is_consistent() {
             f.context_mut().pop_quote_needed();
