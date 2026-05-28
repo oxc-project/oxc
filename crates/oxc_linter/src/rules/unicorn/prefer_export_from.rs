@@ -245,8 +245,7 @@ impl PreferExportFrom {
                     let value = &attribute.value.raw.unwrap();
                     format!("{key}: {value}")
                 })
-                .collect::<Vec<_>>()
-                .join(", ");
+                .format(", ");
 
             Some(&format!("{assert_type} {{ {with_clause_str} }}"))
         } else {
