@@ -1,904 +1,1121 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 490
 ---
 
-  ⚠ unicorn(prefer-export-from): export { default } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:28]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
  2 │             export default defaultExport;
-   ·                            ─────────────
+   ·                            ──────┬──────
+   ·                                  ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
  2 │                 export {defaultExport as default};
-   ·                         ─────────────
+   ·                         ──────┬──────
+   ·                               ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as named } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
  2 │                 export {defaultExport as named};
-   ·                         ─────────────
+   ·                         ──────┬──────
+   ·                               ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as variable } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:37]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
  2 │             export const variable = defaultExport;
-   ·                                     ─────────────
+   ·                                     ──────┬──────
+   ·                                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:32]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {default as defaultExport} from 'foo';
+   · ──────────────────────┬──────────────────────
+   ·                       ╰── Imported here.
  2 │                 export default defaultExport;
-   ·                                ─────────────
+   ·                                ──────┬──────
+   ·                                      ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as named } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {default as defaultExport} from 'foo';
+   · ──────────────────────┬──────────────────────
+   ·                       ╰── Imported here.
  2 │                 export {defaultExport as named};
-   ·                         ─────────────
+   ·                         ──────┬──────
+   ·                               ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as named, default, default as variable } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:3:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
  2 │                 defaultExport.bar = 1;
  3 │                 export {defaultExport as named};
-   ·                         ─────────────
+   ·                         ──────┬──────
+   ·                               ╰── Re-exported here.
  4 │                 export {defaultExport as default};
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as named, default, default as variable } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:4:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
+ 2 │                 defaultExport.bar = 1;
  3 │                 export {defaultExport as named};
  4 │                 export {defaultExport as default};
-   ·                         ─────────────
+   ·                         ──────┬──────
+   ·                               ╰── Re-exported here.
  5 │                 export const variable = defaultExport;
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as named, default, default as variable } from 'foo';
-  │ 
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
+ 2 │                 defaultExport.bar = 1;
+   ╰────
    ╭─[prefer_export_from.tsx:5:41]
  4 │                 export {defaultExport as default};
  5 │                 export const variable = defaultExport;
-   ·                                         ─────────────
+   ·                                         ──────┬──────
+   ·                                               ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named as default } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:28]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │             export default named;
-   ·                            ─────
+   ·                            ──┬──
+   ·                              ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named as default } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │                 export {named as default};
-   ·                         ─────
+   ·                         ──┬──
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │                 export {named as named};
-   ·                         ─────
+   ·                         ──┬──
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named as renamed } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │                 export {named as renamed};
-   ·                         ─────
+   ·                         ──┬──
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named as variable } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:37]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │             export const variable = named;
-   ·                                     ─────
+   ·                                     ──┬──
+   ·                                       ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named, named as default, named as variable } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:3:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │             named.bar = 1;
  3 │             export {named as named};
-   ·                     ─────
+   ·                     ──┬──
+   ·                       ╰── Re-exported here.
  4 │             export {named as default};
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named, named as default, named as variable } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:4:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
+ 2 │             named.bar = 1;
  3 │             export {named as named};
  4 │             export {named as default};
-   ·                     ─────
+   ·                     ──┬──
+   ·                       ╰── Re-exported here.
  5 │             export const variable = named;
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named, named as default, named as variable } from 'foo';
-  │ 
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
+ 2 │             named.bar = 1;
+   ╰────
    ╭─[prefer_export_from.tsx:5:37]
  4 │             export {named as default};
  5 │             export const variable = named;
-   ·                                     ─────
+   ·                                     ──┬──
+   ·                                       ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as namespace from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as namespace from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │             export {namespace as namespace};
-   ·                     ─────────
+   ·                     ────┬────
+   ·                         ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as renamed from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as namespace from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │             export {namespace as renamed};
-   ·                     ─────────
+   ·                     ────┬────
+   ·                         ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as variable from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:37]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as namespace from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │             export const variable = namespace;
-   ·                                     ─────────
+   ·                                     ────┬────
+   ·                                         ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as named from 'foo';
-  │ export * as variable from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:3:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import * as namespace from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │             namespace.bar = 1;
  3 │             export {namespace as named};
-   ·                     ─────────
+   ·                     ────┬────
+   ·                         ╰── Re-exported here.
  4 │             export {namespace as default};
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as named from 'foo';
-  │ export * as variable from 'foo';
-  │ 
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import * as namespace from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
+ 2 │             namespace.bar = 1;
+   ╰────
    ╭─[prefer_export_from.tsx:5:37]
  4 │             export {namespace as default};
  5 │             export const variable = namespace;
-   ·                                     ─────────
+   ·                                     ────┬────
+   ·                                         ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named1 } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named1, named2} from 'foo';
+   · ─────────────────┬─────────────────
+   ·                  ╰── Imported here.
  2 │             export {named1};
-   ·                     ──────
+   ·                     ───┬──
+   ·                        ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as defaultExport } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import defaultExport, {named} from 'foo';
+   · ────────────────────┬────────────────────
+   ·                     ╰── Imported here.
  2 │             export {defaultExport};
-   ·                     ─────────────
+   ·                     ──────┬──────
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import defaultExport, {named} from 'foo';
+   · ────────────────────┬────────────────────
+   ·                     ╰── Imported here.
  2 │             export {named};
-   ·                     ─────
+   ·                     ──┬──
+   ·                       ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as defaultExport } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import defaultExport, * as namespace from 'foo';
+   · ────────────────────────┬───────────────────────
+   ·                         ╰── Imported here.
  2 │             export {defaultExport};
-   ·                     ─────────────
+   ·                     ──────┬──────
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as foo from 'foo';
+   · ─────────────┬─────────────
+   ·              ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │             export * as bar from 'foo';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as foo from 'foo';
+   · ─────────────┬─────────────
+   ·              ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │             export {bar} from 'foo';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as foo from 'foo';
+   · ─────────────┬─────────────
+   ·              ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │             export {} from 'foo';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as foo from 'foo';
+   · ─────────────┬─────────────
+   ·              ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │             export * from 'foo';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import foo from 'foo';
+   · ───────────┬──────────
+   ·            ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │             export * as bar from 'foo';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import foo from 'foo';
+   · ───────────┬──────────
+   ·            ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │             export {bar} from 'foo';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import foo from 'foo';
+   · ───────────┬──────────
+   ·            ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │             export {bar,} from 'foo';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import foo from 'foo';
+   · ───────────┬──────────
+   ·            ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │             export {} from 'foo';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import foo from 'foo';
+   · ───────────┬──────────
+   ·            ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │             export * from 'foo';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named1, named2 } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named1, named2} from 'foo';
+   · ─────────────────┬─────────────────
+   ·                  ╰── Imported here.
  2 │                 export {named1, named2};
-   ·                         ──────
+   ·                         ───┬──
+   ·                            ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named1, named2 } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:33]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named1, named2} from 'foo';
+   · ─────────────────┬─────────────────
+   ·                  ╰── Imported here.
  2 │                 export {named1, named2};
-   ·                                 ──────
+   ·                                 ───┬──
+   ·                                    ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named as default, named } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │                 export {named as default, named};
-   ·                         ─────
+   ·                         ──┬──
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named as default, named } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:43]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │                 export {named as default, named};
-   ·                                           ─────
+   ·                                           ──┬──
+   ·                                             ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named, named as renamed } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named, named as renamed} from 'foo';
+   · ──────────────────────┬─────────────────────
+   ·                       ╰── Imported here.
  2 │                 export {named, renamed};
-   ·                         ─────
+   ·                         ──┬──
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { named, named as renamed } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:32]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {named, named as renamed} from 'foo';
+   · ──────────────────────┬─────────────────────
+   ·                       ╰── Imported here.
  2 │                 export {named, renamed};
-   ·                                ───────
+   ·                                ───┬───
+   ·                                   ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as defaultExport, named1 as default, named2 } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:4:25]
- 3 │                 export {named2};
- 4 │                 export {defaultExport};
-   ·                         ─────────────
-   ╰────
-  help: use `export ... from ...;`
-
-  ⚠ unicorn(prefer-export-from): export { default as defaultExport, named1 as default, named2 } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import defaultExport, {named1, named2} from 'foo';
+   · ─────────────────────────┬────────────────────────
+   ·                          ╰── Imported here.
  2 │                 export {named1 as default};
-   ·                         ──────
+ 3 │                 export {named2};
+ 4 │                 export {defaultExport};
+   ·                         ──────┬──────
+   ·                               ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport, {named1, named2} from 'foo';
+   · ─────────────────────────┬────────────────────────
+   ·                          ╰── Imported here.
+ 2 │                 export {named1 as default};
+   ·                         ───┬──
+   ·                            ╰── Re-exported here.
  3 │                 export {named2};
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default as defaultExport, named1 as default, named2 } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:3:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport, {named1, named2} from 'foo';
+   · ─────────────────────────┬────────────────────────
+   ·                          ╰── Imported here.
  2 │                 export {named1 as default};
  3 │                 export {named2};
-   ·                         ──────
+   ·                         ───┬──
+   ·                            ╰── Re-exported here.
  4 │                 export {defaultExport};
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:3:18]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import * as foo from 'foo';
+   · ─────────────┬─────────────
+   ·              ╰── Imported here.
  2 │         import * as bar from 'foo';
  3 │          export {foo, bar};
-   ·                  ───
+   ·                  ─┬─
+   ·                   ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as bar from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:3:23]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:2:9]
+ 1 │ import * as foo from 'foo';
  2 │         import * as bar from 'foo';
+   ·         ─────────────┬─────────────
+   ·                      ╰── Imported here.
  3 │          export {foo, bar};
-   ·                       ───
+   ·                       ─┬─
+   ·                        ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
-  │ export * as bar from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as foo from 'foo';
+   · ─────────────┬─────────────
+   ·              ╰── Imported here.
  2 │                 export {foo, foo as bar};
-   ·                         ───
+   ·                         ─┬─
+   ·                          ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as foo from 'foo';
-  │ export * as bar from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:30]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as foo from 'foo';
+   · ─────────────┬─────────────
+   ·              ╰── Imported here.
  2 │                 export {foo, foo as bar};
-   ·                              ───
+   ·                              ─┬─
+   ·                               ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:3:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
  2 │         export * from 'foo';
  3 │          export default defaultExport;
-   ·                         ─────────────
+   ·                         ──────┬──────
+   ·                               ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:4:28]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
+ 2 │             export {named} from 'foo';
  3 │             export * from 'foo';
  4 │             export default defaultExport;
-   ·                            ─────────────
+   ·                            ──────┬──────
+   ·                                  ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default } from './foo.js';
-  │ 
-   ╭─[prefer_export_from.tsx:3:32]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport from './foo.js';
+   · ──────────────────┬──────────────────
+   ·                   ╰── Imported here.
  2 │                 export {named} from './foo.js';
  3 │                 export default defaultExport;
-   ·                                ─────────────
+   ·                                ──────┬──────
+   ·                                      ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default } from './foo.js';
-  │ 
-   ╭─[prefer_export_from.tsx:3:32]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport from './foo.js';
+   · ──────────────────┬──────────────────
+   ·                   ╰── Imported here.
  2 │                 export {named} from './foo.js?query';
  3 │                 export default defaultExport;
-   ·                                ─────────────
+   ·                                ──────┬──────
+   ·                                      ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as namespace from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:3:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import * as namespace from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │                 export default namespace;
  3 │                 export {namespace};
-   ·                         ─────────
+   ·                         ────┬────
+   ·                             ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as namespace from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as namespace from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │                 export {namespace};
-   ·                         ─────────
+   ·                         ────┬────
+   ·                             ╰── Re-exported here.
  3 │                 export default namespace;
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { 'foo' as default } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:28]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {'foo' as foo} from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │             export default foo;
-   ·                            ───
+   ·                            ─┬─
+   ·                             ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { 'foo' as foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {'foo' as foo} from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { 'foo' as bar } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:32]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {'foo' as foo} from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │             export const bar = foo;
-   ·                                ───
+   ·                                ─┬─
+   ·                                 ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { 'foo' } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {'foo' as foo} from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │             export {foo as 'foo'};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { "foo" } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {'foo' as foo} from 'foo';
+   · ────────────────┬────────────────
+   ·                 ╰── Imported here.
  2 │             export {foo as "foo"};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { "fo o" } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {'fo o' as foo} from 'foo';
+   · ─────────────────┬────────────────
+   ·                  ╰── Imported here.
  2 │             export {foo as "fo o"};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { "fo\u000ao" } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:20]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {'fo\no' as foo} from 'foo';
+   · ─────────────────┬─────────────────
+   ·                  ╰── Imported here.
  2 │            export {foo as "fo\u000ao"};
-   ·                    ───
+   ·                    ─┬─
+   ·                     ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { 'default' as foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {'default' as foo} from 'foo';
+   · ──────────────────┬──────────────────
+   ·                   ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { 'default' as default } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:28]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {'default' as foo} from 'foo';
+   · ──────────────────┬──────────────────
+   ·                   ╰── Imported here.
  2 │             export default foo;
-   ·                            ───
+   ·                            ─┬─
+   ·                             ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { '*' as foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {'*' as foo} from 'foo';
+   · ───────────────┬───────────────
+   ·                ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:22]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import { foo } from "foo";
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │             export { foo };
-   ·                      ───
+   ·                      ─┬─
+   ·                       ╰── Re-exported here.
  3 │             export type { bar } from "foo";
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:22]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import { foo } from "foo";
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │             export { foo };
-   ·                      ───
+   ·                      ─┬─
+   ·                       ╰── Re-exported here.
  3 │             export { type bar } from "foo";
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:22]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import { foo } from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │             export { foo };
-   ·                      ───
+   ·                      ─┬─
+   ·                       ╰── Re-exported here.
  3 │             export type { bar } from "foo";
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:22]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import { foo } from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │             export { foo };
-   ·                      ───
+   ·                      ─┬─
+   ·                       ╰── Re-exported here.
  3 │             export { type bar } from "foo";
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:27]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import type { foo } from "foo";
+   · ───────────────┬───────────────
+   ·                ╰── Imported here.
  2 │             export type { foo };
-   ·                           ───
+   ·                           ─┬─
+   ·                            ╰── Re-exported here.
  3 │             export type { bar } from "foo";
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:22]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import { foo } from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │             export { foo };
-   ·                      ───
+   ·                      ─┬─
+   ·                       ╰── Re-exported here.
  3 │             export { baz } from "foo" ;
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:27]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import type { foo } from 'foo';
+   · ───────────────┬───────────────
+   ·                ╰── Imported here.
  2 │             export type { foo };
-   ·                           ───
+   ·                           ─┬─
+   ·                            ╰── Re-exported here.
  3 │             export { type bar } from "foo";
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:27]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import type { foo } from 'foo';
+   · ───────────────┬───────────────
+   ·                ╰── Imported here.
  2 │             export type { foo };
-   ·                           ───
+   ·                           ─┬─
+   ·                            ╰── Re-exported here.
  3 │             export type { bar } from "foo";
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:27]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import type { foo } from 'foo';
+   · ───────────────┬───────────────
+   ·                ╰── Imported here.
  2 │             export type { foo };
-   ·                           ───
+   ·                           ─┬─
+   ·                            ╰── Re-exported here.
  3 │             export { baz } from "foo";
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:27]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import type { foo } from 'foo';
+   · ───────────────┬───────────────
+   ·                ╰── Imported here.
  2 │             export type { foo };
-   ·                           ───
+   ·                           ─┬─
+   ·                            ╰── Re-exported here.
  3 │             export { type bar } from "foo";
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:27]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import { type foo } from 'foo';
+   · ───────────────┬───────────────
+   ·                ╰── Imported here.
  2 │             export type { foo };
-   ·                           ───
+   ·                           ─┬─
+   ·                            ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:27]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import { foo } from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
  2 │             export type { foo };
-   ·                           ───
+   ·                           ─┬─
+   ·                            ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:27]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import type { foo } from 'foo';
+   · ───────────────┬───────────────
+   ·                ╰── Imported here.
  2 │             export { type foo };
-   ·                           ───
+   ·                           ─┬─
+   ·                            ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type default } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:28]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import type foo from "foo";
+   · ─────────────┬─────────────
+   ·              ╰── Imported here.
  2 │             export default foo
-   ·                            ───
+   ·                            ─┬─
+   ·                             ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo as bar } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:26]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {type foo} from 'foo';
+   · ──────────────┬──────────────
+   ·               ╰── Imported here.
  2 │             export {type foo as bar};
-   ·                          ───
+   ·                          ─┬─
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo as bar } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:26]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {type foo} from 'foo';
+   · ──────────────┬──────────────
+   ·               ╰── Imported here.
  2 │             export {type foo as bar};
-   ·                          ───
+   ·                          ─┬─
+   ·                           ╰── Re-exported here.
  3 │             export {type bar} from 'foo';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo as baz } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:26]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {type foo as bar} from 'foo';
+   · ──────────────────┬─────────────────
+   ·                   ╰── Imported here.
  2 │             export {type bar as baz};
-   ·                          ───
+   ·                          ─┬─
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo as bar } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:26]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {type foo as foo} from 'foo';
+   · ──────────────────┬─────────────────
+   ·                   ╰── Imported here.
  2 │             export {type foo as bar};
-   ·                          ───
+   ·                          ─┬─
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo as bar } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:26]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {type foo as bar} from 'foo';
+   · ──────────────────┬─────────────────
+   ·                   ╰── Imported here.
  2 │             export {type bar as bar};
-   ·                          ───
+   ·                          ─┬─
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { type foo } from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:26]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {type foo as bar} from 'foo';
+   · ──────────────────┬─────────────────
+   ·                   ╰── Imported here.
  2 │             export {type bar as foo};
-   ·                          ───
+   ·                          ─┬─
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default } from './foo.json' assert { type: 'json' };
-  │ 
-   ╭─[prefer_export_from.tsx:2:32]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import json from './foo.json' assert { type: 'json' };
+   · ───────────────────────────┬──────────────────────────
+   ·                            ╰── Imported here.
  2 │                 export default json;
-   ·                                ────
+   ·                                ──┬─
+   ·                                  ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as json from './foo.json' assert { type: 'json' };
-  │ 
-   ╭─[prefer_export_from.tsx:2:25]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as json from './foo.json' assert { type: 'json' };
+   · ─────────────────────────────┬─────────────────────────────
+   ·                              ╰── Imported here.
  2 │                 export {json};
-   ·                         ────
+   ·                         ──┬─
+   ·                           ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { foo } from './foo.json' assert { type: 'unknown' };
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {foo} from './foo.json' assert { type: 'unknown' };
+   · ─────────────────────────────┬────────────────────────────
+   ·                              ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │                 export {bar} from './foo.json';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { foo } from './foo.json';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {foo} from './foo.json';
+   · ───────────────┬───────────────
+   ·                ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │                 export {bar} from './foo.json' assert { type: 'unknown' };
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export type * as X from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:26]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import type * as X from 'foo';
+   · ───────────────┬──────────────
+   ·                ╰── Imported here.
  2 │                 export { X };
-   ·                          ─
+   ·                          ┬
+   ·                          ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export type * as X from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:31]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as X from 'foo';
+   · ────────────┬────────────
+   ·             ╰── Imported here.
  2 │                 export type { X };
-   ·                               ─
+   ·                               ┬
+   ·                               ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export type * as X from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:31]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import type * as X from 'foo';
+   · ───────────────┬──────────────
+   ·                ╰── Imported here.
  2 │                 export type { X };
-   ·                               ─
+   ·                               ┬
+   ·                               ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as X from 'foo';
-  │ 
-   ╭─[prefer_export_from.tsx:2:26]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as X from 'foo';
+   · ────────────┬────────────
+   ·             ╰── Imported here.
  2 │                 export { X };
-   ·                          ─
+   ·                          ┬
+   ·                          ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { default } from './foo.json' with { type: 'json' };
-  │ 
-   ╭─[prefer_export_from.tsx:2:32]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import json from './foo.json' with { type: 'json' };
+   · ──────────────────────────┬─────────────────────────
+   ·                           ╰── Imported here.
  2 │                 export default json;
-   ·                                ────
+   ·                                ──┬─
+   ·                                  ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export * as json from './foo.json' with { type: 'json' };
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import * as json from './foo.json' with { type: 'json' };
+   · ────────────────────────────┬────────────────────────────
+   ·                             ╰── Imported here.
  2 │             export {json};
-   ·                     ────
+   ·                     ──┬─
+   ·                       ╰── Re-exported here.
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { foo } from './foo.json' with { type: 'unknown' };
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {foo} from './foo.json' with { type: 'unknown' };
+   · ────────────────────────────┬───────────────────────────
+   ·                             ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │                 export {bar} from './foo.json';
    ╰────
   help: use `export ... from ...;`
 
-  ⚠ unicorn(prefer-export-from): export { foo } from './foo.json';
-  │ 
-   ╭─[prefer_export_from.tsx:2:21]
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import {foo} from './foo.json';
+   · ───────────────┬───────────────
+   ·                ╰── Imported here.
  2 │             export {foo};
-   ·                     ───
+   ·                     ─┬─
+   ·                      ╰── Re-exported here.
  3 │                 export {bar} from './foo.json' with { type: 'unknown' };
    ╰────
   help: use `export ... from ...;`

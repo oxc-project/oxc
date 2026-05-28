@@ -28,13 +28,9 @@ use crate::{
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
-fn prefer_export_from_diagnostic_with_details(
-    import_span: Span,
-    export_span: Span,
-    details: String,
-) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn(details).with_label(import_span).with_label(export_span)
+fn prefer_export_from_diagnostic(import_span: Span, export_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer re-exporting directly from the source module.")
+        .with_labels([import_span.label("Imported here."), export_span.label("Re-exported here.")])
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
@@ -792,11 +788,7 @@ impl PreferExportFrom {
 
             if violation.needs_source {
                 ctx.diagnostic_with_suggestion(
-                    prefer_export_from_diagnostic_with_details(
-                        import_decl.span(),
-                        specifier_node.span(),
-                        export_format.clone(),
-                    ),
+                    prefer_export_from_diagnostic(import_decl.span(), specifier_node.span()),
                     |fixer| {
                         Self::add_fix_for_export(
                             fixer,
@@ -819,11 +811,7 @@ impl PreferExportFrom {
                     .join(", ");
 
                 ctx.diagnostic_with_suggestion(
-                    prefer_export_from_diagnostic_with_details(
-                        import_decl.span(),
-                        specifier_node.span(),
-                        export_format.clone(),
-                    ),
+                    prefer_export_from_diagnostic(import_decl.span(), specifier_node.span()),
                     |fixer| {
                         Self::create_fix_for_re_export(
                             fixer,
