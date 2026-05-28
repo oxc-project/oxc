@@ -92,12 +92,12 @@ fn test() {
                   ",
         "
                     /**
-                     * @yield Has a description
+                     * @yields Has a description
                      */
                   ",
         "
                     /**
-                     * @yields {SomeType} Has a description
+                     * @yield {SomeType} Has a description
                      */
                   ",
         "
