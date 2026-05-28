@@ -52,9 +52,6 @@ catalogs:
       specifier: 4.1.7
       version: 4.1.7
 
-overrides:
-  tsdown@0.22.0>rolldown: 1.0.3
-
 importers:
 
   .:
