@@ -764,7 +764,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
                 ]
             );
         });
-        write!(f, [FormatLeadingComments::Comments(comments), group(&format_inner)]);
+
+        if let Some(comment) = comments.first()
+            && comment.span.start > left.span().end
+        {
+            write!(f, FormatLeadingComments::Comments(comments));
+        }
+
+        write!(f, group(&format_inner));
     }
 }
 
