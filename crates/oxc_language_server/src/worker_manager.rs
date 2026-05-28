@@ -359,7 +359,7 @@ impl WorkerManager {
         uri: &Uri,
         diagnostic_mode: DiagnosticMode,
         dynamic_watchers: bool,
-    ) -> Option<Vec<Registration>> {
+    ) -> Option<Registration> {
         // Bail out immediately if we are not in single-file mode.
         if !self.is_single_file_mode() {
             return None;
@@ -379,7 +379,7 @@ impl WorkerManager {
         let worker =
             WorkspaceWorker::new(parent_uri, Arc::clone(&self.tool_builder), diagnostic_mode);
         worker.start_worker(Value::Null).await;
-        let registrations = if dynamic_watchers { worker.init_watchers().await } else { vec![] };
+        let registration = if dynamic_watchers { worker.init_watchers().await } else { None };
 
         // Acquire the write lock to insert the worker.  Re-check both the mode
         // flag and the worker list because a concurrent call (e.g., another
@@ -403,7 +403,7 @@ impl WorkerManager {
             return None;
         }
 
-        Some(registrations)
+        registration
     }
 
     /// In single-file mode, shut down and remove the [`WorkspaceWorker`] whose

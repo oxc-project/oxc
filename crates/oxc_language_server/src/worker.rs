@@ -75,20 +75,15 @@ impl WorkspaceWorker {
     /// Initialize file system watchers for the workspace.
     /// These watchers are used to watch for changes in the lint configuration files.
     /// The returned watchers will be registered to the client.
-    pub async fn init_watchers(&self) -> Vec<Registration> {
+    pub async fn init_watchers(&self) -> Option<Registration> {
         // clone the options to avoid locking the mutex
         let options_json = { self.options.lock().await.clone().unwrap_or_default() };
 
-        let tool_guard = self.tool.read().await;
-        let Some(tool) = tool_guard.as_ref() else {
-            return Vec::new();
-        };
-
-        let patterns = tool.get_watcher_patterns(options_json.clone());
+        let patterns = self.tool.read().await.as_ref()?.get_watcher_patterns(options_json);
         if patterns.is_empty() {
-            Vec::new()
+            None
         } else {
-            vec![registration_watcher_id(&self.root_uri, patterns)]
+            Some(registration_watcher_id(&self.root_uri, patterns))
         }
     }
 
@@ -476,9 +471,10 @@ mod tests {
             DiagnosticMode::None,
         );
         worker.start_worker(serde_json::Value::Null).await;
-        let registrations = worker.init_watchers().await;
-        assert_eq!(registrations.len(), 1);
-        assert_eq!(registrations[0].id, "watcher-file:///root/");
+        let registration = worker.init_watchers().await;
+        assert!(registration.is_some());
+        let registration = registration.unwrap();
+        assert_eq!(registration.id, "watcher-file:///root/");
 
         // with no watchers
         let worker_no_watchers = WorkspaceWorker::new(
@@ -487,8 +483,8 @@ mod tests {
             DiagnosticMode::None,
         );
         worker_no_watchers.start_worker(serde_json::json!({"some_option": true})).await;
-        let registrations_no_watchers = worker_no_watchers.init_watchers().await;
-        assert_eq!(registrations_no_watchers.len(), 0);
+        let registration_no_watchers = worker_no_watchers.init_watchers().await;
+        assert!(registration_no_watchers.is_none());
     }
 
     #[tokio::test]

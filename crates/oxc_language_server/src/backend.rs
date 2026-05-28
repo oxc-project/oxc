@@ -668,8 +668,7 @@ impl LanguageServer for Backend {
                 .worker_manager
                 .ensure_worker_for_file_uri(&uri, diagnostic_mode, dynamic_watchers)
                 .await
-                && !registrations.is_empty()
-                && let Err(err) = self.client.register_capability(registrations).await
+                && let Err(err) = self.client.register_capability(vec![registrations]).await
             {
                 warn!("registering file watchers for single-file workspace failed: {err}");
             }
