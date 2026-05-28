@@ -11,7 +11,7 @@ catalog:
   "@emnapi/core": 1.10.0
   "@emnapi/runtime": 1.10.0
   "@arethetypeswrong/core": 0.18.2
-  "@napi-rs/cli": 3.6.2
+  "@napi-rs/cli": 3.7.0
   "@napi-rs/wasm-runtime": 1.1.4
   "@types/node": 24.1.0
   cross-env: ^10.1.0
