@@ -1473,6 +1473,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-dom-node-remove"?: RuleNoConfig;
   "unicorn/prefer-dom-node-text-content"?: RuleNoConfig;
   "unicorn/prefer-event-target"?: RuleNoConfig;
+  "unicorn/prefer-export-from"?: RuleNoConfig;
   "unicorn/prefer-global-this"?: RuleNoConfig;
   "unicorn/prefer-import-meta-properties"?: RuleNoConfig;
   "unicorn/prefer-includes"?: RuleNoConfig;
