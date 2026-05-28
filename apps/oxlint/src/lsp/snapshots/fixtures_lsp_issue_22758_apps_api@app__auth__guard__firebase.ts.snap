@@ -1,0 +1,92 @@
+---
+source: apps/oxlint/src/lsp/tester.rs
+---
+########## 
+Linted file: fixtures/lsp/issue_22758/apps/api/app/auth/guard/firebase.ts
+----------
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/lsp/issue_22758/apps/api/app/auth/guard/firebase.ts
+
+code: "typescript(no-wrapper-object-types)"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-wrapper-object-types.html"
+message: "Do not use wrapper object types.\nhelp: Replace `String` with `string`.\nnote: `String` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `string` for values, and in `extends`/`implements` use an interface/object shape instead."
+range: Range { start: Position { line: 0, character: 12 }, end: Position { line: 0, character: 18 } }
+related_information[0].message: ""
+related_information[0].location.uri: "file://<variable>/fixtures/lsp/issue_22758/apps/api/app/auth/guard/firebase.ts"
+related_information[0].location.range: Range { start: Position { line: 0, character: 12 }, end: Position { line: 0, character: 18 } }
+severity: Some(Warning)
+source: Some("oxc")
+tags: None
+
+########### Code Actions/Commands
+CodeAction: 
+Title: Replace `String` with `string`.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 12,
+        },
+        end: Position {
+            line: 0,
+            character: 18,
+        },
+    },
+    new_text: "string",
+}
+
+
+CodeAction: 
+Title: Disable typescript/no-wrapper-object-types for this line
+Is Preferred: Some(false)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable-next-line typescript/no-wrapper-object-types\n",
+}
+
+
+CodeAction: 
+Title: Disable typescript/no-wrapper-object-types for this whole file
+Is Preferred: Some(false)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 0,
+        },
+    },
+    new_text: "// oxlint-disable typescript/no-wrapper-object-types\n",
+}
+
+
+########### Fix All Action
+CodeAction: 
+Title: fix all safe fixable oxlint issues
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 12,
+        },
+        end: Position {
+            line: 0,
+            character: 18,
+        },
+    },
+    new_text: "string",
+}

@@ -257,6 +257,10 @@ pub struct LoadedConfigs {
     pub nested_ignore_patterns: Vec<(Vec<String>, PathBuf)>,
 }
 
+pub fn materialize_default_plugins(config: &mut Oxlintrc) {
+    config.plugins.get_or_insert_with(Default::default);
+}
+
 pub struct ConfigLoader<'a> {
     external_linter: Option<&'a ExternalLinter>,
     external_plugin_store: &'a mut ExternalPluginStore,
