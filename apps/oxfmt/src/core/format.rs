@@ -170,6 +170,17 @@ impl SourceFormatter {
     /// Format a file based on its resolved strategy.
     #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %resolved.path().display()))]
     pub fn format(&self, source_text: &str, resolved: FormatStrategy) -> FormatResult {
+        // Early return for empty files to avoid unnecessary formatting work.
+        // > Editors must not insert newlines in empty files when saving those files,
+        // > even if insert_final_newline = true.
+        // https://spec.editorconfig.org/#supported-pairs
+        if source_text.trim().is_empty() {
+            return FormatResult::Success {
+                is_changed: !source_text.is_empty(),
+                code: String::new(),
+            };
+        }
+
         let (result, insert_final_newline) = match resolved {
             FormatStrategy::OxcFormatter {
                 path,

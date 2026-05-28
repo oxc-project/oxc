@@ -1,10 +1,12 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{
     AstNode,
@@ -251,13 +253,52 @@ fn no_else_return_diagnostic_fix(
             Statement::ReturnStatement(s) => !ctx.source_range(s.span).ends_with(';'),
             _ => false,
         };
-        if needs_newline {
-            let replacement = ctx.source_range(replacement_span);
-            fixer.replace(target_span, "\n".to_string() + replacement)
+
+        let needs_trailing_semicolon =
+            needs_trailing_statement_separator(ctx, else_stmt, target_span.end);
+        if needs_newline || needs_trailing_semicolon {
+            let replacement_text = ctx.source_range(replacement_span);
+            let mut replacement = String::with_capacity(replacement_text.len() + 2);
+            if needs_newline {
+                replacement.push('\n');
+            }
+            replacement.push_str(replacement_text);
+            if needs_trailing_semicolon {
+                replacement.push(';');
+            }
+            fixer.replace(target_span, replacement)
         } else {
             fixer.replace_with(&target_span, &replacement_span)
         }
     });
+}
+
+fn needs_trailing_statement_separator(
+    ctx: &LintContext,
+    else_stmt: &Statement,
+    target_end: u32,
+) -> bool {
+    if let Some(last_stmt) = last_statement(else_stmt)
+        && !ctx.source_range(last_stmt.span()).trim_end().ends_with([';', '}'])
+    {
+        for ch in ctx.source_text()[target_end as usize..].chars() {
+            if is_line_terminator(ch) || ch == '}' || ch == ';' {
+                return false;
+            }
+            if !ch.is_whitespace() {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+fn last_statement<'a>(stmt: &'a Statement<'a>) -> Option<&'a Statement<'a>> {
+    match stmt {
+        Statement::BlockStatement(block) => block.body.last(),
+        stmt => Some(stmt),
+    }
 }
 
 fn naive_has_return(node: &Statement) -> Option<Span> {
@@ -725,16 +766,17 @@ fn test() {
             "function foo14() { if (foo) return bar
             else { baz(); }
             [1, 2, 3].map(foo) }",
-            "function foo14() { if (foo) return bar\n baz(); 
-            [1, 2, 3].map(foo) }",
+            concat!(
+                "function foo14() { if (foo) return bar\n baz(); \n",
+                "            [1, 2, 3].map(foo) }",
+            ),
             None,
         ),
         (
             "function foo17() { if (foo) return bar
             else { baz() }
             qaz() }",
-            "function foo17() { if (foo) return bar\n baz() 
-            qaz() }",
+            concat!("function foo17() { if (foo) return bar\n baz() \n", "            qaz() }",),
             None,
         ),
         (
@@ -858,6 +900,21 @@ fn test() {
                 return baz;
                 // comments
             ",
+            None,
+        ),
+        (
+            "function foo(){if(foo){return bar}else{baz=qux}while(baz){}}",
+            "function foo(){if(foo){return bar}baz=qux;while(baz){}}",
+            None,
+        ),
+        (
+            "function foo(){if(foo){return bar}else{baz=qux;}while(baz){}}",
+            "function foo(){if(foo){return bar}baz=qux;while(baz){}}",
+            None,
+        ),
+        (
+            "function foo(){if(foo){return bar}else{if(a)baz=qux}while(baz){}}",
+            "function foo(){if(foo){return bar}if(a)baz=qux;while(baz){}}",
             None,
         ),
     ];
