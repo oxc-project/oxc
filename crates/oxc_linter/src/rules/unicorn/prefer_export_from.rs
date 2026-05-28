@@ -1,11 +1,12 @@
-use crate::{
-    AstNode,
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-};
+use std::fmt::Write;
+
 use cow_utils::CowUtils;
+use indexmap::IndexMap;
 use itertools::Itertools;
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -17,12 +18,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
-use schemars::JsonSchema;
-use serde::Deserialize;
-use std::fmt::Write;
 
-use indexmap::IndexMap;
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
+
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 fn prefer_export_from_diagnostic_with_details(
     import_span: Span,
