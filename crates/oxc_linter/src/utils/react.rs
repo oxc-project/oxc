@@ -922,7 +922,7 @@ pub fn function_body_contains_jsx(body: &FunctionBody) -> bool {
     finder.found
 }
 
-/// Checks if a function-like expression (function or arrow function) returns JSX.
+/// Checks if a function-like expression (function or arrow function) contains JSX.
 pub fn expression_contains_jsx(expr: &Expression) -> bool {
     match expr {
         Expression::FunctionExpression(func) => function_contains_jsx(func),
