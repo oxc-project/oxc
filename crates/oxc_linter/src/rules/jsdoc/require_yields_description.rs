@@ -135,6 +135,11 @@ fn test() {
                      * @yield {SomeType}
                      */
                   ",
+        "
+                    /**
+                     * @yields {T}   
+                     */
+                  ",
     ];
 
     Tester::new(RequireYieldsDescription::NAME, RequireYieldsDescription::PLUGIN, pass, fail)

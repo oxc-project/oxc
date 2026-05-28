@@ -37,3 +37,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │                      */
    ╰────
   help: Add description comment to `@yields` tag.
+
+  ⚠ jsdoc(require-yields-description): Missing JSDoc `@yields` description.
+   ╭─[require_yields_description.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @yields {T}   
+   ·                        ───────
+ 4 │                      */
+   ╰────
+  help: Add description comment to `@yields` tag.
