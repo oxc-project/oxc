@@ -729,6 +729,7 @@ pub(crate) mod jsdoc {
     pub mod require_throws_description;
     pub mod require_throws_type;
     pub mod require_yields;
+    pub mod require_yields_description;
     pub mod require_yields_type;
 }
 
