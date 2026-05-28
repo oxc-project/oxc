@@ -152,14 +152,18 @@ impl Rule for NoArraySort {
 /// `query.sort("-createdAt")` which are not `Array#sort` despite the shared
 /// method name.
 fn is_non_compare_fn_argument(arg: &Argument<'_>) -> bool {
-    match arg {
-        Argument::ObjectExpression(_)
-        | Argument::StringLiteral(_)
-        | Argument::TemplateLiteral(_)
-        | Argument::NumericLiteral(_)
-        | Argument::ArrayExpression(_) => true,
+    let Some(expr) = arg.as_expression().map(Expression::without_parentheses) else {
+        return false;
+    };
+
+    match expr {
+        Expression::ObjectExpression(_)
+        | Expression::StringLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::ArrayExpression(_) => true,
         // `query.sort(-1)` / `query.sort(+1)` — unary on a numeric literal.
-        Argument::UnaryExpression(unary) => {
+        Expression::UnaryExpression(unary) => {
             unary.operator.is_arithmetic()
                 && unary.argument.without_parentheses().is_number_literal()
         }
@@ -201,6 +205,8 @@ fn test() {
         ("User.find().sort({ createdAt: -1 })", None),
         (r#"User.find().sort("-createdAt")"#, None),
         (r#"Post.find({ published: true }).sort({ updatedAt: "desc" })"#, None),
+        ("sorted = collection.sort(({field: 1}))", None),
+        (r#"sorted = query.sort(("field"))"#, None),
     ];
 
     let fail = vec![
