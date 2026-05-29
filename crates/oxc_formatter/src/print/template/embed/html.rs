@@ -148,7 +148,7 @@ pub(super) fn format_html_doc<'a>(
                     let parts =
                         super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
                     for (i, part) in parts.iter().enumerate() {
-                        if i % 2 == 0 {
+                        if i.is_multiple_of(2) {
                             if !part.is_empty() {
                                 super::write_text_with_line_breaks(
                                     f,
