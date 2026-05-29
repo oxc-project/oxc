@@ -10,6 +10,7 @@
 //!   (NAPI-only)
 
 mod to_oxc_formatter;
+mod to_oxc_formatter_json;
 mod to_toml_formatter;
 
 #[cfg(feature = "napi")]
@@ -18,6 +19,7 @@ mod to_package_json;
 mod to_prettier;
 
 pub use to_oxc_formatter::to_oxc_formatter;
+pub use to_oxc_formatter_json::to_oxc_formatter_json;
 pub use to_toml_formatter::to_toml_formatter;
 
 #[cfg(feature = "napi")]

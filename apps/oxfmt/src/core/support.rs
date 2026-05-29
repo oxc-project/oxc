@@ -2,6 +2,7 @@ use std::{path::Path, sync::Arc};
 
 use phf::phf_set;
 
+use oxc_formatter_json::JsonVariant;
 use oxc_span::SourceType;
 
 #[cfg(feature = "napi")]
@@ -26,6 +27,11 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
         return Some(FileKind::OxfmtToml { path });
     }
 
+    let extension = path.extension().and_then(|ext| ext.to_str());
+    if is_json_file(file_name, extension) {
+        return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::Json });
+    }
+
     // External formatter files are only supported with the `napi` feature
     #[cfg(feature = "napi")]
     {
@@ -37,7 +43,6 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
             });
         }
 
-        let extension = path.extension().and_then(|ext| ext.to_str());
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
             let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
             let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
@@ -63,6 +68,8 @@ pub enum FileKind {
     /// JS/TS files formatted by `oxc_formatter`.
     /// `supports_tailwind` is not needed, always enabled for JS/TS files.
     OxcFormatter { path: Arc<Path>, source_type: SourceType },
+    /// JSON (and JSON-like) files formatted by `oxc_formatter_json`.
+    OxcFormatterJson { path: Arc<Path>, variant: JsonVariant },
     /// TOML files formatted by taplo (Pure Rust).
     OxfmtToml { path: Arc<Path> },
     /// Files formatted by external formatter (Prettier).
@@ -88,7 +95,9 @@ pub enum FileKind {
 impl FileKind {
     pub fn path(&self) -> &Path {
         match self {
-            Self::OxcFormatter { path, .. } | Self::OxfmtToml { path } => path,
+            Self::OxcFormatter { path, .. }
+            | Self::OxcFormatterJson { path, .. }
+            | Self::OxfmtToml { path } => path,
             #[cfg(feature = "napi")]
             Self::ExternalFormatter { path, .. }
             | Self::ExternalFormatterPackageJson { path, .. } => path,
@@ -193,22 +202,76 @@ static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
 
 // ---
 
+/// Returns `true` if this is a plain JSON file (handled by `oxc_formatter_json`).
+///
+/// NOTE: `jsonc`, `json5` and `json-stringify` variants are still handled by Prettier.
+fn is_json_file(file_name: &str, extension: Option<&str>) -> bool {
+    if matches!(file_name, "package.json" | "composer.json") {
+        return false;
+    }
+    if JSON_FILENAMES.contains(file_name) {
+        return true;
+    }
+    if let Some(ext) = extension
+        && JSON_EXTENSIONS.contains(ext)
+    {
+        return true;
+    }
+    false
+}
+
+static JSON_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "json",
+    "4DForm",
+    "4DProject",
+    "avsc",
+    "geojson",
+    "gltf",
+    "har",
+    "ice",
+    "JSON-tmLanguage",
+    "json.example",
+    "mcmeta",
+    "sarif",
+    "tact",
+    "tfstate",
+    "tfstate.backup",
+    "topojson",
+    "webapp",
+    "webmanifest",
+    "yy",
+    "yyp",
+};
+
+static JSON_FILENAMES: phf::Set<&'static str> = phf_set! {
+    ".all-contributorsrc",
+    ".arcconfig",
+    ".auto-changelog",
+    ".c8rc",
+    ".htmlhintrc",
+    ".imgbotconfig",
+    ".nycrc",
+    ".tern-config",
+    ".tern-project",
+    ".watchmanconfig",
+    ".babelrc",
+    ".jscsrc",
+    ".jshintrc",
+    ".jslintrc",
+    ".swcrc",
+};
+
+// ---
+
 /// Returns parser name for external formatter, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 #[cfg(feature = "napi")]
 fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
     // JSON and variants
-    // NOTE: `package.json` is handled separately in `classify_file_kind`
+    // NOTE: `parser: json` is already supported by `oxc_formatter_json`,
+    // others are routed to Prettier here.
     if file_name == "composer.json" || extension == Some("importmap") {
         return Some("json-stringify");
-    }
-    if JSON_FILENAMES.contains(file_name) {
-        return Some("json");
-    }
-    if let Some(ext) = extension
-        && JSON_EXTENSIONS.contains(ext)
-    {
-        return Some("json");
     }
     if let Some(ext) = extension
         && JSONC_EXTENSIONS.contains(ext)
@@ -294,49 +357,6 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
 
     None
 }
-
-#[cfg(feature = "napi")]
-static JSON_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "json",
-    "4DForm",
-    "4DProject",
-    "avsc",
-    "geojson",
-    "gltf",
-    "har",
-    "ice",
-    "JSON-tmLanguage",
-    "json.example",
-    "mcmeta",
-    "sarif",
-    "tact",
-    "tfstate",
-    "tfstate.backup",
-    "topojson",
-    "webapp",
-    "webmanifest",
-    "yy",
-    "yyp",
-};
-
-#[cfg(feature = "napi")]
-static JSON_FILENAMES: phf::Set<&'static str> = phf_set! {
-    ".all-contributorsrc",
-    ".arcconfig",
-    ".auto-changelog",
-    ".c8rc",
-    ".htmlhintrc",
-    ".imgbotconfig",
-    ".nycrc",
-    ".tern-config",
-    ".tern-project",
-    ".watchmanconfig",
-    ".babelrc",
-    ".jscsrc",
-    ".jshintrc",
-    ".jslintrc",
-    ".swcrc",
-};
 
 #[cfg(feature = "napi")]
 static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
@@ -523,10 +543,11 @@ mod tests {
     #[cfg(feature = "napi")]
     fn test_get_external_parser_name() {
         let test_cases = vec![
-            // JSON (NOTE: `package.json` is handled in classify_file_kind, not here)
+            // JSON variants
+            // NOTE: `package.json` is handled in classify_file_kind, not here.
+            // Plain JSON (e.g. `data.json`, `schema.avsc`) is routed to
+            // `oxc_formatter_json` and excluded from this map.
             ("config.importmap", Some("json-stringify")),
-            ("data.json", Some("json")),
-            ("schema.avsc", Some("json")),
             ("config.code-workspace", Some("jsonc")),
             ("settings.json5", Some("json5")),
             // HTML
@@ -586,6 +607,33 @@ mod tests {
 
         let kind = classify_file_kind(Arc::from(Path::new("composer.json"))).unwrap();
         assert!(matches!(kind, FileKind::ExternalFormatter { .. }));
+    }
+
+    #[test]
+    fn test_json_files_route_to_oxc_formatter_json() {
+        let json_files = vec![
+            // JSON_EXTENSIONS
+            "data.json",
+            "schema.avsc",
+            "map.geojson",
+            "model.gltf",
+            "config.webmanifest",
+            // JSON_FILENAMES
+            ".babelrc",
+            ".eslintrc.json",
+            ".swcrc",
+            ".watchmanconfig",
+            // tsconfig (handled via standard `.json` extension)
+            "tsconfig.json",
+        ];
+
+        for file_name in json_files {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatterJson { .. })),
+                "`{file_name}` should be routed to oxc_formatter_json"
+            );
+        }
     }
 
     #[test]

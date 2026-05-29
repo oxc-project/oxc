@@ -2664,6 +2664,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_formatter",
  "oxc_formatter_core",
+ "oxc_formatter_json",
  "oxc_language_server",
  "oxc_napi",
  "oxc_parser",
