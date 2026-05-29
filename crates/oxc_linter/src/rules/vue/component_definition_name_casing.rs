@@ -1,4 +1,4 @@
-use cow_utils::CowUtils;
+use convert_case::{Boundary, Case, Converter};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -265,6 +265,16 @@ fn is_regex_word(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_'
 }
 
+fn regex_word_before_upper(graphemes: &[&str]) -> bool {
+    let Some(prev) = graphemes.first().and_then(|s| s.chars().next()) else {
+        return false;
+    };
+    let Some(current) = graphemes.get(1).and_then(|s| s.chars().next()) else {
+        return false;
+    };
+    is_regex_word(prev) && current.is_ascii_uppercase()
+}
+
 /// `camelCase(str)` mirrors upstream:
 /// - if PascalCase: lowercase the first char
 /// - else: replace `[-_](\w)` with `\w` uppercased
@@ -299,23 +309,12 @@ fn pascal_case(s: &str) -> String {
 }
 
 fn kebab_case(s: &str) -> String {
-    let step1: String = s.chars().map(|c| if c == '_' { '-' } else { c }).collect();
-
-    let mut out = String::with_capacity(step1.len());
-    for (i, c) in step1.chars().enumerate() {
-        if c.is_ascii_uppercase() && i > 0 {
-            // `\B` = not at a word boundary. At index 0 we are at a
-            // boundary. For `[A-Z]`, this is true only when the previous
-            // char is also a JavaScript `\w` char.
-            let prev = out.chars().last();
-            let at_boundary = prev.is_none_or(|p| !is_regex_word(p));
-            if !at_boundary {
-                out.push('-');
-            }
-        }
-        out.push(c);
-    }
-    out.cow_to_lowercase().into_owned()
+    let word_before_upper =
+        Boundary::Custom { condition: regex_word_before_upper, start: 1, len: 0 };
+    Converter::new()
+        .set_boundaries(&[Boundary::Underscore, word_before_upper])
+        .to_case(Case::Kebab)
+        .convert(s)
 }
 
 /// Mirror of `getExactConverter(name)(str)`. Returns `None` when the
