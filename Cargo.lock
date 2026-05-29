@@ -2342,6 +2342,7 @@ dependencies = [
  "oxc_ast_visit",
  "oxc_formatter",
  "oxc_formatter_core",
+ "oxc_formatter_json",
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",
