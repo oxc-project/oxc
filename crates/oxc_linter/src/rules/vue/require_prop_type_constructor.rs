@@ -14,6 +14,7 @@ use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
+    frameworks::FrameworkOptions,
     rule::Rule,
     utils::{find_property, is_vue_component_options_object_excluding_instance},
 };
@@ -86,6 +87,9 @@ impl Rule for RequirePropTypeConstructor {
                 verify_props(props_obj, ctx);
             }
             AstKind::CallExpression(call) => {
+                if ctx.frameworks_options() != FrameworkOptions::VueSetup {
+                    return;
+                }
                 let Some(ident) = call.callee.get_identifier_reference() else { return };
                 if ident.name != "defineProps" {
                     return;
@@ -191,8 +195,9 @@ fn single_quasi_identifier(tpl: &TemplateLiteral) -> Option<String> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (
@@ -282,6 +287,19 @@ fn test() {
             r#"<script setup lang="ts">
             import {Props1 as Props} from './test01'
             defineProps<Props>()
+            </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"<script>
+            import { defineProps } from './helpers'
+            defineProps({
+              a: {
+                type: 'String'
+              },
+            })
             </script>"#,
             None,
             None,
