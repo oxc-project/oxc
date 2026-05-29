@@ -1,7 +1,4 @@
-use crate::{
-    FormatOptions,
-    options::{IndentStyle, IndentWidth, LineEnding, LineWidth},
-};
+use crate::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 
 /// Options that affect how the [crate::Printer] prints the format tokens
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -47,34 +44,28 @@ impl From<PrintWidth> for usize {
     }
 }
 
-impl<'a> From<&'a FormatOptions> for PrinterOptions {
-    fn from(options: &'a FormatOptions) -> Self {
-        PrinterOptions::default()
-            .with_indent_style(options.indent_style)
-            .with_indent_width(options.indent_width)
-            .with_print_width(options.line_width.into())
-            .with_line_ending(options.line_ending)
-    }
-}
-
 impl PrinterOptions {
+    #[must_use]
     pub fn with_print_width(mut self, width: PrintWidth) -> Self {
         self.print_width = width;
         self
     }
 
+    #[must_use]
     pub fn with_indent_style(mut self, style: IndentStyle) -> Self {
         self.indent_style = style;
 
         self
     }
 
+    #[must_use]
     pub fn with_indent_width(mut self, width: IndentWidth) -> Self {
         self.indent_width = width;
 
         self
     }
 
+    #[must_use]
     pub fn with_line_ending(mut self, line_ending: LineEnding) -> Self {
         self.line_ending = line_ending;
 
@@ -86,12 +77,12 @@ impl PrinterOptions {
     }
 
     /// Width of an indent in characters.
-    pub(super) const fn indent_width(&self) -> IndentWidth {
+    pub(crate) const fn indent_width(&self) -> IndentWidth {
         self.indent_width
     }
 
     #[expect(dead_code)]
-    pub(super) const fn line_ending(&self) -> LineEnding {
+    pub(crate) const fn line_ending(&self) -> LineEnding {
         self.line_ending
     }
 }

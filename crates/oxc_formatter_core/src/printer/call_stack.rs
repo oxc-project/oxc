@@ -1,14 +1,11 @@
 use std::{fmt::Debug, num::NonZeroU8};
 
-use super::super::{
-    InvalidDocumentError, PrintError, PrintResult,
-    format_element::{PrintMode, tag::TagKind},
-    printer::{
-        Indention,
-        stack::{Stack, StackedStack},
-    },
+use crate::{IndentStyle, InvalidDocumentError, PrintError, PrintMode, PrintResult, TagKind};
+
+use super::{
+    Indention,
+    stack::{Stack, StackedStack},
 };
-use crate::options::IndentStyle;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub(super) enum StackFrameKind {

@@ -1,4 +1,6 @@
-use super::{super::FormatElement, call_stack::PrintElementArgs};
+use crate::FormatElement;
+
+use super::call_stack::PrintElementArgs;
 
 /// Stores the queued line suffixes.
 #[derive(Debug, Default)]

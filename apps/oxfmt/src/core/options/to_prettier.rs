@@ -4,7 +4,7 @@ use std::path::Path;
 use serde::Serialize;
 use serde_json::Value;
 
-use oxc_formatter::FormatOptions;
+use oxc_formatter::JsFormatOptions;
 
 use super::super::oxfmtrc::{
     ArrowParensConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
@@ -31,7 +31,7 @@ pub fn to_prettier(config: &FormatConfig) -> Value {
     // / `ResolvedFormatConfig`) instead of the JS formatter's typed enum once available.
     obj.insert(
         "printWidth".to_string(),
-        Value::from(config.print_width.unwrap_or(FormatOptions::default().line_width.value())),
+        Value::from(config.print_width.unwrap_or(JsFormatOptions::default().line_width.value())),
     );
 
     // Other Prettier core options share defaults with oxfmt,

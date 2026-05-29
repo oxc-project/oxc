@@ -1,3 +1,4 @@
+pub mod debug;
 pub mod document;
 pub mod tag;
 
@@ -13,10 +14,7 @@ use oxc_allocator::Vec as ArenaVec;
 
 use crate::IndentWidth;
 
-use super::{
-    TagKind,
-    format_element::tag::{LabelId, Tag},
-};
+use self::tag::{LabelId, Tag, TagKind};
 
 #[cfg(debug_assertions)]
 const _: () = {
@@ -161,7 +159,7 @@ impl PrintMode {
 pub struct Interned<'a>(&'a [FormatElement<'a>]);
 
 impl<'a> Interned<'a> {
-    pub(super) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
+    pub(crate) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
         Self(content.into_arena_slice())
     }
 }
@@ -198,7 +196,6 @@ const LINE_SEPARATOR: char = '\u{2028}';
 
 const PARAGRAPH_SEPARATOR: char = '\u{2029}';
 
-#[expect(unused)]
 pub const LINE_TERMINATORS: [char; 3] = ['\r', LINE_SEPARATOR, PARAGRAPH_SEPARATOR];
 
 /// Replace the line terminators matching the provided list with "\n"
@@ -340,6 +337,10 @@ impl<'a> BestFittingElement<'a> {
     }
 
     /// Returns the most expanded variant
+    ///
+    /// # Panics
+    ///
+    /// Panics if there are no variants. The constructor guarantees at least two variants.
     pub fn most_expanded(&self) -> &[FormatElement<'a>] {
         self.variants.last().expect(
             "Most contain at least two elements, as guaranteed by the best fitting builder.",
@@ -359,6 +360,10 @@ impl<'a> BestFittingElement<'a> {
     }
 
     /// Returns the least expanded variant
+    ///
+    /// # Panics
+    ///
+    /// Panics if there are no variants. The constructor guarantees at least two variants.
     pub fn most_flat(&self) -> &[FormatElement<'a>] {
         self.variants.first().expect(
             "Most contain at least two elements, as guaranteed by the best fitting builder.",
@@ -397,7 +402,6 @@ pub trait FormatElements {
     /// Returns the start tag of `kind` if:
     /// * the last element is an end tag of `kind`.
     /// * there's a matching start tag in this document (may not be true if this slice is an interned element and the `start` is in the document storing the interned element).
-    #[expect(unused)]
     fn start_tag(&self, kind: TagKind) -> Option<&Tag>;
 
     /// Returns the end tag if:
@@ -493,7 +497,7 @@ impl TextWidth {
     }
 
     /// Returns true if the text contains newlines.
-    pub(crate) const fn is_multiline(self) -> bool {
+    pub const fn is_multiline(self) -> bool {
         (self.0 & Self::MULTILINE_MASK) != 0
     }
 }

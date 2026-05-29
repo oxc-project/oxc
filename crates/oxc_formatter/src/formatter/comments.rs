@@ -405,8 +405,9 @@ impl<'a> Comments<'a> {
     ///
     /// `prettier-ignore` is also supported for compatibility.
     pub fn is_suppression_comment(&self, comment: &Comment) -> bool {
-        let text = self.source_text.text_for(&comment.content_span()).trim();
-        matches!(text, "oxfmt-ignore" | "prettier-ignore")
+        oxc_formatter_core::util::is_suppression_marker(
+            self.source_text.text_for(&comment.content_span()),
+        )
     }
 
     /// Checks if a comment is a type cast comment containing `@type` or `@satisfies`.

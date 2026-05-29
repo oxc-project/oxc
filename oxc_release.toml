@@ -31,6 +31,7 @@ scopes_for_breaking_change = ["format"]
 versioned_files = [
   "apps/oxfmt/Cargo.toml",
   "apps/oxfmt/package.json",
+  "crates/oxc_formatter_core/Cargo.toml",
   "crates/oxc_formatter/Cargo.toml",
   "npm/oxfmt/package.json",
 ]

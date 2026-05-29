@@ -11,7 +11,7 @@ use super::to_oxc_formatter::to_oxc_formatter;
 /// <https://github.com/un-ts/prettier/blob/7a4346d5dbf6b63987c0f81228fc46bb12f8692f/packages/toml/src/index.ts#L27-L31>
 ///
 /// TODO: After `oxc_formatter_core` separation lands, derive the core fields (`column_width` / `indent_string` / `crlf`)
-/// from a neutral resolved form instead of `oxc_formatter::FormatOptions`.
+/// from a neutral resolved form instead of `oxc_formatter::JsFormatOptions`.
 /// `trailing_comma` is JS-specific (not a core option):
 /// - either keep mirroring Prettier's convention by reading it from `FormatConfig` directly,
 /// - or introduce a dedicated `toml: {}` namespace options in oxfmtrc for explicit TOML-side config

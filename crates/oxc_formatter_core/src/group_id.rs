@@ -72,6 +72,10 @@ pub struct UniqueGroupIdBuilder {
 
 impl UniqueGroupIdBuilder {
     /// Creates a new unique group id with the given debug name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the internal counter overflows `u32::MAX`.
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let id = NonZeroU32::new(id).unwrap_or_else(|| panic!("Group ID counter overflowed"));

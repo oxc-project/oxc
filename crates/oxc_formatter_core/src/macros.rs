@@ -29,9 +29,9 @@
 #[macro_export]
 macro_rules! format_args {
     ($($value:expr),+ $(,)?) => {
-        $crate::formatter::Arguments::new(&[
+        $crate::Arguments::new(&[
             $(
-                $crate::formatter::Argument::new(&$value)
+                $crate::Argument::new(&$value)
             ),+
         ])
     }
@@ -115,36 +115,6 @@ macro_rules! dbg_write {
         });
         let result = inspect.write_fmt($crate::format_args!($($arg),+));
         result
-    }}
-}
-
-/// Creates the Format IR for a value.
-///
-/// The first argument `format!` receives is the [FormatContext] that specify how elements must be formatted.
-/// Additional parameters passed get formatted by using their [crate::Format] implementation.
-///
-///
-/// ## Examples
-///
-/// ```text
-/// use biome_formatter::prelude::*;
-/// use biome_formatter::format;
-///
-/// let formatted = format!(SimpleFormatContext::default(), [token("("), token("a"), token(")")]).unwrap();
-///
-/// assert_eq!(
-///     formatted.into_document(),
-///     Document::from(vec![
-///         FormatElement::Token { text: "(" },
-///         FormatElement::Token { text: "a" },
-///         FormatElement::Token { text: ")" },
-///     ])
-/// );
-/// ```
-#[macro_export]
-macro_rules! format {
-    ($context:expr, [$($arg:expr),+ $(,)?]) => {{
-        ($crate::formatter::format($context, $crate::format_args!($($arg),+)))
     }}
 }
 
@@ -334,6 +304,6 @@ macro_rules! format {
 #[macro_export]
 macro_rules! best_fitting {
     ($least_expanded:expr, $($tail:expr),+ $(,)?) => {
-        BestFitting::from_arguments_unchecked($crate::format_args!($least_expanded, $($tail),+))
+        $crate::builders::BestFitting::from_arguments_unchecked($crate::format_args!($least_expanded, $($tail),+))
     };
 }

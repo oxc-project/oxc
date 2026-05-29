@@ -1,4 +1,5 @@
-#![allow(clippy::inline_always, clippy::missing_panics_doc)] // FIXME: all these needs to be fixed.
+// NOTE: `inline_always`: Intentional on `FormatWith::fmt` / `FormatOnce::fmt` hot-path dispatch
+#![allow(clippy::inline_always)]
 
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
@@ -22,41 +23,46 @@ pub use crate::external_formatter::{
     EmbeddedDocFormatterCallback, EmbeddedDocResult, EmbeddedFormatterCallback, ExternalCallbacks,
     TailwindCallback,
 };
-pub use crate::formatter::format_element::tag::{
-    Align, Condition, DedentMode, Group, GroupMode, Tag,
-};
-pub use crate::formatter::format_element::{
-    BestFittingElement, FormatElement, LineMode, PrintMode, TextWidth,
-};
-pub use crate::formatter::{Format, Formatted};
-pub use crate::formatter::{GroupId, UniqueGroupIdBuilder};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
 pub use crate::print::{FormatVueBindingParams, FormatVueScriptGeneric};
 pub use crate::service::*;
 #[cfg(feature = "detect_code_removal")]
 pub use detect_code_removal::detect_code_removal;
+// Re-export the language-agnostic formatting macros from `oxc_formatter_core` so existing
+// `crate::write!` / `crate::format_args!` / `crate::best_fitting!`
+// call-sites in `oxc_formatter` continue to work without changes.
+pub(crate) use oxc_formatter_core::{best_fitting, format_args, write};
+// Internal-only re-exports so crate-local `use crate::{Buffer, Format};` continues to work
+// without leaking these IR primitives in the public API.
+pub(crate) use crate::formatter::{Buffer, Format};
 
-use self::formatter::{FormatContext, prelude::tag::Label};
+use self::formatter::prelude::tag::Label;
+use self::formatter::{Formatted, JsFormatContext};
 
 pub struct Formatter<'a> {
     allocator: &'a Allocator,
-    options: FormatOptions,
+    options: JsFormatOptions,
 }
 
 impl<'a> Formatter<'a> {
-    pub fn new(allocator: &'a Allocator, options: FormatOptions) -> Self {
+    pub fn new(allocator: &'a Allocator, options: JsFormatOptions) -> Self {
         Self { allocator, options }
     }
 
     /// Formats the given AST `Program` and returns the formatted string.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the formatted IR is invalid or contains unbalanced elements,
+    /// indicating a bug in the formatter implementation.
     pub fn build(self, program: &Program<'a>) -> String {
         let formatted = self.format(program);
         formatted.print().unwrap().into_code()
     }
 
     #[inline]
-    pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
+    pub fn format(self, program: &'a Program<'a>) -> Formatted<'a, JsFormatContext<'a>> {
         self.format_with_external_callbacks(program, None)
     }
 
@@ -65,20 +71,20 @@ impl<'a> Formatter<'a> {
         self,
         program: &'a Program<'a>,
         external_callbacks: Option<ExternalCallbacks>,
-    ) -> Formatted<'a> {
+    ) -> Formatted<'a, JsFormatContext<'a>> {
         let program_node = AstNode::new(program, AstNodes::Dummy(), self.allocator);
 
-        let context = FormatContext::new(
+        let context = JsFormatContext::new(
             program.source_text,
             program.source_type,
             &program.comments,
-            self.allocator,
             self.options,
             external_callbacks,
         );
 
         formatter::format(
             context,
+            self.allocator,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
         )
     }
@@ -92,23 +98,26 @@ impl<'a> Formatter<'a> {
     /// - etc...
     ///
     /// `SortImportsTransform` is skipped since it only applies to whole `Program` formatting.
-    pub fn format_node<F: formatter::Format<'a>>(
+    pub fn format_node<F: formatter::Format<'a, JsFormatContext<'a>>>(
         self,
         node: &F,
         source_text: &'a str,
         source_type: SourceType,
         comments: &'a [Comment],
         external_callbacks: Option<ExternalCallbacks>,
-    ) -> Formatted<'a> {
-        let context = FormatContext::new(
+    ) -> Formatted<'a, JsFormatContext<'a>> {
+        let context = JsFormatContext::new(
             source_text,
             source_type,
             comments,
-            self.allocator,
             self.options,
             external_callbacks,
         );
-        formatter::format(context, formatter::Arguments::new(&[formatter::Argument::new(node)]))
+        formatter::format(
+            context,
+            self.allocator,
+            formatter::Arguments::new(&[formatter::Argument::new(node)]),
+        )
     }
 }
 

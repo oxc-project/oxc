@@ -5,7 +5,10 @@ use oxc_span::GetSpan;
 use crate::{
     FormatTrailingCommas,
     ast_nodes::AstNode,
-    formatter::{Buffer, Format, Formatter, GroupId, prelude::*, separated::FormatSeparatedIter},
+    formatter::{
+        Buffer, Format, GroupId, JsFormatContext, JsFormatter, prelude::*,
+        separated::FormatSeparatedIter,
+    },
     utils::array::write_array_node,
     write,
 };
@@ -24,8 +27,8 @@ impl<'a, 'b> ArrayElementList<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for ArrayElementList<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let layout =
             if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {
                 ArrayLayout::Fill
@@ -106,7 +109,7 @@ enum ArrayLayout {
 pub fn can_concisely_print_array_list(
     array_expression_span: Span,
     list: &[ArrayExpressionElement<'_>],
-    f: &Formatter<'_, '_>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
     if list.is_empty() {
         return false;

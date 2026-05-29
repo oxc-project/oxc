@@ -10,27 +10,54 @@ use oxc_data_structures::code_buffer::{self, CodeBuffer};
 pub use printer_options::*;
 use unicode_width::UnicodeWidthChar;
 
-use self::call_stack::PrintIndentStack;
-use super::{
-    ActualStart, FormatElement, GroupId, InvalidDocumentError, PrintError, PrintResult, Printed,
-    format_element::{BestFittingElement, LineMode, PrintMode, tag::Condition},
-    prelude::{
-        Tag::EndFill,
-        TextWidth,
-        tag::{DedentMode, Tag, TagKind},
-    },
-    printer::{
-        call_stack::{
-            CallStack, FitsCallStack, FitsIndentStack, IndentStack, PrintCallStack,
-            PrintElementArgs, StackFrame, SuffixStack,
-        },
-        line_suffixes::{LineSuffixEntry, LineSuffixes},
-        queue::{
-            AllPredicate, FitsEndPredicate, FitsQueue, PrintQueue, Queue, SingleEntryPredicate,
-        },
-    },
+use crate::{
+    ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
+    InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextRange, TextWidth,
 };
-use crate::options::IndentStyle;
+
+use self::call_stack::{
+    CallStack, FitsCallStack, FitsIndentStack, IndentStack, PrintCallStack, PrintElementArgs,
+    PrintIndentStack, StackFrame, SuffixStack,
+};
+use self::line_suffixes::{LineSuffixEntry, LineSuffixes};
+use self::queue::{
+    AllPredicate, FitsEndPredicate, FitsQueue, PrintQueue, Queue, SingleEntryPredicate,
+};
+
+pub type PrintResult<T> = Result<T, PrintError>;
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Printed {
+    code: String,
+    range: Option<TextRange>,
+}
+
+impl Printed {
+    pub fn new(code: String, range: Option<TextRange>) -> Self {
+        Self { code, range }
+    }
+
+    /// Construct an empty formatter result
+    pub fn new_empty() -> Self {
+        Self { code: String::new(), range: None }
+    }
+
+    /// Range of the input source file covered by this formatted code,
+    /// or None if the entire file is covered in this instance
+    pub fn range(&self) -> Option<TextRange> {
+        self.range
+    }
+
+    /// Access the resulting code, borrowing the result
+    pub fn as_code(&self) -> &str {
+        &self.code
+    }
+
+    /// Access the resulting code, consuming the result
+    pub fn into_code(self) -> String {
+        self.code
+    }
+}
 
 /// Prints the format elements into a string
 #[derive(Debug, Default)]
@@ -67,12 +94,20 @@ impl<'a> Printer<'a> {
     }
 
     /// Prints the passed in element as well as all its content
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`PrintError`] if the document contains invalid or unbalanced elements.
     pub fn print(self, document: &'a [FormatElement<'a>]) -> PrintResult<Printed> {
         self.print_with_indent(document, 0)
     }
 
     /// Prints the passed in element as well as all its content,
     /// starting at the specified indentation level
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`PrintError`] if the document contains invalid or unbalanced elements.
     pub fn print_with_indent(
         mut self,
         document: &'a [FormatElement<'a>],
@@ -532,7 +567,7 @@ impl<'a> Printer<'a> {
             }
         }
 
-        if queue.top() == Some(&FormatElement::Tag(EndFill)) {
+        if queue.top() == Some(&FormatElement::Tag(Tag::EndFill)) {
             Ok(())
         } else {
             invalid_end_tag(TagKind::Fill, stack.top_kind())
@@ -1340,14 +1375,27 @@ enum Text<'a> {
 mod tests {
     use oxc_allocator::Allocator;
 
-    use crate::formatter::prelude::document::Document;
-    use crate::formatter::printer::{PrintWidth, Printer, PrinterOptions};
-    use crate::formatter::{FormatContext, FormatState, Printed, VecBuffer};
-    use crate::{IndentStyle, LineEnding};
-    use crate::{format_args, formatter::prelude::*, write};
+    use crate::{
+        Argument, Arguments, Buffer, Document, Format, FormatState, IndentStyle, LineEnding,
+        Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer,
+        builders::{
+            block_indent, empty_line, group, hard_line_break, if_group_breaks,
+            if_group_fits_on_line, line_suffix, soft_block_indent, soft_line_break,
+            soft_line_break_or_space, space, text, token,
+        },
+        format_args,
+        printer::PrintWidth,
+        write,
+    };
 
-    fn format<'a>(allocator: &'a Allocator, root: &dyn Format<'a>) -> Printed {
-        format_with_options(
+    /// Test-only context type alias.
+    type TestContext<'a> = SimpleFormatContext<'a>;
+
+    fn format_simple<'a, F>(allocator: &'a Allocator, root: &F) -> Printed
+    where
+        F: Format<'a, TestContext<'a>>,
+    {
+        format_simple_with_options(
             allocator,
             root,
             PrinterOptions {
@@ -1359,20 +1407,29 @@ mod tests {
         )
     }
 
-    fn format_with_options<'a>(
+    fn format_simple_with_options<'a, F>(
         allocator: &'a Allocator,
-        root: &dyn Format<'a>,
+        root: &F,
         options: PrinterOptions,
-    ) -> Printed {
-        let formatted = crate::format!(FormatContext::dummy(allocator), [root]);
+    ) -> Printed
+    where
+        F: Format<'a, TestContext<'a>>,
+    {
+        let context = SimpleFormatContext::default();
+        let mut state = FormatState::new(context, allocator);
+        let mut buffer = VecBuffer::new(&mut state);
+        crate::format::write(&mut buffer, Arguments::new(&[Argument::new(root)]));
 
-        Printer::new(options, &[]).print(formatted.document()).expect("Document to be valid")
+        let elements = buffer.into_vec();
+        let document = Document::new(elements, Vec::default());
+        document.propagate_expand();
+        Printer::new(options, &[]).print(document.elements()).expect("Document to be valid")
     }
 
     #[test]
     fn it_prints_a_group_on_a_single_line_if_it_fits() {
         let allocator = Allocator::default();
-        let result = format(
+        let result = format_simple(
             &allocator,
             &FormatArrayElements {
                 items: vec![&token("\"a\""), &token("\"b\""), &token("\"c\""), &token("\"d\"")],
@@ -1385,7 +1442,7 @@ mod tests {
     #[test]
     fn it_tracks_the_indent_for_each_token() {
         let allocator = Allocator::default();
-        let formatted = format(
+        let formatted = format_simple(
             &allocator,
             &format_args!(
                 token("a"),
@@ -1426,7 +1483,7 @@ a",
             ..PrinterOptions::default()
         };
 
-        let result = format_with_options(
+        let result = format_simple_with_options(
             &allocator,
             &format_args!(
                 token("function main() {"),
@@ -1452,7 +1509,7 @@ a",
             ..PrinterOptions::default()
         };
 
-        let result = format_with_options(
+        let result = format_simple_with_options(
             &allocator,
             &format_args!(
                 token("function main() {"),
@@ -1472,7 +1529,7 @@ a",
     #[test]
     fn it_breaks_a_group_if_a_string_contains_a_newline() {
         let allocator = Allocator::default();
-        let result = format(
+        let result = format_simple(
             &allocator,
             &FormatArrayElements {
                 items: vec![&text("`This is a string spanning\ntwo lines`"), &token("\"b\"")],
@@ -1488,11 +1545,12 @@ two lines`,
             result.as_code()
         );
     }
+
     #[test]
     fn it_breaks_a_group_if_it_contains_a_hard_line_break() {
         let allocator = Allocator::default();
         let result =
-            format(&allocator, &group(&format_args!(token("a"), block_indent(&token("b")))));
+            format_simple(&allocator, &group(&format_args!(token("a"), block_indent(&token("b")))));
 
         assert_eq!("a\n  b\n", result.as_code());
     }
@@ -1500,7 +1558,7 @@ two lines`,
     #[test]
     fn it_breaks_parent_groups_if_they_dont_fit_on_a_single_line() {
         let allocator = Allocator::default();
-        let result = format(
+        let result = format_simple(
             &allocator,
             &FormatArrayElements {
                 items: vec![
@@ -1544,7 +1602,7 @@ two lines`,
             ..PrinterOptions::default()
         };
 
-        let result = format_with_options(
+        let result = format_simple_with_options(
             &allocator,
             &FormatArrayElements {
                 items: vec![&token("'a'"), &token("'b'"), &token("'c'"), &token("'d'")],
@@ -1558,7 +1616,7 @@ two lines`,
     #[test]
     fn it_prints_consecutive_hard_lines_as_one() {
         let allocator = Allocator::default();
-        let result = format(
+        let result = format_simple(
             &allocator,
             &format_args!(
                 token("a"),
@@ -1575,7 +1633,7 @@ two lines`,
     #[test]
     fn it_prints_consecutive_empty_lines_as_one() {
         let allocator = Allocator::default();
-        let result = format(
+        let result = format_simple(
             &allocator,
             &format_args!(token("a"), empty_line(), empty_line(), empty_line(), token("b"),),
         );
@@ -1586,7 +1644,7 @@ two lines`,
     #[test]
     fn it_prints_consecutive_mixed_lines_as_one() {
         let allocator = Allocator::default();
-        let result = format(
+        let result = format_simple(
             &allocator,
             &format_args!(
                 token("a"),
@@ -1604,9 +1662,10 @@ two lines`,
     #[test]
     fn test_fill_breaks() {
         let allocator = Allocator::default();
-        let mut state = FormatState::new(FormatContext::dummy(&allocator));
+        let context = SimpleFormatContext::default();
+        let mut state = FormatState::new(context, &allocator);
         let mut buffer = VecBuffer::new(&mut state);
-        let mut formatter = Formatter::new(&mut buffer);
+        let mut formatter = crate::Formatter::new(&mut buffer);
 
         formatter
             .fill()
@@ -1640,7 +1699,7 @@ two lines`,
                 .with_print_width(PrintWidth::new(10)),
             &[],
         )
-        .print(&document)
+        .print(document.elements())
         .unwrap();
 
         assert_eq!(printed.as_code(), "1, 2, 3,\n723493294,\n[5],\n[\n\t123456789\n]");
@@ -1649,12 +1708,12 @@ two lines`,
     #[test]
     fn line_suffix_printed_at_end() {
         let allocator = Allocator::default();
-        let printed = format(
+        let printed = format_simple(
             &allocator,
             &format_args!(
                 group(&format_args!(
                     token("["),
-                    soft_block_indent(&format_with(|f| {
+                    soft_block_indent(&test_format_with(|f| {
                         f.fill()
                             .entry(
                                 &soft_line_break_or_space(),
@@ -1679,11 +1738,12 @@ two lines`,
 
         assert_eq!(printed.as_code(), "[1, 2, 3]; // trailing");
     }
+
     #[test]
     fn conditional_with_group_id_in_fits() {
         let allocator = Allocator::default();
-        let content = format_with(|f| {
-            let group_id = f.group_id("test");
+        let content = test_format_with(|f| {
+            let group_id = f.state().group_id("test");
             write!(
                 f,
                 [
@@ -1702,7 +1762,7 @@ two lines`,
             );
         });
 
-        let printed = format(&allocator, &content);
+        let printed = format_simple(&allocator, &content);
 
         assert_eq!(
             printed.as_code(),
@@ -1713,9 +1773,9 @@ two lines`,
     #[test]
     fn out_of_order_group_ids() {
         let allocator = Allocator::default();
-        let content = format_with(|f| {
-            let id_1 = f.group_id("id-1");
-            let id_2 = f.group_id("id-2");
+        let content = test_format_with(|f| {
+            let id_1 = f.state().group_id("id-1");
+            let id_2 = f.state().group_id("id-2");
 
             write!(
                 f,
@@ -1738,7 +1798,7 @@ two lines`,
             );
         });
 
-        let printed = format(&allocator, &content);
+        let printed = format_simple(&allocator, &content);
 
         assert_eq!(
             printed.as_code(),
@@ -1755,7 +1815,7 @@ Group 1 breaks"
         let options =
             PrinterOptions { print_width: PrintWidth::new(10), ..PrinterOptions::default() };
 
-        let result = format_with_options(
+        let result = format_simple_with_options(
             &allocator,
             &format_args!(group(&format_args!(
                 token("("),
@@ -1771,17 +1831,17 @@ Group 1 breaks"
     }
 
     struct FormatArrayElements<'a> {
-        items: Vec<&'a dyn Format<'a>>,
+        items: Vec<&'a dyn Format<'a, TestContext<'a>>>,
     }
 
-    impl<'a> Format<'a> for FormatArrayElements<'a> {
-        fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+    impl<'a> Format<'a, TestContext<'a>> for FormatArrayElements<'a> {
+        fn fmt(&self, f: &mut crate::Formatter<'_, 'a, TestContext<'a>>) {
             write!(
                 f,
                 [group(&format_args!(
                     token("["),
                     soft_block_indent(&format_args!(
-                        format_with(|f| {
+                        test_format_with(|f| {
                             f.join_with(format_args!(token(","), soft_line_break_or_space()))
                                 .entries(&self.items);
                         }),
@@ -1790,6 +1850,27 @@ Group 1 breaks"
                     token("]")
                 ))]
             );
+        }
+    }
+
+    /// Test-only `format_with` closure adapter.
+    fn test_format_with<'a, T>(closure: T) -> TestFormatWith<T>
+    where
+        T: Fn(&mut crate::Formatter<'_, 'a, TestContext<'a>>),
+    {
+        TestFormatWith { closure }
+    }
+
+    struct TestFormatWith<T> {
+        closure: T,
+    }
+
+    impl<'a, T> Format<'a, TestContext<'a>> for TestFormatWith<T>
+    where
+        T: Fn(&mut crate::Formatter<'_, 'a, TestContext<'a>>),
+    {
+        fn fmt(&self, f: &mut crate::Formatter<'_, 'a, TestContext<'a>>) {
+            (self.closure)(f);
         }
     }
 }

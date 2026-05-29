@@ -1,8 +1,9 @@
 use std::{fmt::Debug, iter::FusedIterator, marker::PhantomData};
 
+use crate::{FormatElement, Tag, TagKind};
+
 use super::{
-    super::{format_element::tag::TagKind, prelude::Tag},
-    FormatElement, PrintResult, invalid_end_tag, invalid_start_tag,
+    PrintResult, invalid_end_tag, invalid_start_tag,
     stack::{Stack, StackedStack},
 };
 
