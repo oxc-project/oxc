@@ -58,13 +58,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the redundant role `button` from the element `button`.
 
-  ⚠ jsx-a11y(no-redundant-roles): The `nav` element has an implicit role of `navigation`. Defining this explicitly is redundant and should be avoided.
-   ╭─[no_redundant_roles.tsx:1:6]
- 1 │ <nav role='navigation' />
-   ·      ─────────────────
-   ╰────
-  help: Remove the redundant role `navigation` from the element `nav`.
-
   ⚠ jsx-a11y(no-redundant-roles): The `button` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:9]
  1 │ <Button role='button' />
@@ -267,3 +260,17 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the redundant role `row` from the element `tr`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `ul` element has an implicit role of `list`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <ul role="list" />
+   ·     ───────────
+   ╰────
+  help: Remove the redundant role `list` from the element `ul`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `nav` element has an implicit role of `navigation`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:6]
+ 1 │ <nav role="navigation" />
+   ·      ─────────────────
+   ╰────
+  help: Remove the redundant role `navigation` from the element `nav`.
