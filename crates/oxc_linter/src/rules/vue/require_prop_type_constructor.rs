@@ -293,14 +293,14 @@ fn test() {
             Some(PathBuf::from("test.vue")),
         ),
         (
-            r#"<script>
+            r"<script>
             import { defineProps } from './helpers'
             defineProps({
               a: {
                 type: 'String'
               },
             })
-            </script>"#,
+            </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
