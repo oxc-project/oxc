@@ -1,9 +1,9 @@
 commit: e5509e21
 
 parser_typescript Summary:
-AST Parsed     : 9830/9832 (99.98%)
-Positive Passed: 9818/9832 (99.86%)
-Negative Passed: 1532/2587 (59.22%)
+AST Parsed     : 9781/9781 (100.00%)
+Positive Passed: 9781/9781 (100.00%)
+Negative Passed: 1582/2638 (59.97%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -537,6 +537,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsCheckObjec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsExportMemberMergedWithModuleAugmentation2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationBindDeepExportsAssignment.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationBindReachabilityErrors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementation.ts
 
@@ -2114,409 +2116,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/uni
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/witness/witness.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambientWithStatements.ts
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-    ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:11:5]
- 10 │     L: var y;
- 11 │     return;
-    ·     ──────
- 12 │     switch (x) {
-    ╰────
-
-  × Illegal break statement
-   ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:2:5]
- 1 │ declare namespace M {
- 2 │     break;
-   ·     ──────
- 3 │     continue;
-   ╰────
-  help: A `break` statement can only be used within an enclosing iteration or switch statement.
-
-  × Illegal continue statement: no surrounding iteration statement
-   ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:3:5]
- 2 │     break;
- 3 │     continue;
-   ·     ─────────
- 4 │     debugger;
-   ╰────
-  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:25:5]
- 24 │     }
- 25 │     with (x) {
-    ·     ────
- 26 │     }
-    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts
-
-  × Lexical declaration cannot appear in a single-statement context
-   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:3:5]
- 2 │ if (true) 
- 3 │     const c1 = 0;
-   ·     ─────────────
- 4 │ else 
-   ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:5:5]
- 4 │ else 
- 5 │     const c2 = 0;
-   ·     ─────────────
- 6 │ 
-   ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:8:5]
- 7 │ while (true) 
- 8 │     const c3 = 0;
-   ·     ─────────────
- 9 │ 
-   ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:11:5]
- 10 │ do 
- 11 │     const c4 = 0;
-    ·     ─────────────
- 12 │ while (true);
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:16:5]
- 15 │ with (obj) 
- 16 │     const c5 = 0;  // No  Error will be reported here since we turn off all type checking
-    ·     ─────────────
- 17 │ 
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:19:5]
- 18 │ for (var i = 0; i < 10; i++)
- 19 │     const c6 = 0;
-    ·     ─────────────
- 20 │ 
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:22:5]
- 21 │ for (var i2 in {}) 
- 22 │     const c7 = 0;
-    ·     ─────────────
- 23 │ 
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:25:12]
- 24 │ if (true) 
- 25 │     label: const c8 = 0;
-    ·            ─────────────
- 26 │ 
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:28:29]
- 27 │ while (false)
- 28 │     label2: label3: label4: const c9 = 0;
-    ·                             ─────────────
- 29 │ 
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:15:1]
- 14 │ var obj;
- 15 │ with (obj) 
-    · ────
- 16 │     const c5 = 0;  // No  Error will be reported here since we turn off all type checking
-    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-scopes.ts
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:43:12]
- 42 │ if (true) {
- 43 │     label: const c = 0;
-    ·            ────────────
- 44 │     n = c;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:48:29]
- 47 │ while (false) {
- 48 │     label2: label3: label4: const c = 0;
-    ·                             ────────────
- 49 │     n = c;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:27:1]
- 26 │ var obj;
- 27 │ with (obj) {
-    · ────
- 28 │     const c = 0;
-    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-validContexts.ts
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:31:12]
- 30 │ if (true) {
- 31 │     label: const c8 = 0;
-    ·            ─────────────
- 32 │ }
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:35:29]
- 34 │ while (false) {
- 35 │     label2: label3: label4: const c9 = 0;
-    ·                             ─────────────
- 36 │ }
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:64:18]
- 63 │         const c16 = 0
- 64 │         label17: const c17 = 0;
-    ·                  ──────────────
- 65 │     }
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:18:1]
- 17 │ var obj;
- 18 │ with (obj) {
-    · ────
- 19 │     const c5 = 0;
-    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/convertKeywordsYes.ts
-
-  × Classes can't have a field named 'constructor'
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:175:12]
- 174 │ class bigClass {
- 175 │     public "constructor" = 0;
-     ·            ─────────────
- 176 │     public any = 0;
-     ╰────
-
-  × The keyword 'implements' is reserved
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:292:11]
- 291 │     class constructor { }
- 292 │     class implements { }
-     ·           ──────────
- 293 │     class interface { }
-     ╰────
-
-  × The keyword 'interface' is reserved
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:293:11]
- 292 │     class implements { }
- 293 │     class interface { }
-     ·           ─────────
- 294 │     class let { }
-     ╰────
-
-  × The keyword 'let' is reserved
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:294:11]
- 293 │     class interface { }
- 294 │     class let { }
-     ·           ───
- 295 │     class module { }
-     ╰────
-
-  × The keyword 'package' is reserved
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:296:11]
- 295 │     class module { }
- 296 │     class package { }
-     ·           ───────
- 297 │     class private { }
-     ╰────
-
-  × The keyword 'private' is reserved
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:297:11]
- 296 │     class package { }
- 297 │     class private { }
-     ·           ───────
- 298 │     class protected { }
-     ╰────
-
-  × The keyword 'protected' is reserved
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:298:11]
- 297 │     class private { }
- 298 │     class protected { }
-     ·           ─────────
- 299 │     class public { }
-     ╰────
-
-  × The keyword 'public' is reserved
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:299:11]
- 298 │     class protected { }
- 299 │     class public { }
-     ·           ──────
- 300 │     class set { }
-     ╰────
-
-  × The keyword 'static' is reserved
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:301:11]
- 300 │     class set { }
- 301 │     class static { }
-     ·           ──────
- 302 │     class get { }
-     ╰────
-
-  × The keyword 'yield' is reserved
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:303:11]
- 302 │     class get { }
- 303 │     class yield { }
-     ·           ─────
- 304 │     class declare { }
-     ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts
-
-  × 'with' statements are not allowed
-   ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:4:5]
- 3 │ async function withStatement0() {
- 4 │     with (x) {
-   ·     ────
- 5 │         y;
-   ╰────
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:10:5]
-  9 │ async function withStatement1() {
- 10 │     with (await x) {
-    ·     ────
- 11 │         y;
-    ╰────
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:16:5]
- 15 │ async function withStatement2() {
- 16 │     with (x) {
-    ·     ────
- 17 │         a;
-    ╰────
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:25:9]
- 24 │     with (x) {
- 25 │         with (z) {
-    ·         ────
- 26 │             a;
-    ╰────
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:24:5]
- 23 │ async function withStatement3() {
- 24 │     with (x) {
-    ·     ────
- 25 │         with (z) {
-    ╰────
-
-Panicked: tasks/coverage/typescript/tests/cases/compiler/missingCloseParenStatements.ts
-
-  × Expected `)` but found `{`
-   ╭─[typescript/tests/cases/compiler/missingCloseParenStatements.ts:2:26]
- 1 │ var a1, a2, a3 = 0;
- 2 │ if ( a1 && (a2 + a3 > 0) {
-   ·    ┬                     ┬
-   ·    │                     ╰── `)` expected
-   ·    ╰── Opened here
- 3 │     while( (a2 > 0) && a1
-   ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts
-
-  × 'with' statements are not allowed
-   ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:2:1]
- 1 │ // Arrow function used in with statement
- 2 │ with (window) {
-   · ────
- 3 │     var p = () => this;
-   ╰────
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:43:5]
- 42 │     // Arrow function used in with statement
- 43 │     with (window) {
-    ·     ────
- 44 │         var p = () => this;
-    ╰────
-
-Panicked: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts:2:8]
- 1 │ namespace Inner {
- 2 │     var;
-   ·        ─
- 3 │     let;
-   ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:2:15]
- 1 │ class C4 {
- 2 │     async * f(await) {
-   ·               ─────
- 3 │     }
-   ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:21]
- 1 │ async function * f4(await) {
-   ·                     ─────
- 2 │ }
-   ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:1:29]
- 1 │ const f2 = async function * await() {
-   ·                             ─────
- 2 │ };
-   ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts:2:15]
- 1 │ const o4 = {
- 2 │     async * f(await) {
-   ·               ─────
- 3 │     }
-   ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts:1:1]
- 1 │ return {
-   · ──────
- 2 │ 
-   ╰────
-
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/ArrowFunctionExpression1.ts:1:10]
@@ -3015,6 +2614,40 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │     }
    ╰────
 
+  × TS(1108): A 'return' statement can only be used within a function body.
+    ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:12:5]
+ 11 │     L: var y;
+ 12 │     return;
+    ·     ──────
+ 13 │     switch (x) {
+    ╰────
+
+  × Illegal break statement
+   ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:3:5]
+ 2 │ declare namespace M {
+ 3 │     break;
+   ·     ──────
+ 4 │     continue;
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:4:5]
+ 3 │     break;
+ 4 │     continue;
+   ·     ─────────
+ 5 │     debugger;
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:26:5]
+ 25 │     }
+ 26 │     with (x) {
+    ·     ────
+ 27 │     }
+    ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/ambiguousGenericAssertion1.ts:4:10]
  3 │ var r2 = < <T>(x: T) => T>f; // valid
@@ -3043,6 +2676,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/argumentsBindsToFunctionScopeArgumentList.ts:2:5]
+ 1 │ 'use strict';
+ 2 │ var arguments = 10;
+   ·     ─────────
+ 3 │ function foo(a) {
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/argumentsBindsToFunctionScopeArgumentList.ts:4:5]
+ 3 │ function foo(a) {
+ 4 │     arguments = 10;  /// This shouldnt be of type number and result in error.
+   ·     ─────────
+ 5 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
     ╭─[typescript/tests/cases/compiler/argumentsReferenceInConstructor4_Js.ts:18:9]
  17 │          */
  18 │         const arguments = this.arguments;
@@ -3056,6 +2705,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  16 │         const arguments = this.arguments;
     ·               ─────────
  17 │ 
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/argumentsReferenceInObjectLiteral_Js.ts:22:11]
+ 21 │ const d = () => {
+ 22 │     const arguments = undefined;
+    ·           ─────────
+ 23 │     return {
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -3198,6 +2855,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ─
  4 │ }
    ╰────
+
+  × The keyword 'public' is reserved
+   ╭─[typescript/tests/cases/compiler/asiPublicPrivateProtected.ts:2:1]
+ 1 │ 'use strict';
+ 2 │ public
+   · ──────
+ 3 │ class NonPublicClass {
+   ╰────
+
+  × The keyword 'private' is reserved
+    ╭─[typescript/tests/cases/compiler/asiPublicPrivateProtected.ts:13:1]
+ 12 │ }
+ 13 │ private
+    · ───────
+ 14 │ class NonPrivateClass {
+    ╰────
+
+  × The keyword 'protected' is reserved
+    ╭─[typescript/tests/cases/compiler/asiPublicPrivateProtected.ts:24:1]
+ 23 │ }
+ 24 │ protected
+    · ─────────
+ 25 │ class NonProtectedClass {
+    ╰────
 
   × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[typescript/tests/cases/compiler/asiReturn.ts:2:1]
@@ -3930,6 +3611,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:2:25]
+ 1 │ 'use strict';
+ 2 │ var f1 = (i: number, ...arguments) => { //arguments is error
+   ·                         ─────────
+ 3 │     var arguments: any[]; // no error
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:3:9]
+ 2 │ var f1 = (i: number, ...arguments) => { //arguments is error
+ 3 │     var arguments: any[]; // no error
+   ·         ─────────
+ 4 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:5:12]
+ 4 │ }
+ 5 │ var f12 = (arguments: number, ...rest) => { //arguments is error
+   ·            ─────────
+ 6 │     var arguments = 10; // no error
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:6:9]
+ 5 │ var f12 = (arguments: number, ...rest) => { //arguments is error
+ 6 │     var arguments = 10; // no error
+   ·         ─────────
+ 7 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:8:18]
+ 7 │ }
+ 8 │ var f1NoError = (arguments: number) => { // no error
+   ·                  ─────────
+ 9 │     var arguments = 10; // no error
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:9:9]
+  8 │ var f1NoError = (arguments: number) => { // no error
+  9 │     var arguments = 10; // no error
+    ·         ─────────
+ 10 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:13:9]
+ 12 │ var f2 = (...restParameters) => {
+ 13 │     var arguments = 10; // No Error
+    ·         ─────────
+ 14 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts:16:9]
+ 15 │ var f2NoError = () => {
+ 16 │     var arguments = 10; // no error
+    ·         ─────────
+ 17 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:3:31]
  2 │ class c1 {
  3 │     constructor(i: number, ...arguments) { // error
@@ -4425,6 +4170,549 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  47 │     }
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:3:13]
+ 2 │ // Functions
+ 3 │ function f1(arguments: number, ...restParameters) { //arguments is error
+   ·             ─────────
+ 4 │     var arguments = 10; // no error
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:4:9]
+ 3 │ function f1(arguments: number, ...restParameters) { //arguments is error
+ 4 │     var arguments = 10; // no error
+   ·         ─────────
+ 5 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:6:28]
+ 5 │ }
+ 6 │ function f12(i: number, ...arguments) { //arguments is error
+   ·                            ─────────
+ 7 │     var arguments: any[]; // no error
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:7:9]
+ 6 │ function f12(i: number, ...arguments) { //arguments is error
+ 7 │     var arguments: any[]; // no error
+   ·         ─────────
+ 8 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:9:20]
+  8 │ }
+  9 │ function f1NoError(arguments: number) { // no error
+    ·                    ─────────
+ 10 │     var arguments = 10; // no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:10:9]
+  9 │ function f1NoError(arguments: number) { // no error
+ 10 │     var arguments = 10; // no error
+    ·         ─────────
+ 11 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:13:35]
+ 12 │ 
+ 13 │ declare function f2(i: number, ...arguments); // no error - no code gen
+    ·                                   ─────────
+ 14 │ declare function f21(arguments: number, ...rest); // no error - no code gen
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:14:22]
+ 13 │ declare function f2(i: number, ...arguments); // no error - no code gen
+ 14 │ declare function f21(arguments: number, ...rest); // no error - no code gen
+    ·                      ─────────
+ 15 │ declare function f2NoError(arguments: number); // no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:15:28]
+ 14 │ declare function f21(arguments: number, ...rest); // no error - no code gen
+ 15 │ declare function f2NoError(arguments: number); // no error
+    ·                            ─────────
+ 16 │ 
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:18:9]
+ 17 │ function f3(...restParameters) {
+ 18 │     var arguments = 10; // no error
+    ·         ─────────
+ 19 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:21:9]
+ 20 │ function f3NoError() {
+ 21 │     var arguments = 10; // no error
+    ·         ─────────
+ 22 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:24:13]
+ 23 │ 
+ 24 │ function f4(arguments: number, ...rest); // no codegen no error
+    ·             ─────────
+ 25 │ function f4(arguments: string, ...rest); // no codegen no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:25:13]
+ 24 │ function f4(arguments: number, ...rest); // no codegen no error
+ 25 │ function f4(arguments: string, ...rest); // no codegen no error
+    ·             ─────────
+ 26 │ function f4(arguments: any, ...rest) { // error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:26:13]
+ 25 │ function f4(arguments: string, ...rest); // no codegen no error
+ 26 │ function f4(arguments: any, ...rest) { // error
+    ·             ─────────
+ 27 │     var arguments: any; // No error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:27:9]
+ 26 │ function f4(arguments: any, ...rest) { // error
+ 27 │     var arguments: any; // No error
+    ·         ─────────
+ 28 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:29:28]
+ 28 │ }
+ 29 │ function f42(i: number, ...arguments); // no codegen no error
+    ·                            ─────────
+ 30 │ function f42(i: string, ...arguments); // no codegen no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:30:28]
+ 29 │ function f42(i: number, ...arguments); // no codegen no error
+ 30 │ function f42(i: string, ...arguments); // no codegen no error
+    ·                            ─────────
+ 31 │ function f42(i: any, ...arguments) { // error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:31:25]
+ 30 │ function f42(i: string, ...arguments); // no codegen no error
+ 31 │ function f42(i: any, ...arguments) { // error
+    ·                         ─────────
+ 32 │     var arguments: any[]; // No error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:32:9]
+ 31 │ function f42(i: any, ...arguments) { // error
+ 32 │     var arguments: any[]; // No error
+    ·         ─────────
+ 33 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:34:20]
+ 33 │ }
+ 34 │ function f4NoError(arguments: number); // no error
+    ·                    ─────────
+ 35 │ function f4NoError(arguments: string); // no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:35:20]
+ 34 │ function f4NoError(arguments: number); // no error
+ 35 │ function f4NoError(arguments: string); // no error
+    ·                    ─────────
+ 36 │ function f4NoError(arguments: any) { // no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:36:20]
+ 35 │ function f4NoError(arguments: string); // no error
+ 36 │ function f4NoError(arguments: any) { // no error
+    ·                    ─────────
+ 37 │     var arguments: any; // No error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:37:9]
+ 36 │ function f4NoError(arguments: any) { // no error
+ 37 │     var arguments: any; // No error
+    ·         ─────────
+ 38 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:40:21]
+ 39 │ 
+ 40 │ declare function f5(arguments: number, ...rest); // no codegen no error
+    ·                     ─────────
+ 41 │ declare function f5(arguments: string, ...rest); // no codegen no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:41:21]
+ 40 │ declare function f5(arguments: number, ...rest); // no codegen no error
+ 41 │ declare function f5(arguments: string, ...rest); // no codegen no error
+    ·                     ─────────
+ 42 │ declare function f52(i: number, ...arguments); // no codegen no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:42:36]
+ 41 │ declare function f5(arguments: string, ...rest); // no codegen no error
+ 42 │ declare function f52(i: number, ...arguments); // no codegen no error
+    ·                                    ─────────
+ 43 │ declare function f52(i: string, ...arguments); // no codegen no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:43:36]
+ 42 │ declare function f52(i: number, ...arguments); // no codegen no error
+ 43 │ declare function f52(i: string, ...arguments); // no codegen no error
+    ·                                    ─────────
+ 44 │ declare function f6(arguments: number); // no codegen no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:44:21]
+ 43 │ declare function f52(i: string, ...arguments); // no codegen no error
+ 44 │ declare function f6(arguments: number); // no codegen no error
+    ·                     ─────────
+ 45 │ declare function f6(arguments: string); // no codegen no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunction.ts:45:21]
+ 44 │ declare function f6(arguments: number); // no codegen no error
+ 45 │ declare function f6(arguments: string); // no codegen no error
+    ·                     ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:3:17]
+ 2 │ function foo() {
+ 3 │     function f1(arguments: number, ...restParameters) { //arguments is error
+   ·                 ─────────
+ 4 │         var arguments = 10; // no error
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:4:13]
+ 3 │     function f1(arguments: number, ...restParameters) { //arguments is error
+ 4 │         var arguments = 10; // no error
+   ·             ─────────
+ 5 │     }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:6:32]
+ 5 │     }
+ 6 │     function f12(i: number, ...arguments) { //arguments is error
+   ·                                ─────────
+ 7 │         var arguments: any[]; // no error
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:7:13]
+ 6 │     function f12(i: number, ...arguments) { //arguments is error
+ 7 │         var arguments: any[]; // no error
+   ·             ─────────
+ 8 │     }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:9:24]
+  8 │     }
+  9 │     function f1NoError(arguments: number) { // no error
+    ·                        ─────────
+ 10 │         var arguments = 10; // no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:10:13]
+  9 │     function f1NoError(arguments: number) { // no error
+ 10 │         var arguments = 10; // no error
+    ·             ─────────
+ 11 │     }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:14:13]
+ 13 │     function f3(...restParameters) {
+ 14 │         var arguments = 10; // no error
+    ·             ─────────
+ 15 │     }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:17:13]
+ 16 │     function f3NoError() {
+ 17 │         var arguments = 10; // no error
+    ·             ─────────
+ 18 │     }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:20:17]
+ 19 │ 
+ 20 │     function f4(arguments: number, ...rest); // no codegen no error
+    ·                 ─────────
+ 21 │     function f4(arguments: string, ...rest); // no codegen no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:21:17]
+ 20 │     function f4(arguments: number, ...rest); // no codegen no error
+ 21 │     function f4(arguments: string, ...rest); // no codegen no error
+    ·                 ─────────
+ 22 │     function f4(arguments: any, ...rest) { // error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:22:17]
+ 21 │     function f4(arguments: string, ...rest); // no codegen no error
+ 22 │     function f4(arguments: any, ...rest) { // error
+    ·                 ─────────
+ 23 │         var arguments: any; // No error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:23:13]
+ 22 │     function f4(arguments: any, ...rest) { // error
+ 23 │         var arguments: any; // No error
+    ·             ─────────
+ 24 │     }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:25:32]
+ 24 │     }
+ 25 │     function f42(i: number, ...arguments); // no codegen no error
+    ·                                ─────────
+ 26 │     function f42(i: string, ...arguments); // no codegen no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:26:32]
+ 25 │     function f42(i: number, ...arguments); // no codegen no error
+ 26 │     function f42(i: string, ...arguments); // no codegen no error
+    ·                                ─────────
+ 27 │     function f42(i: any, ...arguments) { // error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:27:29]
+ 26 │     function f42(i: string, ...arguments); // no codegen no error
+ 27 │     function f42(i: any, ...arguments) { // error
+    ·                             ─────────
+ 28 │         var arguments: any[]; // No error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:28:13]
+ 27 │     function f42(i: any, ...arguments) { // error
+ 28 │         var arguments: any[]; // No error
+    ·             ─────────
+ 29 │     }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:30:24]
+ 29 │     }
+ 30 │     function f4NoError(arguments: number); // no error
+    ·                        ─────────
+ 31 │     function f4NoError(arguments: string); // no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:31:24]
+ 30 │     function f4NoError(arguments: number); // no error
+ 31 │     function f4NoError(arguments: string); // no error
+    ·                        ─────────
+ 32 │     function f4NoError(arguments: any) { // no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:32:24]
+ 31 │     function f4NoError(arguments: string); // no error
+ 32 │     function f4NoError(arguments: any) { // no error
+    ·                        ─────────
+ 33 │         var arguments: any; // No error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts:33:13]
+ 32 │     function f4NoError(arguments: any) { // no error
+ 33 │         var arguments: any; // No error
+    ·             ─────────
+ 34 │     }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:2:24]
+ 1 │ 'use strict';
+ 2 │ var v1: (i: number, ...arguments) => void; // no error - no code gen
+   ·                        ─────────
+ 3 │ var v12: (arguments: number, ...restParameters) => void; // no error - no code gen
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:3:11]
+ 2 │ var v1: (i: number, ...arguments) => void; // no error - no code gen
+ 3 │ var v12: (arguments: number, ...restParameters) => void; // no error - no code gen
+   ·           ─────────
+ 4 │ var v2: {
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:5:6]
+ 4 │ var v2: {
+ 5 │     (arguments: number, ...restParameters); // no error - no code gen
+   ·      ─────────
+ 6 │     new (arguments: number, ...restParameters); // no error - no code gen
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:6:10]
+ 5 │     (arguments: number, ...restParameters); // no error - no code gen
+ 6 │     new (arguments: number, ...restParameters); // no error - no code gen
+   ·          ─────────
+ 7 │     foo(arguments: number, ...restParameters); // no error - no code gen
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:7:9]
+ 6 │     new (arguments: number, ...restParameters); // no error - no code gen
+ 7 │     foo(arguments: number, ...restParameters); // no error - no code gen
+   ·         ─────────
+ 8 │     prop: (arguments: number, ...restParameters) => void; // no error - no code gen
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:8:12]
+ 7 │     foo(arguments: number, ...restParameters); // no error - no code gen
+ 8 │     prop: (arguments: number, ...restParameters) => void; // no error - no code gen
+   ·            ─────────
+ 9 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:11:20]
+ 10 │ var v21: {
+ 11 │     (i: number, ...arguments); // no error - no code gen
+    ·                    ─────────
+ 12 │     new (i: number, ...arguments); // no error - no code gen
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:12:24]
+ 11 │     (i: number, ...arguments); // no error - no code gen
+ 12 │     new (i: number, ...arguments); // no error - no code gen
+    ·                        ─────────
+ 13 │     foo(i: number, ...arguments); // no error - no code gen
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:13:23]
+ 12 │     new (i: number, ...arguments); // no error - no code gen
+ 13 │     foo(i: number, ...arguments); // no error - no code gen
+    ·                       ─────────
+ 14 │     prop: (i: number, ...arguments) => void; // no error - no code gen
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInType.ts:14:26]
+ 13 │     foo(i: number, ...arguments); // no error - no code gen
+ 14 │     prop: (i: number, ...arguments) => void; // no error - no code gen
+    ·                          ─────────
+ 15 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:4:20]
+ 3 │ interface i1 {
+ 4 │     (i: number, ...arguments); // no error - no code gen
+   ·                    ─────────
+ 5 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:7:6]
+ 6 │ interface i12 {
+ 7 │     (arguments: number, ...rest); // no error - no code gen
+   ·      ─────────
+ 8 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:10:6]
+  9 │ interface i1NoError {
+ 10 │     (arguments: number);  // no error
+    ·      ─────────
+ 11 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:15:24]
+ 14 │ interface i2 {
+ 15 │     new (i: number, ...arguments); // no error - no code gen
+    ·                        ─────────
+ 16 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:18:10]
+ 17 │ interface i21 {
+ 18 │     new (arguments: number, ...rest); // no error - no code gen
+    ·          ─────────
+ 19 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:21:10]
+ 20 │ interface i2NoError {
+ 21 │     new (arguments: number);  // no error
+    ·          ─────────
+ 22 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:26:23]
+ 25 │ interface i3 {
+ 26 │     foo(i: number, ...arguments); // no error - no code gen
+    ·                       ─────────
+ 27 │     foo1(arguments: number, ...rest); // no error - no code gen
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:27:10]
+ 26 │     foo(i: number, ...arguments); // no error - no code gen
+ 27 │     foo1(arguments: number, ...rest); // no error - no code gen
+    ·          ─────────
+ 28 │     fooNoError(arguments: number);  // no error
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/collisionArgumentsInterfaceMembers.ts:28:16]
+ 27 │     foo1(arguments: number, ...rest); // no error - no code gen
+ 28 │     fooNoError(arguments: number);  // no error
+    ·                ─────────
+ 29 │ }
+    ╰────
+
   × Expected `=` but found `EOF`
    ╭─[typescript/tests/cases/compiler/commonJsExportTypeDeclarationError.ts:3:1]
  2 │ export type test
@@ -4733,6 +5021,156 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:4:5]
+ 3 │ if (true) 
+ 4 │     const c1 = 0;
+   ·     ─────────────
+ 5 │ else 
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:6:5]
+ 5 │ else 
+ 6 │     const c2 = 0;
+   ·     ─────────────
+ 7 │ 
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:9:5]
+  8 │ while (true) 
+  9 │     const c3 = 0;
+    ·     ─────────────
+ 10 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:12:5]
+ 11 │ do 
+ 12 │     const c4 = 0;
+    ·     ─────────────
+ 13 │ while (true);
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:17:5]
+ 16 │ with (obj) 
+ 17 │     const c5 = 0;  // No  Error will be reported here since we turn off all type checking
+    ·     ─────────────
+ 18 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:20:5]
+ 19 │ for (var i = 0; i < 10; i++)
+ 20 │     const c6 = 0;
+    ·     ─────────────
+ 21 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:23:5]
+ 22 │ for (var i2 in {}) 
+ 23 │     const c7 = 0;
+    ·     ─────────────
+ 24 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:26:12]
+ 25 │ if (true) 
+ 26 │     label: const c8 = 0;
+    ·            ─────────────
+ 27 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:29:29]
+ 28 │ while (false)
+ 29 │     label2: label3: label4: const c9 = 0;
+    ·                             ─────────────
+ 30 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:16:1]
+ 15 │ var obj;
+ 16 │ with (obj) 
+    · ────
+ 17 │     const c5 = 0;  // No  Error will be reported here since we turn off all type checking
+    ╰────
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:44:12]
+ 43 │ if (true) {
+ 44 │     label: const c = 0;
+    ·            ────────────
+ 45 │     n = c;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:49:29]
+ 48 │ while (false) {
+ 49 │     label2: label3: label4: const c = 0;
+    ·                             ────────────
+ 50 │     n = c;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:28:1]
+ 27 │ var obj;
+ 28 │ with (obj) {
+    · ────
+ 29 │     const c = 0;
+    ╰────
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:32:12]
+ 31 │ if (true) {
+ 32 │     label: const c8 = 0;
+    ·            ─────────────
+ 33 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:36:29]
+ 35 │ while (false) {
+ 36 │     label2: label3: label4: const c9 = 0;
+    ·                             ─────────────
+ 37 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:65:18]
+ 64 │         const c16 = 0
+ 65 │         label17: const c17 = 0;
+    ·                  ──────────────
+ 66 │     }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:19:1]
+ 18 │ var obj;
+ 19 │ with (obj) {
+    · ────
+ 20 │     const c5 = 0;
+    ╰────
+
   × Identifier `E` has already been declared
    ╭─[typescript/tests/cases/compiler/constEnumErrors.ts:1:12]
  1 │ const enum E {
@@ -4919,6 +5357,302 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·       ───────────────────────────
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
+
+  × Classes can't have a field named 'constructor'
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:176:12]
+ 175 │ class bigClass {
+ 176 │     public "constructor" = 0;
+     ·            ─────────────
+ 177 │     public any = 0;
+     ╰────
+
+  × The keyword 'implements' is reserved
+   ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:7:5]
+ 6 │ var boolean = 0;
+ 7 │ var implements = 0;
+   ·     ──────────
+ 8 │ var interface = 0;
+   ╰────
+
+  × The keyword 'interface' is reserved
+   ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:8:5]
+ 7 │ var implements = 0;
+ 8 │ var interface = 0;
+   ·     ─────────
+ 9 │ var let = 0;
+   ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:9:5]
+  8 │ var interface = 0;
+  9 │ var let = 0;
+    ·     ───
+ 10 │ var module = 0;
+    ╰────
+
+  × The keyword 'package' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:12:5]
+ 11 │ var number = 0;
+ 12 │ var package = 0;
+    ·     ───────
+ 13 │ var private = 0;
+    ╰────
+
+  × The keyword 'private' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:13:5]
+ 12 │ var package = 0;
+ 13 │ var private = 0;
+    ·     ───────
+ 14 │ var protected = 0;
+    ╰────
+
+  × The keyword 'protected' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:14:5]
+ 13 │ var private = 0;
+ 14 │ var protected = 0;
+    ·     ─────────
+ 15 │ var public = 0;
+    ╰────
+
+  × The keyword 'public' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:15:5]
+ 14 │ var protected = 0;
+ 15 │ var public = 0;
+    ·     ──────
+ 16 │ var set = 0;
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:17:5]
+ 16 │ var set = 0;
+ 17 │ var static = 0;
+    ·     ──────
+ 18 │ var string = 0;
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:20:5]
+ 19 │ var get = 0;
+ 20 │ var yield = 0;
+    ·     ─────
+ 21 │ var declare = 0;
+    ╰────
+
+  × The keyword 'implements' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:25:5]
+ 24 │     constructor,
+ 25 │     implements ,
+    ·     ──────────
+ 26 │     interface ,
+    ╰────
+
+  × The keyword 'interface' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:26:5]
+ 25 │     implements ,
+ 26 │     interface ,
+    ·     ─────────
+ 27 │     let,
+    ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:27:5]
+ 26 │     interface ,
+ 27 │     let,
+    ·     ───
+ 28 │     module ,
+    ╰────
+
+  × The keyword 'package' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:29:5]
+ 28 │     module ,
+ 29 │     package,
+    ·     ───────
+ 30 │     private ,
+    ╰────
+
+  × The keyword 'private' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:30:5]
+ 29 │     package,
+ 30 │     private ,
+    ·     ───────
+ 31 │     protected,
+    ╰────
+
+  × The keyword 'protected' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:31:5]
+ 30 │     private ,
+ 31 │     protected,
+    ·     ─────────
+ 32 │     public ,
+    ╰────
+
+  × The keyword 'public' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:32:5]
+ 31 │     protected,
+ 32 │     public ,
+    ·     ──────
+ 33 │     set ,
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:34:5]
+ 33 │     set ,
+ 34 │     static ,
+    ·     ──────
+ 35 │     get ,
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:36:5]
+ 35 │     get ,
+ 36 │     yield,
+    ·     ─────
+ 37 │     declare
+    ╰────
+
+  × The keyword 'implements' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:41:8]
+ 40 │     b2: boolean,
+ 41 │     i: implements ,
+    ·        ──────────
+ 42 │     i2: interface ,
+    ╰────
+
+  × The keyword 'interface' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:42:9]
+ 41 │     i: implements ,
+ 42 │     i2: interface ,
+    ·         ─────────
+ 43 │     l: let,
+    ╰────
+
+  × The keyword 'let' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:43:8]
+ 42 │     i2: interface ,
+ 43 │     l: let,
+    ·        ───
+ 44 │     m: module ,
+    ╰────
+
+  × The keyword 'package' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:46:8]
+ 45 │     n: number,
+ 46 │     p: package,
+    ·        ───────
+ 47 │     p2: private ,
+    ╰────
+
+  × The keyword 'private' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:47:9]
+ 46 │     p: package,
+ 47 │     p2: private ,
+    ·         ───────
+ 48 │     p3: protected,
+    ╰────
+
+  × The keyword 'protected' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:48:9]
+ 47 │     p2: private ,
+ 48 │     p3: protected,
+    ·         ─────────
+ 49 │     p4: public ,
+    ╰────
+
+  × The keyword 'public' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:49:9]
+ 48 │     p3: protected,
+ 49 │     p4: public ,
+    ·         ──────
+ 50 │     s: set ,
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:51:9]
+ 50 │     s: set ,
+ 51 │     s2: static ,
+    ·         ──────
+ 52 │     s3: string,
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:54:8]
+ 53 │     g: get ,
+ 54 │     y: yield,
+    ·        ─────
+ 55 │     d: declare ) { }
+    ╰────
+
+  × The keyword 'implements' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:293:11]
+ 292 │     class constructor { }
+ 293 │     class implements { }
+     ·           ──────────
+ 294 │     class interface { }
+     ╰────
+
+  × The keyword 'interface' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:294:11]
+ 293 │     class implements { }
+ 294 │     class interface { }
+     ·           ─────────
+ 295 │     class let { }
+     ╰────
+
+  × The keyword 'let' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:295:11]
+ 294 │     class interface { }
+ 295 │     class let { }
+     ·           ───
+ 296 │     class module { }
+     ╰────
+
+  × The keyword 'package' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:297:11]
+ 296 │     class module { }
+ 297 │     class package { }
+     ·           ───────
+ 298 │     class private { }
+     ╰────
+
+  × The keyword 'private' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:298:11]
+ 297 │     class package { }
+ 298 │     class private { }
+     ·           ───────
+ 299 │     class protected { }
+     ╰────
+
+  × The keyword 'protected' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:299:11]
+ 298 │     class private { }
+ 299 │     class protected { }
+     ·           ─────────
+ 300 │     class public { }
+     ╰────
+
+  × The keyword 'public' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:300:11]
+ 299 │     class protected { }
+ 300 │     class public { }
+     ·           ──────
+ 301 │     class set { }
+     ╰────
+
+  × The keyword 'static' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:302:11]
+ 301 │     class set { }
+ 302 │     class static { }
+     ·           ──────
+ 303 │     class get { }
+     ╰────
+
+  × The keyword 'yield' is reserved
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:304:11]
+ 303 │     class get { }
+ 304 │     class yield { }
+     ·           ─────
+ 305 │     class declare { }
+     ╰────
 
   × TS(1490): File appears to be binary.
 
@@ -5986,6 +6720,46 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  10 │ 
  11 │ let y = <   Baz >Hello
     ·                  ─────
+    ╰────
+
+  × 'with' statements are not allowed
+   ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:5:5]
+ 4 │ async function withStatement0() {
+ 5 │     with (x) {
+   ·     ────
+ 6 │         y;
+   ╰────
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:11:5]
+ 10 │ async function withStatement1() {
+ 11 │     with (await x) {
+    ·     ────
+ 12 │         y;
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:17:5]
+ 16 │ async function withStatement2() {
+ 17 │     with (x) {
+    ·     ────
+ 18 │         a;
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:26:9]
+ 25 │     with (x) {
+ 26 │         with (z) {
+    ·         ────
+ 27 │             a;
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:25:5]
+ 24 │ async function withStatement3() {
+ 25 │     with (x) {
+    ·     ────
+ 26 │         with (z) {
     ╰────
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
@@ -8257,6 +9031,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Expected `]` but found `EOF`
    ╭─[typescript/tests/cases/compiler/missingCloseBracketInArray.ts:1:48]
  1 │ var alphas:string[] = alphas = ["1","2","3","4"
+   ╰────
+
+  × Expected `)` but found `{`
+   ╭─[typescript/tests/cases/compiler/missingCloseParenStatements.ts:3:26]
+ 2 │ var a1, a2, a3 = 0;
+ 3 │ if ( a1 && (a2 + a3 > 0) {
+   ·    ┬                     ┬
+   ·    │                     ╰── `)` expected
+   ·    ╰── Opened here
+ 4 │     while( (a2 > 0) && a1
    ╰────
 
   × TS(2391): Function implementation is missing or not immediately following the declaration.
@@ -17115,6 +17899,150 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   help: Remove the line break before here
 
   × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments03.ts:2:5]
+ 1 │ 'use strict';
+ 2 │ var arguments;
+   ·     ─────────
+ 3 │ var a = () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments03_ES6.ts:2:5]
+ 1 │ 'use strict';
+ 2 │ var arguments;
+   ·     ─────────
+ 3 │ var a = () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments04.ts:3:9]
+ 2 │ function f() {
+ 3 │     var arguments;
+   ·         ─────────
+ 4 │     var a = () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments04_ES6.ts:3:9]
+ 2 │ function f() {
+ 3 │     var arguments;
+   ·         ─────────
+ 4 │     var a = () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments05.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(arguments) {
+   ·            ─────────
+ 3 │     var a = () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments05_ES6.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(arguments) {
+   ·            ─────────
+ 3 │     var a = () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments06.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(arguments) {
+   ·            ─────────
+ 3 │     var a = () => () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments06_ES6.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(arguments) {
+   ·            ─────────
+ 3 │     var a = () => () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments07.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(arguments) {
+   ·            ─────────
+ 3 │     var a = (arguments) => () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments07.ts:3:14]
+ 2 │ function f(arguments) {
+ 3 │     var a = (arguments) => () => arguments;
+   ·              ─────────
+ 4 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments07_ES6.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(arguments) {
+   ·            ─────────
+ 3 │     var a = (arguments) => () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments07_ES6.ts:3:14]
+ 2 │ function f(arguments) {
+ 3 │     var a = (arguments) => () => arguments;
+   ·              ─────────
+ 4 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments08.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(arguments) {
+   ·            ─────────
+ 3 │     var a = () => (arguments) => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments08.ts:3:20]
+ 2 │ function f(arguments) {
+ 3 │     var a = () => (arguments) => arguments;
+   ·                    ─────────
+ 4 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments08_ES6.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(arguments) {
+   ·            ─────────
+ 3 │     var a = () => (arguments) => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments08_ES6.ts:3:20]
+ 2 │ function f(arguments) {
+ 3 │     var a = () => (arguments) => arguments;
+   ·                    ─────────
+ 4 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments11.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(arguments) {
+   ·            ─────────
+ 3 │     var _arguments = 10;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments11_ES6.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(arguments) {
+   ·            ─────────
+ 3 │     var _arguments = 10;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments12.ts:2:7]
  1 │ class C {
  2 │     f(arguments) {
@@ -17128,6 +18056,134 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │     f(arguments) {
    ·       ─────────
  3 │         var a = () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments13.ts:4:14]
+ 3 │     var _arguments = 10;
+ 4 │     var a = (arguments) => () => _arguments;
+   ·              ─────────
+ 5 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments13_ES6.ts:4:14]
+ 3 │     var _arguments = 10;
+ 4 │     var a = (arguments) => () => _arguments;
+   ·              ─────────
+ 5 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments14.ts:4:15]
+ 3 │     if (Math.random()) {
+ 4 │         const arguments = 100;
+   ·               ─────────
+ 5 │         return () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments14_ES6.ts:4:13]
+ 3 │     if (Math.random()) {
+ 4 │         let arguments = 100;
+   ·             ─────────
+ 5 │         return () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments15.ts:3:9]
+ 2 │ function f() {
+ 3 │     var arguments = "hello";
+   ·         ─────────
+ 4 │     if (Math.random()) {
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments15.ts:5:15]
+ 4 │     if (Math.random()) {
+ 5 │         const arguments = 100;
+   ·               ─────────
+ 6 │         return () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments15_ES6.ts:3:9]
+ 2 │ function f() {
+ 3 │     var arguments = "hello";
+   ·         ─────────
+ 4 │     if (Math.random()) {
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments15_ES6.ts:5:15]
+ 4 │     if (Math.random()) {
+ 5 │         const arguments = 100;
+   ·               ─────────
+ 6 │         return () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments16.ts:3:9]
+ 2 │ function f() {
+ 3 │     var arguments = "hello";
+   ·         ─────────
+ 4 │     if (Math.random()) {
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments16.ts:7:9]
+ 6 │     }
+ 7 │     var arguments = "world";
+   ·         ─────────
+ 8 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments16_ES6.ts:3:9]
+ 2 │ function f() {
+ 3 │     var arguments = "hello";
+   ·         ─────────
+ 4 │     if (Math.random()) {
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments16_ES6.ts:7:9]
+ 6 │     }
+ 7 │     var arguments = "world";
+   ·         ─────────
+ 8 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments17.ts:3:11]
+ 2 │ function f() {
+ 3 │     var { arguments } = { arguments: "hello" };
+   ·           ─────────
+ 4 │     if (Math.random()) {
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments17.ts:7:9]
+ 6 │     }
+ 7 │     var arguments = "world";
+   ·         ─────────
+ 8 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments17_ES6.ts:3:11]
+ 2 │ function f() {
+ 3 │     var { arguments } = { arguments: "hello" };
+   ·           ─────────
+ 4 │     if (Math.random()) {
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments17_ES6.ts:7:9]
+ 6 │     }
+ 7 │     var arguments = "world";
+   ·         ─────────
+ 8 │ }
    ╰────
 
   × Invalid characters after number
@@ -17833,6 +18889,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
+  × The keyword 'let' is reserved
+   ╭─[typescript/tests/cases/conformance/es6/for-ofStatements/for-of56.ts:2:10]
+ 1 │ 'use strict';
+ 2 │ for (var let of []) {}
+   ·          ───
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration10_es6.ts:1:26]
  1 │ function * foo(a = yield => yield) {
@@ -17844,6 +18907,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration12_es6.ts:1:20]
  1 │ var v = function * yield() { }
    ·                    ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration2_es6.ts:2:12]
+ 1 │ 'use strict';
+ 2 │ function f(yield) {
+   ·            ─────
+ 3 │ }
    ╰────
 
   × Cannot use `yield` as an identifier in a generator context
@@ -18526,6 +19597,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                             ─────
    ╰────
   help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
+
+  × The keyword 'yield' is reserved
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck38.ts:2:5]
+ 1 │ 'use strict';
+ 2 │ var yield;
+   ·     ─────
+ 3 │ function* g() {
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck38.ts:5:19]
+ 4 │     yield 0;
+ 5 │     var v: typeof yield;
+   ·                   ─────
+ 6 │ }
+   ╰────
 
   × A 'yield' expression is only allowed in a generator body.
    ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck39.ts:7:13]
@@ -20363,6 +21450,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the trailing comma here
 
+  × 'with' statements are not allowed
+   ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:3:1]
+ 2 │ // Arrow function used in with statement
+ 3 │ with (window) {
+   · ────
+ 4 │     var p = () => this;
+   ╰────
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:44:5]
+ 43 │     // Arrow function used in with statement
+ 44 │     with (window) {
+    ·     ────
+ 45 │         var p = () => this;
+    ╰────
+
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[typescript/tests/cases/conformance/expressions/literals/strictModeOctalLiterals.ts:2:14]
  1 │ export enum E {
@@ -20785,6 +21888,94 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │ 
    ╰────
   help: Try inserting a semicolon here
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:26:31]
+ 25 │ // any type var
+ 26 │ var ResultIsBoolean1 = delete ANY1;
+    ·                               ────
+ 27 │ var ResultIsBoolean2 = delete ANY2;
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:27:31]
+ 26 │ var ResultIsBoolean1 = delete ANY1;
+ 27 │ var ResultIsBoolean2 = delete ANY2;
+    ·                               ────
+ 28 │ var ResultIsBoolean3 = delete A;
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:28:31]
+ 27 │ var ResultIsBoolean2 = delete ANY2;
+ 28 │ var ResultIsBoolean3 = delete A;
+    ·                               ─
+ 29 │ var ResultIsBoolean4 = delete M;
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:29:31]
+ 28 │ var ResultIsBoolean3 = delete A;
+ 29 │ var ResultIsBoolean4 = delete M;
+    ·                               ─
+ 30 │ var ResultIsBoolean5 = delete obj;
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:30:31]
+ 29 │ var ResultIsBoolean4 = delete M;
+ 30 │ var ResultIsBoolean5 = delete obj;
+    ·                               ───
+ 31 │ var ResultIsBoolean6 = delete obj1;
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:31:31]
+ 30 │ var ResultIsBoolean5 = delete obj;
+ 31 │ var ResultIsBoolean6 = delete obj1;
+    ·                               ────
+ 32 │ 
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:34:31]
+ 33 │ // any type literal
+ 34 │ var ResultIsBoolean7 = delete undefined;
+    ·                               ─────────
+ 35 │ var ResultIsBoolean8 = delete null;
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:51:39]
+ 50 │ // multiple delete  operators
+ 51 │ var ResultIsBoolean20 = delete delete ANY;
+    ·                                       ───
+ 52 │ var ResultIsBoolean21 = delete delete delete (ANY + ANY1);
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:55:8]
+ 54 │ // miss assignment operators
+ 55 │ delete ANY;
+    ·        ───
+ 56 │ delete ANY1;
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:56:8]
+ 55 │ delete ANY;
+ 56 │ delete ANY1;
+    ·        ────
+ 57 │ delete ANY2[0];
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts:58:8]
+ 57 │ delete ANY2[0];
+ 58 │ delete ANY, ANY1;
+    ·        ───
+ 59 │ delete obj1.x;
+    ╰────
 
   × Cannot assign to this expression
     ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/incrementOperator/incrementOperatorWithAnyOtherTypeInvalidOperations.ts:37:26]
@@ -21519,6 +22710,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  14 │         };
  15 │     }
     ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts:3:8]
+ 2 │ namespace Inner {
+ 3 │     var;
+   ·        ─
+ 4 │     let;
+   ╰────
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:4:5]
@@ -22514,6 +23713,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  26 │ }
     ╰────
   help: No modifiers are allowed here.
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:3:15]
+ 2 │ class C4 {
+ 3 │     async * f(await) {
+   ·               ─────
+ 4 │     }
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:2:18]
+ 1 │ 'use strict';
+ 2 │ async function * yield() {
+   ·                  ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:2:29]
+ 1 │ 'use strict';
+ 2 │ const f2 = async function * await() {
+   ·                             ─────
+ 3 │ };
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts:3:15]
+ 2 │ const o4 = {
+ 3 │     async * f(await) {
+   ·               ─────
+ 4 │     }
+   ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/forAwait/parser.forAwait.es2018.ts:1:5]
@@ -23526,6 +24757,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·       ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × TS(1108): A 'return' statement can only be used within a function body.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts:2:1]
+ 1 │ 'use strict';
+ 2 │ return {
+   · ──────
+ 3 │ 
+   ╰────
+
+  × The keyword 'private' is reserved
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts:7:5]
+ 6 │     // 'private' should not be considered a member variable here.
+ 7 │     private[key] = value;
+   ·     ───────
+ 8 │ 
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserUnfinishedTypeNameBeforeKeyword1.ts:2:10]

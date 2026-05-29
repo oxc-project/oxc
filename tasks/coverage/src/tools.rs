@@ -229,18 +229,22 @@ pub fn run_parser_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
     files
         .par_iter()
         .map(|f| {
+            // `// @alwaysStrict: true, false` can request multiple variants; run each.
+            // When the directive is absent, the field is `[false]` (the default).
             let mut final_result = TestResult::Passed;
-            for unit in &f.units {
-                let result = run_parser_typescript_unit(
-                    &f.path,
-                    &unit.content,
-                    unit.source_type,
-                    f.settings.always_strict,
-                    &unit.ts_ignore_spans,
-                );
-                if !matches!(result, TestResult::Passed) {
-                    final_result = result;
-                    break;
+            'outer: for &always_strict in &f.settings.always_strict {
+                for unit in &f.units {
+                    let result = run_parser_typescript_unit(
+                        &f.path,
+                        &unit.content,
+                        unit.source_type,
+                        always_strict,
+                        &unit.ts_ignore_spans,
+                    );
+                    if !matches!(result, TestResult::Passed) {
+                        final_result = result;
+                        break 'outer;
+                    }
                 }
             }
             let result = evaluate_result(final_result, f.should_fail);
