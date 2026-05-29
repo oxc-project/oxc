@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use cow_utils::CowUtils;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -16,7 +14,7 @@ use crate::{
     AstNode,
     context::LintContext,
     frameworks::FrameworkOptions,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{find_property, is_vue_component_options_object},
 };
 
@@ -46,21 +44,8 @@ impl CaseType {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct ComponentDefinitionNameCasing(Box<Config>);
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(default)]
-pub struct Config {
-    case_type: CaseType,
-}
-
-impl Deref for ComponentDefinitionNameCasing {
-    type Target = Config;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct ComponentDefinitionNameCasing(CaseType);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -97,22 +82,13 @@ declare_oxc_lint!(
     vue,
     style,
     fix,
-    config = ComponentDefinitionNameCasing,
+    config = CaseType,
     version = "next",
 );
 
 impl Rule for ComponentDefinitionNameCasing {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
-        let case_type = value
-            .get(0)
-            .and_then(|v| v.as_str())
-            .and_then(|s| match s {
-                "PascalCase" => Some(CaseType::PascalCase),
-                "kebab-case" => Some(CaseType::KebabCase),
-                _ => None,
-            })
-            .unwrap_or_default();
-        Ok(Self(Box::new(Config { case_type })))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -175,7 +151,7 @@ impl ComponentDefinitionNameCasing {
         let inner = expr.get_inner_expression();
         let Some((value, inner_span)) = extract_convertible(inner) else { return };
 
-        let case_type = self.case_type;
+        let case_type = self.0;
         if check_case(&value, case_type) {
             return;
         }
