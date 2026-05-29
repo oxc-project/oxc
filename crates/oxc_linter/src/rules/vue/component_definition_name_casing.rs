@@ -9,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -26,7 +26,7 @@ fn component_definition_name_casing_diagnostic(
     OxcDiagnostic::warn(format!("Property name \"{value}\" is not {case_type}.")).with_label(span)
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 enum CaseType {
     #[default]
     #[serde(rename = "PascalCase")]
@@ -44,10 +44,11 @@ impl CaseType {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ComponentDefinitionNameCasing(Box<Config>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
 pub struct Config {
     case_type: CaseType,
 }
@@ -94,6 +95,7 @@ declare_oxc_lint!(
     vue,
     style,
     fix,
+    config = ComponentDefinitionNameCasing,
     version = "next",
 );
 
