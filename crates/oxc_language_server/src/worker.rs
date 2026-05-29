@@ -256,13 +256,8 @@ impl WorkspaceWorker {
             options_guard.clone().unwrap_or_default()
         };
 
-        self.handle_tool_changes(file_system, needs_diagnostic_refresh, |tool, builder| {
-            tool.handle_watched_file_change(
-                builder,
-                &file_event.uri,
-                &self.root_uri,
-                options.clone(),
-            )
+        self.handle_tool_changes(file_system, needs_diagnostic_refresh, move |tool, builder| {
+            tool.handle_watched_file_change(builder, &file_event.uri, &self.root_uri, options)
         })
         .await
     }
@@ -325,7 +320,7 @@ impl WorkspaceWorker {
         change_handler: F,
     ) -> (Option<Vec<(Uri, Vec<Diagnostic>)>>, Vec<Registration>, Vec<Unregistration>)
     where
-        F: Fn(&mut Box<dyn Tool>, &dyn ToolBuilder) -> ToolRestartChanges,
+        F: FnOnce(&mut Box<dyn Tool>, &dyn ToolBuilder) -> ToolRestartChanges,
     {
         let mut registrations = vec![];
         let mut unregistrations = vec![];

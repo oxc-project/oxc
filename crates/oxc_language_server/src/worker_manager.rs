@@ -283,7 +283,7 @@ impl WorkerManager {
     ///
     /// # Errors
     /// * If any URI in `workspaces` cannot be converted to a file path, an error is returned indicating which URI was invalid.
-    pub fn assert_workspaces_are_valid_paths(workspaces: &[Uri]) -> Result<()> {
+    pub fn assert_workspaces_are_valid_paths(workspaces: Vec<&Uri>) -> Result<()> {
         for uri in workspaces {
             if uri.to_file_path().is_none() {
                 return Err(Error::invalid_params(format!(
