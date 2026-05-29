@@ -1,4 +1,4 @@
-use std::{env::current_dir, fs, path::Path};
+use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
@@ -130,7 +130,15 @@ fn parse_format_options(json: &OptionSet) -> FormatOptions {
                 }
             }
             "jsdoc" if value.is_object() => {
-                options.jsdoc = Some(JsdocOptions::default());
+                let mut jsdoc = JsdocOptions::default();
+                if let Some(obj) = value.as_object() {
+                    if let Some(Some(b)) =
+                        obj.get("keepUnparsableExampleIndent").map(|v| v.as_bool())
+                    {
+                        jsdoc.keep_unparsable_example_indent = b;
+                    }
+                }
+                options.jsdoc = Some(jsdoc);
             }
             _ => {}
         }
@@ -219,7 +227,7 @@ fn generate_snapshot(path: &Path, source_text: &str) -> String {
 fn test_file(path: &Path) {
     let source_text = fs::read_to_string(path).unwrap();
     let snapshot = generate_snapshot(path, &source_text);
-    let snapshot_path = current_dir().unwrap().join(path.parent().unwrap());
+    let snapshot_path = Path::new(env!("CARGO_MANIFEST_DIR")).join(path.parent().unwrap());
     let snapshot_name = path.file_name().unwrap().to_str().unwrap();
 
     insta::with_settings!({
@@ -227,7 +235,6 @@ fn test_file(path: &Path) {
         prepend_module_to_snapshot => false,
         snapshot_suffix => "",
         omit_expression => true,
-
     }, {
         insta::assert_snapshot!(snapshot_name, snapshot);
     });
