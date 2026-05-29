@@ -3,7 +3,7 @@ commit: d9fe348c
 parser_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
 Positive Passed: 2222/2236 (99.37%)
-Negative Passed: 1695/1723 (98.37%)
+Negative Passed: 1696/1723 (98.43%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -57,8 +57,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 
@@ -14634,6 +14632,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-as-string/input.ts:1:22]
  1 │ import { type foo as "bar" } from "mod";
    ·                      ─────
+   ╰────
+
+  × 'const' modifier can only appear on a type parameter of a function, method or class
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts:1:8]
+ 1 │ type T<const U> = {};
+   ·        ───────
    ╰────
 
   × TS(1363): A type-only import can specify a default import or named bindings, but not both.

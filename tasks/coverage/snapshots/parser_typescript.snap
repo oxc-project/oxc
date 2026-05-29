@@ -3,7 +3,7 @@ commit: e5509e21
 parser_typescript Summary:
 AST Parsed     : 9781/9781 (100.00%)
 Positive Passed: 9781/9781 (100.00%)
-Negative Passed: 1584/2638 (60.05%)
+Negative Passed: 1585/2638 (60.08%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -2085,8 +2085,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typ
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/propertyAccessOnTypeParameterWithConstraints4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/propertyAccessOnTypeParameterWithConstraints5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typesWithDuplicateTypeParameters.ts
 
@@ -29591,6 +29589,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  23 │ type T20 = typeof Array<>;  // Error
     ·                        ──
  24 │ type T21 = typeof Array<string>;  // new (...) => string[]
+    ╰────
+
+  × 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts:55:9]
+ 54 │ 
+ 55 │ type T1<const T> = T;  // Error
+    ·         ───────
+ 56 │ 
     ╰────
 
   × TS(1273): 'public' modifier cannot be used on a type parameter.

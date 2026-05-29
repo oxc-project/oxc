@@ -289,6 +289,14 @@ pub fn declaration_single_statement(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn const_type_parameter(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "'const' modifier can only appear on a type parameter of a function, method or class",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)

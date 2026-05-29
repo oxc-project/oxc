@@ -130,6 +130,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let id = self.parse_binding_identifier();
         let params = self.parse_ts_type_parameters();
+        // A `const` modifier is only valid on a type parameter of a function, method, or class
+        // (TS1277), so reject it on a type alias, e.g. `type T<const U> = ...`.
+        if let Some(type_params) = &params {
+            for param in &type_params.params {
+                if param.r#const {
+                    self.error(diagnostics::const_type_parameter(param.span));
+                }
+            }
+        }
         self.expect(Kind::Eq);
 
         let intrinsic_token = self.cur_token();
