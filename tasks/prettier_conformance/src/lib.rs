@@ -16,11 +16,16 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
+use oxc_formatter::{Formatter, JsFormatOptions, enable_jsx_source_type, get_parse_options};
+use oxc_formatter_json::JsonFormatOptions;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_spec};
+use crate::{
+    ignore_list::IGNORE_TESTS,
+    options::TestRunnerOptions,
+    spec::{SpecOptions, parse_spec},
+};
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
@@ -202,7 +207,7 @@ impl TestRunner {
     ) -> Vec<(PathBuf, (usize, usize, f32))> {
         // Parse all `runFormatTest()` calls and collect format options
         let spec_path = &dir.join(FORMAT_TEST_SPEC_NAME);
-        let spec_calls = parse_spec(spec_path);
+        let spec_calls = parse_spec(spec_path, self.options.language);
         debug_assert!(
             !spec_calls.is_empty(),
             "There is no `runFormatTest()` in {}, please check if it is correct?",
@@ -211,11 +216,13 @@ impl TestRunner {
 
         let spec_calls = spec_calls
             .into_iter()
-            .filter(|call| {
-                let options = &call.0;
-                // Skip all options that are not supported yet
-                !options.experimental_operator_position.is_start()
-                    && !options.experimental_ternaries
+            .filter(|call| match &call.0 {
+                SpecOptions::Js(options) => {
+                    // Skip all options that are not supported yet
+                    !options.experimental_operator_position.is_start()
+                        && !options.experimental_ternaries
+                }
+                SpecOptions::Json(_) => true,
             })
             .collect::<Vec<_>>();
 
@@ -239,12 +246,11 @@ impl TestRunner {
                     &snapshots,
                     path.file_name().unwrap().to_string_lossy().as_ref(),
                     snapshot_options,
-                    format_options.line_width.value() as usize,
+                    format_options.line_width().value() as usize,
                 )
                 .unwrap();
 
-                let Some(actual) =
-                    Self::run_oxc_formatter(path, &source_text, format_options.clone())
+                let Some(actual) = Self::run_formatter(path, &source_text, format_options.clone())
                 else {
                     // Skip the test if parsing failed
                     if self.options.debug {
@@ -401,10 +407,22 @@ impl TestRunner {
         input
     }
 
-    fn run_oxc_formatter(
+    /// Dispatches by language: JS/TS via `oxc_formatter`, JSON via `oxc_formatter_json`.
+    fn run_formatter(
         path: &Path,
         source_text: &str,
-        format_options: FormatOptions,
+        format_options: SpecOptions,
+    ) -> Option<String> {
+        match format_options {
+            SpecOptions::Js(opts) => Self::run_js_formatter(path, source_text, *opts),
+            SpecOptions::Json(opts) => Self::run_json_formatter(source_text, opts),
+        }
+    }
+
+    fn run_js_formatter(
+        path: &Path,
+        source_text: &str,
+        format_options: JsFormatOptions,
     ) -> Option<String> {
         let allocator = Allocator::default();
 
@@ -420,5 +438,12 @@ impl TestRunner {
 
         let formatted = Formatter::new(&allocator, format_options).build(&ret.program);
         Some(formatted)
+    }
+
+    fn run_json_formatter(source_text: &str, format_options: JsonFormatOptions) -> Option<String> {
+        let allocator = Allocator::default();
+        let formatted = oxc_formatter_json::format(&allocator, source_text, format_options).ok()?;
+        let printed = formatted.print().ok()?;
+        Some(printed.into_code())
     }
 }

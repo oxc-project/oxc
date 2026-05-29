@@ -6,7 +6,8 @@ use tracing::instrument;
 
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
+use oxc_formatter::{Formatter, JsFormatOptions, enable_jsx_source_type, get_parse_options};
+use oxc_formatter_json::JsonFormatOptions;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_toml::Options as TomlFormatterOptions;
@@ -17,7 +18,7 @@ use super::options::{
     inject_tailwind_plugin_payload, to_package_json, to_prettier,
 };
 use super::{
-    options::{to_oxc_formatter, to_toml_formatter},
+    options::{to_oxc_formatter, to_oxc_formatter_json, to_oxc_toml},
     oxfmtrc::FormatConfig,
     support::FileKind,
 };
@@ -37,9 +38,15 @@ pub enum FormatStrategy {
     OxcFormatter {
         path: Arc<Path>,
         source_type: SourceType,
-        format_options: Box<FormatOptions>,
+        format_options: Box<JsFormatOptions>,
         #[cfg(feature = "napi")]
         config: Box<FormatConfig>,
+        insert_final_newline: bool,
+    },
+    /// For JSON (and JSON-like) files formatted by `oxc_formatter_json`.
+    OxcFormatterJson {
+        path: Arc<Path>,
+        format_options: Box<JsonFormatOptions>,
         insert_final_newline: bool,
     },
     /// For TOML files.
@@ -76,7 +83,9 @@ pub enum FormatStrategy {
 impl FormatStrategy {
     pub fn path(&self) -> &Arc<Path> {
         match self {
-            Self::OxcFormatter { path, .. } | Self::OxfmtToml { path, .. } => path,
+            Self::OxcFormatter { path, .. }
+            | Self::OxcFormatterJson { path, .. }
+            | Self::OxfmtToml { path, .. } => path,
             #[cfg(feature = "napi")]
             Self::ExternalFormatter { path, .. }
             | Self::ExternalFormatterPackageJson { path, .. } => path,
@@ -85,14 +94,14 @@ impl FormatStrategy {
 
     /// Build a `FormatStrategy` from a typed [`FormatConfig`] and a [`FileKind`].
     ///
-    /// `to_oxc_formatter` / `to_toml_formatter` run eagerly: their validating
+    /// `to_oxc_formatter` / `to_oxc_toml` run eagerly: their validating
     /// typed conversion belongs at carving so the format step stays infallible.
     /// The Prettier `Value` for `ExternalFormatter*` is deferred:
     /// `FormatConfig` is the single SoT, no validation needed,
     /// and `Box<FormatConfig>` is materially smaller per file than a fully-built `Value`.
     ///
     /// # Errors
-    /// Returns `Err` if the kind needs `FormatOptions`/`TomlFormatterOptions`
+    /// Returns `Err` if the kind needs `JsFormatOptions`/`TomlFormatterOptions`
     /// and the config fails validation.
     // `config` is moved into the napi-only `ExternalFormatter*` variants;
     // when the `napi` feature is off, those branches are cfg-gated out and the
@@ -110,11 +119,14 @@ impl FormatStrategy {
                 config: Box::new(config),
                 insert_final_newline,
             },
-            FileKind::OxfmtToml { path } => Self::OxfmtToml {
+            FileKind::OxcFormatterJson { path, variant } => Self::OxcFormatterJson {
                 path,
-                toml_options: to_toml_formatter(&config)?,
+                format_options: Box::new(to_oxc_formatter_json(&config, variant)?),
                 insert_final_newline,
             },
+            FileKind::OxfmtToml { path } => {
+                Self::OxfmtToml { path, toml_options: to_oxc_toml(&config)?, insert_final_newline }
+            }
             #[cfg(feature = "napi")]
             FileKind::ExternalFormatter {
                 path,
@@ -200,6 +212,10 @@ impl SourceFormatter {
                 ),
                 insert_final_newline,
             ),
+            FormatStrategy::OxcFormatterJson { path, format_options, insert_final_newline } => (
+                self.format_by_oxc_formatter_json(source_text, &path, *format_options),
+                insert_final_newline,
+            ),
             FormatStrategy::OxfmtToml { toml_options, insert_final_newline, .. } => {
                 (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline)
             }
@@ -268,7 +284,7 @@ impl SourceFormatter {
         source_text: &str,
         path: &Path,
         source_type: SourceType,
-        format_options: FormatOptions,
+        format_options: JsFormatOptions,
         #[cfg(feature = "napi")] config: &FormatConfig,
     ) -> Result<String, OxcDiagnostic> {
         let source_type = enable_jsx_source_type(source_type);
@@ -313,6 +329,27 @@ impl SourceFormatter {
         Ok(code.into_code())
     }
 
+    /// Format JSON (and JSON-like) source using `oxc_formatter_json`.
+    ///
+    /// Parse errors are surfaced as `OxcDiagnostic` — there is no Prettier fallback.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_json", skip_all)]
+    fn format_by_oxc_formatter_json(
+        &self,
+        source_text: &str,
+        path: &Path,
+        format_options: JsonFormatOptions,
+    ) -> Result<String, OxcDiagnostic> {
+        let allocator = self.allocator_pool.get();
+        let formatted = oxc_formatter_json::format(&allocator, source_text, format_options)?;
+        let printed = formatted.print().map_err(|err| {
+            OxcDiagnostic::error(format!(
+                "Failed to print formatted JSON: {}\n{err}",
+                path.display()
+            ))
+        })?;
+        Ok(printed.into_code())
+    }
+
     /// Format TOML file using `oxc_toml`.
     #[instrument(level = "debug", name = "oxfmt::format::oxc_toml", skip_all)]
     fn format_by_toml(source_text: &str, options: oxc_toml::Options) -> String {
@@ -344,7 +381,7 @@ impl SourceFormatter {
     /// to fire based on user config.
     fn build_external_callbacks(
         &self,
-        format_options: &FormatOptions,
+        format_options: &JsFormatOptions,
         config: &FormatConfig,
         path: &Path,
     ) -> oxc_formatter::ExternalCallbacks {

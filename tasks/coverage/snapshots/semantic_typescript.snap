@@ -1,8 +1,8 @@
 commit: e5509e21
 
 semantic_typescript Summary:
-AST Parsed     : 4773/4773 (100.00%)
-Positive Passed: 2677/4773 (56.09%)
+AST Parsed     : 4720/4720 (100.00%)
+Positive Passed: 2644/4720 (56.02%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -411,12 +411,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientNameRestri
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientWithStatements.ts
-A 'return' statement can only be used within a function body.
-Illegal break statement
-Illegal continue statement: no surrounding iteration statement
-'with' statements are not allowed
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambiguousOverloadResolution.ts
 Bindings mismatch:
@@ -1919,49 +1913,6 @@ Unresolved references mismatch:
 after transform: ["Array"]
 rebuilt        : []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionArgumentsFunction.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["f1", "f12", "f1NoError", "f2", "f21", "f2NoError", "f3", "f3NoError", "f4", "f42", "f4NoError", "f5", "f52", "f6"]
-rebuilt        : ScopeId(0): ["f1", "f12", "f1NoError", "f3", "f3NoError", "f4", "f42", "f4NoError"]
-Symbol span mismatch for "f4":
-after transform: SymbolId(21): Span { start: 666, end: 668 }
-rebuilt        : SymbolId(13): Span { start: 794, end: 796 }
-Symbol redeclarations mismatch for "f4":
-after transform: SymbolId(21): [Span { start: 666, end: 668 }, Span { start: 730, end: 732 }, Span { start: 794, end: 796 }]
-rebuilt        : SymbolId(13): []
-Symbol span mismatch for "f42":
-after transform: SymbolId(28): Span { start: 880, end: 883 }
-rebuilt        : SymbolId(16): Span { start: 1004, end: 1007 }
-Symbol redeclarations mismatch for "f42":
-after transform: SymbolId(28): [Span { start: 880, end: 883 }, Span { start: 942, end: 945 }, Span { start: 1004, end: 1007 }]
-rebuilt        : SymbolId(16): []
-Symbol span mismatch for "f4NoError":
-after transform: SymbolId(35): Span { start: 1090, end: 1099 }
-rebuilt        : SymbolId(19): Span { start: 1192, end: 1201 }
-Symbol redeclarations mismatch for "f4NoError":
-after transform: SymbolId(35): [Span { start: 1090, end: 1099 }, Span { start: 1141, end: 1150 }, Span { start: 1192, end: 1201 }]
-rebuilt        : SymbolId(19): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts
-Symbol span mismatch for "f4":
-after transform: SymbolId(14): Span { start: 526, end: 528 }
-rebuilt        : SymbolId(14): Span { start: 662, end: 664 }
-Symbol redeclarations mismatch for "f4":
-after transform: SymbolId(14): [Span { start: 526, end: 528 }, Span { start: 594, end: 596 }, Span { start: 662, end: 664 }]
-rebuilt        : SymbolId(14): []
-Symbol span mismatch for "f42":
-after transform: SymbolId(21): Span { start: 760, end: 763 }
-rebuilt        : SymbolId(17): Span { start: 892, end: 895 }
-Symbol redeclarations mismatch for "f42":
-after transform: SymbolId(21): [Span { start: 760, end: 763 }, Span { start: 826, end: 829 }, Span { start: 892, end: 895 }]
-rebuilt        : SymbolId(17): []
-Symbol span mismatch for "f4NoError":
-after transform: SymbolId(28): Span { start: 990, end: 999 }
-rebuilt        : SymbolId(20): Span { start: 1100, end: 1109 }
-Symbol redeclarations mismatch for "f4NoError":
-after transform: SymbolId(28): [Span { start: 990, end: 999 }, Span { start: 1045, end: 1054 }, Span { start: 1100, end: 1109 }]
-rebuilt        : SymbolId(20): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenEnumWithEnumMemberConflict.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["Color", "Thing"]
@@ -2740,29 +2691,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations
 Bindings mismatch:
 after transform: ScopeId(0): ["M", "c1", "c2", "c3", "c4", "c5"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-'with' statements are not allowed
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-scopes.ts
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-'with' statements are not allowed
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-validContexts.ts
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-Lexical declaration cannot appear in a single-statement context
-'with' statements are not allowed
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations2.ts
 Scope flags mismatch:
@@ -4005,10 +3933,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["cond"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/convertKeywordsYes.ts
-Classes can't have a field named 'constructor'
-Unexpected token
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/correlatedUnions.ts
 Bindings mismatch:
@@ -6757,13 +6681,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "Promise"]
 rebuilt        : ["Object", "p"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts
-'with' statements are not allowed
-'with' statements are not allowed
-'with' statements are not allowed
-'with' statements are not allowed
-'with' statements are not allowed
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ClassTest3.ts
 Scope flags mismatch:
@@ -11076,9 +10993,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/metadataReference
 Symbol reference IDs mismatch for "Class1":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4), ReferenceId(11), ReferenceId(12)]
 rebuilt        : SymbolId(0): [ReferenceId(11), ReferenceId(13)]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/missingCloseParenStatements.ts
-Expected `)` but found `{`
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/missingSemicolonInModuleSpecifier.ts
 Bindings mismatch:
@@ -22096,11 +22010,6 @@ Unresolved references mismatch:
 after transform: ["Iterable", "Iterator"]
 rebuilt        : []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck38.ts
-Symbol reference IDs mismatch for "yield":
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck45.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["foo"]
@@ -24642,10 +24551,6 @@ Unresolved reference IDs mismatch for "Date":
 after transform: [ReferenceId(0), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13)]
 rebuilt        : [ReferenceId(4), ReferenceId(5), ReferenceId(6)]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts
-'with' statements are not allowed
-'with' statements are not allowed
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/contextuallyTypedFunctionExpressionsAndReturnAnnotations.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["foo"]
@@ -26398,9 +26303,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/decrementOperator/decrementOperatorWithAnyOtherType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts
-Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/incrementOperator/incrementOperatorWithAnyOtherType.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
@@ -27111,9 +27013,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModule
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts
-Unexpected token
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/importDeclarations/exportImportAlias.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
@@ -27620,17 +27519,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["React"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildrenInvalidType.tsx
-Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "React", "Todo", "TodoList", "TodoListNoError", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
-rebuilt        : ScopeId(0): ["Todo", "TodoList", "TodoListNoError", "_jsxFileName", "_objectSpread", "_reactJsxRuntime"]
-Reference symbol mismatch for "x":
-after transform: SymbolId(12) "x"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["require", "x"]
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionTypeComponent1.tsx
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17)]
@@ -27730,18 +27618,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/nonjsExtension
 Unresolved references mismatch:
 after transform: ["Document", "Element", "HTMLElement"]
 rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts
-Cannot use `await` as an identifier in an async context
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts
-Cannot use `await` as an identifier in an async context
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts
-Cannot use `await` as an identifier in an async context
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts
-Cannot use `await` as an identifier in an async context
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration17.ts
 Bindings mismatch:
@@ -27848,9 +27724,6 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "Bar":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts
-A 'return' statement can only be used within a function body.
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration5.ts
 Symbol span mismatch for "foo":
@@ -28058,17 +27931,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/for
 Unresolved references mismatch:
 after transform: ["Date"]
 rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of19.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["foo"]
-Bindings mismatch:
-after transform: ScopeId(2): ["foo"]
-rebuilt        : ScopeId(2): []
-Symbol scope ID mismatch for "foo":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(1): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/throwStatements/throwStatements.ts
 Scope flags mismatch:

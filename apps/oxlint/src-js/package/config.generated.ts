@@ -646,6 +646,7 @@ export interface DummyRuleMap {
   "jsdoc/require-throws-description"?: DummyRule;
   "jsdoc/require-throws-type"?: DummyRule;
   "jsdoc/require-yields"?: DummyRule;
+  "jsdoc/require-yields-description"?: DummyRule;
   "jsdoc/require-yields-type"?: DummyRule;
   "jsx-a11y/alt-text"?: DummyRule;
   "jsx-a11y/anchor-ambiguous-text"?: DummyRule;

@@ -80,7 +80,7 @@ impl LanguageServer for Backend {
     #[expect(deprecated)] // `params.root_uri` is deprecated, we are only falling back to it if no workspace folder is provided
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         // initialization_options can be anything, so we are requesting `workspace/configuration` when no initialize options are provided
-        let options = params.initialization_options.and_then(|value| {
+        let options = params.initialization_options.and_then(|mut value| {
             // the client supports the new settings object
             if let Ok(new_settings) = serde_json::from_value::<Vec<WorkspaceOption>>(value.clone())
             {
@@ -90,12 +90,13 @@ impl LanguageServer for Backend {
 
             // the client has deprecated settings and has a deprecated root uri.
             // handle all things like the old way
-            if let (Some(deprecated_settings), Some(root_uri)) =
-                (value.get("settings"), params.root_uri.as_ref())
+            if value.get("settings").is_some()
+                && let (Some(deprecated_settings), Some(root_uri)) =
+                    (value.get_mut("settings"), params.root_uri.as_ref())
             {
                 return Some(vec![WorkspaceOption {
                     workspace_uri: root_uri.clone(),
-                    options: deprecated_settings.clone(),
+                    options: deprecated_settings.take(),
                 }]);
             }
 
@@ -119,9 +120,8 @@ impl LanguageServer for Backend {
 
         // client sent workspace folders
         let workers = if let Some(workspace_folders) = params.workspace_folders {
-            let uris: Vec<Uri> =
-                workspace_folders.iter().map(|folder| folder.uri.clone()).collect();
-            WorkerManager::assert_workspaces_are_valid_paths(&uris)?;
+            let uris: Vec<&Uri> = workspace_folders.iter().map(|folder| &folder.uri).collect();
+            WorkerManager::assert_workspaces_are_valid_paths(uris)?;
 
             workspace_folders
                 .into_iter()
@@ -132,7 +132,7 @@ impl LanguageServer for Backend {
                 .collect()
         // client sent deprecated root uri
         } else if let Some(root_uri) = params.root_uri {
-            WorkerManager::assert_workspaces_are_valid_paths(std::slice::from_ref(&root_uri))?;
+            WorkerManager::assert_workspaces_are_valid_paths(vec![&root_uri])?;
 
             vec![self.worker_manager.create_worker(root_uri, capabilities.diagnostic_mode.clone())]
         // client is in single file mode, create no workers initially.
@@ -668,8 +668,7 @@ impl LanguageServer for Backend {
                 .worker_manager
                 .ensure_worker_for_file_uri(&uri, diagnostic_mode, dynamic_watchers)
                 .await
-                && !registrations.is_empty()
-                && let Err(err) = self.client.register_capability(registrations).await
+                && let Err(err) = self.client.register_capability(vec![registrations]).await
             {
                 warn!("registering file watchers for single-file workspace failed: {err}");
             }
@@ -700,7 +699,7 @@ impl LanguageServer for Backend {
                 Ok(diagnostics) => {
                     if !diagnostics.is_empty() {
                         let version_map = ConcurrentHashMap::default();
-                        version_map.pin().insert(uri.clone(), params.text_document.version);
+                        version_map.pin().insert(uri, params.text_document.version);
                         self.publish_all_diagnostics(diagnostics, version_map).await;
                     }
                 }

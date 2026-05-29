@@ -1,12 +1,13 @@
 use std::{borrow::Cow, ops::Deref};
 
+use oxc_formatter_core::util::normalize_string;
 use oxc_span::SourceType;
 use oxc_syntax::identifier::is_identifier_name_patched;
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
     QuoteProperties, QuoteStyle,
-    formatter::{Format, Formatter, prelude::*},
+    formatter::{Format, JsFormatter, prelude::*},
 };
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
@@ -39,7 +40,7 @@ impl<'a> FormatLiteralStringToken<'a> {
         Self { string, jsx, parent_kind }
     }
 
-    pub fn clean_text(&self, f: &Formatter<'_, 'a>) -> CleanedStringLiteralText<'a> {
+    pub fn clean_text(&self, f: &JsFormatter<'_, 'a>) -> CleanedStringLiteralText<'a> {
         let options = f.options();
         let source_type = f.context().source_type();
 
@@ -79,9 +80,9 @@ impl CleanedStringLiteralText<'_> {
     }
 }
 
-impl<'a> Format<'a> for CleanedStringLiteralText<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        text(f.context().allocator().alloc_str(&self.text)).fmt(f);
+impl<'a> Format<'a, JsFormatContext<'a>> for CleanedStringLiteralText<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        text(f.allocator().alloc_str(&self.text)).fmt(f);
     }
 }
 
@@ -356,96 +357,9 @@ impl<'a> LiteralStringNormalizer<'a> {
     }
 }
 
-impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatLiteralStringToken<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         self.clean_text(f).fmt(f);
-    }
-}
-
-/// This function is responsible of:
-///
-/// - escaping `preferred_quote`
-/// - unescape alternate quotes of `preferred_quote` if `quotes_will_change`
-/// - normalize the new lines by replacing `\r\n` and `\r` with `\n`.
-///
-/// The function allocates a new string only if at least one change is performed.
-///
-/// In the following example `"` is escaped and the newline is normalized.
-///
-/// ```text
-/// use biome_formatter::token::string::{normalize_string, Quote};
-/// assert_eq!(
-///     normalize_string(" \"He\\llo\\tworld\" \\' \\' \r\n ", Quote::Double, true),
-///     " \\\"He\\llo\\tworld\\\" ' ' \n ",
-/// );
-/// ```
-pub fn normalize_string(
-    raw_content: &str,
-    preferred_quote: QuoteStyle,
-    quotes_will_change: bool,
-) -> Cow<'_, str> {
-    let alternate_quote = preferred_quote.other().as_byte();
-    let preferred_quote = preferred_quote.as_byte();
-    let mut reduced_string = String::new();
-    let mut copy_start = 0;
-    let mut bytes = raw_content.bytes().enumerate().peekable();
-    while let Some((byte_index, byte)) = bytes.next() {
-        match byte {
-            // If the next character is escaped
-            b'\\' => {
-                if let Some(&(escaped_index, escaped)) = bytes.peek() {
-                    if escaped == b'\r' {
-                        bytes.next(); // consume the \r
-                        // Copy up to (not including) the \r
-                        reduced_string.push_str(&raw_content[copy_start..escaped_index]);
-                        if bytes.next_if(|(_, b)| *b == b'\n').is_some() {
-                            // \\\r\n -> keep \\ and \n, skip \r
-                            // The \n will be included when we copy from copy_start
-                        } else {
-                            // \\\r -> convert \r to \n
-                            reduced_string.push('\n');
-                        }
-                        copy_start = escaped_index + 1;
-                    } else if quotes_will_change && escaped == alternate_quote {
-                        bytes.next(); // consume the escaped character
-                        // Unescape alternate quotes if quotes are changing
-                        reduced_string.push_str(&raw_content[copy_start..byte_index]);
-                        copy_start = escaped_index;
-                    } else {
-                        bytes.next(); // consume the escaped character
-                    }
-                }
-            }
-            // Normalize \r\n and \r to \n
-            b'\r' => {
-                reduced_string.push_str(&raw_content[copy_start..byte_index]);
-                if bytes.next_if(|(_, b)| *b == b'\n').is_some() {
-                    // \r\n -> skip \r, the \n will be included when we copy from copy_start
-                } else {
-                    // Single \r -> convert to \n
-                    reduced_string.push('\n');
-                }
-                copy_start = byte_index + 1;
-            }
-            _ => {
-                // If we encounter a preferred quote and it's not escaped, we have to replace it with
-                // an escaped version.
-                // This is done because of how the enclosed strings can change.
-                // Check `computed_preferred_quote` for more details.
-                if byte == preferred_quote {
-                    reduced_string.push_str(&raw_content[copy_start..byte_index]);
-                    reduced_string.push('\\');
-                    copy_start = byte_index;
-                }
-            }
-        }
-    }
-    if copy_start == 0 && reduced_string.is_empty() {
-        Cow::Borrowed(raw_content)
-    } else {
-        // Copy the remaining characters
-        reduced_string.push_str(&raw_content[copy_start..]);
-        Cow::Owned(reduced_string)
     }
 }
 

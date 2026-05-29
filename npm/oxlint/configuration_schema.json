@@ -649,6 +649,9 @@
         "jsdoc/require-yields": {
           "$ref": "#/definitions/DummyRule"
         },
+        "jsdoc/require-yields-description": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "jsdoc/require-yields-type": {
           "$ref": "#/definitions/DummyRule"
         },

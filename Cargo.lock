@@ -1921,6 +1921,7 @@ dependencies = [
  "oxc",
  "oxc_estree_tokens",
  "oxc_formatter",
+ "oxc_formatter_core",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
  "phf",
@@ -1999,7 +2000,7 @@ dependencies = [
  "nodejs-built-in-modules",
  "oxc_allocator",
  "oxc_ast",
- "oxc_data_structures",
+ "oxc_formatter_core",
  "oxc_jsdoc",
  "oxc_parser",
  "oxc_semantic",
@@ -2014,6 +2015,34 @@ dependencies = [
  "serde_json",
  "smallvec",
  "unicode-width",
+]
+
+[[package]]
+name = "oxc_formatter_core"
+version = "0.52.0"
+dependencies = [
+ "cow-utils",
+ "oxc_allocator",
+ "oxc_data_structures",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
+ "serde_json",
+ "unicode-width",
+]
+
+[[package]]
+name = "oxc_formatter_json"
+version = "0.52.0"
+dependencies = [
+ "insta",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_formatter_core",
+ "oxc_parser",
+ "oxc_span",
+ "oxc_syntax",
 ]
 
 [[package]]
@@ -2297,6 +2326,7 @@ dependencies = [
  "oxc",
  "oxc_compat",
  "oxc_formatter",
+ "oxc_formatter_core",
  "oxc_linter",
  "oxc_napi",
  "oxc_transformer_plugins",
@@ -2314,6 +2344,8 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_formatter",
+ "oxc_formatter_core",
+ "oxc_formatter_json",
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",
@@ -2632,6 +2664,8 @@ dependencies = [
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_formatter",
+ "oxc_formatter_core",
+ "oxc_formatter_json",
  "oxc_language_server",
  "oxc_napi",
  "oxc_parser",
