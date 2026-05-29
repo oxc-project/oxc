@@ -3,7 +3,7 @@ commit: d9fe348c
 parser_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
 Positive Passed: 2222/2236 (99.37%)
-Negative Passed: 1693/1723 (98.26%)
+Negative Passed: 1701/1723 (98.72%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -34,23 +34,7 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-within-single-statement-context/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-assignment/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-default/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-from/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-assignment/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-default/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-from/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-named/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-namespace-export/input.ts
 
@@ -14001,6 +13985,150 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/property-initializer/input.ts:1:25]
  1 │ interface I { x: number = 1;}
    ·                         ─
+   ╰────
+
+  × TS(1063): An export assignment cannot be used in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-assignment/input.ts:2:3]
+ 1 │ declare namespace N {
+ 2 │   export = N;
+   ·   ───────────
+ 3 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-default/input.ts:3:3]
+ 2 │ declare namespace N {
+ 3 │   export default x;
+   ·   ─────────────────
+ 4 │ }
+   ╰────
+
+  × TS(1194): Export declarations are not permitted in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-from/input.ts:2:3]
+ 1 │ declare namespace N {
+ 2 │   export { x } from "foo";
+   ·   ────────────────────────
+ 3 │   export * as ns from "foo";
+   ╰────
+
+  × TS(1194): Export declarations are not permitted in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-from/input.ts:3:3]
+ 2 │   export { x } from "foo";
+ 3 │   export * as ns from "foo";
+   ·   ──────────────────────────
+ 4 │ }
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts:2:3]
+ 1 │ declare namespace N {
+ 2 │   import "foo";
+   ·   ─────────────
+ 3 │   import { x } from "foo";
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts:3:3]
+ 2 │   import "foo";
+ 3 │   import { x } from "foo";
+   ·   ────────────────────────
+ 4 │   import * as ns from "foo";
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts:4:3]
+ 3 │   import { x } from "foo";
+ 4 │   import * as ns from "foo";
+   ·   ──────────────────────────
+ 5 │   import y = require("foo");
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts:5:3]
+ 4 │   import * as ns from "foo";
+ 5 │   import y = require("foo");
+   ·   ──────────────────────────
+ 6 │   import type = require("foo");
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts:6:3]
+ 5 │   import y = require("foo");
+ 6 │   import type = require("foo");
+   ·   ─────────────────────────────
+ 7 │ }
+   ╰────
+
+  × TS(1063): An export assignment cannot be used in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-assignment/input.ts:2:3]
+ 1 │ namespace N {
+ 2 │   export = N;
+   ·   ───────────
+ 3 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-default/input.ts:3:3]
+ 2 │ namespace N {
+ 3 │   export default x;
+   ·   ─────────────────
+ 4 │ }
+   ╰────
+
+  × TS(1194): Export declarations are not permitted in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-from/input.ts:2:3]
+ 1 │ namespace N {
+ 2 │   export { x } from "foo";
+   ·   ────────────────────────
+ 3 │   export * as ns from "foo";
+   ╰────
+
+  × TS(1194): Export declarations are not permitted in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-from/input.ts:3:3]
+ 2 │   export { x } from "foo";
+ 3 │   export * as ns from "foo";
+   ·   ──────────────────────────
+ 4 │ }
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts:2:3]
+ 1 │ namespace N {
+ 2 │   import "foo";
+   ·   ─────────────
+ 3 │   import { x } from "foo";
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts:3:3]
+ 2 │   import "foo";
+ 3 │   import { x } from "foo";
+   ·   ────────────────────────
+ 4 │   import * as ns from "foo";
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts:4:3]
+ 3 │   import { x } from "foo";
+ 4 │   import * as ns from "foo";
+   ·   ──────────────────────────
+ 5 │   import y = require("foo");
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts:5:3]
+ 4 │   import * as ns from "foo";
+ 5 │   import y = require("foo");
+   ·   ──────────────────────────
+ 6 │   import type = require("foo");
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts:6:3]
+ 5 │   import y = require("foo");
+ 6 │   import type = require("foo");
+   ·   ─────────────────────────────
+ 7 │ }
    ╰────
 
   × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.

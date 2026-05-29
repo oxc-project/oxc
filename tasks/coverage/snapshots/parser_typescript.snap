@@ -1,9 +1,9 @@
 commit: e5509e21
 
 parser_typescript Summary:
-AST Parsed     : 9781/9781 (100.00%)
-Positive Passed: 9781/9781 (100.00%)
-Negative Passed: 1582/2638 (59.97%)
+AST Parsed     : 9779/9779 (100.00%)
+Positive Passed: 9779/9779 (100.00%)
+Negative Passed: 1591/2640 (60.27%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -320,8 +320,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorSupress
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5-oldStyleOctalLiteralInEnums.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6DeclOrdering.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportEqualsInterop.ts
@@ -348,17 +346,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAsName
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentImportMergeNoCrash.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces2.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultAlias_excludesEverything.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultClassAndValue.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultClassInNamespace.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultDuplicateCrash.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultFunctionInNamespace.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultInterfaceAndTwoFunctions.ts
 
@@ -767,8 +759,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidat
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidation5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/primitiveMembers.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privacyGloImportParseErrors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privacyTopLevelAmbientExternalModuleImportWithExport.ts
 
@@ -1791,10 +1781,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment9.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration1.ts
 
@@ -6770,6 +6756,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts:30:5]
+ 29 │     export {M_A as a};
+ 30 │     import * as M2 from "M2";
+    ·     ─────────────────────────
+ 31 │     import M4 from "M4";
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts:31:5]
+ 30 │     import * as M2 from "M2";
+ 31 │     import M4 from "M4";
+    ·     ────────────────────
+ 32 │     export import M5 = require("M5");
+    ╰────
+
   × TS(1015): A parameter cannot have a question mark and an initializer.
     ╭─[typescript/tests/cases/compiler/es6ClassTest.ts:25:44]
  24 │     constructor();
@@ -7130,6 +7132,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  14 │ }
     ╰────
 
+  × TS(1194): Export declarations are not permitted in a namespace.
+   ╭─[typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces2.ts:6:5]
+ 5 │ declare namespace N {
+ 6 │     export { x } from "mod"; // Error
+   ·     ────────────────────────
+ 7 │ }
+   ╰────
+
   × TS(1183): An implementation cannot be declared in ambient contexts.
    ╭─[typescript/tests/cases/compiler/exportDeclareClass1.ts:2:21]
  1 │     export declare class eaC {
@@ -7158,6 +7168,38 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  1 │ export function async<T>(...args: any[]): any { }
  2 │ export function await(...args: any[]): any { }
    ·                 ─────
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/compiler/exportDefaultClassInNamespace.ts:2:5]
+ 1 │ namespace ns_class {
+ 2 │     export default class {}
+   ·     ───────────────────────
+ 3 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/compiler/exportDefaultClassInNamespace.ts:6:5]
+ 5 │ namespace ns_abstract_class {
+ 6 │     export default abstract class {}
+   ·     ────────────────────────────────
+ 7 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/compiler/exportDefaultFunctionInNamespace.ts:2:5]
+ 1 │ namespace ns_function {
+ 2 │     export default function () {}
+   ·     ─────────────────────────────
+ 3 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/compiler/exportDefaultFunctionInNamespace.ts:6:5]
+ 5 │ namespace ns_async_function {
+ 6 │     export default async function () {}
+   ·     ───────────────────────────────────
+ 7 │ }
    ╰────
 
   × Identifier `someProp` has already been declared
@@ -7756,12 +7798,28 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[typescript/tests/cases/compiler/importDeclarationInModuleDeclaration1.ts:2:5]
+ 1 │ namespace m2 {
+ 2 │     import m3 = require("use_glo_M1_public");
+   ·     ─────────────────────────────────────────
+ 3 │ }
+   ╰────
+
   × Cannot use import statement outside a module
    ╭─[typescript/tests/cases/compiler/importDeclarationInModuleDeclaration2.ts:2:5]
  1 │ function container() {
  2 │     import "fs";
    ·     ──────
  3 │ }
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[typescript/tests/cases/compiler/importInsideModule.ts:2:5]
+ 1 │ export namespace myModule {
+ 2 │     import foo = require("importInsideModule_file1");
+   ·     ─────────────────────────────────────────────────
+ 3 │     var a = foo.x;
    ╰────
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
@@ -10803,6 +10861,118 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────
    ╰────
 
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:59:5]
+ 58 │ 
+ 59 │     import m1_im3_private = require("m1_M3_public");
+    ·     ────────────────────────────────────────────────
+ 60 │     export var m1_im3_private_v1_public = m1_im3_private.c1;
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:69:5]
+ 68 │ 
+ 69 │     import m1_im4_private = require("m1_M4_private");
+    ·     ─────────────────────────────────────────────────
+ 70 │     export var m1_im4_private_v1_public = m1_im4_private.c1;
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:121:9]
+ 120 │     namespace m2 {
+ 121 │         import errorImport = require("glo_M2_public");
+     ·         ──────────────────────────────────────────────
+ 122 │         import nonerrorImport = glo_M1_public;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:125:13]
+ 124 │         namespace m5 {
+ 125 │             import m5_errorImport = require("glo_M2_public");
+     ·             ─────────────────────────────────────────────────
+ 126 │             import m5_nonerrorImport = glo_M1_public;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:146:5]
+ 145 │ namespace m2 {
+ 146 │     import m3 = require("use_glo_M1_public");
+     ·     ─────────────────────────────────────────
+ 147 │     namespace m4 {
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:149:9]
+ 148 │         var a = 10;
+ 149 │         import m2 = require("use_glo_M1_public");
+     ·         ─────────────────────────────────────────
+ 150 │     }
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:59:5]
+ 58 │ 
+ 59 │     import m1_im3_private = require("m1_M3_public");
+    ·     ────────────────────────────────────────────────
+ 60 │     export var m1_im3_private_v1_public = m1_im3_private.c1;
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:69:5]
+ 68 │ 
+ 69 │     import m1_im4_private = require("m1_M4_private");
+    ·     ─────────────────────────────────────────────────
+ 70 │     export var m1_im4_private_v1_public = m1_im4_private.c1;
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:143:5]
+ 142 │ 
+ 143 │     import m1_im3_private = require("m2_M3_public");
+     ·     ────────────────────────────────────────────────
+ 144 │     export var m1_im3_private_v1_public = m1_im3_private.c1;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:153:5]
+ 152 │ 
+ 153 │     import m1_im4_private = require("m2_M4_private");
+     ·     ─────────────────────────────────────────────────
+ 154 │     export var m1_im4_private_v1_public = m1_im4_private.c1;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:273:9]
+ 272 │     namespace m2 {
+ 273 │         import errorImport = require("glo_M2_public");
+     ·         ──────────────────────────────────────────────
+ 274 │         import nonerrorImport = glo_M1_public;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:277:13]
+ 276 │         namespace m5 {
+ 277 │             import m5_errorImport = require("glo_M2_public");
+     ·             ─────────────────────────────────────────────────
+ 278 │             import m5_nonerrorImport = glo_M1_public;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:302:9]
+ 301 │     namespace m2 {
+ 302 │         import errorImport = require("glo_M4_private");
+     ·         ───────────────────────────────────────────────
+ 303 │         import nonerrorImport = glo_M3_private;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:306:13]
+ 305 │         namespace m5 {
+ 306 │             import m5_errorImport = require("glo_M4_private");
+     ·             ──────────────────────────────────────────────────
+ 307 │             import m5_nonerrorImport = glo_M3_private;
+     ╰────
+
   × TS(1029): 'export' modifier must precede 'declare' modifier.
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
@@ -10819,6 +10989,38 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  327 │     namespace m2 {
      ╰────
   help: Only 'declare' modifier is allowed here.
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:341:5]
+ 340 │ namespace m2 {
+ 341 │     import m3 = require("use_glo_M1_public");
+     ·     ─────────────────────────────────────────
+ 342 │     namespace m4 {
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:344:9]
+ 343 │         var a = 10;
+ 344 │         import m2 = require("use_glo_M1_public");
+     ·         ─────────────────────────────────────────
+ 345 │     }
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:350:5]
+ 349 │ export namespace m3 {
+ 350 │     import m3 = require("use_glo_M1_public");
+     ·     ─────────────────────────────────────────
+ 351 │     namespace m4 {
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:353:9]
+ 352 │         var a = 10;
+ 353 │         import m2 = require("use_glo_M1_public");
+     ·         ─────────────────────────────────────────
+ 354 │     }
+     ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/privateNameJsx.tsx:4:22]
@@ -17283,6 +17485,26 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  172 │     prototype() {} // ok
      ╰────
 
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:252:5]
+ 251 │     namespace TestOnDefaultExportedClass_3 {
+ 252 │ ╭─▶     export default class StaticLength {
+ 253 │ │           static length: number; // error without useDefineForClassFields
+ 254 │ │           length: string; // ok
+ 255 │ ╰─▶     }
+ 256 │     }
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:264:5]
+ 263 │     namespace TestOnDefaultExportedClass_4 {
+ 264 │ ╭─▶     export default class StaticLengthFn {
+ 265 │ │           static length() {} // error without useDefineForClassFields
+ 266 │ │           length() {} // ok
+ 267 │ ╰─▶     }
+ 268 │     }
+     ╰────
+
   × Classes may not have a static property named 'prototype'
      ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:278:16]
  277 │     export default class StaticPrototype {
@@ -17291,12 +17513,72 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  279 │         prototype: string; // ok
      ╰────
 
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:277:5]
+ 276 │     namespace TestOnDefaultExportedClass_5 {
+ 277 │ ╭─▶     export default class StaticPrototype {
+ 278 │ │           static prototype: number; // always an error
+ 279 │ │           prototype: string; // ok
+ 280 │ ╰─▶     }
+ 281 │     }
+     ╰────
+
   × Classes may not have a static property named 'prototype'
      ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:290:16]
  289 │     export default class StaticPrototypeFn {
  290 │         static prototype() {} // always an error
      ·                ─────────
  291 │         prototype() {} // ok
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:289:5]
+ 288 │     namespace TestOnDefaultExportedClass_6 {
+ 289 │ ╭─▶     export default class StaticPrototypeFn {
+ 290 │ │           static prototype() {} // always an error
+ 291 │ │           prototype() {} // ok
+ 292 │ ╰─▶     }
+ 293 │     }
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:302:5]
+ 301 │     namespace TestOnDefaultExportedClass_7 {
+ 302 │ ╭─▶     export default class StaticCaller {
+ 303 │ │           static caller: number; // error without useDefineForClassFields
+ 304 │ │           caller: string; // ok
+ 305 │ ╰─▶     }
+ 306 │     }
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:314:5]
+ 313 │     namespace TestOnDefaultExportedClass_8 {
+ 314 │ ╭─▶     export default class StaticCallerFn {
+ 315 │ │           static caller() {} // error without useDefineForClassFields
+ 316 │ │           caller() {} // ok
+ 317 │ ╰─▶     }
+ 318 │     }
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:327:5]
+ 326 │     namespace TestOnDefaultExportedClass_9 {
+ 327 │ ╭─▶     export default class StaticArguments {
+ 328 │ │           static arguments: number; // error without useDefineForClassFields
+ 329 │ │           arguments: string; // ok
+ 330 │ ╰─▶     }
+ 331 │     }
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:339:5]
+ 338 │     namespace TestOnDefaultExportedClass_10 {
+ 339 │ ╭─▶     export default class StaticArgumentsFn {
+ 340 │ │           static arguments() {} // error without useDefineForClassFields
+ 341 │ │           arguments() {} // ok
+ 342 │ ╰─▶     }
+ 343 │     }
      ╰────
 
   × Identifier `x` has already been declared
@@ -24809,6 +25091,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·          ─
    ╰────
 
+  × TS(1063): An export assignment cannot be used in a namespace.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment5.ts:2:5]
+ 1 │ namespace M {
+ 2 │     export = A;
+   ·     ───────────
+ 3 │ }
+   ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment7.ts:4:1]
  3 │ 
@@ -24824,6 +25114,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ 
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment9.ts:2:3]
+ 1 │ namespace Foo {
+ 2 │   export default foo;
+   ·   ───────────────────
+ 3 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment9.ts:6:3]
+ 5 │ namespace Bar {
+ 6 │   export default bar;
+   ·   ───────────────────
+ 7 │ }
+   ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Expressions/parseIncompleteBinaryExpression1.ts:1:9]

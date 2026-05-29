@@ -32,6 +32,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     `StatementList`[?Yield, ?Await, ?Return] `StatementListItem`[?Yield, ?Await, ?Return]
     pub(crate) fn parse_directives_and_statements(
         &mut self,
+        in_ts_namespace_body: bool,
     ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
         let mut directives = self.ast.vec();
         let mut statements = self.ast.vec();
@@ -99,6 +100,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
                 expecting_directives = false;
+            }
+            // In an internal namespace body, module-referencing `import`/`export` statements are
+            // not permitted. Validated here as each direct statement is parsed (no second pass).
+            if in_ts_namespace_body {
+                self.check_namespace_body_statement(&stmt);
             }
             statements.push(stmt);
         }

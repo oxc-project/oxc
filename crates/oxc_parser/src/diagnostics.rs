@@ -282,6 +282,28 @@ pub fn lexical_declaration_single_statement(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn export_assignment_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1063", "An export assignment cannot be used in a namespace.").with_label(span)
+}
+
+#[cold]
+pub fn import_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1147", "Import declarations in a namespace cannot reference a module.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1194", "Export declarations are not permitted in a namespace.").with_label(span)
+}
+
+#[cold]
+pub fn default_export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1319", "A default export can only be used in an ECMAScript-style module.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)

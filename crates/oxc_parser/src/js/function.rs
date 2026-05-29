@@ -34,8 +34,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::LCurly);
 
         // Add Return context, remove TopLevel context
-        let (directives, statements) =
-            self.context(Context::Return, Context::TopLevel, Self::parse_directives_and_statements);
+        let (directives, statements) = self.context(Context::Return, Context::TopLevel, |p| {
+            p.parse_directives_and_statements(/* in_ts_namespace_body */ false)
+        });
 
         self.expect_closing(Kind::RCurly, opening_span);
         self.ast.alloc_function_body(self.end_span(span), directives, statements)
