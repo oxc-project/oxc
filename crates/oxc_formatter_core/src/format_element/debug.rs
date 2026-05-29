@@ -33,7 +33,7 @@ use crate::{
 impl<'a> Document<'a> {
     /// Returns a wrapper that formats the document for human-readable debug display.
     ///
-    /// The `source_text` is passed to the temporary [`SimpleFormatContext`] used
+    /// The `source_text` is passed to the temporary `SimpleFormatContext` used
     /// while rendering and is only required so that `Format` implementations that
     /// look up the source text behave sensibly. The debug renderer itself does not
     /// use the source text.
