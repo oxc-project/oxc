@@ -35,6 +35,8 @@ use oxc_span::{GetSpan, SourceType};
 fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let show_symbols = env::args().skip(1).any(|arg| arg == "--symbols");
+    // `--symbol-references` reads AST nodes by id, which requires the `ast_nodes` feature.
+    #[cfg(feature = "ast_nodes")]
     let show_symbol_references = env::args().skip(1).any(|arg| arg == "--symbol-references");
     let path = Path::new(&name);
     let source_text = Arc::new(std::fs::read_to_string(path)?);
@@ -86,6 +88,7 @@ fn main() -> std::io::Result<()> {
         }
     }
 
+    #[cfg(feature = "ast_nodes")]
     if show_symbol_references {
         let reporter = GraphicalReportHandler::new();
 

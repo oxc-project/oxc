@@ -98,7 +98,11 @@ pub trait CompilerInterface {
         ControlFlow::Continue(())
     }
 
-    fn after_semantic(&mut self, _semantic_return: &mut SemanticBuilderReturn) -> ControlFlow<()> {
+    fn after_semantic(
+        &mut self,
+        _program: &Program<'_>,
+        _semantic_return: &mut SemanticBuilderReturn,
+    ) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
 
@@ -141,7 +145,7 @@ pub trait CompilerInterface {
             self.handle_errors(semantic_return.errors);
             return;
         }
-        if self.after_semantic(&mut semantic_return).is_break() {
+        if self.after_semantic(&program, &mut semantic_return).is_break() {
             return;
         }
 

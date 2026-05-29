@@ -93,6 +93,12 @@ pub struct SemanticBuilder<'a> {
 
     // builders
     pub(crate) nodes: AstNodes<'a>,
+    /// Stack of ancestors of the current node, from `Program` (index 0) to the current node (top).
+    ///
+    /// This is `O(tree-depth)`, not `O(node-count)` - entries are pushed on `enter_node` and popped
+    /// on `leave_node`. It lets the builder, binder, and checker query parent/ancestor kinds during
+    /// the traversal without reading the [`AstNodes`] vec, which is only built for the linter.
+    pub(crate) ancestor_stack: Vec<(NodeId, AstKind<'a>)>,
     pub(crate) scoping: Scoping,
 
     pub(crate) unresolved_references: UnresolvedReferences<'a>,
@@ -157,6 +163,9 @@ impl<'a> SemanticBuilder<'a> {
             current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
             nodes: AstNodes::default(),
+            // Pre-allocate for a typical AST nesting depth so the stack does not reallocate as it
+            // grows. It only ever holds the current root-to-node path, never all nodes.
+            ancestor_stack: Vec::with_capacity(64),
             hoisting_variables: FxHashMap::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
@@ -368,12 +377,60 @@ impl<'a> SemanticBuilder<'a> {
             control_flow!(self, |cfg| cfg.current_node_ix),
             flags,
         );
+        self.ancestor_stack.push((self.current_node_id, kind));
         self.record_ast_node();
     }
 
     #[inline]
     fn pop_ast_node(&mut self) {
+        self.ancestor_stack.pop();
         self.current_node_id = self.nodes.parent_id(self.current_node_id);
+    }
+
+    /// Kind of an ancestor of the current node (or the current node itself).
+    ///
+    /// Reads the [`ancestor_stack`](Self::ancestor_stack) rather than the [`AstNodes`] vec, so it
+    /// works regardless of whether that vec is being built. `node_id` must be the current node or
+    /// one of its ancestors.
+    pub(crate) fn node_kind(&self, node_id: NodeId) -> AstKind<'a> {
+        self.ancestor_stack
+            .iter()
+            .rev()
+            .find_map(|(id, kind)| (*id == node_id).then_some(*kind))
+            .expect("`node_id` is not the current node or one of its ancestors")
+    }
+
+    /// Kind of the parent of `node_id` (which must be the current node or one of its ancestors).
+    pub(crate) fn parent_node_kind(&self, node_id: NodeId) -> AstKind<'a> {
+        self.node_kind(self.nodes.parent_id(node_id))
+    }
+
+    /// Iterate the kinds of the ancestors of `node_id`, starting with its parent and ending with
+    /// `Program`. `node_id` must be the current node or one of its ancestors.
+    pub(crate) fn ancestor_node_kinds(
+        &self,
+        node_id: NodeId,
+    ) -> impl Iterator<Item = AstKind<'a>> + Clone + '_ {
+        let index = self
+            .ancestor_stack
+            .iter()
+            .rposition(|(id, _)| *id == node_id)
+            .expect("`node_id` is not the current node or one of its ancestors");
+        self.ancestor_stack[..index].iter().rev().map(|(_, kind)| *kind)
+    }
+
+    /// Iterate the ancestors of `node_id` as `(NodeId, AstKind)` pairs, starting with its parent
+    /// and ending with `Program`. `node_id` must be the current node or one of its ancestors.
+    pub(crate) fn ancestor_nodes_enumerated(
+        &self,
+        node_id: NodeId,
+    ) -> impl Iterator<Item = (NodeId, AstKind<'a>)> + Clone + '_ {
+        let index = self
+            .ancestor_stack
+            .iter()
+            .rposition(|(id, _)| *id == node_id)
+            .expect("`node_id` is not the current node or one of its ancestors");
+        self.ancestor_stack[..index].iter().rev().copied()
     }
 
     #[inline]
@@ -485,11 +542,7 @@ impl<'a> SemanticBuilder<'a> {
         // a redeclaration, but it's actually not a redeclaration, so if the symbol declaration
         // is a function expression, then return None to tell the caller that it's not a redeclaration.
         if self.scoping.symbol_flags(symbol_id).is_function()
-            && self
-                .nodes
-                .kind(self.scoping.symbol_declaration(symbol_id))
-                .as_function()
-                .is_some_and(Function::is_expression)
+            && self.nodes.flags(self.scoping.symbol_declaration(symbol_id)).is_function_expression()
         {
             return None;
         }
@@ -763,6 +816,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             control_flow!(self, |cfg| cfg.current_node_ix),
             self.current_node_flags,
         );
+        self.ancestor_stack.push((self.current_node_id, kind));
 
         // Don't call `enter_scope` here as `Program` is a special case - scope has no `parent_id`.
         // Inline the specific logic for `Program` here instead.
@@ -1890,6 +1944,21 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
 
+        // Record the function's shape in `NodeFlags` so the redeclaration checks in
+        // `check_redeclaration` and `checker::check_function_redeclaration` can run without
+        // reading the (linter-only) `AstNodes` vec.
+        let mut function_flags = NodeFlags::empty();
+        if func.is_expression() {
+            function_flags |= NodeFlags::FunctionExpression;
+        }
+        if func.r#async {
+            function_flags |= NodeFlags::AsyncFunction;
+        }
+        if func.generator {
+            function_flags |= NodeFlags::Generator;
+        }
+        *self.nodes.flags_mut(self.current_node_id) |= function_flags;
+
         let parent_function_node_id = self.current_function_node_id;
         self.current_function_node_id = self.current_node_id;
 
@@ -2364,7 +2433,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_class_body(&mut self, body: &ClassBody<'a>) {
         let kind = AstKind::ClassBody(self.alloc(body));
         self.enter_node(kind);
-        self.class_table_builder.declare_class_body(body, self.current_node_id, &self.nodes);
+        let parent_id = self.nodes.parent_id(self.current_node_id);
+        self.class_table_builder.declare_class_body(body, parent_id);
         self.visit_span(&body.span);
         self.visit_class_elements(&body.body);
         self.leave_node(kind);
@@ -2373,10 +2443,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_private_identifier(&mut self, ident: &PrivateIdentifier<'a>) {
         let kind = AstKind::PrivateIdentifier(self.alloc(ident));
         self.enter_node(kind);
+        let parent_kind = self.parent_node_kind(self.current_node_id);
         self.class_table_builder.add_private_identifier_reference(
             ident,
             self.current_node_id,
-            &self.nodes,
+            parent_kind,
         );
         self.visit_span(&ident.span);
         self.leave_node(kind);

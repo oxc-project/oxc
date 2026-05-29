@@ -65,6 +65,12 @@ bitflags! {
         const HasYield  = 1 << 2;
         /// Set for `export { specifier }`
         const ExportSpecifier  = 1 << 3;
+        /// Set on a `Function` node that is an expression (e.g. `(function () {})`)
+        const FunctionExpression = 1 << 4;
+        /// Set on an `async` `Function` node
+        const AsyncFunction = 1 << 5;
+        /// Set on a generator `Function` node
+        const Generator = 1 << 6;
     }
 }
 
@@ -91,5 +97,23 @@ impl NodeFlags {
     #[inline]
     pub fn has_export_specifier(self) -> bool {
         self.contains(Self::ExportSpecifier)
+    }
+
+    /// Returns `true` if this `Function` node is an expression.
+    #[inline]
+    pub fn is_function_expression(self) -> bool {
+        self.contains(Self::FunctionExpression)
+    }
+
+    /// Returns `true` if this `Function` node is `async`.
+    #[inline]
+    pub fn is_async_function(self) -> bool {
+        self.contains(Self::AsyncFunction)
+    }
+
+    /// Returns `true` if this `Function` node is a generator.
+    #[inline]
+    pub fn is_generator(self) -> bool {
+        self.contains(Self::Generator)
     }
 }

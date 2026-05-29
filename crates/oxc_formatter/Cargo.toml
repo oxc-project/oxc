@@ -51,7 +51,7 @@ oxc_formatter_core = { workspace = true, features = ["test_harness"] }
 
 [features]
 default = []
-detect_code_removal = ["dep:oxc_semantic"]
+detect_code_removal = ["dep:oxc_semantic", "oxc_semantic/ast_nodes"]
 
 [lib]
 doctest = false

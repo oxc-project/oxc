@@ -7,13 +7,17 @@
 
 use std::ops::RangeBounds;
 
+#[cfg(feature = "ast_nodes")]
+use oxc_ast::AstKind;
 use oxc_ast::{
-    AstKind, Comment, CommentsRange, ast::IdentifierReference, comments_range, get_comment_at,
+    Comment, CommentsRange, ast::IdentifierReference, comments_range, get_comment_at,
     has_comments_between, is_inside_comment,
 };
 #[cfg(feature = "cfg")]
 use oxc_cfg::ControlFlowGraph;
-use oxc_span::{GetSpan, SourceType, Span};
+#[cfg(feature = "ast_nodes")]
+use oxc_span::GetSpan;
+use oxc_span::{SourceType, Span};
 // Re-export flags and ID types
 pub use oxc_syntax::{
     node::{NodeFlags, NodeId},
@@ -228,6 +232,7 @@ impl<'a> Semantic<'a> {
     }
 
     /// Returns `true` if `node_id` points to an unresolved identifier reference.
+    #[cfg(feature = "ast_nodes")]
     pub fn is_unresolved_reference(&self, node_id: NodeId) -> bool {
         let reference_node = self.nodes.get_node(node_id);
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
@@ -250,6 +255,7 @@ impl<'a> Semantic<'a> {
     }
 
     /// Get the AST node that declares `symbol_id`.
+    #[cfg(feature = "ast_nodes")]
     pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &AstNode<'a> {
         self.nodes.get_node(self.scoping.symbol_declaration(symbol_id))
     }
@@ -260,6 +266,7 @@ impl<'a> Semantic<'a> {
     }
 
     /// Get the textual name for a semantic reference.
+    #[cfg(feature = "ast_nodes")]
     pub fn reference_name(&self, reference: &Reference) -> &str {
         let node = self.nodes.get_node(reference.node_id());
         match node.kind() {
@@ -269,6 +276,7 @@ impl<'a> Semantic<'a> {
     }
 
     /// Get the source span for a semantic reference.
+    #[cfg(feature = "ast_nodes")]
     pub fn reference_span(&self, reference: &Reference) -> Span {
         let node = self.nodes.get_node(reference.node_id());
         node.kind().span()
@@ -298,6 +306,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ast_nodes")]
     fn test_symbols() {
         let source = "
             let a;
@@ -352,6 +361,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ast_nodes")]
     fn test_is_global() {
         let source = "
             var a = 0;

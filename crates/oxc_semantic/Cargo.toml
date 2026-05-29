@@ -46,7 +46,11 @@ serde_json = { workspace = true }
 
 [features]
 default = []
-cfg = ["dep:oxc_cfg"]
+# Build the flattened `AstNodes` vec and the node-reading APIs that depend on it.
+# Only needed by consumers that walk the AST by `NodeId` after analysis (the linter, and the
+# `cfg`/dot debug output). The transformer, minifier, mangler, and codegen do not need it.
+ast_nodes = []
+cfg = ["dep:oxc_cfg", "ast_nodes"]
 jsdoc = ["dep:oxc_jsdoc"]
-linter = ["jsdoc"]
+linter = ["ast_nodes", "jsdoc"]
 serialize = ["oxc_span/serialize", "oxc_syntax/serialize"]

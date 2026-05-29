@@ -1,11 +1,14 @@
 use std::iter::FusedIterator;
 
-use oxc_ast::{AstKind, ast::Program};
+use oxc_ast::AstKind;
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     scope::ScopeId,
 };
+
+#[cfg(feature = "ast_nodes")]
+use oxc_ast::ast::Program;
 
 #[cfg(feature = "linter")]
 use oxc_ast::AstType;
@@ -13,6 +16,7 @@ use oxc_ast::AstType;
 #[cfg(feature = "cfg")]
 use oxc_cfg::BlockNodeId;
 
+#[cfg(feature = "ast_nodes")]
 use super::AstNode;
 
 #[cfg(feature = "linter")]
@@ -21,6 +25,12 @@ use crate::ast_types_bitset::AstTypesBitset;
 /// Untyped AST nodes flattened into an vec
 #[derive(Debug, Default)]
 pub struct AstNodes<'a> {
+    /// Flattened AST nodes, keyed by [`NodeId`].
+    ///
+    /// Only built when the `ast_nodes` feature is enabled (the linter and the `cfg`/dot output).
+    /// The transformer / minifier / mangler / codegen never read it, so they avoid the cost of
+    /// building and storing it.
+    #[cfg(feature = "ast_nodes")]
     nodes: IndexVec<NodeId, AstNode<'a>>,
     /// `node` -> `parent`
     parent_ids: IndexVec<NodeId, NodeId>,
@@ -34,15 +44,20 @@ pub struct AstNodes<'a> {
     /// any nodes of that kind.
     #[cfg(feature = "linter")]
     node_kinds_set: AstTypesBitset,
+    /// Marker to keep `'a` used when neither `nodes` nor any borrowing field is present.
+    #[cfg(not(feature = "ast_nodes"))]
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a> AstNodes<'a> {
     /// Iterate over all [`AstNode`]s in this AST.
+    #[cfg(feature = "ast_nodes")]
     pub fn iter(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
         self.nodes.iter()
     }
 
     /// Iterate over all [`AstNode`]s with their [`NodeId`].
+    #[cfg(feature = "ast_nodes")]
     pub fn iter_enumerated(&self) -> impl Iterator<Item = (NodeId, &AstNode<'a>)> + '_ {
         self.nodes.iter_enumerated()
     }
@@ -50,13 +65,13 @@ impl<'a> AstNodes<'a> {
     /// Returns the number of node in this AST.
     #[inline]
     pub fn len(&self) -> usize {
-        self.nodes.len()
+        self.parent_ids.len()
     }
 
     /// Returns `true` if there are no nodes in this AST.
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.nodes.is_empty()
+        self.parent_ids.is_empty()
     }
 
     /// Walk up the AST, iterating over each parent [`NodeId`].
@@ -73,6 +88,7 @@ impl<'a> AstNodes<'a> {
     /// The first node produced by this iterator is the parent of `node_id`.
     /// The last node will always be [`AstKind::Program`].
     #[inline]
+    #[cfg(feature = "ast_nodes")]
     pub fn ancestor_kinds(
         &self,
         node_id: NodeId,
@@ -85,6 +101,7 @@ impl<'a> AstNodes<'a> {
     /// The first node produced by this iterator is the parent of `node_id`.
     /// The last node will always be [`AstKind::Program`].
     #[inline]
+    #[cfg(feature = "ast_nodes")]
     pub fn ancestors(&self, node_id: NodeId) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
         self.ancestor_ids(node_id).map(|id| self.get_node(id))
     }
@@ -94,6 +111,7 @@ impl<'a> AstNodes<'a> {
     /// The first node produced by this iterator is the parent of `node_id`.
     /// The last node will always be [`AstKind::Program`].
     #[inline]
+    #[cfg(feature = "ast_nodes")]
     pub fn ancestors_enumerated(
         &self,
         node_id: NodeId,
@@ -103,6 +121,7 @@ impl<'a> AstNodes<'a> {
 
     /// Access the underlying struct from [`oxc_ast`].
     #[inline]
+    #[cfg(feature = "ast_nodes")]
     pub fn kind(&self, node_id: NodeId) -> AstKind<'a> {
         self.nodes[node_id].kind()
     }
@@ -114,23 +133,27 @@ impl<'a> AstNodes<'a> {
     }
 
     /// Get the kind of the parent node.
+    #[cfg(feature = "ast_nodes")]
     pub fn parent_kind(&self, node_id: NodeId) -> AstKind<'a> {
         self.kind(self.parent_id(node_id))
     }
 
     /// Get a reference to a node's parent.
+    #[cfg(feature = "ast_nodes")]
     pub fn parent_node(&self, node_id: NodeId) -> &AstNode<'a> {
         self.get_node(self.parent_id(node_id))
     }
 
     #[inline]
     /// Get a node by [`NodeId`].
+    #[cfg(feature = "ast_nodes")]
     pub fn get_node(&self, node_id: NodeId) -> &AstNode<'a> {
         &self.nodes[node_id]
     }
 
     #[inline]
     /// Get a mutable node by [`NodeId`].
+    #[cfg(feature = "ast_nodes")]
     pub fn get_node_mut(&mut self, node_id: NodeId) -> &mut AstNode<'a> {
         &mut self.nodes[node_id]
     }
@@ -158,6 +181,7 @@ impl<'a> AstNodes<'a> {
 
     /// Get the [`Program`] that's also the root of the AST.
     #[inline]
+    #[cfg(feature = "ast_nodes")]
     pub fn program(&self) -> &'a Program<'a> {
         if let Some(node) = self.nodes.first()
             && let AstKind::Program(program) = node.kind()
@@ -184,8 +208,10 @@ impl<'a> AstNodes<'a> {
     ) -> NodeId {
         let node_id = self.parent_ids.push(parent_node_id);
         kind.set_node_id(node_id);
-        let node = AstNode::new(kind, scope_id);
-        self.nodes.push(node);
+        #[cfg(feature = "ast_nodes")]
+        self.nodes.push(AstNode::new(kind, scope_id));
+        #[cfg(not(feature = "ast_nodes"))]
+        let _ = scope_id;
         self.flags.push(flags);
         #[cfg(feature = "cfg")]
         self.cfg_ids.push(cfg_id);
@@ -213,7 +239,10 @@ impl<'a> AstNodes<'a> {
         );
         kind.set_node_id(NodeId::ROOT);
         self.parent_ids.push(NodeId::ROOT);
+        #[cfg(feature = "ast_nodes")]
         self.nodes.push(AstNode::new(kind, scope_id));
+        #[cfg(not(feature = "ast_nodes"))]
+        let _ = scope_id;
         self.flags.push(flags);
         #[cfg(feature = "cfg")]
         self.cfg_ids.push(cfg_id);
@@ -224,6 +253,7 @@ impl<'a> AstNodes<'a> {
 
     /// Reserve space for at least `additional` more nodes.
     pub fn reserve(&mut self, additional: usize) {
+        #[cfg(feature = "ast_nodes")]
         self.nodes.reserve(additional);
         self.parent_ids.reserve(additional);
         self.flags.reserve(additional);
@@ -304,6 +334,7 @@ impl<'a> AstNodes<'a> {
     }
 }
 
+#[cfg(feature = "ast_nodes")]
 impl<'a, 'n> IntoIterator for &'n AstNodes<'a> {
     type IntoIter = std::slice::Iter<'n, AstNode<'a>>;
     type Item = &'n AstNode<'a>;

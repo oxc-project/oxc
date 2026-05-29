@@ -2,6 +2,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
+use smallvec::SmallVec;
 
 use oxc_allocator::{Allocator, BitSet, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
@@ -98,6 +99,16 @@ pub struct Scoping {
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
 
+    /// For symbols hoisted out of their lexical scope (`var` and Annex B function declarations),
+    /// the scope(s) where they are lexically declared - which differ from the registered scope.
+    /// The mangler uses these for slot liveness without needing the AST node vec. Symbols whose
+    /// declaration scope equals their registered scope (the common case) are not stored here.
+    pub(crate) hoisted_declaration_scopes: FxHashMap<SymbolId, SmallVec<[ScopeId; 1]>>,
+
+    /// Maps a named function expression's own scope to its name symbol. The mangler uses this to
+    /// repair orphaned named-function-expression slots without the AST node vec.
+    pub(crate) fn_expr_name_symbols: FxHashMap<ScopeId, SymbolId>,
+
     /// Pre-computed enum member values and scope mappings.
     pub(crate) enum_data: EnumData,
 
@@ -119,6 +130,8 @@ impl Default for Scoping {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
+            hoisted_declaration_scopes: FxHashMap::default(),
+            fn_expr_name_symbols: FxHashMap::default(),
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
@@ -382,6 +395,31 @@ impl Scoping {
             },
             |v| v.as_slice(),
         )
+    }
+
+    /// Scopes where a hoisted symbol (`var` / Annex B function) is lexically declared, when those
+    /// differ from its registered scope. Empty for the common (non-hoisted) case.
+    #[inline]
+    pub fn hoisted_declaration_scopes(&self, symbol_id: SymbolId) -> &[ScopeId] {
+        self.hoisted_declaration_scopes.get(&symbol_id).map_or(&[], SmallVec::as_slice)
+    }
+
+    /// Record a lexical declaration scope for a hoisted symbol.
+    #[inline]
+    pub(crate) fn add_hoisted_declaration_scope(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
+        self.hoisted_declaration_scopes.entry(symbol_id).or_default().push(scope_id);
+    }
+
+    /// The name symbol of the named function expression that creates `scope_id`, if any.
+    #[inline]
+    pub fn fn_expr_name_symbol(&self, scope_id: ScopeId) -> Option<SymbolId> {
+        self.fn_expr_name_symbols.get(&scope_id).copied()
+    }
+
+    /// Record the name symbol of a named function expression, keyed by its own scope.
+    #[inline]
+    pub(crate) fn add_fn_expr_name_symbol(&mut self, scope_id: ScopeId, symbol_id: SymbolId) {
+        self.fn_expr_name_symbols.insert(scope_id, symbol_id);
     }
 
     #[inline]
@@ -1001,6 +1039,8 @@ impl Scoping {
             symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
+            hoisted_declaration_scopes: self.hoisted_declaration_scopes.clone(),
+            fn_expr_name_symbols: self.fn_expr_name_symbols.clone(),
             enum_data: self.enum_data.clone(),
             scope_table: self.scope_table.clone(),
             cell: {

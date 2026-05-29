@@ -18,6 +18,7 @@ pub struct AstNode<'a> {
 }
 
 impl<'a> AstNode<'a> {
+    #[cfg(feature = "ast_nodes")]
     pub(crate) fn new(kind: AstKind<'a>, scope_id: ScopeId) -> Self {
         Self { kind, scope_id }
     }
