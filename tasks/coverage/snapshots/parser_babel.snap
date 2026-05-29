@@ -3,7 +3,7 @@ commit: d9fe348c
 parser_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
 Positive Passed: 2222/2236 (99.37%)
-Negative Passed: 1693/1723 (98.26%)
+Negative Passed: 1695/1723 (98.37%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -32,8 +32,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-within-single-statement-context/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-assignment/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-default/input.ts
@@ -59,8 +57,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/invalid-within-single-statement-context/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
 
@@ -13982,6 +13978,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-within-single-statement-context/input.ts:2:3]
+ 1 │ for (;;)
+ 2 │   interface I {}
+   ·   ──────────────
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × The keyword 'interface' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/new-line/input.ts:1:1]
  1 │ interface
@@ -14473,6 +14477,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ T = number
    ╰────
   help: Try inserting a semicolon here
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-alias/invalid-within-single-statement-context/input.ts:2:3]
+ 1 │ for (;;)
+ 2 │   type T = number;
+   ·   ────────────────
+   ╰────
+  help: Wrap this declaration in a block statement
 
   × Identifier expected after '?.'
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts:1:2]
