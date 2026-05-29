@@ -451,35 +451,29 @@ impl LanguageServer for Backend {
             None
         };
 
-        // Group file events by affected workers to avoid restarting the same worker multiple times.
+        // Group file events by worker to avoid restarting the same worker multiple times.
         // Multiple file events can affect the same worker, and a single file event can affect
         // multiple workers (e.g., when nested workspaces watch the same absolute config file path).
+        // We notify every worker about every file event and let each worker's tool decide via
+        // handle_watched_file_change whether it needs to restart.
         let workers = self.worker_manager.read_workspace_workers().await;
         let mut workers_to_file_events: std::collections::HashMap<&Uri, Vec<&FileEvent>> =
             std::collections::HashMap::new();
 
         for file_event in &params.changes {
             for worker in workers.iter() {
-                // Check if this worker is responsible for the changed file URI.
-                // This includes checking if the file is within the worker's workspace
-                // or if the worker is watching this specific file (e.g., an absolute config path).
-                if Self::is_worker_affected_by_file_event(worker, file_event).await {
-                    workers_to_file_events
-                        .entry(worker.get_root_uri())
-                        .or_default()
-                        .push(file_event);
-                }
+                workers_to_file_events.entry(worker.get_root_uri()).or_default().push(file_event);
             }
         }
 
-        // Process each affected worker exactly once, even if multiple file events affected it.
+        // Process each worker exactly once, even if multiple file events affected it.
         for (worker_root_uri, file_events) in workers_to_file_events.iter() {
             let Some(worker) = workers.iter().find(|w| w.get_root_uri() == *worker_root_uri) else {
                 continue;
             };
 
-            // Use the first file event for this worker. The worker will restart regardless
-            // of which specific file changed, so we don't need to process each event separately.
+            // Use the first file event for this worker. The worker's tool will decide
+            // via handle_watched_file_change whether it needs to restart based on the URI.
             let file_event = file_events[0];
 
             let (diagnostics, registrations, unregistrations) = worker
@@ -959,28 +953,6 @@ impl Backend {
             capabilities: OnceCell::new(),
             file_system: Arc::new(LSPFileSystem::default()),
         }
-    }
-
-    /// Check if a worker is affected by a file event.
-    ///
-    /// A worker is affected if the changed file could be relevant to its configuration.
-    /// Rather than trying to parse glob patterns here, we simply notify all workers
-    /// and let each worker's tool decide via `handle_watched_file_change` whether
-    /// it actually needs to restart.
-    ///
-    /// This handles the nested workspace scenario where multiple workers may watch
-    /// the same absolute config file path (e.g., `/path/to/.oxlintrc.json` watched
-    /// by both the root workspace and nested package workspaces).
-    async fn is_worker_affected_by_file_event(
-        _worker: &WorkspaceWorker,
-        _file_event: &FileEvent,
-    ) -> bool {
-        // Notify all workers for any file change. Each worker's tool will decide
-        // if it actually needs to restart based on its watch patterns.
-        // This is a conservative approach that ensures we don't miss any affected workers,
-        // especially in nested workspace scenarios where multiple workers may watch
-        // the same config file outside their workspace roots.
-        true
     }
 
     /// Request the workspace configuration from the client
