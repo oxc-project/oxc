@@ -6,9 +6,14 @@ use oxc_syntax::{
     line_terminator::{CR, LF, is_line_terminator},
 };
 
-use super::Comments;
-
 /// Source text wrapper providing utilities for text analysis in the formatter.
+///
+/// All positions are `u32` UTF-8 byte offsets into `text`.
+/// This is the only hard prerequisite for any consumer:
+/// - `u32` means byte offsets, not UTF-16 code units or `char` indices
+/// - `u32` is the oxc-wide convention
+///   - `oxc_span::Span` is `u32`-based, and `oxc_parser` rejects sources longer than `u32::MAX` bytes
+///   - so casting a `usize` offset down to `u32` never truncates for parsed sources)
 #[derive(Debug, Clone, Copy)]
 pub struct SourceText<'a> {
     text: &'a str,
@@ -193,18 +198,36 @@ impl<'a> SourceText<'a> {
         // No non-whitespace characters found after position, so return `0` to avoid adding extra new lines
         0
     }
+}
 
-    /// Count line breaks between syntax nodes, considering comments and parentheses
-    pub fn get_lines_before(&self, span: Span, comments: &Comments) -> usize {
+// Language-specific methods.
+//
+// Everything above is language-neutral text scanning.
+// The methods in this block encode front-end-specific trivia rules,
+// so they are deliberately kept separate from the neutral primitives.
+//
+// Each one documents the language whose rules it implements;
+// do NOT call them from a consumer with different trivia semantics.
+impl SourceText<'_> {
+    /// Count line breaks between syntax nodes, considering comments and parentheses.
+    ///
+    /// NOTE: This encodes JS/TS leading-trivia rules.
+    /// It skips an ASI semicolon (`;(function(){});`) and discounts newlines inside non-preserved parens (`(`…`)`).
+    /// Other front-ends (JSON, ...) currently don't call it;
+    /// a consumer with different trivia semantics should not assume this is language-neutral.
+    ///
+    /// `first_unprinted_comment` is the span of the first not-yet-printed comment
+    /// (the JS front-end's `Comments::unprinted_comments().first()`), or `None`.
+    /// Only the span is needed: when that comment ends before `span.start`,
+    /// its leading trivia is included in the count.
+    pub fn get_lines_before(&self, span: Span, first_unprinted_comment: Option<Span>) -> usize {
         let mut start = span.start;
 
-        let comments = comments.unprinted_comments();
-
         // Should skip the leading comments of the node.
-        if let Some(comment) = comments.first()
-            && comment.span.end <= start
+        if let Some(comment) = first_unprinted_comment
+            && comment.end <= start
         {
-            start = comment.span.start;
+            start = comment.start;
         } else if start != 0 && matches!(self.byte_at(start - 1), Some(b';')) {
             // Skip leading semicolon if present
             // `;(function() {});`
@@ -274,8 +297,6 @@ const z = 3;
 "
         .trim();
         let source_text = SourceText::new(source_text);
-        let comments = vec![];
-        let comments = Comments::new(source_text, &comments);
 
         let span_x = Span::new(0, 12);
         let span_y = Span::new(14, 26);
@@ -284,9 +305,9 @@ const z = 3;
         assert_eq!(source_text.text_for(&span_y), "const y = 2;");
         assert_eq!(source_text.text_for(&span_z), "const z = 3;");
 
-        assert_eq!(source_text.get_lines_before(span_x, &comments), 0);
-        assert_eq!(source_text.get_lines_before(span_y, &comments), 2);
-        assert_eq!(source_text.get_lines_before(span_z, &comments), 3);
+        assert_eq!(source_text.get_lines_before(span_x, None), 0);
+        assert_eq!(source_text.get_lines_before(span_y, None), 2);
+        assert_eq!(source_text.get_lines_before(span_z, None), 3);
 
         assert_eq!(source_text.lines_after(span_x.end), 2);
         assert_eq!(source_text.lines_after(span_y.end), 3);
@@ -297,8 +318,6 @@ const z = 3;
     fn test_source_text_with_crlf() {
         let source_text = "const x = 1;\r\n\r\nconst y = 2;\r\n\r\n\r\nconst z = 3;";
         let source_text = SourceText::new(source_text);
-        let comments = vec![];
-        let comments = Comments::new(source_text, &comments);
 
         let span_x = Span::new(0, 12);
         let span_y = Span::new(16, 28);
@@ -307,8 +326,8 @@ const z = 3;
         assert_eq!(source_text.text_for(&span_y), "const y = 2;");
         assert_eq!(source_text.text_for(&span_z), "const z = 3;");
 
-        assert_eq!(source_text.get_lines_before(span_y, &comments), 2);
-        assert_eq!(source_text.get_lines_before(span_z, &comments), 3);
+        assert_eq!(source_text.get_lines_before(span_y, None), 2);
+        assert_eq!(source_text.get_lines_before(span_z, None), 3);
 
         assert_eq!(source_text.lines_after(span_x.end), 2);
         assert_eq!(source_text.lines_after(span_y.end), 3);
@@ -318,8 +337,6 @@ const z = 3;
     fn test_source_text_with_mixed_line_endings() {
         let source_text = "const x = 1;\n\r\nconst y = 2;\r\n\nconst z = 3;";
         let source_text = SourceText::new(source_text);
-        let comments = vec![];
-        let comments = Comments::new(source_text, &comments);
 
         let span_x = Span::new(0, 12);
         let span_y = Span::new(15, 27);
@@ -328,8 +345,8 @@ const z = 3;
         assert_eq!(source_text.text_for(&span_y), "const y = 2;");
         assert_eq!(source_text.text_for(&span_z), "const z = 3;");
 
-        assert_eq!(source_text.get_lines_before(span_y, &comments), 2);
-        assert_eq!(source_text.get_lines_before(span_z, &comments), 2);
+        assert_eq!(source_text.get_lines_before(span_y, None), 2);
+        assert_eq!(source_text.get_lines_before(span_z, None), 2);
 
         assert_eq!(source_text.lines_after(span_x.end), 2);
         assert_eq!(source_text.lines_after(span_y.end), 2);

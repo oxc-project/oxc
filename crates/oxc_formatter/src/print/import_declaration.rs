@@ -135,9 +135,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportDeclarati
                                         if f.context()
                                             .comments()
                                             .has_comment_before(specifier_span.start)
-                                            && f.source_text()
-                                                .get_lines_before(specifier_span, f.comments())
-                                                > 1
+                                            && f.lines_before(specifier_span) > 1
                                         {
                                             write!(f, [empty_line()]);
                                         }

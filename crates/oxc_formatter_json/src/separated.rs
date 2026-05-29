@@ -162,17 +162,16 @@ fn has_blank_line(start: u32, curr_start: u32, f: &JsonFormatter<'_, '_>) -> boo
 /// from being misread as blank-line markers in the inter-entry gap.
 fn gap_slice<'a>(start: u32, curr_start: u32, f: &JsonFormatter<'_, 'a>) -> Option<&'a [u8]> {
     let source = f.context().source_text();
-    let start_usize = start as usize;
     let end = f
         .context()
         .comments()
         .iter_before(curr_start)
         .find(|c| c.span.start >= start)
-        .map_or(curr_start as usize, |c| c.span.start as usize);
-    if end <= start_usize || end > source.len() {
+        .map_or(curr_start, |c| c.span.start);
+    if end <= start || end as usize > source.len() {
         return None;
     }
-    Some(&source.as_bytes()[start_usize..end])
+    Some(source.bytes_range(start, end))
 }
 
 /// Returns `true` if `between` (the source slice between two adjacent entries) places a blank line

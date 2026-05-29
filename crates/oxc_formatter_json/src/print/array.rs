@@ -42,11 +42,11 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
         // Group builders assert on empty content, so emit the source slice verbatim
         // which already captures the user's holes.
         if self.array.elements.iter().all(|el| matches!(el, ArrayExpressionElement::Elision(_))) {
-            let inner_start = (self.array.span.start + 1) as usize;
-            let inner_end = (self.array.span.end - 1) as usize;
+            let inner_start = self.array.span.start + 1;
+            let inner_end = self.array.span.end - 1;
             let source = f.context().source_text();
-            if inner_end > inner_start && inner_end <= source.len() {
-                write!(f, text(&source[inner_start..inner_end]));
+            if inner_end > inner_start && (inner_end as usize) <= source.len() {
+                write!(f, text(source.slice_range(inner_start, inner_end)));
             }
             write!(f, "]");
             return;
@@ -75,8 +75,8 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
                     let pe = prev_end;
                     let sep = format_with(move |f: &mut JsonFormatter<'_, 'a>| {
                         if let Some(pe_val) = pe {
-                            let between = &source[pe_val as usize..curr_start as usize];
-                            if blank_line_after_comma(between.as_bytes()) {
+                            let between = source.bytes_range(pe_val, curr_start);
+                            if blank_line_after_comma(between) {
                                 write!(f, empty_line());
                             } else {
                                 write!(f, soft_line_break_or_space());

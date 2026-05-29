@@ -27,6 +27,7 @@ mod macros;
 mod options;
 pub mod printer;
 mod simple_context;
+mod source_text;
 mod state;
 mod text_range;
 mod traits;
@@ -61,6 +62,7 @@ pub use options::{
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
 pub use simple_context::{SimpleFormatContext, SimpleFormatOptions};
+pub use source_text::SourceText;
 pub use state::FormatState;
 pub use text_range::TextRange;
 pub use traits::{FormatContext, FormatOptions};

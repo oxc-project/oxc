@@ -821,7 +821,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             }
 
             if has_dangling_comments && let Some(first_comment) = comments.first() {
-                if f.source_text().get_lines_before(first_comment.span, f.comments()) > 1 {
+                if f.lines_before(first_comment.span) > 1 {
                     write!(f, empty_line());
                 }
                 write!(

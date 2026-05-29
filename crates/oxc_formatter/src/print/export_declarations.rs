@@ -184,7 +184,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ExportSpecifier
                         // Should add empty line before the specifier if there are comments before it.
                         let specifier_span = specifier.span();
                         if f.context().comments().has_comment_before(specifier_span.start)
-                            && f.source_text().get_lines_before(specifier_span, f.comments()) > 1
+                            && f.lines_before(specifier_span) > 1
                         {
                             write!(f, [empty_line()]);
                         }

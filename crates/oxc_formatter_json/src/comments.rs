@@ -3,8 +3,9 @@ use std::cell::Cell;
 use oxc_allocator::StringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
-    Buffer, Format,
+    Buffer, Format, SourceText,
     builders::{empty_line, hard_line_break, space, text},
+    util::is_suppression_marker,
     write,
 };
 use oxc_span::Span;
@@ -71,7 +72,7 @@ impl<'a> Comments<'a> {
 /// - Other multi-line block comments normalize `\r\n` → `\n` but otherwise stay
 ///   verbatim; their first line still gets its trailing whitespace trimmed.
 pub fn write_single_comment(comment: &Comment, f: &mut JsonFormatter<'_, '_>) {
-    let content = comment.span.source_text(f.context().source_text());
+    let content = f.context().source_text().text_for(&comment.span);
 
     if !comment.is_multiline_block() {
         write!(f, text(content.trim_end()));
@@ -119,7 +120,7 @@ pub fn write_leading_comments(
     for (i, comment) in comments.iter().enumerate() {
         write_single_comment(comment, f);
         let next_pos = comments.get(i + 1).map_or(value_start, |c| c.span.start);
-        write_gap(&source.as_bytes()[comment.span.end as usize..next_pos as usize], f);
+        write_gap(source.bytes_range(comment.span.end, next_pos), f);
     }
 }
 
@@ -165,7 +166,7 @@ pub fn write_trailing_inside_comments(
     let source = f.context().source_text();
     let mut prev_end = lower_bound;
     for comment in comments {
-        write_gap(&source.as_bytes()[prev_end as usize..comment.span.start as usize], f);
+        write_gap(source.bytes_range(prev_end, comment.span.start), f);
         write_single_comment(comment, f);
         prev_end = comment.span.end;
     }
@@ -202,9 +203,9 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FormatTrailingInsideComments {
 
 /// Returns `true` if `comment` is an ignore marker (`oxfmt-ignore` / `prettier-ignore`).
 /// Mirrors `oxc_formatter`'s suppression rule so JSON honors the same authoring convention as JS/TS.
-pub fn is_suppression_comment(source: &str, comment: &Comment) -> bool {
-    let body = comment.content_span().source_text(source);
-    oxc_formatter_core::util::is_suppression_marker(body)
+pub fn is_suppression_comment(source: SourceText<'_>, comment: &Comment) -> bool {
+    let body = source.text_for(&comment.content_span());
+    is_suppression_marker(body)
 }
 
 /// Returns `true` if any pending comment up to `before` is a suppression marker.
@@ -222,7 +223,7 @@ pub struct FormatSuppressedNode(pub Span);
 impl<'a> Format<'a, JsonFormatContext<'a>> for FormatSuppressedNode {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
         write!(f, FormatLeadingComments(self.0));
-        write!(f, text(self.0.source_text(f.context().source_text())));
+        write!(f, text(f.context().source_text().text_for(&self.0)));
         // The verbatim text already includes inside-span comments;
         // advance the cursor so they aren't re-emitted as leading comments of a later node.
         let _ = f.context().comments().take_before(self.0.end);

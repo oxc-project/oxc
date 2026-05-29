@@ -88,7 +88,9 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
         // The array side does NOT do this — only objects.
         let options = f.context().options();
         let expand = match options.expand {
-            Expand::Auto => opens_on_new_line(self.object, f.context().source_text()),
+            Expand::Auto => {
+                f.context().source_text().has_newline_after_opening_brace(self.object.span.start)
+            }
             Expand::Never => false,
         };
         write!(
@@ -100,20 +102,6 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
             ]
         );
     }
-}
-
-/// Returns `true` if the source between `{` and the first property contains a newline.
-///
-/// Mirrors Prettier's `language-js` estree-printer trigger for forcing multi-line
-/// object output: `{<NL>...` keeps the object expanded, `{prop, prop}` stays inline.
-fn opens_on_new_line(object: &ObjectExpression<'_>, source: &str) -> bool {
-    let after_open = object.span.start as usize + 1;
-    let body_start =
-        object.properties.first().map_or(object.span.end as usize, |p| p.span().start as usize);
-    if body_start <= after_open || body_start > source.len() {
-        return false;
-    }
-    source[after_open..body_start].contains('\n')
 }
 
 /// Emits an object property's key, applying Prettier's `json`-parser conventions.

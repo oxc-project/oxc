@@ -158,6 +158,15 @@ impl<'a> Comments<'a> {
         &self.inner[self.printed_count..end]
     }
 
+    /// Returns the span of the first not-yet-printed comment, if any.
+    ///
+    /// Used by [`SourceText::get_lines_before`], which only needs that comment's
+    /// span (not the `Comment` itself) to skip leading trivia.
+    #[inline]
+    pub fn first_unprinted_span(&self) -> Option<Span> {
+        self.unprinted_comments().first().map(|c| c.span)
+    }
+
     /// Returns comments that have already been printed.
     #[inline]
     pub fn printed_comments(&self) -> &'a [Comment] {
