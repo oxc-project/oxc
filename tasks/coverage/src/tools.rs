@@ -18,10 +18,10 @@ use oxc::{
 };
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_pretty_json};
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, Formatter,
-    JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas, get_parse_options,
+    ArrowParentheses, AttributePosition, BracketSameLine, Formatter, JsFormatOptions,
+    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas, get_parse_options,
 };
-use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
 use rayon::prelude::*;
 
 use crate::{

@@ -57,8 +57,8 @@ pub use formatted::Formatted;
 pub use formatter::Formatter;
 pub use group_id::{GroupId, UniqueGroupIdBuilder};
 pub use options::{
-    IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,
-    LineWidthFromIntError, ParseFormatNumberError,
+    BracketSpacing, Expand, IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding,
+    LineWidth, LineWidthFromIntError, ParseFormatNumberError,
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
 pub use simple_context::{SimpleFormatContext, SimpleFormatOptions};

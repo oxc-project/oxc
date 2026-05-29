@@ -1,5 +1,5 @@
-use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
-use oxc_formatter_json::{Expand, JsonFormatOptions, JsonVariant};
+use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 
 use super::super::oxfmtrc::{EndOfLineConfig, FormatConfig, ObjectWrapConfig};
 
@@ -41,7 +41,7 @@ pub fn to_oxc_formatter_json(
     }
     // [Prettier] bracketSpacing: boolean
     if let Some(spacing) = config.bracket_spacing {
-        options.bracket_spacing = spacing;
+        options.bracket_spacing = BracketSpacing::from(spacing);
     }
     // [Prettier] objectWrap: "preserve" | "collapse"
     if let Some(wrap) = config.object_wrap {

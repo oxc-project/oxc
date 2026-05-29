@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
 
 /// JS-facing alias for the language-agnostic [`oxc_formatter_core::util::Quote`].
 /// Kept as `QuoteStyle` so existing public API (`JsFormatOptions::quote_style`)
@@ -583,49 +583,6 @@ impl FromStr for AttributePosition {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct BracketSpacing(bool);
-
-impl BracketSpacing {
-    /// Return the boolean value for this [BracketSpacing]
-    pub fn value(self) -> bool {
-        self.0
-    }
-}
-
-impl Default for BracketSpacing {
-    fn default() -> Self {
-        Self(true)
-    }
-}
-
-impl From<bool> for BracketSpacing {
-    fn from(value: bool) -> Self {
-        Self(value)
-    }
-}
-
-impl fmt::Display for BracketSpacing {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        fmt::Display::fmt(&self.value(), f)
-    }
-}
-
-impl FromStr for BracketSpacing {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let value = bool::from_str(s);
-
-        match value {
-            Ok(value) => Ok(Self(value)),
-            Err(_) => Err(
-                "Value not supported for BracketSpacing. Supported values are 'true' and 'false'.",
-            ),
-        }
-    }
-}
-
 /// Put the `>` of a multi-line HTML or JSX element at the end of the last line instead of being alone on the next line (does not apply to self closing elements).
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct BracketSameLine(bool);
@@ -659,38 +616,6 @@ impl FromStr for BracketSameLine {
                 "Value not supported for BracketSameLine. Supported values are 'true' and 'false'.",
             ),
         }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum Expand {
-    /// Objects are expanded when the first property has a leading newline. Arrays are always
-    /// expanded if they are shorter than the line width.
-    #[default]
-    Auto,
-    /// Objects and arrays are never expanded, if they are shorter than the line width.
-    Never,
-}
-
-impl FromStr for Expand {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "auto" => Ok(Self::Auto),
-            "never" => Ok(Self::Never),
-            _ => Err(std::format!("unknown expand literal: {s}")),
-        }
-    }
-}
-
-impl fmt::Display for Expand {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Expand::Auto => "Auto",
-            Expand::Never => "Never",
-        };
-        f.write_str(s)
     }
 }
 

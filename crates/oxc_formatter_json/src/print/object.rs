@@ -1,6 +1,6 @@
 use oxc_ast::ast::{ObjectExpression, ObjectPropertyKind, PropertyKey};
 use oxc_formatter_core::{
-    Buffer, Format, FormatContext,
+    Buffer, Expand, Format, FormatContext,
     builders::{block_indent, group, soft_block_indent_with_maybe_space, space, text},
     util::{NumberFormatOptions, format_trimmed_number, is_simple_number},
     write,
@@ -14,7 +14,6 @@ use crate::{
         is_suppressed_before, write_dangling_comments,
     },
     context::JsonFormatContext,
-    options::Expand,
 };
 
 use crate::separated::{TrailingSeparator, write_separated};
@@ -96,8 +95,11 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
         write!(
             f,
             [
-                group(&soft_block_indent_with_maybe_space(&properties, options.bracket_spacing))
-                    .should_expand(expand),
+                group(&soft_block_indent_with_maybe_space(
+                    &properties,
+                    options.bracket_spacing.value(),
+                ))
+                .should_expand(expand),
                 "}"
             ]
         );

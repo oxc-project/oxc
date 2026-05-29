@@ -1,5 +1,6 @@
 use oxc_formatter_core::{
-    FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions,
+    BracketSpacing, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth,
+    PrinterOptions,
 };
 
 /// JSON parser variant.
@@ -32,43 +33,15 @@ pub enum JsonVariant {
     JsonStringify,
 }
 
-/// Whether objects keep their authored multi-line shape or collapse to one line when they fit.
-/// Mirrors Prettier's `objectWrap` option for the `json` parser.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-pub enum Expand {
-    /// `objectWrap: "preserve"`.
-    /// An object stays multi-line if there's a newline after `{` in the source;
-    /// otherwise it collapses when it fits.
-    #[default]
-    Auto,
-    /// `objectWrap: "collapse"`.
-    /// Objects collapse when they fit regardless of the authored shape.
-    Never,
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct JsonFormatOptions {
     pub indent_style: IndentStyle,
     pub indent_width: IndentWidth,
     pub line_width: LineWidth,
     pub line_ending: LineEnding,
     pub variant: JsonVariant,
-    pub bracket_spacing: bool,
+    pub bracket_spacing: BracketSpacing,
     pub expand: Expand,
-}
-
-impl Default for JsonFormatOptions {
-    fn default() -> Self {
-        Self {
-            indent_style: IndentStyle::default(),
-            indent_width: IndentWidth::default(),
-            line_width: LineWidth::default(),
-            line_ending: LineEnding::default(),
-            variant: JsonVariant::default(),
-            bracket_spacing: true,
-            expand: Expand::default(),
-        }
-    }
 }
 
 impl FormatOptions for JsonFormatOptions {

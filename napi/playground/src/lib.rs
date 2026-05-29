@@ -29,12 +29,12 @@ use oxc::{
     transformer::{TransformOptions, Transformer},
 };
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    Expand, Formatter, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
-    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas,
-    default_groups, default_internal_patterns, get_parse_options,
+    ArrowParentheses, AttributePosition, BracketSameLine, CustomGroupDefinition, Formatter,
+    GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties, QuoteStyle,
+    Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
+    default_internal_patterns, get_parse_options,
 };
-use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
     LintOptions, Linter, ModuleRecord, Oxlintrc,

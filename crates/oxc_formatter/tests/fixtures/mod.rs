@@ -2,11 +2,11 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    ArrowParentheses, BracketSameLine, BracketSpacing, Formatter, JsFormatOptions, JsdocOptions,
-    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas, get_parse_options,
+    ArrowParentheses, BracketSameLine, Formatter, JsFormatOptions, JsdocOptions, QuoteProperties,
+    QuoteStyle, Semicolons, TrailingCommas, get_parse_options,
 };
 use oxc_formatter_core::{
-    IndentStyle, IndentWidth, LineEnding, LineWidth,
+    BracketSpacing, IndentStyle, IndentWidth, LineEnding, LineWidth,
     test_support::{FixtureFormatter, OptionSet, build_fixture_snapshot},
 };
 use oxc_parser::Parser;

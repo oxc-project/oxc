@@ -2,10 +2,10 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter_core::{
-    IndentStyle, IndentWidth, LineEnding, LineWidth,
+    BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth,
     test_support::{FixtureFormatter, OptionSet, build_fixture_snapshot},
 };
-use oxc_formatter_json::{Expand, JsonFormatOptions, JsonVariant, format};
+use oxc_formatter_json::{JsonFormatOptions, JsonVariant, format};
 
 struct JsonHarness;
 
@@ -60,7 +60,7 @@ impl FixtureFormatter for JsonHarness {
                 }
                 "bracketSpacing" => {
                     if let Some(b) = value.as_bool() {
-                        options.bracket_spacing = b;
+                        options.bracket_spacing = BracketSpacing::from(b);
                     }
                 }
                 "objectWrap" => {
