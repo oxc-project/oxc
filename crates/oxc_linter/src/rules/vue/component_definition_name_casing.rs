@@ -1,6 +1,9 @@
 use std::ops::Deref;
 
 use cow_utils::CowUtils;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, ObjectExpression},
@@ -8,12 +11,11 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
     context::LintContext,
+    frameworks::FrameworkOptions,
     rule::Rule,
     utils::{find_property, is_vue_component_options_object},
 };
@@ -131,6 +133,7 @@ impl ComponentDefinitionNameCasing {
         // `defineOptions({ name: '...' })`
         if let Some(ident) = call.callee.get_identifier_reference()
             && ident.name == "defineOptions"
+            && ctx.frameworks_options() == FrameworkOptions::VueSetup
             && let Some(arg) = call.arguments.first()
             && let Some(Expression::ObjectExpression(obj)) = arg.as_expression()
         {
@@ -287,6 +290,10 @@ fn capitalize(s: &str) -> String {
     }
 }
 
+fn is_regex_word(c: char) -> bool {
+    c.is_ascii_alphanumeric() || c == '_'
+}
+
 /// `camelCase(str)` mirrors upstream:
 /// - if PascalCase: lowercase the first char
 /// - else: replace `[-_](\w)` with `\w` uppercased
@@ -300,18 +307,15 @@ fn camel_case(s: &str) -> String {
     }
 
     let mut out = String::with_capacity(s.len());
-    let mut to_upper = false;
-    for c in s.chars() {
-        if matches!(c, '-' | '_') {
-            to_upper = true;
-            continue;
-        }
-        if to_upper {
-            // Upstream uses `\w` which matches [A-Za-z0-9_]. After
-            // `[-_]`, `_` is not possible here (already consumed), so
-            // uppercasing letters/digits is sufficient.
-            out.extend(c.to_uppercase());
-            to_upper = false;
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        if matches!(c, '-' | '_')
+            && let Some(next) = chars.peek()
+            && is_regex_word(*next)
+        {
+            if let Some(next) = chars.next() {
+                out.extend(next.to_uppercase());
+            }
         } else {
             out.push(c);
         }
@@ -330,14 +334,10 @@ fn kebab_case(s: &str) -> String {
     for (i, c) in step1.chars().enumerate() {
         if c.is_ascii_uppercase() && i > 0 {
             // `\B` = not at a word boundary. At index 0 we are at a
-            // boundary, otherwise we need to check whether the previous
-            // char is a word char. Since this rule's inputs are component
-            // names (letters / digits / `-` / `_` / `$`), in practice
-            // previous chars after the leading position behave like the
-            // upstream regex.
+            // boundary. For `[A-Z]`, this is true only when the previous
+            // char is also a JavaScript `\w` char.
             let prev = out.chars().last();
-            let at_boundary =
-                prev.is_none_or(|p| !p.is_ascii_alphanumeric() && p != '_' && p != '$');
+            let at_boundary = prev.is_none_or(|p| !is_regex_word(p));
             if !at_boundary {
                 out.push('-');
             }
@@ -480,6 +480,9 @@ fn test() {
         // https://github.com/vuejs/eslint-plugin-vue/issues/1018
         ("fn1(component.data)", None, None, js()),
         ("<script setup> defineOptions({}) </script>", None, None, vue()),
+        ("<script> defineOptions({name: 'foo-bar'}) </script>", None, None, vue()),
+        ("defineOptions({name: 'foo-bar'})", None, None, js()),
+        ("<template>{{ Vue.component('foo-bar', {}) }}</template>", None, None, vue()),
         (
             "<script setup> defineOptions({name: 'FooBar'}) </script>",
             Some(serde_json::json!(["PascalCase"])),
@@ -584,6 +587,13 @@ fn test() {
         ),
         (
             "<script>Vue.component(`foo_bar`, {})</script>",
+            Some(serde_json::json!(["kebab-case"])),
+            None,
+            vue(),
+        ),
+        ("<script>Vue.component('foo-é', {})</script>", None, None, vue()),
+        (
+            "<script>Vue.component('$Foo', {})</script>",
             Some(serde_json::json!(["kebab-case"])),
             None,
             vue(),
@@ -704,6 +714,12 @@ fn test() {
         (
             "<script>Vue.component(`foo_bar`, {})</script>",
             "<script>Vue.component(`foo-bar`, {})</script>",
+            Some(serde_json::json!(["kebab-case"])),
+            vue(),
+        ),
+        (
+            "<script>Vue.component('$Foo', {})</script>",
+            "<script>Vue.component('$foo', {})</script>",
             Some(serde_json::json!(["kebab-case"])),
             vue(),
         ),

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 490
 ---
 
   ⚠ vue(component-definition-name-casing): Property name "foo-bar" is not PascalCase.
@@ -118,6 +117,19 @@ assertion_line: 490
    ·                       ─────────
    ╰────
   help: Replace `foo_bar` with `foo-bar`.
+
+  ⚠ vue(component-definition-name-casing): Property name "foo-é" is not PascalCase.
+   ╭─[component_definition_name_casing.tsx:1:23]
+ 1 │ <script>Vue.component('foo-é', {})</script>
+   ·                       ───────
+   ╰────
+
+  ⚠ vue(component-definition-name-casing): Property name "$Foo" is not kebab-case.
+   ╭─[component_definition_name_casing.tsx:1:23]
+ 1 │ <script>Vue.component('$Foo', {})</script>
+   ·                       ──────
+   ╰────
+  help: Replace `$Foo` with `$foo`.
 
   ⚠ vue(component-definition-name-casing): Property name "foo-bar" is not PascalCase.
    ╭─[component_definition_name_casing.tsx:1:37]
