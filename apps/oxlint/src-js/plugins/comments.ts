@@ -58,9 +58,6 @@ let previousComments: Comment[] = [];
 const commentsWithLoc: Comment[] = [];
 let activeCommentsWithLocCount = 0;
 
-// Map from `Comment` instances to their computed `Location` objects.
-const commentsLoc = new WeakMap<Comment, Location>();
-
 // Tracks indices of deserialized comments so their `value` can be cleared on reset,
 // preventing source text strings from being held alive by stale `value` slices.
 //
@@ -85,22 +82,25 @@ const EMPTY_COMMENTS: CommentType[] = Object.freeze([]) as unknown as CommentTyp
 const COMMENT_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Comment` in Rust
 debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);
 
-// Reset `commentsLoc` field on a `Comment` class instance.
+// Reset `#loc` field on a `Comment` class instance.
 // Copied into a `const` below after being defined in class static block.
 let resetCommentLocTemp: (comment: Comment) => void;
 
-// Get `commentsLoc` entry for a `Comment` class instance.
+// Get `#loc` on a `Comment` class instance.
 // Only used in debug build (tests).
 let getCommentPrivateLoc: (comment: Comment) => Location | null;
 
 /**
  * Comment class.
  *
- * Creates `loc` lazily and caches it in a WeakMap.
- * Using a class and an associated WeakMap avoids hidden class transitions that would occur
- * with Object.defineProperty / delete on plain objects.
- * All Comment instances always have the same V8 hidden class, keeping property access monomorphic.
- * Uses a Proxy to make `loc` enumerable for spread operations while keeping internal storage private.
+ * `loc` is defined as an own accessor property via `Object.defineProperty` in the constructor,
+ * using a shared descriptor (`#LOC_DESC`). This makes `loc` an own enumerable property,
+ * so `{...comment}` spreads it and `JSON.stringify(comment)` serializes it, without needing
+ * a Proxy or `toJSON()`.
+ *
+ * The computed `Location` value is cached in the private `#loc` field on first access.
+ * All instances share the same getter function via the static descriptor, keeping the V8
+ * hidden class transition identical across instances. Reset only clears the `#loc` field.
  */
 class Comment implements Span {
   type: CommentType["type"] = null!; // Overwritten later
@@ -108,54 +108,45 @@ class Comment implements Span {
   start: number = 0;
   end: number = 0;
   range: [number, number] = [0, 0];
+  loc: Location = null!; // Overwritten by Object.defineProperty at construction time
+
+  #loc: Location | null = null;
 
   constructor() {
-    // Make `loc` property enumerable and support spread syntax.
-    // So `for (const key in comment) ...` includes `loc` and `...comment` spreads `loc`.
-    return new Proxy(this, {
-      ownKeys(obj) {
-        return [...Reflect.ownKeys(obj), "loc"];
-      },
-      getOwnPropertyDescriptor(comment, prop) {
-        if (prop === "loc") {
-          return {
-            configurable: true,
-            enumerable: true,
-            get: () => comment.loc,
-          };
-        }
-        return Reflect.getOwnPropertyDescriptor(comment, prop);
-      },
-    });
+    // Define `loc` as an own accessor property with a shared getter.
+    // This makes `loc` enumerable, so `{...comment}` spreads it and `JSON.stringify` serializes it.
+    Object.defineProperty(this, "loc", Comment.#LOC_DESC);
   }
 
-  get loc(): Location {
-    let loc = commentsLoc.get(this);
-    if (loc !== undefined) return loc;
+  static #LOC_DESC = {
+    get(this: Comment): Location {
+      let loc = this.#loc;
+      if (loc !== null) return loc;
 
-    // Store computed loc in `commentsLoc` WeakMap and comment in `commentsWithLoc` array.
-    // `resetComments` will clear the `commentsLoc` entry.
-    commentsLoc.set(this, (loc = computeLoc(this.start, this.end)));
-    // Note: The comparison `activeCommentsWithLocCount < commentsWithLoc.length` must be this way around
-    // so that V8 can remove the bounds check on `commentsWithLoc[activeCommentsWithLocCount]`.
-    // `commentsWithLoc.length > activeCommentsWithLocCount` would *not* remove the bounds check in Maglev compiler.
-    if (activeCommentsWithLocCount < commentsWithLoc.length) {
-      commentsWithLoc[activeCommentsWithLocCount] = this;
-    } else {
-      commentsWithLoc.push(this);
-    }
-    activeCommentsWithLocCount++;
+      this.#loc = loc = computeLoc(this.start, this.end);
+      // Note: The comparison `activeCommentsWithLocCount < commentsWithLoc.length` must be this way around
+      // so that V8 can remove the bounds check on `commentsWithLoc[activeCommentsWithLocCount]`.
+      // `commentsWithLoc.length > activeCommentsWithLocCount` would *not* remove the bounds check in Maglev compiler.
+      if (activeCommentsWithLocCount < commentsWithLoc.length) {
+        commentsWithLoc[activeCommentsWithLocCount] = this;
+      } else {
+        commentsWithLoc.push(this);
+      }
+      activeCommentsWithLocCount++;
 
-    return loc;
-  }
+      return loc;
+    },
+    enumerable: true,
+    configurable: true,
+  };
 
   static {
     // Defined in static block to avoid exposing this as a public method
     resetCommentLocTemp = (comment: Comment) => {
-      commentsLoc.delete(comment);
+      comment.#loc = null;
     };
 
-    if (DEBUG) getCommentPrivateLoc = (comment: Comment) => commentsLoc.get(comment) ?? null;
+    if (DEBUG) getCommentPrivateLoc = (comment: Comment) => comment.#loc;
   }
 }
 
@@ -445,7 +436,7 @@ export function resetComments(): void {
     );
   }
 
-  // Reset `commentsLoc` entry on comments where `loc` has been accessed
+  // Reset `#loc` on comments where `loc` has been accessed
   for (let i = 0; i < activeCommentsWithLocCount; i++) {
     resetCommentLoc(commentsWithLoc[i]);
   }
