@@ -320,6 +320,13 @@ pub fn declare_in_ambient_context(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn declaration_single_statement(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Declaration cannot appear in a single-statement context")
+        .with_help("Wrap this declaration in a block statement")
+        .with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)

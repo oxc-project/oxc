@@ -3,7 +3,7 @@ commit: e5509e21
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1628/2640 (61.67%)
+Negative Passed: 1630/2640 (61.74%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -900,15 +900,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/this_inside-
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/topLevelLambda.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeCheckingInsideFunctionExpressionInArray.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeGuardConstructorClassAndNumber.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeGuardConstructorDerivedClass.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeInterfaceDeclarationsInBlockStatements1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeOfEnumAndVarRedeclarations.ts
 
@@ -13396,6 +13392,33 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ╰── A newline is not expected here
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts:3:9]
+ 2 │     for (let i = 0; i < 1; i++)
+ 3 │         type foo = [];
+   ·         ──────────────
+ 4 │         console.log('f1');
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts:9:9]
+  8 │     while (true)
+  9 │         type foo = [];
+    ·         ──────────────
+ 10 │         console.log('f2');
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts:15:9]
+ 14 │     if (true)
+ 15 │         type foo = [];
+    ·         ──────────────
+ 16 │         console.log('f3');
+    ╰────
+  help: Wrap this declaration in a block statement
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/typeAliasDeclareKeywordNewlines.ts:5:8]
  4 │ // The following is invalid but should declare a type alias named 'T1':
@@ -13404,6 +13427,25 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ T1 = null;
    ╰────
   help: Try inserting a semicolon here
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/typeInterfaceDeclarationsInBlockStatements1.ts:4:13]
+ 3 │ function f1() {
+ 4 │   if (true) type s = string;
+   ·             ────────────────
+ 5 │   console.log("" as s);
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/typeInterfaceDeclarationsInBlockStatements1.ts:17:5]
+ 16 │       if (true)
+ 17 │ ╭─▶     interface s {
+ 18 │ │         length: number;
+ 19 │ ╰─▶     }
+ 20 │       console.log("" as s);
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × TS(2457): Type alias name cannot be 'undefined'
    ╭─[typescript/tests/cases/compiler/typeNamedUndefined1.ts:3:17]
@@ -28697,6 +28739,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ label: enum E {}
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:4:8]
+ 3 │ label: async function gen1() { }
+ 4 │ label: enum E {}
+   ·        ─────────
+ 5 │ label: interface I {}
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:5:8]
+ 4 │ label: enum E {}
+ 5 │ label: interface I {}
+   ·        ──────────────
+ 6 │ label: class C { }
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × Invalid class declaration
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:6:8]
  5 │ label: interface I {}
@@ -28731,6 +28791,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ label: enum E {}
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:4:8]
+ 3 │ label: async function gen1() { }
+ 4 │ label: enum E {}
+   ·        ─────────
+ 5 │ label: interface I {}
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:5:8]
+ 4 │ label: enum E {}
+ 5 │ label: interface I {}
+   ·        ──────────────
+ 6 │ label: class C { }
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × Invalid class declaration
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:6:8]
  5 │ label: interface I {}
@@ -28764,6 +28842,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·        ─────────────────────
  5 │ label: enum E {}
    ╰────
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:5:8]
+ 4 │ label: async function gen1() { }
+ 5 │ label: enum E {}
+   ·        ─────────
+ 6 │ label: interface I {}
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:6:8]
+ 5 │ label: enum E {}
+ 6 │ label: interface I {}
+   ·        ──────────────
+ 7 │ label: class C { }
+   ╰────
+  help: Wrap this declaration in a block statement
 
   × Invalid class declaration
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:7:8]
