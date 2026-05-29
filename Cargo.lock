@@ -2183,6 +2183,7 @@ dependencies = [
  "itertools",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_data_structures",
  "oxc_index",
  "oxc_parser",
