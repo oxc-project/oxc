@@ -119,19 +119,14 @@ impl ComponentDefinitionNameCasing {
 
         // `Vue.component('Name', ...)` / `app.component('Name', ...)` /
         // `(Vue as VueConstructor<Vue>).component('Name', ...)`
-        let Some(member_expr) = call.callee.get_inner_expression().as_member_expression() else {
-            return;
-        };
-        let Some(prop_name) = member_expr.static_property_name() else {
-            return;
-        };
-        if prop_name != "component" || call.arguments.len() != 2 {
-            return;
+        if let Some(member_expr) = call.callee.get_inner_expression().as_member_expression()
+            && member_expr.static_property_name().is_some_and(|prop_name| prop_name == "component")
+            && call.arguments.len() == 2
+            && let Some(first_arg) = call.arguments.first()
+            && let Some(first_expr) = first_arg.as_expression()
+        {
+            self.check_name_node(first_expr, ctx);
         }
-
-        let Some(first_arg) = call.arguments.first() else { return };
-        let Some(first_expr) = first_arg.as_expression() else { return };
-        self.check_name_node(first_expr, ctx);
     }
 
     fn check_options_object<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
