@@ -10,7 +10,7 @@ use base54::base54;
 use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
-use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
+use oxc_semantic::{Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
 use oxc_span::SourceType;
 use oxc_str::{CompactStr, Ident, Str};
 
@@ -309,7 +309,7 @@ impl<'t> Mangler<'t> {
         program: &Program<'_>,
         generate_name: G,
     ) {
-        let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
+        let scoping = semantic.scoping_mut();
         let symbols_len = scoping.symbols_len();
 
         let temp_allocator = self.temp_allocator.as_ref();
@@ -324,7 +324,7 @@ impl<'t> Mangler<'t> {
             self.options.keep_names,
             temp_allocator,
             scoping,
-            ast_nodes,
+            program,
         );
 
         // All symbols with their assigned slots. Keyed by symbol id.
@@ -418,16 +418,12 @@ impl<'t> Mangler<'t> {
             for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
                 slots[symbol_id.index()] = assigned_slot;
 
-                // If the symbol is declared by `var`, then it can be hoisted to
-                // parent, so we need to include the scope where it is declared.
-                // (for cases like `function foo() { { var x; let y; } }`)
-                let declared_scope_id =
-                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
-
-                let redeclared_scope_ids = scoping
-                    .symbol_redeclarations(symbol_id)
-                    .iter()
-                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
+                // If the symbol is declared by `var` (or an Annex B function), it is hoisted out
+                // of its lexical scope, so we must also include the scope(s) where it is lexically
+                // declared (e.g. `function foo() { { var x; let y; } }`). `Scoping` records these
+                // during the build; the list is empty for non-hoisted symbols, where the
+                // registered `scope_id` (below) already covers it.
+                let hoisted_declaration_scopes = scoping.get_hoisted_declaration_scopes(symbol_id);
 
                 let referenced_scope_ids =
                     scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
@@ -437,8 +433,8 @@ impl<'t> Mangler<'t> {
                 // that are descendants of scope_id (i.e., not in ancestor_set and not scope_id itself).
                 let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
                 for used_scope_id in referenced_scope_ids
-                    .chain(redeclared_scope_ids)
-                    .chain([scope_id, declared_scope_id])
+                    .chain(hoisted_declaration_scopes.iter().copied())
+                    .chain([scope_id])
                 {
                     for ancestor_id in scoping.scope_ancestors(used_scope_id) {
                         let ancestor_index = ancestor_id.index();
@@ -474,14 +470,12 @@ impl<'t> Mangler<'t> {
             // The shadower-slot guard catches the case where the shadower is in
             // `keep_name_symbols` (filtered out above and itself unassigned).
             if scoping.scope_flags(scope_id).is_function()
-                && let Some(func) = ast_nodes.kind(scoping.get_node_id(scope_id)).as_function()
-                && func.is_expression()
-                && let Some(id) = &func.id
-                && let Some(&shadower) = bindings.get(&id.name)
-                && shadower != id.symbol_id()
+                && let Some(fn_symbol_id) = scoping.get_fn_expr_name_symbol(scope_id)
+                && let Some(&shadower) = bindings.get(&scoping.symbol_ident(fn_symbol_id))
+                && shadower != fn_symbol_id
                 && slots[shadower.index()] != SLOT_UNASSIGNED
             {
-                slots[id.symbol_id().index()] = slots[shadower.index()];
+                slots[fn_symbol_id.index()] = slots[shadower.index()];
             }
         }
 
@@ -662,12 +656,12 @@ impl<'t> Mangler<'t> {
         keep_names: MangleOptionsKeepNames,
         temp_allocator: &'t Allocator,
         scoping: &'a Scoping,
-        nodes: &AstNodes,
+        program: &Program,
     ) -> (FxHashSet<&'a str>, Option<BitSet<'t>>) {
         if !keep_names.function && !keep_names.class {
             return (FxHashSet::default(), None);
         }
-        let ids = collect_name_symbols(keep_names, temp_allocator, scoping, nodes);
+        let ids = collect_name_symbols(keep_names, temp_allocator, scoping, program);
         (ids.ones().map(|id| scoping.symbol_name(SymbolId::from_usize(id))).collect(), Some(ids))
     }
 

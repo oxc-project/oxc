@@ -1,7 +1,8 @@
 use oxc_allocator::{Allocator, BitSet};
-
 use oxc_ast::{AstKind, ast::*};
-use oxc_semantic::{AstNode, AstNodes, ReferenceId, Scoping, SymbolId};
+use oxc_ast_visit::Visit;
+use oxc_semantic::{ReferenceId, Scoping, SymbolId};
+use rustc_hash::FxHashSet;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct MangleOptionsKeepNames {
@@ -32,100 +33,134 @@ impl From<bool> for MangleOptionsKeepNames {
     }
 }
 
+/// Collect, in a single AST traversal, the symbols whose `name` property must be preserved when
+/// `keep_names` is enabled (a function/class assigned to a binding, e.g. `var foo = function () {}`
+/// or `foo = class {}`).
+///
+/// This is node-driven (a `Visit` over `program`) so the mangler does not depend on `Semantic`'s
+/// node vec. It is only invoked when `keep_names` requests function and/or class name preservation,
+/// so the common path pays nothing.
 pub fn collect_name_symbols<'a>(
     options: MangleOptionsKeepNames,
     allocator: &'a Allocator,
     scoping: &Scoping,
-    ast_nodes: &AstNodes,
+    program: &Program,
 ) -> BitSet<'a> {
-    let collector = NameSymbolCollector::new(options, allocator, scoping, ast_nodes);
-    collector.collect()
+    let mut collector = NameSymbolCollector {
+        options,
+        scoping,
+        ancestors: Vec::new(),
+        symbol_ids: FxHashSet::default(),
+    };
+    collector.visit_program(program);
+
+    let mut symbol_ids = BitSet::new_in(scoping.symbols_len(), allocator);
+    for symbol_id in collector.symbol_ids {
+        symbol_ids.set_bit(symbol_id.index());
+    }
+    symbol_ids
 }
 
 /// Collects symbols that are used to set `name` properties of functions and classes.
-struct NameSymbolCollector<'a, 'b, 't> {
+struct NameSymbolCollector<'a, 's> {
     options: MangleOptionsKeepNames,
-    scoping: &'b Scoping,
-    ast_nodes: &'b AstNodes<'a>,
-    allocator: &'t Allocator,
+    scoping: &'s Scoping,
+    /// Ancestors of the node being visited; the top is the parent. Used to find the assignment
+    /// surrounding an `IdentifierReference`.
+    ancestors: Vec<AstKind<'a>>,
+    symbol_ids: FxHashSet<SymbolId>,
 }
 
-impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
-    fn new(
-        options: MangleOptionsKeepNames,
-        allocator: &'t Allocator,
-        scoping: &'b Scoping,
-        ast_nodes: &'b AstNodes<'a>,
-    ) -> Self {
-        Self { options, scoping, ast_nodes, allocator }
-    }
-
-    fn collect(self) -> BitSet<'t> {
-        let mut symbol_ids = BitSet::new_in(self.scoping.symbols_len(), self.allocator);
-        self.scoping
-            .symbol_ids()
-            .filter(|symbol_id| {
-                let decl_node =
-                    self.ast_nodes.get_node(self.scoping.symbol_declaration(*symbol_id));
-                self.is_name_set_declare_node(decl_node, *symbol_id)
-                    || self.has_name_set_reference_node(*symbol_id)
-            })
-            .for_each(|symbol_id| symbol_ids.set_bit(symbol_id.index()));
-        symbol_ids
-    }
-
-    fn has_name_set_reference_node(&self, symbol_id: SymbolId) -> bool {
-        self.scoping
-            .get_resolved_reference_ids(symbol_id)
-            .iter()
-            .any(|&reference_id| self.is_name_set_reference_node(reference_id))
-    }
-
-    fn is_name_set_declare_node(&self, node: &'a AstNode, symbol_id: SymbolId) -> bool {
-        match node.kind() {
-            AstKind::Function(function) => {
-                self.options.function
-                    && function.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
-            }
-            AstKind::Class(cls) => {
-                self.options.class && cls.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
-            }
-            AstKind::VariableDeclarator(decl) => {
-                if let BindingPattern::BindingIdentifier(id) = &decl.id
-                    && id.symbol_id() == symbol_id
+impl<'a> Visit<'a> for NameSymbolCollector<'a, '_> {
+    fn enter_node(&mut self, kind: AstKind<'a>) {
+        match kind {
+            // `function foo() {}` / `class Foo {}`
+            AstKind::Function(func) => {
+                if self.options.function
+                    && let Some(id) = &func.id
                 {
-                    return decl
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
+                    self.symbol_ids.insert(id.symbol_id());
                 }
-                if let Some(assign_pattern) =
-                    Self::find_assign_binding_pattern_kind_of_specific_symbol(&decl.id, symbol_id)
-                {
-                    return self.is_expression_whose_name_needs_to_be_kept(&assign_pattern.right);
-                }
-                false
             }
-            _ => false,
+            AstKind::Class(class) => {
+                if self.options.class
+                    && let Some(id) = &class.id
+                {
+                    self.symbol_ids.insert(id.symbol_id());
+                }
+            }
+            AstKind::VariableDeclarator(declarator) => self.collect_declarator(declarator),
+            AstKind::IdentifierReference(reference) => self.collect_reference(reference),
+            _ => {}
+        }
+        self.ancestors.push(kind);
+    }
+
+    fn leave_node(&mut self, _kind: AstKind<'a>) {
+        self.ancestors.pop();
+    }
+}
+
+impl<'a> NameSymbolCollector<'a, '_> {
+    /// Mark symbols whose `name` is set by a declaration (`var foo = function () {}`,
+    /// `var [foo = function () {}] = []`, ...).
+    fn collect_declarator(&mut self, declarator: &VariableDeclarator<'a>) {
+        // `var foo = function () {}`
+        if let BindingPattern::BindingIdentifier(id) = &declarator.id
+            && let Some(init) = &declarator.init
+            && is_expression_whose_name_needs_to_be_kept(self.options, init)
+        {
+            self.symbol_ids.insert(id.symbol_id());
+        }
+        // Default values in destructuring patterns: `var [foo = function () {}] = []`
+        self.collect_pattern_defaults(&declarator.id);
+    }
+
+    fn collect_pattern_defaults(&mut self, pattern: &BindingPattern<'a>) {
+        match pattern {
+            BindingPattern::BindingIdentifier(_) => {}
+            BindingPattern::ObjectPattern(object_pattern) => {
+                for property in &object_pattern.properties {
+                    self.collect_pattern_defaults(&property.value);
+                }
+            }
+            BindingPattern::ArrayPattern(array_pattern) => {
+                for element in array_pattern.elements.iter().flatten() {
+                    self.collect_pattern_defaults(element);
+                }
+            }
+            BindingPattern::AssignmentPattern(assignment_pattern) => {
+                if let BindingPattern::BindingIdentifier(id) = &assignment_pattern.left
+                    && is_expression_whose_name_needs_to_be_kept(
+                        self.options,
+                        &assignment_pattern.right,
+                    )
+                {
+                    self.symbol_ids.insert(id.symbol_id());
+                }
+                self.collect_pattern_defaults(&assignment_pattern.left);
+            }
         }
     }
 
-    fn is_name_set_reference_node(&self, reference_id: ReferenceId) -> bool {
-        let node_id = self.scoping.get_reference(reference_id).node_id();
-        let parent_node_id = self.ast_nodes.parent_id(node_id);
-        match self.ast_nodes.kind(parent_node_id) {
-            // Check for direct assignment: foo = function() {}
+    /// Mark a symbol whose `name` is set via assignment to one of its references
+    /// (`foo = function () {}`, `[foo = function () {}] = []`, `{ foo = function () {} } = {}`).
+    fn collect_reference(&mut self, reference: &IdentifierReference<'a>) {
+        let reference_id = reference.reference_id();
+        let Some(parent) = self.ancestors.last().copied() else { return };
+        let needs_keep = match parent {
+            // `foo = function () {}`
             AstKind::AssignmentExpression(assign_expr) => {
-                Self::is_assignment_target_id_of_specific_reference(&assign_expr.left, reference_id)
-                    && self.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
+                is_assignment_target_id_of_specific_reference(&assign_expr.left, reference_id)
+                    && is_expression_whose_name_needs_to_be_kept(self.options, &assign_expr.right)
             }
-            // Check for assignments within assignment targets with defaults: [foo = function() {}] = []
+            // `[foo = function () {}] = []`
             AstKind::AssignmentTargetWithDefault(assign_target) => {
-                Self::is_assignment_target_id_of_specific_reference(
-                    &assign_target.binding,
-                    reference_id,
-                ) && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
+                is_assignment_target_id_of_specific_reference(&assign_target.binding, reference_id)
+                    && is_expression_whose_name_needs_to_be_kept(self.options, &assign_target.init)
             }
+            // The reference may be wrapped (member access, TS expression, ...); walk one level
+            // further up to the assignment.
             AstKind::IdentifierReference(_)
             | AstKind::TSAsExpression(_)
             | AstKind::TSSatisfiesExpression(_)
@@ -134,113 +169,70 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
             | AstKind::ComputedMemberExpression(_)
             | AstKind::PrivateFieldExpression(_)
             | AstKind::StaticMemberExpression(_) => {
-                let grand_parent_node_kind = self.ast_nodes.parent_kind(parent_node_id);
-
-                match grand_parent_node_kind {
-                    AstKind::AssignmentExpression(assign_expr) => {
-                        Self::is_assignment_target_id_of_specific_reference(
+                match self.ancestors.iter().rev().nth(1).copied() {
+                    Some(AstKind::AssignmentExpression(assign_expr)) => {
+                        is_assignment_target_id_of_specific_reference(
                             &assign_expr.left,
                             reference_id,
-                        ) && self.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
+                        ) && is_expression_whose_name_needs_to_be_kept(
+                            self.options,
+                            &assign_expr.right,
+                        )
                     }
-                    AstKind::AssignmentTargetWithDefault(assign_target) => {
-                        Self::is_assignment_target_id_of_specific_reference(
+                    Some(AstKind::AssignmentTargetWithDefault(assign_target)) => {
+                        is_assignment_target_id_of_specific_reference(
                             &assign_target.binding,
                             reference_id,
-                        ) && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
+                        ) && is_expression_whose_name_needs_to_be_kept(
+                            self.options,
+                            &assign_target.init,
+                        )
                     }
                     _ => false,
                 }
             }
+            // `({ foo = function () {} } = {})`
             AstKind::AssignmentTargetPropertyIdentifier(ident) => {
-                if ident.binding.reference_id() == reference_id {
-                    return ident
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
-                }
-                false
+                ident.binding.reference_id() == reference_id
+                    && ident.init.as_ref().is_some_and(|init| {
+                        is_expression_whose_name_needs_to_be_kept(self.options, init)
+                    })
             }
             _ => false,
+        };
+
+        if needs_keep && let Some(symbol_id) = self.scoping.get_reference(reference_id).symbol_id()
+        {
+            self.symbol_ids.insert(symbol_id);
         }
     }
+}
 
-    fn find_assign_binding_pattern_kind_of_specific_symbol(
-        kind: &'a BindingPattern,
-        symbol_id: SymbolId,
-    ) -> Option<&'a AssignmentPattern<'a>> {
-        match kind {
-            BindingPattern::BindingIdentifier(_) => None,
-            BindingPattern::ObjectPattern(object_pattern) => {
-                for property in &object_pattern.properties {
-                    if let Some(value) = Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        &property.value,
-                        symbol_id,
-                    ) {
-                        return Some(value);
-                    }
-                }
-                None
-            }
-            BindingPattern::ArrayPattern(array_pattern) => {
-                for element in &array_pattern.elements {
-                    let Some(binding) = element else { continue };
+fn is_assignment_target_id_of_specific_reference(
+    target: &AssignmentTarget,
+    reference_id: ReferenceId,
+) -> bool {
+    if let AssignmentTarget::AssignmentTargetIdentifier(id) = target {
+        id.reference_id() == reference_id
+    } else {
+        false
+    }
+}
 
-                    if let Some(value) = Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        binding, symbol_id,
-                    ) {
-                        return Some(value);
-                    }
-                }
-                None
-            }
-            BindingPattern::AssignmentPattern(assign_pattern) => {
-                if Self::is_binding_id_of_specific_symbol(&assign_pattern.left, symbol_id) {
-                    return Some(assign_pattern);
-                }
-                Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                    &assign_pattern.left,
-                    symbol_id,
-                )
-            }
-        }
+fn is_expression_whose_name_needs_to_be_kept(
+    options: MangleOptionsKeepNames,
+    expr: &Expression,
+) -> bool {
+    if !expr.is_anonymous_function_definition() {
+        return false;
     }
 
-    fn is_binding_id_of_specific_symbol(
-        pattern_kind: &BindingPattern,
-        symbol_id: SymbolId,
-    ) -> bool {
-        if let BindingPattern::BindingIdentifier(id) = pattern_kind {
-            id.symbol_id() == symbol_id
-        } else {
-            false
-        }
+    if options.class && options.function {
+        return true;
     }
 
-    fn is_assignment_target_id_of_specific_reference(
-        target_kind: &AssignmentTarget,
-        reference_id: ReferenceId,
-    ) -> bool {
-        if let AssignmentTarget::AssignmentTargetIdentifier(id) = target_kind {
-            id.reference_id() == reference_id
-        } else {
-            false
-        }
-    }
-
-    fn is_expression_whose_name_needs_to_be_kept(&self, expr: &Expression) -> bool {
-        let is_anonymous = expr.is_anonymous_function_definition();
-        if !is_anonymous {
-            return false;
-        }
-
-        if self.options.class && self.options.function {
-            return true;
-        }
-
-        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
-        (self.options.class && is_class) || (self.options.function && !is_class)
-    }
+    let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
+    (options.class && is_class) || (options.function && !is_class)
 }
 
 #[cfg(test)]
@@ -258,10 +250,11 @@ mod test {
         let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
         assert!(!ret.panicked, "{source_text}");
         assert!(ret.errors.is_empty(), "{source_text}");
-        let ret = SemanticBuilder::new().build(&ret.program);
-        assert!(ret.errors.is_empty(), "{source_text}");
-        let semantic = ret.semantic;
-        let symbols = collect_name_symbols(opts, &allocator, semantic.scoping(), semantic.nodes());
+        let program = ret.program;
+        let semantic_ret = SemanticBuilder::new().build(&program);
+        assert!(semantic_ret.errors.is_empty(), "{source_text}");
+        let semantic = semantic_ret.semantic;
+        let symbols = collect_name_symbols(opts, &allocator, semantic.scoping(), &program);
         symbols
             .ones()
             .map(|symbol_id| {

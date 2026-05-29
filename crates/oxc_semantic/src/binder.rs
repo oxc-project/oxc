@@ -96,6 +96,16 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 });
                 ident.symbol_id.set(Some(symbol_id));
 
+                // When the `var` is hoisted out of its block, its lexical declaration scope
+                // (`current_scope_id`) differs from its registered scope. Record it for the
+                // mangler's slot liveness. Each declarator records its own block, so a redeclared
+                // `var` accumulates every block it appears in.
+                if builder.current_scope_id != target_scope_id {
+                    builder
+                        .scoping
+                        .add_hoisted_declaration_scope(symbol_id, builder.current_scope_id);
+                }
+
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
                 for &scope_id in &var_scope_ids {
@@ -158,6 +168,13 @@ impl<'a> Binder<'a> for Function<'a> {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
 
+            // A named function expression binds its name in its own scope (for expressions this
+            // binder runs after `enter_scope`, so `current_scope_id` is that scope). Record it so
+            // the mangler can repair the slot of a name orphaned by a same-named body declaration.
+            if !is_declaration {
+                builder.scoping.set_fn_expr_name_symbol(builder.current_scope_id, symbol_id);
+            }
+
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
             // scopes also create an implicit var-like binding in the enclosing function
             // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
@@ -189,6 +206,9 @@ impl<'a> Binder<'a> for Function<'a> {
                         .entry(block_scope_id)
                         .or_default()
                         .insert(ident.name, symbol_id);
+                    // Hoisted out of its block: record the lexical (block) scope, where the
+                    // registered scope is now the var scope, for the mangler's slot liveness.
+                    builder.scoping.add_hoisted_declaration_scope(symbol_id, block_scope_id);
                 }
             }
 

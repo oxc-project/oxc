@@ -101,6 +101,17 @@ pub struct Scoping {
     /// Pre-computed enum member values and scope mappings.
     pub(crate) enum_data: EnumData,
 
+    /// Lexical declaration scope(s) of hoisted symbols (`var` / Annex B function declarations),
+    /// recorded by the binder only when they differ from the symbol's registered (hoisted) scope.
+    /// The mangler reads these for slot liveness. Sparse - empty unless the program has
+    /// block-scoped `var`s or Annex B function declarations.
+    hoisted_declaration_scopes: FxHashMap<SymbolId, Vec<ScopeId>>,
+
+    /// For a named function expression's own scope, its name symbol. The mangler uses this to
+    /// repair the slot of a name orphaned by a same-named body declaration. Sparse - empty unless
+    /// the program has named function expressions.
+    fn_expr_name_symbols: FxHashMap<ScopeId, SymbolId>,
+
     /* Scope Tree - single allocation for all scope-indexed flat fields */
     scope_table: ScopeTable,
 
@@ -120,6 +131,8 @@ impl Default for Scoping {
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
             enum_data: EnumData::default(),
+            hoisted_declaration_scopes: FxHashMap::default(),
+            fn_expr_name_symbols: FxHashMap::default(),
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
                 symbol_names: ArenaVec::new_in(allocator),
@@ -467,6 +480,31 @@ impl Scoping {
     }
 
     /// Record a redeclaration for an existing symbol.
+    /// Record a lexical declaration scope of a hoisted symbol (`var` / Annex B function),
+    /// i.e. a scope that differs from the symbol's registered (hoisted) scope. Called by the
+    /// binder. See [`Scoping::get_hoisted_declaration_scopes`].
+    pub(crate) fn add_hoisted_declaration_scope(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
+        self.hoisted_declaration_scopes.entry(symbol_id).or_default().push(scope_id);
+    }
+
+    /// The lexical declaration scope(s) of a hoisted symbol that differ from its registered scope.
+    /// Empty for the common, non-hoisted case. Used by the mangler for slot liveness.
+    pub fn get_hoisted_declaration_scopes(&self, symbol_id: SymbolId) -> &[ScopeId] {
+        self.hoisted_declaration_scopes.get(&symbol_id).map_or(&[], Vec::as_slice)
+    }
+
+    /// Record that `scope_id` is the own scope of a named function expression whose name is
+    /// `symbol_id`. Called by the binder. See [`Scoping::get_fn_expr_name_symbol`].
+    pub(crate) fn set_fn_expr_name_symbol(&mut self, scope_id: ScopeId, symbol_id: SymbolId) {
+        self.fn_expr_name_symbols.insert(scope_id, symbol_id);
+    }
+
+    /// The name symbol of the named function expression that creates `scope_id`, if any. Used by
+    /// the mangler to repair an orphaned function-expression name's slot.
+    pub fn get_fn_expr_name_symbol(&self, scope_id: ScopeId) -> Option<SymbolId> {
+        self.fn_expr_name_symbols.get(&scope_id).copied()
+    }
+
     pub fn add_symbol_redeclaration(
         &mut self,
         symbol_id: SymbolId,
@@ -1002,6 +1040,8 @@ impl Scoping {
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
             enum_data: self.enum_data.clone(),
+            hoisted_declaration_scopes: self.hoisted_declaration_scopes.clone(),
+            fn_expr_name_symbols: self.fn_expr_name_symbols.clone(),
             scope_table: self.scope_table.clone(),
             cell: {
                 let allocator = Allocator::with_capacity(used_bytes);
