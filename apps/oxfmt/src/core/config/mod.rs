@@ -27,9 +27,11 @@ use self::{
     editorconfig::{apply_editorconfig, has_editorconfig_overrides, load_editorconfig},
     overrides::OxfmtrcOverrides,
 };
+#[cfg(feature = "napi")]
+use super::options::to_oxc_formatter;
 use super::{
     FormatStrategy,
-    options::to_oxc_formatter,
+    options::validate,
     oxfmtrc::{FormatConfig, Oxfmtrc},
     support::FileKind,
     utils,
@@ -140,7 +142,7 @@ pub fn resolve_for_api(
     format_config.resolve_tailwind_paths(cwd);
     // Validate eagerly: `from_format_config` skips validation for `ExternalFormatter*` kinds,
     // so range-out values (e.g., `printWidth: 1000`) would otherwise silently reach Prettier.
-    let _ = to_oxc_formatter(&format_config)?;
+    validate(&format_config)?;
     if let Some(plugin) = kind.requires_plugin(&format_config) {
         return Ok(ResolveOutcome::MissingPlugin(plugin));
     }
@@ -378,9 +380,8 @@ impl ConfigResolver {
     /// - `self.oxfmtrc_overrides` is set if `overrides` exists
     /// - `self.ignore_glob` is built from `ignorePatterns`
     ///
-    /// Validation runs eagerly via `to_oxc_formatter(&base_config)` so invalid
-    /// values (e.g., `printWidth: 99999`) are surfaced at config load time
-    /// regardless of which file kind is later processed.
+    /// Validation runs eagerly via `validate(&base_config)`,
+    /// so invalid values are surfaced at config load time, rather than format time.
     ///
     /// # Errors
     /// Returns error if config deserialization or validation fails.
@@ -410,8 +411,7 @@ impl ConfigResolver {
         }
 
         // Eagerly validate; see method doc for the rationale.
-        let _ = to_oxc_formatter(&format_config)?;
-
+        validate(&format_config)?;
         // Save cached snapshot for fast path: no per-file overrides
         self.base_config = Some(format_config);
 
@@ -491,7 +491,7 @@ impl ConfigResolver {
 
         // Validate the merged config; see method doc for what kinds of errors are caught
         // and why this is the only safety net for `ExternalFormatter*` kinds.
-        let _ = to_oxc_formatter(&format_config)?;
+        validate(&format_config)?;
 
         Ok(format_config)
     }
@@ -632,21 +632,20 @@ mod tests_slow_path_validation {
     /// Smoke test: when no overrides match, `resolve()` returns successfully.
     ///
     /// `resolve_options` itself skips re-validation on the fast path
-    /// (just clones the pre-validated `base_config`), but
-    /// `FormatStrategy::from_format_config` still calls `to_oxc_formatter` for
-    /// `OxcFormatter`/`OxfmtToml`, so this test cannot directly assert "no re-validation"
-    /// — only that the overall call succeeds.
+    /// (just clones the pre-validated `base_config`),
+    /// but `FormatStrategy::from_format_config` still runs the typed conversion
+    /// (`to_oxc_formatter` / `to_oxc_toml`) for `OxcFormatter`/`OxfmtToml`,
+    /// so this test cannot directly assert "no re-validation". Only that the overall call succeeds.
     #[test]
     fn fast_path_resolve_succeeds() {
         let resolver = resolver_from_json(serde_json::json!({ "printWidth": 80 }));
-
         let kind = FileKind::OxfmtToml { path: Arc::from(PathBuf::from("Cargo.toml").as_path()) };
         assert!(resolver.resolve(kind).is_ok());
     }
 
     /// `resolve_for_api` must validate even for `ExternalFormatter*` kinds.
-    /// Without the eager `to_oxc_formatter` call, `printWidth: 1000` would
-    /// silently flow through to Prettier via the NAPI `format()` API.
+    /// Without the eager `validate()` call,
+    /// `printWidth: 1000` would silently flow through to Prettier via the NAPI `format()` API.
     #[test]
     #[cfg(feature = "napi")]
     fn resolve_for_api_rejects_invalid_value_for_external_formatter() {

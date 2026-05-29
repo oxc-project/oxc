@@ -1,7 +1,10 @@
-use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{BracketSpacing, Expand};
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 
-use super::super::oxfmtrc::{EndOfLineConfig, FormatConfig, ObjectWrapConfig};
+use super::{
+    super::oxfmtrc::{FormatConfig, ObjectWrapConfig},
+    to_core_options::to_core_options,
+};
 
 /// Convert `FormatConfig` into validated `JsonFormatOptions` for `oxc_formatter_json`.
 ///
@@ -14,31 +17,17 @@ pub fn to_oxc_formatter_json(
     config: &FormatConfig,
     variant: JsonVariant,
 ) -> Result<JsonFormatOptions, String> {
-    let mut options = JsonFormatOptions { variant, ..JsonFormatOptions::default() };
+    let core = to_core_options(config)?;
 
-    // [Prettier] useTabs: boolean
-    if let Some(use_tabs) = config.use_tabs {
-        options.indent_style = if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
-    }
-    // [Prettier] tabWidth: number
-    if let Some(width) = config.tab_width {
-        options.indent_width =
-            IndentWidth::try_from(width).map_err(|e| format!("Invalid tabWidth: {e}"))?;
-    }
-    // [Prettier] printWidth: number
-    if let Some(width) = config.print_width {
-        options.line_width =
-            LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
-    }
-    // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
-    // NOTE: "auto" is not supported
-    if let Some(ending) = config.end_of_line {
-        options.line_ending = match ending {
-            EndOfLineConfig::Lf => LineEnding::Lf,
-            EndOfLineConfig::Crlf => LineEnding::Crlf,
-            EndOfLineConfig::Cr => LineEnding::Cr,
-        };
-    }
+    let mut options = JsonFormatOptions {
+        variant,
+        indent_style: core.indent_style,
+        indent_width: core.indent_width,
+        line_width: core.line_width,
+        line_ending: core.line_ending,
+        ..JsonFormatOptions::default()
+    };
+
     // [Prettier] bracketSpacing: boolean
     if let Some(spacing) = config.bracket_spacing {
         options.bracket_spacing = BracketSpacing::from(spacing);

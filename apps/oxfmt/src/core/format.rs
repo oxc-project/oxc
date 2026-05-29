@@ -18,7 +18,7 @@ use super::options::{
     inject_tailwind_plugin_payload, to_package_json, to_prettier,
 };
 use super::{
-    options::{to_oxc_formatter, to_oxc_formatter_json, to_toml_formatter},
+    options::{to_oxc_formatter, to_oxc_formatter_json, to_oxc_toml},
     oxfmtrc::FormatConfig,
     support::FileKind,
 };
@@ -94,7 +94,7 @@ impl FormatStrategy {
 
     /// Build a `FormatStrategy` from a typed [`FormatConfig`] and a [`FileKind`].
     ///
-    /// `to_oxc_formatter` / `to_toml_formatter` run eagerly: their validating
+    /// `to_oxc_formatter` / `to_oxc_toml` run eagerly: their validating
     /// typed conversion belongs at carving so the format step stays infallible.
     /// The Prettier `Value` for `ExternalFormatter*` is deferred:
     /// `FormatConfig` is the single SoT, no validation needed,
@@ -124,11 +124,9 @@ impl FormatStrategy {
                 format_options: Box::new(to_oxc_formatter_json(&config, variant)?),
                 insert_final_newline,
             },
-            FileKind::OxfmtToml { path } => Self::OxfmtToml {
-                path,
-                toml_options: to_toml_formatter(&config)?,
-                insert_final_newline,
-            },
+            FileKind::OxfmtToml { path } => {
+                Self::OxfmtToml { path, toml_options: to_oxc_toml(&config)?, insert_final_newline }
+            }
             #[cfg(feature = "napi")]
             FileKind::ExternalFormatter {
                 path,
