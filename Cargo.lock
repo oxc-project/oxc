@@ -2026,6 +2026,7 @@ dependencies = [
  "oxc_data_structures",
  "oxc_span",
  "rustc-hash",
+ "serde_json",
  "unicode-width",
 ]
 
@@ -2033,6 +2034,7 @@ dependencies = [
 name = "oxc_formatter_json"
 version = "0.51.0"
 dependencies = [
+ "insta",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",

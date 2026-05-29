@@ -32,6 +32,9 @@ mod text_range;
 mod traits;
 pub mod util;
 
+#[cfg(feature = "test_harness")]
+pub mod test_support;
+
 pub use arguments::{Argument, Arguments};
 pub use buffer::{
     Buffer, BufferExtensions, Inspect, PreambleBuffer, Recorded, Recording, RemoveSoftLinesBuffer,

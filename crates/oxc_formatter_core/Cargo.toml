@@ -25,5 +25,14 @@ cow-utils = { workspace = true }
 rustc-hash = { workspace = true }
 unicode-width = { workspace = true }
 
+serde_json = { workspace = true, optional = true }
+
+[features]
+# Enables `test_support` (used from build.rs and tests/) in downstream formatter
+# crates. Consumer crates still need a direct `insta` dev-dep — the snapshot macro
+# is invoked from each consumer's `tests/fixtures/mod.rs` so the recorded `source:`
+# header points to the consumer, not the shared harness.
+test_harness = ["dep:serde_json"]
+
 [lib]
 doctest = false

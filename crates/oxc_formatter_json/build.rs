@@ -9,8 +9,7 @@ fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = PathBuf::from(out_dir).join("generated_tests.rs");
 
-    let config =
-        GenerateConfig { extensions: &["js", "jsx", "ts", "tsx", "mjs", "cjs", "mts", "cts"] };
+    let config = GenerateConfig { extensions: &["json", "jsonc", "json5"] };
 
     generate_tests(&dest_path, Path::new("tests/fixtures"), &config).unwrap();
 }

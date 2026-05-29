@@ -25,5 +25,12 @@ oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
+[dev-dependencies]
+insta = { workspace = true }
+oxc_formatter_core = { workspace = true, features = ["test_harness"] }
+
+[build-dependencies]
+oxc_formatter_core = { workspace = true, features = ["test_harness"] }
+
 [lib]
 doctest = false
