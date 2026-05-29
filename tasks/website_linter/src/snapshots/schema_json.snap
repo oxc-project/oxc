@@ -2588,6 +2588,9 @@ expression: json
         "vitest/warn-todo": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/component-definition-name-casing": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/define-emits-declaration": {
           "$ref": "#/definitions/DummyRule"
         },
