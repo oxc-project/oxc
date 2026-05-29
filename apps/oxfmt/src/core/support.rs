@@ -12,22 +12,35 @@ use super::oxfmtrc::FormatConfig;
 ///
 /// Returns `None` when the file type is not a formatting target.
 pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
-    if let Some(source_type) = get_oxc_formatter_source_type(&path) {
+    // PERF: Standard JS/TS extensions are by far the most common case,
+    // so resolve them straight from the path before extracting `file_name`/`extension` for anything else.
+    // NOTE:
+    // - Use `path` directly for `.d.ts` detection
+    // - This relies on `EXCLUDE_FILENAMES` containing no file with a standard JS/TS extension
+    //   - guarded by the `exclude_filenames_are_not_js_or_ts` test
+    if let Ok(source_type) = SourceType::from_path(&path) {
         return Some(FileKind::OxcFormatter { path, source_type });
     }
 
     let file_name = path.file_name().and_then(|f| f.to_str())?;
 
-    // Excluded files like lock files
+    // Excluded files like lock files are rejected up front, before any kind check.
+    // NOTE: These are machine-generated and must NEVER be reformatted,
+    // regardless of how they reach us. (CLI, API, LSP, etc)
     if EXCLUDE_FILENAMES.contains(file_name) {
         return None;
+    }
+
+    let extension = path.extension().and_then(|ext| ext.to_str());
+
+    if is_extra_js_file(file_name, extension) {
+        return Some(FileKind::OxcFormatter { path, source_type: SourceType::default() });
     }
 
     if is_toml_file(file_name) {
         return Some(FileKind::OxfmtToml { path });
     }
 
-    let extension = path.extension().and_then(|ext| ext.to_str());
     if is_json_file(file_name, extension) {
         return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::Json });
     }
@@ -157,6 +170,8 @@ static SVELTE_PARSERS: phf::Set<&'static str> = phf_set! {
     "markdown",
     "mdx",
 };
+
+// ---
 
 static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
     // JSON, YAML lock files
@@ -496,34 +511,29 @@ static SPECIAL_JS_FILENAMES: phf::Set<&'static str> = phf_set! {
     "end.frag",
 };
 
-fn get_oxc_formatter_source_type(path: &Path) -> Option<SourceType> {
-    // Standard extensions, also supported by `oxc_span::VALID_EXTENSIONS`
-    // NOTE: Use `path` directly for `.d.ts` detection
-    if let Ok(source_type) = SourceType::from_path(path) {
-        return Some(source_type);
+/// Detects non-standard JS files that `SourceType::from_path` does not recognize,
+/// but Prettier supports as JS.
+///
+/// Standard extensions are handled earlier in [`classify_file_kind`] via `SourceType::from_path`.
+fn is_extra_js_file(file_name: &str, extension: Option<&str>) -> bool {
+    if SPECIAL_JS_FILENAMES.contains(file_name) {
+        return true;
     }
-
-    // Check special filenames first
-    if let Some(file_name) = path.file_name()
-        && SPECIAL_JS_FILENAMES.contains(file_name.to_str()?)
-    {
-        return Some(SourceType::default());
-    }
-
-    let extension = path.extension()?.to_string_lossy();
-    // Additional extensions Prettier also supports
-    if ADDITIONAL_JS_EXTENSIONS.contains(extension.as_ref()) {
-        return Some(SourceType::default());
+    let Some(extension) = extension else {
+        return false;
+    };
+    if ADDITIONAL_JS_EXTENSIONS.contains(extension) {
+        return true;
     }
     // Special handling for `.frag` files: only allow `*.start.frag` and `*.end.frag`
     if extension == "frag" {
-        let stem = path.file_stem()?.to_str()?;
+        let Some(stem) = file_name.strip_suffix(".frag") else {
+            return false;
+        };
         #[expect(clippy::case_sensitive_file_extension_comparisons)]
-        return (stem.ends_with(".start") || stem.ends_with(".end"))
-            .then_some(SourceType::default());
+        return stem.ends_with(".start") || stem.ends_with(".end");
     }
-
-    None
+    false
 }
 
 // ---
@@ -532,16 +542,67 @@ fn get_oxc_formatter_source_type(path: &Path) -> Option<SourceType> {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "napi")]
-    fn get_parser_name(file_name: &str) -> Option<&'static str> {
-        let path = Path::new(file_name);
-        let extension = path.extension().and_then(|ext| ext.to_str());
-        get_external_parser_name(file_name, extension)
+    #[test]
+    fn exclude_filenames_are_not_js_or_ts() {
+        // `classify_file_kind` resolves standard JS/TS extensions (via `SourceType::from_path`)
+        // before checking `EXCLUDE_FILENAMES` for perf,
+        // so an excluded file with a JS/TS extension would bypass the exclusion entirely.
+        for name in &EXCLUDE_FILENAMES {
+            assert!(
+                SourceType::from_path(Path::new(name)).is_err(),
+                "`{name}` in EXCLUDE_FILENAMES must not be a standard JS/TS file, \
+                 otherwise it bypasses the exclusion check in `classify_file_kind`"
+            );
+        }
+    }
+
+    #[test]
+    fn test_js_or_ts_files() {
+        // Standard extensions, special filenames, and Prettier's additional extensions.
+        let js_or_ts_files = vec![
+            // Standard (via `SourceType::from_path`)
+            "index.js",
+            "app.tsx",
+            "types.d.ts",
+            "module.mjs",
+            // Special filenames
+            "Jakefile",
+            "start.frag",
+            "end.frag",
+            // Additional extensions
+            "legacy.es6",
+            "script._js",
+            // `.frag` is only valid as `*.start.frag` / `*.end.frag`
+            "shader.start.frag",
+            "shader.end.frag",
+        ];
+        for file_name in js_or_ts_files {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatter { .. })),
+                "`{file_name}` should be routed to oxc_formatter"
+            );
+        }
+
+        // Plain `.frag` files (not `*.start.frag` / `*.end.frag`) are not JS.
+        for file_name in ["shader.frag", "random.frag", "xstart.frag"] {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                !matches!(result, Some(FileKind::OxcFormatter { .. })),
+                "`{file_name}` should NOT be routed to oxc_formatter"
+            );
+        }
     }
 
     #[test]
     #[cfg(feature = "napi")]
     fn test_get_external_parser_name() {
+        fn get_parser_name(file_name: &str) -> Option<&'static str> {
+            let path = Path::new(file_name);
+            let extension = path.extension().and_then(|ext| ext.to_str());
+            get_external_parser_name(file_name, extension)
+        }
+
         let test_cases = vec![
             // JSON variants
             // NOTE: `package.json` is handled in classify_file_kind, not here.
