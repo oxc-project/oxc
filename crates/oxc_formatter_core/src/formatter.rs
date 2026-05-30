@@ -57,7 +57,6 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
         self.intern_vec(elements)
     }
 
-    #[expect(clippy::unused_self)] // Keep `self` the same as the original source
     pub fn intern_vec(
         &self,
         mut elements: ArenaVec<'ast, FormatElement<'ast>>,
@@ -66,7 +65,10 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
             0 => None,
             // Doesn't get cheaper than calling clone, use the element directly
             1 => elements.pop(),
-            _ => Some(FormatElement::Interned(Interned::new(elements))),
+            _ => {
+                let allocator = self.state().allocator();
+                Some(FormatElement::Interned(Interned::new(elements, allocator)))
+            }
         }
     }
 

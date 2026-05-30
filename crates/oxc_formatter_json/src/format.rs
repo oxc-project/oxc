@@ -50,7 +50,6 @@ pub fn format<'a>(
     }
 
     let document = Document::new(elements, Vec::new());
-    document.propagate_expand();
 
     Ok(Formatted::new(document, context))
 }

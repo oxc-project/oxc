@@ -87,7 +87,5 @@ pub fn format<'ast>(
 
     let document = Document::new(elements, sorted_tailwind_classes);
 
-    document.propagate_expand();
-
     Formatted::new(document, context)
 }

@@ -1422,7 +1422,6 @@ mod tests {
 
         let elements = buffer.into_vec();
         let document = Document::new(elements, Vec::default());
-        document.propagate_expand();
         Printer::new(options, &[]).print(document.elements()).expect("Document to be valid")
     }
 

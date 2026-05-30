@@ -86,6 +86,10 @@ impl<'ast, C, W: Buffer<'ast, C> + ?Sized> Buffer<'ast, C> for &mut W {
 pub struct VecBuffer<'buf, 'ast, C> {
     state: &'buf mut FormatState<'ast, C>,
     elements: ArenaVec<'ast, FormatElement<'ast>>,
+    /// Stack of `(start_idx, has_break)` for currently open `StartGroup` tags.
+    /// Arena-allocated to avoid sys allocs on every sub-buffer (`Formatter::intern`,
+    /// `BestFitting::fmt`) that pushes a group.
+    open_groups: ArenaVec<'ast, (usize, bool)>,
 }
 
 impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
@@ -97,13 +101,15 @@ impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
         state: &'buf mut FormatState<'ast, C>,
         elements: ArenaVec<'ast, FormatElement<'ast>>,
     ) -> Self {
-        Self { state, elements }
+        let open_groups = ArenaVec::new_in(state.allocator());
+        Self { state, elements, open_groups }
     }
 
     /// Creates a buffer with the specified capacity
     pub fn with_capacity(capacity: usize, state: &'buf mut FormatState<'ast, C>) -> Self {
         let elements = ArenaVec::with_capacity_in(capacity, state.allocator());
-        Self { state, elements }
+        let open_groups = ArenaVec::new_in(state.allocator());
+        Self { state, elements, open_groups }
     }
 
     /// Consumes the buffer and returns the written [`FormatElement]`s as a vector.
@@ -132,7 +138,53 @@ impl<C> DerefMut for VecBuffer<'_, '_, C> {
 }
 
 impl<'ast, C> Buffer<'ast, C> for VecBuffer<'_, 'ast, C> {
+    #[inline(always)]
     fn write_element(&mut self, element: FormatElement<'ast>) {
+        // Streaming replacement for `Document::propagate_expand`. `BestFitting` is
+        // intentionally skipped: its variants are built in sub-buffers and act as an
+        // expand boundary.
+        match &element {
+            FormatElement::Tag(Tag::StartGroup(_)) => {
+                self.open_groups.push((self.elements.len(), false));
+                self.elements.push(element);
+                return;
+            }
+            FormatElement::Tag(Tag::EndGroup) => {
+                let (start_idx, has_break) = self.open_groups.pop().unwrap();
+                let FormatElement::Tag(Tag::StartGroup(group)) = &self.elements[start_idx] else {
+                    unreachable!()
+                };
+                if has_break || !group.mode().is_flat() {
+                    group.propagate_expand();
+                    if let Some(parent) = self.open_groups.last_mut() {
+                        parent.1 = true;
+                    }
+                }
+                self.elements.push(element);
+                return;
+            }
+            FormatElement::ExpandParent => {
+                if let Some(top) = self.open_groups.last_mut() {
+                    top.1 = true;
+                }
+            }
+            FormatElement::Line(line_mode) if line_mode.will_break() => {
+                if let Some(top) = self.open_groups.last_mut() {
+                    top.1 = true;
+                }
+            }
+            FormatElement::Text { width, .. } if width.is_multiline() => {
+                if let Some(top) = self.open_groups.last_mut() {
+                    top.1 = true;
+                }
+            }
+            FormatElement::Interned(interned) if interned.propagates_expand() => {
+                if let Some(top) = self.open_groups.last_mut() {
+                    top.1 = true;
+                }
+            }
+            _ => {}
+        }
         self.elements.push(element);
     }
 
@@ -302,7 +354,7 @@ fn clean_interned<'ast>(
     allocator: &'ast Allocator,
 ) -> Interned<'ast> {
     if let Some(cleaned) = interned_cache.get(&interned) {
-        cleaned.clone()
+        *cleaned
     } else {
         // Find the first soft line break element, interned element, or conditional expanded
         // content that must be changed.
@@ -314,12 +366,8 @@ fn clean_interned<'ast>(
                 Some((cleaned, &interned[index..]))
             }
             FormatElement::Interned(inner) => {
-                let cleaned_inner = clean_interned(
-                    inner.clone(),
-                    interned_cache,
-                    condition_content_stack,
-                    allocator,
-                );
+                let cleaned_inner =
+                    clean_interned(*inner, interned_cache, condition_content_stack, allocator);
 
                 if &cleaned_inner == inner {
                     None
@@ -359,7 +407,7 @@ fn clean_interned<'ast>(
 
                         FormatElement::Interned(interned) => {
                             cleaned.push(FormatElement::Interned(clean_interned(
-                                interned.clone(),
+                                *interned,
                                 interned_cache,
                                 condition_content_stack,
                                 allocator,
@@ -375,13 +423,13 @@ fn clean_interned<'ast>(
                     }
                 }
 
-                Interned::new(cleaned)
+                Interned::new(cleaned, allocator)
             }
             // No change necessary, return existing interned element
-            None => interned.clone(),
+            None => interned,
         };
 
-        interned_cache.insert(interned, result.clone());
+        interned_cache.insert(interned, result);
         result
     }
 }

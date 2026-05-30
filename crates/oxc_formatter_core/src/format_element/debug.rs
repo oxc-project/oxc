@@ -203,7 +203,7 @@ where
                     match interned_elements.get(interned).copied() {
                         None => {
                             let index = interned_elements.len();
-                            interned_elements.insert(interned.clone(), index);
+                            interned_elements.insert(*interned, index);
 
                             w!(
                                 f,

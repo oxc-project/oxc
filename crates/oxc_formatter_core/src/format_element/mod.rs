@@ -10,7 +10,7 @@ use std::{borrow::Cow, ops::Deref};
 
 use unicode_width::UnicodeWidthStr;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 use crate::IndentWidth;
 
@@ -155,12 +155,44 @@ impl PrintMode {
     }
 }
 
-#[derive(Clone)]
-pub struct Interned<'a>(&'a [FormatElement<'a>]);
+#[derive(Debug)]
+pub struct InternedInner<'a> {
+    elements: &'a [FormatElement<'a>],
+    /// `[FormatElement]::will_break` semantics: "is the printed output guaranteed to
+    /// span multiple lines". Descends into `BestFitting` variants. Used by external
+    /// callers (e.g. `call_like_expression::arguments`) for Prettier-matching layout
+    /// decisions.
+    will_break: bool,
+    /// `Document::propagate_expand` semantics: "should this element mark its enclosing
+    /// group as `Propagated`". `BestFitting` is a boundary here. Used by
+    /// [`crate::VecBuffer::write_element`] for streaming group propagation.
+    propagates_expand: bool,
+}
+
+#[derive(Clone, Copy)]
+pub struct Interned<'a>(&'a InternedInner<'a>);
 
 impl<'a> Interned<'a> {
-    pub(crate) fn new(content: ArenaVec<'a, FormatElement<'a>>) -> Self {
-        Self(content.into_arena_slice())
+    pub(crate) fn new(content: ArenaVec<'a, FormatElement<'a>>, allocator: &'a Allocator) -> Self {
+        let elements = content.into_arena_slice();
+        let will_break = elements.will_break();
+        let propagates_expand = slice_propagates_expand(elements, allocator);
+        Self(allocator.alloc(InternedInner { elements, will_break, propagates_expand }))
+    }
+
+    #[inline(always)]
+    pub fn will_break(self) -> bool {
+        self.0.will_break
+    }
+
+    #[inline(always)]
+    pub fn propagates_expand(self) -> bool {
+        self.0.propagates_expand
+    }
+
+    #[inline(always)]
+    pub fn elements(self) -> &'a [FormatElement<'a>] {
+        self.0.elements
     }
 }
 
@@ -174,13 +206,13 @@ impl Eq for Interned<'_> {}
 
 impl Hash for Interned<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.as_ptr().addr().hash(state);
+        ptr::from_ref(self.0).addr().hash(state);
     }
 }
 
 impl std::fmt::Debug for Interned<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
+        self.0.elements.fmt(f)
     }
 }
 
@@ -188,8 +220,41 @@ impl<'a> Deref for Interned<'a> {
     type Target = [FormatElement<'a>];
 
     fn deref(&self) -> &Self::Target {
-        self.0
+        self.0.elements
     }
+}
+
+/// Mirrors `Document::propagate_expand`'s return value for a slice: whether the slice
+/// would mark its enclosing group as `Propagated`. `BestFitting` is a boundary
+/// (its variants' breaks don't escape).
+fn slice_propagates_expand<'a>(
+    elements: &'a [FormatElement<'a>],
+    allocator: &'a Allocator,
+) -> bool {
+    let mut group_stack: ArenaVec<'a, &'a tag::Group> = ArenaVec::new_in(allocator);
+    for element in elements {
+        let contributes = match element {
+            FormatElement::Tag(Tag::StartGroup(group)) => {
+                group_stack.push(group);
+                false
+            }
+            FormatElement::Tag(Tag::EndGroup) => {
+                group_stack.pop().is_some_and(|group| !group.mode().is_flat())
+            }
+            FormatElement::Interned(inner) => inner.propagates_expand(),
+            FormatElement::Text { width, .. } => width.is_multiline(),
+            FormatElement::ExpandParent => true,
+            FormatElement::Line(line_mode) => line_mode.will_break(),
+            // `BestFitting` is a propagation boundary — its variants' breaks must not
+            // escape. Other non-forcing elements (Space, Token, LineSuffixBoundary,
+            // TailwindClass, other Tags) also don't contribute.
+            _ => false,
+        };
+        if contributes {
+            return true;
+        }
+    }
+    false
 }
 
 const LINE_SEPARATOR: char = '\u{2028}';
@@ -598,5 +663,57 @@ mod tests {
         let width = TextWidth::from_text("", indent_width(2));
         debug_assert_eq!(width.value(), 0);
         debug_assert!(!width.is_multiline());
+    }
+
+    /// Regression: `Interned::propagates_expand` must treat `BestFitting` as a
+    /// boundary. `[FormatElement]::will_break` deliberately descends into the
+    /// most-flat variant (Prettier-matching semantics for external layout
+    /// decisions), but `Document::propagate_expand`'s group-mode propagation must
+    /// not see that break — otherwise an Interned wrapping a `BestFitting` whose
+    /// most-flat variant has a hard line would wrongly force its enclosing group
+    /// to expand. See https://github.com/oxc-project/oxc/pull/22851#discussion_r3328499668.
+    #[test]
+    fn interned_with_best_fitting_does_not_propagate_inner_break() {
+        use oxc_allocator::{Allocator, Vec as ArenaVec};
+
+        let allocator = Allocator::default();
+
+        // most-flat variant: contains a hard line break.
+        let mut most_flat: ArenaVec<FormatElement> = ArenaVec::new_in(&allocator);
+        most_flat.push(FormatElement::Token { text: "X" });
+        most_flat.push(FormatElement::Line(LineMode::Hard));
+        most_flat.push(FormatElement::Token { text: "Y" });
+
+        // most-expanded variant.
+        let mut most_expanded: ArenaVec<FormatElement> = ArenaVec::new_in(&allocator);
+        most_expanded.push(FormatElement::Token { text: "Z" });
+
+        let mut variants: ArenaVec<&[FormatElement]> = ArenaVec::new_in(&allocator);
+        variants.push(most_flat.into_arena_slice());
+        variants.push(most_expanded.into_arena_slice());
+
+        // SAFETY: `variants` has two entries (most-flat + most-expanded) which
+        // satisfies `BestFittingElement::from_vec_unchecked`'s precondition.
+        let best_fitting = unsafe { BestFittingElement::from_vec_unchecked(variants) };
+
+        // Interned content with >=2 elements so the wrapping kicks in:
+        // [BestFitting, Token("")].
+        let mut interned_content: ArenaVec<FormatElement> = ArenaVec::new_in(&allocator);
+        interned_content.push(FormatElement::BestFitting(best_fitting));
+        interned_content.push(FormatElement::Token { text: "" });
+
+        let interned = Interned::new(interned_content, &allocator);
+
+        // `will_break` keeps its Prettier-matching descend-into-best-fitting
+        // semantics so that external callers (layout decisions in
+        // `call_like_expression` etc.) keep working.
+        assert!(interned.will_break(), "will_break should descend into BestFitting");
+
+        // `propagates_expand` must treat BestFitting as a boundary: the inner hard
+        // line must not bubble out to mark the enclosing group as Propagated.
+        assert!(
+            !interned.propagates_expand(),
+            "propagates_expand must treat BestFitting as an expand boundary"
+        );
     }
 }
