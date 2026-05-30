@@ -1,0 +1,81 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:1:18]
+ 1 │ foo.push(1); foo.push(2);
+   ·                  ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:1:21]
+ 1 │ foo.push(1, 2); foo.push(3, 4);
+   ·                     ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:1:18]
+ 1 │ foo.push(1); foo.push();
+   ·                  ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:1:17]
+ 1 │ foo.push(); foo.push(1);
+   ·                 ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:1:19]
+ 1 │ foo.push(1,); foo.push(2);
+   ·                   ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:2:5]
+ 1 │ foo.push(1);
+ 2 │ foo.push(2);
+   ·     ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Element#classList.add()` multiple times.
+   ╭─[prefer_single_call.tsx:1:39]
+ 1 │ el.classList.add('foo'); el.classList.add('bar');
+   ·                                       ───
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Element#classList.remove()` multiple times.
+   ╭─[prefer_single_call.tsx:1:42]
+ 1 │ el.classList.remove('foo'); el.classList.remove('bar');
+   ·                                          ──────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `importScripts()` multiple times.
+   ╭─[prefer_single_call.tsx:1:24]
+ 1 │ importScripts('a.js'); importScripts('b.js');
+   ·                        ─────────────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:1:33]
+ 1 │ function f() { foo.push(1); foo.push(2); }
+   ·                                 ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:1:18]
+ 1 │ a.b.push(1); a.b.push(2);
+   ·                  ────
+   ╰────
+  help: Merge with the previous call.
