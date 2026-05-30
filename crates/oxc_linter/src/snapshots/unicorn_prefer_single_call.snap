@@ -129,3 +129,25 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:1:18]
+ 1 │ arr.push(1); arr.push(arr.length);
+   ·                  ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:1:18]
+ 1 │ arr.push(1); arr.push(arr[0]);
+   ·                  ────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#push()` multiple times.
+   ╭─[prefer_single_call.tsx:2:5]
+ 1 │ foo.push(1); // keep this
+ 2 │ foo.push(2);
+   ·     ────
+   ╰────
+  help: Merge with the previous call.

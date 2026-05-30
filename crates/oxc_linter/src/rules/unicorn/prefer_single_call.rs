@@ -175,6 +175,40 @@ fn same_call<'a>(a: &CallInfo<'a>, b: &CallInfo<'a>) -> bool {
     a.description == b.description && a.receiver_text == b.receiver_text
 }
 
+/// Returns `true` if `receiver` appears as a standalone identifier (or
+/// member-access chain) within `arg_src` — i.e. it is not a substring of a
+/// longer identifier.
+///
+/// Used to detect arguments like `arr.length` in `arr.push(arr.length)`,
+/// where merging two consecutive pushes would change the evaluation order of
+/// the argument (the receiver is mutated by the first call).
+fn arg_references_receiver(arg_src: &str, receiver: &str) -> bool {
+    if receiver.is_empty() {
+        return false;
+    }
+    let rbytes = receiver.as_bytes();
+    let abytes = arg_src.as_bytes();
+    let mut i = 0;
+    while i + rbytes.len() <= abytes.len() {
+        if abytes[i..].starts_with(rbytes) {
+            let before_ok =
+                i == 0 || !is_js_ident_continue(abytes[i - 1] as char);
+            let after_ok = i + rbytes.len() >= abytes.len()
+                || !is_js_ident_continue(abytes[i + rbytes.len()] as char);
+            if before_ok && after_ok {
+                return true;
+            }
+        }
+        i += 1;
+    }
+    false
+}
+
+#[inline]
+fn is_js_ident_continue(c: char) -> bool {
+    c.is_alphanumeric() || c == '_' || c == '$'
+}
+
 impl Rule for PreferSingleCall {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Run on block-level containers so we can iterate statement pairs in
@@ -212,6 +246,25 @@ impl Rule for PreferSingleCall {
             let second_args = &curr_call.arguments;
             let description = curr_info.description;
             let diag_span = curr_info.diagnostic_span;
+            let receiver = prev_info.receiver_text;
+
+            // P1: Skip autofix when a second-call argument references the
+            // receiver — merging would change the evaluation order because the
+            // first call mutates the receiver before those args are read.
+            // e.g. `arr.push(1); arr.push(arr.length);`
+            let has_state_dep_args = second_args.iter().any(|a| {
+                arg_references_receiver(a.span().source_text(src), receiver)
+            });
+
+            // P2: Skip autofix when there are comments in the gap between the
+            // two statements — deleting the gap would silently drop them.
+            let has_gap_comments =
+                ctx.comments_range(first_stmt_end..second_stmt_end).count() > 0;
+
+            if has_state_dep_args || has_gap_comments {
+                ctx.diagnostic(prefer_single_call_diagnostic(diag_span, description));
+                continue;
+            }
 
             ctx.diagnostic_with_fix(
                 prefer_single_call_diagnostic(diag_span, description),
@@ -346,6 +399,12 @@ mod tests {
             // Parenthesized receiver — normalised to same identity.
             "(foo).push(1); foo.push(2);",
             "foo.push(1); (foo).push(2);",
+            // P1: second-call arg reads the receiver — merging would change
+            // evaluation order (diagnostic fires, but no autofix offered).
+            "arr.push(1); arr.push(arr.length);",
+            "arr.push(1); arr.push(arr[0]);",
+            // P2: comment in the gap — autofix would silently drop it.
+            "foo.push(1); // keep this\nfoo.push(2);",
         ];
 
         let fix = vec![
