@@ -345,6 +345,17 @@ impl ArrowBodyStyle {
         ctx: &LintContext<'a>,
     ) -> RuleFix {
         let body = &arrow_func_expr.body;
+
+        // Check if there are comments between the opening brace and the return statement.
+        // If so, we cannot safely fix because the comment would be lost.
+        // ESLint also skips the fix in this case.
+        let block_start = body.span.start + 1; // Skip the opening '{'
+        let return_start = return_arg.span().start;
+        if ctx.has_comments_between(Span::new(block_start, return_start)) {
+            // Cannot fix when there are comments before the return statement
+            return fixer.noop();
+        }
+
         let return_arg_text = ctx.source_range(return_arg.span());
 
         // Get the inner expression to handle cases like `return ({ ... })`
@@ -559,6 +570,21 @@ fn test() {
     ];
 
     let fail = vec![
+        // Comment before return statement - should not fix (comment would be lost)
+        (
+            "const something = () => {
+  // An important comment ⚠️
+  return \"something\";
+};",
+            Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            "const something = () => {
+  /* An important comment */
+  return \"something\";
+};",
+            Some(serde_json::json!(["as-needed"])),
+        ),
         (
             "for (var foo = () => { return a in b ? bar : () => {} } ;;);",
             Some(serde_json::json!(["as-needed"])),
