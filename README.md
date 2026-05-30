@@ -33,7 +33,7 @@ _/oʊ ɛks siː/_
 
 The Oxidation Compiler is a collection of high-performance tools for JavaScript and TypeScript written in Rust.
 
-Oxc is part of [VoidZero](https://voidzero.dev/)'s vision for a unified, high-performance toolchain for JavaScript. It powers [Rolldown](https://rolldown.rs) ([Vite]'s future bundler) and enables the next generation of ultra-fast development tools that work seamlessly together.
+Oxc is part of [VoidZero](https://voidzero.dev/)'s vision for a unified, high-performance toolchain for JavaScript. It powers [Rolldown](https://rolldown.rs) ([Vite]'s bundler) and enables the next generation of ultra-fast development tools that work seamlessly together.
 
 For more information, check out our website at [oxc.rs](https://oxc.rs).
 
@@ -110,7 +110,7 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [website-url]: https://oxc.rs
 [docs-resolver-url]: https://docs.rs/oxc_resolver
 [rolldown]: https://rolldown.rs
-[vite]: https://vitejs.dev/
+[vite]: https://vite.dev/
 [nuxt]: https://nuxt.com/
 [nova]: https://trynova.dev/
 [swc-node]: https://github.com/swc-project/swc-node

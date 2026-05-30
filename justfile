@@ -16,7 +16,7 @@ alias f := fix
 # Initialize the project by installing all necessary tools
 init:
   # Rust related init
-  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.11.2 -y
+  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.12.4 -y
   # Node.js related init
   pnpm install
 
@@ -60,7 +60,7 @@ lint:
 
 # Format all files
 fmt:
-  -cargo shear --fix # remove all unused dependencies
+  -cargo shear --fix --check-test-targets # remove all unused dependencies
   cargo fmt
   node --run fmt
 
@@ -171,7 +171,10 @@ watch-oxlint-node *args='':
 # Create a new lint rule for any plugin
 new-rule name plugin='eslint':
   cargo run -p rulegen {{name}} {{plugin}}
+  just linter-schema-json
+  just linter-config-ts
   just fmt
+  cargo insta test -p website_linter --accept
 
 # Update test cases for an existing lint rule from upstream
 update-rule-tests name plugin='eslint':

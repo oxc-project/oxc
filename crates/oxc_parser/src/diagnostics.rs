@@ -282,6 +282,44 @@ pub fn lexical_declaration_single_statement(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn export_assignment_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1063", "An export assignment cannot be used in a namespace.").with_label(span)
+}
+
+#[cold]
+pub fn import_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1147", "Import declarations in a namespace cannot reference a module.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1194", "Export declarations are not permitted in a namespace.").with_label(span)
+}
+
+#[cold]
+pub fn default_export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1319", "A default export can only be used in an ECMAScript-style module.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn global_export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1316", "Global module exports may only appear at top level.").with_label(span)
+}
+
+#[cold]
+pub fn statement_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1036", "Statements are not allowed in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn declare_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1038", "A 'declare' modifier cannot be used in an already ambient context.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)
@@ -420,8 +458,8 @@ pub fn rest_element_trailing_comma(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn invalid_binding_rest_element(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid rest element")
-        .with_help("Expected identifier in rest element")
+    OxcDiagnostic::error("Invalid rest element target in destructuring pattern")
+        .with_help("Expected an identifier, like `...rest`.")
         .with_label(span)
 }
 
@@ -804,8 +842,11 @@ pub fn duplicate_default_export(spans: impl IntoIterator<Item = Span>) -> OxcDia
 }
 
 #[cold]
-pub fn import_meta(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span)
+pub fn invalid_import_property(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`",
+    )
+    .with_label(span)
 }
 
 #[cold]
@@ -886,6 +927,28 @@ pub fn modifier_must_precede_other_modifier(
         format!("'{}' modifier must precede '{}' modifier.", modifier.kind, other_modifier),
     )
     .with_label(modifier.span())
+}
+
+#[cold]
+pub fn modifier_cannot_be_used_with_other_modifier(
+    span: Span,
+    modifier: ModifierKind,
+    other_modifier: ModifierKind,
+) -> OxcDiagnostic {
+    ts_error(
+        "1243",
+        format!("'{modifier}' modifier cannot be used with '{other_modifier}' modifier."),
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn modifier_cannot_be_used_in_ambient_context(
+    span: Span,
+    modifier: ModifierKind,
+) -> OxcDiagnostic {
+    ts_error("1040", format!("'{modifier}' modifier cannot be used in an ambient context."))
+        .with_label(span)
 }
 
 #[cold]
@@ -1235,7 +1298,9 @@ pub fn invalid_assignment_target_default_value_operator(span: Span) -> OxcDiagno
 
 #[cold]
 pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid rest operator's argument.").with_label(span)
+    OxcDiagnostic::error("Invalid rest element target in destructuring assignment")
+        .with_help("Expected an identifier or member expression, like `...rest` or `...obj.prop`.")
+        .with_label(span)
 }
 
 #[cold]

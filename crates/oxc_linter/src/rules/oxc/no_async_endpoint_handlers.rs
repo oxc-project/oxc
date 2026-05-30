@@ -197,8 +197,8 @@ impl Rule for NoAsyncEndpointHandlers {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.kind();
-        let Some((endpoint, args)) = utils::as_endpoint_registration(&kind) else {
+        let AstKind::CallExpression(call) = node.kind() else { return };
+        let Some((endpoint, args)) = utils::as_endpoint_registration(call) else {
             return;
         };
         for arg in

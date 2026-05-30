@@ -118,6 +118,18 @@ export interface DecoratorOptions {
    * @default false
    */
   emitDecoratorMetadata?: boolean
+  /**
+   * Aligns nullable-union `design:type` emission with `--strictNullChecks`.
+   *
+   * When `true` (default), `T | null` and `T | undefined` emit `Object`, matching tsc strict.
+   * When `false`, `null` and `undefined` are elided from the union so the underlying
+   * primitive constructor is emitted, matching tsc with `--strictNullChecks=false`
+   * and `babel-plugin-transform-typescript-metadata`.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#strictNullChecks
+   * @default true
+   */
+  strictNullChecks?: boolean
 }
 
 export interface Es2015Options {

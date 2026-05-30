@@ -1,0 +1,7 @@
+{
+  "folder_a/test.js": {
+    "no-console": {
+      "count": 1
+    }
+  }
+}

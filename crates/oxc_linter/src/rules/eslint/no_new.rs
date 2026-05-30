@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn no_new_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use 'new' for side effects.")
@@ -52,13 +52,13 @@ impl Rule for NoNew {
             return;
         };
 
-        let mut ancestors = ctx
-            .nodes()
-            .ancestors(node.id())
-            .filter(|a| !matches!(a.kind(), AstKind::ParenthesizedExpression(_)));
-        let Some(node) = ancestors.next() else { return };
+        let Some(node) = outermost_paren_parent(node, ctx) else { return };
 
         if matches!(node.kind(), AstKind::ExpressionStatement(_)) {
+            let mut ancestors = ctx
+                .nodes()
+                .ancestors(node.id())
+                .filter(|a| !matches!(a.kind(), AstKind::ParenthesizedExpression(_)));
             ancestors.next(); // skip `FunctionBody`
             if let Some(node) = ancestors.next()
                 && matches!(node.kind(), AstKind::ArrowFunctionExpression(e) if e.expression)

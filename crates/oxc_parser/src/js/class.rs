@@ -73,7 +73,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             start_span = d.span.start;
         }
 
-        let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
+        let id = if self.cur_kind().is_binding_identifier()
+            && !(self.at(Kind::Implements)
+                && self.lexer.peek_token().kind().is_identifier_or_keyword())
+        {
             Some(self.parse_binding_identifier())
         } else {
             None
@@ -171,6 +174,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         loop {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher();
+            if self.fatal_error.is_some() {
+                break;
+            }
             let type_argument;
             if let Expression::TSInstantiationExpression(expr) = extend {
                 let expr = expr.unbox();

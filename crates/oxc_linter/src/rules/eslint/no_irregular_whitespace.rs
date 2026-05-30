@@ -351,73 +351,8 @@ fn test() {
         ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
         ("<div>　</div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
         ("﻿console.log('hello BOM');", None),
-        ("// ", None),
-        ("// ", None),
-        ("// ", None),
-        ("//  ", None),
-        ("// ᠎", None),
-        ("// ﻿", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("// ​", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("// 　", None),
-        ("/*  */", None),
-        ("/*  */", None),
-        ("/*  */", None),
-        ("/*   */", None),
-        ("/* ᠎ */", None),
-        ("/* ﻿ */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/* ​ */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/* 　 */", None),
         ("var any = /　/, other = //;", None),
         ("var any = `　`, other = ``;", None), // { "ecmaVersion": 6 },
-        ("<div></div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div></div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div></div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div>᠎</div>;", None),  // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div>﻿</div>;", None),  // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div>​</div>;", None),  // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div>　</div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
     ];
 
     let fail = vec![

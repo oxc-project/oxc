@@ -1,0 +1,59 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware --type-check
+working directory: fixtures/suppression/fixed_violations_are_reported
+----------
+
+  x There are suppressions that do not occur anymore.
+  help: Run `oxlint --prune-suppressions` to remove unused suppressions.
+
+  ! eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ,-[folder_b/test.ts:1:7]
+ 1 | const foo: number = "42";
+   :       ^|^
+   :        `-- 'foo' is declared here
+ 2 | 
+   `----
+  help: Consider removing this declaration.
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[folder_b/test.ts:1:7]
+ 1 | const foo: number = "42";
+   :       ^^^
+ 2 | 
+   `----
+
+  ! eslint(no-unused-vars): Function 'none' is declared but never used.
+   ,-[folder_b/test.ts:3:16]
+ 2 | 
+ 3 | async function none() {
+   :                ^^|^
+   :                  `-- 'none' is declared here
+ 4 |   console.log();
+   `----
+  help: Consider removing this declaration.
+
+  x typescript(TS2584): Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+   ,-[folder_b/test.ts:4:3]
+ 3 | async function none() {
+ 4 |   console.log();
+   :   ^^^^^^^
+ 5 | }
+   `----
+
+  ! eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ,-[folder_b/test.ts:7:7]
+ 6 | 
+ 7 | const a: Array<number> = new Array<number>();
+   :       |
+   :       `-- 'a' is declared here
+   `----
+  help: Consider removing this declaration.
+
+Found 3 warnings and 3 errors.
+Finished in <variable>ms on 2 files with 86 rules using 1 threads.
+----------
+CLI result: LintUnprunedSuppressions
+----------

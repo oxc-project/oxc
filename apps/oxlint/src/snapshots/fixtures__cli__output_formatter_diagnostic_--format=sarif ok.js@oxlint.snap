@@ -13,8 +13,8 @@ working directory: fixtures/cli/output_formatter_diagnostic
       "tool": {
         "driver": {
           "name": "oxlint",
-          "version": "1.62.0",
-          "semanticVersion": "1.62.0",
+          "version": "<variable>",
+          "semanticVersion": "<variable>",
           "informationUri": "https://oxc.rs/docs/guide/usage/linter.html",
           "rules": []
         }

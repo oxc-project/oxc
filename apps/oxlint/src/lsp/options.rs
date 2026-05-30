@@ -4,6 +4,7 @@ use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
 
 use oxc_linter::FixKind;
+use tracing::error;
 
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -22,12 +23,13 @@ pub enum Run {
     OnType,
 }
 
-/// LSP Options for linting, which can be defined for each workspace folder separately.
+/// LSP Options
 ///
-/// It can be sent by the client in `initialize` or `workspace/didChangeConfiguration` requests.
+/// These options can be defined for each workspace folder separately.
+/// File references in the options (e.g. `configPath`, `tsConfigPath`) are resolved relative to the workspace folder.
+///
+/// They can be sent by the client in `initialize` or `workspace/didChangeConfiguration` requests.
 /// If the client supports `workspace/configuration`, the server will request the options from the client.
-///
-/// ## Example
 ///
 /// Example of `initialize` request:
 /// ```json
@@ -89,6 +91,70 @@ pub struct LintOptions {
     /// What kind of fixes to generate for code actions.
     #[schemars(with = "Option<LintFixKindFlag>")]
     pub fix_kind: LintFixKindFlag,
+    /// Customization for individual rules, allows to override the linter's diagnostics and autofix.
+    /// Example of lowering the severity of "no-unused-vars" rule to "hint" and disabling autofix for it:
+    /// ```json
+    /// {
+    ///   "rulesCustomization": {
+    ///     "no-unused-vars": {
+    ///       "severity": "hint",
+    ///       "autofix": false
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rules_customization: Option<RulesCustomization>,
+}
+
+#[derive(Debug, Default, Serialize, PartialEq, Eq, JsonSchema)]
+#[serde(transparent)]
+pub struct RulesCustomization {
+    #[serde(flatten)]
+    pub rules: FxHashMap<String, RuleCustomization>,
+}
+
+impl<'de> Deserialize<'de> for RulesCustomization {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = Value::deserialize(deserializer)?;
+        let Some(object) = value.as_object() else {
+            return Err(D::Error::custom("rulesCustomization must be an object"));
+        };
+
+        let mut rules = FxHashMap::with_capacity_and_hasher(object.len(), FxBuildHasher);
+        for (rule_name, rule_config) in object {
+            let Ok(customization) = RuleCustomization::deserialize(rule_config) else {
+                error!("failed to deserialize customization for rule {rule_name}, skipping.");
+                continue;
+            };
+            rules.insert(rule_name.clone(), customization);
+        }
+
+        Ok(Self { rules })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum RuleCustomizationSeverity {
+    Error,
+    Warn,
+    Info,
+    Hint,
+    Off,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleCustomization {
+    // note: this will not enable "off" rules; it only customizes active rules
+    // it only modifies the severity of returned diagnostics, not the linter configuration
+    pub severity: Option<RuleCustomizationSeverity>,
+    // this flag indicates whether to include this rule in "fix all" and "fix all dangerous" code action
+    pub autofix: Option<bool>,
 }
 
 #[derive(Debug, Default, Serialize, PartialEq, Eq, Deserialize, JsonSchema)]
@@ -158,7 +224,6 @@ impl TryFrom<Value> for LintOptions {
                 flags.insert("fix_kind".to_string(), fix_kind);
             }
         }
-
         Ok(Self {
             run: object.get("run").and_then(|run| Run::deserialize(run).ok()).unwrap_or_default(),
             unused_disable_directives: object
@@ -185,6 +250,9 @@ impl TryFrom<Value> for LintOptions {
                     Some(&"all") => LintFixKindFlag::All,
                     _ => LintFixKindFlag::default(),
                 }),
+            rules_customization: object
+                .get("rulesCustomization")
+                .and_then(|key| RulesCustomization::deserialize(key).ok()),
         })
     }
 }
@@ -193,7 +261,7 @@ impl TryFrom<Value> for LintOptions {
 mod test {
     use serde_json::json;
 
-    use super::{LintOptions, Run, UnusedDisableDirectives};
+    use super::{LintOptions, RuleCustomizationSeverity, Run, UnusedDisableDirectives};
 
     #[test]
     fn test_valid_options_json() {
@@ -203,7 +271,16 @@ mod test {
             "unusedDisableDirectives": "warn",
             "typeAware": true,
             "disableNestedConfig": true,
-            "fixKind": "dangerous_fix"
+            "fixKind": "dangerous_fix",
+            "rulesCustomization": {
+                "no-unused-vars": {
+                    "severity": "error",
+                    "autofix": true
+                },
+                "eqeqeq": {
+                    "severity": "warn"
+                }
+            }
         });
 
         let options = LintOptions::try_from(json).unwrap();
@@ -213,6 +290,16 @@ mod test {
         assert_eq!(options.type_aware, Some(true));
         assert!(options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
+
+        assert!(options.rules_customization.is_some());
+        let rules_customization = options.rules_customization.unwrap();
+        assert_eq!(rules_customization.rules.len(), 2);
+        let no_unused_vars = &rules_customization.rules["no-unused-vars"];
+        assert_eq!(no_unused_vars.severity, Some(RuleCustomizationSeverity::Error));
+        assert_eq!(no_unused_vars.autofix, Some(true));
+        let eqeqeq = &rules_customization.rules["eqeqeq"];
+        assert_eq!(eqeqeq.severity, Some(RuleCustomizationSeverity::Warn));
+        assert_eq!(eqeqeq.autofix, None);
     }
 
     #[test]
@@ -226,6 +313,7 @@ mod test {
         assert_eq!(options.type_aware, None);
         assert!(!options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFixOrSuggestion);
+        assert!(options.rules_customization.is_none());
     }
 
     #[test]
@@ -245,6 +333,29 @@ mod test {
         let options = LintOptions::try_from(json).unwrap();
         assert_eq!(options.run, Run::OnType); // fallback
         assert_eq!(options.config_path, Some("./custom.json".into()));
+    }
+
+    #[test]
+    fn test_invalid_rule_customization_json() {
+        let json = json!({
+            "rulesCustomization": {
+                "valid-rule": {
+                    "severity": "error",
+                },
+                "invalid-rule": {
+                    "severity": "invalid_severity",
+                }
+            }
+        });
+
+        let options = LintOptions::try_from(json).unwrap();
+        assert!(options.rules_customization.is_some());
+        let rules_customization = options.rules_customization.unwrap();
+        assert_eq!(rules_customization.rules.len(), 1);
+        // rule settings are valid
+        assert!(rules_customization.rules.contains_key("valid-rule"));
+        // rule settings are invalid, should be skipped without affecting the deserialization of other rules
+        assert!(!rules_customization.rules.contains_key("invalid-rule"));
     }
 
     #[test]

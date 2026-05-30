@@ -34,7 +34,7 @@ fn test_schema_markdown() {
 
 #[test]
 fn test_schema_markdown_lsp() {
-    let snapshot = Renderer::new(schema_for!(LintOptions)).render();
+    let snapshot = generate_schema_markdown_lsp();
     insta::with_settings!({ prepend_module_to_snapshot => false }, {
         insta::assert_snapshot!(snapshot);
     });
@@ -47,10 +47,21 @@ pub fn print_schema_markdown() {
 
 #[expect(clippy::print_stdout)]
 pub fn print_schema_markdown_lsp() {
-    println!("{}", Renderer::new(schema_for!(LintOptions)).render());
+    println!("{}", generate_schema_markdown_lsp());
 }
 
 fn generate_schema_markdown() -> String {
     let root_schema = schema_for!(Oxlintrc);
-    Renderer::new(root_schema).render()
+    let mut renderer = Renderer::new(root_schema);
+    // rules.* and overrides[n].rules should be hidden from the documentation,
+    // or else every rules will be listed in the documentation, which is not ideal.
+    renderer.with_property_filters(vec!["rules", "overrides[n].rules"]);
+    renderer.render()
+}
+
+fn generate_schema_markdown_lsp() -> String {
+    let root_schema = schema_for!(LintOptions);
+    let mut renderer = Renderer::new(root_schema);
+    renderer.with_title(false);
+    renderer.render()
 }

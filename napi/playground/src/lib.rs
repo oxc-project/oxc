@@ -29,12 +29,12 @@ use oxc::{
     transformer::{TransformOptions, Transformer},
 };
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    Expand, FormatOptions, Formatter, GroupEntry, ImportModifier, ImportSelector, IndentStyle,
-    IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, TrailingCommas, default_groups, default_internal_patterns,
-    get_parse_options,
+    ArrowParentheses, AttributePosition, BracketSameLine, CustomGroupDefinition, Formatter,
+    GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties, QuoteStyle,
+    Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
+    default_internal_patterns, get_parse_options,
 };
+use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
     LintOptions, Linter, ModuleRecord, Oxlintrc,
@@ -429,8 +429,8 @@ impl Oxc {
         }
     }
 
-    fn convert_formatter_options(options: &OxcFormatterOptions) -> FormatOptions {
-        let mut format_options = FormatOptions::default();
+    fn convert_formatter_options(options: &OxcFormatterOptions) -> JsFormatOptions {
+        let mut format_options = JsFormatOptions::default();
 
         if let Some(use_tabs) = options.use_tabs {
             format_options.indent_style =
@@ -624,7 +624,7 @@ impl Oxc {
             let formatter = Formatter::new(&allocator, format_options);
             let formatted = formatter.format(&ret.program);
             if run_options.formatter {
-                self.formatter_ir_text = formatted.document().to_string();
+                self.formatter_ir_text = formatted.document().display(source_text).to_string();
                 self.formatter_formatted_text = match formatted.print() {
                     Ok(printer) => printer.into_code(),
                     Err(err) => err.to_string(),

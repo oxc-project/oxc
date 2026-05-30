@@ -1,12 +1,11 @@
 import { dce, Dependency } from "mod";
 
-var _ref;
 let AbstractClass = class AbstractClass {
   dependency;
   constructor(dependency) {
     this.dependency = dependency;
   }
 };
-AbstractClass = babelHelpers.decorate([dce(), babelHelpers.decorateMetadata("design:paramtypes", [typeof (_ref = typeof Dependency !== "undefined" && Dependency) === "function" ? _ref : Object])], AbstractClass);
+AbstractClass = babelHelpers.decorate([dce(), babelHelpers.decorateMetadata("design:paramtypes", [typeof Dependency === "undefined" ? Object : Dependency])], AbstractClass);
 
 export { AbstractClass };

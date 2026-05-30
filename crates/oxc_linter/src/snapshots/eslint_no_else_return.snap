@@ -275,24 +275,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
    ╭─[no_else_return.tsx:1:50]
- 1 │ function foo() { var a; if (bar) { return true; } else { var a; } }
-   ·                                    ──────┬─────  ───┬──
-   ·                                          │          ╰── Making this `else` block unnecessary.
-   ·                                          ╰── This consequent block always returns,
-   ╰────
-  help: Remove the `else` block, moving its contents outside of the `if` statement.
-
-  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
-   ╭─[no_else_return.tsx:1:61]
- 1 │ function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }
-   ·                                               ──────┬─────  ───┬──
-   ·                                                     │          ╰── Making this `else` block unnecessary.
-   ·                                                     ╰── This consequent block always returns,
-   ╰────
-  help: Remove the `else` block, moving its contents outside of the `if` statement.
-
-  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
-   ╭─[no_else_return.tsx:1:50]
  1 │ function foo() { let a; if (bar) { return true; } else { let a; } }
    ·                                    ──────┬─────  ───┬──
    ·                                          │          ╰── Making this `else` block unnecessary.

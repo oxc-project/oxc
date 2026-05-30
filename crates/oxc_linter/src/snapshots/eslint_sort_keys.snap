@@ -635,9 +635,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `b
         
-                                        ,a` with `a
+                                        ,a` with `a,
         
-                                        ,b`.
+                                        b`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:2:40]

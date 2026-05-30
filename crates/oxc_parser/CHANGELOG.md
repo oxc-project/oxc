@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- 661132d parser: More friendly error messages for rest assignment target and rest binding element (#22719) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- e184f74 parser: Improve invalid `import` property access diagnostic (#22693) (camc314)
+- a9ad27e parser: Keep annotation comments leading without preceding newline (#22711) (Dunqing)
+- b284045 parser: Switch to module goal eagerly on `export` (#22684) (Boshen)
+- 917da24 parser: Apply PURE comment through member-access chains (#22566) (Dunqing)
+
+### ⚡ Performance
+
+- 82f9662 parser: Check identifier kind before context flag (#22662) (camc314)
+- d7cd951 parser: Fast path identifier parsing and inline operator helpers (#22650) (Boshen)
+
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- e431a0e parser: Break extends clause loop on fatal error (#22517) (Boshen)
+
+## [0.131.0] - 2026-05-15
+
+### ⚡ Performance
+
+- 83679ea parser: Split TriviaBuilder::handle_token hot/cold paths (#22415) (Boshen)
+- 0b4e158 parser: Reserve cap `2` for sequence expressions vec (#22374) (camc314)
+
+## [0.130.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- 9fa2122 parser: Parse array computed class keys (#22159) (camc314)
+
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- 81e834c parser: Prevent multiple `Parser` instances in binary (#22120) (overlookmotel)
+- aaabde4 parser: Attach legal comments to following token (#21670) (Dunqing)
+
 ## [0.128.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES

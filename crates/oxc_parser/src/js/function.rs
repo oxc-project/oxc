@@ -34,8 +34,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::LCurly);
 
         // Add Return context, remove TopLevel context
-        let (directives, statements) =
-            self.context(Context::Return, Context::TopLevel, Self::parse_directives_and_statements);
+        let (directives, statements) = self.context(Context::Return, Context::TopLevel, |p| {
+            p.parse_directives_and_statements(/* in_ts_namespace_body */ false)
+        });
 
         self.expect_closing(Kind::RCurly, opening_span);
         self.ast.alloc_function_body(self.end_span(span), directives, statements)
@@ -285,8 +286,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.asi();
         }
 
+        // A function declaration's implementation (body) cannot be declared in an ambient context,
+        // whether the ambient context comes from the function's own `declare` modifier or is
+        // inherited from an enclosing `declare module`/`declare namespace` or a `.d.ts` file
+        // (TS1183). Class methods are checked separately in `check_method_definition`, so they are
+        // excluded here to avoid a duplicate diagnostic.
         if ctx.has_ambient()
-            && modifiers.contains_declare()
+            && matches!(
+                func_kind,
+                FunctionKind::Declaration
+                    | FunctionKind::DefaultExport
+                    | FunctionKind::TSDeclaration
+            )
             && let Some(body) = &body
         {
             self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));

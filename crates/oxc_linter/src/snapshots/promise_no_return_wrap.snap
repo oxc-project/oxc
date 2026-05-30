@@ -90,6 +90,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Return the value being passed into Promise.resolve instead
 
+  ⚠ promise(no-return-wrap): Expected throw instead of Promise.reject
+   ╭─[no_return_wrap.tsx:6:26]
+ 5 │                 } else {
+ 6 │                   return Promise.reject()
+   ·                          ────────────────
+ 7 │                 }
+   ╰────
+  help: Throw the value being passed into Promise.reject instead
+
   ⚠ promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
    ╭─[no_return_wrap.tsx:3:16]
  2 │                doThing().then(function() {
@@ -219,5 +228,61 @@ source: crates/oxc_linter/src/tester.rs
  5 │                      return Promise.resolve(4)
    ·                             ──────────────────
  6 │                    })
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:70]
+ 1 │ doThing().then(function(val) { if (val) { return val } else { return Promise.resolve(val) } })
+   ·                                                                      ────────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ promise(no-return-wrap): Expected throw instead of Promise.reject
+   ╭─[no_return_wrap.tsx:1:70]
+ 1 │ doThing().then(function(val) { if (val) { return val } else { return Promise.reject('err') } })
+   ·                                                                      ─────────────────────
+   ╰────
+  help: Throw the value being passed into Promise.reject instead
+
+  ⚠ promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:77]
+ 1 │ doThing().then(function(val) { if (val) { console.log('hi') } else { return Promise.resolve(val) } })
+   ·                                                                             ────────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:71]
+ 1 │ doThing().then(function(val) { if (val > 10) { if (val > 20) { return Promise.resolve(val) } } })
+   ·                                                                       ────────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:88]
+ 1 │ doThing().then(function(val) { if (val > 10) { return val } else if (val > 5) { return Promise.resolve(val) } })
+   ·                                                                                        ────────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:65]
+ 1 │ doThing().then((val) => { if (val) { return val } else { return Promise.resolve(val) } })
+   ·                                                                 ────────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:61]
+ 1 │ doThing().then(function(val) { switch(val) { case 1: return Promise.resolve(val); default: return val } })
+   ·                                                             ────────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:45]
+ 1 │ doThing().then(function(val) { try { return Promise.resolve(val) } catch(e) { return val } })
+   ·                                             ────────────────────
    ╰────
   help: Return the value being passed into Promise.resolve instead

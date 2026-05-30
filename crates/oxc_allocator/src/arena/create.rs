@@ -74,7 +74,7 @@ const _: () = {
 ///
 /// The available capacity will be slightly smaller.
 /// 16 KiB covers the majority of real-world JS/TS files.
-const FIRST_ALLOCATION_GOAL: usize = 16 * 1024;
+pub(super) const FIRST_ALLOCATION_GOAL: usize = 16 * 1024;
 
 const _: () = {
     assert!(FIRST_ALLOCATION_GOAL.is_power_of_two());

@@ -4,14 +4,14 @@ use oxc_ast::ast::*;
 use crate::{
     Format, FormatTrailingCommas,
     ast_nodes::AstNode,
-    formatter::{Formatter, prelude::*, trivia::format_dangling_comments},
+    formatter::{prelude::*, trivia::format_dangling_comments},
     write,
 };
 
 use super::FormatWrite;
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_nodes_with_soft_line().entries_with_trailing_separator(
             self.iter(),
@@ -22,7 +22,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTupleType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "[");
 
         let element_types = self.element_types();

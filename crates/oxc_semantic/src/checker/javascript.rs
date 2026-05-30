@@ -1,5 +1,5 @@
 use memchr::memchr_iter;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
@@ -28,7 +28,9 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
 
     let mut available_names: Option<Vec<&str>> = None;
     for stmt in &program.body {
-        if let Statement::ExportNamedDeclaration(decl) = stmt {
+        if let Statement::ExportNamedDeclaration(decl) = stmt
+            && decl.source.is_none()
+        {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
@@ -81,8 +83,9 @@ pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
     classes.iter_enumerated().for_each(|(class_id, _)| {
-        let mut defined_elements = FxHashMap::default();
         let elements = &classes.elements[class_id];
+        let mut defined_elements =
+            FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher);
         for (element_id, element) in elements.iter_enumerated() {
             if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
                 let prev_element = &elements[prev_element_id];
@@ -152,13 +155,17 @@ pub fn check_identifier(
     ctx: &SemanticBuilder<'_>,
 ) {
     // reserved keywords are allowed in ambient contexts
-    if ctx.source_type.is_typescript_definition() || is_current_node_ambient_binding(symbol_id, ctx)
-    {
-        return;
+    fn is_allowed_context(symbol_id: Option<SymbolId>, ctx: &SemanticBuilder<'_>) -> bool {
+        ctx.source_type.is_typescript_definition()
+            || is_current_node_ambient_binding(symbol_id, ctx)
     }
 
     match name {
         "await" => {
+            if is_allowed_context(symbol_id, ctx) {
+                return;
+            }
+
             // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
             if ctx.source_type.is_module() {
                 ctx.error(diagnostics::reserved_keyword(name, span));
@@ -171,9 +178,10 @@ pub fn check_identifier(
         // TODO: Revisit this match arm when we add `Ident` and pre-hash the identifier names and see if a HashSet
         // becomes better for performance again.
         "implements" | "interface" | "let" | "package" | "private" | "protected" | "public"
-        | "static" | "yield"
-            if ctx.strict_mode() =>
-        {
+        | "static" | "yield" => {
+            if !ctx.strict_mode() || is_allowed_context(symbol_id, ctx) {
+                return;
+            }
             // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
             ctx.error(diagnostics::reserved_keyword(name, span));
         }
@@ -205,9 +213,9 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
         return;
     }
 
-    if ctx.strict_mode() {
+    match ident.name.as_str() {
         // In strict mode, `eval` and `arguments` are banned as identifiers.
-        if matches!(ident.name.as_str(), "eval" | "arguments") {
+        "eval" | "arguments" if ctx.strict_mode() => {
             // `eval` and `arguments` are allowed as the names of declare functions as well as their arguments.
             //
             // declare function eval(): void; // OK
@@ -243,10 +251,9 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                 ctx.error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
             }
         }
-    } else {
-        // LexicalDeclaration : LetOrConst BindingList ;
-        // * It is a Syntax Error if the BoundNames of BindingList contains "let".
-        if ident.name == "let" {
+        "let" if !ctx.strict_mode() => {
+            // LexicalDeclaration : LetOrConst BindingList ;
+            // * It is a Syntax Error if the BoundNames of BindingList contains "let".
             for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
                 match node_kind {
                     AstKind::VariableDeclarator(decl) => {
@@ -263,6 +270,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                 }
             }
         }
+        _ => {}
     }
 }
 
@@ -274,7 +282,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
 
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
-    if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
+    if matches!(ident.name.as_str(), "arguments" | "eval") && ctx.strict_mode() {
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
             match node_kind {
                 // Only check for actual assignment contexts, not member expression access
@@ -385,26 +393,20 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
     fn leading_zero(s: Option<Str>) -> bool {
         if let Some(s) = s {
-            let mut chars = s.bytes();
-            if let Some(first) = chars.next()
-                && let Some(second) = chars.next()
-            {
-                return first == b'0' && second.is_ascii_digit();
-            }
+            let bytes = s.as_bytes();
+            return bytes.len() >= 2 && bytes[0] == b'0' && bytes[1].is_ascii_digit();
         }
         false
     }
 
-    if ctx.strict_mode() {
-        match lit.base {
-            NumberBase::Octal if leading_zero(lit.raw) => {
-                ctx.error(diagnostics::legacy_octal(lit.span));
-            }
-            NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) => {
-                ctx.error(diagnostics::leading_zero_decimal(lit.span));
-            }
-            _ => {}
+    match lit.base {
+        NumberBase::Octal if leading_zero(lit.raw) && ctx.strict_mode() => {
+            ctx.error(diagnostics::legacy_octal(lit.span));
         }
+        NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) && ctx.strict_mode() => {
+            ctx.error(diagnostics::leading_zero_decimal(lit.span));
+        }
+        _ => {}
     }
 }
 
@@ -1293,6 +1295,15 @@ pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilde
     // ObjectLiteral : { PropertyDefinitionList }
     // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
     // and at least two of those entries were obtained from productions of the form PropertyDefinition : PropertyName : AssignmentExpression
+
+    // A duplicate requires ≥2 entries. JSX/TSX call sites emit huge numbers
+    // of single-property object literals (`<Foo prop={x}>` → `{prop: x}`), so
+    // the early-exit skips the loop setup and `prop_name()` call for those
+    // very common cases.
+    if obj_expr.properties.len() < 2 {
+        return;
+    }
+
     let mut prev_proto: Option<Span> = None;
     for prop in &obj_expr.properties {
         if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {

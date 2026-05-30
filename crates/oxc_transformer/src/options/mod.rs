@@ -80,7 +80,11 @@ impl TransformOptions {
             cwd: PathBuf::new(),
             assumptions: CompilerAssumptions::default(),
             typescript: TypeScriptOptions::default(),
-            decorator: DecoratorOptions { legacy: true, emit_decorator_metadata: true },
+            decorator: DecoratorOptions {
+                legacy: true,
+                emit_decorator_metadata: true,
+                strict_null_checks: true,
+            },
             jsx: JsxOptions {
                 development: true,
                 refresh: Some(ReactRefreshOptions::default()),
@@ -163,6 +167,10 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 .plugins
                 .legacy_decorator
                 .is_some_and(|o| o.emit_decorator_metadata),
+            strict_null_checks: options
+                .plugins
+                .legacy_decorator
+                .is_none_or(|o| o.strict_null_checks),
         };
 
         let jsx = if let Some(options) = &options.presets.jsx {

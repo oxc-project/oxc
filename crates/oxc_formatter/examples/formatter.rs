@@ -17,9 +17,9 @@ use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    BracketSameLine, FormatOptions, Formatter, JsdocOptions, LineWidth, Semicolons,
-    get_parse_options,
+    BracketSameLine, Formatter, JsFormatOptions, JsdocOptions, Semicolons, get_parse_options,
 };
+use oxc_formatter_core::LineWidth;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_tasks_common::print_diff_in_terminal;
@@ -48,7 +48,7 @@ fn main() -> Result<(), String> {
         None => LineWidth::try_from(80).unwrap(),
     };
     let jsdoc_options = if jsdoc { Some(JsdocOptions::default()) } else { None };
-    let options = FormatOptions {
+    let options = JsFormatOptions {
         bracket_same_line: BracketSameLine::from(true),
         semicolons,
         line_width,
@@ -74,7 +74,7 @@ fn main() -> Result<(), String> {
 
     if show_ir {
         println!("--- IR ---");
-        println!("{}", &formatted.document().to_string());
+        println!("{}", formatted.document().display(&source_text));
         println!("--- End IR ---\n");
     }
 
