@@ -114,7 +114,7 @@ fn test() {
         "declare module foo {}",
         "
         declare module foo {
-          declare module bar {}
+          module bar {}
         }
         ",
         "
@@ -144,12 +144,12 @@ fn test() {
         (
             "
             declare module foo {
-              declare module bar {}
+              module bar {}
             }
             ",
             "
             declare namespace foo {
-              declare namespace bar {}
+              namespace bar {}
             }
             ",
             None,

@@ -3,7 +3,7 @@ commit: e5509e21
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1611/2640 (61.02%)
+Negative Passed: 1620/2640 (61.36%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -181,10 +181,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/continueNotI
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashDeclareGlobalTypeofExport.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashRegressionTest.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCommonJsModuleReferencedType.ts
 
@@ -1758,13 +1754,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration12.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration3.d.ts
 
@@ -1775,8 +1767,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration3.ts
 
@@ -1805,12 +1795,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration10.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration2.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration4.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList14.ts
 
@@ -1849,8 +1833,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/VariableDeclarations/parserVariableDeclaration4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserNoASIOnCallAfterFunctionExpression1.ts
 
@@ -5633,6 +5615,70 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ 
    ╰────
 
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts:2:5]
+ 1 │ declare namespace M {
+ 2 │     declare var x;
+   ·     ───────
+ 3 │     declare function f();
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts:3:5]
+ 2 │     declare var x;
+ 3 │     declare function f();
+   ·     ───────
+ 4 │ 
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts:5:5]
+ 4 │ 
+ 5 │     declare namespace N { }
+   ·     ───────
+ 6 │ 
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts:7:5]
+ 6 │ 
+ 7 │     declare class C { }
+   ·     ───────
+ 8 │ }
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:2:5]
+ 1 │ declare namespace M {
+ 2 │     declare var x;
+   ·     ───────
+ 3 │     declare function f();
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:3:5]
+ 2 │     declare var x;
+ 3 │     declare function f();
+   ·     ───────
+ 4 │ 
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:5:5]
+ 4 │ 
+ 5 │     declare namespace N { }
+   ·     ───────
+ 6 │ 
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:7:5]
+ 6 │ 
+ 7 │     declare class C { }
+   ·     ───────
+ 8 │ }
+   ╰────
+
   × Identifier `a` has already been declared
    ╭─[typescript/tests/cases/compiler/declarationEmitDestructuring2.ts:3:13]
  2 │ function g([a, b, c, d] = [1, 2, 3, 4]) { }
@@ -7754,6 +7800,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │     }
  6 │     declare export import a = x.c;
    ·             ──────
+ 7 │     var b: a;
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifierInAmbientContext.ts:6:5]
+ 5 │     }
+ 6 │     declare export import a = x.c;
+   ·     ───────
  7 │     var b: a;
    ╰────
 
@@ -10869,6 +10923,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  126 │             import m5_nonerrorImport = glo_M1_public;
      ╰────
 
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:133:9]
+ 132 │     namespace m2 {
+ 133 │         declare module "abc" {
+     ·         ───────
+ 134 │         }
+     ╰────
+
   × TS(1147): Import declarations in a namespace cannot reference a module.
      ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:146:5]
  145 │ namespace m2 {
@@ -10949,12 +11011,28 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  307 │             import m5_nonerrorImport = glo_M3_private;
      ╰────
 
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:314:9]
+ 313 │     namespace m2 {
+ 314 │         declare module "abc" {
+     ·         ───────
+ 315 │         }
+     ╰────
+
   × TS(1029): 'export' modifier must precede 'declare' modifier.
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
  326 │ declare export module "anotherParseError2" {
      ·         ──────
  327 │     namespace m2 {
+     ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:328:9]
+ 327 │     namespace m2 {
+ 328 │         declare module "abc" {
+     ·         ───────
+ 329 │         }
      ╰────
 
   × 'export' modifier cannot be used here.
@@ -24395,6 +24473,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Remove the extra base class or use interfaces for multiple inheritance
 
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts:2:3]
+ 1 │ declare namespace M {
+ 2 │   declare class C {
+   ·   ───────
+ 3 │   }
+   ╰────
+
   × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration8.ts:2:3]
  1 │ class C {
@@ -24520,6 +24606,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │   1, 2, 3
    ·   ─
  3 │ }
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts:2:3]
+ 1 │ declare namespace M {
+ 2 │   declare enum E {
+   ·   ───────
+ 3 │   }
    ╰────
 
   × Identifier expected. 'void' is a reserved word that cannot be used here.
@@ -25270,6 +25364,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·    ─────────
    ╰────
 
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration1.ts:2:3]
+ 1 │ declare namespace M {
+ 2 │   declare function F();
+   ·   ───────
+ 3 │ }
+   ╰────
+
   × TS(1183): An implementation cannot be declared in ambient contexts.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration2.d.ts:1:14]
  1 │ function F() {
@@ -25834,6 +25936,30 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MissingTokens/parserMissingToken2.ts:1:1]
  1 │ / b;
    · ────
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration3.ts:2:3]
+ 1 │ declare namespace M {
+ 2 │   declare namespace M2 {
+   ·   ───────
+ 3 │   }
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration4.d.ts:2:3]
+ 1 │ namespace M {
+ 2 │   declare namespace M1 {
+   ·   ───────
+ 3 │   }
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration5.ts:3:5]
+ 2 │   declare namespace M2 {
+ 3 │     declare namespace M3 {
+   ·     ───────
+ 4 │     }
    ╰────
 
   × Expected `(` but found `;`
@@ -26968,6 +27094,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/VariableDeclarations/parserVariableDeclaration10.ts:1:7]
  1 │ var a,;
    ·       ─
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/VariableDeclarations/parserVariableDeclaration4.ts:2:4]
+ 1 │ declare namespace M {
+ 2 │    declare var v;
+   ·    ───────
+ 3 │ }
    ╰────
 
   × Unexpected token

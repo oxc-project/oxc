@@ -458,6 +458,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_declaration_statement(&mut self, start_span: u32) -> Statement<'a> {
         let reserved_ctx = self.ctx;
         let modifiers = self.eat_modifiers_before_declaration();
+        if let Some(modifier) = modifiers.get(ModifierKind::Declare)
+            && reserved_ctx.has_ambient()
+            && !reserved_ctx.has_top_level()
+        {
+            self.error(diagnostics::declare_in_ambient_context(modifier.span()));
+        }
         self.ctx = self
             .ctx
             .union_ambient_if(modifiers.contains_declare())

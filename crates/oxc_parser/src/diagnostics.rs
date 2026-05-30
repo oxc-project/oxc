@@ -314,6 +314,12 @@ pub fn statement_in_ambient_context(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn declare_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1038", "A 'declare' modifier cannot be used in an already ambient context.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)
