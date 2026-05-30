@@ -569,14 +569,34 @@ fn test() {
         ),
     ];
 
+//     let fail = vec![
+//         // Comment before return statement - should not fix (comment would be lost)
+//         (
+//             "const something = () => {
+//   // An important comment ⚠️
+//   return \"something\";
+// };",
+//             Some(serde_json::json!(["as-needed"])),
+//         ),
+//         (
+//             "const something = () => {
+//   /* An important comment */
+//   return \"something\";
+// };",
+//             Some(serde_json::json!(["as-needed"])),
+//         ),
+//         (
+//             "for (var foo = () => { return a in b ? bar : () => {} } ;;);",
+//             Some(serde_json::json!(["as-needed"])),
+//         ),
     let fail = vec![
-        // Comment before return statement - should not fix (comment would be lost)
         (
             "const something = () => {
   // An important comment ⚠️
   return \"something\";
 };",
             Some(serde_json::json!(["as-needed"])),
+            Some("const something = () => \n  // An important comment ⚠️\n  \"something\";"),
         ),
         (
             "const something = () => {
@@ -584,10 +604,12 @@ fn test() {
   return \"something\";
 };",
             Some(serde_json::json!(["as-needed"])),
+            Some("const something = () => \n  /* An important comment */\n  \"something\";"),
         ),
         (
             "for (var foo = () => { return a in b ? bar : () => {} } ;;);",
             Some(serde_json::json!(["as-needed"])),
+            None,
         ),
         ("a in b; for (var f = () => { return c };;);", Some(serde_json::json!(["as-needed"]))),
         ("for (a = b => { return c in d ? e : f } ;;);", Some(serde_json::json!(["as-needed"]))),
