@@ -349,12 +349,12 @@ impl ArrowBodyStyle {
         // Check if there are comments between the opening brace and the return statement.
         // If so, we cannot safely fix because the comment would be lost.
         // ESLint also skips the fix in this case.
-        let block_start = body.span.start + 1; // Skip the opening '{'
-        let return_start = return_arg.span().start;
-        if ctx.has_comments_between(Span::new(block_start, return_start)) {
-            // Cannot fix when there are comments before the return statement
-            return fixer.noop();
-        }
+        // let block_start = body.span.start + 1; // Skip the opening '{'
+        // let return_start = return_arg.span().start;
+        // if ctx.has_comments_between(Span::new(block_start, return_start)) {
+        //     // Cannot fix when there are comments before the return statement
+        //     return fixer.noop();
+        // }
 
         let return_arg_text = ctx.source_range(return_arg.span());
 
