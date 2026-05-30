@@ -3,12 +3,10 @@ commit: d9fe348c
 parser_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
 Positive Passed: 2222/2236 (99.37%)
-Negative Passed: 1701/1723 (98.72%)
+Negative Passed: 1702/1723 (98.78%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-ambiguity/input.ts
 
@@ -12902,6 +12900,38 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │   }
    ╰────
 
+  × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts:2:10]
+ 1 │ abstract class A extends Base {
+ 2 │   static abstract m1();
+   ·          ────────
+ 3 │   abstract static m1();
+   ╰────
+
+  × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts:3:12]
+ 2 │   static abstract m1();
+ 3 │   abstract static m1();
+   ·            ──────
+ 4 │ 
+   ╰────
+
+  × TS(1243): 'override' modifier cannot be used with 'declare' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts:5:11]
+ 4 │ 
+ 5 │   declare override prop1: any;
+   ·           ────────
+ 6 │   override declare prop2: any;
+   ╰────
+
+  × TS(1040): 'override' modifier cannot be used in an ambient context.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts:6:12]
+ 5 │   declare override prop1: any;
+ 6 │   override declare prop2: any;
+   ·            ───────
+ 7 │ }
+   ╰────
+
   × TS(1071): 'abstract' modifier cannot appear on an index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:2:3]
  1 │ class C {
@@ -14496,6 +14526,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ class Foo {
  2 │   abstract static {}
    ·   ────────
+ 3 │ }
+   ╰────
+
+  × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-abstract-02/input.ts:2:10]
+ 1 │ class Foo {
+ 2 │   static abstract {}
+   ·          ────────
  3 │ }
    ╰────
 

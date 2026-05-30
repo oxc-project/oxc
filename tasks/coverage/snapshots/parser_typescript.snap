@@ -3,7 +3,7 @@ commit: e5509e21
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1591/2640 (60.27%)
+Negative Passed: 1592/2640 (60.30%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1001,8 +1001,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/await_unaryExpression_es6_2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration3_es6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.2.ts
 
@@ -14558,6 +14556,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ }
    ╰────
 
+  × TS(1243): 'private' modifier cannot be used with 'abstract' modifier.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:6:13]
+ 5 │     protected abstract foo_c();
+ 6 │     private abstract foo_d();
+   ·             ────────
+ 7 │ 
+   ╰────
+
   × TS(1029): 'public' modifier must precede 'abstract' modifier.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:8:14]
  7 │ 
@@ -14574,12 +14580,28 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  10 │     abstract private foo_dd();
     ╰────
 
-  × TS(1029): 'private' modifier must precede 'abstract' modifier.
+  × TS(1243): 'private' modifier cannot be used with 'abstract' modifier.
     ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:10:14]
   9 │     abstract protected foo_cc();
  10 │     abstract private foo_dd();
     ·              ───────
  11 │ 
+    ╰────
+
+  × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:12:14]
+ 11 │ 
+ 12 │     abstract static foo_d();
+    ·              ──────
+ 13 │     static abstract foo_e();
+    ╰────
+
+  × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:13:12]
+ 12 │     abstract static foo_d();
+ 13 │     static abstract foo_e();
+    ·            ────────
+ 14 │ 
     ╰────
 
   × TS(2391): Function implementation is missing or not immediately following the declaration.
@@ -14588,6 +14610,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  15 │     qux();
     ·     ───
  16 │ }
+    ╰────
+
+  × TS(1243): 'private' modifier cannot be used with 'abstract' modifier.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts:5:13]
+ 4 │     protected abstract z : number;
+ 5 │     private abstract w : number;
+   ·             ────────
+ 6 │     
+   ╰────
+
+  × TS(1243): 'private' modifier cannot be used with 'abstract' modifier.
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts:12:13]
+ 11 │     protected abstract foo_z() : number;
+ 12 │     private abstract foo_w() : number;
+    ·             ────────
+ 13 │ }
     ╰────
 
   × TS(1244): Abstract methods can only appear within an abstract class.
@@ -23839,6 +23877,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  7 │         super();
    ╰────
 
+  × TS(1040): 'override' modifier cannot be used in an ambient context.
+    ╭─[typescript/tests/cases/conformance/override/override5.ts:14:14]
+ 13 │ 
+ 14 │     override declare p2: number;
+    ·              ───────
+ 15 │ 
+    ╰────
+
   × TS(1029): 'override' modifier must precede 'readonly' modifier.
     ╭─[typescript/tests/cases/conformance/override/override5.ts:16:14]
  15 │ 
@@ -23878,6 +23924,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  44 │     override abstract f(): void;
     ·              ────────
  45 │     abstract override b(): void;
+    ╰────
+
+  × TS(1040): 'override' modifier cannot be used in an ambient context.
+    ╭─[typescript/tests/cases/conformance/override/override7.ts:11:14]
+ 10 │ 
+ 11 │     override declare p2: number;
+    ·              ───────
+ 12 │ 
     ╰────
 
   × TS(1029): 'override' modifier must precede 'readonly' modifier.

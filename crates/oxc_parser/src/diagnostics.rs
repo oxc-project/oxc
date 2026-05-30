@@ -914,6 +914,28 @@ pub fn modifier_must_precede_other_modifier(
 }
 
 #[cold]
+pub fn modifier_cannot_be_used_with_other_modifier(
+    span: Span,
+    modifier: ModifierKind,
+    other_modifier: ModifierKind,
+) -> OxcDiagnostic {
+    ts_error(
+        "1243",
+        format!("'{modifier}' modifier cannot be used with '{other_modifier}' modifier."),
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn modifier_cannot_be_used_in_ambient_context(
+    span: Span,
+    modifier: ModifierKind,
+) -> OxcDiagnostic {
+    ts_error("1040", format!("'{modifier}' modifier cannot be used in an ambient context."))
+        .with_label(span)
+}
+
+#[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1030", format!("'{}' modifier already seen.", modifier.kind))
         .with_label(modifier.span())

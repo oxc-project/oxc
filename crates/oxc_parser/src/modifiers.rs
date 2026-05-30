@@ -681,17 +681,21 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
             ModifierKind::Async,
             ModifierKind::Accessor,
             ModifierKind::Override,
+            ModifierKind::Abstract,
         ]),
         ModifierKind::Override => ModifierKinds::new([
             ModifierKind::Override,
             ModifierKind::Readonly,
             ModifierKind::Accessor,
             ModifierKind::Async,
+            ModifierKind::Declare,
         ]),
         ModifierKind::Abstract => ModifierKinds::new([
             ModifierKind::Abstract,
             ModifierKind::Override,
             ModifierKind::Accessor,
+            ModifierKind::Static,
+            ModifierKind::Private,
         ]),
         ModifierKind::Export => ModifierKinds::new([
             ModifierKind::Export,
@@ -699,6 +703,9 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
             ModifierKind::Abstract,
             ModifierKind::Async,
         ]),
+        ModifierKind::Declare => {
+            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Override])
+        }
         _ => ModifierKinds::new([kind]),
     }
 }
@@ -731,6 +738,7 @@ impl<C: Config> ParserImpl<'_, C> {
             ModifierKind::Private,
             ModifierKind::Protected,
         ]);
+        use ModifierKind::{Abstract, Declare, Override, Private, Static};
 
         let this_kind = modifier.kind;
         let this_kinds = ModifierKinds::new([this_kind]);
@@ -757,7 +765,29 @@ impl<C: Config> ParserImpl<'_, C> {
         // If multiple illegal kinds, it's arbitrary which one the error is raised for.
         let illegal_kinds = illegal_preceding_modifier_kinds.intersection(existing_kinds);
         let illegal_kind = illegal_kinds.iter().next().unwrap();
-        self.error(diagnostics::modifier_must_precede_other_modifier(modifier, illegal_kind));
+        // Some pairs are mutually exclusive in either order. TypeScript reports them as TS1243
+        // ("cannot be used with") or TS1040 ("cannot be used in an ambient context") rather than
+        // as an ordering error (TS1029). Wording and codes follow `typescript-go`'s
+        // `checkGrammarModifiers`.
+        let span = modifier.span();
+        let error = match (this_kind, illegal_kind) {
+            (Static, Abstract) | (Abstract, Static) => {
+                diagnostics::modifier_cannot_be_used_with_other_modifier(span, Static, Abstract)
+            }
+            (Private, Abstract) | (Abstract, Private) => {
+                diagnostics::modifier_cannot_be_used_with_other_modifier(span, Private, Abstract)
+            }
+            // `declare override`
+            (Override, Declare) => {
+                diagnostics::modifier_cannot_be_used_with_other_modifier(span, Override, Declare)
+            }
+            // `override declare`
+            (Declare, Override) => {
+                diagnostics::modifier_cannot_be_used_in_ambient_context(span, Override)
+            }
+            _ => diagnostics::modifier_must_precede_other_modifier(modifier, illegal_kind),
+        };
+        self.error(error);
     }
 
     #[inline]
