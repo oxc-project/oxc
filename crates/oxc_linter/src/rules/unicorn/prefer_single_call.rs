@@ -87,13 +87,11 @@ struct CallInfo<'a> {
 /// Returns `true` if `expr` is a "stable" receiver — an expression whose
 /// value cannot be changed by a function call side-effect between two
 /// consecutive statements. We accept identifiers, `this`, and chains of
-/// static member accesses built from those primitives.
+/// static (non-computed) member accesses built from those primitives.
 fn is_stable_receiver(expr: &Expression<'_>) -> bool {
     match expr.without_parentheses() {
         Expression::Identifier(_) | Expression::ThisExpression(_) => true,
-        Expression::StaticMemberExpression(m) if !m.optional => {
-            is_stable_receiver(&m.object)
-        }
+        Expression::StaticMemberExpression(m) if !m.optional => is_stable_receiver(&m.object),
         _ => false,
     }
 }
@@ -171,8 +169,8 @@ fn classify_call<'a>(call: &'a CallExpression<'a>, src: &'a str) -> Option<CallI
     }
 }
 
-/// Returns `true` when `a` and `b` represent the same mergeable call pattern
-/// (same method type on the same stable receiver).
+/// Returns `true` when `a` and `b` represent the same mergeable call
+/// (same method type, same stable receiver).
 fn same_call<'a>(a: &CallInfo<'a>, b: &CallInfo<'a>) -> bool {
     a.description == b.description && a.receiver_text == b.receiver_text
 }
@@ -249,7 +247,6 @@ impl Rule for PreferSingleCall {
                 // Determine separator. Check whether the first call ends with a
                 // trailing comma (like `push(a,)`) to avoid generating `push(a,, b)`.
                 let first_src = first_call_span.source_text(src);
-                // Trim the closing ')' then check for trailing comma.
                 let before_paren = first_src[..first_src.len().saturating_sub(1)].trim_end();
                 let separator = if prev_call.arguments.is_empty() {
                     ""
@@ -264,9 +261,19 @@ impl Rule for PreferSingleCall {
                 fix.push(Fix::new(format!("{separator}{args_text})"), close_paren));
             }
 
-            // Delete the second statement entirely (from end of first stmt to
-            // end of second stmt, including the whitespace/newline in between).
-            fix.push(Fix::delete(Span::new(first_stmt_end, second_stmt_end)));
+            // Delete the second statement (everything from end of first stmt to
+            // end of second stmt, including any whitespace/newline in between).
+            //
+            // ASI safety: if the first statement has no semicolon but the second
+            // does, preserve the semicolon so the merged result stays valid.
+            let first_has_semi = prev_es.span.source_text(src).trim_end().ends_with(';');
+            let second_has_semi = expr_stmt.span.source_text(src).trim_end().ends_with(';');
+            let gap_span = Span::new(first_stmt_end, second_stmt_end);
+            if !first_has_semi && second_has_semi {
+                fix.push(Fix::new(";", gap_span));
+            } else {
+                fix.push(Fix::delete(gap_span));
+            }
 
             fix
         });
@@ -284,46 +291,54 @@ mod tests {
         let pass = vec![
             // Already a single call.
             "foo.push(1, 2);",
-            // Different methods — not mergeable.
+            // Different methods.
             "foo.push(1); foo.pop();",
-            // Different receivers — not mergeable.
+            // Different receivers.
             "foo.push(1); bar.push(2);",
-            // Not consecutive — something in between.
+            // Non-consecutive (something in between).
             "foo.push(1); console.log(x); foo.push(2);",
             // Optional call — skip.
             "foo.push?.(1); foo.push?.(2);",
             // Optional member — skip.
             "foo?.push(1); foo?.push(2);",
-            // Ignored push receivers.
+            // Ignored push callee patterns.
             "this.push(1); this.push(2);",
             "stream.push(1); stream.push(2);",
             "process.stdin.push(1); process.stdin.push(2);",
             "process.stdout.push(1); process.stdout.push(2);",
             "process.stderr.push(1); process.stderr.push(2);",
             "this.stream.push(1); this.stream.push(2);",
-            // classList on different elements — not mergeable.
+            // classList on different elements.
             "a.classList.add('x'); b.classList.add('y');",
-            // classList.add vs classList.remove — different method.
+            // add vs remove — different method.
             "el.classList.add('x'); el.classList.remove('y');",
-            // importScripts with non-consecutive calls.
+            // importScripts with a statement in between.
             "importScripts('a.js'); doSomething(); importScripts('b.js');",
-            // Unstable receiver (function call) — skip.
+            // Unstable receiver (function call result may differ).
             "getArr().push(1); getArr().push(2);",
+            // Computed member access — receiver identity not guaranteed.
+            "a[0].push(1); a[0].push(2);",
+            // .add that is not classList.add.
+            "foo.add(1); foo.add(2);",
         ];
 
         let fail = vec![
-            // Basic push.
+            // Basic Array#push.
             "foo.push(1); foo.push(2);",
-            // push with multiple args.
+            // push with multiple args on each side.
             "foo.push(1, 2); foo.push(3, 4);",
-            // Second call has no args — deletes redundant call.
+            // Second call has no args (redundant call is removed).
             "foo.push(1); foo.push();",
             // First call has no args.
             "foo.push(); foo.push(1);",
             // Trailing comma in first call.
             "foo.push(1,); foo.push(2);",
-            // Multi-line.
+            // Multi-line, both with semicolons.
             "foo.push(1);\nfoo.push(2);",
+            // ASI: first statement lacks a semicolon.
+            "foo.push(1)\nfoo.push(2);",
+            // Spread argument.
+            "foo.push(...a); foo.push(...b);",
             // classList.add.
             "el.classList.add('foo'); el.classList.add('bar');",
             // classList.remove.
@@ -332,8 +347,12 @@ mod tests {
             "importScripts('a.js'); importScripts('b.js');",
             // Inside a function body.
             "function f() { foo.push(1); foo.push(2); }",
-            // Nested member push (a.b.push).
+            // Deeply nested member receiver (stable chain).
             "a.b.push(1); a.b.push(2);",
+            // this.prop.push (not in the ignore list).
+            "this.arr.push(1); this.arr.push(2);",
+            // Three consecutive calls — fires on each consecutive pair.
+            "foo.push(1); foo.push(2); foo.push(3);",
         ];
 
         let fix = vec![
@@ -343,6 +362,9 @@ mod tests {
             ("foo.push(); foo.push(1);", "foo.push(1);"),
             ("foo.push(1,); foo.push(2);", "foo.push(1, 2);"),
             ("foo.push(1);\nfoo.push(2);", "foo.push(1, 2);"),
+            // ASI: semicolon from second statement is preserved.
+            ("foo.push(1)\nfoo.push(2);", "foo.push(1, 2);"),
+            ("foo.push(...a); foo.push(...b);", "foo.push(...a, ...b);"),
             ("el.classList.add('foo'); el.classList.add('bar');", "el.classList.add('foo', 'bar');"),
             (
                 "el.classList.remove('foo'); el.classList.remove('bar');",
@@ -351,6 +373,9 @@ mod tests {
             ("importScripts('a.js'); importScripts('b.js');", "importScripts('a.js', 'b.js');"),
             ("function f() { foo.push(1); foo.push(2); }", "function f() { foo.push(1, 2); }"),
             ("a.b.push(1); a.b.push(2);", "a.b.push(1, 2);"),
+            ("this.arr.push(1); this.arr.push(2);", "this.arr.push(1, 2);"),
+            // Three calls: first fix merges calls 1+2; the third call is left for the next pass.
+            ("foo.push(1); foo.push(2); foo.push(3);", "foo.push(1, 2); foo.push(3);"),
         ];
 
         Tester::new(PreferSingleCall::NAME, PreferSingleCall::PLUGIN, pass, fail)
