@@ -3,7 +3,7 @@ commit: d9fe348c
 parser_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
 Positive Passed: 2222/2236 (99.37%)
-Negative Passed: 1702/1723 (98.78%)
+Negative Passed: 1705/1723 (98.96%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -14,13 +14,7 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-param/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-function/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/namespace-function/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments-invalid/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/dts/invalid-class-implementation/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-script/input.ts
 
@@ -13492,12 +13486,34 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   }
    ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/module-function/input.ts:2:18]
+ 1 │ declare module "m" {
+ 2 │   function foo() {}
+   ·                  ▲
+ 3 │ }
+   ╰────
+
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/namespace-class/input.ts:3:13]
  2 │   class C {
  3 │     field = "field";
    ·             ───────
  4 │   }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/namespace-function/input.ts:2:18]
+ 1 │ declare namespace n {
+ 2 │   function foo() {}
+   ·                  ▲
+ 3 │ }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/dts/invalid-class-implementation/input.ts:1:21]
+ 1 │ function foo(): any {}
+   ·                     ▲
    ╰────
 
   × TS(1039): Initializers are not allowed in ambient contexts.

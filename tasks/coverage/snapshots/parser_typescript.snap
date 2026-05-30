@@ -3,7 +3,7 @@ commit: e5509e21
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1592/2640 (60.30%)
+Negative Passed: 1593/2640 (60.34%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1781,8 +1781,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration2.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration3.ts
 
@@ -13846,6 +13844,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  35 │     function fn() { }
     ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:35:19]
+ 34 │     var x = 3;
+ 35 │     function fn() { }
+    ·                   ▲
+ 36 │     class C {
+    ╰────
+
   × TS(1039): Initializers are not allowed in ambient contexts.
     ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:37:20]
  36 │     class C {
@@ -25258,6 +25264,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Expressions/parserUnaryExpression7.ts:1:4]
  1 │ ++ new Foo();
    ·    ─────────
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration2.d.ts:1:14]
+ 1 │ function F() {
+   ·              ▲
+ 2 │ }
    ╰────
 
   × TS(1183): An implementation cannot be declared in ambient contexts.
