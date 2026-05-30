@@ -4,9 +4,12 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
-use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
+use oxc_ecmascript::{
+    BoundNames, ToJsString, ToNumber,
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
@@ -1731,9 +1734,25 @@ impl<'a> PeepholeOptimizations {
             // In `catch (e) { var e = x }`, `var e` hoists to function scope but the assignment
             // targets the catch parameter. Removing the catch param changes semantics.
             && ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
+            && !Self::catch_body_has_same_name_var(&catch.body, ident.name.as_str())
         {
             catch.param = None;
         }
+    }
+
+    fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: &str) -> bool {
+        body.body.iter().any(|stmt| {
+            let Statement::VariableDeclaration(decl) = stmt else { return false };
+            if !decl.kind.is_var() {
+                return false;
+            }
+
+            let mut has_same_name = false;
+            decl.bound_names(&mut |ident| {
+                has_same_name |= ident.name == name;
+            });
+            has_same_name
+        })
     }
 
     /// Whether the name matches any TypedArray name.

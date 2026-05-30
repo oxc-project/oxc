@@ -295,12 +295,20 @@ impl<'a> PeepholeOptimizations {
         if let Some(handler) = &s.handler
             && s.block.body.is_empty()
         {
-            let mut var = KeepVar::new(ctx.ast);
-            var.visit_block_statement(&handler.body);
-            let Some(handler) = &mut s.handler else { return };
-            handler.body.body.clear();
-            if let Some(var_decl) = var.get_variable_declaration_statement() {
-                handler.body.body.push(var_decl);
+            let body = &handler.body.body;
+            let is_canonical_body =
+                body.is_empty() || (body.len() == 1 && Self::is_keep_var_canonical(&body[0]));
+            if !is_canonical_body {
+                let mut var = KeepVar::new(ctx.ast);
+                var.visit_block_statement(&handler.body);
+                let Some(handler) = &mut s.handler else { return };
+
+                for dropped in handler.body.body.take_in(ctx.ast) {
+                    ctx.drop_statement(&dropped);
+                }
+                if let Some(var_decl) = var.get_variable_declaration_statement() {
+                    handler.body.body.push(var_decl);
+                }
             }
         }
 

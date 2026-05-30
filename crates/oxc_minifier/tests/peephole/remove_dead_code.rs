@@ -118,6 +118,13 @@ fn test_fold_try_statement() {
     test("try {} catch (e) { } finally {}", "");
     test("try { foo() } catch (e) { bar() } finally {}", "try { foo() } catch { bar() }");
     test_same("try { foo() } catch { bar() } finally { baz() }");
+
+    let options = CompressOptions::smallest();
+    test_options(
+        "let x = 'initial'; try {} catch (e) { x = 'unexpected'; } console.log(x);",
+        "console.log('initial');",
+        &options,
+    );
 }
 
 #[test]
