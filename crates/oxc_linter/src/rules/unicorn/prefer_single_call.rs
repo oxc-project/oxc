@@ -120,7 +120,7 @@ fn classify_call<'a>(call: &'a CallExpression<'a>, src: &'a str) -> Option<CallI
                     if PUSH_IGNORE.contains(&callee_text) {
                         return None;
                     }
-                    let receiver_text = member.object.span().source_text(src);
+                    let receiver_text = member.object.without_parentheses().span().source_text(src);
                     Some(CallInfo {
                         description: "Array#push()",
                         receiver_text,
@@ -141,7 +141,7 @@ fn classify_call<'a>(call: &'a CallExpression<'a>, src: &'a str) -> Option<CallI
                     if !is_stable_receiver(&obj_member.object) {
                         return None;
                     }
-                    let receiver_text = obj_member.object.span().source_text(src);
+                    let receiver_text = obj_member.object.without_parentheses().span().source_text(src);
                     let description = if method == "add" {
                         "Element#classList.add()"
                     } else {
@@ -177,23 +177,9 @@ fn same_call<'a>(a: &CallInfo<'a>, b: &CallInfo<'a>) -> bool {
 
 impl Rule for PreferSingleCall {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Match ExpressionStatements so we can delete the entire second statement.
-        let AstKind::ExpressionStatement(expr_stmt) = node.kind() else {
-            return;
-        };
-
-        let Expression::CallExpression(call) = &expr_stmt.expression else {
-            return;
-        };
-
-        let src = ctx.source_text();
-        let Some(info) = classify_call(call, src) else {
-            return;
-        };
-
-        // Locate the previous sibling statement in the parent block.
-        let parent = ctx.nodes().parent_node(node.id());
-        let stmts: &[Statement<'a>] = match parent.kind() {
+        // Run on block-level containers so we can iterate statement pairs in
+        // O(n) with `windows(2)` rather than doing O(n) work per statement.
+        let stmts: &[Statement<'a>] = match node.kind() {
             AstKind::BlockStatement(b) => &b.body,
             AstKind::Program(p) => &p.body,
             AstKind::FunctionBody(b) => &b.statements,
@@ -202,81 +188,85 @@ impl Rule for PreferSingleCall {
             _ => return,
         };
 
-        let Some(idx) = stmts.iter().position(|s| s.span() == expr_stmt.span) else {
-            return;
-        };
+        let src = ctx.source_text();
 
-        if idx == 0 {
-            return;
-        }
+        for window in stmts.windows(2) {
+            let (prev_stmt, curr_stmt) = (&window[0], &window[1]);
 
-        let Statement::ExpressionStatement(prev_es) = &stmts[idx - 1] else {
-            return;
-        };
-        let Expression::CallExpression(prev_call) = &prev_es.expression else {
-            return;
-        };
-        let Some(prev_info) = classify_call(prev_call, src) else {
-            return;
-        };
+            let Statement::ExpressionStatement(prev_es) = prev_stmt else { continue; };
+            let Statement::ExpressionStatement(curr_es) = curr_stmt else { continue; };
 
-        if !same_call(&info, &prev_info) {
-            return;
-        }
+            let Expression::CallExpression(prev_call) = &prev_es.expression else { continue; };
+            let Expression::CallExpression(curr_call) = &curr_es.expression else { continue; };
 
-        let first_call_span = prev_call.span;
-        let first_stmt_end = prev_es.span.end;
-        let second_stmt_end = expr_stmt.span.end;
-        let second_args = &call.arguments;
-        let description = info.description;
-        let diag_span = info.diagnostic_span;
+            let Some(prev_info) = classify_call(prev_call, src) else { continue; };
+            let Some(curr_info) = classify_call(curr_call, src) else { continue; };
 
-        ctx.diagnostic_with_fix(prefer_single_call_diagnostic(diag_span, description), |fixer| {
-            let mut fix = fixer
-                .new_fix_with_capacity(2)
-                .with_message(format!("Merge into previous `{description}` call"));
-
-            // If the second call has arguments, insert them into the first call.
-            if !second_args.is_empty() {
-                let args_text = second_args
-                    .iter()
-                    .map(|a| a.span().source_text(src))
-                    .collect::<Vec<_>>()
-                    .join(", ");
-
-                // Determine separator. Check whether the first call ends with a
-                // trailing comma (like `push(a,)`) to avoid generating `push(a,, b)`.
-                let first_src = first_call_span.source_text(src);
-                let before_paren = first_src[..first_src.len().saturating_sub(1)].trim_end();
-                let separator = if prev_call.arguments.is_empty() {
-                    ""
-                } else if before_paren.ends_with(',') {
-                    " "
-                } else {
-                    ", "
-                };
-
-                // Replace the closing ')' of the first call with `{sep}{args})`.
-                let close_paren = Span::new(first_call_span.end - 1, first_call_span.end);
-                fix.push(Fix::new(format!("{separator}{args_text})"), close_paren));
+            if !same_call(&prev_info, &curr_info) {
+                continue;
             }
 
-            // Delete the second statement (everything from end of first stmt to
-            // end of second stmt, including any whitespace/newline in between).
-            //
-            // ASI safety: if the first statement has no semicolon but the second
-            // does, preserve the semicolon so the merged result stays valid.
-            let first_has_semi = prev_es.span.source_text(src).trim_end().ends_with(';');
-            let second_has_semi = expr_stmt.span.source_text(src).trim_end().ends_with(';');
-            let gap_span = Span::new(first_stmt_end, second_stmt_end);
-            if !first_has_semi && second_has_semi {
-                fix.push(Fix::new(";", gap_span));
-            } else {
-                fix.push(Fix::delete(gap_span));
-            }
+            let first_call_span = prev_call.span;
+            let first_stmt_end = prev_es.span.end;
+            let second_stmt_end = curr_es.span.end;
+            let second_args = &curr_call.arguments;
+            let description = curr_info.description;
+            let diag_span = curr_info.diagnostic_span;
 
-            fix
-        });
+            ctx.diagnostic_with_fix(
+                prefer_single_call_diagnostic(diag_span, description),
+                |fixer| {
+                    let mut fix = fixer
+                        .new_fix_with_capacity(2)
+                        .with_message(format!("Merge into previous `{description}` call"));
+
+                    // If the second call has arguments, insert them into the first call.
+                    if !second_args.is_empty() {
+                        let args_text = second_args
+                            .iter()
+                            .map(|a| a.span().source_text(src))
+                            .collect::<Vec<_>>()
+                            .join(", ");
+
+                        // Determine separator. Check whether the first call ends with a
+                        // trailing comma (like `push(a,)`) to avoid generating `push(a,, b)`.
+                        let first_src = first_call_span.source_text(src);
+                        let before_paren =
+                            first_src[..first_src.len().saturating_sub(1)].trim_end();
+                        let separator = if prev_call.arguments.is_empty() {
+                            ""
+                        } else if before_paren.ends_with(',') {
+                            " "
+                        } else {
+                            ", "
+                        };
+
+                        // Replace the closing ')' of the first call with `{sep}{args})`.
+                        let close_paren =
+                            Span::new(first_call_span.end - 1, first_call_span.end);
+                        fix.push(Fix::new(format!("{separator}{args_text})"), close_paren));
+                    }
+
+                    // Delete the second statement (from end of first stmt to end of
+                    // second stmt, including any whitespace/newline in between).
+                    //
+                    // ASI safety: if the first statement has no semicolon but the
+                    // second does, preserve the semicolon so the result stays valid.
+                    let first_has_semi =
+                        prev_es.span.source_text(src).trim_end().ends_with(';');
+                    let second_has_semi =
+                        curr_es.span.source_text(src).trim_end().ends_with(';');
+                    let gap_span = Span::new(first_stmt_end, second_stmt_end);
+                    if !first_has_semi && second_has_semi {
+                        fix.push(Fix::new(";", gap_span));
+                    } else {
+                        fix.push(Fix::delete(gap_span));
+                    }
+
+                    fix
+                },
+            );
+        }
     }
 }
 
@@ -353,6 +343,9 @@ mod tests {
             "this.arr.push(1); this.arr.push(2);",
             // Three consecutive calls — fires on each consecutive pair.
             "foo.push(1); foo.push(2); foo.push(3);",
+            // Parenthesized receiver — normalised to same identity.
+            "(foo).push(1); foo.push(2);",
+            "foo.push(1); (foo).push(2);",
         ];
 
         let fix = vec![
@@ -376,6 +369,9 @@ mod tests {
             ("this.arr.push(1); this.arr.push(2);", "this.arr.push(1, 2);"),
             // Three calls: first fix merges calls 1+2; the third call is left for the next pass.
             ("foo.push(1); foo.push(2); foo.push(3);", "foo.push(1, 2); foo.push(3);"),
+            // Parenthesized receiver — keeps the paren form of whichever call is first.
+            ("(foo).push(1); foo.push(2);", "(foo).push(1, 2);"),
+            ("foo.push(1); (foo).push(2);", "foo.push(1, 2);"),
         ];
 
         Tester::new(PreferSingleCall::NAME, PreferSingleCall::PLUGIN, pass, fail)
