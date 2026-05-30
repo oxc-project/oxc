@@ -1171,7 +1171,7 @@ fn test() {
         (
             "
                             /** @abstract */
-                            { declare let a; }
+                            declare namespace b { let a; }
                           ",
             Some(serde_json::json!([
               {

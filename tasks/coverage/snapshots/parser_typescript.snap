@@ -3,7 +3,7 @@ commit: e5509e21
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1593/2640 (60.34%)
+Negative Passed: 1611/2640 (61.02%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -835,8 +835,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/scopeCheckEx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/scopeCheckInsideStaticMethod1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/selfReferencesInFunctionParameters.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/semicolonsInModuleDeclarations.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/setterWithReturn.ts
 
@@ -1726,8 +1724,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/lega
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesCJSEmit1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitWithPackageExports.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksSpecifierResolution.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksTypesVersions.ts
@@ -1824,47 +1820,17 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList17.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509618.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBlockStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDebuggerStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDoStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement1.d.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement20.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserEmptyStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserExpressionStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement1.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement8.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement1.d.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement5.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserIfStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserLabeledStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserSwitchStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserThrowStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserTryStatement1.d.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserVariableStatement2.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserWhileStatement1.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode1.ts
 
@@ -1901,8 +1867,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName41.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement1.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement20.ts
 
@@ -2588,12 +2552,28 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  7 │ 
    ╰────
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/ambientStatement1.ts:2:6]
+ 1 │     declare namespace M1 {
+ 2 │         while(true);
+   ·         ────────────
+ 3 │     
+   ╰────
+
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/compiler/ambientStatement1.ts:4:22]
  3 │     
  4 │         export var v1 = () => false;
    ·                         ───────────
  5 │     }
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:3:5]
+ 2 │ declare namespace M {
+ 3 │     break;
+   ·     ──────
+ 4 │     continue;
    ╰────
 
   × TS(1108): A 'return' statement can only be used within a function body.
@@ -11619,6 +11599,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  8 │ 
  9 │ function e(...{0: a = 1, 1: b = true, ...rest: rest}: [boolean, string, number]) { }
    ·                                              ──────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/semicolonsInModuleDeclarations.ts:2:27]
+ 1 │ declare namespace ambiModule {
+ 2 │    export interface i1 { };
+   ·                           ─
+ 3 │    export interface i2 { }
    ╰────
 
   × Identifier `v` has already been declared
@@ -22495,6 +22483,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  13 │ 
     ╰────
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/externalModules/initializersInDeclarations.ts:15:2]
+ 14 │ declare namespace M1 {
+ 15 │     while(true);
+    ·     ────────────
+ 16 │ 
+    ╰────
+
   × TS(1039): Initializers are not allowed in ambient contexts.
     ╭─[typescript/tests/cases/conformance/externalModules/initializersInDeclarations.ts:17:18]
  16 │ 
@@ -23788,6 +23784,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ export async function f() {
    ╰────
   help: TypeScript transforms 'import ... =' to 'const ... ='
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitWithPackageExports.ts:5:1]
+ 4 │ import * as type from "inner";
+ 5 │ cjs;
+   · ────
+ 6 │ mjs;
+   ╰────
 
   × TS(7060): This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint.
    ╭─[typescript/tests/cases/conformance/node/nodeModulesForbidenSyntax.ts:2:12]
@@ -26022,6 +26026,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
       ╰────
   help: Try inserting a semicolon here
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509618.ts:2:20]
+ 1 │ declare namespace ambiModule {
+ 2 │    interface i1 { };
+   ·                    ─
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509630.ts:3:1]
  2 │     public examples = [ // typing here
@@ -26497,6 +26509,18 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ }
    ╰────
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBlockStatement1.d.ts:1:1]
+ 1 │ {}
+   · ──
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBreakStatement1.d.ts:1:1]
+ 1 │ break;
+   · ──────
+   ╰────
+
   × Illegal break statement
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBreakStatement1.d.ts:1:1]
  1 │ break;
@@ -26504,12 +26528,37 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserContinueStatement1.d.ts:1:1]
+ 1 │ continue;
+   · ─────────
+   ╰────
+
   × Illegal continue statement: no surrounding iteration statement
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserContinueStatement1.d.ts:1:1]
  1 │ continue;
    · ─────────
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDebuggerStatement1.d.ts:1:1]
+ 1 │ debugger;
+   · ─────────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDoStatement1.d.ts:1:1]
+ 1 │ ╭─▶ do {
+ 2 │ │   }
+ 3 │ ╰─▶ while (e);
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement1.d.ts:1:1]
+ 1 │ ╭─▶ for (var i of e) {
+ 2 │ ╰─▶ }
+   ╰────
 
   × Expected `;` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement2.ts:1:13]
@@ -26577,6 +26626,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserEmptyStatement1.d.ts:1:1]
+ 1 │ ;
+   · ─
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserExpressionStatement1.d.ts:1:1]
+ 1 │ Foo();
+   · ──────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement1.d.ts:1:1]
+ 1 │ ╭─▶ for (var i in e) {
+ 2 │ ╰─▶ }
+   ╰────
+
   × Identifier expected. 'in' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement2.ts:1:10]
  1 │ for (var in X) {
@@ -26629,6 +26696,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement1.d.ts:1:1]
+ 1 │ ╭─▶ for (;;) {
+ 2 │ ╰─▶ }
+   ╰────
+
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement4.ts:1:6]
  1 │ for (a = 1 in b) {
@@ -26657,16 +26730,66 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ }
    ╰────
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserIfStatement1.d.ts:1:1]
+ 1 │ ╭─▶ if (foo) {
+ 2 │ ╰─▶ }
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserLabeledStatement1.d.ts:1:1]
+ 1 │ ╭─▶ foo:
+ 2 │ ╰─▶   bar();
+   ╰────
+
   × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserReturnStatement1.d.ts:1:1]
  1 │ return;
    · ──────
    ╰────
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserReturnStatement1.d.ts:1:1]
+ 1 │ return;
+   · ───────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserSwitchStatement1.d.ts:1:1]
+ 1 │ ╭─▶ switch (foo) {
+ 2 │ ╰─▶ }
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserThrowStatement1.d.ts:1:1]
+ 1 │ throw e;
+   · ────────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserTryStatement1.d.ts:1:1]
+ 1 │ ╭─▶ try {
+ 2 │ │   }
+ 3 │ │   catch (e) {
+ 4 │ ╰─▶ }
+   ╰────
+
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserVariableStatement1.d.ts:1:9]
  1 │ var v = 1;
    ·         ─
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserWhileStatement1.d.ts:1:1]
+ 1 │ ╭─▶ while (e) {
+ 2 │ ╰─▶ }
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserWithStatement1.d.ts:1:1]
+ 1 │ ╭─▶ with (foo) {
+ 2 │ ╰─▶ }
    ╰────
 
   × 'with' statements are not allowed
@@ -27056,6 +27179,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────
    ╰────
   help: No modifiers are allowed here.
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement1.d.ts:1:1]
+ 1 │ ╭─▶ for (var i of e) {
+ 2 │ ╰─▶ }
+   ╰────
 
   × Expected `;` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement2.ts:1:13]

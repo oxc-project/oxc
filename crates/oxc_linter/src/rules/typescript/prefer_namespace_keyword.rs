@@ -156,8 +156,8 @@ fn test() {
         ),
         ("declare /* module */ module foo {}", "declare /* module */ namespace foo {}", None),
         (
-            "declare module X.Y.module { x = 'module'; }",
-            "declare namespace X.Y.module { x = 'module'; }",
+            "declare module X.Y.module { let x: 'module'; }",
+            "declare namespace X.Y.module { let x: 'module'; }",
             None,
         ),
     ];

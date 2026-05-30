@@ -309,6 +309,11 @@ pub fn global_export_in_namespace(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn statement_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1036", "Statements are not allowed in ambient contexts.").with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)
