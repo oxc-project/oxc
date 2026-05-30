@@ -26,6 +26,10 @@ pub struct DropDiff<'a, 's> {
     dirty: &'s mut PassDirty<'a>,
     scoping: &'s Scoping,
     mode: DropDiffMode,
+    /// Set `true` when a `walk_old_*` (MarkDead) walk marks at least one
+    /// resolved reference dead. Read by [`Self::resurrect_is_noop`] to skip the
+    /// replacement-value walk when there is nothing for it to un-mark.
+    marked: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -38,7 +42,7 @@ enum DropDiffMode {
 
 impl<'a, 's> DropDiff<'a, 's> {
     pub(crate) fn new(dirty: &'s mut PassDirty<'a>, scoping: &'s Scoping) -> Self {
-        Self { dirty, scoping, mode: DropDiffMode::MarkDead }
+        Self { dirty, scoping, mode: DropDiffMode::MarkDead, marked: false }
     }
 
     pub(crate) fn walk_old_expression(mut self, expr: &Expression<'a>) -> Self {
@@ -80,13 +84,46 @@ impl<'a, 's> DropDiff<'a, 's> {
         self
     }
 
+    /// Whether the `resurrect_*` walk over the replacement value is a provable
+    /// no-op and can be skipped.
+    ///
+    /// `resurrect_*` exists to UN-mark resolved references that `walk_old_*`
+    /// marked dead but which actually survive inside the replacement value
+    /// (the only way a reference can be in both the old subtree and the new
+    /// value is `clone_in_with_semantic_ids`, which preserves the
+    /// `ReferenceId` — see `substitute_alternate_syntax.rs`). If `walk_old_*`
+    /// marked nothing this call (`!marked`), there is no bit for this call's
+    /// resurrect to clear, so walking the (often large, moved-in) replacement
+    /// subtree only re-confirms already-clear bits.
+    ///
+    /// Safety: this relies on the same no-cross-call-aliasing invariant the
+    /// whole incremental refresh already depends on — a `ReferenceId` is never
+    /// simultaneously in a subtree dropped by one helper call and the
+    /// replacement value of a *different* call. Cloning (the only id-aliasing
+    /// site) drops the original and installs the clone within a single
+    /// `replace_*` call, so the surviving clone is always un-marked by THIS
+    /// call's resurrect (where `marked` is `true`). If a future pass ever splits
+    /// an aliased id across two helper calls, this skip would leave a live
+    /// reference pruned — verified absent by `cargo coverage -- minifier` (no
+    /// output diff) and a debug over-prune assertion during review.
+    #[inline]
+    fn resurrect_is_noop(&self) -> bool {
+        !self.marked
+    }
+
     pub(crate) fn resurrect_from_expression(mut self, expr: &Expression<'a>) -> Self {
+        if self.resurrect_is_noop() {
+            return self;
+        }
         self.mode = DropDiffMode::Resurrect;
         self.visit_expression(expr);
         self
     }
 
     pub(crate) fn resurrect_from_statement(mut self, stmt: &Statement<'a>) -> Self {
+        if self.resurrect_is_noop() {
+            return self;
+        }
         self.mode = DropDiffMode::Resurrect;
         self.visit_statement(stmt);
         self
@@ -96,18 +133,27 @@ impl<'a, 's> DropDiff<'a, 's> {
         mut self,
         prop: &AssignmentTargetProperty<'a>,
     ) -> Self {
+        if self.resurrect_is_noop() {
+            return self;
+        }
         self.mode = DropDiffMode::Resurrect;
         self.visit_assignment_target_property(prop);
         self
     }
 
     pub(crate) fn resurrect_from_property_key(mut self, key: &PropertyKey<'a>) -> Self {
+        if self.resurrect_is_noop() {
+            return self;
+        }
         self.mode = DropDiffMode::Resurrect;
         self.visit_property_key(key);
         self
     }
 
     pub(crate) fn resurrect_from_for_statement_left(mut self, lhs: &ForStatementLeft<'a>) -> Self {
+        if self.resurrect_is_noop() {
+            return self;
+        }
         self.mode = DropDiffMode::Resurrect;
         self.visit_for_statement_left(lhs);
         self
@@ -126,6 +172,7 @@ impl<'a> Visit<'a> for DropDiff<'a, '_> {
         let idx = reference_id.index();
         match (self.mode, resolved) {
             (DropDiffMode::MarkDead, true) => {
+                self.marked = true;
                 // Refs minted MID-pass (via `create_reference` / `clone_in_with_semantic_ids`)
                 // would have indices beyond the bitset's capacity (sized at
                 // `enter_program`). A `debug_assert!` probe confirmed this case
