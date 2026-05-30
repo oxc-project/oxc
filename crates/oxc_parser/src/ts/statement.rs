@@ -364,6 +364,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Statement::ExportAllDeclaration(decl) => {
                 self.error(diagnostics::export_in_namespace(decl.span));
             }
+            Statement::TSNamespaceExportDeclaration(decl) => {
+                self.error(diagnostics::global_export_in_namespace(decl.span));
+            }
             // ES `import "..."` / `import ... from "..."`.
             Statement::ImportDeclaration(decl) => {
                 self.error(diagnostics::import_in_namespace(decl.span));

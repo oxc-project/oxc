@@ -304,6 +304,11 @@ pub fn default_export_in_namespace(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn global_export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1316", "Global module exports may only appear at top level.").with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)

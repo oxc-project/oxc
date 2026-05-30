@@ -3,7 +3,7 @@ commit: d9fe348c
 parser_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
 Positive Passed: 2222/2236 (99.37%)
-Negative Passed: 1705/1723 (98.96%)
+Negative Passed: 1706/1723 (99.01%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -27,8 +27,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-within-single-statement-context/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-named/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-namespace-export/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-global-redeclare-block-level-variable-in-module/input.ts
 
@@ -14175,6 +14173,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  6 │   import type = require("foo");
    ·   ─────────────────────────────
  7 │ }
+   ╰────
+
+  × TS(1316): Global module exports may only appear at top level.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-namespace-export/input.ts:2:3]
+ 1 │ namespace N {
+ 2 │   export as namespace N;
+   ·   ──────────────────────
+ 3 │ }
    ╰────
 
   × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.
