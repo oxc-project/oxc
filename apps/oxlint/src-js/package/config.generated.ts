@@ -646,6 +646,7 @@ export interface DummyRuleMap {
   "jsdoc/require-throws-description"?: DummyRule;
   "jsdoc/require-throws-type"?: DummyRule;
   "jsdoc/require-yields"?: DummyRule;
+  "jsdoc/require-yields-description"?: DummyRule;
   "jsdoc/require-yields-type"?: DummyRule;
   "jsx-a11y/alt-text"?: DummyRule;
   "jsx-a11y/anchor-ambiguous-text"?: DummyRule;
@@ -875,6 +876,7 @@ export interface DummyRuleMap {
   "prefer-const"?: DummyRule;
   "prefer-destructuring"?: DummyRule;
   "prefer-exponentiation-operator"?: DummyRule;
+  "prefer-named-capture-group"?: DummyRule;
   "prefer-numeric-literals"?: DummyRule;
   "prefer-object-has-own"?: DummyRule;
   "prefer-object-spread"?: DummyRule;
@@ -1289,6 +1291,7 @@ export interface DummyRuleMap {
   "vitest/valid-expect-in-promise"?: DummyRule;
   "vitest/valid-title"?: DummyRule;
   "vitest/warn-todo"?: DummyRule;
+  "vue/component-definition-name-casing"?: DummyRule;
   "vue/define-emits-declaration"?: DummyRule;
   "vue/define-props-declaration"?: DummyRule;
   "vue/define-props-destructuring"?: DummyRule;
@@ -1313,6 +1316,7 @@ export interface DummyRuleMap {
   "vue/no-watch-after-await"?: DummyRule;
   "vue/prefer-import-from-vue"?: DummyRule;
   "vue/require-default-export"?: DummyRule;
+  "vue/require-prop-type-constructor"?: DummyRule;
   "vue/require-render-return"?: DummyRule;
   "vue/require-slots-as-functions"?: DummyRule;
   "vue/require-typed-ref"?: DummyRule;

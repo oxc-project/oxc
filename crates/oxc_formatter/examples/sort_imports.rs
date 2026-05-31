@@ -4,7 +4,7 @@ use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    FormatOptions, Formatter, SortImportsOptions, SortOrder, default_groups,
+    Formatter, JsFormatOptions, SortImportsOptions, SortOrder, default_groups,
     default_internal_patterns, get_parse_options,
 };
 use oxc_parser::Parser;
@@ -57,7 +57,7 @@ fn main() -> Result<(), String> {
 
     // Format the parsed code
     let options =
-        FormatOptions { sort_imports: Some(sort_imports_options.clone()), ..Default::default() };
+        JsFormatOptions { sort_imports: Some(sort_imports_options.clone()), ..Default::default() };
 
     let formatter = Formatter::new(&allocator, options);
     let formatted = formatter.format(&ret.program);

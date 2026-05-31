@@ -922,7 +922,7 @@ mod test {
                 return;
               }
               private arrow = one => 'arrow';
-              private abstract abs(one);
+              private abs(one) {}
             }
             ",
                 None,

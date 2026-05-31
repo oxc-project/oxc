@@ -8,9 +8,9 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    FormatOptions, Formatter, JsdocOptions, LineWidth, QuoteStyle, enable_jsx_source_type,
-    get_parse_options,
+    Formatter, JsFormatOptions, JsdocOptions, QuoteStyle, enable_jsx_source_type, get_parse_options,
 };
+use oxc_formatter_core::LineWidth;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -298,11 +298,11 @@ impl JsdocTestRunner {
 
         // Use printWidth=80 to match Prettier's default (oxfmt defaults to 100)
         let width = line_width_override.unwrap_or(80);
-        let options = FormatOptions {
+        let options = JsFormatOptions {
             line_width: LineWidth::try_from(width).unwrap(),
             quote_style,
             jsdoc: Some(jsdoc_options.clone()),
-            ..FormatOptions::default()
+            ..JsFormatOptions::default()
         };
         let formatted = Formatter::new(&allocator, options).build(&ret.program);
         Some(formatted)

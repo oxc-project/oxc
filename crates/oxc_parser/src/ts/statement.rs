@@ -321,7 +321,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::StringLiteral(self.parse_literal_string());
         let body = if self.at(Kind::LCurly) {
-            let block = self.parse_ts_module_block();
+            // External module body (`declare module "x" {}`); `import`/`export` are allowed here.
+            let block = self.parse_ts_module_block(/* in_ts_namespace_body */ false);
             Some(TSModuleDeclarationBody::TSModuleBlock(block))
         } else {
             self.asi();
@@ -342,12 +343,54 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    fn parse_ts_module_block(&mut self) -> Box<'a, TSModuleBlock<'a>> {
+    /// Validate a statement that appears directly in an *internal* namespace body
+    /// (`namespace N {}` / `module N {}`). Module-referencing `import`/`export` forms are not
+    /// permitted there. Called inline from `parse_statement_list_item` while `Context::TsNamespace`
+    /// is set, so the body is never iterated a second time. External modules
+    /// (`declare module "x" {}`) never set the flag, so they remain unrestricted.
+    pub(crate) fn check_namespace_body_statement(&mut self, stmt: &Statement<'a>) {
+        match stmt {
+            Statement::ExportDefaultDeclaration(decl) => {
+                self.error(diagnostics::default_export_in_namespace(decl.span));
+            }
+            Statement::TSExportAssignment(decl) => {
+                self.error(diagnostics::export_assignment_in_namespace(decl.span));
+            }
+            // `export { ... } from "..."` (re-export from a module). A bare `export { ... }`
+            // with no module source re-exports locals and is allowed in a namespace.
+            Statement::ExportNamedDeclaration(decl) if decl.source.is_some() => {
+                self.error(diagnostics::export_in_namespace(decl.span));
+            }
+            Statement::ExportAllDeclaration(decl) => {
+                self.error(diagnostics::export_in_namespace(decl.span));
+            }
+            Statement::TSNamespaceExportDeclaration(decl) => {
+                self.error(diagnostics::global_export_in_namespace(decl.span));
+            }
+            // ES `import "..."` / `import ... from "..."`.
+            Statement::ImportDeclaration(decl) => {
+                self.error(diagnostics::import_in_namespace(decl.span));
+            }
+            // `import x = require("...")` references a module; `import x = A.B` is allowed.
+            Statement::TSImportEqualsDeclaration(decl)
+                if matches!(
+                    decl.module_reference,
+                    TSModuleReference::ExternalModuleReference(_)
+                ) =>
+            {
+                self.error(diagnostics::import_in_namespace(decl.span));
+            }
+            _ => {}
+        }
+    }
+
+    fn parse_ts_module_block(&mut self, in_ts_namespace_body: bool) -> Box<'a, TSModuleBlock<'a>> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
         // Remove TopLevel context for module block
-        let (directives, statements) =
-            self.context_remove(Context::TopLevel, Self::parse_directives_and_statements);
+        let (directives, statements) = self.context_remove(Context::TopLevel, |p| {
+            p.parse_directives_and_statements(in_ts_namespace_body)
+        });
         self.expect(Kind::RCurly);
         self.ast.alloc_ts_module_block(self.end_span(span), directives, statements)
     }
@@ -364,7 +407,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let decl = self.parse_module_or_namespace_declaration(span, kind, &Modifiers::empty());
             TSModuleDeclarationBody::TSModuleDeclaration(decl)
         } else {
-            let block = self.parse_ts_module_block();
+            // Internal namespace body — validate each statement inline as it is parsed
+            // (see `check_namespace_body_statement`), avoiding a second pass over the body.
+            let block = self.parse_ts_module_block(/* in_ts_namespace_body */ true);
             TSModuleDeclarationBody::TSModuleBlock(block)
         };
         self.verify_modifiers(
@@ -391,7 +436,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::Global);
         let keyword_span = self.end_span(keyword_span_start);
 
-        let body = self.parse_ts_module_block().unbox();
+        let body = self.parse_ts_module_block(/* in_ts_namespace_body */ false).unbox();
 
         self.verify_modifiers(
             modifiers,
@@ -413,6 +458,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_declaration_statement(&mut self, start_span: u32) -> Statement<'a> {
         let reserved_ctx = self.ctx;
         let modifiers = self.eat_modifiers_before_declaration();
+        if let Some(modifier) = modifiers.get(ModifierKind::Declare)
+            && reserved_ctx.has_ambient()
+            && !reserved_ctx.has_top_level()
+        {
+            self.error(diagnostics::declare_in_ambient_context(modifier.span()));
+        }
         self.ctx = self
             .ctx
             .union_ambient_if(modifiers.contains_declare())
@@ -532,13 +583,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Box<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);
+        let generator = self.eat(Kind::Star);
         let func_kind = FunctionKind::TSDeclaration;
-        let id = self.parse_function_id(func_kind, r#async, false);
+        let id = self.parse_function_id(func_kind, r#async, generator);
         self.parse_function(
             start_span,
             id,
             r#async,
-            false,
+            generator,
             func_kind,
             FormalParameterKind::FormalParameter,
             modifiers,

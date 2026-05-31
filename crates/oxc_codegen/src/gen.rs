@@ -969,10 +969,7 @@ impl Gen for ImportDeclaration<'_> {
 impl Gen for WithClause<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
-        p.print_str(match self.keyword {
-            WithClauseKeyword::With => "with",
-            WithClauseKeyword::Assert => "assert",
-        });
+        p.print_str(self.keyword.as_str());
         p.print_soft_space();
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');

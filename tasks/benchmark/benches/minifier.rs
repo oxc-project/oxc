@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
+use oxc_ast::ast::Program;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_minifier::{CompressOptions, Compressor};
@@ -54,19 +55,40 @@ fn bench_minifier(criterion: &mut Criterion) {
     group.finish();
 }
 
+/// Transform a parsed program to plain JavaScript (targeting esnext), the way the real pipeline
+/// feeds the mangler: TypeScript is stripped before minification, so the mangler only ever runs
+/// on JS - mangling an untransformed `.ts`/`.tsx` AST would not be representative. Returns the
+/// transformed program; the caller builds semantic data from it and mangles.
+fn transform_to_js<'a>(
+    allocator: &'a Allocator,
+    source_text: &'a str,
+    source_type: SourceType,
+    path: &Path,
+) -> Program<'a> {
+    let mut program = Parser::new(allocator, source_text, source_type).parse().program;
+    let scoping =
+        SemanticBuilder::new().with_enum_eval(true).build(&program).semantic.into_scoping();
+    let transform_options = TransformOptions::from_target("esnext").unwrap();
+    let transformer_ret = Transformer::new(allocator, path, &transform_options)
+        .build_with_scoping(scoping, &mut program);
+    assert!(transformer_ret.errors.is_empty());
+    program
+}
+
 fn bench_mangler(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("mangler");
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_type = SourceType::from_path(&file.file_name).unwrap();
         let source_text = file.source_text.as_str();
+        let path = Path::new(&file.file_name);
         let mut allocator = Allocator::default();
         let mut temp_allocator = Allocator::default();
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
                 temp_allocator.reset();
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let program = transform_to_js(&allocator, source_text, source_type, path);
                 let mut semantic = SemanticBuilder::new().build(&program).semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
@@ -82,13 +104,14 @@ fn bench_mangler(criterion: &mut Criterion) {
         let id = BenchmarkId::from_parameter(format!("{}_keep_names", &first_file.file_name));
         let source_type = SourceType::from_path(&first_file.file_name).unwrap();
         let source_text = first_file.source_text.as_str();
+        let path = Path::new(&first_file.file_name);
         let mut allocator = Allocator::default();
         let mut temp_allocator = Allocator::default();
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
                 temp_allocator.reset();
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let program = transform_to_js(&allocator, source_text, source_type, path);
                 let mut semantic = SemanticBuilder::new().build(&program).semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)

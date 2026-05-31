@@ -114,7 +114,7 @@ fn test() {
         "declare module foo {}",
         "
         declare module foo {
-          declare module bar {}
+          module bar {}
         }
         ",
         "
@@ -144,20 +144,20 @@ fn test() {
         (
             "
             declare module foo {
-              declare module bar {}
+              module bar {}
             }
             ",
             "
             declare namespace foo {
-              declare namespace bar {}
+              namespace bar {}
             }
             ",
             None,
         ),
         ("declare /* module */ module foo {}", "declare /* module */ namespace foo {}", None),
         (
-            "declare module X.Y.module { x = 'module'; }",
-            "declare namespace X.Y.module { x = 'module'; }",
+            "declare module X.Y.module { let x: 'module'; }",
+            "declare namespace X.Y.module { let x: 'module'; }",
             None,
         ),
     ];

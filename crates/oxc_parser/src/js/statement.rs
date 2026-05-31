@@ -32,12 +32,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     `StatementList`[?Yield, ?Await, ?Return] `StatementListItem`[?Yield, ?Await, ?Return]
     pub(crate) fn parse_directives_and_statements(
         &mut self,
+        in_ts_namespace_body: bool,
     ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
         let mut directives = self.ast.vec();
         let mut statements = self.ast.vec();
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx = StatementContext::StatementList;
+        let is_ambient_block = (is_top_level || in_ts_namespace_body) && self.ctx.has_ambient();
+        let mut reported_ambient_statement = false;
 
         // Check if we need to track potential await reparsing.
         // This is only needed in unambiguous mode at top level when not in await context.
@@ -99,6 +102,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
                 expecting_directives = false;
+            }
+            // In an internal namespace body, module-referencing `import`/`export` statements are
+            // not permitted. Validated here as each direct statement is parsed (no second pass).
+            if in_ts_namespace_body {
+                self.check_namespace_body_statement(&stmt);
+            }
+            if is_ambient_block
+                && !reported_ambient_statement
+                && !stmt.is_declaration()
+                && !stmt.is_module_declaration()
+            {
+                self.error(diagnostics::statement_in_ambient_context(stmt.span()));
+                reported_ambient_statement = true;
             }
             statements.push(stmt);
         }
