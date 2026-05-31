@@ -94,6 +94,18 @@ pub trait CompilerInterface {
         true
     }
 
+    /// Whether semantic analysis should build full AST node storage.
+    ///
+    /// Defaults to `false`, which uses the lightweight ancestor-stack storage:
+    /// the pipeline only needs [`Scoping`], not the AST nodes. Override to return
+    /// `true` if [`after_semantic`] (or anything reading the
+    /// [`SemanticBuilderReturn`]) needs to access `semantic.nodes()`.
+    ///
+    /// [`after_semantic`]: CompilerInterface::after_semantic
+    fn build_ast_nodes(&self) -> bool {
+        false
+    }
+
     fn after_parse(&mut self, _parser_return: &mut ParserReturn) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
@@ -228,7 +240,10 @@ pub trait CompilerInterface {
             builder = builder.with_excess_capacity(2.0).with_enum_eval(true);
         }
 
-        builder.with_check_syntax_error(self.check_semantic_error()).build(program)
+        builder
+            .with_check_syntax_error(self.check_semantic_error())
+            .with_ast_nodes(self.build_ast_nodes())
+            .build(program)
     }
 
     fn isolated_declaration<'a>(

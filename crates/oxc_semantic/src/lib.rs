@@ -76,7 +76,17 @@ pub struct Semantic<'a> {
     source_type: SourceType,
 
     /// The Abstract Syntax Tree (AST) nodes.
+    ///
+    /// Empty if semantic analysis was run with ancestor-stack node storage
+    /// (see [`SemanticBuilder::with_ast_nodes`]).
     nodes: AstNodes<'a>,
+
+    /// Total number of AST nodes visited during analysis.
+    ///
+    /// Equal to `nodes.len()` in full storage mode, but recorded separately so
+    /// that [`Semantic::stats`] stays accurate even when nodes are not retained
+    /// (ancestor-stack mode), where `nodes` is empty.
+    node_count: u32,
 
     scoping: Scoping,
 
@@ -220,7 +230,7 @@ impl<'a> Semantic<'a> {
     pub fn stats(&self) -> Stats {
         #[expect(clippy::cast_possible_truncation)]
         Stats::new(
-            self.nodes.len() as u32,
+            self.node_count,
             self.scoping.scopes_len() as u32,
             self.scoping.symbols_len() as u32,
             self.scoping.references.len() as u32,
@@ -292,7 +302,8 @@ mod tests {
     ) -> Semantic<'s> {
         let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
         assert!(parse.errors.is_empty());
-        let semantic = SemanticBuilder::new().build(allocator.alloc(parse.program));
+        let semantic =
+            SemanticBuilder::new().with_ast_nodes(true).build(allocator.alloc(parse.program));
         assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
         semantic.semantic
     }

@@ -25,6 +25,7 @@ oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_cfg = { workspace = true, optional = true }
 oxc_diagnostics = { workspace = true }
+oxc_data_structures = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
 oxc_jsdoc = { workspace = true, optional = true }

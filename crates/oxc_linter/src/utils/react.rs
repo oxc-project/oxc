@@ -1028,8 +1028,10 @@ mod test {
             let source_type = SourceType::jsx();
             let parser_ret = Parser::new(&allocator, source, source_type).parse();
             assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
-            let semantic =
-                SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+            let semantic = SemanticBuilder::new()
+                .with_ast_nodes(true)
+                .build(allocator.alloc(parser_ret.program))
+                .semantic;
 
             let found = semantic.nodes().iter().any(|node| is_es5_component(node));
             assert_eq!(found, expected, "Failed for: {source}");
@@ -1059,8 +1061,10 @@ mod test {
             let parser_ret = Parser::new(&allocator, source, SourceType::tsx()).parse();
             assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
 
-            let semantic =
-                SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+            let semantic = SemanticBuilder::new()
+                .with_ast_nodes(true)
+                .build(allocator.alloc(parser_ret.program))
+                .semantic;
             let found = semantic.nodes().iter().find_map(|node| {
                 if let super::AstKind::JSXOpeningElement(opening) = node.kind() {
                     Some(get_jsx_element_name(&opening.name).into_owned())
@@ -1123,8 +1127,10 @@ mod test {
             let source_type = SourceType::tsx();
             let parser_ret = Parser::new(&allocator, source, source_type).parse();
             assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
-            let semantic =
-                SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+            let semantic = SemanticBuilder::new()
+                .with_ast_nodes(true)
+                .build(allocator.alloc(parser_ret.program))
+                .semantic;
 
             let found = semantic.nodes().iter().any(|node| is_es6_component(node));
             assert_eq!(found, expected, "Failed for: {source}");

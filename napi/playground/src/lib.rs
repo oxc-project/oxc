@@ -244,6 +244,7 @@ impl Oxc {
         let semantic_ret = semantic_builder
             .with_check_syntax_error(parser_options.semantic_errors)
             .with_cfg(run_options.cfg)
+            .with_ast_nodes(true)
             .build(program);
         self.diagnostics.extend(semantic_ret.errors);
 

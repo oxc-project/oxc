@@ -281,7 +281,11 @@ impl<'t> Mangler<'t> {
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
-        let mut semantic = SemanticBuilder::new().with_class_table(true).build(program).semantic;
+        let mut semantic = SemanticBuilder::new()
+            .with_class_table(true)
+            .with_ast_nodes(true)
+            .build(program)
+            .semantic;
         let class_private_mappings = self.build_with_semantic(&mut semantic, program);
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }

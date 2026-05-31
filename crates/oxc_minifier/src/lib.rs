@@ -145,6 +145,7 @@ impl<'a> Minifier {
                 let mut semantic = SemanticBuilder::new()
                     .with_stats(stats)
                     .with_class_table(true)
+                    .with_ast_nodes(true)
                     .build(program)
                     .semantic;
                 let class_private_mappings = Mangler::default()

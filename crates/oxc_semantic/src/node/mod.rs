@@ -1,6 +1,8 @@
 mod nodes;
+mod storage;
 
 pub use nodes::AstNodes;
+pub use storage::NodeStorage;
 
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::AstKind;

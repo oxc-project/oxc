@@ -181,6 +181,7 @@ impl<'a> SemanticTester<'a> {
         SemanticBuilder::new()
             .with_check_syntax_error(true)
             .with_cfg(self.cfg)
+            .with_ast_nodes(true)
             .build(self.allocator.alloc(parse.program))
     }
 

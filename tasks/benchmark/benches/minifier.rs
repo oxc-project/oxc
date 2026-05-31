@@ -89,7 +89,10 @@ fn bench_mangler(criterion: &mut Criterion) {
                 allocator.reset();
                 temp_allocator.reset();
                 let program = transform_to_js(&allocator, source_text, source_type, path);
-                let mut semantic = SemanticBuilder::new().build(&program).semantic;
+                // The mangler reads AST nodes, so build full node storage (the binder/checker
+                // default to the lightweight ancestor-stack storage, which is discarded by the build).
+                let mut semantic =
+                    SemanticBuilder::new().with_ast_nodes(true).build(&program).semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
                         .build_with_semantic(&mut semantic, &program);
@@ -112,7 +115,10 @@ fn bench_mangler(criterion: &mut Criterion) {
                 allocator.reset();
                 temp_allocator.reset();
                 let program = transform_to_js(&allocator, source_text, source_type, path);
-                let mut semantic = SemanticBuilder::new().build(&program).semantic;
+                // The mangler reads AST nodes, so build full node storage (the binder/checker
+                // default to the lightweight ancestor-stack storage, which is discarded by the build).
+                let mut semantic =
+                    SemanticBuilder::new().with_ast_nodes(true).build(&program).semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
                         .with_options(MangleOptions {

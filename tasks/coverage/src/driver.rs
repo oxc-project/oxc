@@ -88,6 +88,11 @@ impl CompilerInterface for Driver {
         ControlFlow::Continue(())
     }
 
+    fn build_ast_nodes(&self) -> bool {
+        // `after_semantic` reads `semantic.nodes()` when checking semantic ids.
+        self.check_semantic
+    }
+
     fn after_semantic(&mut self, ret: &mut SemanticBuilderReturn) -> ControlFlow<()> {
         if self.check_semantic {
             let program = ret.semantic.nodes().program();

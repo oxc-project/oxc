@@ -32,7 +32,7 @@ use crate::{
     class::ClassTableBuilder,
     diagnostics::redeclaration,
     label::UnusedLabels,
-    node::AstNodes,
+    node::NodeStorage,
     scoping::{Bindings, Scoping},
     stats::Stats,
     unresolved_stack::UnresolvedReferences,
@@ -99,7 +99,13 @@ pub struct SemanticBuilder<'a> {
     pub(crate) async_or_generator_function_node_ids: Vec<NodeId>,
 
     // builders
-    pub(crate) nodes: AstNodes<'a>,
+    /// AST node storage. Defaults to the lightweight ancestor-stack backend; switched to
+    /// full [`AstNodes`](crate::AstNodes) storage by [`with_ast_nodes`] (or [`with_cfg`]).
+    /// The variant is the single source of truth for which mode is in effect.
+    ///
+    /// [`with_ast_nodes`]: SemanticBuilder::with_ast_nodes
+    /// [`with_cfg`]: SemanticBuilder::with_cfg
+    pub(crate) nodes: NodeStorage<'a>,
     pub(crate) scoping: Scoping,
 
     pub(crate) unresolved_references: UnresolvedReferences<'a>,
@@ -163,7 +169,7 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
-            nodes: AstNodes::default(),
+            nodes: NodeStorage::ancestor_stack(),
             hoisting_variables: FxHashMap::default(),
             async_or_generator_function_node_ids: Vec::new(),
             scoping,
@@ -196,6 +202,33 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    /// Control whether full AST node storage is built.
+    ///
+    /// When `true`, every node is recorded in [`AstNodes`], so the resulting
+    /// [`Semantic`] supports random access to nodes by [`NodeId`] (via
+    /// [`Semantic::nodes`]). This is required by consumers that walk the whole
+    /// tree, such as the linter, formatter, and mangler.
+    ///
+    /// When `false` (the default), only the live ancestor chain is retained
+    /// during the build.
+    /// [`Scoping`] is produced identically, but [`Semantic::nodes`] is empty.
+    /// Use this for pipelines that only need [`Scoping`] (transform, minify,
+    /// define/inject), to avoid the per-node allocation of full storage.
+    ///
+    /// Enabling a [`ControlFlowGraph`] via [`SemanticBuilder::with_cfg`] forces
+    /// full storage regardless of this setting.
+    ///
+    /// [`AstNodes`]: crate::AstNodes
+    /// [`NodeId`]: oxc_syntax::node::NodeId
+    /// [`Semantic::nodes`]: crate::Semantic::nodes
+    /// [`Scoping`]: crate::Scoping
+    /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
+    #[must_use]
+    pub fn with_ast_nodes(mut self, yes: bool) -> Self {
+        self.nodes = if yes { NodeStorage::full() } else { NodeStorage::ancestor_stack() };
         self
     }
 
@@ -297,6 +330,14 @@ impl<'a> SemanticBuilder<'a> {
             let stats_with_excess = stats.increase_by(self.excess_capacity);
             (stats_with_excess, Some(stats))
         };
+
+        // Control flow graph construction stores per-node data, so it requires full node
+        // storage regardless of the `with_ast_nodes` setting.
+        #[cfg(feature = "cfg")]
+        if self.cfg.is_some() && matches!(self.nodes, NodeStorage::Ancestors { .. }) {
+            self.nodes = NodeStorage::full();
+        }
+
         self.nodes.reserve(stats.nodes as usize);
         self.scoping.reserve(
             stats.symbols as usize,
@@ -335,12 +376,15 @@ impl<'a> SemanticBuilder<'a> {
         #[cfg(debug_assertions)]
         self.unused_labels.assert_empty();
 
+        #[expect(clippy::cast_possible_truncation)]
+        let node_count = self.nodes.len() as u32;
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
             comments: &program.comments,
             irregular_whitespaces: [].into(),
-            nodes: self.nodes,
+            nodes: self.nodes.into_ast_nodes(),
+            node_count,
             scoping: self.scoping,
             classes: self.class_table_builder.build(),
             #[cfg(feature = "jsdoc")]
@@ -390,7 +434,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[inline]
     fn pop_ast_node(&mut self) {
-        self.current_node_id = self.nodes.parent_id(self.current_node_id);
+        self.current_node_id = self.nodes.pop_node(self.current_node_id);
     }
 
     #[inline]
@@ -501,14 +545,18 @@ impl<'a> SemanticBuilder<'a> {
         // then defining a variable with the same name as the function name will be considered
         // a redeclaration, but it's actually not a redeclaration, so if the symbol declaration
         // is a function expression, then return None to tell the caller that it's not a redeclaration.
-        if self.scoping.symbol_flags(symbol_id).is_function()
-            && self
-                .nodes
-                .kind(self.scoping.symbol_declaration(symbol_id))
-                .as_function()
-                .is_some_and(Function::is_expression)
-        {
-            return None;
+        //
+        // Detect this without dereferencing the function's AST node (which may not be retained in
+        // ancestor-stack node storage mode): a function expression binds its own name in the scope
+        // *it* creates, so the name symbol's declaration node is that scope's node. A previous
+        // function *declaration* (e.g. `function a() {} function a() {}`) is instead bound in the
+        // enclosing scope, so its declaration node differs from its scope's node and is not matched.
+        if self.scoping.symbol_flags(symbol_id).is_function() {
+            let declaration = self.scoping.symbol_declaration(symbol_id);
+            let scope_node_id = self.scoping.get_node_id(self.scoping.symbol_scope_id(symbol_id));
+            if declaration == scope_node_id {
+                return None;
+            }
         }
 
         let flags = self.scoping.symbol_flags(symbol_id);

@@ -60,6 +60,7 @@ fn main() -> std::io::Result<()> {
     let semantic = SemanticBuilder::new()
         // Enable additional syntax checks not performed by the parser
         .with_check_syntax_error(true)
+        .with_ast_nodes(true)
         .build(&program);
 
     // Report semantic analysis errors
