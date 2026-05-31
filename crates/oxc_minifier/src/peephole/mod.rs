@@ -19,7 +19,6 @@ mod substitute_alternate_syntax;
 
 use oxc_ast_visit::{Visit, walk::walk_call_expression};
 use oxc_semantic::Scoping;
-use oxc_str::Ident;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
@@ -158,28 +157,6 @@ impl<'a> PeepholeOptimizations {
             }
         }
     }
-
-    /// For each name in `dirty.dead_unresolved`, walk the live program to
-    /// see whether any `IdentifierReference` with that name still survives.
-    /// Names with no surviving occurrence are removed from
-    /// `Scoping::root_unresolved_references`.
-    fn prune_unresolved_refs(ctx: &mut TraverseCtx<'a>, program: &Program<'a>) {
-        let mut survivors: FxHashSet<Ident<'a>> = FxHashSet::default();
-        // Borrow PassDirty's candidates immutably for the walk.
-        {
-            let candidates = &ctx.state.dirty.dead_unresolved;
-            let mut collector = NamedRefCollector { candidates, survivors: &mut survivors };
-            collector.visit_program(program);
-        }
-        // Now reborrow mutably to prune.
-        let dead_unresolved = std::mem::take(&mut ctx.state.dirty.dead_unresolved);
-        let scoping = ctx.scoping_mut();
-        for name in &dead_unresolved {
-            if !survivors.contains(name) {
-                scoping.remove_unresolved_reference(name.as_str());
-            }
-        }
-    }
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
@@ -208,15 +185,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             scoping.retain_resolved_references_excluding(&state.dirty.dead_refs);
         }
 
-        // (2) Unresolved references — gated confirmation walk by name.
-        //     Pruning `root_unresolved_references` is name-keyed and a name may
-        //     have many references; only remove the entry if no live occurrence
-        //     remains.
-        if !ctx.state.dirty.dead_unresolved.is_empty() {
-            Self::prune_unresolved_refs(ctx, program);
-        }
-
-        // (3) Direct-eval — gated full walk only when an eval was dropped.
+        // (2) Direct-eval — gated full walk only when an eval was dropped.
         if ctx.state.dirty.eval_dropped {
             let scoping = ctx.scoping();
             let mut live = LiveDirectEvalCollector::new(scoping);
@@ -635,21 +604,5 @@ impl<'a> Visit<'a> for LiveDirectEvalCollector<'_> {
         }
         // Recurse — `eval` may be nested in another call's arguments, e.g. `foo(eval('x'))`.
         walk_call_expression(self, it);
-    }
-}
-
-/// Walks the live program to find which names in `candidates` still appear
-/// in any `IdentifierReference`. Used by `prune_unresolved_refs` to confirm
-/// it's safe to remove a name from `root_unresolved_references`.
-struct NamedRefCollector<'a, 's> {
-    candidates: &'s FxHashSet<Ident<'a>>,
-    survivors: &'s mut FxHashSet<Ident<'a>>,
-}
-
-impl<'a> Visit<'a> for NamedRefCollector<'a, '_> {
-    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
-        if self.candidates.contains(&it.name) {
-            self.survivors.insert(it.name);
-        }
     }
 }

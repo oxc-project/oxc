@@ -640,13 +640,6 @@ impl Scoping {
         });
     }
 
-    /// Remove all references for `name` from the root-unresolved set.
-    pub fn remove_unresolved_reference(&mut self, name: &str) {
-        self.cell.with_dependent_mut(|_allocator, cell| {
-            cell.root_unresolved_references.remove(name);
-        });
-    }
-
     /// Reserve additional capacity for symbols, references, and scopes.
     pub fn reserve(
         &mut self,

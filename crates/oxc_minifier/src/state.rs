@@ -5,7 +5,7 @@ use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
-use oxc_str::{Ident, Str};
+use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
@@ -30,12 +30,6 @@ pub struct PassDirty<'a> {
     /// `just minsize` corpus, so the hot path elides the bounds check.
     pub(crate) dead_refs: BitSet<'a>,
 
-    /// Names of unresolved references whose last AST occurrence has been
-    /// removed. Pruning `Scoping::root_unresolved_references` is name-keyed
-    /// (and a name can have many references); confirming the prune is safe
-    /// requires a small walk in `exit_program`.
-    pub(crate) dead_unresolved: FxHashSet<Ident<'a>>,
-
     /// At least one direct `eval(...)` call was dropped this pass. Gates
     /// the small `LiveDirectEvalCollector` walk at `exit_program`.
     pub(crate) eval_dropped: bool,
@@ -46,7 +40,6 @@ impl<'a> PassDirty<'a> {
         Self {
             // Empty bitset; replaced with a properly-sized one at `enter_program`.
             dead_refs: BitSet::new_in(0, allocator),
-            dead_unresolved: FxHashSet::default(),
             eval_dropped: false,
         }
     }
@@ -60,16 +53,14 @@ impl<'a> PassDirty<'a> {
     /// as helpers mint fresh references.
     pub fn init(&mut self, references_len: usize, allocator: &'a Allocator) {
         self.dead_refs = BitSet::new_in(references_len, allocator);
-        self.dead_unresolved.clear();
         self.eval_dropped = false;
     }
 
     /// Reset everything except `dead_refs` allocation, which is re-sized
     /// by `init`. Used at `exit_program` to clear cross-pass leakage of
-    /// `dead_unresolved` / `eval_dropped`; `dead_refs` is already consumed
-    /// by then so its state doesn't matter until the next `init`.
+    /// `eval_dropped`; `dead_refs` is already consumed by then so its state
+    /// doesn't matter until the next `init`.
     pub fn reset(&mut self) {
-        self.dead_unresolved.clear();
         self.eval_dropped = false;
     }
 
@@ -77,7 +68,7 @@ impl<'a> PassDirty<'a> {
     /// (no AST mutation observed).
     #[expect(dead_code)]
     pub fn is_empty(&self) -> bool {
-        self.dead_refs.is_empty() && self.dead_unresolved.is_empty() && !self.eval_dropped
+        self.dead_refs.is_empty() && !self.eval_dropped
     }
 }
 

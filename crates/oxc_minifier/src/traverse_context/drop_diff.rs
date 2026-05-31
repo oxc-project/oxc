@@ -10,18 +10,14 @@ use crate::state::PassDirty;
 /// Two distinct walk modes:
 ///
 /// - `walk_old_*` — invoked on a subtree being dropped or replaced. Every
-///   reference found is ADDED to `dirty.dead_refs` (resolved) or
-///   `dirty.dead_unresolved` (unresolved by name). Every direct eval call
-///   sets `dirty.eval_dropped = true`.
+///   resolved reference found is ADDED to `dirty.dead_refs`. Every direct eval
+///   call sets `dirty.eval_dropped = true`. Unresolved references are not
+///   tracked (see `visit_identifier_reference`).
 ///
 /// - `resurrect_from_*` — invoked on the replacement value during a
 ///   `replace_*` helper call. Every resolved reference found is REMOVED
 ///   from `dirty.dead_refs`. Handles within-call and cross-call
-///   `ReferenceId` preservation via `clone_in_with_semantic_ids`. Unresolved
-///   references are not aggressively un-marked because pruning the
-///   unresolved set is name-keyed and a name with many refs survives if any
-///   one occurrence does — the `exit_program` prune walk handles this
-///   correctly via per-name confirmation.
+///   `ReferenceId` preservation via `clone_in_with_semantic_ids`.
 pub struct DropDiff<'a, 's> {
     dirty: &'s mut PassDirty<'a>,
     scoping: &'s Scoping,
@@ -185,16 +181,15 @@ impl<'a> Visit<'a> for DropDiff<'a, '_> {
                 debug_assert!(idx < self.dirty.dead_refs.capacity());
                 self.dirty.dead_refs.set_bit(idx);
             }
-            (DropDiffMode::MarkDead, false) => {
-                self.dirty.dead_unresolved.insert(it.name);
-            }
             (DropDiffMode::Resurrect, true) => {
                 debug_assert!(idx < self.dirty.dead_refs.capacity());
                 self.dirty.dead_refs.unset_bit(idx);
             }
-            (DropDiffMode::Resurrect, false) => {
-                // Intentionally no-op — see struct doc comment for rationale.
-            }
+            // Unresolved references (no `symbol_id`) are intentionally untracked:
+            // `root_unresolved_references` is not consumed by any in-loop
+            // optimization and the compressor's `Scoping` is never read back by a
+            // consumer (callers rebuild it), so pruning it would be dead work.
+            (_, false) => {}
         }
     }
 
