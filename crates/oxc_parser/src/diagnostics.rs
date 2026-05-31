@@ -1229,6 +1229,16 @@ pub fn implementation_in_ambient(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn generator_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1221", "Generators are not allowed in an ambient context.").with_label(span)
+}
+
+#[cold]
+pub fn overload_signature_generator(span: Span) -> OxcDiagnostic {
+    ts_error("1222", "An overload signature cannot be declared as a generator.").with_label(span)
+}
+
+#[cold]
 pub fn initializers_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
     ts_error("1039", "Initializers are not allowed in ambient contexts.").with_label(span)
 }

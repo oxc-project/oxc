@@ -302,6 +302,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
+
+        if generator {
+            if ctx.has_ambient() {
+                self.error(diagnostics::generator_in_ambient_context(self.end_span(span)));
+            } else if body.is_none() {
+                self.error(diagnostics::overload_signature_generator(self.end_span(span)));
+            }
+        }
         self.verify_modifiers(
             modifiers,
             ModifierKinds::new([ModifierKind::Declare, ModifierKind::Async]),

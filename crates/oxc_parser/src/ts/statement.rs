@@ -583,13 +583,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Box<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);
+        let generator = self.eat(Kind::Star);
         let func_kind = FunctionKind::TSDeclaration;
-        let id = self.parse_function_id(func_kind, r#async, false);
+        let id = self.parse_function_id(func_kind, r#async, generator);
         self.parse_function(
             start_span,
             id,
             r#async,
-            false,
+            generator,
             func_kind,
             FormalParameterKind::FormalParameter,
             modifiers,
