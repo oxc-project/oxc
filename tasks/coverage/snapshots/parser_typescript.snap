@@ -3,7 +3,7 @@ commit: e5509e21
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1620/2640 (61.36%)
+Negative Passed: 1621/2640 (61.40%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -51,8 +51,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitCallExp
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/baseCheck.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/baseExpressionTypeParameters.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/bigintIndex.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/binaryArithmatic1.ts
 
@@ -3296,6 +3294,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/compiler/bigintArbirtraryIdentifier.ts:1:10]
  1 │ import { 0n as foo } from "./foo";
    ·          ──
+   ╰────
+
+  × TS(1268): An index signature parameter type must be 'string', 'number', 'symbol', or a template literal type.
+   ╭─[typescript/tests/cases/compiler/bigintIndex.ts:2:6]
+ 1 │ interface BigIntIndex<E> {
+ 2 │     [index: bigint]: E; // should error
+   ·      ─────────────
+ 3 │ }
    ╰────
 
   × Invalid characters after number
@@ -25606,6 +25612,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  1 │ interface I {
  2 │   [a?]
    ·      ─
+ 3 │ }
+   ╰────
+
+  × TS(1268): An index signature parameter type must be 'string', 'number', 'symbol', or a template literal type.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature6.ts:2:4]
+ 1 │ interface I {
+ 2 │   [a:boolean]
+   ·    ─────────
  3 │ }
    ╰────
 

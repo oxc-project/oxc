@@ -1082,6 +1082,26 @@ pub fn index_signature_one_parameter(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn index_signature_parameter_type(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1268",
+        "An index signature parameter type must be 'string', 'number', 'symbol', or a template \
+         literal type.",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn index_signature_parameter_literal_type(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1337",
+        "An index signature parameter type cannot be a literal type or generic type. Consider \
+         using a mapped object type instead.",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn mixed_coalesce(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Logical expressions and coalesce expressions cannot be mixed")
         .with_help("Wrap either expression by parentheses")
