@@ -1197,6 +1197,30 @@ fn test() {
                   ",
             Some(serde_json::json!([{ "allowAsProps": true, }])),
         ),
+        (
+            "
+                function MyComponent() {
+                  return (
+                    <Button
+                      onClick={() => {
+                        showToast(<Toast label=\"Button clicked\" />);
+                      }}
+                    />
+                  );
+                }
+                ",
+            None,
+        ),
+        (
+            "
+            useMutation(MUTATION, {
+              onCompleted: (data) => {   // ← flagged, but this is a void callback
+                if (data.errors) { showToast(<ErrorToast />); }
+              },
+            });
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
