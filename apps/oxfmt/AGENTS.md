@@ -6,12 +6,12 @@ The `oxfmt` implemented under this directory serves several purposes.
 
 - Pure Rust CLI
   - Minimum feature set, CLI usage only, no LSP, no Stdin support
-  - Formats JS/TS and TOML files, no xxx-in-js support
+  - Formats JS/TS, JSON and TOML files, no xxx-in-js support
   - Entry point: `main()` in `src/main.rs`
   - Build with `cargo build --no-default-features`
 - JS/Rust hybrid CLI using `napi-rs`
   - Full feature set like CLI, Stdin, LSP, and more
-  - Format many file types with embedded language formatting support
+  - Format many file types with embedded language formatting support like Prettier
   - Entry point: `src-js/cli.ts` which uses `run_cli()` from `src/main_napi.rs`
   - Build with `pnpm build`
 - Node.js API using napi-rs
@@ -20,7 +20,7 @@ The `oxfmt` implemented under this directory serves several purposes.
 
 When making changes, consider the impact on all paths.
 
-## Platform Considerations
+### Platform considerations
 
 Oxfmt is built for multiple platforms (Linux, macOS, Windows) and architectures.
 
@@ -30,6 +30,26 @@ When working with file paths in CLI code, be aware of Windows path differences:
 - Be cautious with path comparisons and normalization across platforms
   - Avoid hardcoding `/` as a path separator; prefer `Path::join()`
   - Windows uses `\` as a path separator and has drive letter prefixes (e.g., `C:\`)
+
+### Formatter implementations
+
+Oxfmt utilizes different implementations depending on the file extension and filename:
+
+- Tier 1: Rust implementations using `oxc_formatter` or `oxc_formatter_json` found in this repository
+- Tier 2: Rust implementations using external libraries like `oxc_toml`
+- Tier 3: Delegations to Prettier via NAPI-JS calls (e.g., for Vue or Markdown)
+- Tier 4: Delegations to Prettier that require additional plugins (e.g., for Svelte)
+
+Consequently, managing these various formatter implementations and handling their respective options are also part of Oxfmt's responsibilities.
+
+### CLI implementations
+
+Oxfmt shares code with Oxlint regarding its CLI implementation.
+
+- Rust implementation: `crates/oxc_config`
+- JS implementation: `apps/shared`
+
+Please exercise extra caution when making changes to these files.
 
 ## Verification
 
@@ -44,14 +64,15 @@ Also run `clippy` for the same configurations and resolve all warnings.
 Run tests with:
 
 ```sh
-# Run E2E test
-pnpm build-test && pnpm t
-# Update snapshots
-pnpm t -u
-# Run conformance test for xxx-in-js and js-in-xxx
-pnpm conformance
 # Run unit test in Rust
 cargo t
+# Run E2E test
+pnpm build-dev && pnpm t
+# Update snapshots
+pnpm t -u
+
+# Run conformance test for xxx-in-js and js-in-xxx
+pnpm conformance
 ```
 
 To manually verify the CLI behavior after building:
@@ -67,18 +88,18 @@ cat <file> | node ./dist/cli.js --config=<cfg> --stdin-filepath=<file>
 OXC_LOG=debug node ./dist/cli.js --threads=1 <file>
 ```
 
-NOTE: `pnpm build-test` combines `pnpm build-js` and `pnpm build-napi`, so you don't need to run them separately.
+NOTE: `pnpm build-dev` combines `pnpm build-js` and `pnpm build-napi`, so you don't need to run them separately.
 
 To compare formatting output with Prettier:
 
 ```sh
-# Use a shared config file (e.g., fmt.json) because oxfmt and Prettier have different default printWidth
+# Use a shared config file (e.g., fmt.json) because Oxfmt and Prettier have different default printWidth.
 # Example fmt.json: { "printWidth": 80 }
 cat <file> | node ./dist/cli.js --config=fmt.json --stdin-filepath=<file>
 npx prettier --config=fmt.json <file>
 ```
 
-## Test Organization (`test/` directory)
+## Test organization (`test/` directory)
 
 Tests are organized into specific domains, each with its own structure.
 
@@ -114,7 +135,7 @@ Each test directory follows the 1:1:1 rule:
 
 Shared helpers are in `utils.ts` at the `test/lsp/` level.
 
-## After updating `Oxfmtrc` (Under `src/core/oxfmtrc`)
+## After updating `Oxfmtrc` (`src/core/oxfmtrc.rs`)
 
 When modifying the `Oxfmtrc` struct (and configuration options):
 
