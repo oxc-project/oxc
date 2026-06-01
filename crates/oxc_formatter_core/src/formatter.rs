@@ -98,7 +98,6 @@ impl<'ast, C> Buffer<'ast, C> for Formatter<'_, 'ast, C> {
         self.buffer.write_element(element);
     }
 
-    #[inline(always)]
     fn elements(&self) -> &[FormatElement<'ast>] {
         self.buffer.elements()
     }
@@ -110,17 +109,14 @@ impl<'ast, C> Buffer<'ast, C> for Formatter<'_, 'ast, C> {
         }
     }
 
-    #[inline(always)]
     fn state(&self) -> &FormatState<'ast, C> {
         self.buffer.state()
     }
 
-    #[inline(always)]
     fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
         self.buffer.state_mut()
     }
 
-    #[inline(always)]
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
         self.buffer.replace_end(start, replacement);
     }

@@ -54,32 +54,26 @@ pub trait Buffer<'ast, C> {
 
 /// Implements the `[Buffer]` trait for all mutable references of objects implementing [Buffer].
 impl<'ast, C, W: Buffer<'ast, C> + ?Sized> Buffer<'ast, C> for &mut W {
-    #[inline(always)]
     fn write_element(&mut self, element: FormatElement<'ast>) {
         (**self).write_element(element);
     }
 
-    #[inline(always)]
     fn elements(&self) -> &[FormatElement<'ast>] {
         (**self).elements()
     }
 
-    #[inline(always)]
     fn write_fmt(&mut self, args: Arguments<'_, 'ast, C>) {
         (**self).write_fmt(args);
     }
 
-    #[inline(always)]
     fn state(&self) -> &FormatState<'ast, C> {
         (**self).state()
     }
 
-    #[inline(always)]
     fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
         (**self).state_mut()
     }
 
-    #[inline(always)]
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
         (**self).replace_end(start, replacement);
     }
@@ -138,7 +132,6 @@ impl<C> DerefMut for VecBuffer<'_, '_, C> {
 }
 
 impl<'ast, C> Buffer<'ast, C> for VecBuffer<'_, 'ast, C> {
-    #[inline(always)]
     fn write_element(&mut self, element: FormatElement<'ast>) {
         self.elements.push(element);
     }
@@ -148,27 +141,22 @@ impl<'ast, C> Buffer<'ast, C> for VecBuffer<'_, 'ast, C> {
     // forwarding shim per dispatch). Here `Self` is `Sized`, so `&mut Self` coerces straight
     // to `&mut dyn Buffer` with the concrete type `VecBuffer` — a single vtable hop. This
     // covers every `write!(<owned VecBuffer>, …)` / `buffer.write_fmt(…)` call site.
-    #[inline(always)]
     fn write_fmt(&mut self, arguments: Arguments<'_, 'ast, C>) {
         write::<C>(self, arguments);
     }
 
-    #[inline(always)]
     fn elements(&self) -> &[FormatElement<'ast>] {
         self
     }
 
-    #[inline(always)]
     fn state(&self) -> &FormatState<'ast, C> {
         self.state
     }
 
-    #[inline(always)]
     fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
         self.state
     }
 
-    #[inline(always)]
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
         self.elements.splice(start.., replacement.iter().cloned());
     }
@@ -411,7 +399,6 @@ impl<'ast, C> Buffer<'ast, C> for RemoveSoftLinesBuffer<'_, 'ast, C> {
     // See the note on `VecBuffer::write_fmt`: override the default so dispatch resolves to the
     // concrete `RemoveSoftLinesBuffer` instead of going through the `&mut W` shim. Hot via the
     // arrow-parameter and template-expression paths (`write!(buffer, …)` on a local instance).
-    #[inline(always)]
     fn write_fmt(&mut self, arguments: Arguments<'_, 'ast, C>) {
         write::<C>(self, arguments);
     }
