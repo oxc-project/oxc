@@ -147,7 +147,7 @@ declare_oxc_lint!(
     typescript,
     style,
     pending,
-    version = "next",
+    version = "1.68.0",
     config = MethodSignatureStyleConfig
 );
 
