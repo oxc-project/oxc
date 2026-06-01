@@ -1,6 +1,5 @@
-use oxc_ast::{
-    AstKind,
-    ast::{CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression},
+use oxc_ast::ast::{
+    CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression,
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -8,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule,
+    context::LintContext, frameworks::FrameworkOptions, rule::Rule,
     utils::is_vue_component_options_call,
 };
 
@@ -52,17 +51,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for OneComponentPerFile {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Program(program) = node.kind() else {
-            return;
-        };
-
+    fn run_once(&self, ctx: &LintContext) {
         let mut visitor = ComponentCollector {
             component_spans: Vec::new(),
             is_vue_file: ctx.file_extension().is_some_and(|ext| ext == "vue"),
             is_script_setup: ctx.frameworks_options() == FrameworkOptions::VueSetup,
         };
-        visitor.visit_program(program);
+        visitor.visit_program(ctx.nodes().program());
 
         if visitor.component_spans.len() > 1 {
             for span in &visitor.component_spans {
