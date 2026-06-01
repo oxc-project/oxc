@@ -31,6 +31,7 @@ use oxc_language_server::{
 use crate::{
     config_loader::{
         ConfigLoader, build_nested_configs, config_file_names, discover_configs_in_tree,
+        materialize_default_plugins,
     },
     lsp::{
         code_actions::{
@@ -105,13 +106,14 @@ impl ServerLinterBuilder {
         #[cfg(feature = "napi")]
         let loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
 
-        let oxlintrc = match loader.load_root_config(&root_path, config_path.as_ref()) {
+        let mut oxlintrc = match loader.load_root_config(&root_path, config_path.as_ref()) {
             Ok(config) => config,
             Err(e) => {
                 warn!("Failed to load config: {e}");
                 Oxlintrc::default()
             }
         };
+        materialize_default_plugins(&mut oxlintrc);
 
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
@@ -166,7 +168,7 @@ impl ServerLinterBuilder {
         let lint_options = LintOptions {
             fix: fix_kind,
             report_unused_directive: match options.unused_disable_directives {
-                Some(UnusedDisableDirectives::Allow) => Some(AllowWarnDeny::Allow),
+                Some(UnusedDisableDirectives::Allow) => None,
                 Some(UnusedDisableDirectives::Warn) => Some(AllowWarnDeny::Warn),
                 Some(UnusedDisableDirectives::Deny) => Some(AllowWarnDeny::Deny),
                 None => match config_store.report_unused_disable_directives() {
@@ -1391,6 +1393,17 @@ mod test {
     }
 
     #[test]
+    fn test_allow_unused_directives() {
+        Tester::new(
+            "fixtures/lsp/allow_unused_disabled_directives",
+            json!({
+                "unusedDisableDirectives": "allow"
+            }),
+        )
+        .test_and_snapshot_single_file("test.js");
+    }
+
+    #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_report_tsgolint_unused_directives() {
         Tester::new(
@@ -1507,5 +1520,11 @@ mod test {
             }),
         );
         tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
+    fn test_issue_22758() {
+        let tester = Tester::new("fixtures/lsp/issue_22758/apps/api", json!({}));
+        tester.test_and_snapshot_single_file("app/auth/guard/firebase.ts");
     }
 }

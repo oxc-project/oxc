@@ -10,7 +10,7 @@ use serde_json::Value;
 use tracing::{debug, debug_span};
 
 use oxc_formatter::{
-    EmbeddedDocFormatterCallback, EmbeddedFormatterCallback, ExternalCallbacks, FormatOptions,
+    EmbeddedDocFormatterCallback, EmbeddedFormatterCallback, ExternalCallbacks, JsFormatOptions,
     TailwindCallback,
 };
 
@@ -241,7 +241,7 @@ impl ExternalFormatter {
     /// The options (including `filepath`) are captured in the closures and passed to JS on each call.
     pub fn to_external_callbacks(
         &self,
-        format_options: &FormatOptions,
+        format_options: &JsFormatOptions,
         options: Value,
     ) -> ExternalCallbacks {
         let needs_embedded = !format_options.embedded_language_formatting.is_off();

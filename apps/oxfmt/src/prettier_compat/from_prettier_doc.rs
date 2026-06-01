@@ -4,9 +4,10 @@ use rustc_hash::FxHashMap;
 use serde_json::Value;
 
 use oxc_allocator::{Allocator, StringBuilder};
-use oxc_formatter::{
-    Align, Condition, DedentMode, EmbeddedDocResult, FormatElement, Group, GroupId, GroupMode,
-    IndentWidth, LineMode, PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
+use oxc_formatter::EmbeddedDocResult;
+use oxc_formatter_core::{
+    Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
+    PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
 };
 
 /// Marker string used to represent `-Infinity` in JSON.

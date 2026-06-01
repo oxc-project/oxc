@@ -2066,3 +2066,13 @@ impl ImportPhase {
         }
     }
 }
+
+impl WithClauseKeyword {
+    /// Returns the syntax associated with this [`WithClauseKeyword`].
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::With => "with",
+            Self::Assert => "assert",
+        }
+    }
+}

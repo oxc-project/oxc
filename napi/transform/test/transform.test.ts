@@ -370,6 +370,53 @@ describe("legacy decorator", () => {
       `);
     });
   });
+
+  describe("strictNullChecks", () => {
+    const code = `
+      class Source {
+        @dce prop!: string | null;
+      }
+    `;
+
+    it("emits Object by default (strictNullChecks: true)", () => {
+      const ret = transformSync("test.ts", code, {
+        sourceType: "module",
+        decorator: {
+          legacy: true,
+          emitDecoratorMetadata: true,
+        },
+      });
+      expect(ret.code).toMatchInlineSnapshot(`
+        "import _decorateMetadata from "@oxc-project/runtime/helpers/decorateMetadata";
+        import _decorate from "@oxc-project/runtime/helpers/decorate";
+        class Source {
+        	prop;
+        }
+        _decorate([dce, _decorateMetadata("design:type", Object)], Source.prototype, "prop", void 0);
+        "
+      `);
+    });
+
+    it("elides null/undefined from union when strictNullChecks: false", () => {
+      const ret = transformSync("test.ts", code, {
+        sourceType: "module",
+        decorator: {
+          legacy: true,
+          emitDecoratorMetadata: true,
+          strictNullChecks: false,
+        },
+      });
+      expect(ret.code).toMatchInlineSnapshot(`
+        "import _decorateMetadata from "@oxc-project/runtime/helpers/decorateMetadata";
+        import _decorate from "@oxc-project/runtime/helpers/decorate";
+        class Source {
+        	prop;
+        }
+        _decorate([dce, _decorateMetadata("design:type", String)], Source.prototype, "prop", void 0);
+        "
+      `);
+    });
+  });
 });
 
 describe("worker", () => {

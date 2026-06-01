@@ -1,12 +1,11 @@
 use std::mem;
 
-use oxc_allocator::Allocator;
 use oxc_ast::Comment;
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    external_formatter::ExternalCallbacks, formatter::FormatElement, options::FormatOptions,
+    external_formatter::ExternalCallbacks, formatter::FormatElement, options::JsFormatOptions,
 };
 
 use super::{Comments, SourceText};
@@ -72,6 +71,7 @@ impl TailwindContextEntry {
 
     /// Create a new context entry with updated quasi position.
     /// Used when formatting individual quasis to track their position in the template.
+    #[must_use]
     pub fn with_quasi_position(mut self, is_first: bool, is_last: bool) -> Self {
         self.is_first_quasi = is_first;
         self.is_last_quasi = is_last;
@@ -80,8 +80,8 @@ impl TailwindContextEntry {
 }
 
 /// Context object storing data relevant when formatting an object.
-pub struct FormatContext<'ast> {
-    options: FormatOptions,
+pub struct JsFormatContext<'ast> {
+    options: JsFormatOptions,
 
     source_text: SourceText<'ast>,
 
@@ -93,7 +93,7 @@ pub struct FormatContext<'ast> {
 
     /// Tracks whether quotes are needed for properties in the current object-like node.
     ///
-    /// When [`FormatOptions::quote_properties`] is [`crate::QuoteProperties::Consistent`], each entry indicates
+    /// When [`JsFormatOptions::quote_properties`] is [`crate::QuoteProperties::Consistent`], each entry indicates
     /// whether at least one property key requires quotes. A stack is used to handle nested object-like
     /// structures (e.g., `{ a: { "b-c": 1 } }` where only the inner object needs quoted keys).
     quote_needed_stack: Vec<bool>,
@@ -107,13 +107,11 @@ pub struct FormatContext<'ast> {
     tailwind_context_stack: Vec<TailwindContextEntry>,
 
     external_callbacks: ExternalCallbacks,
-
-    allocator: &'ast Allocator,
 }
 
-impl std::fmt::Debug for FormatContext<'_> {
+impl std::fmt::Debug for JsFormatContext<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FormatContext")
+        f.debug_struct("JsFormatContext")
             .field("options", &self.options)
             .field("source_text", &self.source_text)
             .field("source_type", &self.source_type)
@@ -125,13 +123,28 @@ impl std::fmt::Debug for FormatContext<'_> {
     }
 }
 
-impl<'ast> FormatContext<'ast> {
+impl oxc_formatter_core::FormatContext for JsFormatContext<'_> {
+    type Options = JsFormatOptions;
+
+    fn options(&self) -> &JsFormatOptions {
+        &self.options
+    }
+
+    fn source_code(&self) -> &str {
+        &self.source_text
+    }
+
+    fn get_tailwind_class(&self, idx: usize) -> Option<&str> {
+        self.tailwind_classes.get(idx).map(String::as_str)
+    }
+}
+
+impl<'ast> JsFormatContext<'ast> {
     pub fn new(
         source_text: &'ast str,
         source_type: SourceType,
         comments: &'ast [Comment],
-        allocator: &'ast Allocator,
-        options: FormatOptions,
+        options: JsFormatOptions,
         external_callbacks: Option<ExternalCallbacks>,
     ) -> Self {
         let source_text = SourceText::new(source_text);
@@ -145,33 +158,7 @@ impl<'ast> FormatContext<'ast> {
             tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
             external_callbacks: external_callbacks.unwrap_or_default(),
-            allocator,
         }
-    }
-
-    pub(crate) fn dummy(allocator: &'ast Allocator) -> Self {
-        Self {
-            options: FormatOptions::default(),
-            source_text: SourceText::new(""),
-            source_type: SourceType::default(),
-            comments: Comments::new(SourceText::new(""), &[]),
-            cached_elements: FxHashMap::default(),
-            quote_needed_stack: Vec::new(),
-            tailwind_classes: Vec::new(),
-            tailwind_context_stack: Vec::new(),
-            external_callbacks: ExternalCallbacks::default(),
-            allocator,
-        }
-    }
-
-    /// Get the external callbacks if set
-    pub fn external_callbacks(&self) -> &ExternalCallbacks {
-        &self.external_callbacks
-    }
-
-    /// Returns the formatting options
-    pub fn options(&self) -> &FormatOptions {
-        &self.options
     }
 
     /// Returns a reference to the program's comments.
@@ -226,19 +213,12 @@ impl<'ast> FormatContext<'ast> {
         *self.quote_needed_stack.last().unwrap_or(&false)
     }
 
-    pub fn allocator(&self) -> &'ast Allocator {
-        self.allocator
-    }
-
     /// Add a Tailwind CSS class string found in JSX attributes.
     /// Returns the index where the class was stored.
     pub fn add_tailwind_class(&mut self, class: String) -> usize {
         let index = self.tailwind_classes.len();
         self.tailwind_classes.push(class);
         index
-    }
-    pub fn get_tailwind_class(&self, index: usize) -> Option<&String> {
-        self.tailwind_classes.get(index)
     }
 
     /// Take all collected Tailwind classes, clearing the internal storage.
@@ -272,5 +252,10 @@ impl<'ast> FormatContext<'ast> {
     /// Get a mutable reference to the current Tailwind context, if any.
     pub fn tailwind_context_mut(&mut self) -> Option<&mut TailwindContextEntry> {
         self.tailwind_context_stack.last_mut()
+    }
+
+    /// Get the external callbacks if set
+    pub fn external_callbacks(&self) -> &ExternalCallbacks {
+        &self.external_callbacks
     }
 }

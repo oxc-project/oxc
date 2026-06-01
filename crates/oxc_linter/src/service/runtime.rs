@@ -718,8 +718,15 @@ impl Runtime {
 
                         // If the new source text is owned, that means it was modified,
                         // so we write the new source text to the file.
-                        if let Cow::Owned(new_source_text) = &new_source_text {
-                            file_system.write_file(path, new_source_text).unwrap();
+                        if let Cow::Owned(new_source_text) = &new_source_text
+                            && let Err(error) = file_system.write_file(path, new_source_text)
+                        {
+                            tx_error
+                                .send(vec![Error::new(OxcDiagnostic::error(format!(
+                                    "Failed to write file {} with error \"{error}\"",
+                                    path.display()
+                                )))])
+                                .unwrap();
                         }
                     });
                 },

@@ -24,7 +24,9 @@ use crate::{
     cli::{
         CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
     },
-    config_loader::{CliConfigLoadError, ConfigLoadError, ConfigLoader},
+    config_loader::{
+        CliConfigLoadError, ConfigLoadError, ConfigLoader, materialize_default_plugins,
+    },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
@@ -282,11 +284,10 @@ impl CliRunner {
             }
         };
 
-        {
-            let mut plugins = root_config.plugins.unwrap_or_default();
-            enable_plugins.apply_overrides(&mut plugins);
-            root_config.plugins = Some(plugins);
-        }
+        materialize_default_plugins(&mut root_config);
+        let mut plugins = root_config.plugins.unwrap_or_default();
+        enable_plugins.apply_overrides(&mut plugins);
+        root_config.plugins = Some(plugins);
 
         let base_ignore_patterns = root_config.ignore_patterns.clone();
 

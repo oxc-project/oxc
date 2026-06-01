@@ -67,6 +67,7 @@ use crate::{
         var_declarations::VarDeclarationsStore,
     },
     context::TraverseCtx,
+    decorator::DecoratorOptions,
     state::TransformState,
     utils::ast_builder::{create_assignment, create_class_method, create_prototype_member},
 };
@@ -124,10 +125,10 @@ pub struct LegacyDecorator<'a> {
 }
 
 impl LegacyDecorator<'_> {
-    pub fn new(emit_decorator_metadata: bool) -> Self {
+    pub fn new(options: DecoratorOptions) -> Self {
         Self {
-            emit_decorator_metadata,
-            metadata: LegacyDecoratorMetadata::new(),
+            emit_decorator_metadata: options.emit_decorator_metadata,
+            metadata: LegacyDecoratorMetadata::new(options),
             class_decorated_data: None,
             decorations: FxHashMap::default(),
             class_decorations_stack: NonEmptyStack::new(ClassDecorations::default()),

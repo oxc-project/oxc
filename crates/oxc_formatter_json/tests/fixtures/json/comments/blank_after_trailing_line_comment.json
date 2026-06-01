@@ -1,0 +1,6 @@
+{
+  "a": 1, // trailing
+
+  // leading after blank
+  "b": 2
+}

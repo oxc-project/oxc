@@ -117,6 +117,14 @@ fn test() {
             "describe(\"suite\", () => { test(\"foo\") })",
             Some(serde_json::json!([{ "withinDescribe": "test" }])),
         ),
+        (
+            "
+                describe('suite', () => {});
+
+                test('foo', () => {});
+            ",
+            Some(serde_json::json!([{ "withinDescribe": "it" }])),
+        ),
     ];
 
     let fail = vec![

@@ -29,12 +29,11 @@ use oxc::{
     transformer::{TransformOptions, Transformer},
 };
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    Expand, FormatOptions, Formatter, GroupEntry, ImportModifier, ImportSelector, IndentStyle,
-    IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
+    ArrowParentheses, AttributePosition, BracketSameLine, CustomGroupDefinition, GroupEntry,
+    ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons,
     SortImportsOptions, SortOrder, TrailingCommas, default_groups, default_internal_patterns,
-    get_parse_options,
 };
+use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
     LintOptions, Linter, ModuleRecord, Oxlintrc,
@@ -429,8 +428,8 @@ impl Oxc {
         }
     }
 
-    fn convert_formatter_options(options: &OxcFormatterOptions) -> FormatOptions {
-        let mut format_options = FormatOptions::default();
+    fn convert_formatter_options(options: &OxcFormatterOptions) -> JsFormatOptions {
+        let mut format_options = JsFormatOptions::default();
 
         if let Some(use_tabs) = options.use_tabs {
             format_options.indent_style =
@@ -616,20 +615,34 @@ impl Oxc {
     ) {
         let allocator = Allocator::default();
         if run_options.formatter {
-            let ret = Parser::new(&allocator, source_text, source_type)
-                .with_options(get_parse_options())
-                .parse();
-
             let format_options = Self::convert_formatter_options(formatter_options);
-            let formatter = Formatter::new(&allocator, format_options);
-            let formatted = formatter.format(&ret.program);
-            if run_options.formatter {
-                self.formatter_ir_text = formatted.document().to_string();
-                self.formatter_formatted_text = match formatted.print() {
+
+            // `format()` is called twice: once to dump the IR, once for the printed code.
+            // `print()` consumes the `Formatted`, so the IR pass needs its own.
+            // Playground already re-parses for the formatter, so the extra parse is acceptable here.
+            self.formatter_ir_text = match oxc_formatter::format(
+                &allocator,
+                source_text,
+                source_type,
+                format_options.clone(),
+                None,
+            ) {
+                Ok(formatted) => formatted.document().display(source_text).to_string(),
+                Err(err) => err.to_string(),
+            };
+            self.formatter_formatted_text = match oxc_formatter::format(
+                &allocator,
+                source_text,
+                source_type,
+                format_options,
+                None,
+            ) {
+                Ok(formatted) => match formatted.print() {
                     Ok(printer) => printer.into_code(),
                     Err(err) => err.to_string(),
-                };
-            }
+                },
+                Err(err) => err.to_string(),
+            };
         }
     }
 

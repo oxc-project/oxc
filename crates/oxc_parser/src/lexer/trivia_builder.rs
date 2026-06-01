@@ -159,7 +159,19 @@ impl<'a> TriviaBuilder<'a> {
 
     fn should_stay_leading(comment: &Comment) -> bool {
         // Match esbuild's model where legal comments are preserved before the following token/statement.
-        matches!(comment.content, CommentContent::Legal | CommentContent::JsdocLegal)
+        // Annotation comments (`@__PURE__`, `@__NO_SIDE_EFFECTS__`) semantically mark the *next*
+        // token, so they must also stay leading even when no newline precedes them — otherwise
+        // codegen's minified output (which smashes statements together) breaks idempotency:
+        // pass 1 emits the verbatim annotation as leading, pass 2 re-parses it as trailing of the
+        // previous `}`/`;` and loses the `attached_to`, falling back to the canonical literal.
+        matches!(
+            comment.content,
+            CommentContent::Legal
+                | CommentContent::JsdocLegal
+                | CommentContent::Pure
+                | CommentContent::PureNotApplied
+                | CommentContent::NoSideEffects
+        )
     }
 
     /// Update `pure_comment` / `has_no_side_effects_comment` to point to the comment at `index`.
@@ -544,6 +556,49 @@ function bar() {}";
         assert_eq!(comments[0].attached_to, function_start);
         assert!(comments[0].is_legal());
         assert!(comments[0].followed_by_newline());
+    }
+
+    // Annotation comments mark the *next* token, so they must stay leading even
+    // when they sit directly after a previous statement with no preceding newline
+    // (which is what codegen produces in `minify` mode). Without this, pass 2 of
+    // an idempotency test would re-classify the annotation as trailing of the
+    // previous token, drop its `attached_to`, and the codegen would fall back to
+    // the canonical literal — diverging from pass 1's verbatim output.
+    #[test]
+    fn no_side_effects_block_comment_after_code_is_attached_to_next_token() {
+        let source_text = "function foo() {}/* #__NO_SIDE_EFFECTS__ */\nfunction bar() {}";
+        let comments = get_comments(source_text);
+        let bar_start = u32::try_from(source_text.rfind("function").unwrap()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].attached_to, bar_start);
+        assert!(comments[0].is_no_side_effects());
+    }
+
+    #[test]
+    fn no_side_effects_line_comment_after_code_is_attached_to_next_token() {
+        let source_text = "foo();// @__NO_SIDE_EFFECTS__\nfunction bar() {}";
+        let comments = get_comments(source_text);
+        let function_start = u32::try_from(source_text.find("function").unwrap()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].attached_to, function_start);
+        assert!(comments[0].is_no_side_effects());
+        assert!(comments[0].followed_by_newline());
+    }
+
+    #[test]
+    fn pure_block_comment_after_code_is_attached_to_next_token() {
+        let source_text = "foo();/* @__PURE__ */new Bar()";
+        let comments = get_comments(source_text);
+        let new_start = u32::try_from(source_text.find("new").unwrap()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Leading);
+        assert_eq!(comments[0].attached_to, new_start);
+        assert!(comments[0].is_pure());
     }
 
     #[test]

@@ -6,7 +6,7 @@ use crate::{
     ast_nodes::AstNode,
     external_formatter::EmbeddedDocResult,
     format_args,
-    formatter::{FormatElement, Formatter, prelude::*},
+    formatter::{FormatElement, prelude::*},
     write,
 };
 
@@ -21,7 +21,7 @@ const PLACEHOLDER_SUFFIX: &str = "-id";
 /// then replaces placeholder occurrences in the resulting IR with `${expr}` Docs.
 pub(super) fn format_css_doc<'a>(
     quasi: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;
     let expressions: Vec<_> = quasi.expressions().iter().collect();
@@ -53,7 +53,7 @@ pub(super) fn format_css_doc<'a>(
 
     // Phase 1: Build joined text
     // quasis[0].raw + "@prettier-placeholder-0-id" + quasis[1].raw + ...
-    let allocator = f.context().allocator();
+    let allocator = f.allocator();
     let joined = {
         let mut sb = StringBuilder::new_in(allocator);
         for (idx, quasi_elem) in quasis.iter().enumerate() {
@@ -91,14 +91,14 @@ pub(super) fn format_css_doc<'a>(
 
     // Phase 3: Replace placeholders in IR with expressions
     let indent_width = f.options().indent_width;
-    let format_content = format_once(move |f: &mut Formatter<'_, 'a>| {
+    let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
         for element in ir {
             match &element {
                 FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
                     let parts =
                         super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
                     for (i, part) in parts.iter().enumerate() {
-                        if i % 2 == 0 {
+                        if i.is_multiple_of(2) {
                             if !part.is_empty() {
                                 super::write_text_with_line_breaks(
                                     f,

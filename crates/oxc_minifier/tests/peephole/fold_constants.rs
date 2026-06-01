@@ -619,6 +619,25 @@ fn test_fold_logical_op2() {
     fold("x = [(function(){alert(x)})()] && x", "x=((function(){alert(x)})(),x)");
 }
 
+// `cjs-module-lexer` scans `module.exports = { ... }` syntactically. esbuild
+// emits `0 && (module.exports = { ... })` as a parse-time hint when the real
+// exports happen through helpers the lexer can't trace; folding the hint
+// away breaks `import { X } from "<cjs-pkg>"` consumers.
+//
+// Hint emission site (esbuild v0.28.0):
+// https://github.com/evanw/esbuild/blob/v0.28.0/internal/linker/linker.go#L5127-L5138
+//
+// See also #4878 — the original guard, removed by the #8618 refactor.
+#[test]
+fn test_preserve_cjs_module_lexer_hint() {
+    test_same("0 && (module.exports = { version });");
+    test_same("0 && (module.exports = { a, b, c });");
+    // Compound assignments aren't real lexer hints — keep folding them.
+    fold("x = 0 && (module.exports ||= y)", "x = 0");
+    // Non-export-shape RHS still folds.
+    fold("x = 0 && foo()", "x = 0");
+}
+
 #[test]
 fn test_fold_nullish_coalesce() {
     // fold if left is null/undefined
