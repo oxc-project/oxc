@@ -1323,6 +1323,7 @@ export interface DummyRuleMap {
   "vue/no-multiple-slot-args"?: DummyRule;
   "vue/no-required-prop-with-default"?: DummyRule;
   "vue/no-reserved-component-names"?: DummyRule;
+  "vue/no-reserved-keys"?: DummyRule;
   "vue/no-shared-component-data"?: DummyRule;
   "vue/no-this-in-before-route-enter"?: DummyRule;
   "vue/no-watch-after-await"?: DummyRule;

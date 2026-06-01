@@ -2654,6 +2654,9 @@ expression: json
         "vue/no-reserved-component-names": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/no-reserved-keys": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/no-shared-component-data": {
           "$ref": "#/definitions/DummyRule"
         },

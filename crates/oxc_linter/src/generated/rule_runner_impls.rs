@@ -5100,6 +5100,12 @@ impl RuleRunner for crate::rules::vue::no_reserved_component_names::NoReservedCo
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::vue::no_reserved_keys::NoReservedKeys {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::ObjectProperty]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::vue::no_shared_component_data::NoSharedComponentData {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ObjectProperty]));
