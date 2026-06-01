@@ -157,6 +157,43 @@ impl<'a> PeepholeOptimizations {
             }
         }
     }
+
+    /// Debug-only guard for the incremental scoping refresh.
+    ///
+    /// Every `ReferenceId` whose bit is set in `dead_refs` is about to be
+    /// removed from each symbol's resolved-reference list by
+    /// `retain_resolved_references_excluding`. Such a reference MUST no longer
+    /// appear anywhere in the live program — otherwise a still-live reference
+    /// is being pruned, leaving a symbol looking under-referenced so a later
+    /// pass can wrongly drop it (the unsafe direction that produces incorrect
+    /// output).
+    ///
+    /// This walks the live program once per dirty pass in debug builds only, so
+    /// the entire unit-test and `cargo coverage -- minifier` corpus doubles as
+    /// an over-prune detector at zero release cost. Resolved references only;
+    /// unresolved references are not tracked. Allocates nothing: each live
+    /// reference is checked against `dead_refs` directly.
+    #[cfg(debug_assertions)]
+    fn debug_assert_no_over_prune(program: &Program<'a>, dead_refs: &oxc_allocator::BitSet<'_>) {
+        struct OverPruneCheck<'b, 'c> {
+            dead_refs: &'b oxc_allocator::BitSet<'c>,
+        }
+        impl<'a> Visit<'a> for OverPruneCheck<'_, '_> {
+            fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+                let Some(reference_id) = it.reference_id.get() else { return };
+                let idx = reference_id.index();
+                // Refs minted mid-pass have `idx >= capacity` and are never in
+                // `dead_refs`; this mirrors the guard in
+                // `retain_resolved_references_excluding`.
+                assert!(
+                    idx >= self.dead_refs.capacity() || !self.dead_refs.has_bit(idx),
+                    "incremental scoping over-prune: reference {idx} is marked dead but still \
+                     appears in the live program",
+                );
+            }
+        }
+        OverPruneCheck { dead_refs }.visit_program(program);
+    }
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
@@ -176,6 +213,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         //     Per-pass dirty data is built by `replace_*` / `drop_*` helpers as
         //     subtrees are removed and is consumed here in one batch.
         if !ctx.state.dirty.dead_refs.is_empty() {
+            // Debug-only guard: every reference we are about to prune must
+            // really be gone from the live program (see the helper).
+            #[cfg(debug_assertions)]
+            Self::debug_assert_no_over_prune(program, &ctx.state.dirty.dead_refs);
+
             // SAFETY-equivalent: split borrows so we can pass `&dead_refs`
             // into `scoping_mut()`. Both borrow disjoint fields of
             // `MinifierState`/`TraverseCtx`, so we use a local rebinding to
