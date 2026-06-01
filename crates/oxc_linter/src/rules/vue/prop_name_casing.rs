@@ -246,10 +246,9 @@ fn property_key_static_name<'a>(
         PropertyKey::PrivateIdentifier(_) => None,
         key => {
             // Computed key expressions: pull the inner expression and accept
-            // statically resolvable literals (string / template literal /
-            // identifier in parenthesized form). Other shapes (variable,
-            // call, binary expression, member, this, regex literal handled
-            // specially) are treated dynamically.
+            // statically resolvable literals. Dynamic shapes (variable,
+            // call, binary expression, member, this) are treated as
+            // unresolvable and skipped.
             let expr = key.as_expression()?.get_inner_expression();
             match expr {
                 Expression::StringLiteral(lit) => Some((lit.value.as_str().into(), lit.span)),
