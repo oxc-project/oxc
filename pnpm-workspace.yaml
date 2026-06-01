@@ -35,5 +35,22 @@ allowBuilds:
 
 verifyDepsBeforeRun: install
 minimumReleaseAgeExclude:
+  - "@oxc-parser/*"
+  - "@oxc-project/*"
+  - "@oxfmt/*"
+  - "@oxlint-tsgolint/*"
+  - "@oxlint/*"
+  - "@rolldown/*"
+  - "@tsdown/*"
+  - "@vitejs/devtools"
+  - "@vitest/*"
   - "@voidzero-dev/*"
+  - oxc-parser
+  - oxfmt
+  - oxlint
+  - oxlint-tsgolint
+  - rolldown
+  - tsdown
+  - vite
   - vite-plus
+  - vitest
