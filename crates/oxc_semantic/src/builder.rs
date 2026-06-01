@@ -120,6 +120,8 @@ pub struct SemanticBuilder<'a> {
     #[expect(unused)]
     pub(crate) cfg: (),
 
+    pub(crate) build_class_table: bool,
+
     pub(crate) class_table_builder: ClassTableBuilder<'a>,
 
     #[cfg(feature = "cfg")]
@@ -172,6 +174,7 @@ impl<'a> SemanticBuilder<'a> {
             cfg: None,
             #[cfg(not(feature = "cfg"))]
             cfg: (),
+            build_class_table: false,
             class_table_builder: ClassTableBuilder::new(),
             #[cfg(feature = "cfg")]
             ast_node_records: Vec::new(),
@@ -218,6 +221,13 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     /// No-op when `cfg` feature is disabled.
     pub fn with_cfg(self, _cfg: bool) -> Self {
+        self
+    }
+
+    /// Enable/disable building the class table.
+    #[must_use]
+    pub fn with_class_table(mut self, yes: bool) -> Self {
+        self.build_class_table = yes;
         self
     }
 
@@ -289,6 +299,8 @@ impl<'a> SemanticBuilder<'a> {
             stats.scopes as usize,
         );
         self.unresolved_references.reserve_exact(stats.references as usize);
+
+        self.class_table_builder.enabled = self.build_class_table || self.check_syntax_error;
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
