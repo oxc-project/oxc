@@ -55,9 +55,8 @@ fn reserved_key_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Key `{name}` is reserved.")).with_label(span)
 }
 
-fn starts_with_underscore_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Keys starting with `_` are reserved in `{name}` group."))
-        .with_label(span)
+fn starts_with_underscore_diagnostic(key: &str, group: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Key `{key}` is reserved in `{group}` group.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
@@ -226,7 +225,7 @@ impl NoReservedKeys {
             if self.is_reserved(n) {
                 ctx.diagnostic(reserved_key_diagnostic(n, span));
             } else if matches!(group, "data" | "asyncData") && n.starts_with('_') {
-                ctx.diagnostic(starts_with_underscore_diagnostic(group, span));
+                ctx.diagnostic(starts_with_underscore_diagnostic(n, group, span));
             }
         }
     }

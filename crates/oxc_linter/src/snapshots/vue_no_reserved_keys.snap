@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
 
-  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `data` group.
    ╭─[no_reserved_keys.tsx:4:37]
  3 │                 export default {
  4 │                   data() { return { _foo: 1 } }
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `data` group.
    ╭─[no_reserved_keys.tsx:4:27]
  3 │                 new Vue({
  4 │                   data: { _foo: String }
@@ -90,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `data` group.
    ╭─[no_reserved_keys.tsx:4:42]
  3 │                 new Vue({
  4 │                   data: () => { return { _foo: String } }
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `data` group.
    ╭─[no_reserved_keys.tsx:4:34]
  3 │                 new Vue({
  4 │                   data: () => ({ _foo: String })
@@ -106,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `asyncData` group.
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `asyncData` group.
    ╭─[no_reserved_keys.tsx:4:39]
  3 │                 new Vue({
  4 │                   asyncData: () => ({ _foo: String })
@@ -162,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 })
    ╰────
 
-  ⚠ vue(no-reserved-keys): Keys starting with `_` are reserved in `data` group.
+  ⚠ vue(no-reserved-keys): Key `_foo` is reserved in `data` group.
    ╭─[no_reserved_keys.tsx:4:37]
  3 │                 Vue.mixin({
  4 │                   data() { return { _foo: 1 } }
