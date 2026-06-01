@@ -16,11 +16,8 @@
 use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{
-    BracketSameLine, Formatter, JsFormatOptions, JsdocOptions, Semicolons, get_parse_options,
-};
+use oxc_formatter::{BracketSameLine, JsFormatOptions, JsdocOptions, Semicolons};
 use oxc_formatter_core::LineWidth;
-use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_tasks_common::print_diff_in_terminal;
 use pico_args::Arguments;
@@ -58,19 +55,16 @@ fn main() -> Result<(), String> {
 
     let allocator = Allocator::new();
 
-    // Parse the source code
-    let ret = Parser::new(&allocator, &source_text, source_type)
-        .with_options(get_parse_options())
-        .parse();
-
-    // Report any parsing errors
-    for error in ret.errors {
-        let error = error.with_source_code(source_text.clone());
-        println!("{error:?}");
-        println!("Parsed with Errors.");
-    }
-
-    let formatted = Formatter::new(&allocator, options).format(&ret.program);
+    // Parse + format the source code
+    let formatted =
+        match oxc_formatter::format(&allocator, &source_text, source_type, options, None) {
+            Ok(formatted) => formatted,
+            Err(error) => {
+                let error = error.with_source_code(source_text.clone());
+                println!("{error:?}");
+                return Err("Parsed with Errors.".to_string());
+            }
+        };
 
     if show_ir {
         println!("--- IR ---");

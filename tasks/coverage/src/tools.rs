@@ -18,8 +18,8 @@ use oxc::{
 };
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_pretty_json};
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, Formatter, JsFormatOptions,
-    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas, get_parse_options,
+    ArrowParentheses, AttributePosition, BracketSameLine, JsFormatOptions, QuoteProperties,
+    QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
 use rayon::prelude::*;
@@ -480,29 +480,20 @@ fn get_formatter_options_list() -> [JsFormatOptions; 3] {
 }
 
 fn run_formatter(code: &str, source_type: SourceType) -> TestResult {
-    let allocator = Allocator::default();
-    let ParserReturn { program, errors, .. } =
-        Parser::new(&allocator, code, source_type).with_options(get_parse_options()).parse();
-
-    if !errors.is_empty() {
-        return TestResult::Passed; // Skip if parse error
-    }
-
     for options in get_formatter_options_list() {
-        let text1 = Formatter::new(&allocator, options.clone()).build(&program);
+        let allocator = Allocator::default();
+        let text1 =
+            match oxc_formatter::format(&allocator, code, source_type, options.clone(), None) {
+                Ok(formatted) => formatted.print().unwrap().into_code(),
+                Err(_) => return TestResult::Passed, // Skip if parse error
+            };
 
+        // Re-format the output: a parse error on the second pass is a real formatter bug.
         let allocator2 = Allocator::default();
-        let ParserReturn { program: program2, errors, .. } =
-            Parser::new(&allocator2, &text1, source_type).with_options(get_parse_options()).parse();
-
-        if !errors.is_empty() {
-            return TestResult::ParseError(
-                errors.iter().map(std::string::ToString::to_string).collect(),
-                false,
-            );
-        }
-
-        let text2 = Formatter::new(&allocator2, options).build(&program2);
+        let text2 = match oxc_formatter::format(&allocator2, &text1, source_type, options, None) {
+            Ok(formatted) => formatted.print().unwrap().into_code(),
+            Err(err) => return TestResult::ParseError(err.to_string(), false),
+        };
 
         if text1 != text2 {
             return TestResult::Mismatch("Mismatch", text1, text2);

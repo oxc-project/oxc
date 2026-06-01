@@ -24,11 +24,11 @@ Expected `{` but found `Identifier`
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/parenthesizedExpressionInternalComments.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
-Initializers are not allowed in ambient contexts.An implementation cannot be declared in ambient contexts.
+Initializers are not allowed in ambient contexts.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeAssertionToGenericFunctionType.ts
 Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAssignmentPatternOrder.ts
-Initializers are not allowed in ambient contexts.Initializers are not allowed in ambient contexts.An implementation cannot be declared in ambient contexts.
+Initializers are not allowed in ambient contexts.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringReassignsRightHandSide.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitExponentiationOperatorInTempalteString4.ts
@@ -106,4 +106,4 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/pedantic/noUnchecked
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/propertyNamesOfReservedWords.ts
-'static' modifier cannot appear on a type member.'static' modifier cannot appear on a type member.
+'static' modifier cannot appear on a type member.

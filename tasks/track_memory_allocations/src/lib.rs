@@ -7,7 +7,7 @@ use humansize::{DECIMAL, format_size};
 use mimalloc_safe::MiMalloc;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{Formatter, JsFormatOptions, get_parse_options as get_formatter_parse_options};
+use oxc_formatter::{JsFormatOptions, format_program, parse_for_format};
 use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
@@ -137,7 +137,6 @@ pub fn run() -> Result<(), io::Error> {
     let mut allocator = Allocator::default();
 
     let parse_options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
-    let formatter_parse_options = get_formatter_parse_options();
     let minifier_options = MinifierOptions {
         mangle: Some(MangleOptions::default()),
         compress: Some(CompressOptions::smallest()),
@@ -169,11 +168,12 @@ pub fn run() -> Result<(), io::Error> {
         // Formatter runs on a freshly-parsed AST (not after transformer/minifier),
         // so re-parse with the formatter's parse options before formatting
         allocator.reset();
-        let parsed = Parser::new(&allocator, &file.source_text, file.source_type)
-            .with_options(formatter_parse_options)
-            .parse();
+        let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
         assert!(parsed.errors.is_empty());
-        let _ = Formatter::new(&allocator, JsFormatOptions::default()).build(&parsed.program);
+        let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
+            .print()
+            .unwrap()
+            .into_code();
     }
 
     for file in files.files() {
@@ -255,13 +255,14 @@ pub fn run() -> Result<(), io::Error> {
         allocator.reset();
         reset_global_allocs();
 
-        let parsed = Parser::new(&allocator, &file.source_text, file.source_type)
-            .with_options(formatter_parse_options)
-            .parse();
+        let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
         assert!(parsed.errors.is_empty());
 
         let (_, formatter_stats) = record_stats_in(&allocator, || {
-            Formatter::new(&allocator, JsFormatOptions::default()).build(&parsed.program)
+            format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
+                .print()
+                .unwrap()
+                .into_code()
         });
 
         formatter_out.push_str(&format_table_row(

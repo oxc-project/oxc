@@ -7,11 +7,8 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{
-    Formatter, JsFormatOptions, JsdocOptions, QuoteStyle, enable_jsx_source_type, get_parse_options,
-};
+use oxc_formatter::{JsFormatOptions, JsdocOptions, QuoteStyle, format_program, parse_for_format};
 use oxc_formatter_core::LineWidth;
-use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 fn root() -> PathBuf {
@@ -285,13 +282,12 @@ impl JsdocTestRunner {
         line_width_override: Option<u16>,
     ) -> Option<String> {
         let allocator = Allocator::default();
-
         let source_type = SourceType::from_path(path).unwrap_or_default();
-        let source_type = enable_jsx_source_type(source_type);
 
-        let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(get_parse_options())
-            .parse();
+        // Parse here (not via `oxc_formatter::format`) so recoverable parse errors are tolerated:
+        // some jsdoc fixtures (e.g. duplicate declarations) still format correctly. Only a hard
+        // parser panic aborts. `format_program` is the AST-in entry point for exactly this.
+        let ret = parse_for_format(&allocator, source_text, source_type);
         if ret.panicked {
             return None;
         }
@@ -304,7 +300,6 @@ impl JsdocTestRunner {
             jsdoc: Some(jsdoc_options.clone()),
             ..JsFormatOptions::default()
         };
-        let formatted = Formatter::new(&allocator, options).build(&ret.program);
-        Some(formatted)
+        Some(format_program(&allocator, &ret.program, options, None).print().ok()?.into_code())
     }
 }

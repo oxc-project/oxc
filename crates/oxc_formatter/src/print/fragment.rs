@@ -10,33 +10,33 @@ use crate::{
 
 use super::parameters::{ParameterLayout, ParameterList};
 
-/// Formats `FormalParameters` for Vue `v-for`(LHS) / `v-slot` binding contexts.
+/// Formats `FormalParameters` placed in a binding position.
 ///
-/// Prettier wraps the source as `function _(...) {}` before calling `textToDoc()`,
-/// so the input is always a `FormalParameters` node extracted from the synthetic function.
+/// The input is a `FormalParameters` node extracted from a synthetic `function _(...) {}`
+/// wrapper (see the `FragmentContext` input contract).
 ///
 /// Trailing commas at the parameter list level are suppressed,
 /// while trailing commas inside nested patterns (e.g., destructured objects/arrays)
 /// follow the normal `trailingComma` setting.
 ///
-/// For `v-for` with multiple params (e.g., `(item, index) in items`),
-/// - call `.with_parens()` to wrap the list with parentheses
-/// - apply the nested indent/group structure from Prettier's `html-binding.js`
+/// For a binding-LHS position with multiple params (e.g., `(item, index)`),
+/// - `with_parens` wraps the list with parentheses
+/// - the nested indent/group structure mirrors Prettier's `html-binding.js`
 ///   - <https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/print/html-binding.js#L14>
 ///
-/// For `v-slot` bindings (e.g., `{ item }`), use the default (no parens).
-pub struct FormatVueBindingParams<'a, 'b> {
+/// For a plain binding position (e.g., `{ item }`), use the default (no parens).
+pub struct FormatFunctionParams<'a, 'b> {
     node: &'b AstNode<'a, FormalParameters<'a>>,
     with_parens: bool,
 }
 
-impl<'a, 'b> FormatVueBindingParams<'a, 'b> {
+impl<'a, 'b> FormatFunctionParams<'a, 'b> {
     pub fn new(node: &'b AstNode<'a, FormalParameters<'a>>, with_parens: bool) -> Self {
         Self { node, with_parens }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for FormatVueBindingParams<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunctionParams<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let list = ParameterList::with_layout(self.node, None, ParameterLayout::Default)
             .with_omit_trailing_separator();
@@ -57,25 +57,25 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatVueBindingParams<'a, '_> {
     }
 }
 
-/// Formats `TSTypeParameterDeclaration` for Vue `<script generic="...">`.
+/// Formats a `TSTypeParameterDeclaration` placed in a standard declaration position.
 ///
-/// Prettier wraps the source as `type T<...> = any` before calling `textToDoc()`,
-/// so the input is always a `TSTypeParameterDeclaration` extracted from the synthetic type alias.
+/// The input is a `TSTypeParameterDeclaration` extracted from a synthetic `type T<...> = any`
+/// wrapper (see the `FragmentContext` input contract).
 ///
 /// Outputs the comma-separated type parameter list with `soft_block_indent` wrapping with comments.
 /// Does NOT include angle bracket delimiters `<`/`>` or group wrapping.
 /// And trailing commas are suppressed.
-pub struct FormatVueScriptGeneric<'a, 'b> {
+pub struct FormatTypeParameters<'a, 'b> {
     decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>,
 }
 
-impl<'a, 'b> FormatVueScriptGeneric<'a, 'b> {
+impl<'a, 'b> FormatTypeParameters<'a, 'b> {
     pub fn new(decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>) -> Self {
         Self { decl }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for FormatVueScriptGeneric<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatTypeParameters<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let params = self.decl.params();
 
