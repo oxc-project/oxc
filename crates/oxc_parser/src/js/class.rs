@@ -720,7 +720,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::setter_with_rest_parameter(rest.span));
         } else if self.is_ts {
             let param = function.params.items.first().unwrap();
-            if param.optional {
+            if let Some(return_type) = &function.return_type {
+                self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
+                    return_type.span(),
+                ));
+            } else if param.optional {
                 self.error(diagnostics::setter_with_optional_parameter(param.span));
             } else if param.initializer.is_some() {
                 self.error(diagnostics::setter_with_initializer(function.params.span));
