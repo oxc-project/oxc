@@ -145,9 +145,6 @@ impl Rule for NoReservedKeys {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_extension().is_some_and(|ext| ext == "vue")
-    }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
@@ -221,6 +218,10 @@ impl Rule for NoReservedKeys {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.file_extension().is_some_and(|ext| ext == "vue")
     }
 }
 
