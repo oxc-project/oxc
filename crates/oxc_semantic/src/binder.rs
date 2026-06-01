@@ -366,7 +366,7 @@ impl<'a> Binder<'a> for ImportNamespaceSpecifier<'a> {
 
 impl<'a> Binder<'a> for TSImportEqualsDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        declare_symbol_for_import_specifier(&self.id, false, builder);
+        declare_symbol_for_import_specifier(&self.id, self.import_kind.is_type(), builder);
     }
 }
 
