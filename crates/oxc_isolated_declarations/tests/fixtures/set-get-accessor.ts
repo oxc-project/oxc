@@ -20,6 +20,7 @@ class Cls {
   private static accessor f: string;
   accessor g!: string;
   private accessor h!: string;
+  public accessor i!: string;
 }
 
 // Incorrect

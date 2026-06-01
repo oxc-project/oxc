@@ -17,6 +17,7 @@ declare class Cls {
 	private static accessor f;
 	accessor g: string;
 	private accessor h;
+	accessor i: string;
 }
 declare class ClsBad {
 	get a();
@@ -44,20 +45,20 @@ declare class GlobalSymbol4 {
 
   x TS9009: At least one accessor must have an explicit return type annotation
   | with --isolatedDeclarations.
-    ,-[27:7]
- 26 | class ClsBad {
- 27 |   get a() {
+    ,-[28:7]
+ 27 | class ClsBad {
+ 28 |   get a() {
     :       ^
- 28 |     return;
+ 29 |     return;
     `----
 
   x TS9009: At least one accessor must have an explicit return type annotation
   | with --isolatedDeclarations.
-    ,-[66:8]
- 65 |   }
- 66 |   get [Symbol.toStringTag]() {
+    ,-[67:8]
+ 66 |   }
+ 67 |   get [Symbol.toStringTag]() {
     :        ^^^^^^^^^^^^^^^^^^
- 67 |     return GlobalSymbol4;
+ 68 |     return GlobalSymbol4;
     `----
 
 

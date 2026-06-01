@@ -630,7 +630,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.r#static,
                         property.r#override,
                         false,
-                        property.accessibility,
+                        Self::transform_accessibility(property.accessibility),
                     );
                     elements.push(new_element);
                 }
