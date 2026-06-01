@@ -34,3 +34,6 @@ allowBuilds:
   "@nestjs/core@11.1.9": false
 
 verifyDepsBeforeRun: install
+minimumReleaseAgeExclude:
+  - "@voidzero-dev/*"
+  - vite-plus
