@@ -86,7 +86,7 @@ debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);
 // Copied into a `const` below after being defined in class static block.
 let resetCommentLocTemp: (comment: Comment) => void;
 
-// Get `#loc` on a `Comment` class instance.
+// Get `#loc` field on a `Comment` class instance.
 // Only used in debug build (tests).
 let getCommentPrivateLoc: (comment: Comment) => Location | null;
 
