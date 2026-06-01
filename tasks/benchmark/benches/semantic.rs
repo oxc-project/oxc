@@ -27,8 +27,8 @@ fn bench_semantic(criterion: &mut Criterion) {
                 runner.run(|| {
                     // We drop `Semantic` inside this closure as drop time is part of cost of using this API.
                     // We return `errors` to be dropped outside of the measured section, as usually
-                    // code would have no errors. One of our benchmarks `cal.com.tsx` has a lot of errors,
-                    // but that's atypical, so don't want to include it in benchmark time.
+                    // real-world code has no errors, so allocating and dropping them is atypical and
+                    // we don't want to include it in benchmark time.
                     let ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
                     let ret = black_box(ret);
                     ret.errors

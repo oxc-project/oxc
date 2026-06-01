@@ -53,8 +53,8 @@ impl TestFiles {
                 "https://cdn.jsdelivr.net/gh/prettier/prettier@3.6.2/src/language-js/comments/handle-comments.js",
                 // Large TS (2370L / 76.1KB)
                 "https://cdn.jsdelivr.net/gh/honojs/hono@v4.10.5/src/types.ts",
-                // Extra large TSX (11180L / 346KB)
-                "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@v0.18.0/packages/excalidraw/components/App.tsx",
+                // Extra large TSX (~13k lines / 415KB) — excalidraw App.tsx (master @ f6d85bc8)
+                "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
             ].into_iter().map(TestFile::new).collect(),
         }
     }
@@ -64,7 +64,8 @@ impl TestFiles {
             files: [
                 "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
                 "https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js",
-                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx",
+                // Real world app tsx (415KB) — excalidraw App.tsx (master @ f6d85bc8)
+                "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
                 "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
                 // Hand-written synthetic fixture covering every AST node, transformer plugin,
                 // minifier optimization, and semantic step in oxc — pinned to a revision so
