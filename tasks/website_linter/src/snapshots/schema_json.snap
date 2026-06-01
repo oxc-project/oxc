@@ -2678,6 +2678,9 @@ expression: json
         "vue/require-prop-type-constructor": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/require-prop-types": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/require-render-return": {
           "$ref": "#/definitions/DummyRule"
         },
