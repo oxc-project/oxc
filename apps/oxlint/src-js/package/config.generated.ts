@@ -1327,6 +1327,7 @@ export interface DummyRuleMap {
   "vue/no-this-in-before-route-enter"?: DummyRule;
   "vue/no-watch-after-await"?: DummyRule;
   "vue/prefer-import-from-vue"?: DummyRule;
+  "vue/prop-name-casing"?: DummyRule;
   "vue/require-default-export"?: DummyRule;
   "vue/require-prop-type-constructor"?: DummyRule;
   "vue/require-render-return"?: DummyRule;
