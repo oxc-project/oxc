@@ -2,13 +2,6 @@ use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression},
 };
-use oxc_cfg::{
-    EdgeType, ErrorEdgeKind, InstructionKind, ReturnInstructionKind,
-    graph::{
-        Direction,
-        visit::{Control, DfsEvent, set_depth_first_search},
-    },
-};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -20,7 +13,7 @@ use crate::{
     context::{ContextHost, LintContext},
     module_record::ImportImportName,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_vue_component_options_object,
+    utils::{definitely_returns_in_all_codepaths, is_vue_component_options_object},
 };
 
 fn return_in_computed_property_diagnostic(span: Span) -> OxcDiagnostic {
@@ -221,75 +214,6 @@ fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> boo
         }
         scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id)
     })
-}
-
-fn definitely_returns_in_all_codepaths(
-    node: &AstNode<'_>,
-    ctx: &LintContext<'_>,
-    treat_undefined_as_unspecified: bool,
-) -> bool {
-    let cfg = ctx.cfg();
-    let graph = cfg.graph();
-
-    let output =
-        set_depth_first_search(graph, Some(ctx.nodes().cfg_id(node.id())), |event| match event {
-            DfsEvent::TreeEdge(a, b) => {
-                if graph.edges_connecting(a, b).any(|e| {
-                    matches!(
-                        e.weight(),
-                        EdgeType::Normal
-                            | EdgeType::Jump
-                            | EdgeType::Error(ErrorEdgeKind::Explicit)
-                    )
-                }) {
-                    Control::Continue
-                } else {
-                    Control::Prune
-                }
-            }
-            DfsEvent::Discover(basic_block_id, _) => {
-                let return_instruction =
-                    cfg.basic_block(basic_block_id).instructions().iter().find(|it| {
-                        match it.kind {
-                            InstructionKind::Return(_) | InstructionKind::Throw => true,
-                            InstructionKind::ImplicitReturn
-                            | InstructionKind::Break(_)
-                            | InstructionKind::Continue(_)
-                            | InstructionKind::Iteration(_)
-                            | InstructionKind::Unreachable
-                            | InstructionKind::Condition
-                            | InstructionKind::Statement => false,
-                        }
-                    });
-
-                let does_return = return_instruction.is_some_and(|ret| {
-                    !matches!(
-                        ret.kind,
-                        InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
-                            if treat_undefined_as_unspecified
-                    )
-                });
-
-                if graph.edges_directed(basic_block_id, Direction::Outgoing).any(|e| {
-                    matches!(
-                        e.weight(),
-                        EdgeType::Jump
-                            | EdgeType::Normal
-                            | EdgeType::Backedge
-                            | EdgeType::Error(ErrorEdgeKind::Explicit)
-                    )
-                }) {
-                    Control::Continue
-                } else if does_return {
-                    Control::Prune
-                } else {
-                    Control::Break(())
-                }
-            }
-            _ => Control::Continue,
-        });
-
-    output.break_value().is_none()
 }
 
 #[test]

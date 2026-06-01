@@ -123,6 +123,14 @@ fn test() {
                 ",
             Some(serde_json::json!([{ "withinDescribe": "it" }])),
         ),
+        (
+            "
+                describe('suite', () => {});
+
+                test('foo', () => {});
+            ",
+            Some(serde_json::json!([{ "withinDescribe": "it" }])),
+        ),
     ];
 
     let fail = vec![

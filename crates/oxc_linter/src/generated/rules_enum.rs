@@ -169,6 +169,7 @@ pub use crate::rules::eslint::prefer_arrow_callback::PreferArrowCallback as Esli
 pub use crate::rules::eslint::prefer_const::PreferConst as EslintPreferConst;
 pub use crate::rules::eslint::prefer_destructuring::PreferDestructuring as EslintPreferDestructuring;
 pub use crate::rules::eslint::prefer_exponentiation_operator::PreferExponentiationOperator as EslintPreferExponentiationOperator;
+pub use crate::rules::eslint::prefer_named_capture_group::PreferNamedCaptureGroup as EslintPreferNamedCaptureGroup;
 pub use crate::rules::eslint::prefer_numeric_literals::PreferNumericLiterals as EslintPreferNumericLiterals;
 pub use crate::rules::eslint::prefer_object_has_own::PreferObjectHasOwn as EslintPreferObjectHasOwn;
 pub use crate::rules::eslint::prefer_object_spread::PreferObjectSpread as EslintPreferObjectSpread;
@@ -304,6 +305,7 @@ pub use crate::rules::jsdoc::require_returns_type::RequireReturnsType as JsdocRe
 pub use crate::rules::jsdoc::require_throws_description::RequireThrowsDescription as JsdocRequireThrowsDescription;
 pub use crate::rules::jsdoc::require_throws_type::RequireThrowsType as JsdocRequireThrowsType;
 pub use crate::rules::jsdoc::require_yields::RequireYields as JsdocRequireYields;
+pub use crate::rules::jsdoc::require_yields_description::RequireYieldsDescription as JsdocRequireYieldsDescription;
 pub use crate::rules::jsdoc::require_yields_type::RequireYieldsType as JsdocRequireYieldsType;
 pub use crate::rules::jsx_a11y::alt_text::AltText as JsxA11YAltText;
 pub use crate::rules::jsx_a11y::anchor_ambiguous_text::AnchorAmbiguousText as JsxA11YAnchorAmbiguousText;
@@ -494,6 +496,7 @@ pub use crate::rules::typescript::dot_notation::DotNotation as TypescriptDotNota
 pub use crate::rules::typescript::explicit_function_return_type::ExplicitFunctionReturnType as TypescriptExplicitFunctionReturnType;
 pub use crate::rules::typescript::explicit_member_accessibility::ExplicitMemberAccessibility as TypescriptExplicitMemberAccessibility;
 pub use crate::rules::typescript::explicit_module_boundary_types::ExplicitModuleBoundaryTypes as TypescriptExplicitModuleBoundaryTypes;
+pub use crate::rules::typescript::method_signature_style::MethodSignatureStyle as TypescriptMethodSignatureStyle;
 pub use crate::rules::typescript::no_array_delete::NoArrayDelete as TypescriptNoArrayDelete;
 pub use crate::rules::typescript::no_base_to_string::NoBaseToString as TypescriptNoBaseToString;
 pub use crate::rules::typescript::no_confusing_non_null_assertion::NoConfusingNonNullAssertion as TypescriptNoConfusingNonNullAssertion;
@@ -788,11 +791,13 @@ pub use crate::rules::vitest::valid_expect::ValidExpect as VitestValidExpect;
 pub use crate::rules::vitest::valid_expect_in_promise::ValidExpectInPromise as VitestValidExpectInPromise;
 pub use crate::rules::vitest::valid_title::ValidTitle as VitestValidTitle;
 pub use crate::rules::vitest::warn_todo::WarnTodo as VitestWarnTodo;
+pub use crate::rules::vue::component_definition_name_casing::ComponentDefinitionNameCasing as VueComponentDefinitionNameCasing;
 pub use crate::rules::vue::define_emits_declaration::DefineEmitsDeclaration as VueDefineEmitsDeclaration;
 pub use crate::rules::vue::define_props_declaration::DefinePropsDeclaration as VueDefinePropsDeclaration;
 pub use crate::rules::vue::define_props_destructuring::DefinePropsDestructuring as VueDefinePropsDestructuring;
 pub use crate::rules::vue::max_props::MaxProps as VueMaxProps;
 pub use crate::rules::vue::no_arrow_functions_in_watch::NoArrowFunctionsInWatch as VueNoArrowFunctionsInWatch;
+pub use crate::rules::vue::no_computed_properties_in_data::NoComputedPropertiesInData as VueNoComputedPropertiesInData;
 pub use crate::rules::vue::no_deprecated_data_object_declaration::NoDeprecatedDataObjectDeclaration as VueNoDeprecatedDataObjectDeclaration;
 pub use crate::rules::vue::no_deprecated_delete_set::NoDeprecatedDeleteSet as VueNoDeprecatedDeleteSet;
 pub use crate::rules::vue::no_deprecated_destroyed_lifecycle::NoDeprecatedDestroyedLifecycle as VueNoDeprecatedDestroyedLifecycle;
@@ -801,16 +806,21 @@ pub use crate::rules::vue::no_deprecated_model_definition::NoDeprecatedModelDefi
 pub use crate::rules::vue::no_deprecated_props_default_this::NoDeprecatedPropsDefaultThis as VueNoDeprecatedPropsDefaultThis;
 pub use crate::rules::vue::no_deprecated_vue_config_keycodes::NoDeprecatedVueConfigKeycodes as VueNoDeprecatedVueConfigKeycodes;
 pub use crate::rules::vue::no_export_in_script_setup::NoExportInScriptSetup as VueNoExportInScriptSetup;
+pub use crate::rules::vue::no_expose_after_await::NoExposeAfterAwait as VueNoExposeAfterAwait;
 pub use crate::rules::vue::no_import_compiler_macros::NoImportCompilerMacros as VueNoImportCompilerMacros;
 pub use crate::rules::vue::no_lifecycle_after_await::NoLifecycleAfterAwait as VueNoLifecycleAfterAwait;
 pub use crate::rules::vue::no_multiple_slot_args::NoMultipleSlotArgs as VueNoMultipleSlotArgs;
 pub use crate::rules::vue::no_required_prop_with_default::NoRequiredPropWithDefault as VueNoRequiredPropWithDefault;
+pub use crate::rules::vue::no_reserved_component_names::NoReservedComponentNames as VueNoReservedComponentNames;
 pub use crate::rules::vue::no_reserved_keys::NoReservedKeys as VueNoReservedKeys;
 pub use crate::rules::vue::no_shared_component_data::NoSharedComponentData as VueNoSharedComponentData;
 pub use crate::rules::vue::no_this_in_before_route_enter::NoThisInBeforeRouteEnter as VueNoThisInBeforeRouteEnter;
 pub use crate::rules::vue::no_watch_after_await::NoWatchAfterAwait as VueNoWatchAfterAwait;
 pub use crate::rules::vue::prefer_import_from_vue::PreferImportFromVue as VuePreferImportFromVue;
+pub use crate::rules::vue::prop_name_casing::PropNameCasing as VuePropNameCasing;
 pub use crate::rules::vue::require_default_export::RequireDefaultExport as VueRequireDefaultExport;
+pub use crate::rules::vue::require_prop_type_constructor::RequirePropTypeConstructor as VueRequirePropTypeConstructor;
+pub use crate::rules::vue::require_render_return::RequireRenderReturn as VueRequireRenderReturn;
 pub use crate::rules::vue::require_slots_as_functions::RequireSlotsAsFunctions as VueRequireSlotsAsFunctions;
 pub use crate::rules::vue::require_typed_ref::RequireTypedRef as VueRequireTypedRef;
 pub use crate::rules::vue::return_in_computed_property::ReturnInComputedProperty as VueReturnInComputedProperty;
@@ -1023,6 +1033,7 @@ pub enum RuleEnum {
     EslintPreferConst(EslintPreferConst),
     EslintPreferDestructuring(EslintPreferDestructuring),
     EslintPreferExponentiationOperator(EslintPreferExponentiationOperator),
+    EslintPreferNamedCaptureGroup(EslintPreferNamedCaptureGroup),
     EslintPreferNumericLiterals(EslintPreferNumericLiterals),
     EslintPreferObjectHasOwn(EslintPreferObjectHasOwn),
     EslintPreferObjectSpread(EslintPreferObjectSpread),
@@ -1063,6 +1074,7 @@ pub enum RuleEnum {
     TypescriptExplicitFunctionReturnType(TypescriptExplicitFunctionReturnType),
     TypescriptExplicitMemberAccessibility(TypescriptExplicitMemberAccessibility),
     TypescriptExplicitModuleBoundaryTypes(TypescriptExplicitModuleBoundaryTypes),
+    TypescriptMethodSignatureStyle(TypescriptMethodSignatureStyle),
     TypescriptNoArrayDelete(TypescriptNoArrayDelete),
     TypescriptNoBaseToString(TypescriptNoBaseToString),
     TypescriptNoConfusingNonNullAssertion(TypescriptNoConfusingNonNullAssertion),
@@ -1519,6 +1531,7 @@ pub enum RuleEnum {
     JsdocRequireThrowsDescription(JsdocRequireThrowsDescription),
     JsdocRequireThrowsType(JsdocRequireThrowsType),
     JsdocRequireYields(JsdocRequireYields),
+    JsdocRequireYieldsDescription(JsdocRequireYieldsDescription),
     JsdocRequireYieldsType(JsdocRequireYieldsType),
     PromiseAlwaysReturn(PromiseAlwaysReturn),
     PromiseAvoidNew(PromiseAvoidNew),
@@ -1617,11 +1630,13 @@ pub enum RuleEnum {
     NodeNoNewRequire(NodeNoNewRequire),
     NodeNoPathConcat(NodeNoPathConcat),
     NodeNoProcessEnv(NodeNoProcessEnv),
+    VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing),
     VueDefineEmitsDeclaration(VueDefineEmitsDeclaration),
     VueDefinePropsDeclaration(VueDefinePropsDeclaration),
     VueDefinePropsDestructuring(VueDefinePropsDestructuring),
     VueMaxProps(VueMaxProps),
     VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch),
+    VueNoComputedPropertiesInData(VueNoComputedPropertiesInData),
     VueNoDeprecatedDataObjectDeclaration(VueNoDeprecatedDataObjectDeclaration),
     VueNoDeprecatedDeleteSet(VueNoDeprecatedDeleteSet),
     VueNoDeprecatedDestroyedLifecycle(VueNoDeprecatedDestroyedLifecycle),
@@ -1630,16 +1645,21 @@ pub enum RuleEnum {
     VueNoDeprecatedPropsDefaultThis(VueNoDeprecatedPropsDefaultThis),
     VueNoDeprecatedVueConfigKeycodes(VueNoDeprecatedVueConfigKeycodes),
     VueNoExportInScriptSetup(VueNoExportInScriptSetup),
+    VueNoExposeAfterAwait(VueNoExposeAfterAwait),
     VueNoImportCompilerMacros(VueNoImportCompilerMacros),
     VueNoLifecycleAfterAwait(VueNoLifecycleAfterAwait),
     VueNoMultipleSlotArgs(VueNoMultipleSlotArgs),
     VueNoRequiredPropWithDefault(VueNoRequiredPropWithDefault),
+    VueNoReservedComponentNames(VueNoReservedComponentNames),
     VueNoReservedKeys(VueNoReservedKeys),
     VueNoSharedComponentData(VueNoSharedComponentData),
     VueNoThisInBeforeRouteEnter(VueNoThisInBeforeRouteEnter),
     VueNoWatchAfterAwait(VueNoWatchAfterAwait),
     VuePreferImportFromVue(VuePreferImportFromVue),
+    VuePropNameCasing(VuePropNameCasing),
     VueRequireDefaultExport(VueRequireDefaultExport),
+    VueRequirePropTypeConstructor(VueRequirePropTypeConstructor),
+    VueRequireRenderReturn(VueRequireRenderReturn),
     VueRequireSlotsAsFunctions(VueRequireSlotsAsFunctions),
     VueRequireTypedRef(VueRequireTypedRef),
     VueReturnInComputedProperty(VueReturnInComputedProperty),
@@ -1843,7 +1863,9 @@ const ESLINT_PREFER_ARROW_CALLBACK_ID: usize = ESLINT_OPERATOR_ASSIGNMENT_ID + 1
 const ESLINT_PREFER_CONST_ID: usize = ESLINT_PREFER_ARROW_CALLBACK_ID + 1usize;
 const ESLINT_PREFER_DESTRUCTURING_ID: usize = ESLINT_PREFER_CONST_ID + 1usize;
 const ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID: usize = ESLINT_PREFER_DESTRUCTURING_ID + 1usize;
-const ESLINT_PREFER_NUMERIC_LITERALS_ID: usize = ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID + 1usize;
+const ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID: usize =
+    ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID + 1usize;
+const ESLINT_PREFER_NUMERIC_LITERALS_ID: usize = ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID + 1usize;
 const ESLINT_PREFER_OBJECT_HAS_OWN_ID: usize = ESLINT_PREFER_NUMERIC_LITERALS_ID + 1usize;
 const ESLINT_PREFER_OBJECT_SPREAD_ID: usize = ESLINT_PREFER_OBJECT_HAS_OWN_ID + 1usize;
 const ESLINT_PREFER_PROMISE_REJECT_ERRORS_ID: usize = ESLINT_PREFER_OBJECT_SPREAD_ID + 1usize;
@@ -1890,7 +1912,9 @@ const TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID: usize =
     TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID + 1usize;
 const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
     TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID + 1usize;
-const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
+const TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID: usize =
+    TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
+const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID + 1usize;
 const TYPESCRIPT_NO_BASE_TO_STRING_ID: usize = TYPESCRIPT_NO_ARRAY_DELETE_ID + 1usize;
 const TYPESCRIPT_NO_CONFUSING_NON_NULL_ASSERTION_ID: usize =
     TYPESCRIPT_NO_BASE_TO_STRING_ID + 1usize;
@@ -2423,7 +2447,8 @@ const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = JSDOC_REQUIRE_RETURNS_DESCRIPTION_I
 const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = JSDOC_REQUIRE_RETURNS_TYPE_ID + 1usize;
 const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = JSDOC_REQUIRE_THROWS_DESCRIPTION_ID + 1usize;
 const JSDOC_REQUIRE_YIELDS_ID: usize = JSDOC_REQUIRE_THROWS_TYPE_ID + 1usize;
-const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = JSDOC_REQUIRE_YIELDS_ID + 1usize;
+const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = JSDOC_REQUIRE_YIELDS_ID + 1usize;
+const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID + 1usize;
 const PROMISE_ALWAYS_RETURN_ID: usize = JSDOC_REQUIRE_YIELDS_TYPE_ID + 1usize;
 const PROMISE_AVOID_NEW_ID: usize = PROMISE_ALWAYS_RETURN_ID + 1usize;
 const PROMISE_CATCH_OR_RETURN_ID: usize = PROMISE_AVOID_NEW_ID + 1usize;
@@ -2527,13 +2552,15 @@ const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_HANDLE_CALLBACK_ERR_ID + 1usize;
 const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
 const NODE_NO_PATH_CONCAT_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
 const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_PATH_CONCAT_ID + 1usize;
-const VUE_DEFINE_EMITS_DECLARATION_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
+const VUE_DEFINE_EMITS_DECLARATION_ID: usize = VUE_COMPONENT_DEFINITION_NAME_CASING_ID + 1usize;
 const VUE_DEFINE_PROPS_DECLARATION_ID: usize = VUE_DEFINE_EMITS_DECLARATION_ID + 1usize;
 const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID + 1usize;
 const VUE_MAX_PROPS_ID: usize = VUE_DEFINE_PROPS_DESTRUCTURING_ID + 1usize;
 const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = VUE_MAX_PROPS_ID + 1usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID + 1usize;
 const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize =
-    VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID + 1usize;
+    VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID + 1usize;
 const VUE_NO_DEPRECATED_DELETE_SET_ID: usize =
     VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID + 1usize;
 const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = VUE_NO_DEPRECATED_DELETE_SET_ID + 1usize;
@@ -2544,17 +2571,22 @@ const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize =
 const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize =
     VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID + 1usize;
 const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID + 1usize;
-const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID + 1usize;
+const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID + 1usize;
+const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = VUE_NO_EXPOSE_AFTER_AWAIT_ID + 1usize;
 const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = VUE_NO_IMPORT_COMPILER_MACROS_ID + 1usize;
 const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = VUE_NO_LIFECYCLE_AFTER_AWAIT_ID + 1usize;
 const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = VUE_NO_MULTIPLE_SLOT_ARGS_ID + 1usize;
-const VUE_NO_RESERVED_KEYS_ID: usize = VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID + 1usize;
+const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID + 1usize;
+const VUE_NO_RESERVED_KEYS_ID: usize = VUE_NO_RESERVED_COMPONENT_NAMES_ID + 1usize;
 const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = VUE_NO_RESERVED_KEYS_ID + 1usize;
 const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = VUE_NO_SHARED_COMPONENT_DATA_ID + 1usize;
 const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID + 1usize;
 const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_NO_WATCH_AFTER_AWAIT_ID + 1usize;
-const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
-const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
+const VUE_PROP_NAME_CASING_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
+const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PROP_NAME_CASING_ID + 1usize;
+const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
+const VUE_REQUIRE_RENDER_RETURN_ID: usize = VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID + 1usize;
+const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = VUE_REQUIRE_RENDER_RETURN_ID + 1usize;
 const VUE_REQUIRE_TYPED_REF_ID: usize = VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID + 1usize;
 const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
 const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = VUE_RETURN_IN_COMPUTED_PROPERTY_ID + 1usize;
@@ -2761,6 +2793,7 @@ impl RuleEnum {
             Self::EslintPreferConst(_) => ESLINT_PREFER_CONST_ID,
             Self::EslintPreferDestructuring(_) => ESLINT_PREFER_DESTRUCTURING_ID,
             Self::EslintPreferExponentiationOperator(_) => ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID,
+            Self::EslintPreferNamedCaptureGroup(_) => ESLINT_PREFER_NAMED_CAPTURE_GROUP_ID,
             Self::EslintPreferNumericLiterals(_) => ESLINT_PREFER_NUMERIC_LITERALS_ID,
             Self::EslintPreferObjectHasOwn(_) => ESLINT_PREFER_OBJECT_HAS_OWN_ID,
             Self::EslintPreferObjectSpread(_) => ESLINT_PREFER_OBJECT_SPREAD_ID,
@@ -2817,6 +2850,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID
             }
+            Self::TypescriptMethodSignatureStyle(_) => TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID,
             Self::TypescriptNoArrayDelete(_) => TYPESCRIPT_NO_ARRAY_DELETE_ID,
             Self::TypescriptNoBaseToString(_) => TYPESCRIPT_NO_BASE_TO_STRING_ID,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -3365,6 +3399,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JSDOC_REQUIRE_THROWS_DESCRIPTION_ID,
             Self::JsdocRequireThrowsType(_) => JSDOC_REQUIRE_THROWS_TYPE_ID,
             Self::JsdocRequireYields(_) => JSDOC_REQUIRE_YIELDS_ID,
+            Self::JsdocRequireYieldsDescription(_) => JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID,
             Self::JsdocRequireYieldsType(_) => JSDOC_REQUIRE_YIELDS_TYPE_ID,
             Self::PromiseAlwaysReturn(_) => PROMISE_ALWAYS_RETURN_ID,
             Self::PromiseAvoidNew(_) => PROMISE_AVOID_NEW_ID,
@@ -3469,11 +3504,13 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NODE_NO_NEW_REQUIRE_ID,
             Self::NodeNoPathConcat(_) => NODE_NO_PATH_CONCAT_ID,
             Self::NodeNoProcessEnv(_) => NODE_NO_PROCESS_ENV_ID,
+            Self::VueComponentDefinitionNameCasing(_) => VUE_COMPONENT_DEFINITION_NAME_CASING_ID,
             Self::VueDefineEmitsDeclaration(_) => VUE_DEFINE_EMITS_DECLARATION_ID,
             Self::VueDefinePropsDeclaration(_) => VUE_DEFINE_PROPS_DECLARATION_ID,
             Self::VueDefinePropsDestructuring(_) => VUE_DEFINE_PROPS_DESTRUCTURING_ID,
             Self::VueMaxProps(_) => VUE_MAX_PROPS_ID,
             Self::VueNoArrowFunctionsInWatch(_) => VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID,
+            Self::VueNoComputedPropertiesInData(_) => VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID
             }
@@ -3484,16 +3521,21 @@ impl RuleEnum {
             Self::VueNoDeprecatedPropsDefaultThis(_) => VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID,
             Self::VueNoExportInScriptSetup(_) => VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID,
+            Self::VueNoExposeAfterAwait(_) => VUE_NO_EXPOSE_AFTER_AWAIT_ID,
             Self::VueNoImportCompilerMacros(_) => VUE_NO_IMPORT_COMPILER_MACROS_ID,
             Self::VueNoLifecycleAfterAwait(_) => VUE_NO_LIFECYCLE_AFTER_AWAIT_ID,
             Self::VueNoMultipleSlotArgs(_) => VUE_NO_MULTIPLE_SLOT_ARGS_ID,
             Self::VueNoRequiredPropWithDefault(_) => VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID,
+            Self::VueNoReservedComponentNames(_) => VUE_NO_RESERVED_COMPONENT_NAMES_ID,
             Self::VueNoReservedKeys(_) => VUE_NO_RESERVED_KEYS_ID,
             Self::VueNoSharedComponentData(_) => VUE_NO_SHARED_COMPONENT_DATA_ID,
             Self::VueNoThisInBeforeRouteEnter(_) => VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID,
             Self::VueNoWatchAfterAwait(_) => VUE_NO_WATCH_AFTER_AWAIT_ID,
             Self::VuePreferImportFromVue(_) => VUE_PREFER_IMPORT_FROM_VUE_ID,
+            Self::VuePropNameCasing(_) => VUE_PROP_NAME_CASING_ID,
             Self::VueRequireDefaultExport(_) => VUE_REQUIRE_DEFAULT_EXPORT_ID,
+            Self::VueRequirePropTypeConstructor(_) => VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID,
+            Self::VueRequireRenderReturn(_) => VUE_REQUIRE_RENDER_RETURN_ID,
             Self::VueRequireSlotsAsFunctions(_) => VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID,
             Self::VueRequireTypedRef(_) => VUE_REQUIRE_TYPED_REF_ID,
             Self::VueReturnInComputedProperty(_) => VUE_RETURN_IN_COMPUTED_PROPERTY_ID,
@@ -3700,6 +3742,7 @@ impl RuleEnum {
             Self::EslintPreferConst(_) => EslintPreferConst::NAME,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::NAME,
             Self::EslintPreferExponentiationOperator(_) => EslintPreferExponentiationOperator::NAME,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::NAME,
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::NAME,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::NAME,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::NAME,
@@ -3756,6 +3799,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::NAME
             }
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::NAME,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::NAME,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::NAME,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -4294,6 +4338,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::NAME,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::NAME,
             Self::JsdocRequireYields(_) => JsdocRequireYields::NAME,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::NAME,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::NAME,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::NAME,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::NAME,
@@ -4394,11 +4439,13 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::NAME,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::NAME,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::NAME,
+            Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::NAME,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::NAME,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::NAME,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::NAME,
             Self::VueMaxProps(_) => VueMaxProps::NAME,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::NAME,
+            Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::NAME,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::NAME
             }
@@ -4409,16 +4456,21 @@ impl RuleEnum {
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::NAME,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::NAME,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::NAME,
+            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::NAME,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::NAME,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::NAME,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::NAME,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::NAME,
+            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::NAME,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::NAME,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::NAME,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::NAME,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::NAME,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::NAME,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::NAME,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::NAME,
+            Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::NAME,
+            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::NAME,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::NAME,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::NAME,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::NAME,
@@ -4631,6 +4683,7 @@ impl RuleEnum {
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::CATEGORY
             }
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::CATEGORY,
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::CATEGORY,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::CATEGORY,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::CATEGORY,
@@ -4689,6 +4742,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::CATEGORY
             }
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::CATEGORY,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::CATEGORY,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::CATEGORY,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -5263,6 +5317,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::CATEGORY,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::CATEGORY,
             Self::JsdocRequireYields(_) => JsdocRequireYields::CATEGORY,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::CATEGORY,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::CATEGORY,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::CATEGORY,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::CATEGORY,
@@ -5375,11 +5430,13 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::CATEGORY,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::CATEGORY,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::CATEGORY,
+            Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::CATEGORY,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::CATEGORY,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::CATEGORY,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::CATEGORY,
             Self::VueMaxProps(_) => VueMaxProps::CATEGORY,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::CATEGORY,
+            Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::CATEGORY,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::CATEGORY
             }
@@ -5392,16 +5449,21 @@ impl RuleEnum {
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::CATEGORY,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::CATEGORY,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::CATEGORY,
+            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::CATEGORY,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::CATEGORY,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::CATEGORY,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::CATEGORY,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::CATEGORY,
+            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::CATEGORY,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::CATEGORY,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::CATEGORY,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::CATEGORY,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::CATEGORY,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::CATEGORY,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::CATEGORY,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::CATEGORY,
+            Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::CATEGORY,
+            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::CATEGORY,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::CATEGORY,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::CATEGORY,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::CATEGORY,
@@ -5609,6 +5671,7 @@ impl RuleEnum {
             Self::EslintPreferConst(_) => EslintPreferConst::FIX,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::FIX,
             Self::EslintPreferExponentiationOperator(_) => EslintPreferExponentiationOperator::FIX,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::FIX,
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::FIX,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::FIX,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::FIX,
@@ -5665,6 +5728,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::FIX
             }
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::FIX,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::FIX,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::FIX,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -6203,6 +6267,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::FIX,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::FIX,
             Self::JsdocRequireYields(_) => JsdocRequireYields::FIX,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::FIX,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::FIX,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::FIX,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::FIX,
@@ -6303,11 +6368,13 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::FIX,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::FIX,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FIX,
+            Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::FIX,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FIX,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FIX,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::FIX,
             Self::VueMaxProps(_) => VueMaxProps::FIX,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::FIX,
+            Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::FIX,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::FIX
             }
@@ -6318,16 +6385,21 @@ impl RuleEnum {
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::FIX,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::FIX,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::FIX,
+            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::FIX,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::FIX,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::FIX,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::FIX,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::FIX,
+            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::FIX,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::FIX,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::FIX,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::FIX,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::FIX,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FIX,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::FIX,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::FIX,
+            Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::FIX,
+            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::FIX,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::FIX,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::FIX,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::FIX,
@@ -6565,6 +6637,9 @@ impl RuleEnum {
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::documentation()
             }
+            Self::EslintPreferNamedCaptureGroup(_) => {
+                EslintPreferNamedCaptureGroup::documentation()
+            }
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::documentation(),
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::documentation(),
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::documentation(),
@@ -6628,6 +6703,9 @@ impl RuleEnum {
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::documentation()
+            }
+            Self::TypescriptMethodSignatureStyle(_) => {
+                TypescriptMethodSignatureStyle::documentation()
             }
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::documentation(),
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::documentation(),
@@ -7341,6 +7419,9 @@ impl RuleEnum {
             }
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::documentation(),
             Self::JsdocRequireYields(_) => JsdocRequireYields::documentation(),
+            Self::JsdocRequireYieldsDescription(_) => {
+                JsdocRequireYieldsDescription::documentation()
+            }
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::documentation(),
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::documentation(),
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::documentation(),
@@ -7471,11 +7552,17 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::documentation(),
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::documentation(),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::documentation(),
+            Self::VueComponentDefinitionNameCasing(_) => {
+                VueComponentDefinitionNameCasing::documentation()
+            }
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::documentation(),
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::documentation(),
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::documentation(),
             Self::VueMaxProps(_) => VueMaxProps::documentation(),
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::documentation(),
+            Self::VueNoComputedPropertiesInData(_) => {
+                VueNoComputedPropertiesInData::documentation()
+            }
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::documentation()
             }
@@ -7494,16 +7581,23 @@ impl RuleEnum {
                 VueNoDeprecatedVueConfigKeycodes::documentation()
             }
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::documentation(),
+            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::documentation(),
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::documentation(),
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::documentation(),
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::documentation(),
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::documentation(),
+            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::documentation(),
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::documentation(),
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::documentation(),
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::documentation(),
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::documentation(),
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::documentation(),
+            Self::VuePropNameCasing(_) => VuePropNameCasing::documentation(),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::documentation(),
+            Self::VueRequirePropTypeConstructor(_) => {
+                VueRequirePropTypeConstructor::documentation()
+            }
+            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::documentation(),
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::documentation(),
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::documentation(),
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::documentation(),
@@ -8013,6 +8107,10 @@ impl RuleEnum {
                 EslintPreferExponentiationOperator::config_schema(generator)
                     .or_else(|| EslintPreferExponentiationOperator::schema(generator))
             }
+            Self::EslintPreferNamedCaptureGroup(_) => {
+                EslintPreferNamedCaptureGroup::config_schema(generator)
+                    .or_else(|| EslintPreferNamedCaptureGroup::schema(generator))
+            }
             Self::EslintPreferNumericLiterals(_) => {
                 EslintPreferNumericLiterals::config_schema(generator)
                     .or_else(|| EslintPreferNumericLiterals::schema(generator))
@@ -8130,6 +8228,10 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::config_schema(generator)
                     .or_else(|| TypescriptExplicitModuleBoundaryTypes::schema(generator))
+            }
+            Self::TypescriptMethodSignatureStyle(_) => {
+                TypescriptMethodSignatureStyle::config_schema(generator)
+                    .or_else(|| TypescriptMethodSignatureStyle::schema(generator))
             }
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::config_schema(generator)
                 .or_else(|| TypescriptNoArrayDelete::schema(generator)),
@@ -9491,6 +9593,10 @@ impl RuleEnum {
                 .or_else(|| JsdocRequireThrowsType::schema(generator)),
             Self::JsdocRequireYields(_) => JsdocRequireYields::config_schema(generator)
                 .or_else(|| JsdocRequireYields::schema(generator)),
+            Self::JsdocRequireYieldsDescription(_) => {
+                JsdocRequireYieldsDescription::config_schema(generator)
+                    .or_else(|| JsdocRequireYieldsDescription::schema(generator))
+            }
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::config_schema(generator)
                 .or_else(|| JsdocRequireYieldsType::schema(generator)),
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::config_schema(generator)
@@ -9754,6 +9860,10 @@ impl RuleEnum {
                 .or_else(|| NodeNoPathConcat::schema(generator)),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::config_schema(generator)
                 .or_else(|| NodeNoProcessEnv::schema(generator)),
+            Self::VueComponentDefinitionNameCasing(_) => {
+                VueComponentDefinitionNameCasing::config_schema(generator)
+                    .or_else(|| VueComponentDefinitionNameCasing::schema(generator))
+            }
             Self::VueDefineEmitsDeclaration(_) => {
                 VueDefineEmitsDeclaration::config_schema(generator)
                     .or_else(|| VueDefineEmitsDeclaration::schema(generator))
@@ -9772,6 +9882,10 @@ impl RuleEnum {
             Self::VueNoArrowFunctionsInWatch(_) => {
                 VueNoArrowFunctionsInWatch::config_schema(generator)
                     .or_else(|| VueNoArrowFunctionsInWatch::schema(generator))
+            }
+            Self::VueNoComputedPropertiesInData(_) => {
+                VueNoComputedPropertiesInData::config_schema(generator)
+                    .or_else(|| VueNoComputedPropertiesInData::schema(generator))
             }
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::config_schema(generator)
@@ -9799,6 +9913,8 @@ impl RuleEnum {
             }
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::config_schema(generator)
                 .or_else(|| VueNoExportInScriptSetup::schema(generator)),
+            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::config_schema(generator)
+                .or_else(|| VueNoExposeAfterAwait::schema(generator)),
             Self::VueNoImportCompilerMacros(_) => {
                 VueNoImportCompilerMacros::config_schema(generator)
                     .or_else(|| VueNoImportCompilerMacros::schema(generator))
@@ -9810,6 +9926,10 @@ impl RuleEnum {
             Self::VueNoRequiredPropWithDefault(_) => {
                 VueNoRequiredPropWithDefault::config_schema(generator)
                     .or_else(|| VueNoRequiredPropWithDefault::schema(generator))
+            }
+            Self::VueNoReservedComponentNames(_) => {
+                VueNoReservedComponentNames::config_schema(generator)
+                    .or_else(|| VueNoReservedComponentNames::schema(generator))
             }
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::config_schema(generator)
                 .or_else(|| VueNoReservedKeys::schema(generator)),
@@ -9823,8 +9943,16 @@ impl RuleEnum {
                 .or_else(|| VueNoWatchAfterAwait::schema(generator)),
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::config_schema(generator)
                 .or_else(|| VuePreferImportFromVue::schema(generator)),
+            Self::VuePropNameCasing(_) => VuePropNameCasing::config_schema(generator)
+                .or_else(|| VuePropNameCasing::schema(generator)),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::config_schema(generator)
                 .or_else(|| VueRequireDefaultExport::schema(generator)),
+            Self::VueRequirePropTypeConstructor(_) => {
+                VueRequirePropTypeConstructor::config_schema(generator)
+                    .or_else(|| VueRequirePropTypeConstructor::schema(generator))
+            }
+            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::config_schema(generator)
+                .or_else(|| VueRequireRenderReturn::schema(generator)),
             Self::VueRequireSlotsAsFunctions(_) => {
                 VueRequireSlotsAsFunctions::config_schema(generator)
                     .or_else(|| VueRequireSlotsAsFunctions::schema(generator))
@@ -10045,6 +10173,7 @@ impl RuleEnum {
             Self::EslintPreferConst(_) => "eslint",
             Self::EslintPreferDestructuring(_) => "eslint",
             Self::EslintPreferExponentiationOperator(_) => "eslint",
+            Self::EslintPreferNamedCaptureGroup(_) => "eslint",
             Self::EslintPreferNumericLiterals(_) => "eslint",
             Self::EslintPreferObjectHasOwn(_) => "eslint",
             Self::EslintPreferObjectSpread(_) => "eslint",
@@ -10085,6 +10214,7 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(_) => "typescript",
             Self::TypescriptExplicitMemberAccessibility(_) => "typescript",
             Self::TypescriptExplicitModuleBoundaryTypes(_) => "typescript",
+            Self::TypescriptMethodSignatureStyle(_) => "typescript",
             Self::TypescriptNoArrayDelete(_) => "typescript",
             Self::TypescriptNoBaseToString(_) => "typescript",
             Self::TypescriptNoConfusingNonNullAssertion(_) => "typescript",
@@ -10535,6 +10665,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => "jsdoc",
             Self::JsdocRequireThrowsType(_) => "jsdoc",
             Self::JsdocRequireYields(_) => "jsdoc",
+            Self::JsdocRequireYieldsDescription(_) => "jsdoc",
             Self::JsdocRequireYieldsType(_) => "jsdoc",
             Self::PromiseAlwaysReturn(_) => "promise",
             Self::PromiseAvoidNew(_) => "promise",
@@ -10631,11 +10762,13 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => "node",
             Self::NodeNoPathConcat(_) => "node",
             Self::NodeNoProcessEnv(_) => "node",
+            Self::VueComponentDefinitionNameCasing(_) => "vue",
             Self::VueDefineEmitsDeclaration(_) => "vue",
             Self::VueDefinePropsDeclaration(_) => "vue",
             Self::VueDefinePropsDestructuring(_) => "vue",
             Self::VueMaxProps(_) => "vue",
             Self::VueNoArrowFunctionsInWatch(_) => "vue",
+            Self::VueNoComputedPropertiesInData(_) => "vue",
             Self::VueNoDeprecatedDataObjectDeclaration(_) => "vue",
             Self::VueNoDeprecatedDeleteSet(_) => "vue",
             Self::VueNoDeprecatedDestroyedLifecycle(_) => "vue",
@@ -10644,16 +10777,21 @@ impl RuleEnum {
             Self::VueNoDeprecatedPropsDefaultThis(_) => "vue",
             Self::VueNoDeprecatedVueConfigKeycodes(_) => "vue",
             Self::VueNoExportInScriptSetup(_) => "vue",
+            Self::VueNoExposeAfterAwait(_) => "vue",
             Self::VueNoImportCompilerMacros(_) => "vue",
             Self::VueNoLifecycleAfterAwait(_) => "vue",
             Self::VueNoMultipleSlotArgs(_) => "vue",
             Self::VueNoRequiredPropWithDefault(_) => "vue",
+            Self::VueNoReservedComponentNames(_) => "vue",
             Self::VueNoReservedKeys(_) => "vue",
             Self::VueNoSharedComponentData(_) => "vue",
             Self::VueNoThisInBeforeRouteEnter(_) => "vue",
             Self::VueNoWatchAfterAwait(_) => "vue",
             Self::VuePreferImportFromVue(_) => "vue",
+            Self::VuePropNameCasing(_) => "vue",
             Self::VueRequireDefaultExport(_) => "vue",
+            Self::VueRequirePropTypeConstructor(_) => "vue",
+            Self::VueRequireRenderReturn(_) => "vue",
             Self::VueRequireSlotsAsFunctions(_) => "vue",
             Self::VueRequireTypedRef(_) => "vue",
             Self::VueReturnInComputedProperty(_) => "vue",
@@ -11251,6 +11389,9 @@ impl RuleEnum {
                     EslintPreferExponentiationOperator::from_configuration(value)?,
                 ))
             }
+            Self::EslintPreferNamedCaptureGroup(_) => Ok(Self::EslintPreferNamedCaptureGroup(
+                EslintPreferNamedCaptureGroup::from_configuration(value)?,
+            )),
             Self::EslintPreferNumericLiterals(_) => Ok(Self::EslintPreferNumericLiterals(
                 EslintPreferNumericLiterals::from_configuration(value)?,
             )),
@@ -11385,6 +11526,9 @@ impl RuleEnum {
                     TypescriptExplicitModuleBoundaryTypes::from_configuration(value)?,
                 ))
             }
+            Self::TypescriptMethodSignatureStyle(_) => Ok(Self::TypescriptMethodSignatureStyle(
+                TypescriptMethodSignatureStyle::from_configuration(value)?,
+            )),
             Self::TypescriptNoArrayDelete(_) => Ok(Self::TypescriptNoArrayDelete(
                 TypescriptNoArrayDelete::from_configuration(value)?,
             )),
@@ -12877,6 +13021,9 @@ impl RuleEnum {
             Self::JsdocRequireYields(_) => {
                 Ok(Self::JsdocRequireYields(JsdocRequireYields::from_configuration(value)?))
             }
+            Self::JsdocRequireYieldsDescription(_) => Ok(Self::JsdocRequireYieldsDescription(
+                JsdocRequireYieldsDescription::from_configuration(value)?,
+            )),
             Self::JsdocRequireYieldsType(_) => {
                 Ok(Self::JsdocRequireYieldsType(JsdocRequireYieldsType::from_configuration(value)?))
             }
@@ -13185,6 +13332,11 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => {
                 Ok(Self::NodeNoProcessEnv(NodeNoProcessEnv::from_configuration(value)?))
             }
+            Self::VueComponentDefinitionNameCasing(_) => {
+                Ok(Self::VueComponentDefinitionNameCasing(
+                    VueComponentDefinitionNameCasing::from_configuration(value)?,
+                ))
+            }
             Self::VueDefineEmitsDeclaration(_) => Ok(Self::VueDefineEmitsDeclaration(
                 VueDefineEmitsDeclaration::from_configuration(value)?,
             )),
@@ -13197,6 +13349,9 @@ impl RuleEnum {
             Self::VueMaxProps(_) => Ok(Self::VueMaxProps(VueMaxProps::from_configuration(value)?)),
             Self::VueNoArrowFunctionsInWatch(_) => Ok(Self::VueNoArrowFunctionsInWatch(
                 VueNoArrowFunctionsInWatch::from_configuration(value)?,
+            )),
+            Self::VueNoComputedPropertiesInData(_) => Ok(Self::VueNoComputedPropertiesInData(
+                VueNoComputedPropertiesInData::from_configuration(value)?,
             )),
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 Ok(Self::VueNoDeprecatedDataObjectDeclaration(
@@ -13228,6 +13383,9 @@ impl RuleEnum {
             Self::VueNoExportInScriptSetup(_) => Ok(Self::VueNoExportInScriptSetup(
                 VueNoExportInScriptSetup::from_configuration(value)?,
             )),
+            Self::VueNoExposeAfterAwait(_) => {
+                Ok(Self::VueNoExposeAfterAwait(VueNoExposeAfterAwait::from_configuration(value)?))
+            }
             Self::VueNoImportCompilerMacros(_) => Ok(Self::VueNoImportCompilerMacros(
                 VueNoImportCompilerMacros::from_configuration(value)?,
             )),
@@ -13239,6 +13397,9 @@ impl RuleEnum {
             }
             Self::VueNoRequiredPropWithDefault(_) => Ok(Self::VueNoRequiredPropWithDefault(
                 VueNoRequiredPropWithDefault::from_configuration(value)?,
+            )),
+            Self::VueNoReservedComponentNames(_) => Ok(Self::VueNoReservedComponentNames(
+                VueNoReservedComponentNames::from_configuration(value)?,
             )),
             Self::VueNoReservedKeys(_) => {
                 Ok(Self::VueNoReservedKeys(VueNoReservedKeys::from_configuration(value)?))
@@ -13255,9 +13416,18 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => {
                 Ok(Self::VuePreferImportFromVue(VuePreferImportFromVue::from_configuration(value)?))
             }
+            Self::VuePropNameCasing(_) => {
+                Ok(Self::VuePropNameCasing(VuePropNameCasing::from_configuration(value)?))
+            }
             Self::VueRequireDefaultExport(_) => Ok(Self::VueRequireDefaultExport(
                 VueRequireDefaultExport::from_configuration(value)?,
             )),
+            Self::VueRequirePropTypeConstructor(_) => Ok(Self::VueRequirePropTypeConstructor(
+                VueRequirePropTypeConstructor::from_configuration(value)?,
+            )),
+            Self::VueRequireRenderReturn(_) => {
+                Ok(Self::VueRequireRenderReturn(VueRequireRenderReturn::from_configuration(value)?))
+            }
             Self::VueRequireSlotsAsFunctions(_) => Ok(Self::VueRequireSlotsAsFunctions(
                 VueRequireSlotsAsFunctions::from_configuration(value)?,
             )),
@@ -13480,6 +13650,7 @@ impl RuleEnum {
             Self::EslintPreferConst(rule) => rule.to_configuration(),
             Self::EslintPreferDestructuring(rule) => rule.to_configuration(),
             Self::EslintPreferExponentiationOperator(rule) => rule.to_configuration(),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.to_configuration(),
             Self::EslintPreferNumericLiterals(rule) => rule.to_configuration(),
             Self::EslintPreferObjectHasOwn(rule) => rule.to_configuration(),
             Self::EslintPreferObjectSpread(rule) => rule.to_configuration(),
@@ -13520,6 +13691,7 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.to_configuration(),
             Self::TypescriptExplicitMemberAccessibility(rule) => rule.to_configuration(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.to_configuration(),
+            Self::TypescriptMethodSignatureStyle(rule) => rule.to_configuration(),
             Self::TypescriptNoArrayDelete(rule) => rule.to_configuration(),
             Self::TypescriptNoBaseToString(rule) => rule.to_configuration(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.to_configuration(),
@@ -13972,6 +14144,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(rule) => rule.to_configuration(),
             Self::JsdocRequireThrowsType(rule) => rule.to_configuration(),
             Self::JsdocRequireYields(rule) => rule.to_configuration(),
+            Self::JsdocRequireYieldsDescription(rule) => rule.to_configuration(),
             Self::JsdocRequireYieldsType(rule) => rule.to_configuration(),
             Self::PromiseAlwaysReturn(rule) => rule.to_configuration(),
             Self::PromiseAvoidNew(rule) => rule.to_configuration(),
@@ -14070,11 +14243,13 @@ impl RuleEnum {
             Self::NodeNoNewRequire(rule) => rule.to_configuration(),
             Self::NodeNoPathConcat(rule) => rule.to_configuration(),
             Self::NodeNoProcessEnv(rule) => rule.to_configuration(),
+            Self::VueComponentDefinitionNameCasing(rule) => rule.to_configuration(),
             Self::VueDefineEmitsDeclaration(rule) => rule.to_configuration(),
             Self::VueDefinePropsDeclaration(rule) => rule.to_configuration(),
             Self::VueDefinePropsDestructuring(rule) => rule.to_configuration(),
             Self::VueMaxProps(rule) => rule.to_configuration(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.to_configuration(),
+            Self::VueNoComputedPropertiesInData(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.to_configuration(),
@@ -14083,16 +14258,21 @@ impl RuleEnum {
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.to_configuration(),
             Self::VueNoExportInScriptSetup(rule) => rule.to_configuration(),
+            Self::VueNoExposeAfterAwait(rule) => rule.to_configuration(),
             Self::VueNoImportCompilerMacros(rule) => rule.to_configuration(),
             Self::VueNoLifecycleAfterAwait(rule) => rule.to_configuration(),
             Self::VueNoMultipleSlotArgs(rule) => rule.to_configuration(),
             Self::VueNoRequiredPropWithDefault(rule) => rule.to_configuration(),
+            Self::VueNoReservedComponentNames(rule) => rule.to_configuration(),
             Self::VueNoReservedKeys(rule) => rule.to_configuration(),
             Self::VueNoSharedComponentData(rule) => rule.to_configuration(),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.to_configuration(),
             Self::VueNoWatchAfterAwait(rule) => rule.to_configuration(),
             Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
+            Self::VuePropNameCasing(rule) => rule.to_configuration(),
             Self::VueRequireDefaultExport(rule) => rule.to_configuration(),
+            Self::VueRequirePropTypeConstructor(rule) => rule.to_configuration(),
+            Self::VueRequireRenderReturn(rule) => rule.to_configuration(),
             Self::VueRequireSlotsAsFunctions(rule) => rule.to_configuration(),
             Self::VueRequireTypedRef(rule) => rule.to_configuration(),
             Self::VueReturnInComputedProperty(rule) => rule.to_configuration(),
@@ -14305,6 +14485,7 @@ impl RuleEnum {
                 Self::EslintPreferConst(rule) => rule.run(node, ctx),
                 Self::EslintPreferDestructuring(rule) => rule.run(node, ctx),
                 Self::EslintPreferExponentiationOperator(rule) => rule.run(node, ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run(node, ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run(node, ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run(node, ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run(node, ctx),
@@ -14345,6 +14526,7 @@ impl RuleEnum {
                 Self::TypescriptExplicitFunctionReturnType(rule) => rule.run(node, ctx),
                 Self::TypescriptExplicitMemberAccessibility(rule) => rule.run(node, ctx),
                 Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run(node, ctx),
+                Self::TypescriptMethodSignatureStyle(rule) => rule.run(node, ctx),
                 Self::TypescriptNoArrayDelete(rule) => rule.run(node, ctx),
                 Self::TypescriptNoBaseToString(rule) => rule.run(node, ctx),
                 Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run(node, ctx),
@@ -14797,6 +14979,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run(node, ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run(node, ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run(node, ctx),
                 Self::PromiseAvoidNew(rule) => rule.run(node, ctx),
@@ -14895,11 +15078,13 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run(node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
+                Self::VueComponentDefinitionNameCasing(rule) => rule.run(node, ctx),
                 Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
                 Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run(node, ctx),
                 Self::VueMaxProps(rule) => rule.run(node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run(node, ctx),
+                Self::VueNoComputedPropertiesInData(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDeleteSet(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run(node, ctx),
@@ -14908,16 +15093,21 @@ impl RuleEnum {
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run(node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run(node, ctx),
+                Self::VueNoExposeAfterAwait(rule) => rule.run(node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
                 Self::VueNoLifecycleAfterAwait(rule) => rule.run(node, ctx),
                 Self::VueNoMultipleSlotArgs(rule) => rule.run(node, ctx),
                 Self::VueNoRequiredPropWithDefault(rule) => rule.run(node, ctx),
+                Self::VueNoReservedComponentNames(rule) => rule.run(node, ctx),
                 Self::VueNoReservedKeys(rule) => rule.run(node, ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run(node, ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run(node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run(node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
+                Self::VuePropNameCasing(rule) => rule.run(node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
+                Self::VueRequirePropTypeConstructor(rule) => rule.run(node, ctx),
+                Self::VueRequireRenderReturn(rule) => rule.run(node, ctx),
                 Self::VueRequireSlotsAsFunctions(rule) => rule.run(node, ctx),
                 Self::VueRequireTypedRef(rule) => rule.run(node, ctx),
                 Self::VueReturnInComputedProperty(rule) => rule.run(node, ctx),
@@ -15123,6 +15313,7 @@ impl RuleEnum {
                 Self::EslintPreferConst(rule) => rule.run(node, ctx),
                 Self::EslintPreferDestructuring(rule) => rule.run(node, ctx),
                 Self::EslintPreferExponentiationOperator(rule) => rule.run(node, ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run(node, ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run(node, ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run(node, ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run(node, ctx),
@@ -15163,6 +15354,7 @@ impl RuleEnum {
                 Self::TypescriptExplicitFunctionReturnType(rule) => rule.run(node, ctx),
                 Self::TypescriptExplicitMemberAccessibility(rule) => rule.run(node, ctx),
                 Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run(node, ctx),
+                Self::TypescriptMethodSignatureStyle(rule) => rule.run(node, ctx),
                 Self::TypescriptNoArrayDelete(rule) => rule.run(node, ctx),
                 Self::TypescriptNoBaseToString(rule) => rule.run(node, ctx),
                 Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run(node, ctx),
@@ -15615,6 +15807,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run(node, ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run(node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run(node, ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run(node, ctx),
                 Self::PromiseAvoidNew(rule) => rule.run(node, ctx),
@@ -15713,11 +15906,13 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run(node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
+                Self::VueComponentDefinitionNameCasing(rule) => rule.run(node, ctx),
                 Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
                 Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run(node, ctx),
                 Self::VueMaxProps(rule) => rule.run(node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run(node, ctx),
+                Self::VueNoComputedPropertiesInData(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDeleteSet(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run(node, ctx),
@@ -15726,16 +15921,21 @@ impl RuleEnum {
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run(node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run(node, ctx),
+                Self::VueNoExposeAfterAwait(rule) => rule.run(node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
                 Self::VueNoLifecycleAfterAwait(rule) => rule.run(node, ctx),
                 Self::VueNoMultipleSlotArgs(rule) => rule.run(node, ctx),
                 Self::VueNoRequiredPropWithDefault(rule) => rule.run(node, ctx),
+                Self::VueNoReservedComponentNames(rule) => rule.run(node, ctx),
                 Self::VueNoReservedKeys(rule) => rule.run(node, ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run(node, ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run(node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run(node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
+                Self::VuePropNameCasing(rule) => rule.run(node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
+                Self::VueRequirePropTypeConstructor(rule) => rule.run(node, ctx),
+                Self::VueRequireRenderReturn(rule) => rule.run(node, ctx),
                 Self::VueRequireSlotsAsFunctions(rule) => rule.run(node, ctx),
                 Self::VueRequireTypedRef(rule) => rule.run(node, ctx),
                 Self::VueReturnInComputedProperty(rule) => rule.run(node, ctx),
@@ -15948,6 +16148,7 @@ impl RuleEnum {
                 Self::EslintPreferConst(rule) => rule.run_once(ctx),
                 Self::EslintPreferDestructuring(rule) => rule.run_once(ctx),
                 Self::EslintPreferExponentiationOperator(rule) => rule.run_once(ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_once(ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run_once(ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run_once(ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run_once(ctx),
@@ -15988,6 +16189,7 @@ impl RuleEnum {
                 Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_once(ctx),
                 Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_once(ctx),
                 Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_once(ctx),
+                Self::TypescriptMethodSignatureStyle(rule) => rule.run_once(ctx),
                 Self::TypescriptNoArrayDelete(rule) => rule.run_once(ctx),
                 Self::TypescriptNoBaseToString(rule) => rule.run_once(ctx),
                 Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run_once(ctx),
@@ -16440,6 +16642,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYields(rule) => rule.run_once(ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_once(ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run_once(ctx),
                 Self::PromiseAvoidNew(rule) => rule.run_once(ctx),
@@ -16538,11 +16741,13 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run_once(ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
+                Self::VueComponentDefinitionNameCasing(rule) => rule.run_once(ctx),
                 Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
                 Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run_once(ctx),
                 Self::VueMaxProps(rule) => rule.run_once(ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_once(ctx),
+                Self::VueNoComputedPropertiesInData(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDeleteSet(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_once(ctx),
@@ -16551,16 +16756,21 @@ impl RuleEnum {
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_once(ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_once(ctx),
+                Self::VueNoExposeAfterAwait(rule) => rule.run_once(ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
                 Self::VueNoLifecycleAfterAwait(rule) => rule.run_once(ctx),
                 Self::VueNoMultipleSlotArgs(rule) => rule.run_once(ctx),
                 Self::VueNoRequiredPropWithDefault(rule) => rule.run_once(ctx),
+                Self::VueNoReservedComponentNames(rule) => rule.run_once(ctx),
                 Self::VueNoReservedKeys(rule) => rule.run_once(ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run_once(ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_once(ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_once(ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
+                Self::VuePropNameCasing(rule) => rule.run_once(ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
+                Self::VueRequirePropTypeConstructor(rule) => rule.run_once(ctx),
+                Self::VueRequireRenderReturn(rule) => rule.run_once(ctx),
                 Self::VueRequireSlotsAsFunctions(rule) => rule.run_once(ctx),
                 Self::VueRequireTypedRef(rule) => rule.run_once(ctx),
                 Self::VueReturnInComputedProperty(rule) => rule.run_once(ctx),
@@ -16766,6 +16976,7 @@ impl RuleEnum {
                 Self::EslintPreferConst(rule) => rule.run_once(ctx),
                 Self::EslintPreferDestructuring(rule) => rule.run_once(ctx),
                 Self::EslintPreferExponentiationOperator(rule) => rule.run_once(ctx),
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_once(ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run_once(ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run_once(ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run_once(ctx),
@@ -16806,6 +17017,7 @@ impl RuleEnum {
                 Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_once(ctx),
                 Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_once(ctx),
                 Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_once(ctx),
+                Self::TypescriptMethodSignatureStyle(rule) => rule.run_once(ctx),
                 Self::TypescriptNoArrayDelete(rule) => rule.run_once(ctx),
                 Self::TypescriptNoBaseToString(rule) => rule.run_once(ctx),
                 Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run_once(ctx),
@@ -17258,6 +17470,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYields(rule) => rule.run_once(ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run_once(ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_once(ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run_once(ctx),
                 Self::PromiseAvoidNew(rule) => rule.run_once(ctx),
@@ -17356,11 +17569,13 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run_once(ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
+                Self::VueComponentDefinitionNameCasing(rule) => rule.run_once(ctx),
                 Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
                 Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run_once(ctx),
                 Self::VueMaxProps(rule) => rule.run_once(ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_once(ctx),
+                Self::VueNoComputedPropertiesInData(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDeleteSet(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_once(ctx),
@@ -17369,16 +17584,21 @@ impl RuleEnum {
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_once(ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_once(ctx),
+                Self::VueNoExposeAfterAwait(rule) => rule.run_once(ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
                 Self::VueNoLifecycleAfterAwait(rule) => rule.run_once(ctx),
                 Self::VueNoMultipleSlotArgs(rule) => rule.run_once(ctx),
                 Self::VueNoRequiredPropWithDefault(rule) => rule.run_once(ctx),
+                Self::VueNoReservedComponentNames(rule) => rule.run_once(ctx),
                 Self::VueNoReservedKeys(rule) => rule.run_once(ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run_once(ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_once(ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_once(ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
+                Self::VuePropNameCasing(rule) => rule.run_once(ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
+                Self::VueRequirePropTypeConstructor(rule) => rule.run_once(ctx),
+                Self::VueRequireRenderReturn(rule) => rule.run_once(ctx),
                 Self::VueRequireSlotsAsFunctions(rule) => rule.run_once(ctx),
                 Self::VueRequireTypedRef(rule) => rule.run_once(ctx),
                 Self::VueReturnInComputedProperty(rule) => rule.run_once(ctx),
@@ -17608,6 +17828,7 @@ impl RuleEnum {
                 Self::EslintPreferExponentiationOperator(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17672,6 +17893,7 @@ impl RuleEnum {
                 Self::TypescriptExplicitModuleBoundaryTypes(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::TypescriptMethodSignatureStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::TypescriptNoArrayDelete(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::TypescriptNoBaseToString(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::TypescriptNoConfusingNonNullAssertion(rule) => {
@@ -18308,6 +18530,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::PromiseAvoidNew(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18428,11 +18651,15 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueComponentDefinitionNameCasing(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::VueDefineEmitsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueMaxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoComputedPropertiesInData(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
@@ -18449,16 +18676,21 @@ impl RuleEnum {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::VueNoExportInScriptSetup(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoExposeAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoLifecycleAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoMultipleSlotArgs(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoRequiredPropWithDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoReservedComponentNames(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoReservedKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VuePropNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueRequirePropTypeConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireSlotsAsFunctions(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireTypedRef(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueReturnInComputedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18680,6 +18912,7 @@ impl RuleEnum {
                 Self::EslintPreferExponentiationOperator(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::EslintPreferNamedCaptureGroup(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferNumericLiterals(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferObjectHasOwn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::EslintPreferObjectSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18744,6 +18977,7 @@ impl RuleEnum {
                 Self::TypescriptExplicitModuleBoundaryTypes(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::TypescriptMethodSignatureStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::TypescriptNoArrayDelete(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::TypescriptNoBaseToString(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::TypescriptNoConfusingNonNullAssertion(rule) => {
@@ -19380,6 +19614,7 @@ impl RuleEnum {
                 Self::JsdocRequireThrowsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireThrowsType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYields(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::JsdocRequireYieldsDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JsdocRequireYieldsType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::PromiseAlwaysReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::PromiseAvoidNew(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19500,11 +19735,15 @@ impl RuleEnum {
                 Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueComponentDefinitionNameCasing(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::VueDefineEmitsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueMaxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoComputedPropertiesInData(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
@@ -19521,16 +19760,21 @@ impl RuleEnum {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::VueNoExportInScriptSetup(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoExposeAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoLifecycleAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoMultipleSlotArgs(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoRequiredPropWithDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoReservedComponentNames(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoReservedKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VuePropNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueRequirePropTypeConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireSlotsAsFunctions(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireTypedRef(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueReturnInComputedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19738,6 +19982,7 @@ impl RuleEnum {
             Self::EslintPreferConst(rule) => rule.should_run(ctx),
             Self::EslintPreferDestructuring(rule) => rule.should_run(ctx),
             Self::EslintPreferExponentiationOperator(rule) => rule.should_run(ctx),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.should_run(ctx),
             Self::EslintPreferNumericLiterals(rule) => rule.should_run(ctx),
             Self::EslintPreferObjectHasOwn(rule) => rule.should_run(ctx),
             Self::EslintPreferObjectSpread(rule) => rule.should_run(ctx),
@@ -19778,6 +20023,7 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitMemberAccessibility(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.should_run(ctx),
+            Self::TypescriptMethodSignatureStyle(rule) => rule.should_run(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.should_run(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.should_run(ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.should_run(ctx),
@@ -20228,6 +20474,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(rule) => rule.should_run(ctx),
             Self::JsdocRequireThrowsType(rule) => rule.should_run(ctx),
             Self::JsdocRequireYields(rule) => rule.should_run(ctx),
+            Self::JsdocRequireYieldsDescription(rule) => rule.should_run(ctx),
             Self::JsdocRequireYieldsType(rule) => rule.should_run(ctx),
             Self::PromiseAlwaysReturn(rule) => rule.should_run(ctx),
             Self::PromiseAvoidNew(rule) => rule.should_run(ctx),
@@ -20324,11 +20571,13 @@ impl RuleEnum {
             Self::NodeNoNewRequire(rule) => rule.should_run(ctx),
             Self::NodeNoPathConcat(rule) => rule.should_run(ctx),
             Self::NodeNoProcessEnv(rule) => rule.should_run(ctx),
+            Self::VueComponentDefinitionNameCasing(rule) => rule.should_run(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDestructuring(rule) => rule.should_run(ctx),
             Self::VueMaxProps(rule) => rule.should_run(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.should_run(ctx),
+            Self::VueNoComputedPropertiesInData(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.should_run(ctx),
@@ -20337,16 +20586,21 @@ impl RuleEnum {
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.should_run(ctx),
             Self::VueNoExportInScriptSetup(rule) => rule.should_run(ctx),
+            Self::VueNoExposeAfterAwait(rule) => rule.should_run(ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.should_run(ctx),
             Self::VueNoLifecycleAfterAwait(rule) => rule.should_run(ctx),
             Self::VueNoMultipleSlotArgs(rule) => rule.should_run(ctx),
             Self::VueNoRequiredPropWithDefault(rule) => rule.should_run(ctx),
+            Self::VueNoReservedComponentNames(rule) => rule.should_run(ctx),
             Self::VueNoReservedKeys(rule) => rule.should_run(ctx),
             Self::VueNoSharedComponentData(rule) => rule.should_run(ctx),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.should_run(ctx),
             Self::VueNoWatchAfterAwait(rule) => rule.should_run(ctx),
             Self::VuePreferImportFromVue(rule) => rule.should_run(ctx),
+            Self::VuePropNameCasing(rule) => rule.should_run(ctx),
             Self::VueRequireDefaultExport(rule) => rule.should_run(ctx),
+            Self::VueRequirePropTypeConstructor(rule) => rule.should_run(ctx),
+            Self::VueRequireRenderReturn(rule) => rule.should_run(ctx),
             Self::VueRequireSlotsAsFunctions(rule) => rule.should_run(ctx),
             Self::VueRequireTypedRef(rule) => rule.should_run(ctx),
             Self::VueReturnInComputedProperty(rule) => rule.should_run(ctx),
@@ -20583,6 +20837,9 @@ impl RuleEnum {
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::IS_TSGOLINT_RULE
             }
+            Self::EslintPreferNamedCaptureGroup(_) => {
+                EslintPreferNamedCaptureGroup::IS_TSGOLINT_RULE
+            }
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::IS_TSGOLINT_RULE,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::IS_TSGOLINT_RULE,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::IS_TSGOLINT_RULE,
@@ -20646,6 +20903,9 @@ impl RuleEnum {
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::IS_TSGOLINT_RULE
+            }
+            Self::TypescriptMethodSignatureStyle(_) => {
+                TypescriptMethodSignatureStyle::IS_TSGOLINT_RULE
             }
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::IS_TSGOLINT_RULE,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::IS_TSGOLINT_RULE,
@@ -21359,6 +21619,9 @@ impl RuleEnum {
             }
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::IS_TSGOLINT_RULE,
             Self::JsdocRequireYields(_) => JsdocRequireYields::IS_TSGOLINT_RULE,
+            Self::JsdocRequireYieldsDescription(_) => {
+                JsdocRequireYieldsDescription::IS_TSGOLINT_RULE
+            }
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::IS_TSGOLINT_RULE,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::IS_TSGOLINT_RULE,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::IS_TSGOLINT_RULE,
@@ -21489,11 +21752,17 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::IS_TSGOLINT_RULE,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::IS_TSGOLINT_RULE,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::IS_TSGOLINT_RULE,
+            Self::VueComponentDefinitionNameCasing(_) => {
+                VueComponentDefinitionNameCasing::IS_TSGOLINT_RULE
+            }
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::IS_TSGOLINT_RULE,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::IS_TSGOLINT_RULE,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::IS_TSGOLINT_RULE,
             Self::VueMaxProps(_) => VueMaxProps::IS_TSGOLINT_RULE,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::IS_TSGOLINT_RULE,
+            Self::VueNoComputedPropertiesInData(_) => {
+                VueNoComputedPropertiesInData::IS_TSGOLINT_RULE
+            }
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::IS_TSGOLINT_RULE
             }
@@ -21512,16 +21781,23 @@ impl RuleEnum {
                 VueNoDeprecatedVueConfigKeycodes::IS_TSGOLINT_RULE
             }
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::IS_TSGOLINT_RULE,
+            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::IS_TSGOLINT_RULE,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::IS_TSGOLINT_RULE,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::IS_TSGOLINT_RULE,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::IS_TSGOLINT_RULE,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::IS_TSGOLINT_RULE,
+            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::IS_TSGOLINT_RULE,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::IS_TSGOLINT_RULE,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::IS_TSGOLINT_RULE,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::IS_TSGOLINT_RULE,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::IS_TSGOLINT_RULE,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::IS_TSGOLINT_RULE,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::IS_TSGOLINT_RULE,
+            Self::VueRequirePropTypeConstructor(_) => {
+                VueRequirePropTypeConstructor::IS_TSGOLINT_RULE
+            }
+            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::IS_TSGOLINT_RULE,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::IS_TSGOLINT_RULE,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::IS_TSGOLINT_RULE,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::IS_TSGOLINT_RULE,
@@ -21736,6 +22012,7 @@ impl RuleEnum {
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::VERSION
             }
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::VERSION,
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::VERSION,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::VERSION,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::VERSION,
@@ -21794,6 +22071,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::VERSION
             }
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::VERSION,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::VERSION,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::VERSION,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -22368,6 +22646,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::VERSION,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::VERSION,
             Self::JsdocRequireYields(_) => JsdocRequireYields::VERSION,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::VERSION,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::VERSION,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::VERSION,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::VERSION,
@@ -22480,11 +22759,13 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::VERSION,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::VERSION,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::VERSION,
+            Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::VERSION,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::VERSION,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::VERSION,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::VERSION,
             Self::VueMaxProps(_) => VueMaxProps::VERSION,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::VERSION,
+            Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::VERSION,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::VERSION
             }
@@ -22497,16 +22778,21 @@ impl RuleEnum {
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::VERSION,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::VERSION,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::VERSION,
+            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::VERSION,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::VERSION,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::VERSION,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::VERSION,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::VERSION,
+            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::VERSION,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::VERSION,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::VERSION,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::VERSION,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::VERSION,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::VERSION,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::VERSION,
+            Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::VERSION,
+            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::VERSION,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::VERSION,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::VERSION,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::VERSION,
@@ -22726,6 +23012,7 @@ impl RuleEnum {
             Self::EslintPreferExponentiationOperator(_) => {
                 EslintPreferExponentiationOperator::HAS_CONFIG
             }
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::HAS_CONFIG,
             Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::HAS_CONFIG,
             Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::HAS_CONFIG,
             Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::HAS_CONFIG,
@@ -22784,6 +23071,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::HAS_CONFIG
             }
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::HAS_CONFIG,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::HAS_CONFIG,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::HAS_CONFIG,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -23382,6 +23670,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::HAS_CONFIG,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::HAS_CONFIG,
             Self::JsdocRequireYields(_) => JsdocRequireYields::HAS_CONFIG,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::HAS_CONFIG,
             Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::HAS_CONFIG,
             Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::HAS_CONFIG,
             Self::PromiseAvoidNew(_) => PromiseAvoidNew::HAS_CONFIG,
@@ -23498,11 +23787,15 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::HAS_CONFIG,
             Self::NodeNoPathConcat(_) => NodeNoPathConcat::HAS_CONFIG,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::HAS_CONFIG,
+            Self::VueComponentDefinitionNameCasing(_) => {
+                VueComponentDefinitionNameCasing::HAS_CONFIG
+            }
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::HAS_CONFIG,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::HAS_CONFIG,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::HAS_CONFIG,
             Self::VueMaxProps(_) => VueMaxProps::HAS_CONFIG,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::HAS_CONFIG,
+            Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::HAS_CONFIG,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
                 VueNoDeprecatedDataObjectDeclaration::HAS_CONFIG
             }
@@ -23517,16 +23810,21 @@ impl RuleEnum {
                 VueNoDeprecatedVueConfigKeycodes::HAS_CONFIG
             }
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::HAS_CONFIG,
+            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::HAS_CONFIG,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::HAS_CONFIG,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::HAS_CONFIG,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::HAS_CONFIG,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::HAS_CONFIG,
+            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::HAS_CONFIG,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::HAS_CONFIG,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::HAS_CONFIG,
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::HAS_CONFIG,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::HAS_CONFIG,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::HAS_CONFIG,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::HAS_CONFIG,
+            Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::HAS_CONFIG,
+            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::HAS_CONFIG,
             Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::HAS_CONFIG,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::HAS_CONFIG,
             Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::HAS_CONFIG,
@@ -23733,6 +24031,7 @@ impl RuleEnum {
             Self::EslintPreferConst(rule) => rule.types_info(),
             Self::EslintPreferDestructuring(rule) => rule.types_info(),
             Self::EslintPreferExponentiationOperator(rule) => rule.types_info(),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.types_info(),
             Self::EslintPreferNumericLiterals(rule) => rule.types_info(),
             Self::EslintPreferObjectHasOwn(rule) => rule.types_info(),
             Self::EslintPreferObjectSpread(rule) => rule.types_info(),
@@ -23773,6 +24072,7 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.types_info(),
             Self::TypescriptExplicitMemberAccessibility(rule) => rule.types_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.types_info(),
+            Self::TypescriptMethodSignatureStyle(rule) => rule.types_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.types_info(),
             Self::TypescriptNoBaseToString(rule) => rule.types_info(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.types_info(),
@@ -24223,6 +24523,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(rule) => rule.types_info(),
             Self::JsdocRequireThrowsType(rule) => rule.types_info(),
             Self::JsdocRequireYields(rule) => rule.types_info(),
+            Self::JsdocRequireYieldsDescription(rule) => rule.types_info(),
             Self::JsdocRequireYieldsType(rule) => rule.types_info(),
             Self::PromiseAlwaysReturn(rule) => rule.types_info(),
             Self::PromiseAvoidNew(rule) => rule.types_info(),
@@ -24319,11 +24620,13 @@ impl RuleEnum {
             Self::NodeNoNewRequire(rule) => rule.types_info(),
             Self::NodeNoPathConcat(rule) => rule.types_info(),
             Self::NodeNoProcessEnv(rule) => rule.types_info(),
+            Self::VueComponentDefinitionNameCasing(rule) => rule.types_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDestructuring(rule) => rule.types_info(),
             Self::VueMaxProps(rule) => rule.types_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.types_info(),
+            Self::VueNoComputedPropertiesInData(rule) => rule.types_info(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.types_info(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.types_info(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.types_info(),
@@ -24332,16 +24635,21 @@ impl RuleEnum {
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.types_info(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.types_info(),
             Self::VueNoExportInScriptSetup(rule) => rule.types_info(),
+            Self::VueNoExposeAfterAwait(rule) => rule.types_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.types_info(),
             Self::VueNoLifecycleAfterAwait(rule) => rule.types_info(),
             Self::VueNoMultipleSlotArgs(rule) => rule.types_info(),
             Self::VueNoRequiredPropWithDefault(rule) => rule.types_info(),
+            Self::VueNoReservedComponentNames(rule) => rule.types_info(),
             Self::VueNoReservedKeys(rule) => rule.types_info(),
             Self::VueNoSharedComponentData(rule) => rule.types_info(),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.types_info(),
             Self::VueNoWatchAfterAwait(rule) => rule.types_info(),
             Self::VuePreferImportFromVue(rule) => rule.types_info(),
+            Self::VuePropNameCasing(rule) => rule.types_info(),
             Self::VueRequireDefaultExport(rule) => rule.types_info(),
+            Self::VueRequirePropTypeConstructor(rule) => rule.types_info(),
+            Self::VueRequireRenderReturn(rule) => rule.types_info(),
             Self::VueRequireSlotsAsFunctions(rule) => rule.types_info(),
             Self::VueRequireTypedRef(rule) => rule.types_info(),
             Self::VueReturnInComputedProperty(rule) => rule.types_info(),
@@ -24548,6 +24856,7 @@ impl RuleEnum {
             Self::EslintPreferConst(rule) => rule.run_info(),
             Self::EslintPreferDestructuring(rule) => rule.run_info(),
             Self::EslintPreferExponentiationOperator(rule) => rule.run_info(),
+            Self::EslintPreferNamedCaptureGroup(rule) => rule.run_info(),
             Self::EslintPreferNumericLiterals(rule) => rule.run_info(),
             Self::EslintPreferObjectHasOwn(rule) => rule.run_info(),
             Self::EslintPreferObjectSpread(rule) => rule.run_info(),
@@ -24588,6 +24897,7 @@ impl RuleEnum {
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_info(),
             Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_info(),
+            Self::TypescriptMethodSignatureStyle(rule) => rule.run_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.run_info(),
             Self::TypescriptNoBaseToString(rule) => rule.run_info(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run_info(),
@@ -25038,6 +25348,7 @@ impl RuleEnum {
             Self::JsdocRequireThrowsDescription(rule) => rule.run_info(),
             Self::JsdocRequireThrowsType(rule) => rule.run_info(),
             Self::JsdocRequireYields(rule) => rule.run_info(),
+            Self::JsdocRequireYieldsDescription(rule) => rule.run_info(),
             Self::JsdocRequireYieldsType(rule) => rule.run_info(),
             Self::PromiseAlwaysReturn(rule) => rule.run_info(),
             Self::PromiseAvoidNew(rule) => rule.run_info(),
@@ -25134,11 +25445,13 @@ impl RuleEnum {
             Self::NodeNoNewRequire(rule) => rule.run_info(),
             Self::NodeNoPathConcat(rule) => rule.run_info(),
             Self::NodeNoProcessEnv(rule) => rule.run_info(),
+            Self::VueComponentDefinitionNameCasing(rule) => rule.run_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDestructuring(rule) => rule.run_info(),
             Self::VueMaxProps(rule) => rule.run_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_info(),
+            Self::VueNoComputedPropertiesInData(rule) => rule.run_info(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_info(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.run_info(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_info(),
@@ -25147,16 +25460,21 @@ impl RuleEnum {
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_info(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_info(),
             Self::VueNoExportInScriptSetup(rule) => rule.run_info(),
+            Self::VueNoExposeAfterAwait(rule) => rule.run_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.run_info(),
             Self::VueNoLifecycleAfterAwait(rule) => rule.run_info(),
             Self::VueNoMultipleSlotArgs(rule) => rule.run_info(),
             Self::VueNoRequiredPropWithDefault(rule) => rule.run_info(),
+            Self::VueNoReservedComponentNames(rule) => rule.run_info(),
             Self::VueNoReservedKeys(rule) => rule.run_info(),
             Self::VueNoSharedComponentData(rule) => rule.run_info(),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_info(),
             Self::VueNoWatchAfterAwait(rule) => rule.run_info(),
             Self::VuePreferImportFromVue(rule) => rule.run_info(),
+            Self::VuePropNameCasing(rule) => rule.run_info(),
             Self::VueRequireDefaultExport(rule) => rule.run_info(),
+            Self::VueRequirePropTypeConstructor(rule) => rule.run_info(),
+            Self::VueRequireRenderReturn(rule) => rule.run_info(),
             Self::VueRequireSlotsAsFunctions(rule) => rule.run_info(),
             Self::VueRequireTypedRef(rule) => rule.run_info(),
             Self::VueReturnInComputedProperty(rule) => rule.run_info(),
@@ -25385,6 +25703,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintPreferConst(EslintPreferConst::default()),
         RuleEnum::EslintPreferDestructuring(EslintPreferDestructuring::default()),
         RuleEnum::EslintPreferExponentiationOperator(EslintPreferExponentiationOperator::default()),
+        RuleEnum::EslintPreferNamedCaptureGroup(EslintPreferNamedCaptureGroup::default()),
         RuleEnum::EslintPreferNumericLiterals(EslintPreferNumericLiterals::default()),
         RuleEnum::EslintPreferObjectHasOwn(EslintPreferObjectHasOwn::default()),
         RuleEnum::EslintPreferObjectSpread(EslintPreferObjectSpread::default()),
@@ -25441,6 +25760,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptExplicitModuleBoundaryTypes(
             TypescriptExplicitModuleBoundaryTypes::default(),
         ),
+        RuleEnum::TypescriptMethodSignatureStyle(TypescriptMethodSignatureStyle::default()),
         RuleEnum::TypescriptNoArrayDelete(TypescriptNoArrayDelete::default()),
         RuleEnum::TypescriptNoBaseToString(TypescriptNoBaseToString::default()),
         RuleEnum::TypescriptNoConfusingNonNullAssertion(
@@ -25979,6 +26299,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsdocRequireThrowsDescription(JsdocRequireThrowsDescription::default()),
         RuleEnum::JsdocRequireThrowsType(JsdocRequireThrowsType::default()),
         RuleEnum::JsdocRequireYields(JsdocRequireYields::default()),
+        RuleEnum::JsdocRequireYieldsDescription(JsdocRequireYieldsDescription::default()),
         RuleEnum::JsdocRequireYieldsType(JsdocRequireYieldsType::default()),
         RuleEnum::PromiseAlwaysReturn(PromiseAlwaysReturn::default()),
         RuleEnum::PromiseAvoidNew(PromiseAvoidNew::default()),
@@ -26079,11 +26400,13 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NodeNoNewRequire(NodeNoNewRequire::default()),
         RuleEnum::NodeNoPathConcat(NodeNoPathConcat::default()),
         RuleEnum::NodeNoProcessEnv(NodeNoProcessEnv::default()),
+        RuleEnum::VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing::default()),
         RuleEnum::VueDefineEmitsDeclaration(VueDefineEmitsDeclaration::default()),
         RuleEnum::VueDefinePropsDeclaration(VueDefinePropsDeclaration::default()),
         RuleEnum::VueDefinePropsDestructuring(VueDefinePropsDestructuring::default()),
         RuleEnum::VueMaxProps(VueMaxProps::default()),
         RuleEnum::VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch::default()),
+        RuleEnum::VueNoComputedPropertiesInData(VueNoComputedPropertiesInData::default()),
         RuleEnum::VueNoDeprecatedDataObjectDeclaration(
             VueNoDeprecatedDataObjectDeclaration::default(),
         ),
@@ -26094,16 +26417,21 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueNoDeprecatedPropsDefaultThis(VueNoDeprecatedPropsDefaultThis::default()),
         RuleEnum::VueNoDeprecatedVueConfigKeycodes(VueNoDeprecatedVueConfigKeycodes::default()),
         RuleEnum::VueNoExportInScriptSetup(VueNoExportInScriptSetup::default()),
+        RuleEnum::VueNoExposeAfterAwait(VueNoExposeAfterAwait::default()),
         RuleEnum::VueNoImportCompilerMacros(VueNoImportCompilerMacros::default()),
         RuleEnum::VueNoLifecycleAfterAwait(VueNoLifecycleAfterAwait::default()),
         RuleEnum::VueNoMultipleSlotArgs(VueNoMultipleSlotArgs::default()),
         RuleEnum::VueNoRequiredPropWithDefault(VueNoRequiredPropWithDefault::default()),
+        RuleEnum::VueNoReservedComponentNames(VueNoReservedComponentNames::default()),
         RuleEnum::VueNoReservedKeys(VueNoReservedKeys::default()),
         RuleEnum::VueNoSharedComponentData(VueNoSharedComponentData::default()),
         RuleEnum::VueNoThisInBeforeRouteEnter(VueNoThisInBeforeRouteEnter::default()),
         RuleEnum::VueNoWatchAfterAwait(VueNoWatchAfterAwait::default()),
         RuleEnum::VuePreferImportFromVue(VuePreferImportFromVue::default()),
+        RuleEnum::VuePropNameCasing(VuePropNameCasing::default()),
         RuleEnum::VueRequireDefaultExport(VueRequireDefaultExport::default()),
+        RuleEnum::VueRequirePropTypeConstructor(VueRequirePropTypeConstructor::default()),
+        RuleEnum::VueRequireRenderReturn(VueRequireRenderReturn::default()),
         RuleEnum::VueRequireSlotsAsFunctions(VueRequireSlotsAsFunctions::default()),
         RuleEnum::VueRequireTypedRef(VueRequireTypedRef::default()),
         RuleEnum::VueReturnInComputedProperty(VueReturnInComputedProperty::default()),

@@ -33,7 +33,6 @@ use basic::{EmptyArray, Null};
 /// | File                       | Compact TS | Compact JS | Pretty TS | Pretty JS |
 /// |----------------------------|------------|------------|-----------|-----------|
 /// | antd.js                    |         10 |          9 |        76 |        72 |
-/// | cal.com.tsx                |         10 |          9 |        40 |        37 |
 /// | checker.ts                 |          7 |          6 |        27 |        24 |
 /// | pdf.mjs                    |         13 |         12 |        71 |        67 |
 /// | RadixUIAdoptionSection.jsx |         10 |          9 |        45 |        44 |

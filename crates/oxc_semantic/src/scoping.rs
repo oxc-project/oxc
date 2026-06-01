@@ -446,6 +446,26 @@ impl Scoping {
         self.symbol_table.push(span, flags, scope_id, node_id)
     }
 
+    /// Create a new symbol, append symbol metadata to the symbol table, and bind it to a scope.
+    pub(crate) fn create_symbol_with_binding(
+        &mut self,
+        span: Span,
+        name: Ident<'_>,
+        flags: SymbolFlags,
+        symbol_scope_id: ScopeId,
+        binding_scope_id: ScopeId,
+        node_id: NodeId,
+    ) -> SymbolId {
+        let symbol_id = self.symbol_table.push(span, flags, symbol_scope_id, node_id);
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let name = name.clone_in(allocator);
+            cell.symbol_names.push(name);
+            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.bindings[binding_scope_id].insert(name, symbol_id);
+        });
+        symbol_id
+    }
+
     /// Record a redeclaration for an existing symbol.
     pub fn add_symbol_redeclaration(
         &mut self,
@@ -840,19 +860,6 @@ impl Scoping {
     #[inline]
     pub fn iter_bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
         self.cell.borrow_dependent().bindings[scope_id].values().copied()
-    }
-
-    #[inline]
-    pub(crate) fn insert_binding(
-        &mut self,
-        scope_id: ScopeId,
-        name: Ident<'_>,
-        symbol_id: SymbolId,
-    ) {
-        self.cell.with_dependent_mut(|allocator, cell| {
-            let name = name.clone_in(allocator);
-            cell.bindings[scope_id].insert(name, symbol_id);
-        });
     }
 
     /// Create a scope.

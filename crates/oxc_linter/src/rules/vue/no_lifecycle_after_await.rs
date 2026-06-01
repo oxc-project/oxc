@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AwaitExpression, CallExpression, ExportDefaultDeclarationKind, Expression, Function,
-        ObjectExpression, ObjectPropertyKind,
+        ObjectExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -13,7 +13,9 @@ use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
 use crate::module_record::{ImportEntry, ImportImportName};
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule, utils::find_property,
+};
 
 fn no_lifecycle_after_await_diagnostic(span: Span, hook_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -116,12 +118,7 @@ impl Rule for NoLifecycleAfterAwait {
 }
 
 fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-    let Some(setup_prop) = obj_expr.properties.iter().find_map(|prop| {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
-            return None;
-        };
-        obj_prop.key.static_name().is_some_and(|name| name == "setup").then_some(obj_prop)
-    }) else {
+    let Some(setup_prop) = find_property(obj_expr, "setup") else {
         return;
     };
 

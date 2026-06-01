@@ -7,8 +7,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, ast_util::get_declaration_from_reference_id, context::LintContext,
-    module_record::ImportImportName, rule::Rule, utils::is_in_vue_component_instance_method,
+    AstNode,
+    context::LintContext,
+    module_record::ImportImportName,
+    rule::Rule,
+    utils::{is_in_vue_component_instance_method, is_this_object},
 };
 
 fn should_be_function_diagnostic(span: Span) -> OxcDiagnostic {
@@ -77,7 +80,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     fix,
-    version = "next",
+    version = "1.67.0",
 );
 
 impl Rule for ValidNextTick {
@@ -85,15 +88,11 @@ impl Rule for ValidNextTick {
         let (next_tick_node, report_span) = match node.kind() {
             AstKind::StaticMemberExpression(m) => {
                 let prop_name = m.property.name.as_str();
-                let object = m.object.get_inner_expression();
+                let object = &m.object;
                 let matches = match prop_name {
-                    "$nextTick" => match object {
-                        Expression::ThisExpression(_) => true,
-                        Expression::Identifier(id) => is_this_alias(id, ctx),
-                        _ => false,
-                    },
+                    "$nextTick" => is_this_object(object, ctx),
                     "nextTick" => {
-                        matches!(object, Expression::Identifier(id) if id.name == "Vue")
+                        matches!(object.get_inner_expression(), Expression::Identifier(id) if id.name == "Vue")
                     }
                     _ => false,
                 };
@@ -200,15 +199,6 @@ fn is_awaited_promise(call_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
         }
         _ => false,
     }
-}
-
-fn is_this_alias(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
-        .and_then(|node| match node.kind() {
-            AstKind::VariableDeclarator(var) => var.init.as_ref(),
-            _ => None,
-        })
-        .is_some_and(|init| matches!(init.get_inner_expression(), Expression::ThisExpression(_)))
 }
 
 fn is_vue_next_tick_import(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
@@ -379,6 +369,29 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            "<script>export default {
+                    mounted() {
+                      const { vm } = this
+                      vm.$nextTick()
+                    }
+                  }</script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "<script>export default {
+                    mounted() {
+                      let vm = this
+                      vm = other
+                      vm.$nextTick()
+                    }
+                  }</script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
@@ -509,6 +522,17 @@ fn test() {
                       this.$nextTick;
                     }
                   })</script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "<script>export default {
+                    mounted() {
+                      const vm = this
+                      vm.$nextTick()
+                    }
+                  }</script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),

@@ -1,10 +1,13 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    rules::shared::no_negated_condition::{DOCUMENTATION, run},
+    rules::shared::no_negated_condition::{
+        DOCUMENTATION, run_on_conditional_expression, run_on_if_statement,
+    },
 };
 
 #[derive(Debug, Default, Clone)]
@@ -21,7 +24,15 @@ declare_oxc_lint!(
 
 impl Rule for NoNegatedCondition {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        run(node, ctx);
+        match node.kind() {
+            AstKind::IfStatement(if_stmt) => {
+                run_on_if_statement(if_stmt, ctx);
+            }
+            AstKind::ConditionalExpression(conditional_expr) => {
+                run_on_conditional_expression(conditional_expr, ctx);
+            }
+            _ => {}
+        }
     }
 }
 

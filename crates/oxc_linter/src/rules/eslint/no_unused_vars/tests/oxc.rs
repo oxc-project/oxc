@@ -1139,6 +1139,12 @@ fn test_arguments() {
         ("foo.bar((a, b) => (a.foo[b.bar].baz++, a))", None),
         // Multiple parameters used in sequence
         ("foo.bar((a, b, c) => (b[c.x]++, a[b.y]++, a))", None),
+        ("function foo(...args) { return 1 } foo()", Some(json!([{ "args": "none" }]))),
+        ("function foo(...args: unknown[]) { return 1 } foo()", Some(json!([{ "args": "none" }]))),
+        (
+            "function foo(a, ...args: unknown[]) { return a } foo()",
+            Some(json!([{ "args": "none" }])),
+        ),
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),
@@ -1147,6 +1153,8 @@ fn test_arguments() {
         ("function foo(...args: typeof args) {} foo()", None),
         ("function foo(...args: unknown[]): args is string[] { return true } foo()", None),
         ("function foo(...unused) {} foo()", Some(json!([{ "argsIgnorePattern": "^ignored" }]))),
+        ("function foo(...args) { return 1 } foo()", Some(json!([{ "args": "after-used" }]))),
+        ("function foo(...args: unknown[]) { return 1 } foo()", Some(json!([{ "args": "all" }]))),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)

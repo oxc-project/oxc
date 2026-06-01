@@ -10,7 +10,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct NoFocusedTests;
 
-declare_oxc_lint!(NoFocusedTests, jest, correctness, fix, docs = DOCUMENTATION, version = "0.0.8",);
+declare_oxc_lint!(
+    NoFocusedTests,
+    jest,
+    correctness,
+    suggestion,
+    docs = DOCUMENTATION,
+    version = "0.0.8",
+);
 
 impl Rule for NoFocusedTests {
     fn run_on_jest_node<'a, 'c>(
@@ -24,6 +31,7 @@ impl Rule for NoFocusedTests {
 
 #[test]
 fn test() {
+    use crate::fixer::FixKind;
     use crate::tester::Tester;
 
     let pass = vec![
@@ -66,9 +74,14 @@ fn test() {
     ];
 
     let fix = vec![
-        ("describe.only('foo', () => {})", "describe('foo', () => {})", None),
-        ("describe['only']('foo', () => {})", "describe('foo', () => {})", None),
-        ("fdescribe('foo', () => {})", "describe('foo', () => {})", None),
+        ("describe.only('foo', () => {})", "describe('foo', () => {})", None, FixKind::Suggestion),
+        (
+            "describe['only']('foo', () => {})",
+            "describe('foo', () => {})",
+            None,
+            FixKind::Suggestion,
+        ),
+        ("fdescribe('foo', () => {})", "describe('foo', () => {})", None, FixKind::Suggestion),
     ];
 
     Tester::new(NoFocusedTests::NAME, NoFocusedTests::PLUGIN, pass, fail)

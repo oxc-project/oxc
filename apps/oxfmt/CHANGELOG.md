@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.53.0] - 2026-06-01
+
+### 🚀 Features
+
+- d75cbbf oxfmt: Format `parser:json` files by `oxc_formatter_json` (#22709) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d3cdd62 oxfmt: Skip formatting for whitespace-only file (#22780) (leaysgur)
+
+### 📚 Documentation
+
+- 845f393 oxfmt,formatter,formatter_json,formatter_core: Add/update AGENTS.md (#22873) (leaysgur)
+
+## [0.52.0] - 2026-05-26
+
+### 🚀 Features
+
+- 16b8058 oxfmt: Support `vite-plus/resolveConfig` for vite.config.ts (#22454) (leaysgur)
+
+## [0.51.0] - 2026-05-19
+
+### 🐛 Bug Fixes
+
+- 8ee946f formatter/sort_imports: Use label to classify lines (#22512) (leaysgur)
+- 8c1da44 formatter: Normalize destructuring keys in DCR (#22478) (camc314)
+
 ## [0.50.0] - 2026-05-15
 
 ### 💥 BREAKING CHANGES

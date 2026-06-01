@@ -11,7 +11,7 @@ use oxc_allocator::{Allocator, Vec as ArenaVec};
 use crate::{
     Buffer, JsLabels, SortImportsOptions,
     formatter::{
-        Formatter,
+        JsFormatter,
         format_element::{
             FormatElement, LineMode,
             tag::{LabelId, Tag},
@@ -39,7 +39,7 @@ use crate::{
 ///
 /// # Panics
 /// Panics if `sort_imports` option is not enabled.
-pub fn sort_imports_chunk(formatter: &mut Formatter<'_, '_>, chunk_start: usize) {
+pub fn sort_imports_chunk(formatter: &mut JsFormatter<'_, '_>, chunk_start: usize) {
     let elements = &formatter.elements()[chunk_start..];
     let options = formatter.options().sort_imports.as_ref().unwrap();
 

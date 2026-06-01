@@ -190,140 +190,134 @@ impl Rule for ConsistentTypeImports {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if self.disallow_type_annotations {
+        match node.kind() {
             // `import()` type annotations are forbidden.
             // `type Foo = import('foo')`
-            if let AstKind::TSImportType(import_type) = node.kind() {
+            AstKind::TSImportType(import_type) if self.disallow_type_annotations => {
                 ctx.diagnostic(no_import_type_annotations_diagnostic(import_type.span));
-                return;
             }
-        }
+            // `import type { Foo } from 'foo'`
+            AstKind::ImportDeclaration(import_decl)
+                if matches!(self.prefer, Prefer::NoTypeImports)
+                    && import_decl.import_kind.is_type() =>
+            {
+                ctx.diagnostic_with_fix(avoid_import_type_diagnostic(import_decl.span), |fixer| {
+                    fix_remove_type_specifier_from_import_declaration(fixer, import_decl.span, ctx)
+                });
+            }
+            // import { type Foo } from 'foo'
+            AstKind::ImportSpecifier(import_specifier)
+                if matches!(self.prefer, Prefer::NoTypeImports)
+                    && import_specifier.import_kind.is_type() =>
+            {
+                ctx.diagnostic_with_fix(
+                    avoid_import_type_diagnostic(import_specifier.span),
+                    |fixer| {
+                        fix_remove_type_specifier_from_import_specifier(
+                            fixer,
+                            import_specifier.span,
+                            ctx,
+                        )
+                    },
+                );
+            }
+            AstKind::ImportDeclaration(import_decl)
+                if matches!(self.prefer, Prefer::TypeImports) =>
+            {
+                // Store references that only used as type and without type qualifier.
+                // For example:
+                // ```typescript
+                // import { A, B, type C } from 'foo';
+                // const a: A;
+                // const b: B;
+                // const c: C;
+                // ```
+                // `A` and `B` are only used as type references.
+                let mut type_references_without_type_qualifier = vec![];
+                // If all specifiers are only used as type references.
+                let mut is_only_type_references = false;
 
-        if matches!(self.prefer, Prefer::NoTypeImports) {
-            match node.kind() {
-                // `import type { Foo } from 'foo'`
-                AstKind::ImportDeclaration(import_decl) if import_decl.import_kind.is_type() => {
-                    ctx.diagnostic_with_fix(
-                        avoid_import_type_diagnostic(import_decl.span),
-                        |fixer| {
-                            fix_remove_type_specifier_from_import_declaration(
-                                fixer,
-                                import_decl.span,
-                                ctx,
-                            )
-                        },
-                    );
+                if let Some(specifiers) = &import_decl.specifiers {
+                    for specifier in specifiers {
+                        let symbol_id = specifier.local().symbol_id();
+                        let no_type_qualifier = match specifier {
+                            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                                specifier.import_kind.is_value()
+                            }
+                            // TODO: consume tsconfig and see if React is needed based on "jsx" field
+                            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                                if specifier.local.name == "React" {
+                                    continue;
+                                }
+                                true
+                            }
+                            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                                if specifier.local.name == "React" {
+                                    continue;
+                                }
+                                true
+                            }
+                        };
+
+                        if no_type_qualifier && is_only_has_type_references(symbol_id, ctx) {
+                            type_references_without_type_qualifier.push(specifier);
+                        }
+                    }
+
+                    is_only_type_references =
+                        type_references_without_type_qualifier.len() == specifiers.len();
                 }
-                // import { type Foo } from 'foo'
-                AstKind::ImportSpecifier(import_specifier)
-                    if import_specifier.import_kind.is_type() =>
+
+                if import_decl.import_kind.is_value()
+                    && !type_references_without_type_qualifier.is_empty()
                 {
+                    let type_names = type_references_without_type_qualifier
+                        .iter()
+                        .map(|specifier| specifier.name())
+                        .collect::<Vec<_>>();
+
+                    // ['foo', 'bar', 'baz' ] => "foo, bar, and baz".
+                    let type_imports = format_word_list(&type_names);
+                    let type_names =
+                        type_names.iter().map(std::convert::AsRef::as_ref).collect::<Vec<_>>();
+
+                    let fixer_fn = |fixer: RuleFixer<'_, 'a>| {
+                        let fix_options = FixOptions {
+                            fixer,
+                            import_decl,
+                            type_names: &type_names,
+                            fix_style: self.fix_style,
+                            ctx,
+                        };
+
+                        match fix_to_type_import_declaration(&fix_options) {
+                            Ok(fixes) => fixes,
+                            Err(err) => {
+                                debug_assert!(false, "Failed to fix: {err}");
+                                fixer.noop()
+                            }
+                        }
+                    };
+
+                    if is_only_type_references && import_decl.import_kind.is_value() {
+                        // `import type {} from 'foo' assert { type: 'json' }` is invalid
+                        // Import assertions cannot be used with type-only imports or exports.
+                        if import_decl.with_clause.is_none() {
+                            ctx.diagnostic_with_fix(
+                                type_over_value_diagnostic(import_decl.span),
+                                fixer_fn,
+                            );
+                        }
+                        return;
+                    }
+
                     ctx.diagnostic_with_fix(
-                        avoid_import_type_diagnostic(import_specifier.span),
-                        |fixer| {
-                            fix_remove_type_specifier_from_import_specifier(
-                                fixer,
-                                import_specifier.span,
-                                ctx,
-                            )
-                        },
+                        some_imports_are_only_types_diagnostic(import_decl.span, &type_imports),
+                        fixer_fn,
                     );
                 }
-                _ => {}
             }
-            return;
-        }
-
-        let AstKind::ImportDeclaration(import_decl) = node.kind() else {
-            return;
-        };
-
-        // Store references that only used as type and without type qualifier.
-        // For example:
-        // ```typescript
-        // import { A, B, type C } from 'foo';
-        // const a: A;
-        // const b: B;
-        // const c: C;
-        // ```
-        // `A` and `B` are only used as type references.
-        let mut type_references_without_type_qualifier = vec![];
-        // If all specifiers are only used as type references.
-        let mut is_only_type_references = false;
-
-        if let Some(specifiers) = &import_decl.specifiers {
-            for specifier in specifiers {
-                let symbol_id = specifier.local().symbol_id();
-                let no_type_qualifier = match specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        specifier.import_kind.is_value()
-                    }
-                    // TODO: consume tsconfig and see if React is needed based on "jsx" field
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        if specifier.local.name == "React" {
-                            continue;
-                        }
-                        true
-                    }
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                        if specifier.local.name == "React" {
-                            continue;
-                        }
-                        true
-                    }
-                };
-
-                if no_type_qualifier && is_only_has_type_references(symbol_id, ctx) {
-                    type_references_without_type_qualifier.push(specifier);
-                }
-            }
-
-            is_only_type_references =
-                type_references_without_type_qualifier.len() == specifiers.len();
-        }
-
-        if import_decl.import_kind.is_value() && !type_references_without_type_qualifier.is_empty()
-        {
-            let type_names = type_references_without_type_qualifier
-                .iter()
-                .map(|specifier| specifier.name())
-                .collect::<Vec<_>>();
-
-            // ['foo', 'bar', 'baz' ] => "foo, bar, and baz".
-            let type_imports = format_word_list(&type_names);
-            let type_names = type_names.iter().map(std::convert::AsRef::as_ref).collect::<Vec<_>>();
-
-            let fixer_fn = |fixer: RuleFixer<'_, 'a>| {
-                let fix_options = FixOptions {
-                    fixer,
-                    import_decl,
-                    type_names: &type_names,
-                    fix_style: self.fix_style,
-                    ctx,
-                };
-
-                match fix_to_type_import_declaration(&fix_options) {
-                    Ok(fixes) => fixes,
-                    Err(err) => {
-                        debug_assert!(false, "Failed to fix: {err}");
-                        fixer.noop()
-                    }
-                }
-            };
-
-            if is_only_type_references && import_decl.import_kind.is_value() {
-                // `import type {} from 'foo' assert { type: 'json' }` is invalid
-                // Import assertions cannot be used with type-only imports or exports.
-                if import_decl.with_clause.is_none() {
-                    ctx.diagnostic_with_fix(type_over_value_diagnostic(import_decl.span), fixer_fn);
-                }
-                return;
-            }
-
-            ctx.diagnostic_with_fix(
-                some_imports_are_only_types_diagnostic(import_decl.span, &type_imports),
-                fixer_fn,
-            );
+            _ => {}
         }
     }
 

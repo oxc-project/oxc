@@ -900,7 +900,7 @@ mod test {
               get prop(): void {
                 return 1;
               }
-              set prop(one: string): void {}
+              set prop(one: string) {}
               method(one: string): void {
                 return;
               }
@@ -922,7 +922,7 @@ mod test {
                 return;
               }
               private arrow = one => 'arrow';
-              private abstract abs(one);
+              private abs(one) {}
             }
             ",
                 None,

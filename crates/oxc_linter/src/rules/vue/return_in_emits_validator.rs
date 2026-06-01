@@ -71,7 +71,7 @@ declare_oxc_lint!(
     ReturnInEmitsValidator,
     vue,
     correctness,
-    version = "next",
+    version = "1.67.0",
 );
 
 impl Rule for ReturnInEmitsValidator {

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 66/66 (100.00%)
-Positive Passed: 66/66 (100.00%)
-Negative Passed: 137/137 (100.00%)
+AST Parsed     : 67/67 (100.00%)
+Positive Passed: 67/67 (100.00%)
+Negative Passed: 140/140 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -288,6 +288,12 @@ Negative Passed: 137/137 (100.00%)
  1 │ import source 'module';
    ·               ────┬───
    ·                   ╰── `from` expected
+   ╰────
+
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
+   ╭─[misc/fail/import-sync-expression.js:1:11]
+ 1 │ const x = import.sync("baz");
+   ·           ───────────
    ╰────
 
   × TS(1363): A type-only import can specify a default import or named bindings, but not both.
@@ -3812,6 +3818,20 @@ Negative Passed: 137/137 (100.00%)
  3 │ }
    ╰────
   help: Add an identifier after '?.'
+
+  × Invalid rest element target in destructuring assignment
+   ╭─[misc/fail/rest-assignment-target.js:1:6]
+ 1 │ ({...[]} = {});
+   ·      ──
+   ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
+
+  × Invalid rest element target in destructuring pattern
+   ╭─[misc/fail/rest-binding-element.js:1:11]
+ 1 │ const {...[]} = obj;
+   ·           ──
+   ╰────
+  help: Expected an identifier, like `...rest`.
 
   × 'using' declarations are not allowed at the top level of a script
    ╭─[misc/fail/script-top-level-using.js:2:1]

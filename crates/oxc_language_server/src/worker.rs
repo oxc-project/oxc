@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::json;
@@ -75,20 +75,15 @@ impl WorkspaceWorker {
     /// Initialize file system watchers for the workspace.
     /// These watchers are used to watch for changes in the lint configuration files.
     /// The returned watchers will be registered to the client.
-    pub async fn init_watchers(&self) -> Vec<Registration> {
+    pub async fn init_watchers(&self) -> Option<Registration> {
         // clone the options to avoid locking the mutex
         let options_json = { self.options.lock().await.clone().unwrap_or_default() };
 
-        let tool_guard = self.tool.read().await;
-        let Some(tool) = tool_guard.as_ref() else {
-            return Vec::new();
-        };
-
-        let patterns = tool.get_watcher_patterns(options_json.clone());
+        let patterns = self.tool.read().await.as_ref()?.get_watcher_patterns(options_json);
         if patterns.is_empty() {
-            Vec::new()
+            None
         } else {
-            vec![registration_watcher_id(&self.root_uri, patterns)]
+            Some(registration_watcher_id(&self.root_uri, patterns))
         }
     }
 
@@ -261,13 +256,8 @@ impl WorkspaceWorker {
             options_guard.clone().unwrap_or_default()
         };
 
-        self.handle_tool_changes(file_system, needs_diagnostic_refresh, |tool, builder| {
-            tool.handle_watched_file_change(
-                builder,
-                &file_event.uri,
-                &self.root_uri,
-                options.clone(),
-            )
+        self.handle_tool_changes(file_system, needs_diagnostic_refresh, move |tool, builder| {
+            tool.handle_watched_file_change(builder, &file_event.uri, &self.root_uri, options)
         })
         .await
     }
@@ -330,7 +320,7 @@ impl WorkspaceWorker {
         change_handler: F,
     ) -> (Option<Vec<(Uri, Vec<Diagnostic>)>>, Vec<Registration>, Vec<Unregistration>)
     where
-        F: Fn(&mut Box<dyn Tool>, &dyn ToolBuilder) -> ToolRestartChanges,
+        F: FnOnce(&mut Box<dyn Tool>, &dyn ToolBuilder) -> ToolRestartChanges,
     {
         let mut registrations = vec![];
         let mut unregistrations = vec![];
@@ -410,12 +400,19 @@ fn registration_watcher_id(root_uri: &Uri, patterns: Vec<String>) -> Registratio
         register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
             watchers: patterns
                 .into_iter()
-                .map(|pattern| FileSystemWatcher {
-                    glob_pattern: GlobPattern::Relative(RelativePattern {
-                        base_uri: OneOf::Right(root_uri.clone()),
-                        pattern,
-                    }),
-                    kind: Some(WatchKind::all()), // created, deleted, changed
+                .map(|pattern| {
+                    let glob_pattern = if Path::new(&pattern).is_absolute() {
+                        GlobPattern::String(pattern)
+                    } else {
+                        GlobPattern::Relative(RelativePattern {
+                            base_uri: OneOf::Right(root_uri.clone()),
+                            pattern,
+                        })
+                    };
+                    FileSystemWatcher {
+                        glob_pattern,
+                        kind: Some(WatchKind::all()), // created, deleted, changed
+                    }
                 })
                 .collect::<Vec<_>>(),
         })),
@@ -429,7 +426,10 @@ mod tests {
     use std::sync::Arc;
     use tower_lsp_server::{
         jsonrpc::ErrorCode,
-        ls_types::{CodeActionContext, CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri},
+        ls_types::{
+            CodeActionContext, CodeActionOrCommand, DidChangeWatchedFilesRegistrationOptions,
+            FileChangeType, FileEvent, GlobPattern, Range, Uri,
+        },
     };
 
     use crate::{
@@ -476,9 +476,10 @@ mod tests {
             DiagnosticMode::None,
         );
         worker.start_worker(serde_json::Value::Null).await;
-        let registrations = worker.init_watchers().await;
-        assert_eq!(registrations.len(), 1);
-        assert_eq!(registrations[0].id, "watcher-file:///root/");
+        let registration = worker.init_watchers().await;
+        assert!(registration.is_some());
+        let registration = registration.unwrap();
+        assert_eq!(registration.id, "watcher-file:///root/");
 
         // with no watchers
         let worker_no_watchers = WorkspaceWorker::new(
@@ -487,8 +488,28 @@ mod tests {
             DiagnosticMode::None,
         );
         worker_no_watchers.start_worker(serde_json::json!({"some_option": true})).await;
-        let registrations_no_watchers = worker_no_watchers.init_watchers().await;
-        assert_eq!(registrations_no_watchers.len(), 0);
+        let registration_no_watchers = worker_no_watchers.init_watchers().await;
+        assert!(registration_no_watchers.is_none());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_registration_watcher_absolute_pattern() {
+        let root_uri = Uri::from_str("file:///root/").unwrap();
+        let registration =
+            super::registration_watcher_id(&root_uri, vec!["/etc/**/*.json".to_string()]);
+
+        let register_options = registration.register_options.unwrap();
+        let options: DidChangeWatchedFilesRegistrationOptions =
+            serde_json::from_value(register_options).unwrap();
+
+        assert_eq!(options.watchers.len(), 1);
+        match &options.watchers[0].glob_pattern {
+            GlobPattern::String(pattern) => assert_eq!(pattern, "/etc/**/*.json"),
+            GlobPattern::Relative(_) => {
+                panic!("Expected absolute glob to be encoded as GlobPattern::String")
+            }
+        }
     }
 
     #[tokio::test]

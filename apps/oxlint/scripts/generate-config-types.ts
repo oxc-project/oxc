@@ -70,6 +70,18 @@ function sanitizeSchema(value: any): void {
 
 sanitizeSchema(schema);
 
+const dummyRuleMap = schema.definitions?.DummyRuleMap;
+const dummyRuleMapAdditionalProperties = dummyRuleMap?.additionalProperties;
+if (
+  typeof dummyRuleMapAdditionalProperties !== "object" ||
+  dummyRuleMapAdditionalProperties === null
+) {
+  throw new Error("Expected DummyRuleMap.additionalProperties in the oxlint config schema.");
+}
+// Named rule properties are optional, so the string index signature must
+// accept `undefined` to keep the generated declaration internally valid.
+dummyRuleMapAdditionalProperties.tsType = "DummyRule | undefined";
+
 const bannerComment =
   "/*\n" +
   " * This file is generated from npm/oxlint/configuration_schema.json.\n" +

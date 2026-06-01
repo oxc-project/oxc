@@ -7,7 +7,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 
-use crate::{ModuleRecord, context::LintContext, rule::Rule};
+use crate::{
+    ModuleRecord,
+    context::LintContext,
+    module_record::{ExportEntry, ExportExportName},
+    rule::Rule,
+};
 
 fn no_named_export(module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No named exports found in module '{module_name}'"))
@@ -56,6 +61,8 @@ impl Rule for Export {
         let module_record = ctx.module_record();
         let named_export = &module_record.exported_bindings;
 
+        diagnose_duplicate_named_exports(ctx, module_record);
+
         let mut all_export_names = FxHashMap::default();
         let mut visited = FxHashSet::default();
 
@@ -102,6 +109,64 @@ impl Rule for Export {
             }
         }
     }
+}
+
+struct ExportNameSpans {
+    spans: Vec<Span>,
+    has_named_specifier: bool,
+}
+
+fn diagnose_duplicate_named_exports(ctx: &LintContext<'_>, module_record: &ModuleRecord) {
+    let mut export_names: FxHashMap<(CompactStr, bool), ExportNameSpans> = FxHashMap::default();
+
+    module_record
+        .local_export_entries
+        .iter()
+        .chain(&module_record.indirect_export_entries)
+        .for_each(|export_entry| {
+            let Some((name, span)) = export_name(export_entry) else {
+                return;
+            };
+
+            let entry = export_names
+                .entry((CompactStr::from(name), export_entry.is_type))
+                .or_insert(ExportNameSpans { spans: Vec::new(), has_named_specifier: false });
+            entry.spans.push(span);
+            entry.has_named_specifier |= is_named_export_specifier(ctx, export_entry);
+        });
+
+    for ((name, _), entry) in export_names {
+        if entry.spans.len() <= 1 || !entry.has_named_specifier {
+            continue;
+        }
+
+        let labels = entry.spans.into_iter().map(LabeledSpan::underline).collect::<Vec<_>>();
+        ctx.diagnostic(
+            OxcDiagnostic::warn(format!("Multiple exports of name '{name}'."))
+                .with_help(
+                    "Rename or remove the duplicate export so each name is exported only once.",
+                )
+                .with_labels(labels),
+        );
+    }
+}
+
+fn export_name(export_entry: &ExportEntry) -> Option<(&str, Span)> {
+    match &export_entry.export_name {
+        ExportExportName::Name(name) => Some((name.name(), name.span)),
+        ExportExportName::Default(span) => Some(("default", *span)),
+        ExportExportName::Null => None,
+    }
+}
+
+fn is_named_export_specifier(ctx: &LintContext<'_>, export_entry: &ExportEntry) -> bool {
+    // Resolved indirect exports use the import statement span, which can appear after the export.
+    if export_entry.statement_span.start > export_entry.span.start {
+        return true;
+    }
+
+    ctx.find_next_token_within(export_entry.statement_span.start, export_entry.span.start, "{")
+        .is_some()
 }
 
 fn walk_exported_recursive(
@@ -265,6 +330,7 @@ fn test() {
                 export {Bar as default};
             "#),
             "export type * from './export-props.js'",
+            "export const foo = 1;\nimport { foo } from 'mod';",
         ];
         let fail = vec![
             (r#"let foo; export { foo }; export * from "./export-all""#),
@@ -337,6 +403,9 @@ fn test() {
             //     export const Foo = 'bar';
             //     export namespace Foo { }
             // "),
+            ("export const foo = function () {};\nfunction bar() {}\nexport { bar as foo };"),
+            ("export const foo = 1;\nexport /* comment */ { foo };"),
+            ("export const value = 1;\nexport { value };"),
         ];
 
         Tester::new(Export::NAME, Export::PLUGIN, pass, fail)

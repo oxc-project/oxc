@@ -653,6 +653,9 @@ expression: json
         "jsdoc/require-yields": {
           "$ref": "#/definitions/DummyRule"
         },
+        "jsdoc/require-yields-description": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "jsdoc/require-yields-type": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -1340,6 +1343,9 @@ expression: json
         "prefer-exponentiation-operator": {
           "$ref": "#/definitions/DummyRule"
         },
+        "prefer-named-capture-group": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "prefer-numeric-literals": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -1686,6 +1692,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "typescript/explicit-module-boundary-types": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/method-signature-style": {
           "$ref": "#/definitions/DummyRule"
         },
         "typescript/no-array-delete": {
@@ -2582,6 +2591,9 @@ expression: json
         "vitest/warn-todo": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/component-definition-name-casing": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/define-emits-declaration": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -2595,6 +2607,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "vue/no-arrow-functions-in-watch": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/no-computed-properties-in-data": {
           "$ref": "#/definitions/DummyRule"
         },
         "vue/no-deprecated-data-object-declaration": {
@@ -2621,6 +2636,9 @@ expression: json
         "vue/no-export-in-script-setup": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/no-expose-after-await": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/no-import-compiler-macros": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -2631,6 +2649,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "vue/no-required-prop-with-default": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/no-reserved-component-names": {
           "$ref": "#/definitions/DummyRule"
         },
         "vue/no-reserved-keys": {
@@ -2648,7 +2669,16 @@ expression: json
         "vue/prefer-import-from-vue": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/prop-name-casing": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/require-default-export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/require-prop-type-constructor": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/require-render-return": {
           "$ref": "#/definitions/DummyRule"
         },
         "vue/require-slots-as-functions": {
@@ -3016,6 +3046,15 @@ expression: json
             }
           ],
           "markdownDescription": "Environments enable and disable collections of global variables."
+        },
+        "excludeFiles": {
+          "description": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`"
         },
         "files": {
           "description": "A list of glob patterns to override.\n\n## Example\n`[ \"*.test.ts\", \"*.spec.ts\" ]`",

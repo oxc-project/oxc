@@ -1,14 +1,16 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference, MemberExpression},
+    ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
-    AstNode, ast_util::get_declaration_from_reference_id, context::LintContext, rule::Rule,
-    utils::is_in_vue_component_instance_method,
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{is_in_vue_component_instance_method, is_this_object},
 };
 
 const DEPRECATED_EVENTS_API_METHODS: [&str; 3] = ["$on", "$off", "$once"];
@@ -101,28 +103,12 @@ impl Rule for NoDeprecatedEventsApi {
             return;
         }
 
-        match member_expr.object.get_inner_expression() {
-            Expression::ThisExpression(_) if is_in_vue_component_instance_method(node, ctx) => {
-                ctx.diagnostic(no_deprecated_events_api_diagnostic(member_expr.property.span));
-            }
-            Expression::Identifier(ident)
-                if is_this(ident, ctx) && is_in_vue_component_instance_method(node, ctx) =>
-            {
-                ctx.diagnostic(no_deprecated_events_api_diagnostic(member_expr.property.span));
-            }
-            _ => {}
+        if is_this_object(&member_expr.object, ctx)
+            && is_in_vue_component_instance_method(node, ctx)
+        {
+            ctx.diagnostic(no_deprecated_events_api_diagnostic(member_expr.property.span));
         }
     }
-}
-
-#[inline]
-fn is_this(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
-        .and_then(|node| match node.kind() {
-            AstKind::VariableDeclarator(var) => var.init.as_ref(),
-            _ => None,
-        })
-        .is_some_and(|init| matches!(init, Expression::ThisExpression(_)))
 }
 
 #[test]
@@ -250,6 +236,33 @@ fn test() {
             None,
             Some(PathBuf::from("test.js")),
         ),
+        (
+            r"
+            app.component('some-comp', {
+              mounted() {
+                const { vm } = this
+                vm.$on('start', foo)
+              }
+            })
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            r"
+            app.component('some-comp', {
+              mounted() {
+                let vm = this
+                vm = other
+                vm.$on('start', foo)
+              }
+            })
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
     ];
 
     let fail = vec![
@@ -309,6 +322,49 @@ fn test() {
             None,
             None,
             Some(PathBuf::from("test.js")),
+        ),
+        (
+            r"
+            app.component('some-comp', {
+              mounted() {
+                const vm = (this)
+                vm.$on('start', foo)
+              }
+            })
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            r"
+            <script lang='ts'>
+            export default {
+              mounted() {
+                const vm = this as any
+                vm.$on('start', foo)
+              }
+            }
+            </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"
+            <script lang='ts'>
+            export default {
+              mounted() {
+                const vm = this!
+                vm.$on('start', foo)
+              }
+            }
+            </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
         ),
         (
             r"
