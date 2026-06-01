@@ -480,6 +480,16 @@ export interface OxlintOverride {
    */
   env?: OxlintEnv;
   /**
+   * A list of glob patterns to exclude from this override.
+   *
+   * Files matching these patterns are not globally ignored; this override
+   * simply does not apply to them.
+   *
+   * ## Example
+   * `[ "*.generated.ts", "fixtures/**" ]`
+   */
+  excludeFiles?: GlobSet;
+  /**
    * A list of glob patterns to override.
    *
    * ## Example

@@ -3041,6 +3041,15 @@ expression: json
           ],
           "markdownDescription": "Environments enable and disable collections of global variables."
         },
+        "excludeFiles": {
+          "description": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`"
+        },
         "files": {
           "description": "A list of glob patterns to override.\n\n## Example\n`[ \"*.test.ts\", \"*.spec.ts\" ]`",
           "allOf": [
