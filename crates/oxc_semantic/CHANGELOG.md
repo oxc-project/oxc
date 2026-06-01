@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.134.0] - 2026-06-01
+
+### ⚡ Performance
+
+- 9e496a7 semantic: Defer declare lookup for empty accessors (#22810) (camc314)
+
 ## [0.133.0] - 2026-05-26
 
 ### 🐛 Bug Fixes

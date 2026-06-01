@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.134.0] - 2026-06-01
+
+### 🐛 Bug Fixes
+
+- cf5769c parser: Reject TypeScript declarations in single-statement context (#22827) (Boshen)
+- c360fb6 parser: Reject generators in ambient contexts and overload signatures (TS1221/TS1222) (#22848) (Boshen)
+- cc60d8d parser: Reject invalid index signature parameter types (TS1268/TS1337) (#22852) (Boshen)
+- 3d13e29 parser: Reject `declare` in an already-ambient context (TS1038) (#22850) (Boshen)
+- 5152854 parser: Reject statements in ambient contexts (TS1036) (#22849) (Boshen)
+- 4f9afc5 parser: Reject `export as namespace` inside a namespace body (TS1316) (#22846) (Boshen)
+- 2eafea6 parser: Reject function implementations in ambient contexts (TS1183) (#22845) (Boshen)
+- c645615 parser: Reject incompatible class member modifiers (#22843) (Boshen)
+- 276b78b parser: Reject module-referencing imports/exports in a namespace body (#22836) (Boshen)
+- 842ed1c parser: Parse `class implements` with `implements` as the class name (#22801) (Boshen)
+
+### ⚡ Performance
+
+- 7e3a567 parser: Reuse cached token kind in delimited-list loops (#22841) (Boshen)
+- 9e741c2 parser: Use peek_token instead of lookahead on the modifier path (#22842) (Boshen)
+
 ## [0.133.0] - 2026-05-26
 
 ### 🚀 Features
