@@ -24,6 +24,12 @@ declare_oxc_lint!(
     /// Mixing value-returning and non-value-returning code paths makes control flow harder to
     /// reason about and frequently indicates a bug.
     ///
+    /// ::: warning
+    /// If possible, prefer TypeScript's `noImplicitReturns` compiler option over this rule.
+    /// `noImplicitReturns` uses TypeScript's type information and control-flow analysis,
+    /// so it can catch more implicit return paths than this rule.
+    /// :::
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

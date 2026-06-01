@@ -6,7 +6,7 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{GetSpan, SPAN};
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
+use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
 use crate::TraverseCtx;
 
@@ -74,28 +74,28 @@ impl<'a> PeepholeOptimizations {
 
     pub fn fold_chain_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ChainExpression(e) = expr else { return };
-        let left_expr = match &e.expression {
-            match_member_expression!(ChainElement) => {
-                let member_expr = e.expression.to_member_expression();
-                if !member_expr.optional() {
-                    return;
+        let span = e.span;
+        match try_fold_chain_at_element(&mut e.expression, ctx) {
+            ChainFold::Unfolded { .. } => {}
+            ChainFold::Flipped { has_optional } => {
+                // For `(known_obj)?.foo?.bar` the inner `?.` flips, but the
+                // outer `?.bar` keeps the wrapper alive.
+                if !has_optional {
+                    *expr = Expression::from(e.expression.take_in(ctx.ast));
                 }
-                member_expr.object()
+                ctx.state.changed = true;
             }
-            ChainElement::CallExpression(call_expr) => {
-                if !call_expr.optional {
-                    return;
-                }
-                &call_expr.callee
+            ChainFold::Collapse { base, base_has_side_effects } => {
+                *expr = if base_has_side_effects {
+                    ctx.ast.expression_sequence(
+                        span,
+                        ctx.ast.vec_from_array([base, ctx.ast.void_0(span)]),
+                    )
+                } else {
+                    ctx.value_to_expr(span, ConstantValue::Undefined)
+                };
+                ctx.state.changed = true;
             }
-            ChainElement::TSNonNullExpression(_) => return,
-        };
-        let ty = left_expr.value_type(ctx);
-        if let Some(changed) = (ty.is_null() || ty.is_undefined())
-            .then(|| ctx.value_to_expr(e.span, ConstantValue::Undefined))
-        {
-            *expr = changed;
-            ctx.state.changed = true;
         }
     }
 
@@ -116,6 +116,17 @@ impl<'a> PeepholeOptimizations {
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if if lval { op.is_or() } else { op.is_and() } {
+                // Preserve `0 && (module.exports = { ... })` — esbuild emits
+                // it on Node platform as a parse-time hint for
+                // `cjs-module-lexer` to detect named CJS exports
+                // (https://github.com/evanw/esbuild/blob/v0.28.0/internal/linker/linker.go#L5127-L5138).
+                // The expression is unreachable at runtime, but dropping it
+                // breaks ESM `import { X } from "<cjs-pkg>"` consumers.
+                // Restores the bailout removed by the #8618 refactor; the
+                // original lived at #4878.
+                if !lval && op.is_and() && is_cjs_module_exports_hint(&logical_expr.right) {
+                    return None;
+                }
                 return Some(logical_expr.left.take_in(ctx.ast));
             } else if !left.may_have_side_effects(ctx) {
                 let should_keep_indirect_access =
@@ -766,4 +777,153 @@ impl<'a> PeepholeOptimizations {
 
         ctx.state.changed = true;
     }
+}
+
+/// Outcome of folding an optional-chain at the deepest optional position.
+///
+/// `has_optional` carries the same notion in both `Unfolded` and `Flipped`:
+/// whether any unresolved `?.` exists in the chain segment seen so far —
+/// below the current level while still searching, above the fold point
+/// after firing. It gates outer fold attempts and the wrapper unwrap.
+enum ChainFold<'a> {
+    Unfolded {
+        has_optional: bool,
+    },
+    Flipped {
+        has_optional: bool,
+    },
+    /// `base_has_side_effects` is computed here so the caller doesn't walk
+    /// the base subtree a second time.
+    Collapse {
+        base: Expression<'a>,
+        base_has_side_effects: bool,
+    },
+}
+
+/// Try folding the *deepest* (= leftmost in source order) optional in a
+/// chain. Recurses inward through `.object` / `.callee` first so the
+/// short-circuit point is found before any outer access.
+///
+/// Nested `ChainExpression`s (e.g. `(a?.b)?.c`) are not descended into —
+/// the compressor's separate flattening pass merges them into a single
+/// chain on a later iteration, after which this fold fires.
+fn try_fold_chain_at_element<'a>(
+    elem: &mut ChainElement<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> ChainFold<'a> {
+    match elem {
+        ChainElement::CallExpression(c) => try_fold_call_expression(c, ctx),
+        match_member_expression!(ChainElement) => {
+            try_fold_member_expression(elem.to_member_expression_mut(), ctx)
+        }
+        ChainElement::TSNonNullExpression(t) => try_fold_chain_at_expr(&mut t.expression, ctx),
+    }
+}
+
+fn try_fold_chain_at_expr<'a>(expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) -> ChainFold<'a> {
+    match expr.get_inner_expression_mut() {
+        Expression::CallExpression(c) => try_fold_call_expression(c, ctx),
+        match_member_expression!(Expression) => {
+            try_fold_member_expression(expr.to_member_expression_mut(), ctx)
+        }
+        _ => ChainFold::Unfolded { has_optional: false },
+    }
+}
+
+fn try_fold_call_expression<'a>(
+    call: &mut CallExpression<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> ChainFold<'a> {
+    match try_fold_chain_at_expr(&mut call.callee, ctx) {
+        ChainFold::Flipped { has_optional } => {
+            ChainFold::Flipped { has_optional: has_optional || call.optional }
+        }
+        collapse @ ChainFold::Collapse { .. } => collapse,
+        ChainFold::Unfolded { has_optional } => {
+            try_fold_at_optional(&mut call.optional, &mut call.callee, has_optional, ctx)
+                .unwrap_or(ChainFold::Unfolded { has_optional: has_optional || call.optional })
+        }
+    }
+}
+
+fn try_fold_member_expression<'a>(
+    member: &mut MemberExpression<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> ChainFold<'a> {
+    let (optional_mut, object) = member_expression_optional_and_object_mut(member);
+    let optional = *optional_mut;
+    match try_fold_chain_at_expr(object, ctx) {
+        ChainFold::Flipped { has_optional } => {
+            ChainFold::Flipped { has_optional: has_optional || optional }
+        }
+        collapse @ ChainFold::Collapse { .. } => collapse,
+        ChainFold::Unfolded { has_optional } => {
+            try_fold_at_optional(optional_mut, object, has_optional, ctx)
+                .unwrap_or(ChainFold::Unfolded { has_optional: has_optional || optional })
+        }
+    }
+}
+
+fn member_expression_optional_and_object_mut<'a, 'b>(
+    member: &'b mut MemberExpression<'a>,
+) -> (&'b mut bool, &'b mut Expression<'a>) {
+    match member {
+        MemberExpression::StaticMemberExpression(m) => {
+            let m = &mut **m;
+            (&mut m.optional, &mut m.object)
+        }
+        MemberExpression::ComputedMemberExpression(m) => {
+            let m = &mut **m;
+            (&mut m.optional, &mut m.object)
+        }
+        MemberExpression::PrivateFieldExpression(m) => {
+            let m = &mut **m;
+            (&mut m.optional, &mut m.object)
+        }
+    }
+}
+
+fn try_fold_at_optional<'a>(
+    optional: &mut bool,
+    base: &mut Expression<'a>,
+    has_optional: bool,
+    ctx: &TraverseCtx<'a>,
+) -> Option<ChainFold<'a>> {
+    if !*optional || has_optional {
+        return None;
+    }
+    match base.value_type(ctx) {
+        ValueType::Null | ValueType::Undefined => {
+            let base_has_side_effects = base.may_have_side_effects(ctx);
+            let taken = base.take_in(ctx.ast);
+            Some(ChainFold::Collapse { base: taken, base_has_side_effects })
+        }
+        ValueType::Undetermined => None,
+        _ => {
+            *optional = false;
+            Some(ChainFold::Flipped { has_optional: false })
+        }
+    }
+}
+
+/// `true` when `expr` matches esbuild's [`cjs-module-lexer`] hint shape:
+/// `module.exports = { ... }`. Used by [`PeepholeOptimizations`] to keep
+/// constant-folding and unused-expression removal from dropping the
+/// surrounding `0 && (module.exports = { ... })` statement.
+///
+/// esbuild emits this single shape (no `||`, no `exports.X`, no chains) on
+/// the Node platform; see [linker.go#L5127-L5139][esbuild] for the
+/// construction site.
+///
+/// [`cjs-module-lexer`]: https://github.com/nodejs/cjs-module-lexer
+/// [esbuild]: https://github.com/evanw/esbuild/blob/v0.28.0/internal/linker/linker.go#L5127-L5138
+pub(super) fn is_cjs_module_exports_hint(expr: &Expression<'_>) -> bool {
+    let Expression::AssignmentExpression(assign) = expr.get_inner_expression() else {
+        return false;
+    };
+    assign.operator == AssignmentOperator::Assign
+        && assign
+            .left
+            .as_member_expression()
+            .is_some_and(|m| m.is_specific_member_access("module", "exports"))
 }

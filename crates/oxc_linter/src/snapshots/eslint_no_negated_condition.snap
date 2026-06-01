@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-negated-condition): Unexpected negated condition.
    ╭─[no_negated_condition.tsx:1:5]
  1 │ if (!a) {;} else {;}

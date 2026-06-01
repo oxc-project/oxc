@@ -92,7 +92,11 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
                         _ => ValueType::Undetermined,
                     }
                 } else {
-                    ValueType::Undetermined
+                    ident
+                        .reference_id
+                        .get()
+                        .and_then(|reference_id| ctx.value_type_for_reference_id(reference_id))
+                        .unwrap_or(ValueType::Undetermined)
                 }
             }
             Expression::UnaryExpression(e) => e.value_type(ctx),

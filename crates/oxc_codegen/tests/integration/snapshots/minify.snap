@@ -96,13 +96,13 @@ class A {constructor(public readonly a: number) {}}
 ----------
 class A{constructor(public readonly a:number){}}
 ########## 22
-abstract class A {private abstract static m()}
+abstract class A {protected abstract m()}
 ----------
-abstract class A{private abstract static m();}
+abstract class A{protected abstract m();}
 ########## 23
-abstract class A {private abstract static readonly prop: string}
+class A {private static readonly prop: string}
 ----------
-abstract class A{private abstract static readonly prop:string}
+class A{private static readonly prop:string}
 ########## 24
 interface A { a: string, 'b': number, 'c'(): void }
 ----------

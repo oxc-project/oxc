@@ -22,35 +22,56 @@ impl<'a> AstroPartialLoader<'a> {
 
     pub fn parse(self) -> Vec<JavaScriptSource<'a>> {
         let mut results = vec![];
-        let frontmatter = self.parse_frontmatter();
-        let start = frontmatter.as_ref().map_or(0, |r| r.source_text.len() + ASTRO_SPLIT.len() * 2);
-        results.extend(frontmatter);
+        let mut start = 0;
+        if let Some((frontmatter, frontmatter_end)) = self.parse_frontmatter() {
+            start = frontmatter_end;
+            results.push(frontmatter);
+        }
         results.extend(self.parse_scripts(start));
         results
     }
 
     /// Parse `---` frontmatter block
     #[expect(clippy::cast_possible_truncation)]
-    fn parse_frontmatter(&self) -> Option<JavaScriptSource<'a>> {
+    fn parse_frontmatter(&self) -> Option<(JavaScriptSource<'a>, usize)> {
         let split_finder = Finder::new(ASTRO_SPLIT);
-        let offsets = split_finder.find_iter(self.source_text.as_bytes()).collect::<Vec<_>>();
-        if offsets.len() <= 1 {
+        let mut offsets = split_finder
+            .find_iter(self.source_text.as_bytes())
+            .filter(|offset| self.is_fence(*offset));
+
+        let start = offsets.next()?;
+        if !self.source_text[..start].chars().all(char::is_whitespace) {
             return None;
         }
+        let end = offsets.next()?;
 
-        let start = offsets.first()?;
-        let end = offsets.last()?;
-        let Ok(start) = u32::try_from(*start) else {
+        let Ok(start) = u32::try_from(start) else {
             return None;
         };
-        let Ok(end) = u32::try_from(*end) else {
+        let Ok(end) = u32::try_from(end) else {
             return None;
         };
 
         // move start to the end of the ASTRO_SPLIT
         let start = start + ASTRO_SPLIT.len() as u32;
         let js_code = Span::new(start, end).source_text(self.source_text);
-        Some(JavaScriptSource::partial(js_code, SourceType::ts(), start))
+        let frontmatter = JavaScriptSource::partial(js_code, SourceType::ts(), start);
+
+        Some((frontmatter, end as usize + ASTRO_SPLIT.len()))
+    }
+
+    fn is_fence(&self, offset: usize) -> bool {
+        let line_start = self.source_text[..offset].rfind('\n').map_or(0, |index| index + 1);
+        if !self.source_text[line_start..offset].chars().all(char::is_whitespace) {
+            return false;
+        }
+
+        let fence_end = offset + ASTRO_SPLIT.len();
+        let line_end = self.source_text[fence_end..]
+            .find('\n')
+            .map_or(self.source_text.len(), |index| fence_end + index);
+
+        self.source_text[fence_end..line_end].chars().all(char::is_whitespace)
     }
 
     /// In .astro files, you can add client-side JavaScript by adding one (or more) `<script>` tags.
@@ -300,5 +321,29 @@ mod test {
         assert_eq!(sources.len(), 2);
         assert_eq!(sources[0].source_text.trim(), r#"console.log("text/javascript");"#);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("application/ecmascript");"#);
+    }
+
+    #[test]
+    fn test_parse_astro_frontmatter_with_later_js_separator() {
+        let source_text = r#"
+        ---
+        const title = "hello";
+        ---
+
+        <div>{"---"}</div>
+
+        <script>
+            const marker = "---";
+            console.log(marker);
+        </script>
+        "#;
+
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 2);
+        assert_eq!(sources[0].source_text.trim(), "const title = \"hello\";");
+        assert_eq!(
+            sources[1].source_text.trim(),
+            "const marker = \"---\";\n            console.log(marker);"
+        );
     }
 }

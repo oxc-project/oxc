@@ -1,4 +1,6 @@
-use oxc_ast::ast::{AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty};
+use oxc_ast::ast::{
+    AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty, VariableDeclaration,
+};
 use oxc_ast::{AstKind, ast::VariableDeclarationKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -195,7 +197,7 @@ impl PreferConst {
     /// Returns `noop` if the fix should not be applied.
     fn fix_let_to_const<'a>(
         fixer: RuleFixer<'_, 'a>,
-        decl: &oxc_ast::ast::VariableDeclaration<'a>,
+        decl: &VariableDeclaration<'a>,
         declarator_index: usize,
         all_const: bool,
         is_for_in_of_init: bool,

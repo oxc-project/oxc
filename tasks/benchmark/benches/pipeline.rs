@@ -43,6 +43,7 @@ fn bench_pipeline(criterion: &mut Criterion) {
                     // Semantic
                     let scoping = SemanticBuilder::new()
                         .with_excess_capacity(2.0)
+                        .with_enum_eval(true)
                         .build(&program)
                         .semantic
                         .into_scoping();

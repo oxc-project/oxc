@@ -149,7 +149,7 @@ fn generate_deserializers(
         /* END_IF */
 
         let uint8, int32, float64, sourceText, sourceTextLatin,
-            sourceStartPos = 0, sourceEndPos = 0, firstNonAsciiPos = 0;
+            sourceStartPos = 0, firstNonAsciiPos = 0;
 
         let parent = null;
 
@@ -178,25 +178,24 @@ fn generate_deserializers(
         /* END_IF */
 
         /* IF !LINTER */
-        export function deserialize(buffer, sourceText, sourceByteLen) {{
-            sourceEndPos = sourceByteLen;
-            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
+        export function deserialize(buffer, sourceText, sourceStartPos, sourceByteLen) {{
+            return deserializeWith(buffer, sourceText, sourceStartPos, sourceByteLen, deserializeRawTransferData);
         }}
         /* END_IF */
 
         /* IF LINTER */
-        export function deserializeProgramOnly(buffer, sourceText, sourceStartPosInput, sourceByteLen) {{
-            sourceStartPos = sourceStartPosInput;
-            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
+        export function deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen) {{
+            return deserializeWith(buffer, sourceText, sourceStartPos, sourceByteLen, deserializeProgram);
         }}
         /* END_IF */
 
-        function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {{
+        function deserializeWith(buffer, sourceTextInput, sourceStartPosInput, sourceByteLen, deserialize) {{
             uint8 = buffer;
             int32 = buffer.int32;
             float64 = buffer.float64;
 
             sourceText = sourceTextInput;
+            sourceStartPos = sourceStartPosInput;
 
             const sourceIsAscii = sourceText.length === sourceByteLen;
 
@@ -204,29 +203,16 @@ fn generate_deserializers(
             // `sourceText.substr()` can be used for strings which are within source text and ending before
             // this position, since byte offsets equal char offsets in the all-ASCII prefix.
             // Also decode source text as Latin-1 (or reuse `sourceText` if it's all ASCII).
-            if (LINTER) {{
-                if (sourceIsAscii === true) {{
-                    firstNonAsciiPos = sourceStartPos + sourceByteLen;
-                    sourceTextLatin = sourceText;
-                }} else {{
-                    let i = sourceStartPos;
-                    const sourceEndPos = sourceStartPos + sourceByteLen;
-                    for (; i < sourceEndPos && uint8[i] < 128; i++);
-                    firstNonAsciiPos = i;
-
-                    sourceTextLatin = latin1Slice.call(uint8, sourceStartPos, sourceEndPos);
-                }}
+            if (sourceIsAscii === true) {{
+                firstNonAsciiPos = sourceStartPos + sourceByteLen;
+                sourceTextLatin = sourceText;
             }} else {{
-                if (sourceIsAscii === true) {{
-                    firstNonAsciiPos = sourceByteLen;
-                    sourceTextLatin = sourceText;
-                }} else {{
-                    let i = 0;
-                    for (; i < sourceByteLen && uint8[i] < 128; i++);
-                    firstNonAsciiPos = i;
+                let i = sourceStartPos;
+                const sourceEndPos = sourceStartPos + sourceByteLen;
+                for (; i < sourceEndPos && uint8[i] < 128; i++);
+                firstNonAsciiPos = i;
 
-                    sourceTextLatin = latin1Slice.call(uint8, 0, sourceByteLen);
-                }}
+                sourceTextLatin = latin1Slice.call(uint8, sourceStartPos, sourceEndPos);
             }}
 
             const data = deserialize(int32[{data_pointer_pos_32}]);
@@ -965,8 +951,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
     ");
 }
 
-// In parser, source text is always at the start of the buffer, and all other strings are after it.
-// In linter, source text is towards the end of the buffer, and all other strings are before it.
+// Source text is towards the end of the buffer, and all other strings are before it
 static STR_DESERIALIZER_BODY: &str = "
     const pos32 = pos >> 2,
         len = int32[pos32 + 2];
@@ -977,11 +962,6 @@ static STR_DESERIALIZER_BODY: &str = "
 
     const end = pos + len;
 
-    /* IF !LINTER */
-    if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
-    /* END_IF */
-
-    /* IF LINTER */
     // Note: Tried reducing this check to a single branch by making the comparison the equivalent of this Rust:
     // `end.wrapping_sub(sourceStartPos) <= firstNonAsciiOffset`.
     //
@@ -1002,16 +982,11 @@ static STR_DESERIALIZER_BODY: &str = "
     if (isInSourceRegion && end <= firstNonAsciiPos) {
         return sourceTextLatin.substr(pos - sourceStartPos, len);
     }
-    /* END_IF */
 
     // Use `utf8Slice` for strings longer than 64 bytes
     if (len > STRING_DECODE_CROSSOVER) return utf8Slice.call(uint8, pos, end);
 
     // If string is in source region, use slice of `sourceTextLatin` if all ASCII
-    /* IF !LINTER */
-    const isInSourceRegion = pos < sourceEndPos;
-    /* END_IF */
-
     if (isInSourceRegion) {
         // Check if all bytes are ASCII, use `utf8Slice` if not
         for (let i = pos; i < end; i++) {
@@ -1019,7 +994,7 @@ static STR_DESERIALIZER_BODY: &str = "
         }
 
         // String is all ASCII, so slice from `sourceTextLatin`
-        return sourceTextLatin.substr(LINTER ? pos - sourceStartPos : pos, len);
+        return sourceTextLatin.substr(pos - sourceStartPos, len);
     }
 
     // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.

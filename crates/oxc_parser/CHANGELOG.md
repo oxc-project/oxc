@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.134.0] - 2026-06-01
+
+### 🐛 Bug Fixes
+
+- cf5769c parser: Reject TypeScript declarations in single-statement context (#22827) (Boshen)
+- c360fb6 parser: Reject generators in ambient contexts and overload signatures (TS1221/TS1222) (#22848) (Boshen)
+- cc60d8d parser: Reject invalid index signature parameter types (TS1268/TS1337) (#22852) (Boshen)
+- 3d13e29 parser: Reject `declare` in an already-ambient context (TS1038) (#22850) (Boshen)
+- 5152854 parser: Reject statements in ambient contexts (TS1036) (#22849) (Boshen)
+- 4f9afc5 parser: Reject `export as namespace` inside a namespace body (TS1316) (#22846) (Boshen)
+- 2eafea6 parser: Reject function implementations in ambient contexts (TS1183) (#22845) (Boshen)
+- c645615 parser: Reject incompatible class member modifiers (#22843) (Boshen)
+- 276b78b parser: Reject module-referencing imports/exports in a namespace body (#22836) (Boshen)
+- 842ed1c parser: Parse `class implements` with `implements` as the class name (#22801) (Boshen)
+
+### ⚡ Performance
+
+- 7e3a567 parser: Reuse cached token kind in delimited-list loops (#22841) (Boshen)
+- 9e741c2 parser: Use peek_token instead of lookahead on the modifier path (#22842) (Boshen)
+
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- 661132d parser: More friendly error messages for rest assignment target and rest binding element (#22719) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- e184f74 parser: Improve invalid `import` property access diagnostic (#22693) (camc314)
+- a9ad27e parser: Keep annotation comments leading without preceding newline (#22711) (Dunqing)
+- b284045 parser: Switch to module goal eagerly on `export` (#22684) (Boshen)
+- 917da24 parser: Apply PURE comment through member-access chains (#22566) (Dunqing)
+
+### ⚡ Performance
+
+- 82f9662 parser: Check identifier kind before context flag (#22662) (camc314)
+- d7cd951 parser: Fast path identifier parsing and inline operator helpers (#22650) (Boshen)
+
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- e431a0e parser: Break extends clause loop on fatal error (#22517) (Boshen)
+
+## [0.131.0] - 2026-05-15
+
+### ⚡ Performance
+
+- 83679ea parser: Split TriviaBuilder::handle_token hot/cold paths (#22415) (Boshen)
+- 0b4e158 parser: Reserve cap `2` for sequence expressions vec (#22374) (camc314)
+
+## [0.130.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- 9fa2122 parser: Parse array computed class keys (#22159) (camc314)
+
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- 81e834c parser: Prevent multiple `Parser` instances in binary (#22120) (overlookmotel)
+- aaabde4 parser: Attach legal comments to following token (#21670) (Dunqing)
+
 ## [0.128.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES

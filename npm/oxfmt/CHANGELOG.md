@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.52.0] - 2026-05-26
+
+### 🚀 Features
+
+- 16b8058 oxfmt: Support `vite-plus/resolveConfig` for vite.config.ts (#22454) (leaysgur)
+
+## [0.50.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- 43b9978 formatter/sort_imports: Treat subpath imports as internal (#22440) (leaysgur)
+
+## [0.49.0] - 2026-05-11
+
+### 🚀 Features
+
+- 6e8e818 oxfmt: Experimental .svelte support (#21700) (leaysgur)
+
 ## [0.45.0] - 2026-04-13
 
 ### 🐛 Bug Fixes

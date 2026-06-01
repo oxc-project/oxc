@@ -4,6 +4,63 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.134.0] - 2026-06-01
+
+### 🚀 Features
+
+- 9c71f2e ast, codegen, formatter: Add `WithClauseKeyword::as_str` helper and use it (#22791) (camc314)
+
+### 🐛 Bug Fixes
+
+- c645615 parser: Reject incompatible class member modifiers (#22843) (Boshen)
+
+## [0.133.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- 2f7b210 codegen: Emit pife-arrow/function leading comments inside the wrap (#22720) (Dunqing)
+- d61e1d7 codegen: Preserve verbatim text of pure/no-side-effects comments (#22525) (Dunqing)
+- 917da24 parser: Apply PURE comment through member-access chains (#22566) (Dunqing)
+- a069b1c codegen: Preserve quotes for cjs-module-lexer equality strings (#22551) (Dunqing)
+
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- b9615b2 codegen: Preserve string quotes in require() calls during minification (#22475) (zennnnnnn11)
+
+## [0.131.0] - 2026-05-15
+
+### 🚀 Features
+
+- bc91a17 codegen: Expose `Codegen::with_source_type` method (#22432) (camc314)
+
+### 🐛 Bug Fixes
+
+- 18edc2c codegen: Keep `Object.defineProperty` property name as plain string in minify (#22400) (Dunqing)
+
+### ⚡ Performance
+
+- 2c7d781 codegen: Inline identifier-name accessors (#22411) (Boshen)
+- 5f3bdd0 codegen: Add `#[inline]` to `code`, `code_len` (#22373) (camc314)
+
+## [0.130.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- 6a8852d codegen: Emit newline after legal-comment orphan flush (#22304) (Dunqing)
+- 29a3cd7 codegen: Swap mapping/indent order for top-level decls (#22206) (Dunqing)
+- a6aff7e codegen: Emit block/array/object end mapping at close char (#22200) (Dunqing)
+- a099b03 codegen: Emit call end mapping at `)` position, not past it (#22199) (Dunqing)
+- 2493bdd codegen: Correct sourcemap end mappings for closing delimiters (#22001) (Mark Dalgleish)
+
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- e852911 codegen: Preserve legal comments orphaned by upstream passes (#21575) (Dunqing)
+- aaabde4 parser: Attach legal comments to following token (#21670) (Dunqing)
+
 ## [0.128.0] - 2026-04-27
 
 ### 🐛 Bug Fixes

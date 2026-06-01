@@ -118,15 +118,21 @@ impl<'s, 'a> Symbol<'s, 'a> {
     pub fn iter_relevant_parent_and_grandparent_kinds(
         &self,
         node_id: NodeId,
-    ) -> impl Iterator<Item = (/* parent */ AstKind<'a>, /* grandparent */ AstKind<'a>)> + Clone + '_
-    {
-        let parents_iter = iter::once(self.nodes().kind(node_id)).chain(
-            self.nodes().ancestor_kinds(node_id).filter(|kind| Self::is_relevant_kind(*kind)),
-        );
+    ) -> impl Iterator<Item = (/* parent */ AstKind<'a>, /* grandparent */ AstKind<'a>)> + '_ {
+        let mut parent = Some(self.nodes().kind(node_id));
+        let mut ancestors =
+            self.nodes().ancestor_kinds(node_id).filter(|kind| Self::is_relevant_kind(*kind));
 
-        let grandparents_iter = parents_iter.clone().skip(1);
-
-        parents_iter.zip(grandparents_iter)
+        iter::from_fn(move || {
+            let current = parent?;
+            if let Some(grandparent) = ancestors.next() {
+                parent = Some(grandparent);
+                Some((current, grandparent))
+            } else {
+                parent = None;
+                None
+            }
+        })
     }
 
     #[inline]

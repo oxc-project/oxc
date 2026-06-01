@@ -876,8 +876,11 @@ impl<'a> ArrowFunctionConverter<'a> {
     ) {
         let original_scope_id = ctx.scoping().symbol_scope_id(binding.symbol_id);
         if target_scope_id != original_scope_id {
-            ctx.scoping_mut().set_symbol_scope_id(binding.symbol_id, target_scope_id);
-            ctx.scoping_mut().move_binding(original_scope_id, target_scope_id, binding.name);
+            ctx.scoping_mut().move_binding_by_symbol_id(
+                original_scope_id,
+                target_scope_id,
+                binding.symbol_id,
+            );
         }
     }
 

@@ -1,5 +1,4 @@
 import Tinypool from "tinypool";
-import { resolvePlugins } from "../libs/apis";
 import type {
   FormatFileParam,
   FormatEmbeddedCodeParam,
@@ -10,7 +9,7 @@ import type {
 // Worker pool for parallel Prettier formatting
 let pool: Tinypool | null = null;
 
-export async function initExternalFormatter(numThreads: number): Promise<string[]> {
+export async function initExternalFormatter(numThreads: number): Promise<void> {
   pool = new Tinypool({
     filename: new URL("./cli-worker.js", import.meta.url).href,
     minThreads: numThreads,
@@ -23,8 +22,6 @@ export async function initExternalFormatter(numThreads: number): Promise<string[
     // `process.env` is not inherited (likely a bug), so it needs to be explicitly specified.
     env: process.env as Record<string, string>,
   });
-
-  return resolvePlugins();
 }
 
 export async function disposeExternalFormatter(): Promise<void> {

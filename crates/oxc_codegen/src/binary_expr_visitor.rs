@@ -10,7 +10,7 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::{Codegen, Context, Operator, r#gen::GenExpr};
+use crate::{Codegen, Context, Operator, cjs_module_lexer, r#gen::GenExpr};
 
 #[derive(Clone, Copy)]
 pub enum Binaryish<'a> {
@@ -124,7 +124,9 @@ impl<'a> BinaryExpressionVisitor<'a> {
             };
 
             let Some(left_binary) = left_binary else {
-                left.gen_expr(p, v.left_precedence, v.ctx);
+                if !cjs_module_lexer::try_print_equality_string(p, v.operator, left) {
+                    left.gen_expr(p, v.left_precedence, v.ctx);
+                }
                 v.visit_right_and_finish(p);
                 break;
             };
@@ -223,7 +225,10 @@ impl<'a> BinaryExpressionVisitor<'a> {
         p.print_soft_space();
         self.operator.r#gen(p);
         p.print_soft_space();
-        self.e.right().gen_expr(p, self.right_precedence, self.ctx);
+        let right = self.e.right();
+        if !cjs_module_lexer::try_print_equality_string(p, self.operator, right) {
+            right.gen_expr(p, self.right_precedence, self.ctx);
+        }
         if self.wrap {
             p.print_ascii_byte(b')');
         }

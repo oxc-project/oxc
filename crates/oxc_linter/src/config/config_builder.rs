@@ -530,6 +530,7 @@ impl ConfigStoreBuilder {
 
                 Ok::<_, Vec<OverrideRulesError>>(ResolvedOxlintOverride {
                     files: override_config.files,
+                    exclude_files: override_config.exclude_files,
                     env: override_config.env,
                     globals: override_config.globals,
                     plugins: override_config.plugins,
@@ -1439,6 +1440,15 @@ mod test {
             plugin_config.plugins(),
             extends_plugin_config.plugins(),
             "Extending a config with a plugin is the same as adding it directly"
+        );
+
+        // Test 9: Child Config with plugins extends parent with default plugins (not specified by user)
+        let child_with_plugins_parent_no_plugin_config = config_store_from_path(
+            "fixtures/extends_config/plugins/child_with_plugins_parent_default_plugin.json",
+        );
+        assert_eq!(
+            child_with_plugins_parent_no_plugin_config.plugins(),
+            LintPlugins::JEST | LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
         );
     }
 

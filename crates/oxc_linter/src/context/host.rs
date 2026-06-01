@@ -49,6 +49,10 @@ pub struct ContextSubHost<'a> {
 }
 
 impl<'a> ContextSubHost<'a> {
+    pub(crate) fn source_text_offset(&self) -> u32 {
+        self.source_text_offset
+    }
+
     /// # Panics
     /// If `semantic.cfg()` is `None`.
     pub fn new(

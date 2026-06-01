@@ -195,15 +195,16 @@ fn is_var_declarator_or_test_block<'a>(
     match node.kind() {
         AstKind::VariableDeclarator(_) => return true,
         AstKind::CallExpression(call_expr) => {
+            let node_name = get_node_name(&call_expr.callee);
+
+            if additional_test_block_functions.contains(&node_name) {
+                return true;
+            }
+
             if let Some(jest_node) = id_nodes_mapping.get(&node.id())
                 && let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, jest_node, ctx)
             {
                 return matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test));
-            }
-
-            let node_name = get_node_name(&call_expr.callee);
-            if additional_test_block_functions.contains(&node_name) {
-                return true;
             }
 
             let parent = ctx.nodes().parent_node(node.id());

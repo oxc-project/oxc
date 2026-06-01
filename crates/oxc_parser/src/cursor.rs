@@ -444,7 +444,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 return (list, None);
             }
-            if !self.at(separator) {
+            if kind != separator {
                 self.set_fatal_error(diagnostics::expect_closing_or_separator(
                     close.to_str(),
                     separator.to_str(),
@@ -491,7 +491,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 return None;
             }
-            if !self.at(separator) {
+            if kind != separator {
                 self.set_fatal_error(diagnostics::expect_closing_or_separator(
                     close.to_str(),
                     separator.to_str(),

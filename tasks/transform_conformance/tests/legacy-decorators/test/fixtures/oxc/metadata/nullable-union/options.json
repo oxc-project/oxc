@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    [
+      "transform-legacy-decorator",
+      {
+        "emitDecoratorMetadata": true,
+        "strictNullChecks": false
+      }
+    ]
+  ]
+}

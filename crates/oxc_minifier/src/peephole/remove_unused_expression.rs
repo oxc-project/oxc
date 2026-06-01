@@ -12,6 +12,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::symbol::SymbolId;
 
 use super::PeepholeOptimizations;
+use super::fold_constants::is_cjs_module_exports_hint;
 
 impl<'a> PeepholeOptimizations {
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
@@ -92,6 +93,19 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn remove_unused_logical_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+        // Preserve `0 && (module.exports = { ... })` — see
+        // `is_cjs_module_exports_hint` in `fold_constants.rs`. esbuild emits
+        // this shape on Node platform as a `cjs-module-lexer` hint
+        // (https://github.com/evanw/esbuild/blob/v0.28.0/internal/linker/linker.go#L5127-L5138).
+        // Without this guard, callers that disable
+        // `treeshake.property_write_side_effects` (e.g. rolldown / vite)
+        // reach the `!may_have_side_effects` branch below and silently drop
+        // the hint.
+        if let Expression::LogicalExpression(logical_expr) = e
+            && is_cjs_module_exports_hint(&logical_expr.right)
+        {
+            return false;
+        }
         if !e.may_have_side_effects(ctx) {
             return true;
         }

@@ -1,0 +1,675 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:10]
+ 1 │ <address role="button" />
+   ·          ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:10]
+ 1 │ <article role="button" />
+   ·          ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <aside role="button" />
+   ·        ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:13]
+ 1 │ <blockquote role="button" />
+   ·             ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <br role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:10]
+ 1 │ <caption role="button" />
+   ·          ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <code role="button" />
+   ·       ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <dd role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <del role="button" />
+   ·      ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:10]
+ 1 │ <details role="button" />
+   ·          ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <dfn role="button" />
+   ·      ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <dir role="button" />
+   ·      ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <dl role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <dt role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <em role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:11]
+ 1 │ <fieldset role="button" />
+   ·           ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:13]
+ 1 │ <figcaption role="button" />
+   ·             ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:9]
+ 1 │ <figure role="button" />
+   ·         ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:9]
+ 1 │ <footer role="button" />
+   ·         ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <form role="button" />
+   ·       ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h1 role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h2 role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h3 role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h4 role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h5 role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h6 role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <hr role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <html role="button" />
+   ·       ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:9]
+ 1 │ <iframe role="button" />
+   ·         ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <img role="button" />
+   ·      ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <ins role="button" />
+   ·      ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <label role="button" />
+   ·        ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:9]
+ 1 │ <legend role="button" />
+   ·         ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <li role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <main role="button" />
+   ·       ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <mark role="button" />
+   ·       ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:10]
+ 1 │ <marquee role="button" />
+   ·          ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <menu role="button" />
+   ·       ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <meter role="button" />
+   ·        ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <nav role="button" />
+   ·      ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ol role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:11]
+ 1 │ <optgroup role="button" />
+   ·           ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:9]
+ 1 │ <output role="button" />
+   ·         ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <pre role="button" />
+   ·      ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:11]
+ 1 │ <progress role="button" />
+   ·           ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <ruby role="button" />
+   ·       ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:9]
+ 1 │ <strong role="button" />
+   ·         ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <sub role="button" />
+   ·      ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <sup role="button" />
+   ·      ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <table role="button" />
+   ·        ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <tbody role="button" />
+   ·        ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <tfoot role="button" />
+   ·        ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <thead role="button" />
+   ·        ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <time role="button" />
+   ·       ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ul role="button" />
+   ·     ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:4]
+ 1 │ <p role="button" />
+   ·    ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:10]
+ 1 │ <section role="button" aria-label="Aardvark" />
+   ·          ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <main role="menuitem" />
+   ·       ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:10]
+ 1 │ <article role="menuitem" />
+   ·          ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <dd role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <dfn role="menuitem" />
+   ·      ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <dt role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:11]
+ 1 │ <fieldset role="menuitem" />
+   ·           ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:9]
+ 1 │ <figure role="menuitem" />
+   ·         ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:7]
+ 1 │ <form role="menuitem" />
+   ·       ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h1 role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h2 role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h3 role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h4 role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h5 role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <h6 role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <hr role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <img role="menuitem" />
+   ·      ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:6]
+ 1 │ <nav role="menuitem" />
+   ·      ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ol role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <table role="menuitem" />
+   ·        ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <tbody role="menuitem" />
+   ·        ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <tfoot role="menuitem" />
+   ·        ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <thead role="menuitem" />
+   ·        ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:10]
+ 1 │ <Article role="button" />
+   ·          ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ul role="menu" />
+   ·     ───────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ul role="menubar" />
+   ·     ──────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ul role="radiogroup" />
+   ·     ─────────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ul role="tablist" />
+   ·     ──────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ul role="tree" />
+   ·     ───────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ul role="treegrid" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ol role="menu" />
+   ·     ───────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ol role="menubar" />
+   ·     ──────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ol role="radiogroup" />
+   ·     ─────────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ol role="tablist" />
+   ·     ──────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ol role="tree" />
+   ·     ───────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <ol role="treegrid" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <li role="tab" />
+   ·     ──────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <li role="menuitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <li role="row" />
+   ·     ──────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
+ 1 │ <li role="treeitem" />
+   ·     ───────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.

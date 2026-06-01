@@ -8,11 +8,15 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
+use oxc_ast::ast::Expression;
+use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_span::Span;
+use oxc_str::static_ident;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 mod comment;
 mod config;
+mod control_flow;
 mod express;
 mod jest;
 mod jsdoc;
@@ -21,6 +25,7 @@ mod promise;
 mod react;
 mod react_perf;
 mod regex;
+mod static_value;
 mod this_expression;
 mod typescript;
 mod unicorn;
@@ -29,9 +34,9 @@ mod vitest;
 mod vue;
 
 pub use self::{
-    comment::*, config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*,
-    react_perf::*, regex::*, this_expression::*, typescript::*, unicorn::*, url::*, vitest::*,
-    vue::*,
+    comment::*, config::*, control_flow::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*,
+    react::*, react_perf::*, regex::*, static_value::*, this_expression::*, typescript::*,
+    unicorn::*, url::*, vitest::*, vue::*,
 };
 
 /// List of Eslint rules that have TypeScript equivalents.
@@ -107,6 +112,17 @@ pub fn pad_fix_with_token_boundary(source_text: &str, span: Span, replacement: &
     }
     if needs_pad_end {
         replacement.push(' ');
+    }
+}
+
+pub fn is_string_raw_member_expression(expr: &Expression, scoping: &Scoping) -> bool {
+    if let Some(member) = expr.get_member_expr()
+        && member.static_property_name() == Some("raw")
+        && let Expression::Identifier(ident) = member.object().get_inner_expression()
+    {
+        ident.is_global_reference_name(static_ident!("String"), scoping)
+    } else {
+        false
     }
 }
 

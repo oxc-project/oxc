@@ -1,7 +1,11 @@
-import * as esbuild from "esbuild";
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import { rolldown } from "rolldown";
+
+// Rollup-compatible bundlers reserve `\0`-prefixed IDs for plugin virtual modules,
+// so Rolldown will not try to resolve these generated `?url` asset modules as files.
+const NEW_URL_ASSET_PREFIX = "\0new-url-asset:";
 
 async function main() {
   const args = parseArgs({
@@ -14,36 +18,39 @@ async function main() {
   });
 
   // bundle wasm.js -> browser-bundle.js
-  await esbuild.build({
-    entryPoints: ["./src-js/wasm.js"],
-    outfile: "browser-bundle.js",
-    alias: {
-      "@oxc-parser/binding-wasm32-wasi": "./src-js/parser.wasi-browser.js",
-    },
-    bundle: true,
+  const bundle = await rolldown({
+    input: "./src-js/wasm.js",
     platform: "browser",
-    format: "esm",
-    logLevel: "info",
+    resolve: {
+      alias: {
+        "@oxc-parser/binding-wasm32-wasi": path.resolve("./src-js/parser.wasi-browser.js"),
+      },
+    },
     plugins: [
       {
         name: "patch-new-url",
-        setup(build) {
-          build.onResolve({ filter: /\?url$/ }, async (args) => {
-            const path = args.path.replace(/\?url$/, "");
-            return {
-              namespace: "new-url-asset",
-              path,
-            };
-          });
-          build.onLoad({ namespace: "new-url-asset", filter: /.*/ }, async (args) => {
-            return {
-              contents: `export default new URL(${JSON.stringify(args.path)}, import.meta.url).href`,
-            };
-          });
+        resolveId(source) {
+          if (source.endsWith("?url")) {
+            return `${NEW_URL_ASSET_PREFIX}${source.replace(/\?url$/, "")}`;
+          }
+        },
+        load(id) {
+          if (id.startsWith(NEW_URL_ASSET_PREFIX)) {
+            const assetPath = id.slice(NEW_URL_ASSET_PREFIX.length);
+            return `export default new URL(${JSON.stringify(assetPath)}, import.meta.url).href`;
+          }
         },
       },
     ],
   });
+  try {
+    await bundle.write({
+      file: "browser-bundle.js",
+      format: "esm",
+    });
+  } finally {
+    await bundle.close();
+  }
 
   if (args.values.npmDir) {
     const pkgDir = path.resolve(args.values.npmDir, "wasm32-wasi");

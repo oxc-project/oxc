@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  "compilerOptions": {
+    /* Projects */
+    // "incremental": true,
+    // "composite": true,
+
+    /* Language and Environment */
+    "target": "es2016"
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  "compilerOptions": {
+    /* Projects */
+    // "incremental": true,
+    // "composite": true,
+
+    /* Language and Environment */
+    "target": "es2016"
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  "compilerOptions": {
+    /* Projects */
+    // "incremental": true,
+    // "composite": true,
+
+    /* Language and Environment */
+    "target": "es2016"
+  }
+}
+
+===================== End =====================

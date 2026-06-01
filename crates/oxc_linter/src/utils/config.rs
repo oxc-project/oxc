@@ -38,3 +38,13 @@ where
         .transpose()
         .map_err(D::Error::custom)
 }
+
+pub fn deserialize_required_regex_option<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    let pattern = String::deserialize(deserializer)?;
+    RegexBuilder::new(&pattern).build().map(Some).map_err(D::Error::custom)
+}
