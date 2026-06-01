@@ -700,20 +700,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[cold]
     pub(crate) fn check_getter(&mut self, function: &Function<'a>) {
-        if !function.params.items.is_empty() {
+        if let Some(type_parameters) = &function.type_parameters {
+            self.error(diagnostics::accessor_cannot_have_type_parameters(type_parameters.span));
+        } else if !function.params.items.is_empty() {
             self.error(diagnostics::getter_parameters(function.params.span));
         }
     }
 
     #[cold]
     pub(crate) fn check_setter(&mut self, function: &Function<'a>) {
-        if let Some(rest) = &function.params.rest {
-            self.error(diagnostics::setter_with_rest_parameter(rest.span));
+        if let Some(type_parameters) = &function.type_parameters {
+            self.error(diagnostics::accessor_cannot_have_type_parameters(type_parameters.span));
         } else if function.params.parameters_count() != 1 {
             self.error(diagnostics::setter_with_parameters(
                 function.params.span,
                 function.params.parameters_count(),
             ));
+        } else if let Some(rest) = &function.params.rest {
+            self.error(diagnostics::setter_with_rest_parameter(rest.span));
         } else if self.is_ts && function.params.items.first().unwrap().initializer.is_some() {
             self.error(diagnostics::setter_with_initializer(function.params.span));
         }

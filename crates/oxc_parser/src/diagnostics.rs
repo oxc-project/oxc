@@ -751,6 +751,11 @@ pub fn a_set_accessor_cannot_have_a_return_type_annotation(span: Span) -> OxcDia
 }
 
 #[cold]
+pub fn accessor_cannot_have_type_parameters(span: Span) -> OxcDiagnostic {
+    ts_error("1094", "An accessor cannot have type parameters.").with_label(span)
+}
+
+#[cold]
 pub fn return_statement_only_in_function_body(span: Span) -> OxcDiagnostic {
     ts_error("1108", "A 'return' statement can only be used within a function body.")
         .with_label(span)
