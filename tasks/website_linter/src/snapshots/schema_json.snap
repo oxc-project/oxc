@@ -2666,6 +2666,9 @@ expression: json
         "vue/prefer-import-from-vue": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/prop-name-casing": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/require-default-export": {
           "$ref": "#/definitions/DummyRule"
         },

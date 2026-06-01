@@ -816,6 +816,7 @@ pub use crate::rules::vue::no_shared_component_data::NoSharedComponentData as Vu
 pub use crate::rules::vue::no_this_in_before_route_enter::NoThisInBeforeRouteEnter as VueNoThisInBeforeRouteEnter;
 pub use crate::rules::vue::no_watch_after_await::NoWatchAfterAwait as VueNoWatchAfterAwait;
 pub use crate::rules::vue::prefer_import_from_vue::PreferImportFromVue as VuePreferImportFromVue;
+pub use crate::rules::vue::prop_name_casing::PropNameCasing as VuePropNameCasing;
 pub use crate::rules::vue::require_default_export::RequireDefaultExport as VueRequireDefaultExport;
 pub use crate::rules::vue::require_prop_type_constructor::RequirePropTypeConstructor as VueRequirePropTypeConstructor;
 pub use crate::rules::vue::require_render_return::RequireRenderReturn as VueRequireRenderReturn;
@@ -1653,6 +1654,7 @@ pub enum RuleEnum {
     VueNoThisInBeforeRouteEnter(VueNoThisInBeforeRouteEnter),
     VueNoWatchAfterAwait(VueNoWatchAfterAwait),
     VuePreferImportFromVue(VuePreferImportFromVue),
+    VuePropNameCasing(VuePropNameCasing),
     VueRequireDefaultExport(VueRequireDefaultExport),
     VueRequirePropTypeConstructor(VueRequirePropTypeConstructor),
     VueRequireRenderReturn(VueRequireRenderReturn),
@@ -2577,7 +2579,8 @@ const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = VUE_NO_RESERVED_COMPONENT_NAMES_I
 const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = VUE_NO_SHARED_COMPONENT_DATA_ID + 1usize;
 const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID + 1usize;
 const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_NO_WATCH_AFTER_AWAIT_ID + 1usize;
-const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
+const VUE_PROP_NAME_CASING_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
+const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PROP_NAME_CASING_ID + 1usize;
 const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
 const VUE_REQUIRE_RENDER_RETURN_ID: usize = VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID + 1usize;
 const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = VUE_REQUIRE_RENDER_RETURN_ID + 1usize;
@@ -3525,6 +3528,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID,
             Self::VueNoWatchAfterAwait(_) => VUE_NO_WATCH_AFTER_AWAIT_ID,
             Self::VuePreferImportFromVue(_) => VUE_PREFER_IMPORT_FROM_VUE_ID,
+            Self::VuePropNameCasing(_) => VUE_PROP_NAME_CASING_ID,
             Self::VueRequireDefaultExport(_) => VUE_REQUIRE_DEFAULT_EXPORT_ID,
             Self::VueRequirePropTypeConstructor(_) => VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID,
             Self::VueRequireRenderReturn(_) => VUE_REQUIRE_RENDER_RETURN_ID,
@@ -4458,6 +4462,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::NAME,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::NAME,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::NAME,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::NAME,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::NAME,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::NAME,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::NAME,
@@ -5449,6 +5454,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::CATEGORY,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::CATEGORY,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::CATEGORY,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::CATEGORY,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::CATEGORY,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::CATEGORY,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::CATEGORY,
@@ -6383,6 +6389,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::FIX,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::FIX,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FIX,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::FIX,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::FIX,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::FIX,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::FIX,
@@ -7577,6 +7584,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::documentation(),
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::documentation(),
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::documentation(),
+            Self::VuePropNameCasing(_) => VuePropNameCasing::documentation(),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::documentation(),
             Self::VueRequirePropTypeConstructor(_) => {
                 VueRequirePropTypeConstructor::documentation()
@@ -9925,6 +9933,8 @@ impl RuleEnum {
                 .or_else(|| VueNoWatchAfterAwait::schema(generator)),
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::config_schema(generator)
                 .or_else(|| VuePreferImportFromVue::schema(generator)),
+            Self::VuePropNameCasing(_) => VuePropNameCasing::config_schema(generator)
+                .or_else(|| VuePropNameCasing::schema(generator)),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::config_schema(generator)
                 .or_else(|| VueRequireDefaultExport::schema(generator)),
             Self::VueRequirePropTypeConstructor(_) => {
@@ -10767,6 +10777,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => "vue",
             Self::VueNoWatchAfterAwait(_) => "vue",
             Self::VuePreferImportFromVue(_) => "vue",
+            Self::VuePropNameCasing(_) => "vue",
             Self::VueRequireDefaultExport(_) => "vue",
             Self::VueRequirePropTypeConstructor(_) => "vue",
             Self::VueRequireRenderReturn(_) => "vue",
@@ -13391,6 +13402,9 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => {
                 Ok(Self::VuePreferImportFromVue(VuePreferImportFromVue::from_configuration(value)?))
             }
+            Self::VuePropNameCasing(_) => {
+                Ok(Self::VuePropNameCasing(VuePropNameCasing::from_configuration(value)?))
+            }
             Self::VueRequireDefaultExport(_) => Ok(Self::VueRequireDefaultExport(
                 VueRequireDefaultExport::from_configuration(value)?,
             )),
@@ -14240,6 +14254,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.to_configuration(),
             Self::VueNoWatchAfterAwait(rule) => rule.to_configuration(),
             Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
+            Self::VuePropNameCasing(rule) => rule.to_configuration(),
             Self::VueRequireDefaultExport(rule) => rule.to_configuration(),
             Self::VueRequirePropTypeConstructor(rule) => rule.to_configuration(),
             Self::VueRequireRenderReturn(rule) => rule.to_configuration(),
@@ -15073,6 +15088,7 @@ impl RuleEnum {
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run(node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run(node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
+                Self::VuePropNameCasing(rule) => rule.run(node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run(node, ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run(node, ctx),
@@ -15899,6 +15915,7 @@ impl RuleEnum {
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run(node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run(node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
+                Self::VuePropNameCasing(rule) => rule.run(node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run(node, ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run(node, ctx),
@@ -16732,6 +16749,7 @@ impl RuleEnum {
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_once(ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_once(ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
+                Self::VuePropNameCasing(rule) => rule.run_once(ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_once(ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run_once(ctx),
@@ -17558,6 +17576,7 @@ impl RuleEnum {
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_once(ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_once(ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
+                Self::VuePropNameCasing(rule) => rule.run_once(ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_once(ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run_once(ctx),
@@ -18648,6 +18667,7 @@ impl RuleEnum {
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VuePropNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19730,6 +19750,7 @@ impl RuleEnum {
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VuePropNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20554,6 +20575,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.should_run(ctx),
             Self::VueNoWatchAfterAwait(rule) => rule.should_run(ctx),
             Self::VuePreferImportFromVue(rule) => rule.should_run(ctx),
+            Self::VuePropNameCasing(rule) => rule.should_run(ctx),
             Self::VueRequireDefaultExport(rule) => rule.should_run(ctx),
             Self::VueRequirePropTypeConstructor(rule) => rule.should_run(ctx),
             Self::VueRequireRenderReturn(rule) => rule.should_run(ctx),
@@ -21747,6 +21769,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::IS_TSGOLINT_RULE,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::IS_TSGOLINT_RULE,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::IS_TSGOLINT_RULE,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::IS_TSGOLINT_RULE,
             Self::VueRequirePropTypeConstructor(_) => {
                 VueRequirePropTypeConstructor::IS_TSGOLINT_RULE
@@ -22742,6 +22765,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::VERSION,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::VERSION,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::VERSION,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::VERSION,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::VERSION,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::VERSION,
@@ -23772,6 +23796,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::HAS_CONFIG,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::HAS_CONFIG,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::HAS_CONFIG,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::HAS_CONFIG,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::HAS_CONFIG,
             Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::HAS_CONFIG,
@@ -24595,6 +24620,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.types_info(),
             Self::VueNoWatchAfterAwait(rule) => rule.types_info(),
             Self::VuePreferImportFromVue(rule) => rule.types_info(),
+            Self::VuePropNameCasing(rule) => rule.types_info(),
             Self::VueRequireDefaultExport(rule) => rule.types_info(),
             Self::VueRequirePropTypeConstructor(rule) => rule.types_info(),
             Self::VueRequireRenderReturn(rule) => rule.types_info(),
@@ -25418,6 +25444,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_info(),
             Self::VueNoWatchAfterAwait(rule) => rule.run_info(),
             Self::VuePreferImportFromVue(rule) => rule.run_info(),
+            Self::VuePropNameCasing(rule) => rule.run_info(),
             Self::VueRequireDefaultExport(rule) => rule.run_info(),
             Self::VueRequirePropTypeConstructor(rule) => rule.run_info(),
             Self::VueRequireRenderReturn(rule) => rule.run_info(),
@@ -26373,6 +26400,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueNoThisInBeforeRouteEnter(VueNoThisInBeforeRouteEnter::default()),
         RuleEnum::VueNoWatchAfterAwait(VueNoWatchAfterAwait::default()),
         RuleEnum::VuePreferImportFromVue(VuePreferImportFromVue::default()),
+        RuleEnum::VuePropNameCasing(VuePropNameCasing::default()),
         RuleEnum::VueRequireDefaultExport(VueRequireDefaultExport::default()),
         RuleEnum::VueRequirePropTypeConstructor(VueRequirePropTypeConstructor::default()),
         RuleEnum::VueRequireRenderReturn(VueRequireRenderReturn::default()),
