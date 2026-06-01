@@ -258,14 +258,15 @@ impl ArrowBodyStyle {
         match mode {
             Mode::Never => {
                 // Mode::Never: report any block body
-                if body.statements.is_empty() {
+                if body.is_empty() {
                     // TODO: implement a fix for empty block bodies
                     ctx.diagnostic(unexpected_empty_block_diagnostic(body.span));
                     return;
                 }
 
                 // Check if we can fix (single return with argument)
-                if body.statements.len() == 1
+                if body.directives.is_empty()
+                    && body.statements.len() == 1
                     && let Statement::ReturnStatement(return_statement) = &body.statements[0]
                     && let Some(return_arg) = &return_statement.argument
                 {
@@ -285,7 +286,7 @@ impl ArrowBodyStyle {
                 // Cannot auto-fix other cases
                 ctx.diagnostic(unexpected_block_with_unknown_help_diagnostic(body.span));
             }
-            Mode::AsNeeded if body.statements.len() == 1 => {
+            Mode::AsNeeded if body.directives.is_empty() && body.statements.len() == 1 => {
                 if let Statement::ReturnStatement(return_statement) = &body.statements[0] {
                     // Skip if requireReturnForObjectLiteral and returning an object
                     if self.1.require_return_for_object_literal
@@ -567,6 +568,7 @@ fn test() {
             "var foo = () => { return { bar: 0 }; };",
             Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
         ),
+        (r#"var foo = () => { "use strict"; return 0; };"#, None),
     ];
 
     let fail = vec![
@@ -730,6 +732,8 @@ fn test() {
         ("var foo = () => { return {a: 1}.b + c && d };", Some(serde_json::json!(["as-needed"]))),
         ("var foo = () => { return {a: 1}.b.c + d };", Some(serde_json::json!(["as-needed"]))),
         ("var foo = () => { return {a: 1}.b() + c };", Some(serde_json::json!(["as-needed"]))),
+        (r#"var foo = () => { "use strict"; return 0; };"#, Some(serde_json::json!(["never"]))),
+        (r#"var foo = () => { "use strict"; };"#, Some(serde_json::json!(["never"]))),
     ];
 
     let fix = vec![
@@ -1103,6 +1107,16 @@ var foo = () =>
             "const a = () => { return/* comment */1; };",
             "const a = () =>  /* comment */1 ;",
             Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            r#"var foo = () => { "use strict"; return 0; };"#,
+            r#"var foo = () => { "use strict"; return 0; };"#,
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            r#"var foo = () => { "use strict"; };"#,
+            r#"var foo = () => { "use strict"; };"#,
+            Some(serde_json::json!(["never"])),
         ),
     ];
 
