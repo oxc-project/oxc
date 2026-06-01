@@ -19,18 +19,21 @@ fn method_signature_style_diagnostic(
     config: MethodSignatureStyleConfig,
     span: Span,
 ) -> OxcDiagnostic {
-    let (message, help) = match config {
-        MethodSignatureStyleConfig::Property => (
-            "Use a property signature instead of a method signature.",
-            "Replace the method signature with a property whose type is a function type.",
-        ),
-        MethodSignatureStyleConfig::Method => (
-            "Use a method signature instead of a property signature.",
-            "Replace the property signature with method shorthand syntax.",
-        ),
-    };
+    match config {
+        MethodSignatureStyleConfig::Property => method_signature_style_property_diagnostic(span),
+        MethodSignatureStyleConfig::Method => method_signature_style_method_diagnostic(span),
+    }
+}
 
-    OxcDiagnostic::warn(message).with_help(help).with_label(span)
+fn method_signature_style_property_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use a property signature instead of a method signature.")
+        .with_help("Replace the method signature with a property whose type is a function type.")
+        .with_label(span)
+}
+fn method_signature_style_method_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use a method signature instead of a property signature.")
+        .with_help("Replace the property signature with method shorthand syntax.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, JsonSchema, Deserialize, Serialize)]
@@ -155,11 +158,9 @@ impl Rule for MethodSignatureStyle {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::TSMethodSignature(ts_method) if self.is_property_style() => {
-                if ts_method.kind != TSMethodSignatureKind::Method {
-                    return;
-                }
-
+            AstKind::TSMethodSignature(ts_method)
+                if self.is_property_style() && ts_method.kind == TSMethodSignatureKind::Method =>
+            {
                 ctx.diagnostic(method_signature_style_diagnostic(self.0, ts_method.span));
             }
             AstKind::TSPropertySignature(ts_property) if self.is_method_style() => {
