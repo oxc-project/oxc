@@ -8418,7 +8418,7 @@ snapshots:
 
   core-js-compat@3.49.0:
     dependencies:
-      browserslist: 4.28.1
+      browserslist: 4.28.2
 
   cors@2.8.5:
     dependencies:
@@ -8736,7 +8736,7 @@ snapshots:
 
   eslint-plugin-unicorn@57.0.0(eslint@10.4.0):
     dependencies:
-      '@babel/helper-validator-identifier': 7.28.5
+      '@babel/helper-validator-identifier': 7.29.7
       '@eslint-community/eslint-utils': 4.9.1(eslint@10.4.0)
       ci-info: 4.4.0
       clean-regexp: 1.0.0
@@ -9630,7 +9630,7 @@ snapshots:
 
   parse-json@8.3.0:
     dependencies:
-      '@babel/code-frame': 7.29.0
+      '@babel/code-frame': 7.29.7
       index-to-position: 1.2.0
       type-fest: 4.41.0
 
