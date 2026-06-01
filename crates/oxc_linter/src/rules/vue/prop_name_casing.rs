@@ -23,7 +23,7 @@ use crate::{
 };
 
 fn prop_name_casing_diagnostic(span: Span, name: &str, case_type: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prop \"{name}\" is not in {case_type}.")).with_label(span)
+    OxcDiagnostic::warn(format!("Prop '{name}' is not in {case_type}.")).with_label(span)
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

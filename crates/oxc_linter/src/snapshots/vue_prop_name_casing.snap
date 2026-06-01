@@ -1,9 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 490
 ---
 
-  ⚠ vue(prop-name-casing): Prop "greeting_text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         greeting_text: String
@@ -11,7 +10,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting_text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         greeting_text: String
@@ -19,7 +18,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting_text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
    ╭─[prop_name_casing.tsx:4:31]
  3 │                     export default {
  4 │                       props: ['greeting_text']
@@ -27,7 +26,7 @@ assertion_line: 490
  5 │                     }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greetingText" is not in snake_case.
+  ⚠ vue(prop-name-casing): Prop 'greetingText' is not in snake_case.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         greetingText: String
@@ -35,7 +34,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting-text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting-text' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         'greeting-text': String
@@ -43,7 +42,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting-text" is not in snake_case.
+  ⚠ vue(prop-name-casing): Prop 'greeting-text' is not in snake_case.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         'greeting-text': String
@@ -51,7 +50,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting_text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         'greeting_text': String
@@ -59,7 +58,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting-text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting-text' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:26]
  4 │                       props: {
  5 │                         ['greeting-text']: String
@@ -67,7 +66,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting_text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         greeting_text
@@ -75,7 +74,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "abc-123-def" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'abc-123-def' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         'abc-123-def': String
@@ -83,7 +82,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting-text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting-text' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:27]
  4 │                       props: {
  5 │                         [('greeting-text')]: String
@@ -91,7 +90,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "_item" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop '_item' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         _item: String
@@ -99,7 +98,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "_itemName" is not in snake_case.
+  ⚠ vue(prop-name-casing): Prop '_itemName' is not in snake_case.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         _itemName: String
@@ -107,7 +106,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting-text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting-text' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:26]
  4 │                       props: {
  5 │                         [`greeting-text`]: String
@@ -115,7 +114,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "/greeting-text/" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop '/greeting-text/' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:26]
  4 │                       props: {
  5 │                         [/greeting-text/]: String
@@ -123,7 +122,7 @@ assertion_line: 490
  6 │                       }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting_text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
    ╭─[prop_name_casing.tsx:4:21]
  3 │                   defineProps({
  4 │                     greeting_text: String
@@ -131,7 +130,7 @@ assertion_line: 490
  5 │                   })
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting_text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
    ╭─[prop_name_casing.tsx:3:32]
  2 │                   <script setup>
  3 │                   defineProps(['greeting_text'])
@@ -139,7 +138,7 @@ assertion_line: 490
  4 │                   </script>
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "greeting_text" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
    ╭─[prop_name_casing.tsx:4:21]
  3 │                   interface Props {
  4 │                     greeting_text: number
@@ -147,7 +146,7 @@ assertion_line: 490
  5 │                   }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "notIgnored_prop" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'notIgnored_prop' is not in camelCase.
    ╭─[prop_name_casing.tsx:5:25]
  4 │                       props: {
  5 │                         notIgnored_prop: String,
@@ -155,7 +154,7 @@ assertion_line: 490
  6 │                         'other-pattern': Number,
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "other-pattern" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'other-pattern' is not in camelCase.
    ╭─[prop_name_casing.tsx:6:25]
  5 │                         notIgnored_prop: String,
  6 │                         'other-pattern': Number,
@@ -163,7 +162,7 @@ assertion_line: 490
  7 │                         'pattern-valid': String
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "notIgnored_prop" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'notIgnored_prop' is not in camelCase.
    ╭─[prop_name_casing.tsx:4:31]
  3 │                     export default {
  4 │                       props: ['notIgnored_prop', 'pattern_invalid', 'validProp', 'pattern-valid']
@@ -171,7 +170,7 @@ assertion_line: 490
  5 │                     }
    ╰────
 
-  ⚠ vue(prop-name-casing): Prop "pattern_invalid" is not in camelCase.
+  ⚠ vue(prop-name-casing): Prop 'pattern_invalid' is not in camelCase.
    ╭─[prop_name_casing.tsx:4:50]
  3 │                     export default {
  4 │                       props: ['notIgnored_prop', 'pattern_invalid', 'validProp', 'pattern-valid']
