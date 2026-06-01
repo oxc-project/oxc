@@ -1,4 +1,3 @@
-use phf::{Set, phf_set};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -14,54 +13,12 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{find_property, is_vue_component_options_object_excluding_instance},
-};
-
-static HTML_ELEMENTS: Set<&'static str> = phf_set! {
-    "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi", "bdo",
-    "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code", "col", "colgroup",
-    "data", "datalist", "dd", "del", "details", "dfn", "dialog", "div", "dl", "dt", "em", "embed",
-    "fencedframe", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4",
-    "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "iframe", "img", "input", "ins",
-    "kbd", "label", "legend", "li", "link", "main", "map", "mark", "menu", "meta", "meter", "nav",
-    "noscript", "object", "ol", "optgroup", "option", "output", "p", "picture", "pre", "progress",
-    "q", "rp", "rt", "ruby", "s", "samp", "script", "search", "section", "select",
-    "selectedcontent", "slot", "small", "source", "span", "strong", "style", "sub", "summary",
-    "sup", "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "time",
-    "title", "tr", "track", "u", "ul", "var", "video", "wbr",
-};
-
-static DEPRECATED_HTML_ELEMENTS: Set<&'static str> = phf_set! {
-    "acronym", "applet", "basefont", "bgsound", "big", "blink", "center", "dir", "font", "frame",
-    "frameset", "isindex", "keygen", "listing", "marquee", "menuitem", "multicol", "nextid",
-    "nobr", "noembed", "noframes", "param", "plaintext", "rb", "rtc", "spacer", "strike", "tt",
-    "xmp",
-};
-
-static SVG_ELEMENTS: Set<&'static str> = phf_set! {
-    "a", "animate", "animateMotion", "animateTransform", "circle", "clipPath", "defs", "desc",
-    "ellipse", "feBlend", "feColorMatrix", "feComponentTransfer", "feComposite",
-    "feConvolveMatrix", "feDiffuseLighting", "feDisplacementMap", "feDistantLight", "feDropShadow",
-    "feFlood", "feFuncA", "feFuncB", "feFuncG", "feFuncR", "feGaussianBlur", "feImage", "feMerge",
-    "feMergeNode", "feMorphology", "feOffset", "fePointLight", "feSpecularLighting", "feSpotLight",
-    "feTile", "feTurbulence", "filter", "foreignObject", "g", "image", "line", "linearGradient",
-    "marker", "mask", "metadata", "mpath", "path", "pattern", "polygon", "polyline",
-    "radialGradient", "rect", "script", "set", "stop", "style", "svg", "switch", "symbol", "text",
-    "textPath", "title", "tspan", "use", "view",
-};
-
-static KEBAB_CASE_ELEMENTS: Set<&'static str> = phf_set! {
-    "annotation-xml", "color-profile", "font-face", "font-face-src", "font-face-uri",
-    "font-face-format", "font-face-name", "missing-glyph",
-};
-
-static VUE2_BUILTIN: Set<&'static str> = phf_set! {
-    "template", "slot", "component", "Component", "transition", "Transition", "transition-group",
-    "TransitionGroup", "keep-alive", "KeepAlive",
-};
-
-static VUE3_BUILTIN_EXTRA: Set<&'static str> = phf_set! {
-    "teleport", "Teleport", "suspense", "Suspense",
+    utils::{
+        VUE_RESERVED_DEPRECATED_HTML_ELEMENTS, VUE_RESERVED_HTML_ELEMENTS,
+        VUE_RESERVED_KEBAB_CASE_ELEMENTS, VUE_RESERVED_SVG_ELEMENTS, VUE2_BUILTIN_COMPONENT_NAMES,
+        VUE3_BUILTIN_COMPONENT_NAMES_EXTRA, find_property,
+        is_vue_component_options_object_excluding_instance,
+    },
 };
 
 fn reserved_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
@@ -203,12 +160,14 @@ impl NoReservedComponentNames {
     fn report_if_reserved(&self, name: &str, span: Span, ctx: &LintContext<'_>) {
         if self.is_reserved_html(name) {
             ctx.diagnostic(reserved_in_html_diagnostic(name, span));
-        } else if self.disallow_vue_built_in_components && VUE2_BUILTIN.contains(name) {
+        } else if self.disallow_vue_built_in_components
+            && VUE2_BUILTIN_COMPONENT_NAMES.contains(name)
+        {
             ctx.diagnostic(reserved_in_vue_diagnostic(name, span));
         } else if self.disallow_vue3_built_in_components {
-            if VUE2_BUILTIN.contains(name) {
+            if VUE2_BUILTIN_COMPONENT_NAMES.contains(name) {
                 ctx.diagnostic(reserved_in_vue_diagnostic(name, span));
-            } else if VUE3_BUILTIN_EXTRA.contains(name) {
+            } else if VUE3_BUILTIN_COMPONENT_NAMES_EXTRA.contains(name) {
                 ctx.diagnostic(reserved_in_vue3_diagnostic(name, span));
             } else if self.is_reserved_other(name) {
                 ctx.diagnostic(reserved_diagnostic(name, span));
@@ -219,12 +178,12 @@ impl NoReservedComponentNames {
     }
 
     fn is_reserved_html(&self, name: &str) -> bool {
-        if HTML_ELEMENTS.contains(name) {
+        if VUE_RESERVED_HTML_ELEMENTS.contains(name) {
             return true;
         }
         if !self.html_element_case_sensitive
             && let Some(lowered) = lower_first_char(name)
-            && HTML_ELEMENTS.contains(lowered.as_str())
+            && VUE_RESERVED_HTML_ELEMENTS.contains(lowered.as_str())
         {
             return true;
         }
@@ -232,23 +191,25 @@ impl NoReservedComponentNames {
     }
 
     fn is_reserved_other(&self, name: &str) -> bool {
-        if DEPRECATED_HTML_ELEMENTS.contains(name)
-            || KEBAB_CASE_ELEMENTS.contains(name)
-            || SVG_ELEMENTS.contains(name)
+        if VUE_RESERVED_DEPRECATED_HTML_ELEMENTS.contains(name)
+            || VUE_RESERVED_KEBAB_CASE_ELEMENTS.contains(name)
+            || VUE_RESERVED_SVG_ELEMENTS.contains(name)
         {
             return true;
         }
         if !self.html_element_case_sensitive {
             if let Some(lowered) = lower_first_char(name) {
-                if DEPRECATED_HTML_ELEMENTS.contains(lowered.as_str()) {
+                if VUE_RESERVED_DEPRECATED_HTML_ELEMENTS.contains(lowered.as_str()) {
                     return true;
                 }
-                if SVG_ELEMENTS.contains(lowered.as_str()) && is_all_ascii_lowercase(&lowered) {
+                if VUE_RESERVED_SVG_ELEMENTS.contains(lowered.as_str())
+                    && is_all_ascii_lowercase(&lowered)
+                {
                     return true;
                 }
             }
             if let Some(kebab) = pascal_to_kebab(name)
-                && KEBAB_CASE_ELEMENTS.contains(kebab.as_str())
+                && VUE_RESERVED_KEBAB_CASE_ELEMENTS.contains(kebab.as_str())
             {
                 return true;
             }
@@ -337,6 +298,30 @@ fn test() {
             Some(PathBuf::from("test.vue")),
         ),
         (
+            "<script>export default { name: 'Transition' }</script>",
+            None,
+            None,
+            Some(PathBuf::from("Transition.vue")),
+        ),
+        (
+            "<script>export default { name: 'Teleport' }</script>",
+            None,
+            None,
+            Some(PathBuf::from("Teleport.vue")),
+        ),
+        (
+            "<script>export default { name: 'Teleport' }</script>",
+            Some(serde_json::json!([ { "disallowVueBuiltInComponents": true } ])),
+            None,
+            Some(PathBuf::from("Teleport.vue")),
+        ),
+        (
+            "<script>export default { name: 'Div' }</script>",
+            Some(serde_json::json!([ { "htmlElementCaseSensitive": true } ])),
+            None,
+            Some(PathBuf::from("Div.vue")),
+        ),
+        (
             "<script>Vue.component('FooBar', {})</script>",
             None,
             None,
@@ -392,6 +377,18 @@ fn test() {
             None,
             Some(PathBuf::from("div.vue")),
         ),
+        (
+            "<script>export default { name: 'geolocation' }</script>",
+            None,
+            None,
+            Some(PathBuf::from("geolocation.vue")),
+        ),
+        (
+            "<script>export default { name: 'Geolocation' }</script>",
+            None,
+            None,
+            Some(PathBuf::from("Geolocation.vue")),
+        ),
         // pattern 2: Vue.component('<reserved>', component)
         (
             "<script>Vue.component('div', component)</script>",
@@ -431,12 +428,24 @@ fn test() {
             None,
             Some(PathBuf::from("div.vue")),
         ),
+        (
+            "<script setup>defineOptions({ name: 'geolocation' })</script>",
+            Some(serde_json::json!([ { "htmlElementCaseSensitive": true } ])),
+            None,
+            Some(PathBuf::from("geolocation.vue")),
+        ),
         // pattern 9: Vue 2 builtin + disallowVueBuiltInComponents
         (
             "<script>export default { name: 'Transition' }</script>",
             Some(serde_json::json!([ { "disallowVueBuiltInComponents": true } ])),
             None,
             Some(PathBuf::from("Transition.vue")),
+        ),
+        (
+            "<script>export default { name: 'Component' }</script>",
+            Some(serde_json::json!([ { "disallowVueBuiltInComponents": true } ])),
+            None,
+            Some(PathBuf::from("Component.vue")),
         ),
         // pattern 10: Vue 2 builtin detected under disallowVue3BuiltInComponents
         // (Vue3 builtin list includes Vue2; messageId is `reservedInVue`)
