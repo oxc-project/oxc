@@ -150,71 +150,77 @@ impl Rule for NoReservedKeys {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call) = node.kind() {
-            self.check_define_props(call, ctx);
-            return;
-        }
-        let AstKind::ObjectProperty(prop) = node.kind() else { return };
-        let Some(group_name) = prop.key.static_name() else { return };
-        let group = group_name.as_ref();
-        if !self.is_target_group(group) {
-            return;
-        }
-
-        let Some(parent) = ctx.nodes().ancestors(node.id()).next() else { return };
-        if !is_vue_component_options_object(parent, ctx) {
-            return;
-        }
-
-        match prop.value.get_inner_expression() {
-            Expression::ArrayExpression(arr) => {
-                for elem in &arr.elements {
-                    let Some(Expression::StringLiteral(lit)) = elem.as_expression() else {
-                        continue;
-                    };
-                    if self.is_reserved(lit.value.as_str()) {
-                        ctx.diagnostic(reserved_key_diagnostic(lit.value.as_str(), lit.span));
-                    }
+        match node.kind() {
+            AstKind::CallExpression(call) => self.check_define_props(call, ctx),
+            AstKind::ObjectProperty(prop) => {
+                let Some(group_name) = prop.key.static_name() else { return };
+                let group = group_name.as_ref();
+                if !self.is_target_group(group) {
+                    return;
                 }
-            }
-            Expression::ObjectExpression(obj) => {
-                self.check_keys(group, obj, ctx);
-            }
-            Expression::FunctionExpression(func) => {
-                let Some(body) = &func.body else { return };
-                for stmt in &body.statements {
-                    if let Statement::ReturnStatement(ret) = stmt
-                        && let Some(arg) = &ret.argument
-                        && let Expression::ObjectExpression(obj) = arg.get_inner_expression()
-                    {
-                        self.check_keys(group, obj, ctx);
-                    }
+
+                let Some(parent) = ctx.nodes().ancestors(node.id()).next() else { return };
+                if !is_vue_component_options_object(parent, ctx) {
+                    return;
                 }
-            }
-            Expression::ArrowFunctionExpression(arrow) => {
-                if arrow.expression {
-                    // `() => ({foo})` expression body
-                    if let Some(Statement::ExpressionStatement(es)) = arrow.body.statements.first()
-                        && let Expression::ObjectExpression(obj) =
-                            es.expression.get_inner_expression()
-                    {
-                        self.check_keys(group, obj, ctx);
-                    }
-                } else {
-                    // `() => { return {foo} }` block body
-                    for stmt in &arrow.body.statements {
-                        if let Statement::ReturnStatement(ret) = stmt
-                            && let Some(arg) = &ret.argument
-                            && let Expression::ObjectExpression(obj) = arg.get_inner_expression()
-                        {
-                            self.check_keys(group, obj, ctx);
+
+                match prop.value.get_inner_expression() {
+                    Expression::ArrayExpression(arr) => {
+                        for elem in &arr.elements {
+                            let Some(Expression::StringLiteral(lit)) = elem.as_expression() else {
+                                continue;
+                            };
+                            if self.is_reserved(lit.value.as_str()) {
+                                ctx.diagnostic(reserved_key_diagnostic(
+                                    lit.value.as_str(),
+                                    lit.span,
+                                ));
+                            }
                         }
                     }
+                    Expression::ObjectExpression(obj) => {
+                        self.check_keys(group, obj, ctx);
+                    }
+                    Expression::FunctionExpression(func) => {
+                        let Some(body) = &func.body else { return };
+                        for stmt in &body.statements {
+                            if let Statement::ReturnStatement(ret) = stmt
+                                && let Some(arg) = &ret.argument
+                                && let Expression::ObjectExpression(obj) =
+                                    arg.get_inner_expression()
+                            {
+                                self.check_keys(group, obj, ctx);
+                            }
+                        }
+                    }
+                    Expression::ArrowFunctionExpression(arrow) => {
+                        if arrow.expression {
+                            // `() => ({foo})` expression body
+                            if let Some(Statement::ExpressionStatement(es)) =
+                                arrow.body.statements.first()
+                                && let Expression::ObjectExpression(obj) =
+                                    es.expression.get_inner_expression()
+                            {
+                                self.check_keys(group, obj, ctx);
+                            }
+                        } else {
+                            // `() => { return {foo} }` block body
+                            for stmt in &arrow.body.statements {
+                                if let Statement::ReturnStatement(ret) = stmt
+                                    && let Some(arg) = &ret.argument
+                                    && let Expression::ObjectExpression(obj) =
+                                        arg.get_inner_expression()
+                                {
+                                    self.check_keys(group, obj, ctx);
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
                 }
             }
             _ => {}
         }
-    }
     }
 }
 
