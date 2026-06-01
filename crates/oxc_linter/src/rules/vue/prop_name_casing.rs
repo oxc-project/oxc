@@ -18,7 +18,7 @@ use crate::{
     ast_util::get_declaration_from_reference_id,
     context::LintContext,
     frameworks::FrameworkOptions,
-    rule::Rule,
+    rule::{Rule, TupleRuleConfig},
     utils::{find_property, is_vue_component_options_object_excluding_instance},
 };
 
@@ -48,18 +48,14 @@ impl CaseType {
 pub struct PropNameCasing(Box<Config>);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(default)]
-pub struct Config {
-    case_type: CaseType,
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct Options {
     ignore_props: Vec<String>,
 }
 
-impl Deref for PropNameCasing {
-    type Target = Config;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct Config(CaseType, Options);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -99,30 +95,13 @@ declare_oxc_lint!(
     PropNameCasing,
     vue,
     style,
-    config = PropNameCasing,
+    config = Config,
     version = "next",
 );
 
 impl Rule for PropNameCasing {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
-        let case_type = value
-            .get(0)
-            .and_then(|v| v.as_str())
-            .and_then(|s| match s {
-                "camelCase" => Some(CaseType::CamelCase),
-                "snake_case" => Some(CaseType::SnakeCase),
-                _ => None,
-            })
-            .unwrap_or_default();
-        let ignore_props = value
-            .get(1)
-            .and_then(|v| v.get("ignoreProps"))
-            .and_then(|v| v.as_array())
-            .map(|arr| {
-                arr.iter().filter_map(|v| v.as_str().map(ToString::to_string)).collect::<Vec<_>>()
-            })
-            .unwrap_or_default();
-        Ok(Self(Box::new(Config { case_type, ignore_props })))
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -224,13 +203,14 @@ impl PropNameCasing {
     }
 
     fn report_if_invalid(&self, name: &str, span: Span, ctx: &LintContext<'_>) {
-        if is_ignored(name, &self.ignore_props) {
+        let Config(case_type, options) = &*self.0;
+        if is_ignored(name, &options.ignore_props) {
             return;
         }
-        if check_case(name, self.case_type) {
+        if check_case(name, *case_type) {
             return;
         }
-        ctx.diagnostic(prop_name_casing_diagnostic(span, name, self.case_type.as_str()));
+        ctx.diagnostic(prop_name_casing_diagnostic(span, name, case_type.as_str()));
     }
 }
 
