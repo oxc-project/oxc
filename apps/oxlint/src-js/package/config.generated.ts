@@ -993,6 +993,7 @@ export interface DummyRuleMap {
   "typescript/explicit-function-return-type"?: DummyRule;
   "typescript/explicit-member-accessibility"?: DummyRule;
   "typescript/explicit-module-boundary-types"?: DummyRule;
+  "typescript/method-signature-style"?: DummyRule;
   "typescript/no-array-delete"?: DummyRule;
   "typescript/no-base-to-string"?: DummyRule;
   "typescript/no-confusing-non-null-assertion"?: DummyRule;
