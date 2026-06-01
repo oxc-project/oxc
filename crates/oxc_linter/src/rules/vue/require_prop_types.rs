@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, CallExpression, ExportDefaultDeclarationKind, Expression, NewExpression,
-        ObjectExpression, ObjectPropertyKind,
+        ArrayExpression, CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind,
+        Expression, NewExpression, ObjectExpression, ObjectPropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -65,17 +65,29 @@ declare_oxc_lint!(
 
 impl Rule for RequirePropTypes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if ctx.frameworks_options() == FrameworkOptions::VueSetup {
-            Self::run_on_setup(node, ctx);
-        } else {
-            Self::run_on_options(node, ctx);
+        match node.kind() {
+            AstKind::CallExpression(call_expr)
+                if ctx.frameworks_options() == FrameworkOptions::VueSetup =>
+            {
+                Self::run_on_setup(call_expr, ctx);
+            }
+            AstKind::ExportDefaultDeclaration(export_decl)
+                if ctx.frameworks_options() != FrameworkOptions::VueSetup =>
+            {
+                Self::run_on_options_export(export_decl, ctx);
+            }
+            AstKind::NewExpression(new_expr)
+                if ctx.frameworks_options() != FrameworkOptions::VueSetup =>
+            {
+                Self::run_on_options_new(new_expr, ctx);
+            }
+            _ => {}
         }
     }
 }
 
 impl RequirePropTypes {
-    fn run_on_setup<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    fn run_on_setup<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
         let Some(ident) = call_expr.callee.get_identifier_reference() else { return };
 
         if call_expr.type_arguments.is_some() {
@@ -84,15 +96,11 @@ impl RequirePropTypes {
 
         match ident.name.as_str() {
             "defineProps" => {
-                let Some(expr) = call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                else {
-                    return;
-                };
-                match expr {
+                match call_expr.arguments.first().and_then(|arg| arg.as_expression()) {
                     // foo: {
-                    Expression::ObjectExpression(obj) => Self::check_props(obj, ctx),
+                    Some(Expression::ObjectExpression(obj)) => Self::check_props(obj, ctx),
                     // foo: [
-                    Expression::ArrayExpression(arr) => Self::check_array_props(arr, ctx),
+                    Some(Expression::ArrayExpression(arr)) => Self::check_array_props(arr, ctx),
                     _ => {}
                 }
             }
@@ -137,21 +145,28 @@ impl RequirePropTypes {
         }
     }
 
-    fn run_on_options<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let obj = match node.kind() {
-            AstKind::ExportDefaultDeclaration(export_decl) => match &export_decl.declaration {
-                ExportDefaultDeclarationKind::ObjectExpression(obj) => Some(obj.as_ref()),
-                ExportDefaultDeclarationKind::CallExpression(call_expr) => {
-                    Self::find_props_in_call(call_expr)
-                }
-                _ => None,
-            },
-            AstKind::NewExpression(new_expr) => Self::find_props_in_new_expr(new_expr),
+    fn run_on_options_export<'a>(
+        export_decl: &ExportDefaultDeclaration<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let obj = match &export_decl.declaration {
+            ExportDefaultDeclarationKind::ObjectExpression(obj) => Some(obj.as_ref()),
+            ExportDefaultDeclarationKind::CallExpression(call_expr) => {
+                Self::find_props_in_call(call_expr)
+            }
             _ => None,
         };
 
         let Some(obj) = obj else { return };
+        Self::check_options_props(obj, ctx);
+    }
 
+    fn run_on_options_new<'a>(new_expr: &NewExpression<'a>, ctx: &LintContext<'a>) {
+        let Some(obj) = Self::find_props_in_new_expr(new_expr) else { return };
+        Self::check_options_props(obj, ctx);
+    }
+
+    fn check_options_props(obj: &ObjectExpression, ctx: &LintContext) {
         let Some(props_prop) = obj.properties.iter().find_map(|prop| {
             let ObjectPropertyKind::ObjectProperty(p) = prop else { return None };
             p.key.static_name().is_some_and(|k| k == "props").then_some(p)
@@ -172,15 +187,14 @@ impl RequirePropTypes {
         call_expr: &'a CallExpression<'a>,
     ) -> Option<&'a ObjectExpression<'a>> {
         let member_expr = call_expr.callee.get_member_expr()?;
-        if member_expr.static_property_name() != Some("extend") {
-            return None;
-        }
 
-        let arg = call_expr.arguments.first()?.as_expression()?;
-        match arg.get_inner_expression() {
-            Expression::ObjectExpression(obj) => Some(obj),
-            _ => None,
+        if member_expr.static_property_name() == Some("extend")
+            && let Expression::ObjectExpression(obj) =
+                call_expr.arguments.first()?.as_expression()?.get_inner_expression()
+        {
+            return Some(obj);
         }
+        None
     }
 
     fn find_props_in_new_expr<'a>(
@@ -241,15 +255,19 @@ impl RequirePropTypes {
 
 fn prop_value_has_type(obj: &ObjectExpression) -> bool {
     obj.properties.iter().any(|prop| {
-        let ObjectPropertyKind::ObjectProperty(p) = prop else { return false };
-        let Some(key) = p.key.static_name() else { return false };
-        if key == "type" {
-            if let Expression::ArrayExpression(a) = p.value.get_inner_expression() {
-                return !a.elements.is_empty();
+        if let ObjectPropertyKind::ObjectProperty(p) = prop
+            && let Some(key) = p.key.static_name()
+        {
+            if key == "type" {
+                if let Expression::ArrayExpression(a) = p.value.get_inner_expression() {
+                    return !a.elements.is_empty();
+                }
+                return true;
             }
-            return true;
+            key == "validator"
+        } else {
+            false
         }
-        key == "validator"
     })
 }
 
