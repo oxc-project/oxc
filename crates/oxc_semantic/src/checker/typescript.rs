@@ -276,19 +276,6 @@ fn check_type_name_is_reserved<'a>(
 
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
     let is_abstract = method.r#type.is_abstract();
-    let is_declare = ctx.class_table_builder.current_class_id.map_or(
-        ctx.source_type.is_typescript_definition(),
-        |id| {
-            let node_id = ctx.class_table_builder.classes.declarations[id];
-            let AstKind::Class(class) = ctx.nodes.get_node(node_id).kind() else {
-                #[cfg(debug_assertions)]
-                panic!("current_class_id is set, but does not point to a Class node.");
-                #[cfg(not(debug_assertions))]
-                return ctx.source_type.is_typescript_definition();
-            };
-            class.declare || ctx.source_type.is_typescript_definition()
-        },
-    );
 
     if is_abstract {
         // constructors cannot be abstract, no matter what
@@ -314,8 +301,23 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     }
 
     // Illegal to have `get foo();` or `set foo(a)`
-    if method.kind.is_accessor() && is_empty_body && !is_abstract && !is_declare {
-        ctx.error(diagnostics::accessor_without_body(method.key.span()));
+    if method.kind.is_accessor() && is_empty_body && !is_abstract {
+        let is_declare = ctx.class_table_builder.current_class_id.map_or(
+            ctx.source_type.is_typescript_definition(),
+            |id| {
+                let node_id = ctx.class_table_builder.classes.declarations[id];
+                let AstKind::Class(class) = ctx.nodes.get_node(node_id).kind() else {
+                    #[cfg(debug_assertions)]
+                    panic!("current_class_id is set, but does not point to a Class node.");
+                    #[cfg(not(debug_assertions))]
+                    return ctx.source_type.is_typescript_definition();
+                };
+                class.declare || ctx.source_type.is_typescript_definition()
+            },
+        );
+        if !is_declare {
+            ctx.error(diagnostics::accessor_without_body(method.key.span()));
+        }
     }
 }
 

@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  "a": 1, // trailing
+
+  // leading after blank
+  "b": 2
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  "a": 1, // trailing
+
+  // leading after blank
+  "b": 2
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  "a": 1, // trailing
+
+  // leading after blank
+  "b": 2
+}
+
+===================== End =====================

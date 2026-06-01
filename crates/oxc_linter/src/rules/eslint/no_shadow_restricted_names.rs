@@ -113,9 +113,13 @@ impl Rule for NoShadowRestrictedNames {
                 continue;
             }
 
+            let node_id = ctx.scoping().symbol_declaration(symbol_id);
+            if matches!(ctx.nodes().kind(node_id), AstKind::TSEnumMember(_)) {
+                continue;
+            }
+
             if name == "undefined" {
                 // Allow to declare `undefined` variable but not allow to assign value to it.
-                let node_id = ctx.scoping().symbol_declaration(symbol_id);
                 if let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id)
                     && declarator.init.is_none()
                     && ctx
@@ -166,6 +170,10 @@ fn test() {
         ("const foo = globalThis", None), // { "ecmaVersion": 2020 },
         ("function foo() { return globalThis; }", None), // { "ecmaVersion": 2020 },
         ("import { globalThis as foo } from 'bar'", None), // { "ecmaVersion": 2020, "sourceType": "module" }
+        (
+            "export enum Globals { undefined = 'undefined', NaN = 'nan', Infinity = 'infinity', eval = 'eval', arguments = 'arguments' }",
+            None,
+        ),
     ];
 
     let fail = vec![

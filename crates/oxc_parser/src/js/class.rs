@@ -73,7 +73,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             start_span = d.span.start;
         }
 
-        let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
+        let id = if self.cur_kind().is_binding_identifier()
+            && !(self.at(Kind::Implements)
+                && self.lexer.peek_token().kind().is_identifier_or_keyword())
+        {
             Some(self.parse_binding_identifier())
         } else {
             None

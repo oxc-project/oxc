@@ -723,7 +723,7 @@ fn test() {
         (
             "
             abstract class Test {
-              private abstract accessor foo: number;
+              private accessor foo: number;
             }
                   ",
             None,

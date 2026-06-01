@@ -348,7 +348,7 @@ fn test() {
         (
             "namespace A {
                export declare namespace B {
-                 declare namespace C {}
+                 namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
@@ -358,7 +358,7 @@ fn test() {
         (
             "namespace A {
                export declare namespace B {
-                 export declare namespace C {}
+                 export namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
@@ -428,7 +428,7 @@ fn test() {
         (
             "export namespace A {
                export declare namespace B {
-                 declare namespace C {}
+                 namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
@@ -438,7 +438,7 @@ fn test() {
         (
             "export namespace A {
                export declare namespace B {
-                 export declare namespace C {}
+                 export namespace C {}
                }
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),

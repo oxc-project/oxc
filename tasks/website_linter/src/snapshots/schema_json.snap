@@ -653,6 +653,9 @@ expression: json
         "jsdoc/require-yields": {
           "$ref": "#/definitions/DummyRule"
         },
+        "jsdoc/require-yields-description": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "jsdoc/require-yields-type": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -1338,6 +1341,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "prefer-exponentiation-operator": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "prefer-named-capture-group": {
           "$ref": "#/definitions/DummyRule"
         },
         "prefer-numeric-literals": {
@@ -2582,6 +2588,9 @@ expression: json
         "vitest/warn-todo": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/component-definition-name-casing": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/define-emits-declaration": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -2655,6 +2664,9 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "vue/require-default-export": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vue/require-prop-type-constructor": {
           "$ref": "#/definitions/DummyRule"
         },
         "vue/require-render-return": {
