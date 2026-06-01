@@ -64,7 +64,7 @@ declare_oxc_lint!(
     PreferNamedCaptureGroup,
     eslint,
     style,
-    version = "next",
+    version = "1.68.0",
 );
 
 impl Rule for PreferNamedCaptureGroup {

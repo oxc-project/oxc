@@ -83,7 +83,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = CaseType,
-    version = "next",
+    version = "1.68.0",
 );
 
 impl Rule for ComponentDefinitionNameCasing {
