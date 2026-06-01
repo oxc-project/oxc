@@ -3,7 +3,7 @@ commit: e5509e21
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1632/2640 (61.82%)
+Negative Passed: 1634/2640 (61.89%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -719,8 +719,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/operatorAddN
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalParamReferencingOtherParams2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalParamReferencingOtherParams3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalSetterParam.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/orderMattersForSignatureGroupIdentity.ts
 
@@ -1757,8 +1755,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration2.ts
 
@@ -10203,6 +10199,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·       ─
  12 │     ?(): any; //err
     ╰────
+
+  × TS(1051): A 'set' accessor cannot have an optional parameter.
+   ╭─[typescript/tests/cases/compiler/optionalSetterParam.ts:3:20]
+ 2 │ 
+ 3 │     public set bar(param?:any) { }
+   ·                    ──────────
+ 4 │ }
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/overloadConsecutiveness.ts:3:14]
@@ -25884,6 +25888,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  1 │ class C {
  2 │    set Foo(a = 1) { }
    ·           ───────
+ 3 │ }
+   ╰────
+
+  × TS(1051): A 'set' accessor cannot have an optional parameter.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts:2:12]
+ 1 │ class C {
+ 2 │    set Foo(a?: number) { }
+   ·            ──────────
  3 │ }
    ╰────
 
