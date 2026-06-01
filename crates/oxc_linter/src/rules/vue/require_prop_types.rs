@@ -437,6 +437,22 @@ fn test() {
                 props: {
                     foo: {
                         type: String
+                    } as PropOptions<string>
+                }
+            });
+            </script>
+            "#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"
+            <script lang="ts">
+            export default (Vue as VueConstructor<Vue>).extend({
+                props: {
+                    foo: {
+                        type: String
                     }
                 }
             });
