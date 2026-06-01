@@ -114,26 +114,6 @@ declare_oxc_lint!(
     /// </script>
     /// ```
     ///
-    /// ### Options
-    ///
-    /// This rule has an options object with the following defaults:
-    ///
-    /// ```json
-    /// {
-    ///   "reserved": [],
-    ///   "groups": []
-    /// }
-    /// ```
-    ///
-    /// #### `reserved`
-    ///
-    /// An array of extra key names to treat as reserved, in addition to the
-    /// built-in Vue instance properties.
-    ///
-    /// #### `groups`
-    ///
-    /// An array of extra component option groups to inspect, in addition to the
-    /// built-in `props` / `computed` / `data` / `asyncData` / `methods` / `setup`.
     NoReservedKeys,
     vue,
     correctness,
