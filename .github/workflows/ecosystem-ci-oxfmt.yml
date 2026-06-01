@@ -1,60 +1,74 @@
 name: Ecosystem CI (oxfmt)
 
 on:
-  issue_comment:
-    types: [created]
+  pull_request:
+    types: [labeled]
 
 permissions: {}
 
 concurrency:
-  group: ecosystem-ci-oxfmt-${{ github.event.issue.number }}
+  group: ecosystem-ci-oxfmt-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   trigger:
     if: >
-      github.event.issue.pull_request &&
-      contains(github.event.comment.body, '/oxfmt-ecosys') &&
-      (
-        github.event.comment.author_association == 'MEMBER' ||
-        github.event.comment.author_association == 'OWNER'
-      )
+      github.event.label.name == 'run-oxfmt-ecosystem-ci' &&
+      github.repository == 'oxc-project/oxc'
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      contents: read
     steps:
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        id: prepare
-        with:
-          script: |
-            const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-            });
-            await github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: context.payload.comment.id,
-              content: 'rocket',
-            });
-            const { data: comment } = await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `Triggering Oxfmt Ecosystem CI for \`${pr.head.ref}\`\nhttps://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml`,
-            });
-            core.setOutput('ref', `refs/pull/${context.issue.number}/head`);
-            core.setOutput('comment-id', comment.id);
-
       - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         id: app-token
         with:
           client-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: oxc-project
-          repositories: oxc-ecosystem-ci
+          repositories: |
+            ${{ github.event.repository.name }}
+            oxc-ecosystem-ci
+
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        id: prepare
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const issueNumber = context.payload.pull_request.number;
+            const branch = context.payload.pull_request.head.ref;
+            const body = `Triggering Oxfmt Ecosystem CI for \`${branch}\`\nhttps://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml`;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              per_page: 100,
+            });
+            const existing = comments.findLast((c) =>
+              c.user.login === 'oxc-guard[bot]' &&
+              c.body &&
+              (c.body.startsWith('Triggering Oxfmt Ecosystem CI') || c.body.startsWith('## [Oxfmt Ecosystem CI]'))
+            );
+
+            let commentId;
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+              commentId = existing.id;
+            } else {
+              const { data: created } = await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body,
+              });
+              commentId = created.id;
+            }
+
+            core.setOutput('ref', `refs/pull/${issueNumber}/head`);
+            core.setOutput('comment-id', commentId);
 
       - uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
         with:
@@ -64,7 +78,22 @@ jobs:
           ref: main
           inputs: >-
             {
-              "issue-number": "${{ github.event.issue.number }}",
+              "issue-number": "${{ github.event.pull_request.number }}",
               "comment-id": "${{ steps.prepare.outputs.comment-id }}",
               "ref": "${{ steps.prepare.outputs.ref }}"
+            }
+
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                name: 'run-oxfmt-ecosystem-ci',
+              });
+            } catch (error) {
+              if (error.status !== 404) throw error;
             }
