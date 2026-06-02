@@ -1331,6 +1331,7 @@ export interface DummyRuleMap {
   "vue/prefer-import-from-vue"?: DummyRule;
   "vue/prop-name-casing"?: DummyRule;
   "vue/require-default-export"?: DummyRule;
+  "vue/require-direct-export"?: DummyRule;
   "vue/require-prop-type-constructor"?: DummyRule;
   "vue/require-prop-types"?: DummyRule;
   "vue/require-render-return"?: DummyRule;
