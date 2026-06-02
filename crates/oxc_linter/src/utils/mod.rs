@@ -25,17 +25,19 @@ mod promise;
 mod react;
 mod react_perf;
 mod regex;
+mod static_value;
 mod this_expression;
 mod typescript;
 mod unicorn;
 mod url;
 mod vitest;
 mod vue;
+pub mod vue_casing;
 
 pub use self::{
     comment::*, config::*, control_flow::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*,
-    react::*, react_perf::*, regex::*, this_expression::*, typescript::*, unicorn::*, url::*,
-    vitest::*, vue::*,
+    react::*, react_perf::*, regex::*, static_value::*, this_expression::*, typescript::*,
+    unicorn::*, url::*, vitest::*, vue::*,
 };
 
 /// List of Eslint rules that have TypeScript equivalents.

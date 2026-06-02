@@ -3,12 +3,10 @@ commit: d9fe348c
 parser_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
 Positive Passed: 2222/2236 (99.37%)
-Negative Passed: 1693/1723 (98.26%)
+Negative Passed: 1708/1723 (99.13%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-ambiguity/input.ts
 
@@ -16,13 +14,7 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-param/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-function/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/namespace-function/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments-invalid/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/dts/invalid-class-implementation/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-script/input.ts
 
@@ -32,35 +24,13 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-within-single-statement-context/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-assignment/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-default/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-from/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-assignment/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-default/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-from/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-named/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-namespace-export/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-global-redeclare-block-level-variable-in-module/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/invalid-within-single-statement-context/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
 
@@ -12814,6 +12784,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
+  × TS(1221): Generators are not allowed in an ambient context.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:7:13]
+ 6 │   readonly *e() {}
+ 7 │   declare *f() {}
+   ·             ─────
+ 8 │   protected *g() {}
+   ╰────
+
   × TS(1183): An implementation cannot be declared in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:7:16]
  6 │   readonly *e() {}
@@ -12916,6 +12894,38 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │   constructor(private, public, static) {
    ·                                ──────
  3 │   }
+   ╰────
+
+  × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts:2:10]
+ 1 │ abstract class A extends Base {
+ 2 │   static abstract m1();
+   ·          ────────
+ 3 │   abstract static m1();
+   ╰────
+
+  × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts:3:12]
+ 2 │   static abstract m1();
+ 3 │   abstract static m1();
+   ·            ──────
+ 4 │ 
+   ╰────
+
+  × TS(1243): 'override' modifier cannot be used with 'declare' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts:5:11]
+ 4 │ 
+ 5 │   declare override prop1: any;
+   ·           ────────
+ 6 │   override declare prop2: any;
+   ╰────
+
+  × TS(1040): 'override' modifier cannot be used in an ambient context.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts:6:12]
+ 5 │   declare override prop1: any;
+ 6 │   override declare prop2: any;
+   ·            ───────
+ 7 │ }
    ╰────
 
   × TS(1071): 'abstract' modifier cannot appear on an index signature.
@@ -13079,6 +13089,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
+  × TS(1221): Generators are not allowed in an ambient context.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:4:14]
+ 3 │   readonly *e?() { }
+ 4 │   declare *f?() { }
+   ·              ──────
+ 5 │ }
+   ╰────
+
   × TS(1183): An implementation cannot be declared in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:4:17]
  3 │   readonly *e?() { }
@@ -13112,6 +13130,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  11 │ }
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1221): Generators are not allowed in an ambient context.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:10:19]
+  9 │   readonly *[e?.e]?() { }
+ 10 │   declare *[f?.f]?() { }
+    ·                   ──────
+ 11 │ }
+    ╰────
 
   × TS(1183): An implementation cannot be declared in ambient contexts.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:10:22]
@@ -13478,12 +13504,34 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   }
    ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/module-function/input.ts:2:18]
+ 1 │ declare module "m" {
+ 2 │   function foo() {}
+   ·                  ▲
+ 3 │ }
+   ╰────
+
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/namespace-class/input.ts:3:13]
  2 │   class C {
  3 │     field = "field";
    ·             ───────
  4 │   }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/namespace-function/input.ts:2:18]
+ 1 │ declare namespace n {
+ 2 │   function foo() {}
+   ·                  ▲
+ 3 │ }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/dts/invalid-class-implementation/input.ts:1:21]
+ 1 │ function foo(): any {}
+   ·                     ▲
    ╰────
 
   × TS(1039): Initializers are not allowed in ambient contexts.
@@ -13982,6 +14030,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-within-single-statement-context/input.ts:2:3]
+ 1 │ for (;;)
+ 2 │   interface I {}
+   ·   ──────────────
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × The keyword 'interface' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/new-line/input.ts:1:1]
  1 │ interface
@@ -14001,6 +14057,158 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/property-initializer/input.ts:1:25]
  1 │ interface I { x: number = 1;}
    ·                         ─
+   ╰────
+
+  × TS(1063): An export assignment cannot be used in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-assignment/input.ts:2:3]
+ 1 │ declare namespace N {
+ 2 │   export = N;
+   ·   ───────────
+ 3 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-default/input.ts:3:3]
+ 2 │ declare namespace N {
+ 3 │   export default x;
+   ·   ─────────────────
+ 4 │ }
+   ╰────
+
+  × TS(1194): Export declarations are not permitted in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-from/input.ts:2:3]
+ 1 │ declare namespace N {
+ 2 │   export { x } from "foo";
+   ·   ────────────────────────
+ 3 │   export * as ns from "foo";
+   ╰────
+
+  × TS(1194): Export declarations are not permitted in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-export-from/input.ts:3:3]
+ 2 │   export { x } from "foo";
+ 3 │   export * as ns from "foo";
+   ·   ──────────────────────────
+ 4 │ }
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts:2:3]
+ 1 │ declare namespace N {
+ 2 │   import "foo";
+   ·   ─────────────
+ 3 │   import { x } from "foo";
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts:3:3]
+ 2 │   import "foo";
+ 3 │   import { x } from "foo";
+   ·   ────────────────────────
+ 4 │   import * as ns from "foo";
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts:4:3]
+ 3 │   import { x } from "foo";
+ 4 │   import * as ns from "foo";
+   ·   ──────────────────────────
+ 5 │   import y = require("foo");
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts:5:3]
+ 4 │   import * as ns from "foo";
+ 5 │   import y = require("foo");
+   ·   ──────────────────────────
+ 6 │   import type = require("foo");
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-declare-import/input.ts:6:3]
+ 5 │   import y = require("foo");
+ 6 │   import type = require("foo");
+   ·   ─────────────────────────────
+ 7 │ }
+   ╰────
+
+  × TS(1063): An export assignment cannot be used in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-assignment/input.ts:2:3]
+ 1 │ namespace N {
+ 2 │   export = N;
+   ·   ───────────
+ 3 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-default/input.ts:3:3]
+ 2 │ namespace N {
+ 3 │   export default x;
+   ·   ─────────────────
+ 4 │ }
+   ╰────
+
+  × TS(1194): Export declarations are not permitted in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-from/input.ts:2:3]
+ 1 │ namespace N {
+ 2 │   export { x } from "foo";
+   ·   ────────────────────────
+ 3 │   export * as ns from "foo";
+   ╰────
+
+  × TS(1194): Export declarations are not permitted in a namespace.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-from/input.ts:3:3]
+ 2 │   export { x } from "foo";
+ 3 │   export * as ns from "foo";
+   ·   ──────────────────────────
+ 4 │ }
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts:2:3]
+ 1 │ namespace N {
+ 2 │   import "foo";
+   ·   ─────────────
+ 3 │   import { x } from "foo";
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts:3:3]
+ 2 │   import "foo";
+ 3 │   import { x } from "foo";
+   ·   ────────────────────────
+ 4 │   import * as ns from "foo";
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts:4:3]
+ 3 │   import { x } from "foo";
+ 4 │   import * as ns from "foo";
+   ·   ──────────────────────────
+ 5 │   import y = require("foo");
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts:5:3]
+ 4 │   import * as ns from "foo";
+ 5 │   import y = require("foo");
+   ·   ──────────────────────────
+ 6 │   import type = require("foo");
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-import/input.ts:6:3]
+ 5 │   import y = require("foo");
+ 6 │   import type = require("foo");
+   ·   ─────────────────────────────
+ 7 │ }
+   ╰────
+
+  × TS(1316): Global module exports may only appear at top level.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-namespace-export/input.ts:2:3]
+ 1 │ namespace N {
+ 2 │   export as namespace N;
+   ·   ──────────────────────
+ 3 │ }
    ╰────
 
   × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.
@@ -14371,6 +14579,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-abstract-02/input.ts:2:10]
+ 1 │ class Foo {
+ 2 │   static abstract {}
+   ·          ────────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-abstract-02/input.ts:2:19]
  1 │ class Foo {
@@ -14473,6 +14689,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ T = number
    ╰────
   help: Try inserting a semicolon here
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-alias/invalid-within-single-statement-context/input.ts:2:3]
+ 1 │ for (;;)
+ 2 │   type T = number;
+   ·   ────────────────
+   ╰────
+  help: Wrap this declaration in a block statement
 
   × Identifier expected after '?.'
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts:1:2]

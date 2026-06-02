@@ -4,8 +4,8 @@ use bitflags::bitflags;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, FormalParameter, IdentifierName, IdentifierReference, MethodDefinition,
-        MethodDefinitionKind, ObjectProperty, PropertyKind, TSAccessibility,
+        Expression, FormalParameter, Function, IdentifierName, IdentifierReference,
+        MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKind, TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -349,31 +349,32 @@ impl NoEmptyFunction {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> ViolationInfo<'a> {
-        for parent in ctx.nodes().ancestor_kinds(node.id()) {
+        let mut ancestors = ctx.nodes().ancestor_kinds(node.id());
+        while let Some(parent) = ancestors.next() {
             match parent {
                 AstKind::Function(f) => {
                     if let Some(name) = f.name() {
-                        let is_generator = f.generator;
-                        let is_async = f.r#async;
-
-                        if is_generator && self.allow.contains(Allowed::GeneratorFunctions) {
-                            return ViolationInfo::default();
-                        }
-                        if is_async && self.allow.contains(Allowed::AsyncFunctions) {
-                            return ViolationInfo::default();
-                        }
-                        if !is_generator && !is_async && self.allow.contains(Allowed::Function) {
+                        if self.is_allowed_function_expression(f) {
                             return ViolationInfo::default();
                         }
 
-                        let kind = if is_async {
+                        let kind = if f.r#async {
                             "async function"
-                        } else if is_generator {
+                        } else if f.generator {
                             "generator function"
                         } else {
                             "function"
                         };
                         return (kind, Some(name.into())).into();
+                    }
+                    if f.is_expression()
+                        && self.is_allowed_function_expression(f)
+                        && ancestors
+                            .clone()
+                            .next()
+                            .is_none_or(Self::is_plain_function_expression_container)
+                    {
+                        return ViolationInfo::default();
                     }
                 }
                 AstKind::ArrowFunctionExpression(arrow) => {
@@ -422,13 +423,7 @@ impl NoEmptyFunction {
                     if let Some(init) = &decl.init {
                         match init.get_inner_expression() {
                             Expression::FunctionExpression(function)
-                                if (function.r#async
-                                    && self.allow.contains(Allowed::AsyncFunctions)
-                                    || function.generator
-                                        && self.allow.contains(Allowed::GeneratorFunctions)
-                                    || !function.r#async
-                                        && !function.generator
-                                        && self.allow.contains(Allowed::Function)) =>
+                                if self.is_allowed_function_expression(function) =>
                             {
                                 return ViolationInfo::default();
                             }
@@ -507,16 +502,25 @@ impl NoEmptyFunction {
                     }
                     self.allow.contains(Allowed::Methods)
                 } else {
-                    if function.r#async && self.allow.contains(Allowed::AsyncFunctions)
-                        || function.generator && self.allow.contains(Allowed::GeneratorFunctions)
-                    {
-                        return true;
-                    }
-                    !function.r#async
-                        && !function.generator
-                        && self.allow.contains(Allowed::Function)
+                    self.is_allowed_function_expression(function)
                 }
             }
+        }
+    }
+
+    fn is_allowed_function_expression(&self, function: &Function) -> bool {
+        function.r#async && self.allow.contains(Allowed::AsyncFunctions)
+            || function.generator && self.allow.contains(Allowed::GeneratorFunctions)
+            || !function.r#async && !function.generator && self.allow.contains(Allowed::Function)
+    }
+
+    fn is_plain_function_expression_container(parent: AstKind) -> bool {
+        match parent {
+            AstKind::MethodDefinition(_) => false,
+            AstKind::ObjectProperty(property) => {
+                property.kind == PropertyKind::Init && !property.method
+            }
+            _ => true,
         }
     }
 
@@ -1079,6 +1083,17 @@ fn test() {
         (
             "class A extends B { override foo() {} }",
             Some(serde_json::json!([{ "allow": ["overrideMethods", "methods"] }])),
+        ),
+        (
+            "
+            const x = function () {};
+            function fetchData(callback = function () {}) {
+                callback();
+            }
+            button.onclick = function () {};
+            setTimeout(function () {}, 1000);
+            ",
+            Some(serde_json::json!([{ "allow": ["functions"] }])),
         ),
     ];
 

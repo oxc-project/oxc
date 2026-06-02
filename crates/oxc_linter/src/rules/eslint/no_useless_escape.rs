@@ -286,10 +286,6 @@ fn check_string(string: &str) -> Vec<usize> {
     offsets
 }
 
-#[expect(
-    clippy::collapsible_match,
-    reason = "changing to a guard causes fall-through to the catch-all arm"
-)]
 fn check_template(string: &str) -> Vec<usize> {
     if string.len() <= 1 {
         return vec![];

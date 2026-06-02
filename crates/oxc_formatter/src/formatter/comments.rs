@@ -158,6 +158,15 @@ impl<'a> Comments<'a> {
         &self.inner[self.printed_count..end]
     }
 
+    /// Returns the span of the first not-yet-printed comment, if any.
+    ///
+    /// Used by [`SourceText::get_lines_before`], which only needs that comment's
+    /// span (not the `Comment` itself) to skip leading trivia.
+    #[inline]
+    pub fn first_unprinted_span(&self) -> Option<Span> {
+        self.unprinted_comments().first().map(|c| c.span)
+    }
+
     /// Returns comments that have already been printed.
     #[inline]
     pub fn printed_comments(&self) -> &'a [Comment] {
@@ -405,8 +414,9 @@ impl<'a> Comments<'a> {
     ///
     /// `prettier-ignore` is also supported for compatibility.
     pub fn is_suppression_comment(&self, comment: &Comment) -> bool {
-        let text = self.source_text.text_for(&comment.content_span()).trim();
-        matches!(text, "oxfmt-ignore" | "prettier-ignore")
+        oxc_formatter_core::util::is_suppression_marker(
+            self.source_text.text_for(&comment.content_span()),
+        )
     }
 
     /// Checks if a comment is a type cast comment containing `@type` or `@satisfies`.

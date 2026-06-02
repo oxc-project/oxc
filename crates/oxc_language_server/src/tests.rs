@@ -1180,6 +1180,55 @@ mod test_suite {
     }
 
     #[tokio::test]
+    async fn test_watched_file_changed_triggers_both_workspaces() {
+        let init_options = InitializeRequestOptions {
+            dynamic_watchers: true,
+            workspace_folders: Some(vec![
+                WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() },
+                WorkspaceFolder {
+                    uri: WORKSPACE_2.parse().unwrap(),
+                    name: "workspace_2".to_string(),
+                },
+            ]),
+            ..Default::default()
+        };
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize_request_workspace_folders(init_options),
+        )
+        .await;
+
+        acknowledge_registrations(&mut server).await;
+
+        let file_change_notification =
+            did_change_watched_files(format!("{WORKSPACE}/watcher.config").as_str());
+        server.send_request(file_change_notification).await;
+
+        // Old watcher unregistration expected
+        acknowledge_unregistrations(&mut server).await;
+
+        let register_request = server.recv_notification().await;
+        assert_eq!(register_request.method(), "client/registerCapability");
+        let register_params: Value = register_request.params().unwrap().clone();
+        let registrations = register_params["registrations"].as_array().unwrap();
+        assert_eq!(registrations.len(), 2);
+        assert!(
+            registrations
+                .iter()
+                .any(|registration| { registration["id"] == format!("watcher-{WORKSPACE}") })
+        );
+        assert!(
+            registrations
+                .iter()
+                .any(|registration| { registration["id"] == format!("watcher-{WORKSPACE_2}") })
+        );
+        server.send_ack(register_request.id().unwrap()).await;
+
+        server.shutdown(3).await;
+    }
+
+    #[tokio::test]
     async fn test_watched_file_changed_revalidate_diagnostics() {
         let init_options =
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };

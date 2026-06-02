@@ -37,6 +37,8 @@ pub trait GenExpr: GetSpan {
     #[inline]
     fn print_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         self.gen_expr(p, precedence, ctx);
+        // Map chain punctuation after a postfix operand ending in `)`/`]`.
+        p.add_source_mapping_after_postfix(self.span(), precedence);
     }
 }
 
@@ -969,10 +971,7 @@ impl Gen for ImportDeclaration<'_> {
 impl Gen for WithClause<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
-        p.print_str(match self.keyword {
-            WithClauseKeyword::With => "with",
-            WithClauseKeyword::Assert => "assert",
-        });
+        p.print_str(self.keyword.as_str());
         p.print_soft_space();
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');

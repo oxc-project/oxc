@@ -221,6 +221,13 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Enable/disable building the class table.
+    #[must_use]
+    pub fn with_class_table(mut self, yes: bool) -> Self {
+        self.class_table_builder.enabled = yes;
+        self
+    }
+
     /// Provide statistics about AST to optimize memory usage of semantic analysis.
     ///
     /// Accurate statistics can greatly improve performance, especially for large ASTs.
@@ -289,6 +296,8 @@ impl<'a> SemanticBuilder<'a> {
             stats.scopes as usize,
         );
         self.unresolved_references.reserve_exact(stats.references as usize);
+
+        self.class_table_builder.enabled |= self.check_syntax_error;
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);

@@ -139,7 +139,7 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             property.r#override,
             property.optional,
-            property.definite,
+            false,
             property.readonly,
             Self::transform_accessibility(property.accessibility),
         )
@@ -629,8 +629,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.computed,
                         property.r#static,
                         property.r#override,
-                        property.definite,
-                        property.accessibility,
+                        false,
+                        Self::transform_accessibility(property.accessibility),
                     );
                     elements.push(new_element);
                 }
