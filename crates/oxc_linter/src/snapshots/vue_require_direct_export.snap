@@ -29,25 +29,28 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Function component must return a value.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:1:9]
  1 │ <script>export default function NoReturn() {} </script>
    ·         ─────────────────────────────────────
    ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Function component must return a value.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:1:9]
  1 │ <script>export default function () {} </script>
    ·         ─────────────────────────────
    ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Function component must return a value.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:1:9]
  1 │ <script>export default () => {} </script>
    ·         ───────────────────────
    ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Function component must return a value.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:1:9]
  1 │ ╭─▶ <script>export default () => {
  2 │ │                       const foo = () => {
@@ -55,8 +58,9 @@ source: crates/oxc_linter/src/tester.rs
  4 │ │                       }
  5 │ ╰─▶                   }</script>
    ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Function component must return a value.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:2:17]
  1 │     <script>
  2 │ ╭─▶                 export default () => {
@@ -64,6 +68,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │ ╰─▶                 }
  5 │                 </script>
    ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
 
   ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:5:19]
@@ -74,7 +79,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Functional component functions are not allowed.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:4:19]
  3 │                       import { h } from 'vue'
  4 │ ╭─▶                   export default function (props) {
@@ -82,9 +87,9 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                   }
  7 │                       </script>
    ╰────
-  help: Export a component object directly instead of using a functional component function.
+  help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Function component must return a value.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:3:19]
  2 │                       <script>
  3 │ ╭─▶                   export default (props) => {
@@ -95,8 +100,9 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                   }
  9 │                       </script>
    ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Function component must return a value.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:3:19]
  2 │                       <script>
  3 │ ╭─▶                   export default function(props) {
@@ -107,8 +113,9 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                   }
  9 │                       </script>
    ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Functional component functions are not allowed.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:4:19]
  3 │                       import { h } from 'vue'
  4 │ ╭─▶                   export default (props) => {
@@ -118,9 +125,9 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                   }
  9 │                       </script>
    ╰────
-  help: Export a component object directly instead of using a functional component function.
+  help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Functional component functions are not allowed.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:3:19]
  2 │                       import { h } from 'vue'
  3 │ ╭─▶                   export default function Component () {
@@ -128,9 +135,9 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                   }
  6 │                       </script>
    ╰────
-  help: Export a component object directly instead of using a functional component function.
+  help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Functional component functions are not allowed.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:3:19]
  2 │                       import { h } from 'vue'
  3 │ ╭─▶                   export default (props) => {
@@ -138,16 +145,16 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                   }
  6 │                       </script>
    ╰────
-  help: Export a component object directly instead of using a functional component function.
+  help: Export the component object directly instead of assigning it to a variable first.
 
-  ⚠ vue(require-direct-export): Functional component functions are not allowed.
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:3:19]
  2 │                   import { h } from 'vue'
  3 │                   export default props => h('div', props.msg)
    ·                   ───────────────────────────────────────────
  4 │                   </script>
    ╰────
-  help: Export a component object directly instead of using a functional component function.
+  help: Export the component object directly instead of assigning it to a variable first.
 
   ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
    ╭─[require_direct_export.tsx:3:19]
@@ -173,6 +180,15 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   export default Vue.extend(2)
    ·                   ────────────────────────────
  4 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:2:19]
+ 1 │ <script>
+ 2 │                   export default createComponent({})
+   ·                   ──────────────────────────────────
+ 3 │                   </script>
    ╰────
   help: Export the component object directly instead of assigning it to a variable first.
 
@@ -218,5 +234,14 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   export default (defineComponent(A))
    ·                   ───────────────────────────────────
  5 │                   </script>
+   ╰────
+  help: Export the component object directly instead of assigning it to a variable first.
+
+  ⚠ vue(require-direct-export): Expected the component literal to be directly exported.
+   ╭─[require_direct_export.tsx:2:19]
+ 1 │ <script>
+ 2 │                   export default class Component {}
+   ·                   ─────────────────────────────────
+ 3 │                   </script>
    ╰────
   help: Export the component object directly instead of assigning it to a variable first.
