@@ -10,10 +10,10 @@
 //!
 //! Create a `test.json` file and run:
 //! ```bash
-//! cargo run -p oxc_formatter_json --example formatter [filename]
-//! cargo run -p oxc_formatter_json --example formatter -- --print-width 100 [filename]
-//! cargo run -p oxc_formatter_json --example formatter -- --variant json5 [filename]
-//! cargo run -p oxc_formatter_json --example formatter -- --diff [filename]
+//! cargo run -p oxc_formatter_json --example json_formatter [filename]
+//! cargo run -p oxc_formatter_json --example json_formatter -- --print-width 100 [filename]
+//! cargo run -p oxc_formatter_json --example json_formatter -- --variant json5 [filename]
+//! cargo run -p oxc_formatter_json --example json_formatter -- --diff [filename]
 //! ```
 //!
 //! The parser variant is inferred from the file extension (`.jsonc`, `.json5`),
