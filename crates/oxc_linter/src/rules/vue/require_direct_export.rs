@@ -99,6 +99,7 @@ declare_oxc_lint!(
     RequireDirectExport,
     vue,
     style,
+    version = "next",
     config = RequireDirectExport,
 );
 
