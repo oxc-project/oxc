@@ -17470,6 +17470,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  12 │ };
     ╰────
 
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:12:5]
+ 11 │ class BDBang extends A {
+ 12 │     declare property!: any; // ! is not allowed, this is an ambient declaration
+    ·     ───────────────────────
+ 13 │ }
+    ╰────
+
   × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:15:5]
  14 │ class BOther extends A {
@@ -17814,6 +17822,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  9 │ }
    ╰────
   help: Only 'readonly' modifier is allowed here.
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:29:5]
+ 28 │ declare class C4 {
+ 29 │     a!: number;
+    ·     ───────────
+ 30 │ }
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:35:5]
+ 34 │ abstract class C5 {
+ 35 │     abstract a!: number;
+    ·     ────────────────────
+ 36 │ }
+    ╰────
 
   × TS(1264): Declarations with definite assignment assertions must also have type annotations.
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:69:10]

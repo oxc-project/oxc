@@ -580,6 +580,12 @@ pub fn optional_definite_property(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn definite_assignment_assertion_not_permitted(span: Span) -> OxcDiagnostic {
+    ts_error("1255", "A definite assignment assertion '!' is not permitted in this context.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn identifier_async(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in an async context"))
         .with_label(span1)

@@ -865,6 +865,7 @@ pub(crate) mod vue {
     pub mod no_required_prop_with_default;
     pub mod no_reserved_component_names;
     pub mod no_reserved_keys;
+    pub mod no_reserved_props;
     pub mod no_shared_component_data;
     pub mod no_this_in_before_route_enter;
     pub mod no_watch_after_await;
