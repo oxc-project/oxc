@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{Buffer, Formatter, prelude::*},
+    formatter::{Buffer, prelude::*},
     write,
 };
 
@@ -24,8 +24,8 @@ impl<'a, 'b> FormatArrayExpression<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "[");
 
         if self.array.elements().is_empty() {

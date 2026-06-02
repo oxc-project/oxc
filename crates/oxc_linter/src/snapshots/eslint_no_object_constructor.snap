@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
    ╭─[no_object_constructor.tsx:1:1]
  1 │ new Object

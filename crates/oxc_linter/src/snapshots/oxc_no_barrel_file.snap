@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(no-barrel-file): Barrel file detected, 10 modules are loaded which exceeds the threshold of 1.
    ╭─[index.ts:2:15]
  1 │ 

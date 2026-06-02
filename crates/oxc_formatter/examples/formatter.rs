@@ -9,16 +9,15 @@
 //! ```bash
 //! cargo run -p oxc_formatter --example formatter [filename]
 //! cargo run -p oxc_formatter --example formatter -- --no-semi [filename]
+//! cargo run -p oxc_formatter --example formatter -- --jsdoc [filename]
 //! cargo run -p oxc_formatter --example formatter -- --diff [filename]
 //! ```
 
 use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{
-    BracketSameLine, FormatOptions, Formatter, LineWidth, Semicolons, get_parse_options,
-};
-use oxc_parser::Parser;
+use oxc_formatter::{BracketSameLine, JsFormatOptions, JsdocOptions, Semicolons};
+use oxc_formatter_core::LineWidth;
 use oxc_span::SourceType;
 use oxc_tasks_common::print_diff_in_terminal;
 use pico_args::Arguments;
@@ -27,6 +26,7 @@ use pico_args::Arguments;
 fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
     let no_semi = args.contains("--no-semi");
+    let jsdoc = args.contains("--jsdoc");
     let show_ir = args.contains("--ir");
     // Show diff between original and formatted code
     let show_diff = args.contains("--diff");
@@ -44,32 +44,31 @@ fn main() -> Result<(), String> {
         Some(width) => LineWidth::try_from(width).unwrap(),
         None => LineWidth::try_from(80).unwrap(),
     };
-    let options = FormatOptions {
+    let jsdoc_options = if jsdoc { Some(JsdocOptions::default()) } else { None };
+    let options = JsFormatOptions {
         bracket_same_line: BracketSameLine::from(true),
         semicolons,
         line_width,
+        jsdoc: jsdoc_options,
         ..Default::default()
     };
 
     let allocator = Allocator::new();
 
-    // Parse the source code
-    let ret = Parser::new(&allocator, &source_text, source_type)
-        .with_options(get_parse_options())
-        .parse();
-
-    // Report any parsing errors
-    for error in ret.errors {
-        let error = error.with_source_code(source_text.clone());
-        println!("{error:?}");
-        println!("Parsed with Errors.");
-    }
-
-    let formatted = Formatter::new(&allocator, options).format(&ret.program);
+    // Parse + format the source code
+    let formatted =
+        match oxc_formatter::format(&allocator, &source_text, source_type, options, None) {
+            Ok(formatted) => formatted,
+            Err(error) => {
+                let error = error.with_source_code(source_text.clone());
+                println!("{error:?}");
+                return Err("Parsed with Errors.".to_string());
+            }
+        };
 
     if show_ir {
         println!("--- IR ---");
-        println!("{}", &formatted.document().to_string());
+        println!("{}", formatted.document().display(&source_text));
         println!("--- End IR ---\n");
     }
 
@@ -83,9 +82,9 @@ fn main() -> Result<(), String> {
             print_diff_in_terminal(&source_text, &formatted_code);
         }
     } else {
-        println!("--- Formatted Code ---");
-        println!("{formatted_code}");
-        println!("--- End Formatted Code ---");
+        // println!("--- Formatted Code ---");
+        // println!("{formatted_code}");
+        // println!("--- End Formatted Code ---");
     }
 
     Ok(())

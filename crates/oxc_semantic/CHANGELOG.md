@@ -4,6 +4,149 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.134.0] - 2026-06-01
+
+### ⚡ Performance
+
+- 9e496a7 semantic: Defer declare lookup for empty accessors (#22810) (camc314)
+
+## [0.133.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- fa7c463 semantic: Correct TS enum member symbol spans (#22689) (camc314)
+- 26b9396 semantic: Resolve parameter decorators outside parameter scope (#22623) (camc314)
+- dfa931d semantic: Propagate unresolved auto-increment enum value instead of defaulting to 0 (#22646) (Dunqing)
+
+### ⚡ Performance
+
+- 2f623b0 semantic: Skip unresolved checks for re-exports (#22660) (camc314)
+- 0d9553d semantic: Early-exit `check_object_expression` for objects with <2 properties (#22668) (Dunqing)
+- d721ad9 semantic: Use direct grandparent lookup for TS type parameters (#22658) (camc314)
+- 0aff288 semantic: Reorder numeric literal strict mode checks (#22657) (camc314)
+- 4d5ddb1 semantic: Reorder binding identifier checks (#22656) (camc314)
+- e32acd8 semantic: Reorder identifier ambient binding check (#22653) (camc314)
+- 09fe178 semantic: Reorder ident reference strict mode check (#22652) (camc314)
+- 4b6add2 semantic: Avoid duplicate ident clone for bindings (#22663) (camc314)
+- 7b84314 semantic: Use direct byte access for numeric leading-zero check (#22642) (camc314)
+- 0345a31 semantic: Pre-size class elements hash map (#22618) (camc314)
+- 4f289f1 semantic: Resolve_references_for_current_scope without a temp Vec (#22599) (Dunqing)
+- e862c15 semantic: Avoid heap alloc for var hoist scope ids (#22603) (Dunqing)
+- 8ff8674 semantic: Early return if `excess` is `0` in `Stats::increase_by` (#22616) (camc314)
+- 7a4120e semantic: Pre-reserve unresolved_references using Stats::references (#22580) (Dunqing)
+
+## [0.132.0] - 2026-05-18
+
+### ⚡ Performance
+
+- ce92c6c semantic: `#[inline]` `Scoping::get_binding` (#22414) (Dunqing)
+- d782b78 minifier: Use BitSet for LiveUsageCollector live references (#22425) (Boshen)
+
+## [0.130.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- a7c3e22 semantic: Clear member write target for computed keys (#22302) (camc314)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+- c4aedfa str: [**BREAKING**] Add `static_ident!` macro (#21245) (overlookmotel)
+
+### 🚀 Features
+
+- 6dd061c semantic: Extend `MemberWriteTarget` to cover all property modification patterns (#21205) (Dunqing)
+- 75663c0 semantic: Add enum member value evaluation for const enum support (#20602) (Dunqing)
+- 3cfe8ed semantic: Add `MemberWriteTarget` flag to `ReferenceFlags` (#20772) (Dunqing)
+
+### ⚡ Performance
+
+- 61adedd minifier: Fix O(n²) perf on very many var decls (#21062) (Gunnlaugur Thor Briem)
+
+## [0.124.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- 31316c8 semantic: Rebind class expressions before identifier checks (#20916) (camc314)
+
+## [0.123.0] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- ffacf99 semantic: Report error on await inside block inside static block (#20750) (camc314)
+- ccf9301 semantic: Report error on for-await inside block inside static block (#20749) (camc314)
+- 9a5ff73 semantic: Hoist Annex B block-scoped function declarations to var scope (#20728) (Dunqing)
+- 2bad7f5 semantic: Report error on await-using inside nested static block (#20746) (camc314)
+
+## [0.122.0] - 2026-03-23
+
+### 🚀 Features
+
+- 07128b0 semantic: Report error for `await using` in class static block (#20535) (camc314)
+- 728fc8d semantic: Improve diagnostic for `await` in static block (#20534) (camc314)
+
+## [0.119.0] - 2026-03-14
+
+### ⚡ Performance
+
+- 5474d0a semantic: V8-style walk-up reference resolution (#20292) (Boshen)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- 733d6dc parser: Report error on `infer` outside conditional type (#19879) (camc314)
+- 5036bb6 parser: Report error on `for await` in static blocks (#19844) (camc314)
+- 5937a32 semantic: Introduce `symbol_declarations` method (#19609) (camc314)
+- 655c38f semantic: Add "did you mean?" suggestions to undefined name errors (#19102) (copilot-swe-agent)
+
+### 🐛 Bug Fixes
+
+- 017de5d parser: Update error code for type annotation in `for...in` statement (#19882) (camc314)
+- 8ad3430 semantic/jsdoc: Handle even-numbered backtick sequences in JSDoc parsing (#19664) (Boshen)
+
+## [0.115.0] - 2026-02-23
+
+### 🐛 Bug Fixes
+
+- 933ff72 semantic: Emit correct error code for reserved type name (#19545) (camc314)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- 429d876 semantic: Assign ast node ids during semantic build (#19263) (Boshen)
+
+### 🐛 Bug Fixes
+
+- bfb15a3 semantic: Make multi_index_vec clone panic-safe (#19299) (Boshen)
+
+### ⚡ Performance
+
+- 5b90d46 semantic: Improve SoA with multi index vec (#19138) (Boshen)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- f32ea19 semantic: Report redeclaration error for import bindings conflicting with value declarations (#19068) (Boshen)
+- 3aeba7a semantic: Report redeclaration error for `function a() {} var a` in module mode (#19041) (Boshen)
+- 463d60d semantic: Skip TS2391 for standalone computed-name class methods (#19025) (Boshen)
+- 6067a49 linter/jsdoc: False positive in `check-tag-names` for `@` in email addresses and npm scopes (#19021) (Boshen)
+- b13bb70 semantic/jsdoc: Inline tags like `{@link}` break jsdoc parsing (#19019) (Boshen)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+- 2537924 semantic: Optimize scope resolution with fast paths and inlining (#19029) (Boshen)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES

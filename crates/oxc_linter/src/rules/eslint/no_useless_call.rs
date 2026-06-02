@@ -64,7 +64,8 @@ declare_oxc_lint!(
     /// ```
     NoUselessCall,
     eslint,
-    perf
+    perf,
+    version = "0.15.9",
 );
 
 impl Rule for NoUselessCall {

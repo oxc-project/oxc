@@ -2,6 +2,6 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "module": "esnext",
-    "noUnusedLocals": true
+    "strict": false
   }
 }

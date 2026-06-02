@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --tsconfig non-exists.json
+working directory: fixtures/cli/tsconfig
+----------
+The tsconfig file "<cwd>/fixtures/cli/tsconfig/non-exists.json" does not exist, Please provide a valid tsconfig file.
+----------
+CLI result: InvalidOptionTsConfig
+----------

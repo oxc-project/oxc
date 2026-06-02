@@ -19,6 +19,7 @@ fn default_as_true() -> bool {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+/// TypeScript transform options.
 pub struct TypeScriptOptions {
     /// Replace the function used when compiling JSX expressions.
     /// This is so that we know that the import is not a type import, and should not be removed.
@@ -36,7 +37,7 @@ pub struct TypeScriptOptions {
     /// This should only be used if you are using TypeScript >= 3.8.
     pub only_remove_type_imports: bool,
 
-    // Enables compilation of TypeScript namespaces.
+    /// Enables compilation of TypeScript namespaces.
     #[serde(default = "default_as_true")]
     pub allow_namespaces: bool,
 
@@ -84,8 +85,17 @@ pub struct TypeScriptOptions {
     #[serde(default)]
     pub remove_class_fields_without_initializer: bool,
 
-    /// Unused.
+    /// When true, optimize const enums by inlining their values at usage sites
+    /// and removing the enum declaration.
     pub optimize_const_enums: bool,
+
+    /// When true, optimize regular (non-const) enums by inlining their member
+    /// accesses at usage sites when the member value is statically known.
+    ///
+    /// Non-exported enum declarations are also removed when all members are
+    /// evaluable and no references to the enum as a runtime value exist
+    /// (e.g., `console.log(Foo)`, `typeof Foo`, or passing the enum as an argument).
+    pub optimize_enums: bool,
 
     // Preset options
     /// Modifies extensions in import and export declarations.
@@ -108,12 +118,14 @@ impl Default for TypeScriptOptions {
             allow_declare_fields: default_as_true(),
             remove_class_fields_without_initializer: false,
             optimize_const_enums: false,
+            optimize_enums: false,
             rewrite_import_extensions: None,
         }
     }
 }
 
 #[derive(Debug, Clone, Copy, Default)]
+/// Strategy for rewriting TypeScript import/export extensions.
 pub enum RewriteExtensionsMode {
     /// Rewrite `.ts`/`.mts`/`.cts` extensions in import/export declarations to `.js`/`.mjs`/`.cjs`.
     #[default]
@@ -123,6 +135,7 @@ pub enum RewriteExtensionsMode {
 }
 
 impl RewriteExtensionsMode {
+    /// Returns `true` when extensions should be removed instead of rewritten.
     pub fn is_remove(self) -> bool {
         matches!(self, Self::Remove)
     }

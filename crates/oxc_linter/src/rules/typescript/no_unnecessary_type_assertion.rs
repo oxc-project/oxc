@@ -68,6 +68,7 @@ declare_oxc_lint!(
     suspicious,
     fix,
     config = NoUnnecessaryTypeAssertionConfig,
+    version = "1.12.0",
 );
 
 impl Rule for NoUnnecessaryTypeAssertion {

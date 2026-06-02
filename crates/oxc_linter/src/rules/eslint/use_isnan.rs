@@ -68,21 +68,21 @@ impl Default for UseIsnan {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows checking against NaN without using `isNaN()` call.
+    /// Disallows checking against `NaN` without using `isNaN()` call.
     ///
     /// ### Why is this bad?
     ///
-    /// In JavaScript, NaN is a special value of the Number type.
+    /// In JavaScript, `NaN` is a special value of the Number type.
     /// It’s used to represent any of the “not-a-number” values represented
     /// by the double-precision 64-bit format as specified by the IEEE Standard
     /// for Binary Floating-Point Arithmetic.
     ///
-    /// Because NaN is unique in JavaScript by not being equal to anything, including itself,
-    /// the results of comparisons to NaN are confusing:
+    /// Because `NaN` is unique in JavaScript by not being equal to anything, including itself,
+    /// the results of comparisons to `NaN` are confusing:
     /// - `NaN === NaN` or `NaN == NaN` evaluate to false
     /// - `NaN !== NaN` or `NaN != NaN` evaluate to true
     ///
-    /// Therefore, use `Number.isNaN()` or global `isNaN()` functions to test whether a value is NaN.
+    /// Therefore, use `Number.isNaN()` or global `isNaN()` functions to test whether a value is `NaN`.
     ///
     /// ### Examples
     ///
@@ -98,6 +98,7 @@ declare_oxc_lint!(
     correctness,
     conditional_fix,
     config = UseIsnan,
+    version = "0.0.3",
 );
 
 impl Rule for UseIsnan {
@@ -131,10 +132,10 @@ impl Rule for UseIsnan {
                     ctx.diagnostic(case_nan(test.span()));
                 }
             }
-            AstKind::SwitchStatement(switch) if self.enforce_for_switch_case => {
-                if is_nan_identifier(&switch.discriminant) {
-                    ctx.diagnostic(switch_nan(switch.discriminant.span()));
-                }
+            AstKind::SwitchStatement(switch)
+                if self.enforce_for_switch_case && is_nan_identifier(&switch.discriminant) =>
+            {
+                ctx.diagnostic(switch_nan(switch.discriminant.span()));
             }
             AstKind::CallExpression(call) if self.enforce_for_index_of => {
                 // Only check calls with 1 or 2 arguments (standard indexOf/lastIndexOf signature)

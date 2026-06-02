@@ -1,4 +1,28 @@
-use crate::tester::{test, test_same};
+use crate::{
+    test_idempotency, test_idempotency_options,
+    tester::{test, test_same},
+};
+
+// A leading comment inside a `pife` arrow alternate of a `?:` must stay
+// inside the paren wrap on every codegen pass; otherwise the parser re-
+// anchors the shifted comment and the next pass drops it.
+#[test]
+fn test_comment_inside_pife_arrow_alternate_of_conditional() {
+    test(
+        "export const x = foo ? bar : (\n  // explanatory comment\n  (a, b) => a + b\n);",
+        "export const x = foo ? bar : (\n// explanatory comment\n(a, b) => a + b);\n",
+    );
+    test_idempotency(
+        "export const x = foo ? bar : (\n  // explanatory comment\n  (a, b) => a + b\n);",
+    );
+}
+
+#[test]
+fn test_comment_inside_pife_function_alternate_of_conditional() {
+    test_idempotency(
+        "export const x = foo ? bar : (\n  // explanatory comment\n  function(c) { return c }\n);",
+    );
+}
 
 #[test]
 fn test_comment_at_top_of_file() {
@@ -20,6 +44,16 @@ fn test_comment_at_top_of_file() {
 #[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
+    // https://github.com/oxc-project/oxc/issues/17266
+    test("console.log(<div x={/*before*/ x} />)", "console.log(<div x={/*before*/ x} />);\n");
+    test(
+        "console.log(<div x={/*before*/ \"y\"} />)",
+        "console.log(<div x={/*before*/ \"y\"} />);\n",
+    );
+    test("console.log(<div x={/*before*/ true} />)", "console.log(<div x={/*before*/ true} />);\n");
+    test("console.log(<div {/*before*/ ...x} />)", "console.log(<div {/*before*/ ...x} />);\n");
+    test("console.log(<div>{/*before*/ x}</div>)", "console.log(<div>{/*before*/ x}</div>);\n");
+    test("console.log(<>{/*before*/ x}</>)", "console.log(<>{/*before*/ x}</>);\n");
     // https://lingui.dev/ref/macro#definemessage
     test("const message = /*i18n*/{};", "const message = (/*i18n*/ {});\n");
     test(
@@ -210,6 +244,37 @@ catch (err) /* c8 ignore next */ /* istanbul ignore next */ { handle(err); }",
             "try { something(); }
 catch (err) // v8 ignore next
 { handle(err); }",
+            // Coverage comment before ConditionalExpression alternate
+            // https://github.com/oxc-project/oxc/issues/20549
+            "const a = Math.random() ? 1 : /* istanbul ignore next */ 2;",
+            // Coverage comment between SwitchStatement cases
+            // https://github.com/oxc-project/oxc/issues/20549
+            "switch (Math.random()) {
+  case 0.5: break;
+  /* istanbul ignore next */
+  default: break;
+}",
+            // Coverage comment before ObjectExpression property
+            // https://github.com/oxc-project/oxc/issues/21302
+            "const obj = {
+  a: () => 1,
+  /* v8 ignore next */
+  b: () => 2,
+}",
+            // Coverage comment before single ObjectExpression property
+            "const obj = { /* v8 ignore next */ a: () => 1 }",
+            // Coverage comment before the first ObjectExpression property
+            "const obj = {
+  /* v8 ignore next */
+  a: () => 1,
+  b: () => 2,
+}",
+            // Coverage comment before a SpreadElement in ObjectExpression
+            "const obj = {
+  a: 1,
+  /* v8 ignore next */
+  ...rest,
+}",
         ];
 
         snapshot("coverage", &cases);
@@ -602,4 +667,51 @@ function foo() {
             }
         }
     }
+}
+
+#[test]
+fn test_pure_comment_on_object_idempotency() {
+    test_idempotency("export const X = /* @__PURE__ */ { a: 1 };");
+}
+
+// Regression for monitor-oxc codegen idempotency:
+// inline `/*!*/` between expression operands (parsed as a legal block comment
+// because it starts with `!`) used to round-trip non-idempotently — pass 1
+// emitted `\t/*!*/ }` (orphan flushed before `}`, trailing-edge converted
+// the closing-brace indent into a single space) and pass 2 emitted
+// `\t/*!*/}` (the comment now attaches to `}` so `FunctionBody`'s
+// `clear_pending_indent_space()` runs). The fix forces orphan flushes to
+// land on their own line, matching the pass-2 behaviour on pass 1.
+#[test]
+fn test_inline_legal_comment_in_function_body_is_idempotent() {
+    test_idempotency(
+        "function isPunctuator(ch) {\n\treturn ch === 33/*!*/ || ch === 37/*%*/;\n}\n",
+    );
+}
+
+#[test]
+fn test_legal_comment_after_code_minify_with_comments_idempotency() {
+    use oxc_codegen::{CodegenOptions, CommentOptions};
+
+    test_idempotency_options(
+        "foo();/**
+* @license MIT
+**//*! #__NO_SIDE_EFFECTS__ */function bar(){}",
+        &CodegenOptions {
+            minify: true,
+            comments: CommentOptions::default(),
+            source_map_path: Some("test.js".into()),
+            ..CodegenOptions::default()
+        },
+    );
+}
+
+#[test]
+fn test_comment_inside_parenthesized_expression_with_pife_arrow() {
+    test_idempotency("export const x = foo ? bar : (\n  // comment\n  (a, b) => a + b\n);");
+}
+
+#[test]
+fn test_comment_inside_double_parenthesized_pife_arrow() {
+    test_idempotency("const x = foo ? bar : ( ( ( a ) => a ) );");
 }

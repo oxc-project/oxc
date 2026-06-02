@@ -17,18 +17,18 @@ mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
-use oxc_ast_visit::Visit;
-use oxc_semantic::ReferenceId;
+use oxc_ast_visit::{Visit, walk::walk_call_expression};
+use oxc_semantic::Scoping;
+use oxc_syntax::{
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolId,
+};
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::Vec;
+use oxc_allocator::{Allocator, BitSet, Vec};
 use oxc_ast::ast::*;
-use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
-use crate::{
-    ctx::{Ctx, TraverseCtx},
-    state::MinifierState,
-};
+use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
@@ -36,11 +36,7 @@ pub use self::normalize::{Normalize, NormalizeOptions};
 pub struct PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn run_once(
-        &mut self,
-        program: &mut Program<'a>,
-        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
-    ) {
+    pub fn run_once(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 
@@ -79,7 +75,7 @@ impl<'a> PeepholeOptimizations {
     /// which would change the semantics.
     pub fn member_object_may_be_mutated(
         assignment_target: &AssignmentTarget<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         let object = match assignment_target {
             AssignmentTarget::ComputedMemberExpression(member_expr) => &member_expr.object,
@@ -97,13 +93,13 @@ impl<'a> PeepholeOptimizations {
     /// or if the expression is not a simple identifier/this reference.
     pub fn is_expression_that_reference_may_change(
         expr: &Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         match expr {
             Expression::Identifier(id) => {
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
-                    ctx.scoping().symbol_is_mutated(symbol_id)
+                    Self::is_symbol_mutated(symbol_id, ctx)
                 } else {
                     true
                 }
@@ -112,44 +108,93 @@ impl<'a> PeepholeOptimizations {
             _ => true,
         }
     }
+
+    /// Check if a symbol is mutated, using the O(1) cached `write_references_count`
+    /// from `SymbolValue` when available, falling back to the O(num_refs) scan in
+    /// `Scoping::symbol_is_mutated` for symbols without cached values.
+    ///
+    /// Only variable declarators have cached values (populated during
+    /// `exit_variable_declarator` → `init_symbol_value`); function declarations
+    /// and other binding kinds still take the fallback path.
+    fn is_symbol_mutated(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        if let Some(sv) = ctx.state.symbol_values.get_symbol_value(symbol_id) {
+            sv.write_references_count > 0
+        } else {
+            ctx.scoping().symbol_is_mutated(symbol_id)
+        }
+    }
+
+    /// Refresh `ScopeFlags::DirectEval` from live direct-eval call sites.
+    ///
+    /// `direct_eval_scopes` lists scopes that still contain a direct `eval(...)` call.
+    /// Clears `DirectEval` from every scope, then re-propagates from each scope in the
+    /// set up to the root.
+    ///
+    /// Skipping this leaves `DirectEval` set on scopes whose only eval call was just
+    /// DCE'd, which keeps unused-declaration removal conservative until reparse.
+    fn refresh_direct_eval_flags(scoping: &mut Scoping, direct_eval_scopes: &FxHashSet<ScopeId>) {
+        // Semantic propagates `DirectEval` to the root, so an empty live set plus a
+        // clean root means no scope has the flag — nothing to clear or set.
+        if direct_eval_scopes.is_empty() && !scoping.root_scope_flags().contains_direct_eval() {
+            return;
+        }
+
+        for index in 0..scoping.scopes_len() {
+            scoping.scope_flags_mut(ScopeId::from_usize(index)).remove(ScopeFlags::DirectEval);
+        }
+
+        for &scope_id in direct_eval_scopes {
+            let mut ancestor = Some(scope_id);
+            while let Some(scope_id) = ancestor {
+                let flags = scoping.scope_flags_mut(scope_id);
+                // An earlier iteration already flagged this chain; stop walking up.
+                if flags.contains_direct_eval() {
+                    break;
+                }
+                flags.insert(ScopeFlags::DirectEval);
+                ancestor = scoping.scope_parent_id(scope_id);
+            }
+        }
+    }
 }
 
-impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
+impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.symbol_values.clear();
+        ctx.state.symbol_values.reset();
+        ctx.state.proto_write_symbols.clear();
         ctx.state.changed = false;
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.state.changed {
-            // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-            let mut counter = ReferencesCounter::default();
-            counter.visit_program(program);
-            for reference_id_to_remove in refs_before.difference(&counter.refs) {
-                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
-            }
+            // Walk the live AST to collect data the peephole pass left stale:
+            // - Live `IdentifierReference` IDs, so dead references can be batch-pruned
+            //   from each symbol's reference list (individual deletion via
+            //   `delete_resolved_reference` is O(n) per call, O(n²) over many removals,
+            //   which shows up in bundler output with thousands of unused
+            //   `var import_X = __toESM(require_Y())` declarations).
+            // - Scopes that still contain a direct `eval()` call, needed by
+            //   `refresh_direct_eval_flags`.
+            let mut collector = LiveUsageCollector::new(ctx.scoping(), ctx.ast.allocator);
+            collector.visit_program(program);
+            let LiveUsageCollector { refs, direct_eval_scopes, .. } = collector;
+            let scoping = ctx.scoping_mut();
+            scoping.retain_resolved_references(&refs);
+            Self::refresh_direct_eval_flags(scoping, &direct_eval_scopes);
         }
         // Only check class_symbols_stack in full optimization mode (not DCE mode)
         debug_assert!(ctx.state.dce || ctx.state.class_symbols_stack.is_exhausted());
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let ctx = &mut Ctx::new(ctx);
         Self::minimize_statements(stmts, ctx);
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
-            return;
-        }
-        let ctx = &mut Ctx::new(ctx);
         Self::keep_track_of_pure_functions(stmt, ctx);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let ctx = &mut Ctx::new(ctx);
         if ctx.state.dce {
             match stmt {
                 Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
@@ -198,10 +243,14 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 }
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
-                Statement::FunctionDeclaration(_) => {
+                Statement::FunctionDeclaration(f) => {
+                    Self::init_function_declaration_symbol_value(f.id.as_ref(), ctx);
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
-                Statement::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
+                Statement::ClassDeclaration(c) => {
+                    Self::init_class_declaration_symbol_value(c, ctx);
+                    Self::remove_unused_class_declaration(stmt, ctx);
+                }
                 Statement::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
                 _ => {}
             }
@@ -213,7 +262,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_for_statement(stmt, ctx);
         Self::minimize_for_statement(stmt, ctx);
     }
@@ -222,7 +270,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_return_statement(stmt, ctx);
     }
 
@@ -234,7 +281,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_variable_declaration(decl, ctx);
     }
 
@@ -243,12 +289,10 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         decl: &mut VariableDeclarator<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ctx = &mut Ctx::new(ctx);
         Self::init_symbol_value(decl, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let ctx = &mut Ctx::new(ctx);
         if ctx.state.dce {
             match expr {
                 Expression::TemplateLiteral(t) => {
@@ -358,7 +402,10 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                     Self::substitute_object_or_array_constructor(expr, ctx);
                 }
                 Expression::BooleanLiteral(_) => Self::substitute_boolean(expr, ctx),
-                Expression::ArrayExpression(_) => Self::substitute_array_expression(expr, ctx),
+                Expression::ArrayExpression(_) => {
+                    Self::try_flatten_array_expression_elements(expr, ctx);
+                    Self::substitute_array_expression(expr, ctx);
+                }
                 Expression::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
                 _ => {}
             }
@@ -370,34 +417,32 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             return;
         }
         if expr.operator.is_not() {
-            let ctx = &mut Ctx::new(ctx);
             Self::minimize_expression_in_boolean_context(&mut expr.argument, ctx);
         }
     }
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
-            return;
+        if !ctx.state.dce {
+            Self::substitute_call_expression(e, ctx);
+            Self::remove_empty_spread_arguments(&mut e.arguments);
         }
-        let ctx = &mut Ctx::new(ctx);
-        Self::substitute_call_expression(e, ctx);
-        Self::remove_empty_spread_arguments(&mut e.arguments);
+        // Re-evaluate each iteration: peephole folding/inlining may expose a
+        // pure-eligible arg shape that `Normalize`'s one-shot pass missed.
+        Normalize::set_no_side_effects_to_call_expr(e, ctx);
     }
 
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.state.dce {
-            return;
+        if !ctx.state.dce {
+            Self::substitute_new_expression(e, ctx);
+            Self::remove_empty_spread_arguments(&mut e.arguments);
         }
-        let ctx = &mut Ctx::new(ctx);
-        Self::substitute_new_expression(e, ctx);
-        Self::remove_empty_spread_arguments(&mut e.arguments);
+        Normalize::set_pure_or_no_side_effects_to_new_expr(e, ctx);
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_object_property(prop, ctx);
     }
 
@@ -409,7 +454,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_assignment_target_property(node, ctx);
     }
 
@@ -421,7 +465,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_assignment_target_property_property(prop, ctx);
     }
 
@@ -429,7 +472,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_binding_property(prop, ctx);
     }
 
@@ -441,7 +483,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_method_definition(prop, ctx);
     }
 
@@ -453,7 +494,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_property_definition(prop, ctx);
     }
 
@@ -465,7 +505,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_accessor_property(prop, ctx);
     }
 
@@ -477,8 +516,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = Ctx::new(ctx);
-        Self::convert_to_dotted_properties(expr, &ctx);
+        Self::convert_to_dotted_properties(expr, ctx);
     }
 
     fn enter_class_body(&mut self, _body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -492,7 +530,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::remove_dead_code_exit_class_body(body, ctx);
         Self::remove_unused_private_members(body, ctx);
         ctx.state.class_symbols_stack.pop_class_scope(Self::get_declared_private_symbols(body));
@@ -502,8 +539,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        let ctx = Ctx::new(ctx);
-        Self::substitute_catch_clause(catch, &ctx);
+        Self::substitute_catch_clause(catch, ctx);
     }
 
     fn exit_private_field_expression(
@@ -529,14 +565,39 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 }
 
-#[derive(Default)]
-struct ReferencesCounter {
-    refs: FxHashSet<ReferenceId>,
+struct LiveUsageCollector<'a, 's> {
+    scoping: &'s Scoping,
+    /// Bitset of live `ReferenceId`s. Sized to `scoping.references_len()` at construction.
+    /// Replaces a `FxHashSet<ReferenceId>`: insert + contains drop from ~25 cycles to ~5,
+    /// and the per-file memory footprint goes from MB-scale to KB-scale.
+    refs: BitSet<'a>,
+    direct_eval_scopes: FxHashSet<ScopeId>,
 }
 
-impl<'a> Visit<'a> for ReferencesCounter {
+impl<'a, 's> LiveUsageCollector<'a, 's> {
+    fn new(scoping: &'s Scoping, allocator: &'a Allocator) -> Self {
+        Self {
+            scoping,
+            refs: BitSet::new_in(scoping.references_len(), allocator),
+            direct_eval_scopes: FxHashSet::default(),
+        }
+    }
+}
+
+impl<'a> Visit<'a> for LiveUsageCollector<'_, '_> {
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
+        if !it.optional
+            && let Some(ident) = it.callee.get_identifier_reference()
+            && ident.name == "eval"
+        {
+            let scope_id = self.scoping.get_reference(ident.reference_id()).scope_id();
+            self.direct_eval_scopes.insert(scope_id);
+        }
+        // Recurse — `eval` may be nested in another call's arguments, e.g. `foo(eval('x'))`.
+        walk_call_expression(self, it);
+    }
+
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
-        let reference_id = it.reference_id();
-        self.refs.insert(reference_id);
+        self.refs.set_bit(it.reference_id().index());
     }
 }

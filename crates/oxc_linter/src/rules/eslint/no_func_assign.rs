@@ -8,6 +8,7 @@ use crate::{context::LintContext, rule::Rule};
 
 fn no_func_assign_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is a function."))
+        .with_help("Do not re-assign a function declared as a FunctionDeclaration.")
         .with_label(span.label(format!("{name} is re-assigned here")))
 }
 
@@ -66,7 +67,8 @@ declare_oxc_lint!(
     /// ```
     NoFuncAssign,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.3",
 );
 
 impl Rule for NoFuncAssign {

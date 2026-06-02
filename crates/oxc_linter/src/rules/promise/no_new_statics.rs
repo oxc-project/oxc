@@ -40,7 +40,8 @@ declare_oxc_lint!(
     NoNewStatics,
     promise,
     correctness,
-    fix
+    fix,
+    version = "0.6.1",
 );
 
 impl Rule for NoNewStatics {

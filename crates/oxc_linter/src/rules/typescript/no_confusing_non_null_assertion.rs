@@ -43,7 +43,8 @@ declare_oxc_lint!(
     NoConfusingNonNullAssertion,
     typescript,
     suspicious,
-    pending
+    pending,
+    version = "0.6.1",
 );
 
 fn not_need_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {

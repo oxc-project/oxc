@@ -56,7 +56,8 @@ declare_oxc_lint!(
     PreferMathMinMax,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "0.10.1",
 );
 
 impl Rule for PreferMathMinMax {

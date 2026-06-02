@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// ```
     Default,
     import,
-    correctness
+    correctness,
+    version = "0.0.13",
 );
 
 impl Rule for Default {

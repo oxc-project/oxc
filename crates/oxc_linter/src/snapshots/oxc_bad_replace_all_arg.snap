@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:1:12]
  1 │ withSpaces.replaceAll(/\s+/, ',');

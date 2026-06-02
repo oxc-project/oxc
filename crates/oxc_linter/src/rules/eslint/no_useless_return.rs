@@ -68,7 +68,8 @@ declare_oxc_lint!(
     NoUselessReturn,
     eslint,
     pedantic,
-    pending
+    pending,
+    version = "1.32.0",
 );
 
 impl Rule for NoUselessReturn {

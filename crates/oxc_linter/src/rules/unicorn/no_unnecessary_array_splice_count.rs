@@ -53,7 +53,8 @@ declare_oxc_lint!(
     NoUnnecessaryArraySpliceCount,
     unicorn,
     pedantic,
-    fix
+    fix,
+    version = "1.20.0",
 );
 
 impl Rule for NoUnnecessaryArraySpliceCount {

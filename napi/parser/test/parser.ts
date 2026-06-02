@@ -12,6 +12,7 @@ export type * from "../src-js/index.js";
 interface ExperimentalParserOptions {
   experimentalRawTransfer?: boolean;
   experimentalParent?: boolean;
+  experimentalTokens?: boolean;
   experimentalLazy?: boolean;
 }
 

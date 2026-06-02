@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
@@ -20,7 +21,9 @@ fn adjacent_overload_signatures_diagnostic(
     first: Option<Span>,
     second: Span,
 ) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!("All {fn_name:?} signatures should be adjacent."));
+    let mut d = OxcDiagnostic::warn(format!("All {fn_name:?} signatures should be adjacent."))
+        .with_help(format!("Move all {fn_name:?} overload signatures together, placing them consecutively before any other members."))
+        .with_note("Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.");
     if let Some(span) = first {
         d = d.and_label(span);
     }
@@ -81,7 +84,8 @@ declare_oxc_lint!(
     /// ```
     AdjacentOverloadSignatures,
     typescript,
-    style
+    style,
+    version = "0.0.7",
 );
 
 #[derive(PartialEq, Debug)]

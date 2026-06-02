@@ -1,0 +1,21 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-check-only
+working directory: fixtures/cli/tsgolint_type_check_only_svelte_syntax_error
+----------
+
+  x Unexpected token
+   ,-[test.svelte:2:21]
+ 1 | <script lang="ts">
+ 2 | const foo: number = ;
+   :                     ^
+ 3 | </script>
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

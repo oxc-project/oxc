@@ -48,6 +48,43 @@ export function debugAssertIsNonNull<T>(
 }
 
 /**
+ * Assert a value is not `undefined`.
+ *
+ * In release builds, is a no-op. Only does runtime checks in debug builds.
+ * Minification removes this function and all calls to it in release builds, so it has zero runtime cost.
+ *
+ * Use this for testing conditions which would indicate a bug in the code.
+ * Do NOT use this for validating user input.
+ *
+ * If creating the error message is expensive, or potentially creating the message itself can result in an error
+ * when the assertion passes, pass a function which returns the message.
+ *
+ * ```ts
+ * debugAssertIsNotUndefined(thing, () => `Should not be undefined: ${getErrorMessage()}`);
+ * ```
+ *
+ * @param value - Value
+ * @param message - Message to include in error if `value` is `undefined`, or a function which returns the message
+ *   to include in error (optional).
+ */
+export function debugAssertIsNotUndefined<T>(
+  value: T | undefined,
+  message?: string | (() => string),
+): asserts value is T {
+  if (!DEBUG) return;
+
+  if (value === undefined) {
+    if (typeof message === "function") {
+      message = message();
+    } else if (message === undefined) {
+      message = "Expected value not to be undefined";
+    }
+
+    throw new Error(message);
+  }
+}
+
+/**
  * Debug assert that `fn` is a function.
  *
  * In release builds, is a no-op. Only does runtime checks in debug builds.

@@ -1,29 +1,30 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:1:14]
  1 │ new Response(JSON.stringify(data))
    ·              ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:1:14]
  1 │ new Response(JSON.stringify(data), extraArgument)
    ·              ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:1:18]
  1 │ new Response( (( JSON.stringify( (( 0, data )), ) )), )
    ·                  ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
-   ╭─[prefer_response_static_json.tsx:3:15]
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:3:30]
  2 │                 return new // comment
  3 │                     Response(JSON.stringify(data))
    ·                              ──────────────
@@ -31,39 +32,39 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:1:14]
  1 │ new Response(JSON.stringify(data), {status: 200})
    ·              ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
-   ╭─[prefer_response_static_json.tsx:2:23]
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:2:32]
  1 │ foo
  2 │             new (( Response ))(JSON.stringify(data))
    ·                                ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
-   ╭─[prefer_response_static_json.tsx:2:23]
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:2:32]
  1 │ foo;
  2 │             new (( Response ))(JSON.stringify(data))
    ·                                ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
-   ╭─[prefer_response_static_json.tsx:2:26]
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:2:35]
  1 │ foo;
  2 │             (( new (( Response ))(JSON.stringify(data)) ))
    ·                                   ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
 
-  ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
-   ╭─[prefer_response_static_json.tsx:2:26]
+  ⚠ unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
+   ╭─[prefer_response_static_json.tsx:2:35]
  1 │ foo
  2 │             (( new (( Response ))(JSON.stringify(data)) ))
    ·                                   ──────────────

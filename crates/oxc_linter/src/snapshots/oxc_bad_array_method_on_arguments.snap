@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments['map'](() => {})}
@@ -275,10 +276,10 @@ source: crates/oxc_linter/src/tester.rs
   help: The `arguments` object does not have a `@@iterator()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.
 
   ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
-   ╭─[bad_array_method_on_arguments.tsx:2:30]
+   ╭─[bad_array_method_on_arguments.tsx:2:26]
  1 │ const arr = [1, 2, 3, 4, 5];
- 2 │              function fn() { arguments.with(2, 6) }
-   ·                              ──────────────
- 3 │              fn(arr)
+ 2 │          function fn() { arguments.with(2, 6) }
+   ·                          ──────────────
+ 3 │          fn(arr)
    ╰────
   help: The `arguments` object does not have a `with()` method. If you intended to use an array method, consider using rest parameters instead or converting the `arguments` object to an array.

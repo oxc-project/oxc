@@ -1,7 +1,8 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -68,6 +69,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = HeadingHasContentConfig,
+    version = "0.0.19",
 );
 
 // always including <h1> thru <h6>

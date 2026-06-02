@@ -1,14 +1,12 @@
+use std::path::Path;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    TailwindcssOptions, TrailingCommas,
-};
-use oxc_toml::Options as TomlFormatterOptions;
+use oxc_config::GlobSet;
+
+use crate::core::utils;
 
 /// Configuration options for the Oxfmt.
 ///
@@ -39,11 +37,10 @@ pub struct Oxfmtrc {
 #[serde(rename_all = "camelCase")]
 pub struct OxfmtOverrideConfig {
     /// Glob patterns to match files for this override.
-    /// All patterns are relative to the Oxfmt configuration file.
-    pub files: Vec<String>,
+    pub files: GlobSet,
     /// Glob patterns to exclude from this override.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub exclude_files: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
+    pub exclude_files: GlobSet,
     /// Format options to apply for matched files.
     #[serde(default)]
     pub options: FormatConfig,
@@ -67,7 +64,7 @@ pub struct FormatConfig {
     /// Specify the number of spaces per indentation-level.
     ///
     /// - Default: `2`
-    /// - Overrides `.editorconfig.indent_size`
+    /// - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tab_width: Option<u8>,
     /// Which end of line characters to apply.
@@ -92,6 +89,7 @@ pub struct FormatConfig {
     /// For JSX, you can set the `jsxSingleQuote` option.
     ///
     /// - Default: `false`
+    /// - Overrides `.editorconfig.quote_type`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_quote: Option<bool>,
     /// Use single quotes instead of double quotes in JSX.
@@ -147,18 +145,25 @@ pub struct FormatConfig {
     pub single_attribute_per_line: Option<bool>,
 
     // NOTE: These experimental options are not yet supported.
-    // Just be here to report error if they are used.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    // Reject at deserialize time so all entry paths (base / overrides / NAPI `resolve()`) are covered uniformly.
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "reject_experimental_operator_position",
+        default
+    )]
     #[schemars(skip)]
     pub experimental_operator_position: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "reject_experimental_ternaries",
+        default
+    )]
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
 
     /// Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
     ///
     /// NOTE: XXX-in-JS support is incomplete.
-    /// JS-in-XXX is fully supported but still be handled by Prettier.
     ///
     /// - Default: `"auto"`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -197,16 +202,19 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_final_newline: Option<bool>,
 
-    /// Experimental: Sort import statements.
+    /// Sort import statements.
     ///
     /// Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
     /// For details, see each field's documentation.
     ///
+    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+    ///
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_sort_imports: Option<SortImportsConfig>,
+    #[serde(alias = "experimentalSortImports")]
+    pub sort_imports: Option<SortImportsUserConfig>,
 
-    /// Experimental: Sort `package.json` keys.
+    /// Sort `package.json` keys.
     ///
     /// The algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).
     /// But we believe it is clearer and easier to navigate.
@@ -214,20 +222,80 @@ pub struct FormatConfig {
     ///
     /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_sort_package_json: Option<SortPackageJsonUserConfig>,
+    #[serde(alias = "experimentalSortPackageJson")]
+    pub sort_package_json: Option<SortPackageJsonUserConfig>,
 
-    /// Experimental: Sort Tailwind CSS classes.
+    /// Sort Tailwind CSS classes.
     ///
     /// Using the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
     /// Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
     /// For details, see each field's documentation.
     ///
+    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+    ///
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_tailwindcss: Option<TailwindcssConfig>,
+    #[serde(alias = "experimentalTailwindcss")]
+    pub sort_tailwindcss: Option<SortTailwindcssUserConfig>,
+
+    /// Enable JSDoc comment formatting.
+    ///
+    /// When enabled, JSDoc comments are normalized and reformatted:
+    /// tag aliases are canonicalized, descriptions are capitalized,
+    /// long lines are wrapped, and short comments are collapsed to single-line.
+    ///
+    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+    ///
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub jsdoc: Option<JsdocUserConfig>,
+
+    /// Options for `prettier-plugin-svelte`.
+    ///
+    /// Pass `true` or an object to enable `.svelte` file formatting,
+    /// or `false` (handy in overrides) / omit to disable.
+    /// Setting `true` resets to defaults — any options inherited from a parent scope are dropped.
+    ///
+    /// NOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime,
+    /// but Oxfmt does NOT bundle or auto-install it.
+    /// You must install `svelte` yourself in your project, formatting will fail at runtime otherwise.
+    ///
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub svelte: Option<SvelteUserConfig>,
 }
 
 impl FormatConfig {
+    /// Whether `prettier-plugin-svelte` is enabled by this config.
+    ///
+    /// Enabled when `svelte` is set to `true` or an object;
+    /// disabled when unset or `false`.
+    pub fn is_svelte_enabled(&self) -> bool {
+        matches!(self.svelte, Some(SvelteUserConfig::Bool(true) | SvelteUserConfig::Object(_)))
+    }
+
+    /// Resolve relative tailwind paths (`config`, `stylesheet`) to absolute paths.
+    /// Otherwise, the plugin tries to resolve the Prettier's configuration file, not Oxfmt's.
+    /// <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/125a8bc77639529a5a0c7e4e8a02174d7ed2d70b/src/config.ts#L50-L54>
+    pub fn resolve_tailwind_paths(&mut self, base_dir: &Path) {
+        let Some(SortTailwindcssUserConfig::Object(ref mut tw)) = self.sort_tailwindcss else {
+            return;
+        };
+
+        for path_field in [&mut tw.config, &mut tw.stylesheet] {
+            let Some(path_str) = path_field.as_ref() else {
+                continue;
+            };
+
+            let path = Path::new(path_str);
+            if path.is_relative() {
+                *path_field = Some(
+                    utils::normalize_relative_path(base_dir, path).to_string_lossy().to_string(),
+                );
+            }
+        }
+    }
+
     /// Merge another `FormatConfig`, overwriting only fields that are `Some<T>`.
     ///
     /// # Panics
@@ -239,225 +307,30 @@ impl FormatConfig {
         let merged = json_deep_merge(base, overlay);
         *self = serde_json::from_value(merged).unwrap();
     }
-
-    /// Convert to `OxfmtOptions`.
-    ///
-    /// # Errors
-    /// Returns error if any option value is invalid
-    pub fn into_oxfmt_options(self) -> Result<OxfmtOptions, String> {
-        // Not yet supported options:
-        // [Prettier] experimentalOperatorPosition: "start" | "end"
-        // [Prettier] experimentalTernaries: boolean
-        if self.experimental_operator_position.is_some() {
-            return Err("Unsupported option: `experimentalOperatorPosition`".to_string());
-        }
-        if self.experimental_ternaries.is_some() {
-            return Err("Unsupported option: `experimentalTernaries`".to_string());
-        }
-
-        // All values are based on defaults from `FormatOptions::default()`
-        let mut format_options = FormatOptions::default();
-
-        // [Prettier] useTabs: boolean
-        if let Some(use_tabs) = self.use_tabs {
-            format_options.indent_style =
-                if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
-        }
-
-        // [Prettier] tabWidth: number
-        if let Some(width) = self.tab_width {
-            format_options.indent_width =
-                IndentWidth::try_from(width).map_err(|e| format!("Invalid tabWidth: {e}"))?;
-        }
-
-        // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
-        // NOTE: "auto" is not supported
-        if let Some(ending) = self.end_of_line {
-            format_options.line_ending = match ending {
-                EndOfLineConfig::Lf => LineEnding::Lf,
-                EndOfLineConfig::Crlf => LineEnding::Crlf,
-                EndOfLineConfig::Cr => LineEnding::Cr,
-            };
-        }
-
-        // [Prettier] printWidth: number
-        if let Some(width) = self.print_width {
-            format_options.line_width =
-                LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
-        }
-
-        // [Prettier] singleQuote: boolean
-        if let Some(single_quote) = self.single_quote {
-            format_options.quote_style =
-                if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
-        }
-
-        // [Prettier] jsxSingleQuote: boolean
-        if let Some(jsx_single_quote) = self.jsx_single_quote {
-            format_options.jsx_quote_style =
-                if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
-        }
-
-        // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
-        if let Some(props) = self.quote_props {
-            format_options.quote_properties = match props {
-                QuotePropsConfig::AsNeeded => QuoteProperties::AsNeeded,
-                QuotePropsConfig::Consistent => QuoteProperties::Consistent,
-                QuotePropsConfig::Preserve => QuoteProperties::Preserve,
-            };
-        }
-
-        // [Prettier] trailingComma: "all" | "es5" | "none"
-        if let Some(commas) = self.trailing_comma {
-            format_options.trailing_commas = match commas {
-                TrailingCommaConfig::All => TrailingCommas::All,
-                TrailingCommaConfig::Es5 => TrailingCommas::Es5,
-                TrailingCommaConfig::None => TrailingCommas::None,
-            };
-        }
-
-        // [Prettier] semi: boolean
-        if let Some(semi) = self.semi {
-            format_options.semicolons =
-                if semi { Semicolons::Always } else { Semicolons::AsNeeded };
-        }
-
-        // [Prettier] arrowParens: "avoid" | "always"
-        if let Some(parens) = self.arrow_parens {
-            format_options.arrow_parentheses = match parens {
-                ArrowParensConfig::Avoid => ArrowParentheses::AsNeeded,
-                ArrowParensConfig::Always => ArrowParentheses::Always,
-            };
-        }
-
-        // [Prettier] bracketSpacing: boolean
-        if let Some(spacing) = self.bracket_spacing {
-            format_options.bracket_spacing = BracketSpacing::from(spacing);
-        }
-
-        // [Prettier] bracketSameLine: boolean
-        if let Some(same_line) = self.bracket_same_line {
-            format_options.bracket_same_line = BracketSameLine::from(same_line);
-        }
-
-        // [Prettier] singleAttributePerLine: boolean
-        if let Some(single_attribute_per_line) = self.single_attribute_per_line {
-            format_options.attribute_position = if single_attribute_per_line {
-                AttributePosition::Multiline
-            } else {
-                AttributePosition::Auto
-            };
-        }
-
-        // [Prettier] objectWrap: "preserve" | "collapse"
-        if let Some(object_wrap) = self.object_wrap {
-            format_options.expand = match object_wrap {
-                ObjectWrapConfig::Preserve => Expand::Auto,
-                ObjectWrapConfig::Collapse => Expand::Never,
-            };
-        }
-
-        // [Prettier] embeddedLanguageFormatting: "auto" | "off"
-        if let Some(embedded_language_formatting) = self.embedded_language_formatting {
-            format_options.embedded_language_formatting = match embedded_language_formatting {
-                EmbeddedLanguageFormattingConfig::Auto => EmbeddedLanguageFormatting::Auto,
-                EmbeddedLanguageFormattingConfig::Off => EmbeddedLanguageFormatting::Off,
-            };
-        }
-
-        // Below are our own extensions
-
-        if let Some(config) = self.experimental_sort_imports {
-            let mut sort_imports = SortImportsOptions::default();
-
-            if let Some(v) = config.partition_by_newline {
-                sort_imports.partition_by_newline = v;
-            }
-            if let Some(v) = config.partition_by_comment {
-                sort_imports.partition_by_comment = v;
-            }
-            if let Some(v) = config.sort_side_effects {
-                sort_imports.sort_side_effects = v;
-            }
-            if let Some(v) = config.order {
-                sort_imports.order = match v {
-                    SortOrderConfig::Asc => SortOrder::Asc,
-                    SortOrderConfig::Desc => SortOrder::Desc,
-                };
-            }
-            if let Some(v) = config.ignore_case {
-                sort_imports.ignore_case = v;
-            }
-            if let Some(v) = config.newlines_between {
-                sort_imports.newlines_between = v;
-            }
-            if let Some(v) = config.internal_pattern {
-                sort_imports.internal_pattern = v;
-            }
-            if let Some(v) = config.groups {
-                sort_imports.groups = v.into_iter().map(SortGroupItemConfig::into_vec).collect();
-            }
-            if let Some(v) = config.custom_groups {
-                sort_imports.custom_groups = v
-                    .into_iter()
-                    .map(|c| CustomGroupDefinition {
-                        group_name: c.group_name,
-                        element_name_pattern: c.element_name_pattern,
-                    })
-                    .collect();
-            }
-
-            // `partition_by_newline: true` and `newlines_between: true` cannot be used together
-            if sort_imports.partition_by_newline && sort_imports.newlines_between {
-                return Err("Invalid `sortImports` configuration: `partitionByNewline: true` and `newlinesBetween: true` cannot be used together".to_string());
-            }
-
-            format_options.experimental_sort_imports = Some(sort_imports);
-        }
-
-        if let Some(config) = self.experimental_tailwindcss {
-            format_options.experimental_tailwindcss = Some(TailwindcssOptions {
-                config: config.config,
-                stylesheet: config.stylesheet,
-                functions: config.functions.unwrap_or_default(),
-                attributes: config.attributes.unwrap_or_default(),
-                preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
-                preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
-            });
-        }
-
-        // Currently, there is a no options for TOML formatter
-        let toml_options = build_toml_options(&format_options);
-
-        let sort_package_json = self.experimental_sort_package_json.map_or_else(
-            || Some(SortPackageJsonConfig::default().to_sort_options()),
-            |c| c.to_sort_options(),
-        );
-
-        let insert_final_newline = self.insert_final_newline.unwrap_or(true);
-
-        Ok(OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline })
-    }
 }
 
-/// Build `toml` formatter options from `FormatOptions`.
-/// Use the same options as `prettier-plugin-toml`.
-/// <https://github.com/un-ts/prettier/blob/7a4346d5dbf6b63987c0f81228fc46bb12f8692f/packages/toml/src/index.ts#L27-L31>
-fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
-    TomlFormatterOptions {
-        column_width: format_options.line_width.value() as usize,
-        indent_string: if format_options.indent_style.is_tab() {
-            "\t".to_string()
-        } else {
-            " ".repeat(format_options.indent_width.value() as usize)
-        },
-        array_trailing_comma: !format_options.trailing_commas.is_none(),
-        crlf: format_options.line_ending.is_carriage_return_line_feed(),
-        // NOTE: Need to align with `oxc_formatter` and Prettier defaults,
-        // to make `insertFinalNewline` option work correctly.
-        trailing_newline: true,
-        ..Default::default()
+// ---
+
+fn reject_experimental_operator_position<'de, D>(d: D) -> Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = Option::<String>::deserialize(d)?;
+    if v.is_some() {
+        return Err(serde::de::Error::custom("Unsupported option: `experimentalOperatorPosition`"));
     }
+    Ok(v)
+}
+
+fn reject_experimental_ternaries<'de, D>(d: D) -> Result<Option<bool>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = Option::<bool>::deserialize(d)?;
+    if v.is_some() {
+        return Err(serde::de::Error::custom("Unsupported option: `experimentalTernaries`"));
+    }
+    Ok(v)
 }
 
 // ---
@@ -527,6 +400,23 @@ pub enum HtmlWhitespaceSensitivityConfig {
 
 // ---
 
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortImportsUserConfig {
+    Bool(bool),
+    Object(SortImportsConfig),
+}
+
+impl SortImportsUserConfig {
+    pub fn into_config(self) -> Option<SortImportsConfig> {
+        match self {
+            Self::Bool(true) => Some(SortImportsConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortImportsConfig {
@@ -587,7 +477,7 @@ pub struct SortImportsConfig {
     ///
     /// This is useful for distinguishing your own modules from external dependencies.
     ///
-    /// - Default: `["~/", "@/"]`
+    /// - Default: `["~/", "@/", "#"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub internal_pattern: Option<Vec<String>>,
     /// Specifies a list of predefined import groups for sorting.
@@ -606,8 +496,8 @@ pub struct SortImportsConfig {
     ///
     /// The list of selectors is sorted from most to least important:
     /// - `type` — TypeScript type imports.
-    /// - `side-effect-style` — Side effect style imports.
-    /// - `side-effect` — Side effect imports.
+    /// - `side_effect_style` — Side effect style imports.
+    /// - `side_effect` — Side effect imports.
     /// - `style` — Style imports.
     /// - `index` — Main file from the current directory.
     /// - `sibling` — Modules from the same directory.
@@ -619,29 +509,27 @@ pub struct SortImportsConfig {
     /// - `import` — Any import.
     ///
     /// The list of modifiers is sorted from most to least important:
-    /// - `side-effect` — Side effect imports.
+    /// - `side_effect` — Side effect imports.
     /// - `type` — TypeScript type imports.
     /// - `value` — Value imports.
     /// - `default` — Imports containing the default specifier.
     /// - `wildcard` — Imports containing the wildcard (`* as`) specifier.
     /// - `named` — Imports containing at least one named specifier.
-    /// - `multiline` — Imports on multiple lines.
-    /// - `singleline` — Imports on a single line.
-    ///
-    /// See also <https://perfectionist.dev/rules/sort-imports#groups> for details.
     ///
     /// - Default: See below
     /// ```json
     /// [
-    ///   "type-import",
-    ///   ["value-builtin", "value-external"],
-    ///   "type-internal",
-    ///   "value-internal",
-    ///   ["type-parent", "type-sibling", "type-index"],
-    ///   ["value-parent", "value-sibling", "value-index"],
-    ///   "unknown",
+    ///   "builtin",
+    ///   "external",
+    ///   ["internal", "subpath"],
+    ///   ["parent", "sibling", "index"],
+    ///   "style",
+    ///   "unknown"
     /// ]
     /// ```
+    ///
+    /// Also, you can override the global `newlinesBetween` setting for specific group boundaries
+    /// by including a `{ "newlinesBetween": boolean }` marker object in the `groups` list at the desired position.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub groups: Option<Vec<SortGroupItemConfig>>,
     /// Define your own groups for matching very specific imports.
@@ -651,6 +539,9 @@ pub struct SortImportsConfig {
     ///
     /// If you want a predefined group to take precedence over a custom group,
     /// you must write a custom group definition that does the same as what the predefined group does, and put it first in the list.
+    ///
+    /// If you specify multiple conditions like `elementNamePattern`, `selector`, and `modifiers`,
+    /// all conditions must be met for an import to match the custom group (AND logic).
     ///
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -667,15 +558,30 @@ pub enum SortOrderConfig {
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged)]
 pub enum SortGroupItemConfig {
+    /// A `{ "newlinesBetween": bool }` marker object that overrides the global `newlinesBetween`
+    /// setting for the boundary between the previous and next groups.
+    NewlinesBetween(NewlinesBetweenMarker),
+    /// A single group name string (e.g. `"value-builtin"`).
     Single(String),
+    /// Multiple group names treated as one group (e.g. `["value-builtin", "value-external"]`).
     Multiple(Vec<String>),
 }
 
+/// A marker object for overriding `newlinesBetween` at a specific group boundary.
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct NewlinesBetweenMarker {
+    pub newlines_between: bool,
+}
+
 impl SortGroupItemConfig {
-    fn into_vec(self) -> Vec<String> {
+    pub(super) fn into_vec(self) -> Vec<String> {
         match self {
             Self::Single(s) => vec![s],
             Self::Multiple(v) => v,
+            Self::NewlinesBetween(_) => {
+                unreachable!("NewlinesBetween markers should be handled before calling into_vec")
+            }
         }
     }
 }
@@ -685,8 +591,20 @@ impl SortGroupItemConfig {
 pub struct CustomGroupItemConfig {
     /// Name of the custom group, used in the `groups` option.
     pub group_name: String,
-    /// List of import name prefixes to match for this group.
+    /// List of glob patterns to match import sources for this group.
     pub element_name_pattern: Vec<String>,
+    /// Selector to match the import kind.
+    ///
+    /// Possible values: `"type"`, `"side_effect_style"`, `"side_effect"`, `"style"`, `"index"`,
+    /// `"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selector: Option<String>,
+    /// Modifiers to match the import characteristics.
+    /// All specified modifiers must be present (AND logic).
+    ///
+    /// Possible values: `"side_effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modifiers: Option<Vec<String>>,
 }
 
 // ---
@@ -705,13 +623,11 @@ impl Default for SortPackageJsonUserConfig {
 }
 
 impl SortPackageJsonUserConfig {
-    /// Convert to `sort_package_json::SortOptions`.
-    /// Returns `None` if sorting is disabled.
-    pub fn to_sort_options(&self) -> Option<sort_package_json::SortOptions> {
+    pub fn into_config(self) -> Option<SortPackageJsonConfig> {
         match self {
             Self::Bool(false) => None,
-            Self::Bool(true) => Some(SortPackageJsonConfig::default().to_sort_options()),
-            Self::Object(config) => Some(config.to_sort_options()),
+            Self::Bool(true) => Some(SortPackageJsonConfig::default()),
+            Self::Object(config) => Some(config),
         }
     }
 }
@@ -726,21 +642,28 @@ pub struct SortPackageJsonConfig {
     pub sort_scripts: Option<bool>,
 }
 
-impl SortPackageJsonConfig {
-    fn to_sort_options(&self) -> sort_package_json::SortOptions {
-        sort_package_json::SortOptions {
-            sort_scripts: self.sort_scripts.unwrap_or(false),
-            // Small optimization: Prettier will reformat anyway
-            pretty: false,
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortTailwindcssUserConfig {
+    Bool(bool),
+    Object(SortTailwindcssConfig),
+}
+
+impl SortTailwindcssUserConfig {
+    pub fn into_config(self) -> Option<SortTailwindcssConfig> {
+        match self {
+            Self::Bool(true) => Some(SortTailwindcssConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
         }
     }
 }
 
-// ---
-
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-pub struct TailwindcssConfig {
+pub struct SortTailwindcssConfig {
     /// Path to your Tailwind CSS configuration file (v3).
     ///
     /// NOTE: Paths are resolved relative to the Oxfmt configuration file.
@@ -787,103 +710,142 @@ pub struct TailwindcssConfig {
 
 // ---
 
-/// Resolved format options from `FormatConfig`.
-///
-/// Contains `FormatOptions` for `oxc_formatter` plus additional Oxfmt-specific options.
-/// All fields here are subject to per-file overrides.
-#[derive(Debug, Clone)]
-pub struct OxfmtOptions {
-    pub format_options: FormatOptions,
-    pub toml_options: TomlFormatterOptions,
-    pub sort_package_json: Option<sort_package_json::SortOptions>,
-    pub insert_final_newline: bool,
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum JsdocUserConfig {
+    Bool(bool),
+    Object(JsdocConfig),
 }
 
-/// Populates the raw config JSON with resolved `FormatOptions` values.
-/// This ensures `external_formatter`(Prettier) receives the same options that `oxc_formatter` uses.
-///
-/// Only options that meet one of these criteria need to be mapped:
-/// - 1. Different defaults between Prettier and oxc_formatter
-///   - e.g. `printWidth`: Prettier: 80, Oxfmt: 100
-/// - 2. Can be set via `.editorconfig` (values won't be in raw config JSON)
-///   - `max_line_length` -> `printWidth`
-///   - `end_of_line` -> `endOfLine`
-///   - `indent_style` -> `useTabs`
-///   - `indent_size` -> `tabWidth`
-pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
-    let Some(obj) = config.as_object_mut() else {
-        return;
-    };
-
-    // vs Prettier defaults and `.editorconfig` values
-    obj.insert("printWidth".to_string(), Value::from(options.line_width.value()));
-
-    // vs `.editorconfig` values
-    obj.insert(
-        "useTabs".to_string(),
-        Value::from(match options.indent_style {
-            IndentStyle::Tab => true,
-            IndentStyle::Space => false,
-        }),
-    );
-    obj.insert("tabWidth".to_string(), Value::from(options.indent_width.value()));
-    obj.insert(
-        "endOfLine".to_string(),
-        Value::from(match options.line_ending {
-            LineEnding::Lf => "lf",
-            LineEnding::Crlf => "crlf",
-            LineEnding::Cr => "cr",
-        }),
-    );
-
-    // Already handled by Oxfmt
-    obj.remove("overrides");
-
-    // Below are our own extensions, just remove them
-    obj.remove("ignorePatterns");
-    obj.remove("insertFinalNewline");
-    obj.remove("experimentalSortImports");
-    obj.remove("experimentalSortPackageJson");
-
-    // Map `experimentalTailwindcss` options to Prettier's tailwind plugin format,
-    // by adding `tailwind` prefix to each field.
-    // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
-    if let Some(tailwind) = obj.remove("experimentalTailwindcss")
-        && let Some(tailwind) = tailwind.as_object()
-    {
-        // NOTE: Internal flag for JS side to signal that plugin is enabled
-        obj.insert("_tailwindPluginEnabled".to_string(), Value::Bool(true));
-
-        for (src, dst) in [
-            ("config", "tailwindConfig"),
-            ("stylesheet", "tailwindStylesheet"),
-            ("functions", "tailwindFunctions"),
-            ("attributes", "tailwindAttributes"),
-            ("preserveWhitespace", "tailwindPreserveWhitespace"),
-            ("preserveDuplicates", "tailwindPreserveDuplicates"),
-        ] {
-            if let Some(v) = tailwind.get(src) {
-                obj.insert(dst.to_string(), v.clone());
-            }
+impl JsdocUserConfig {
+    pub fn into_config(self) -> Option<JsdocConfig> {
+        match self {
+            Self::Bool(true) => Some(JsdocConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
         }
     }
+}
 
-    // Any other fields are preserved as-is.
-    // - e.g. `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
-    //   - Defined in `Oxfmtrc`, but only used by Prettier
-    // - e.g. `plugins`
-    //   - It does not mean plugin works correctly with Oxfmt
-    //   - Oxfmt still not aware of any plugin-defined languages
-    // Other options defined independently by plugins are also left as they are.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct JsdocConfig {
+    /// Capitalize the first letter of tag descriptions.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capitalize_descriptions: Option<bool>,
+    /// Add a trailing dot to the end of descriptions.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_with_dot: Option<bool>,
+    /// Append default values to `@param` descriptions (e.g. "Default is `value`").
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub add_default_to_description: Option<bool>,
+    /// Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prefer_code_fences: Option<bool>,
+    /// Strategy for wrapping description lines at print width.
+    ///
+    /// - `"greedy"` — Always re-wrap text to fit within print width.
+    /// - `"balance"` — Preserve original line breaks if all lines fit within print width.
+    ///
+    /// - Default: `"greedy"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line_wrapping_style: Option<String>,
+    /// How to format comment blocks.
+    ///
+    /// - `"singleLine"` — Convert to single-line `/** content */` when possible.
+    /// - `"multiline"` — Always use multi-line format.
+    /// - `"keep"` — Preserve original formatting.
+    ///
+    /// - Default: `"singleLine"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comment_line_strategy: Option<String>,
+    /// Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_tag_groups: Option<bool>,
+    /// Add a blank line between the last `@param` and `@returns`.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_returns_from_param: Option<bool>,
+    /// Add spaces inside JSDoc type braces: `{string}` → `{ string }`.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bracket_spacing: Option<bool>,
+    /// Emit `@description` tag instead of inline description.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_tag: Option<bool>,
+    /// Preserve indentation in unparsable `@example` code.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keep_unparsable_example_indent: Option<bool>,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SvelteUserConfig {
+    Bool(bool),
+    Object(SvelteConfig),
+}
+
+impl SvelteUserConfig {
+    pub fn into_config(self) -> Option<SvelteConfig> {
+        match self {
+            Self::Bool(true) => Some(SvelteConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SvelteConfig {
+    /// The order in which Svelte component sections are printed.
+    /// Format: join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want;
+    /// or `none` if you don't want to reorder anything.
+    ///
+    /// - Default: `"options-scripts-markup-styles"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_order: Option<String>,
+    /// Whether to allow attribute shorthand if attribute name and expression are same.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allow_shorthand: Option<bool>,
+    /// Whether to indent code inside `<script>` and `<style>` tags.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub indent_script_and_style: Option<bool>,
 }
 
 // ---
 
 /// Merge two JSON values recursively.
-/// - Overlay values overwrite base values
-/// - `null` values in overlay reset the field to default (via `Option<T>` → `None`)
+/// - Overlay values overwrite base values (any non-object overlay wins, including `null`)
 ///
 /// All Prettier options are flat, but some our options are nested.
+///
+/// NOTE: null-as-reset is helper-level only.
+/// [`FormatConfig::merge`] re-serializes typed `Option<T>` fields with `skip_serializing_if = "Option::is_none"`,
+/// so `None` is omitted (not emitted as `null`) and never reaches this function.
+/// User-facing override `null` therefore has no effect, explicit field omission has the same result.
 fn json_deep_merge(base: Value, overlay: Value) -> Value {
     match (base, overlay) {
         (Value::Object(mut base_map), Value::Object(overlay_map)) => {
@@ -902,274 +864,6 @@ fn json_deep_merge(base: Value, overlay: Value) -> Value {
 }
 
 // ---
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_config_parsing() {
-        let json = r#"{
-            "useTabs": true,
-            "tabWidth": 4,
-            "printWidth": 100,
-            "singleQuote": true,
-            "semi": false,
-            "experimentalSortImports": {
-                "partitionByNewline": true,
-                "order": "desc",
-                "ignoreCase": false,
-                "newlinesBetween": false
-            }
-        }"#;
-
-        let config: FormatConfig = serde_json::from_str(json).unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-
-        assert!(oxfmt_options.format_options.indent_style.is_tab());
-        assert_eq!(oxfmt_options.format_options.indent_width.value(), 4);
-        assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
-        assert!(!oxfmt_options.format_options.quote_style.is_double());
-        assert!(oxfmt_options.format_options.semicolons.is_as_needed());
-
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
-        assert!(sort_imports.partition_by_newline);
-        assert!(sort_imports.order.is_desc());
-        assert!(!sort_imports.ignore_case);
-        assert!(!sort_imports.newlines_between);
-    }
-
-    #[test]
-    fn test_ignore_unknown_fields() {
-        let config: FormatConfig = serde_json::from_str(
-            r#"{
-                "unknownField": "someValue",
-                "anotherUnknown": 123
-            }"#,
-        )
-        .unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-
-        // Should use defaults
-        assert!(oxfmt_options.format_options.indent_style.is_space());
-        assert_eq!(oxfmt_options.format_options.indent_width.value(), 2);
-        assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
-        assert_eq!(oxfmt_options.format_options.experimental_sort_imports, None);
-    }
-
-    #[test]
-    fn test_empty_config() {
-        let config: FormatConfig = serde_json::from_str("{}").unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-
-        // Should use defaults
-        assert!(oxfmt_options.format_options.indent_style.is_space());
-        assert_eq!(oxfmt_options.format_options.indent_width.value(), 2);
-        assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
-        assert_eq!(oxfmt_options.format_options.experimental_sort_imports, None);
-    }
-
-    #[test]
-    fn test_arrow_parens_normalization() {
-        // Test "avoid" -> "as-needed" normalization
-        let config: FormatConfig = serde_json::from_str(r#"{"arrowParens": "avoid"}"#).unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-        assert!(oxfmt_options.format_options.arrow_parentheses.is_as_needed());
-
-        // Test "always" remains unchanged
-        let config: FormatConfig = serde_json::from_str(r#"{"arrowParens": "always"}"#).unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-        assert!(oxfmt_options.format_options.arrow_parentheses.is_always());
-    }
-
-    #[test]
-    fn test_object_wrap_normalization() {
-        // Test "preserve" -> "auto" normalization
-        let config: FormatConfig = serde_json::from_str(r#"{"objectWrap": "preserve"}"#).unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-        assert_eq!(oxfmt_options.format_options.expand, Expand::Auto);
-
-        // Test "collapse" -> "never" normalization
-        let config: FormatConfig = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-        assert_eq!(oxfmt_options.format_options.expand, Expand::Never);
-    }
-
-    #[test]
-    fn test_sort_imports_config() {
-        let config: FormatConfig = serde_json::from_str(
-            r#"{
-            "experimentalSortImports": {}
-        }"#,
-        )
-        .unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
-        assert!(sort_imports.newlines_between);
-        assert!(!sort_imports.partition_by_newline);
-
-        // Test explicit false
-        let config: FormatConfig = serde_json::from_str(
-            r#"{
-                "experimentalSortImports": {
-                    "newlinesBetween": false
-                }
-            }"#,
-        )
-        .unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
-        assert!(!sort_imports.newlines_between);
-        assert!(!sort_imports.partition_by_newline);
-
-        // Test explicit true
-        let config: FormatConfig = serde_json::from_str(
-            r#"{
-                "experimentalSortImports": {
-                    "newlinesBetween": true
-                }
-            }"#,
-        )
-        .unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
-        assert!(sort_imports.newlines_between);
-        assert!(!sort_imports.partition_by_newline);
-
-        let config: FormatConfig = serde_json::from_str(
-            r#"{
-                "experimentalSortImports": {
-                    "partitionByNewline": true,
-                    "newlinesBetween": false
-                }
-            }"#,
-        )
-        .unwrap();
-        assert!(config.into_oxfmt_options().is_ok());
-        let config: FormatConfig = serde_json::from_str(
-            r#"{
-                "experimentalSortImports": {
-                    "partitionByNewline": true,
-                    "newlinesBetween": true
-                }
-            }"#,
-        )
-        .unwrap();
-        assert!(config.into_oxfmt_options().is_err_and(|e| e.contains("newlinesBetween")));
-
-        let config: FormatConfig = serde_json::from_str(
-            r#"{
-                "experimentalSortImports": {
-                    "groups": [
-                        "builtin",
-                        ["external", "internal"],
-                        "parent",
-                        "sibling",
-                        "index"
-                    ]
-                }
-            }"#,
-        )
-        .unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
-        assert_eq!(sort_imports.groups.len(), 5);
-        assert_eq!(sort_imports.groups[0], vec!["builtin".to_string()]);
-        assert_eq!(sort_imports.groups[1], vec!["external".to_string(), "internal".to_string()]);
-        assert_eq!(sort_imports.groups[4], vec!["index".to_string()]);
-    }
-}
-
-#[cfg(test)]
-mod tests_populate_prettier_config {
-    use super::*;
-
-    #[test]
-    fn test_populate_prettier_config_defaults() {
-        let json_string = r"{}";
-        let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
-        let config: FormatConfig = serde_json::from_str(json_string).unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-
-        populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
-
-        let obj = raw_config.as_object().unwrap();
-        assert_eq!(obj.get("printWidth").unwrap(), 100);
-    }
-
-    #[test]
-    fn test_populate_prettier_config_with_user_values() {
-        let json_string = r#"{
-            "printWidth": 80,
-            "ignorePatterns": ["*.min.js"],
-            "experimentalSortImports": { "order": "asc" }
-        }"#;
-        let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
-        let config: FormatConfig = serde_json::from_str(json_string).unwrap();
-        let oxfmt_options = config.into_oxfmt_options().unwrap();
-
-        populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
-
-        let obj = raw_config.as_object().unwrap();
-        // User-specified value is preserved via FormatOptions
-        assert_eq!(obj.get("printWidth").unwrap(), 80);
-        // oxfmt extensions are removed
-        assert!(!obj.contains_key("ignorePatterns"));
-        assert!(!obj.contains_key("experimentalSortImports"));
-    }
-
-    #[test]
-    fn test_overrides_parsing() {
-        let json = r#"{
-            "tabWidth": 2,
-            "overrides": [
-                {
-                    "files": ["*.test.js"],
-                    "options": { "tabWidth": 4 }
-                },
-                {
-                    "files": ["*.md", "*.html"],
-                    "excludeFiles": ["*.min.js"],
-                    "options": { "printWidth": 80 }
-                }
-            ]
-        }"#;
-
-        let config: Oxfmtrc = serde_json::from_str(json).unwrap();
-        assert!(config.overrides.is_some());
-
-        let overrides = config.overrides.unwrap();
-        assert_eq!(overrides.len(), 2);
-
-        // First override: single file pattern
-        assert_eq!(overrides[0].files, vec!["*.test.js"]);
-        assert!(overrides[0].exclude_files.is_none());
-        assert_eq!(overrides[0].options.tab_width, Some(4));
-
-        // Second override: multiple file patterns with exclude
-        assert_eq!(overrides[1].files, vec!["*.md", "*.html"]);
-        assert_eq!(overrides[1].exclude_files, Some(vec!["*.min.js".to_string()]));
-        assert_eq!(overrides[1].options.print_width, Some(80));
-    }
-
-    #[test]
-    fn test_populate_prettier_config_removes_overrides() {
-        let json_string = r#"{
-            "tabWidth": 2,
-            "overrides": [
-                { "files": ["*.test.js"], "options": { "tabWidth": 4 } }
-            ]
-        }"#;
-        let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
-        let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
-        let oxfmt_options = oxfmtrc.format_config.into_oxfmt_options().unwrap();
-
-        populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
-
-        let obj = raw_config.as_object().unwrap();
-        assert!(!obj.contains_key("overrides"));
-    }
-}
 
 #[cfg(test)]
 mod tests_json_deep_merge {
@@ -1193,11 +887,71 @@ mod tests_json_deep_merge {
             merged,
             json!({ "experimentalSortImports": { "order": "desc", "ignoreCase": true } })
         );
+    }
+}
 
-        // Null overwrites value (but in practice, None is skipped during serialization)
-        let base = json!({ "semi": false, "tabWidth": 4 });
-        let overlay = json!({ "semi": null });
-        let merged = json_deep_merge(base, overlay);
-        assert_eq!(merged, json!({ "semi": null, "tabWidth": 4 }));
+// ---
+
+#[cfg(test)]
+mod tests_reject_experimental {
+    use super::*;
+
+    #[test]
+    fn test_reject_experimental_operator_position_in_base() {
+        let json = r#"{ "experimentalOperatorPosition": "start" }"#;
+        let err = serde_json::from_str::<FormatConfig>(json).unwrap_err();
+        assert!(err.to_string().contains("experimentalOperatorPosition"));
+    }
+
+    #[test]
+    fn test_reject_experimental_ternaries_in_base() {
+        let json = r#"{ "experimentalTernaries": true }"#;
+        let err = serde_json::from_str::<FormatConfig>(json).unwrap_err();
+        assert!(err.to_string().contains("experimentalTernaries"));
+    }
+
+    #[test]
+    fn test_reject_experimental_in_overrides() {
+        // `OxfmtOverrideConfig.options: FormatConfig` so the same deserialize_with applies
+        let json = r#"{
+            "overrides": [
+                {
+                    "files": ["*.ts"],
+                    "options": { "experimentalOperatorPosition": "end" }
+                }
+            ]
+        }"#;
+        let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
+        assert!(err.to_string().contains("experimentalOperatorPosition"));
+
+        let json = r#"{
+            "overrides": [
+                {
+                    "files": ["*.ts"],
+                    "options": { "experimentalTernaries": true }
+                }
+            ]
+        }"#;
+        let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
+        assert!(err.to_string().contains("experimentalTernaries"));
+    }
+
+    #[test]
+    fn test_reject_experimental_via_napi_resolve_path() {
+        // NAPI `resolve()` does `serde_json::from_value::<FormatConfig>(raw_config)`,
+        // which goes through the same deserialize_with.
+        let raw = serde_json::json!({ "experimentalTernaries": true });
+        let err = serde_json::from_value::<FormatConfig>(raw).unwrap_err();
+        assert!(err.to_string().contains("experimentalTernaries"));
+    }
+
+    #[test]
+    fn test_unset_experimental_does_not_fail() {
+        // Sanity: omitting both fields parses cleanly
+        let json = r#"{ "printWidth": 120 }"#;
+        let config: FormatConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(config.print_width, Some(120));
+        assert!(config.experimental_operator_position.is_none());
+        assert!(config.experimental_ternaries.is_none());
     }
 }

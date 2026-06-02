@@ -118,6 +118,18 @@ export interface DecoratorOptions {
    * @default false
    */
   emitDecoratorMetadata?: boolean
+  /**
+   * Aligns nullable-union `design:type` emission with `--strictNullChecks`.
+   *
+   * When `true` (default), `T | null` and `T | undefined` emit `Object`, matching tsc strict.
+   * When `false`, `null` and `undefined` are elided from the union so the underlying
+   * primitive constructor is emitted, matching tsc with `--strictNullChecks=false`
+   * and `babel-plugin-transform-typescript-metadata`.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#strictNullChecks
+   * @default true
+   */
+  strictNullChecks?: boolean
 }
 
 export interface Es2015Options {
@@ -616,6 +628,24 @@ export interface TypeScriptOptions {
    * Defaults to `false`.
    */
   removeClassFieldsWithoutInitializer?: boolean
+  /**
+   * When true, optimize const enums by inlining their values at usage sites
+   * and removing the enum declaration.
+   *
+   * @default false
+   */
+  optimizeConstEnums?: boolean
+  /**
+   * When true, optimize regular (non-const) enums by inlining their member
+   * accesses at usage sites when the member value is statically known.
+   *
+   * Non-exported enum declarations are also removed when all members are
+   * evaluable and no references to the enum as a runtime value exist
+   * (e.g., `console.log(Foo)`, `typeof Foo`, or passing the enum as an argument).
+   *
+   * @default false
+   */
+  optimizeEnums?: boolean
   /**
    * Also generate a `.d.ts` declaration file for TypeScript files.
    *

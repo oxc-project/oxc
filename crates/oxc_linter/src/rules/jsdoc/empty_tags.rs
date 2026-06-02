@@ -63,7 +63,9 @@ declare_oxc_lint!(
     EmptyTags,
     jsdoc,
     restriction,
+    pending,
     config = EmptyTagsConfig,
+    version = "0.2.16",
 );
 
 const EMPTY_TAGS: [&str; 18] = [

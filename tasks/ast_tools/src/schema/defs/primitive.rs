@@ -7,7 +7,7 @@ use super::{Containers, Def, Derives, Schema, TypeDef, TypeId, extensions::layou
 ///
 /// Includes:
 /// * Built-ins e.g. `u8`, `&str`.
-/// * Special Oxc types e.g. `ScopeId`, `Atom`.
+/// * Special Oxc types e.g. `ScopeId`, `Str`.
 #[derive(Debug)]
 pub struct PrimitiveDef {
     pub id: TypeId,
@@ -49,7 +49,7 @@ impl Def for PrimitiveDef {
     /// Get if type has a lifetime.
     #[expect(unused_variables)]
     fn has_lifetime(&self, schema: &Schema) -> bool {
-        matches!(self.name(), "&str" | "Atom" | "Ident")
+        matches!(self.name(), "&str" | "Str" | "Ident")
     }
 
     /// Get type signature (including lifetimes).
@@ -64,11 +64,11 @@ impl Def for PrimitiveDef {
                     quote!(&'a str)
                 }
             }
-            "Atom" => {
+            "Str" => {
                 if anon {
-                    quote!(Atom<'_>)
+                    quote!(Str<'_>)
                 } else {
-                    quote!(Atom<'a>)
+                    quote!(Str<'a>)
                 }
             }
             "Ident" => {

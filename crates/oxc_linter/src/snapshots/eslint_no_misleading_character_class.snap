@@ -1,776 +1,1224 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
- 1 │ var r = /[👍]/
-   ·          ────
-   ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
+ 1 │ var r = /[👍]/
+   ·           ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\uD83D\uDC4D]/
-   ·          ──────────────
+   ·           ────────────
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\uD83D\uDC4D-\uffff]/
-   ·          ─────────────────────
+   ·           ────────────
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👍]/
-   ·          ────
+   ·           ──
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:17]
  1 │ var r = /before[\uD83D\uDC4D]after/
-   ·          ─────────────────────────
+   ·                 ────────────
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:17]
  1 │ var r = /[before\uD83D\uDC4Dafter]/
-   ·          ─────────────────────────
+   ·                 ────────────
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:17]
  1 │ var r = /\uDC4D[\uD83D\uDC4D]/
-   ·          ────────────────────
+   ·                 ────────────
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👍]/
-   ·          ────
+   ·           ──
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👍]\a/
-   ·          ──────
+   ·           ──
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:13]
  1 │ var r = /\a[👍]\a/
-   ·          ────────
+   ·             ──
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:15]
  1 │ var r = /(?<=[👍])/
-   ·          ─────────
+   ·               ──
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:15]
  1 │ var r = /(?<=[👍])/
-   ·          ─────────
+   ·               ──
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[Á]/
-   ·          ───
+   ·           ─
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[Á]/u
-   ·          ───
+   ·           ─
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u0041\u0301]/
-   ·          ──────────────
+   ·           ────────────
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u0041\u0301]/u
-   ·          ──────────────
+   ·           ────────────
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u{41}\u{301}]/u
-   ·          ───────────────
+   ·           ─────────────
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[❇️]/
-   ·          ────
+   ·           ──
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[❇️]/u
-   ·          ────
+   ·           ──
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u2747\uFE0F]/
-   ·          ──────────────
+   ·           ────────────
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u2747\uFE0F]/u
-   ·          ──────────────
+   ·           ────────────
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u{2747}\u{FE0F}]/u
-   ·          ──────────────────
+   ·           ────────────────
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👶🏻]/
-   ·          ────
+   ·           ──
    ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:15]
+ 1 │ var r = /[👶🏻]/
+   ·             ─
+   ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👶🏻]/u
-   ·          ────
+   ·           ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[a\uD83C\uDFFB]/u
-   ·          ───────────────
+   ·           ─────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\uD83D\uDC76\uD83C\uDFFB]/u
-   ·          ──────────────────────────
+   ·           ────────────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u{1F476}\u{1F3FB}]/u
-   ·          ────────────────────
+   ·           ──────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[🇯🇵]/
-   ·          ────
+   ·           ─
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:15]
+ 1 │ var r = /[🇯🇵]/
+   ·            ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[🇯🇵]/i
-   ·          ────
+   ·           ─
    ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:15]
+ 1 │ var r = /[🇯🇵]/i
+   ·            ─
+   ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[🇯🇵]/u
-   ·          ────
+   ·           ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F1EF} for the regional indicator symbol for 'J') instead of regional indicator symbol pairs in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\uD83C\uDDEF\uD83C\uDDF5]/u
-   ·          ──────────────────────────
+   ·           ────────────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F1EF} for the regional indicator symbol for 'J') instead of regional indicator symbol pairs in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u{1F1EF}\u{1F1F5}]/u
-   ·          ────────────────────
+   ·           ──────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F1EF} for the regional indicator symbol for 'J') instead of regional indicator symbol pairs in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:15]
  1 │ var r = /[👨‍👩‍👦]/
-   ·          ────
+   ·             ─
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = /[👨‍👩‍👦]/
+   ·             ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👨‍👩‍👦]/
-   ·          ────
+   ·           ──
    ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:18]
+ 1 │ var r = /[👨‍👩‍👦]/
+   ·             ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:25]
+ 1 │ var r = /[👨‍👩‍👦]/
+   ·             ─
+   ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👨‍👩‍👦]/u
-   ·          ────
+   ·           ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:18]
+ 1 │ var r = /[👨‍👩‍👦]/u
+   ·             ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👩‍👦]/u
-   ·          ────
+   ·           ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👩‍👦][👩‍👦]/u
-   ·          ────────
+   ·           ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:24]
+ 1 │ var r = /[👩‍👦][👩‍👦]/u
+   ·               ──
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
-   ·          ───────────
+   ·           ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:18]
+ 1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
+   ·             ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:34]
+ 1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
+   ·                  ──
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:41]
+ 1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
+   ·                    ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👨‍👩‍👦👩‍👦]/u
-   ·          ──────
+   ·           ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:18]
+ 1 │ var r = /[👨‍👩‍👦👩‍👦]/u
+   ·             ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = /[👨‍👩‍👦👩‍👦]/u
+   ·             ──
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC66]/u
-   ·          ──────────────────────────────────────────────────
+   ·           ──────────────────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = /[\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC66]/u
+   ·                             ──────────────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
-   ·          ─────────────────────────────────────────────
+   ·           ──────────────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:28]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·                            ──────────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\uD83D\uDC68\u200D\uD83D\uDC69]/u
-   ·          ────────────────────────────────
+   ·           ──────────────────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u{1F468}\u{200D}\u{1F469}]/u
-   ·          ────────────────────────────
+   ·           ──────────────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]foo[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
-   ·          ─────────────────────────────────────────────────────────────────────────────────────────────
+   ·           ──────────────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:28]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]foo[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·                            ──────────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:59]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]foo[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·                                                           ──────────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:76]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]foo[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·                                                                            ──────────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:17]
+   ╭─[no_misleading_character_class.tsx:1:18]
  1 │ var r = RegExp("[👍]", "")
-   ·                 ────
+   ·                  ──
    ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[👍]", "")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp('[👍]', ``)
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ ╭─▶ var r = new RegExp(`
- 2 │ ╰─▶                             [👍]`)
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ ╭─▶ var r = new RegExp(`
- 2 │ ╰─▶                             [❇️]`)
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ ╭─▶ var r = new RegExp(`
- 2 │ ╰─▶             [❇️]`)
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:39]
- 1 │ const flags = ""; var r = new RegExp("[👍]", flags)
-   ·                                       ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:17]
- 1 │ var r = RegExp("[\\uD83D\\uDC4D]", "")
-   ·                 ────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:17]
- 1 │ var r = RegExp("before[\\uD83D\\uDC4D]after", "")
-   ·                 ───────────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:17]
- 1 │ var r = RegExp("[before\\uD83D\\uDC4Dafter]", "")
-   ·                 ───────────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:17]
- 1 │ var r = RegExp("\t\t\t👍[👍]")
-   ·                 ────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("\u1234[\\uD83D\\uDC4D]")
-   ·                     ──────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("\\u1234\\u5678👎[👍]")
-   ·                     ────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("\\u1234\\u5678👍[👍]")
-   ·                     ────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[👍]", "")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[👍]", "")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[👍]\\a", "")
-   ·                     ───────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("/(?<=[👍])", "")
-   ·                     ──────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("/(?<=[👍])", "")
-   ·                     ──────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[Á]", "")
-   ·                     ───
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[Á]", "u")
-   ·                     ───
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[\\u0041\\u0301]", "")
-   ·                     ────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[\\u0041\\u0301]", "u")
-   ·                     ────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[\\u{41}\\u{301}]", "u")
-   ·                     ─────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[❇️]", "")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[❇️]", "u")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:13]
- 1 │ new RegExp("[ \\ufe0f]", "")
-   ·             ──────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:13]
- 1 │ new RegExp("[ \\ufe0f]", "u")
-   ·             ──────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:13]
- 1 │ new RegExp("[ \\ufe0f][ \\ufe0f]")
-   ·             ────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[\\u2747\\uFE0F]", "")
-   ·                     ────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[\\u2747\\uFE0F]", "u")
-   ·                     ────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[\\u{2747}\\u{FE0F}]", "u")
-   ·                     ────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[👶🏻]", "")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[👶🏻]", "u")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[\\uD83D\\uDC76\\uD83C\\uDFFB]", "u")
-   ·                     ──────────────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[\\u{1F476}\\u{1F3FB}]", "u")
-   ·                     ──────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:17]
- 1 │ var r = RegExp(`            👍[👍]`)
-   ·                 ────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:17]
- 1 │ var r = RegExp(`\t\t\t👍[👍]`)
-   ·                 ────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[🇯🇵]", "")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[🇯🇵]", "i")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp('[🇯🇵]', `i`)
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[🇯🇵]")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[🇯🇵]",)
-   ·                     ────
-   ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
- 1 │ var r = new RegExp(("[🇯🇵]"))
-   ·                      ────
+ 1 │ var r = new RegExp("[👍]", "")
+   ·                      ──
    ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp('[👍]', ``)
+   ·                      ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:2:21]
+ 1 │ var r = new RegExp(`
+ 2 │                             [👍]`)
+   ·                              ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:2:21]
+ 1 │ var r = new RegExp(`
+ 2 │                             [❇️]`)
+   ·                              ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:2:5]
+ 1 │ var r = new RegExp(`
+ 2 │             [❇️]`)
+   ·              ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:40]
+ 1 │ const flags = ""; var r = new RegExp("[👍]", flags)
+   ·                                        ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:18]
+ 1 │ var r = RegExp("[\\uD83D\\uDC4D]", "")
+   ·                  ──────────────
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:24]
+ 1 │ var r = RegExp("before[\\uD83D\\uDC4D]after", "")
+   ·                        ──────────────
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:24]
+ 1 │ var r = RegExp("[before\\uD83D\\uDC4Dafter]", "")
+   ·                        ──────────────
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:28]
+ 1 │ var r = RegExp("\t\t\t👍[👍]")
+   ·                          ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:28]
+ 1 │ var r = new RegExp("\u1234[\\uD83D\\uDC4D]")
+   ·                            ──────────────
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:40]
+ 1 │ var r = new RegExp("\\u1234\\u5678👎[👍]")
+   ·                                      ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:40]
+ 1 │ var r = new RegExp("\\u1234\\u5678👍[👍]")
+   ·                                      ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[👍]", "")
+   ·                      ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[👍]", "")
+   ·                      ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[👍]\\a", "")
+   ·                      ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:27]
+ 1 │ var r = new RegExp("/(?<=[👍])", "")
+   ·                           ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:27]
+ 1 │ var r = new RegExp("/(?<=[👍])", "")
+   ·                           ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[Á]", "")
+   ·                      ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[Á]", "u")
+   ·                      ─
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[\\u0041\\u0301]", "")
+   ·                      ──────────────
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[\\u0041\\u0301]", "u")
+   ·                      ──────────────
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[\\u{41}\\u{301}]", "u")
+   ·                      ───────────────
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[❇️]", "")
+   ·                      ──
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[❇️]", "u")
+   ·                      ──
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:14]
+ 1 │ new RegExp("[ \\ufe0f]", "")
+   ·              ────────
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:14]
+ 1 │ new RegExp("[ \\ufe0f]", "u")
+   ·              ────────
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:14]
+ 1 │ new RegExp("[ \\ufe0f][ \\ufe0f]")
+   ·              ────────
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:24]
+ 1 │ new RegExp("[ \\ufe0f][ \\ufe0f]")
+   ·                        ────────
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[\\u2747\\uFE0F]", "")
+   ·                      ──────────────
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[\\u2747\\uFE0F]", "u")
+   ·                      ──────────────
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[\\u{2747}\\u{FE0F}]", "u")
+   ·                      ──────────────────
+   ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[👶🏻]", "")
+   ·                      ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[👶🏻]", "")
+   ·                        ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[👶🏻]", "u")
+   ·                      ──
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[\\uD83D\\uDC76\\uD83C\\uDFFB]", "u")
+   ·                      ────────────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[\\u{1F476}\\u{1F3FB}]", "u")
+   ·                      ────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:25]
+ 1 │ var r = RegExp(`            👍[👍]`)
+   ·                             ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:28]
+ 1 │ var r = RegExp(`\t\t\t👍[👍]`)
+   ·                          ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[🇯🇵]", "")
+   ·                      ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[🇯🇵]", "")
+   ·                       ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[🇯🇵]", "i")
+   ·                      ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[🇯🇵]", "i")
+   ·                       ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp('[🇯🇵]', `i`)
+   ·                      ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp('[🇯🇵]', `i`)
+   ·                       ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[🇯🇵]")
+   ·                      ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[🇯🇵]")
+   ·                       ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[🇯🇵]",)
+   ·                      ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[🇯🇵]",)
+   ·                       ─
+   ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:23]
- 1 │ var r = new RegExp((("[🇯🇵]")))
-   ·                       ────
+ 1 │ var r = new RegExp(("[🇯🇵]"))
+   ·                       ─
    ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:27]
+ 1 │ var r = new RegExp(("[🇯🇵]"))
+   ·                        ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:24]
+ 1 │ var r = new RegExp((("[🇯🇵]")))
+   ·                        ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:28]
+ 1 │ var r = new RegExp((("[🇯🇵]")))
+   ·                         ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:23]
+ 1 │ var r = new RegExp(("[🇯🇵]"),)
+   ·                       ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:27]
+ 1 │ var r = new RegExp(("[🇯🇵]"),)
+   ·                        ─
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[🇯🇵]", "u")
+   ·                      ──
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F1EF} for the regional indicator symbol for 'J') instead of regional indicator symbol pairs in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[\\uD83C\\uDDEF\\uD83C\\uDDF5]", "u")
+   ·                      ────────────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F1EF} for the regional indicator symbol for 'J') instead of regional indicator symbol pairs in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp("[\\u{1F1EF}\\u{1F1F5}]", "u")
+   ·                      ────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F1EF} for the regional indicator symbol for 'J') instead of regional indicator symbol pairs in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "")
+   ·                        ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:33]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "")
+   ·                        ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
- 1 │ var r = new RegExp(("[🇯🇵]"),)
-   ·                      ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[🇯🇵]", "u")
-   ·                     ────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[\\uD83C\\uDDEF\\uD83C\\uDDF5]", "u")
-   ·                     ──────────────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
- 1 │ var r = new RegExp("[\\u{1F1EF}\\u{1F1F5}]", "u")
-   ·                     ──────────────────────
-   ╰────
-
-  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
  1 │ var r = new RegExp("[👨‍👩‍👦]", "")
-   ·                     ────
+   ·                      ──
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
+   ╭─[no_misleading_character_class.tsx:1:29]
  1 │ var r = new RegExp("[👨‍👩‍👦]", "")
-   ·                     ────
+   ·                        ─
    ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:36]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "")
+   ·                        ─
+   ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
+   ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👨‍👩‍👦]", "u")
-   ·                     ────
+   ·                      ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "u")
+   ·                        ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👩‍👦]", "u")
-   ·                     ────
+   ·                      ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
+   ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👩‍👦][👩‍👦]", "u")
-   ·                     ────────
+   ·                      ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
+   ╭─[no_misleading_character_class.tsx:1:35]
+ 1 │ var r = new RegExp("[👩‍👦][👩‍👦]", "u")
+   ·                          ──
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👨‍👩‍👦]foo[👨‍👩‍👦]", "u")
-   ·                     ───────────
+   ·                      ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]foo[👨‍👩‍👦]", "u")
+   ·                        ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:45]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]foo[👨‍👩‍👦]", "u")
+   ·                             ──
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:52]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]foo[👨‍👩‍👦]", "u")
+   ·                               ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👨‍👩‍👦👩‍👦]", "u")
-   ·                     ──────
+   ·                      ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = new RegExp("[👨‍👩‍👦👩‍👦]", "u")
+   ·                        ─
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:40]
+ 1 │ var r = new RegExp("[👨‍👩‍👦👩‍👦]", "u")
+   ·                        ──
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[\\uD83D\\uDC68\\u200D\\uD83D\\uDC69\\u200D\\uD83D\\uDC66]", "u")
-   ·                     ──────────────────────────────────────────────────────────
+   ·                      ───────────────────────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:21]
+   ╭─[no_misleading_character_class.tsx:1:43]
+ 1 │ var r = new RegExp("[\\uD83D\\uDC68\\u200D\\uD83D\\uDC69\\u200D\\uD83D\\uDC66]", "u")
+   ·                                           ───────────────────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
-   ·                     ──────────────────────────────────────────────────
+   ·                      ─────────────────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:41]
+ 1 │ var r = new RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
+   ·                                         ─────────────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:32]
+   ╭─[no_misleading_character_class.tsx:1:33]
  1 │ var r = new globalThis.RegExp("[❇️]", "")
-   ·                                ────
+   ·                                 ──
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
-   ╭─[no_misleading_character_class.tsx:1:32]
+   ╭─[no_misleading_character_class.tsx:1:33]
  1 │ var r = new globalThis.RegExp("[👶🏻]", "u")
-   ·                                ────
+   ·                                 ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:32]
+   ╭─[no_misleading_character_class.tsx:1:33]
  1 │ var r = new globalThis.RegExp("[🇯🇵]", "")
-   ·                                ────
+   ·                                 ─
    ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:37]
+ 1 │ var r = new globalThis.RegExp("[🇯🇵]", "")
+   ·                                  ─
+   ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:32]
+   ╭─[no_misleading_character_class.tsx:1:33]
  1 │ var r = new globalThis.RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
-   ·                                ──────────────────────────────────────────────────
+   ·                                 ─────────────────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:52]
+ 1 │ var r = new globalThis.RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
+   ·                                                    ─────────────────────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:2]
+   ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\ud83d\u{dc4d}]/u
-   ·  ────────────────
+   ·   ──────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:2]
+   ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\u{d83d}\udc4d]/u
-   ·  ────────────────
+   ·   ──────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:2]
+   ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\u{d83d}\u{dc4d}]/u
-   ·  ──────────────────
+   ·   ────────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:2]
+   ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\uD83D\u{DC4d}]/u
-   ·  ────────────────
+   ·   ──────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F44D}) instead of surrogate pairs.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:9]
+   ╭─[no_misleading_character_class.tsx:1:11]
+ 1 │ RegExp(/[a👍z]/u, '');
+   ·           ──
+   ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp(/[👍]/)
-   ·         ────
+   ·          ──
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:9]
+   ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp(/[👍]/, 'i');
-   ·         ────
+   ·          ──
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:9]
+   ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp(/[👍]/, 'g');
-   ·         ────
+   ·          ──
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:13]
+   ╭─[no_misleading_character_class.tsx:1:17]
  1 │ new RegExp("\x5B \\ufe0f\u005D")
-   ·             ──────────────────
+   ·                 ────────
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:13]
+   ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp("[ \u{5c}ufe0f]")
-   ·             ──────────────
+   ·              ────────────
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:13]
+   ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp("[ \\ufe\60f]")
-   ·             ────────────
+   ·              ──────────
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:13]
+   ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp("[ \\uf\e0f]")
-   ·             ───────────
+   ·              ─────────
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:13]
+   ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp(`[.\\u200D.]`)
-   ·             ───────────
+   ·              ─────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
-   ╭─[no_misleading_character_class.tsx:1:13]
+   ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp(`[.\\\x75200D.]`)
-   ·             ──────────────
+   ·              ────────────
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.
 
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
-   ╭─[no_misleading_character_class.tsx:1:10]
+   ╭─[no_misleading_character_class.tsx:1:12]
  1 │ var r = /[[👶🏻]]/v
-   ·          ──────
+   ·            ──
    ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:15]
+ 1 │ new RegExp(/^[👍]$/v, '')
+   ·               ──
+   ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:2]
+   ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[Á]/
-   ·  ───
+   ·   ─
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:2]
+   ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\\̶]/
-   ·  ────
+   ·   ──
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:2]
+   ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\n̅]/
-   ·  ────
+   ·   ──
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:2]
+   ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\👍]/
-   ·  ─────
+   ·   ───
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:9]
+   ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp('[\è]')
-   ·         ────
+   ·          ──
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:9]
+   ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp('[\👍]')
-   ·         ─────
+   ·          ───
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:9]
+   ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp('[\\👍]')
-   ·         ──────
+   ·          ────
    ╰────
+  help: Add the Unicode flag 'u'.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
-   ╭─[no_misleading_character_class.tsx:1:9]
+   ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp('[\❇️]')
-   ·         ─────
+   ·          ───
    ╰────
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
-   ╭─[no_misleading_character_class.tsx:1:9]
+   ╭─[no_misleading_character_class.tsx:1:10]
  1 │ RegExp(`[\👍]`) // Backslash + U+D83D + U+DC4D
-   ·         ─────
+   ·          ───
    ╰────
+  help: Add the Unicode flag 'u'.
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:3]
+ 1 │ /[\u200c\u200d\p{ID_Continue}.]/
+   ·   ──────────────
+   ╰────
+  help: Use Unicode code point escapes (e.g., \u{1F468}\u200D\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.

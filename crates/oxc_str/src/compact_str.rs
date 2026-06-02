@@ -11,13 +11,15 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 /// Maximum length for inline string, which can be created with [`CompactStr::new_const`].
 pub const MAX_INLINE_LEN: usize = 16;
 
-/// Lifetimeless version of [`crate::Atom`] which owns its own string data allocation.
+/// Lifetimeless version of [`Str`] which owns its own string data allocation.
 ///
 /// [`CompactStr`] is immutable. Use [`CompactStr::into_string`] for a mutable
 /// [`String`].
 ///
 /// Currently implemented as just a wrapper around [`compact_str::CompactString`],
 /// but will be reduced in size with a custom implementation later.
+///
+/// [`Str`]: crate::Str
 #[derive(Clone, Eq, PartialOrd, Ord)]
 pub struct CompactStr(CompactString);
 

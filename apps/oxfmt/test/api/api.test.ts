@@ -1,13 +1,31 @@
-import { format } from "../../dist/index.js";
-import { describe, expect, test } from "vitest";
-import type { FormatOptions } from "../../dist/index.js";
+import { describe, expect, it } from "vitest";
+import { format, defineConfig } from "../../dist/index.js";
+import type { FormatConfig } from "../../dist/index.js";
 
-describe("API Tests", () => {
-  test("`format()` function exists", () => {
+describe("defineConfig() API", () => {
+  it("`defineConfig()` function exists", () => {
+    expect(typeof defineConfig).toBe("function");
+  });
+
+  it("`defineConfig()` returns the same object", () => {
+    const config = defineConfig({ semi: true, tabWidth: 4, ignorePatterns: ["*.min.js"] });
+    expect(config).toStrictEqual({ semi: true, tabWidth: 4, ignorePatterns: ["*.min.js"] });
+  });
+});
+
+describe("format() API", () => {
+  it("`format()` function exists", () => {
     expect(typeof format).toBe("function");
   });
 
-  test("should `format()` multiple times", async () => {
+  it("dynamic import also works", async () => {
+    const { format } = await import("../../dist/index.js");
+    const result = await format("a.ts", "const x:number=42");
+    expect(result.code).toBe("const x: number = 42;\n");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should `format()` multiple times w/o panic", async () => {
     const result1 = await format("a.ts", "const x:number=42");
     expect(result1.code).toBe("const x: number = 42;\n");
     expect(result1.errors).toStrictEqual([]);
@@ -17,8 +35,8 @@ describe("API Tests", () => {
     expect(result2.errors).toStrictEqual([]);
   });
 
-  test("should TS types and options work", async () => {
-    const options: FormatOptions = {
+  it("should TS types and options work", async () => {
+    const options: FormatConfig = {
       quoteProps: "as-needed", // Can be string literal
       printWidth: 120,
       semi: false,
@@ -38,62 +56,5 @@ describe("API Tests", () => {
       semi: "invalid",
     });
     expect(errors.length).toBe(1);
-  });
-
-  test("should `format()` with options work", async () => {
-    const pkgJSON = JSON.stringify({
-      version: "1.0.0",
-      name: "my-package",
-    });
-    const result1 = await format("package.json", pkgJSON);
-    expect(result1.code).toBe(`{\n  "name": "my-package",\n  "version": "1.0.0"\n}\n`);
-    expect(result1.errors).toStrictEqual([]);
-
-    const result2 = await format("package.json", pkgJSON, { experimentalSortPackageJson: false });
-    expect(result2.code).toBe(`{\n  "version": "1.0.0",\n  "name": "my-package"\n}\n`);
-    expect(result2.errors).toStrictEqual([]);
-
-    const vueCode = `
-<template><div>Vue</div></template>
-<style>div{color:red;}</style>
-`.trim();
-    const result3 = await format("Component.vue", vueCode, {
-      vueIndentScriptAndStyle: true,
-    });
-    expect(result3.code).toBe(
-      `
-<template><div>Vue</div></template>
-<style>
-  div {
-    color: red;
-  }
-</style>
-`.trimStart(),
-    );
-    expect(result3.errors).toStrictEqual([]);
-  });
-
-  test("should sort imports with customGroups", async () => {
-    const input = `import { foo } from "./foo";
-import { util } from "~/utils/util";
-import { store } from "~/stores/store";
-`;
-    const result = await format("a.ts", input, {
-      experimentalSortImports: {
-        customGroups: [
-          { elementNamePattern: ["~/stores/"], groupName: "stores" },
-          { elementNamePattern: ["~/utils/"], groupName: "utils" },
-        ],
-        groups: ["stores", "utils", "sibling"],
-      },
-    });
-
-    expect(result.code).toBe(`import { store } from "~/stores/store";
-
-import { util } from "~/utils/util";
-
-import { foo } from "./foo";
-`);
-    expect(result.errors).toStrictEqual([]);
   });
 });

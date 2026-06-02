@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one"
    ·                     ─────────────────
@@ -13,7 +14,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one-reexport"
    ·                     ──────────────────────────
@@ -25,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one-reexport"
    ·                     ──────────────────────────
@@ -37,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
@@ -51,7 +52,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
@@ -65,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { two } from "./es6/depth-three-star"
    ·                     ────────────────────────
@@ -81,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:33]
  1 │ import one, { two, three } from "./es6/depth-three-star"
    ·                                 ────────────────────────
@@ -97,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { bar } from "./es6/depth-three-indirect"
    ·                     ────────────────────────────
@@ -113,7 +114,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { bar } from "./es6/depth-three-indirect"
    ·                     ────────────────────────────
@@ -129,7 +130,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
@@ -143,7 +144,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
@@ -157,7 +158,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one"
    ·                     ─────────────────
@@ -169,7 +170,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one"
    ·                     ─────────────────
@@ -181,7 +182,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one-reexport"
    ·                     ──────────────────────────
@@ -193,7 +194,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
@@ -207,7 +208,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
@@ -221,7 +222,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { two } from "./es6/depth-three-star"
    ·                     ────────────────────────
@@ -237,7 +238,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:33]
  1 │ import one, { two, three } from "./es6/depth-three-star"
    ·                                 ────────────────────────
@@ -253,7 +254,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { bar } from "./es6/depth-three-indirect"
    ·                     ────────────────────────────
@@ -269,7 +270,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { bar } from "./es6/depth-three-indirect"
    ·                     ────────────────────────────
@@ -285,7 +286,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
@@ -299,7 +300,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./intermediate-ignore"
    ·                     ───────────────────────
@@ -313,7 +314,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./ignore"
    ·                     ──────────
@@ -325,7 +326,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./typescript/ts-types-some-type-imports";
    ·                     ─────────────────────────────────────────
@@ -337,7 +338,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./typescript/ts-types-re-exporting-type";
    ·                     ─────────────────────────────────────────
@@ -349,7 +350,7 @@ source: crates/oxc_linter/src/tester.rs
            │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
            ╰─────────╯ imports the current file
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:41]
  1 │ export function Foo() {}; export * from './depth-zero'
    ·                                         ───────┬──────
@@ -357,7 +358,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the self-referencing export and consider using a named export instead.
 
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+  ⚠ import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:28]
  1 │ import * as depthZero from './depth-zero'
    ·                            ───────┬──────

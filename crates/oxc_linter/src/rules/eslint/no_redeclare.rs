@@ -1,4 +1,4 @@
-use javascript_globals::GLOBALS;
+use javascript_globals::GLOBALS_BUILTIN;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,14 +12,17 @@ use crate::{
 };
 
 fn no_redeclare_diagnostic(name: &str, decl_span: Span, re_decl_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is already defined.")).with_labels([
-        decl_span.label(format!("'{name}' is already defined.")),
-        re_decl_span.label("It can not be redeclared here."),
-    ])
+    OxcDiagnostic::warn(format!("'{name}' is already defined."))
+        .with_help("Use a different variable name or remove the duplicate declaration.")
+        .with_labels([
+            decl_span.label(format!("'{name}' is already defined.")),
+            re_decl_span.label("It can not be redeclared here."),
+        ])
 }
 
 fn no_redeclare_as_builtin_in_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is already defined as a built-in global variable."))
+        .with_help("Use a different variable name to avoid shadowing the built-in global.")
         .with_label(span)
 }
 
@@ -64,6 +67,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     config = NoRedeclare,
+    version = "0.0.13",
 );
 
 impl Rule for NoRedeclare {
@@ -72,8 +76,7 @@ impl Rule for NoRedeclare {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        // Cache `GLOBALS["builtin"]`, to avoid repeatedly fetching it (hashmap lookup) in the loop below
-        let builtin_globals = if self.builtin_globals { Some(&GLOBALS["builtin"]) } else { None };
+        let builtin_globals = if self.builtin_globals { Some(&GLOBALS_BUILTIN) } else { None };
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let name = ctx.scoping().symbol_name(symbol_id);

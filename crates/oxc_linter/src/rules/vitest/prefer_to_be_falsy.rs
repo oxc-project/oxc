@@ -35,7 +35,8 @@ declare_oxc_lint!(
     PreferToBeFalsy,
     vitest,
     style,
-    fix
+    fix,
+    version = "0.7.1",
 );
 
 impl Rule for PreferToBeFalsy {

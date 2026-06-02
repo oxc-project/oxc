@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(no-async-await): async is not allowed
    ╭─[no_async_await.tsx:1:1]
  1 │ async function foo() {}

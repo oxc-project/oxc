@@ -45,7 +45,8 @@ declare_oxc_lint!(
     NoAriaHiddenOnFocusable,
     jsx_a11y,
     correctness,
-    fix
+    fix,
+    version = "0.0.22",
 );
 
 impl Rule for NoAriaHiddenOnFocusable {

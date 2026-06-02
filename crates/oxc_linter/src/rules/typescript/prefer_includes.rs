@@ -75,6 +75,7 @@ declare_oxc_lint!(
     typescript,
     pedantic,
     fix,
+    version = "1.29.0",
 );
 
 impl Rule for PreferIncludes {}

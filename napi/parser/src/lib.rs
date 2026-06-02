@@ -3,6 +3,8 @@ use std::mem;
 use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
+#[cfg(feature = "tokens")]
+use oxc::parser::config::RuntimeParserConfig;
 use oxc::{
     allocator::Allocator,
     parser::{ParseOptions, Parser, ParserReturn},
@@ -17,7 +19,13 @@ pub use types::*;
 
 #[cfg(all(
     feature = "allocator",
-    not(any(target_arch = "arm", target_os = "freebsd", target_family = "wasm"))
+    not(any(
+        target_arch = "arm",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "windows",
+        target_family = "wasm"
+    ))
 ))]
 #[global_allocator]
 static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
@@ -74,12 +82,18 @@ fn parse_impl<'a>(
     source_text: &'a str,
     options: &ParserOptions,
 ) -> ParserReturn<'a> {
-    Parser::new(allocator, source_text, source_type)
-        .with_options(ParseOptions {
-            preserve_parens: options.preserve_parens.unwrap_or(true),
-            ..ParseOptions::default()
-        })
-        .parse()
+    let parser = Parser::new(allocator, source_text, source_type).with_options(ParseOptions {
+        preserve_parens: options.preserve_parens.unwrap_or(true),
+        ..ParseOptions::default()
+    });
+
+    // When `tokens` feature is disabled, parser uses the default `NoTokensParserConfig`,
+    // which avoids the runtime branch on whether to collect tokens, and so is faster.
+    // The `experimentalTokens` option in `ParserOptions` is silently ignored in that case.
+    #[cfg(feature = "tokens")]
+    let parser = parser.with_config(RuntimeParserConfig::new(options.tokens.unwrap_or(false)));
+
+    parser.parse()
 }
 
 fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions) -> ParseResult {

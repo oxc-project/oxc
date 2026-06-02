@@ -60,7 +60,8 @@ declare_oxc_lint!(
     /// ```
     NoTitleInDocumentHead,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 impl Rule for NoTitleInDocumentHead {

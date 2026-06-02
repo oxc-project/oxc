@@ -34,9 +34,17 @@ declare_oxc_lint!(
     /// This rule reports when the module keyword is used instead of namespace.
     /// This rule does not report on the use of TypeScript module declarations to describe external APIs (declare module 'foo' {}).
     ///
+    /// ::: warning
+    /// This rule is deprecated and will be removed in a future release.
+    ///
+    /// In a future version of TypeScript and Oxlint, this will be a hard error produced by the parser.
+    ///
+    /// See: https://github.com/microsoft/TypeScript/issues/54500, https://github.com/microsoft/TypeScript/issues/62211 and https://github.com/microsoft/TypeScript/pull/62876.
+    /// :::
+    ///
     /// ### Why is this bad?
     ///
-    /// Namespaces are an outdated way to organize TypeScript code. ES2015 module syntax is now preferred (import/export).
+    /// Namespaces are an outdated way to organize TypeScript code. ES2015 module syntax is now preferred (`import`/`export`).
     /// For projects still using custom modules / namespaces, it's preferred to refer to them as namespaces.
     ///
     /// ### Examples
@@ -53,7 +61,8 @@ declare_oxc_lint!(
     PreferNamespaceKeyword,
     typescript,
     correctness,
-    fix
+    fix,
+    version = "0.7.0",
 );
 
 fn is_valid_module(module: &TSModuleDeclaration) -> bool {
@@ -105,7 +114,7 @@ fn test() {
         "declare module foo {}",
         "
         declare module foo {
-          declare module bar {}
+          module bar {}
         }
         ",
         "
@@ -135,20 +144,20 @@ fn test() {
         (
             "
             declare module foo {
-              declare module bar {}
+              module bar {}
             }
             ",
             "
             declare namespace foo {
-              declare namespace bar {}
+              namespace bar {}
             }
             ",
             None,
         ),
         ("declare /* module */ module foo {}", "declare /* module */ namespace foo {}", None),
         (
-            "declare module X.Y.module { x = 'module'; }",
-            "declare namespace X.Y.module { x = 'module'; }",
+            "declare module X.Y.module { let x: 'module'; }",
+            "declare namespace X.Y.module { let x: 'module'; }",
             None,
         ),
     ];

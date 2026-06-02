@@ -66,7 +66,8 @@ declare_oxc_lint!(
     /// ```
     NoHeadElement,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.1",
 );
 
 impl Rule for NoHeadElement {
@@ -104,18 +105,18 @@ fn test() {
         (
             r"import Head from 'next/head';
 
-			export class MyComponent {
-			  render() {
-				return (
-				  <div>
-					<Head>
-					  <title>My page title</title>
-					</Head>
-				  </div>
-				);
-			  }
-			}
-		",
+            export class MyComponent {
+              render() {
+                return (
+                  <div>
+                    <Head>
+                      <title>My page title</title>
+                    </Head>
+                  </div>
+                );
+              }
+            }
+        ",
             None,
             None,
             Some(PathBuf::from("pages/index.js")),
@@ -123,17 +124,17 @@ fn test() {
         (
             r"import Head from 'next/head';
 
-           	      export class MyComponent {
-           	        render() {
-           	          return (
-           	            <div>
-           	              <Head>
-           	                <title>My page title</title>
-           	              </Head>
-           	            </div>
-           	          );
-           	        }
-           	      }
+                     export class MyComponent {
+                       render() {
+                         return (
+                           <div>
+                             <Head>
+                               <title>My page title</title>
+                             </Head>
+                           </div>
+                         );
+                       }
+                     }
         ",
             None,
             None,
@@ -141,34 +142,34 @@ fn test() {
         ),
         (
             r"
-        	      export default function Layout({ children }) {
-        	        return (
-        	          <html>
-        	            <head>
-        	              <title>layout</title>
-        	            </head>
-        	            <body>{children}</body>
-        	          </html>
-        	        );
-        	      }
-        	",
+                  export default function Layout({ children }) {
+                    return (
+                      <html>
+                        <head>
+                          <title>layout</title>
+                        </head>
+                        <body>{children}</body>
+                      </html>
+                    );
+                  }
+            ",
             None,
             None,
             Some(PathBuf::from("./app/layout.js")),
         ),
         (
             r"
-        	      export default function Layout({ children }) {
-        	        return (
-        	          <html>
-        	            <head>
-        	              <title>layout</title>
-        	            </head>
-        	            <body>{children}</body>
-        	          </html>
-        	        );
-        	      }
-        	",
+                  export default function Layout({ children }) {
+                    return (
+                      <html>
+                        <head>
+                          <title>layout</title>
+                        </head>
+                        <body>{children}</body>
+                      </html>
+                    );
+                  }
+            ",
             None,
             None,
             Some(PathBuf::from("./app/layout.js")),
@@ -178,17 +179,17 @@ fn test() {
     let fail = vec![
         (
             r"
-        	      export class MyComponent {
-        	        render() {
-        	          return (
-        	            <div>
-        	              <head>
-        	                <title>My page title</title>
-        	              </head>
-        	            </div>
-        	          );
-        	        }
-        	}",
+                  export class MyComponent {
+                    render() {
+                      return (
+                        <div>
+                          <head>
+                            <title>My page title</title>
+                          </head>
+                        </div>
+                      );
+                    }
+            }",
             None,
             None,
             Some(PathBuf::from("./pages/index.js")),
@@ -196,20 +197,20 @@ fn test() {
         (
             r"import Head from 'next/head';
 
-        	      export class MyComponent {
-        	        render() {
-        	          return (
-        	            <div>
-        	              <head>
-        	                <title>My page title</title>
-        	              </head>
-        	              <Head>
-        	                <title>My page title</title>
-        	              </Head>
-        	            </div>
-        	          );
-        	        }
-        	}",
+                  export class MyComponent {
+                    render() {
+                      return (
+                        <div>
+                          <head>
+                            <title>My page title</title>
+                          </head>
+                          <Head>
+                            <title>My page title</title>
+                          </Head>
+                        </div>
+                      );
+                    }
+            }",
             None,
             None,
             Some(PathBuf::from("pages/index.tsx")),

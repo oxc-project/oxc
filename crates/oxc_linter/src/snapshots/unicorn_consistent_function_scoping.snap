@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:3:30]
  2 │                 {
  3 │                     function doBar(bar) {
@@ -10,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:26]
  1 │ function doFoo(FooComponent) {
    ·          ──┬──
@@ -22,7 +23,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `Bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:26]
  1 │ function Foo() {
    ·          ─┬─
@@ -34,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `Bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:27]
  1 │ function foo() { function bar() { return <JSX/>; } }
    ·          ─┬─              ─┬─
@@ -43,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:29]
  1 │ function doFoo(Foo) { const doBar = () => arguments; return doBar(); };
    ·          ──┬──              ──┬──
@@ -52,7 +53,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:4:34]
  2 │ 
  3 │             function outer() {
@@ -65,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `inner` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:26]
  1 │ function doFoo(foo) {
    ·          ──┬──
@@ -77,7 +78,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:3:26]
  1 │ function doFoo() {
    ·          ──┬──
@@ -90,7 +91,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:29]
  1 │ function doFoo() { function doBar(bar) { return bar; } }
    ·          ──┬──              ──┬──
@@ -99,14 +100,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:37]
  1 │ const doFoo = function() { function doBar(bar) { return bar; } };
    ·                                     ─────
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:31]
  1 │ const doFoo = function() {
  2 │                 const doBar = function(bar) {
@@ -115,7 +116,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:34]
  1 │ function doFoo() { const doBar = function(bar) { return bar; }; }
    ·          ──┬──                   ────┬───
@@ -124,7 +125,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:34]
  1 │ function doFoo() { const doBar = function(bar) { return bar; }; doBar(); }
    ·          ──┬──                   ────┬───
@@ -133,7 +134,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:29]
  1 │ const doFoo = () => { const doBar = bar => { return bar; } }
    ·       ──┬──                 ──┬──
@@ -142,7 +143,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:32]
  1 │ function doFoo(Foo) { function doBar() { return this; } return doBar(); };
    ·          ──┬──                 ──┬──
@@ -151,7 +152,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:29]
  1 │ function doFoo(Foo) { const doBar = () => (function() {return this})(); return doBar(); };
    ·          ──┬──              ──┬──
@@ -160,7 +161,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:23]
  1 │ function doFoo(Foo) {
    ·          ──┬──
@@ -172,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:26]
  1 │ function doFoo(Foo) {
    ·          ──┬──
@@ -184,7 +185,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:23]
  1 │ function doFoo(Foo) {
    ·          ──┬──
@@ -196,7 +197,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:26]
  1 │ function doFoo(foo) {
    ·          ──┬──
@@ -208,7 +209,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:26]
  1 │ function doFoo(foo) {
    ·          ──┬──
@@ -220,7 +221,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:29]
  1 │ function doFoo() { function doBar() {} }
    ·          ──┬──              ──┬──
@@ -229,28 +230,28 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:36]
  1 │ function doFoo(foo) { { { function doBar(bar) { return bar; } } } return foo; }
    ·                                    ─────
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:14]
  1 │ { { function doBar(bar) { return bar; } } }
    ·              ─────
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:46]
  1 │ for (let foo = 0; foo < 1; foo++) { function doBar(bar) { return bar; } }
    ·                                              ─────
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:27]
  1 │ function foo() { function bar() {} }
    ·          ─┬─              ─┬─
@@ -259,7 +260,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:33]
  1 │ function foo() { async function bar() {} }
    ·          ─┬─                    ─┬─
@@ -268,7 +269,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:28]
  1 │ function foo() { function* bar() {} }
    ·          ─┬─               ─┬─
@@ -277,7 +278,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:34]
  1 │ function foo() { async function* bar() {} }
    ·          ─┬─                     ─┬─
@@ -286,7 +287,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:24]
  1 │ function foo() { const bar = () => {} }
    ·          ─┬─           ─┬─
@@ -295,7 +296,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:24]
  1 │ function foo() { const bar = async () => {} }
    ·          ─┬─           ─┬─
@@ -304,7 +305,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `baz` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `baz` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:34]
  1 │ function foo() { async function* baz() {} }
    ·          ─┬─                     ─┬─
@@ -313,7 +314,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `baz` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:3:30]
  1 │ useEffect(() => {
  2 │                 function foo() {
@@ -326,7 +327,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:3:30]
  1 │ (function() {
  2 │                 function foo() {
@@ -339,7 +340,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `returnsZero` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `returnsZero` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:26]
  1 │ process.nextTick(() => {
  2 │                 function returnsZero() {
@@ -348,7 +349,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `returnsZero` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:4:30]
  3 │                 function() {
  4 │                     function bar() {
@@ -357,7 +358,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `baz` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `baz` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:8:30]
  7 │                 function() {
  8 │                     function baz() {
@@ -366,7 +367,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `baz` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBaz` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBaz` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:3:26]
  1 │ function Foo() {
    ·          ─┬─
@@ -379,7 +380,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBaz` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `Bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:2:26]
  1 │ function Foo() {
    ·          ─┬─
@@ -391,7 +392,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `Bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBaz` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `doBaz` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:10]
  1 │ function Foo() {
    ·          ─┬─
@@ -407,7 +408,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `doBaz` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `b` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `b` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:10]
  1 │ function fn1() {
    ·          ─┬─
@@ -423,7 +424,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `b` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `c` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `c` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:10]
  1 │ function fn1() {
    ·          ─┬─
@@ -439,7 +440,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `c` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `foo` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `foo` does not capture any variables from its parent scope
     ╭─[consistent_function_scoping.tsx:9:26]
   7 │             }
   8 │             function fn2() {
@@ -452,7 +453,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Move `foo` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:32]
  1 │ const outer = () => { function inner() {} }
    ·       ──┬──                    ──┬──
@@ -461,25 +462,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `inner` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:1:27]
- 1 │ function foo() { function bar() {} }
-   ·          ─┬─              ─┬─
-   ·           │                ╰── This function does not use any variables from the parent function
-   ·           ╰── Outer scope where this function is defined
-   ╰────
-  help: Move `bar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:1:33]
- 1 │ function foo() { async function bar() {} }
-   ·          ─┬─                    ─┬─
-   ·           │                      ╰── This function does not use any variables from the parent function
-   ·           ╰── Outer scope where this function is defined
-   ╰────
-  help: Move `bar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:29]
  1 │ function foo() { function * bar() {} }
    ·          ─┬─                ─┬─
@@ -488,7 +471,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:35]
  1 │ function foo() { async function * bar() {} }
    ·          ─┬─                      ─┬─
@@ -497,34 +480,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `bar` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:1:24]
- 1 │ function foo() { const bar = () => {} }
-   ·          ─┬─           ─┬─
-   ·           │             ╰── This function does not use any variables from the parent function
-   ·           ╰── Outer scope where this function is defined
-   ╰────
-  help: Move `bar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `bar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:1:24]
- 1 │ function foo() { const bar = async () => {} }
-   ·          ─┬─           ─┬─
-   ·           │             ╰── This function does not use any variables from the parent function
-   ·           ╰── Outer scope where this function is defined
-   ╰────
-  help: Move `bar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
-   ╭─[consistent_function_scoping.tsx:1:34]
- 1 │ function doFoo() { const doBar = function(bar) { return bar; }; }
-   ·          ──┬──                   ────┬───
-   ·            │                         ╰── This function does not use any variables from the parent function
-   ·            ╰── Outer scope where this function is defined
-   ╰────
-  help: Move `doBar` to the outer scope to avoid recreating it on every call.
-
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:43]
  1 │ function outer() { const inner = function inner() {}; }
    ·          ──┬──                            ──┬──
@@ -533,7 +489,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `inner` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:73]
  1 │ export namespace Foo { export function outer() { const inner = function inner() {}; } }
    ·                                        ──┬──                            ──┬──
@@ -542,9 +498,22 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move `inner` to the outer scope to avoid recreating it on every call.
 
-  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `MockI18nProvider` does not capture any variables from its parent scope
+  ⚠ unicorn(consistent-function-scoping): Function `MockI18nProvider` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:70]
  1 │ jest.mock('@kbn/i18n-react', () => { return { I18nProvider: function MockI18nProvider() { }, }; });
    ·                                                                      ────────────────
    ╰────
   help: Move `MockI18nProvider` to the outer scope to avoid recreating it on every call.
+
+  ⚠ unicorn(consistent-function-scoping): Function `usesImport` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:3:23]
+ 1 │ import { notifications } from 'some-module';
+ 2 │             export const Outer = () => {
+   ·                          ──┬──
+   ·                            ╰── Outer scope where this function is defined
+ 3 │                 const usesImport = () => {
+   ·                       ─────┬────
+   ·                            ╰── This function does not use any variables from the parent arrow function
+ 4 │                     notifications.show({ message: 'x' });
+   ╰────
+  help: Move `usesImport` to the outer scope to avoid recreating it on every call.

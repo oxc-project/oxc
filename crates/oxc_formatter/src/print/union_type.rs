@@ -6,7 +6,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Formatter,
+        JsFormatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
@@ -17,8 +17,10 @@ use crate::{
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let types = self.types();
+
+        let is_alias_level = matches!(self.parent(), AstNodes::TSTypeAliasDeclaration(_));
 
         // ```ts
         // {
@@ -26,12 +28,42 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         // } | null | void
         // ```
         // should be inlined and not be printed in the multi-line variant
-        let should_hug = should_hug_type(self, f);
-        if should_hug {
-            return format_union_types(self.types(), Span::default(), true, f);
+        if should_hug_type(self, f) {
+            // Don't take the hug shortcut when a single-member union at the
+            // type-alias level has own-line leading comments.
+            // Those comments must be handled by the normal union formatting path,
+            // so they are printed with correct indentation.
+
+            // `type A = | "VALUE"` is a single-member union that is not
+            // parenthesized or nested — a candidate for the hug shortcut.
+            let is_single_plain_member = self.types.len() == 1
+                && !matches!(
+                    self.types.first(),
+                    Some(TSType::TSParenthesizedType(_) | TSType::TSUnionType(_))
+                );
+            // ```ts
+            // type A =
+            //   /** JSDoc */
+            //   | 'VALUE';
+            // ```
+            let has_comment_before_pipe =
+                f.comments().has_leading_own_line_comment(self.span().start);
+            // ```ts
+            // type A = |
+            //   // Comment
+            //   'VALUE';
+            // ```
+            let has_comment_after_pipe = is_single_plain_member
+                && f.comments().has_leading_own_line_comment(self.types[0].span().start);
+
+            let has_alias_level_own_line_comments =
+                is_alias_level && (has_comment_before_pipe || has_comment_after_pipe);
+            if !has_alias_level_own_line_comments {
+                return format_union_types(self.types(), Span::default(), true, f);
+            }
         }
 
-        // Find the head of the nest union type chain
+        // Find the head of the nested union type chain.
         // ```js
         // type Foo = | (| (A | B))
         //                  ^^^^^
@@ -43,8 +75,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         // So the head of the current nested union type chain is `| (| (A | B))`
         // if we encounter a leading comment when navigating up the chain,
         // we consider the current union type as having leading comments
-        let leading_comments = f.context().comments().comments_before(self.span().start);
-        let has_leading_comments = !leading_comments.is_empty();
+        // For a single plain member at the alias level, also collect comments
+        // between `|` and the member (see the hug-shortcut guard above).
+        let is_single_plain_member = self.types.len() == 1
+            && !matches!(
+                self.types.first(),
+                Some(TSType::TSParenthesizedType(_) | TSType::TSUnionType(_))
+            );
+        let leading_comments = if is_alias_level && is_single_plain_member {
+            f.context().comments().comments_before(self.types[0].span().start)
+        } else {
+            f.context().comments().comments_before(self.span().start)
+        };
+        let comment_info = LeadingCommentsInfo::from_comments(leading_comments);
         let mut union_type_at_top = self;
         while let AstNodes::TSUnionType(parent) = union_type_at_top.parent()
             && parent.types().len() == 1
@@ -58,11 +101,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             // These parents have indent for their content, so we don't need to indent here
             match parent {
                 AstNodes::TSTypeAliasDeclaration(alias) => {
-                    !f.comments().printed_comments().last().is_some_and(|comment| {
-                        comment.span.start
-                            > alias.type_parameters().map_or(alias.id.span.end, |tp| tp.span.end)
-                            && comment.followed_by_newline()
-                    })
+                    should_indent_alias_union(alias, comment_info, f)
                 }
                 AstNodes::TSTypeAssertion(_)
                 | AstNodes::TSTupleType(_)
@@ -80,7 +119,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             let suppressed_node_span =
                 if is_suppressed { self.types.first().unwrap().span() } else { Span::default() };
 
-            let leading_soft_line_break_or_space = should_indent && !has_leading_comments;
+            let leading_soft_line_break_or_space = should_indent && !comment_info.has_comments();
 
             let separator = format_with(|f| {
                 if leading_soft_line_break_or_space {
@@ -127,21 +166,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
 
         let format_inner_content = format_with(|f| {
             let only_type = union_type_at_top.types.len() == 1;
-            let (has_own_line_comment, has_end_of_line_comment) =
-                leading_comments.iter().fold((false, false), |(own_line, end_of_line), comment| {
-                    (
-                        own_line || comment.preceded_by_newline(),
-                        end_of_line || comment.followed_by_newline(),
-                    )
-                });
+            let has_own_line_comment = comment_info.has_own_line_comment
+                || (matches!(union_type_at_top.parent(), AstNodes::TSTypeAliasDeclaration(_))
+                    && comment_info.has_trailing_own_line_non_jsdoc_block_comment);
             write!(
                 f,
                 [
                     ((has_own_line_comment && !only_type)
-                        || (has_end_of_line_comment && only_type))
+                        || (comment_info.has_end_of_line_comment && only_type))
                         .then(soft_line_break),
                     FormatLeadingComments::Comments(leading_comments),
-                    (!has_end_of_line_comment && has_own_line_comment && only_type)
+                    (!comment_info.has_end_of_line_comment && has_own_line_comment && only_type)
                         .then(soft_line_break),
                     group(&content)
                 ]
@@ -156,18 +191,74 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default)]
+struct LeadingCommentsInfo {
+    has_comments: bool,
+    has_own_line_comment: bool,
+    has_end_of_line_comment: bool,
+    has_trailing_own_line_non_jsdoc_block_comment: bool,
+    has_trailing_own_line_jsdoc_comment: bool,
+}
+
+impl LeadingCommentsInfo {
+    fn from_comments(comments: &[Comment]) -> Self {
+        let mut info = Self { has_comments: !comments.is_empty(), ..Self::default() };
+        for comment in comments {
+            info.has_own_line_comment |= comment.preceded_by_newline();
+            info.has_end_of_line_comment |= comment.followed_by_newline();
+            info.has_trailing_own_line_non_jsdoc_block_comment |= comment.is_block()
+                && comment.is_trailing()
+                && comment.followed_by_newline()
+                && !matches!(comment.content, CommentContent::Jsdoc | CommentContent::JsdocLegal);
+            info.has_trailing_own_line_jsdoc_comment |=
+                matches!(comment.content, CommentContent::Jsdoc | CommentContent::JsdocLegal)
+                    && comment.is_trailing()
+                    && comment.followed_by_newline();
+        }
+        info
+    }
+
+    #[inline]
+    fn has_comments(self) -> bool {
+        self.has_comments
+    }
+}
+
+fn should_indent_alias_union<'a>(
+    alias: &AstNode<'a, TSTypeAliasDeclaration<'a>>,
+    comment_info: LeadingCommentsInfo,
+    f: &JsFormatter<'_, 'a>,
+) -> bool {
+    // When a union starts after a trailing own-line JSDoc comment
+    // (e.g. `=(/** ... */\n| A)`),
+    // type-alias indentation is already applied by the parent assignment printer.
+    if comment_info.has_trailing_own_line_jsdoc_comment {
+        return false;
+    }
+
+    !f.comments().printed_comments().last().is_some_and(|comment| {
+        comment.span.start
+            > alias
+                .type_parameters()
+                .map_or(alias.id.span.end, |type_parameters| type_parameters.span.end)
+            && comment.followed_by_newline()
+    })
+}
+
 fn format_union_types<'a>(
     node: &AstNode<'a, Vec<'a, TSType<'a>>>,
     mut suppressed_node_span: Span,
     should_hug: bool,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     let mut node_iter = node.iter().peekable();
     while let Some(element) = node_iter.next() {
         let element_span = element.span();
+        let has_trailing_suppression_comment =
+            f.comments().has_trailing_suppression_comment(element_span.end);
 
-        if suppressed_node_span == element_span {
-            let comments = f.context().comments().comments_before(suppressed_node_span.start);
+        if suppressed_node_span == element_span || has_trailing_suppression_comment {
+            let comments = f.context().comments().comments_before(element_span.start);
             FormatLeadingComments::Comments(comments).fmt(f);
             let needs_parentheses = element.needs_parentheses(f);
             if needs_parentheses {

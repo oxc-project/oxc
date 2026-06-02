@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -10,7 +10,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This function uses the private member usage collected during the main traverse
     /// to remove unused private fields and methods from the class body.
-    pub fn remove_unused_private_members(body: &mut ClassBody<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_unused_private_members(body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.current_scope_flags().contains_direct_eval() {
             return;
         }
@@ -21,7 +21,7 @@ impl<'a> PeepholeOptimizations {
                 let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {
                     return true;
                 };
-                let name: Atom = private_id.name.into();
+                let name: Str = private_id.name.into();
                 if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name) {
                     return true;
                 }
@@ -31,14 +31,14 @@ impl<'a> PeepholeOptimizations {
                 let PropertyKey::PrivateIdentifier(private_id) = &method.key else {
                     return true;
                 };
-                let name: Atom = private_id.name.into();
+                let name: Str = private_id.name.into();
                 ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
             }
             ClassElement::AccessorProperty(accessor) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
                     return true;
                 };
-                let name: Atom = private_id.name.into();
+                let name: Str = private_id.name.into();
                 if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name) {
                     return true;
                 }
@@ -54,7 +54,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn get_declared_private_symbols(body: &ClassBody<'a>) -> impl Iterator<Item = Atom<'a>> {
+    pub fn get_declared_private_symbols(body: &ClassBody<'a>) -> impl Iterator<Item = Str<'a>> {
         body.body.iter().filter_map(|element| match element {
             ClassElement::PropertyDefinition(prop) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {

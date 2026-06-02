@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
    ╭─[block_scoped_var.mjs:3:21]
  2 │             if (true) {

@@ -7,6 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 fn redeclaration_diagnostic(decl_span: Span, redeclare_span: Span, name: &str) -> OxcDiagnostic {
@@ -122,6 +123,7 @@ declare_oxc_lint!(
     BlockScopedVar,
     eslint,
     suspicious,
+    version = "0.16.9",
 );
 
 impl Rule for BlockScopedVar {
@@ -151,7 +153,7 @@ impl Rule for BlockScopedVar {
 }
 
 fn run_for_all_references(
-    (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
+    (pattern, name, symbol): (&BindingPattern, Ident<'_>, &SymbolId),
     declare_scope_id: ScopeId,
     ctx: &LintContext,
 ) {
@@ -169,13 +171,13 @@ fn run_for_all_references(
             ctx.diagnostic(use_outside_scope_diagnostic(
                 pattern.span(),
                 ctx.reference_span(reference),
-                name,
+                &name,
             ));
         });
 }
 
 fn run_for_all_redeclarations(
-    (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
+    (pattern, name, symbol): (&BindingPattern, Ident<'_>, &SymbolId),
     declare_scope_id: ScopeId,
     ctx: &LintContext,
 ) {
@@ -191,14 +193,14 @@ fn run_for_all_redeclarations(
             )
         })
         .for_each(|redeclaration| {
-            ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, name));
+            ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, &name));
         });
 }
 
 fn run_for_declaration(pattern: &BindingPattern, node_scope_id: ScopeId, ctx: &LintContext) {
     // e.g. "var [a, b] = [1, 2]"
     for ident in pattern.get_binding_identifiers() {
-        let name = ident.name.as_str();
+        let name = ident.name;
         let Some(symbol) = ctx.scoping().find_binding(node_scope_id, name) else {
             continue;
         };
@@ -247,7 +249,6 @@ fn test() {
         "function f() { } f(); var exports = { f: f };",
         "var f = () => {}; f(); var exports = { f: f };",
         "!function f(){ f; }",
-        "function f() { } f(); var exports = { f: f };",
         "function f() { var a, b; { a = true; } b = a; }",
         "var a; function f() { var b = a; }",
         "function f(a) { }",
@@ -285,7 +286,6 @@ fn test() {
         "class C { static { if (bar) { foo; } var foo; } }",
         "class C { static { foo; var foo; } }",
         "class C { static { var foo; foo; } }",
-        "(function () { foo(); })(); function foo() {}",
         "(function () { foo(); })(); function foo() {}",
         "foo: while (true) { bar: for (var i = 0; i < 13; ++i) {if (i === 7) break foo; } }",
         "foo: while (true) { bar: for (var i = 0; i < 13; ++i) {if (i === 7) continue foo; } }",

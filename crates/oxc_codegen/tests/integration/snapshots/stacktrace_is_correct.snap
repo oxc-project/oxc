@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_codegen/tests/integration/sourcemap.rs
 ---
-Node.js version: v24.12.0
+Node.js version: v24.14.0
 
 ## Input
 const fn = () => {
@@ -147,6 +147,35 @@ Error
 
 ------------------------------------------------------
 ## Input
+const factory = () => {
+    return () => {
+        Error.stackTraceLimit = 2;
+        throw new Error()
+    }
+}
+factory()()
+
+## Output
+const factory = () => {
+	return () => {
+		Error.stackTraceLimit = 2;
+		throw new Error();
+	};
+};
+factory()();
+
+
+## Stderr
+/project/input.js:4
+        throw new Error()
+              ^
+
+Error
+    at <anonymous> (/project/input.js:4:15)
+    at <anonymous> (/project/input.js:7:10)
+
+------------------------------------------------------
+## Input
 var a
 const obj = {
     fn() {
@@ -206,3 +235,30 @@ fn("name", () => {
 Error
     at <anonymous> (/project/input.js:6:11)
     at fn (/project/input.js:2:5)
+
+------------------------------------------------------
+## Input
+const make = () => ({
+    get prop() {
+        Error.stackTraceLimit = 2;
+        throw new Error()
+    }
+})
+make().prop
+
+## Output
+const make = () => ({ get prop() {
+	Error.stackTraceLimit = 2;
+	throw new Error();
+} });
+make().prop;
+
+
+## Stderr
+/project/input.js:4
+        throw new Error()
+              ^
+
+Error
+    at Object.get prop (/project/input.js:4:15)
+    at <anonymous> (/project/input.js:7:7)

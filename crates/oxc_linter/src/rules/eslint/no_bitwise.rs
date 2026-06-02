@@ -1,7 +1,8 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use oxc_syntax::operator::BinaryOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -57,7 +58,7 @@ impl std::ops::Deref for NoBitwise {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow bitwise operators
+    /// Disallow bitwise operators.
     ///
     /// ### Why is this bad?
     ///
@@ -95,6 +96,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = NoBitwiseConfig,
+    version = "0.0.3",
 );
 
 impl Rule for NoBitwise {

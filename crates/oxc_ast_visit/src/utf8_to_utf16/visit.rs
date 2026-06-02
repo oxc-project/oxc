@@ -39,22 +39,6 @@ impl Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut prop.span.end);
     }
 
-    pub(crate) fn convert_binding_rest_element(
-        &mut self,
-        rest_element: &mut BindingRestElement<'_>,
-    ) {
-        self.convert_offset(&mut rest_element.span.start);
-        match &mut rest_element.argument {
-            BindingPattern::BindingIdentifier(ident) => self.visit_binding_identifier(ident),
-            BindingPattern::ObjectPattern(pattern) => self.visit_object_pattern(pattern),
-            BindingPattern::ArrayPattern(pattern) => self.visit_array_pattern(pattern),
-            BindingPattern::AssignmentPattern(pattern) => {
-                self.visit_assignment_pattern(pattern);
-            }
-        }
-        self.convert_offset(&mut rest_element.span.end);
-    }
-
     pub(crate) fn convert_binding_property(&mut self, prop: &mut BindingProperty<'_>) {
         self.convert_offset(&mut prop.span.start);
 

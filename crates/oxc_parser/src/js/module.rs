@@ -5,9 +5,9 @@ use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
 use crate::{
-    ParserImpl, diagnostics,
+    ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
-    modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{Modifier, ModifierKind, Modifiers},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -26,7 +26,7 @@ enum ImportOrExportSpecifier<'a> {
     Export(ExportSpecifier<'a>),
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
     /// `ImportCall` : import ( `AssignmentExpression` )
     pub(crate) fn parse_import_expression(
@@ -287,8 +287,7 @@ impl<'a> ParserImpl<'a> {
                                 default_span,
                             ));
                         }
-                        let mut import_specifiers = self.parse_import_specifiers(import_kind);
-                        specifiers.append(&mut import_specifiers);
+                        self.parse_import_specifiers_into(&mut specifiers, import_kind);
                     }
                     _ => return self.unexpected(),
                 }
@@ -309,8 +308,7 @@ impl<'a> ParserImpl<'a> {
             specifiers.push(self.parse_import_namespace_specifier());
         } else if self.at(Kind::LCurly) {
             // import { export1 , export2 as alias2 , [...] } from "module-name";
-            let mut import_specifiers = self.parse_import_specifiers(import_kind);
-            specifiers.append(&mut import_specifiers);
+            self.parse_import_specifiers_into(&mut specifiers, import_kind);
         }
 
         self.expect(Kind::From);
@@ -328,19 +326,23 @@ impl<'a> ParserImpl<'a> {
     }
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
-    fn parse_import_specifiers(
+    fn parse_import_specifiers_into(
         &mut self,
+        specifiers: &mut Vec<'a, ImportDeclarationSpecifier<'a>>,
         import_kind: ImportOrExportKind,
-    ) -> Vec<'a, ImportDeclarationSpecifier<'a>> {
+    ) {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
-        let (list, _) = self.context_remove(self.ctx, |p| {
-            p.parse_delimited_list(Kind::RCurly, Kind::Comma, opening_span, |parser| {
-                parser.parse_import_specifier(import_kind)
-            })
+        self.context_remove(self.ctx, |p| {
+            let _ = p.parse_delimited_list_into(
+                specifiers,
+                Kind::RCurly,
+                Kind::Comma,
+                opening_span,
+                |parser| parser.parse_import_specifier(import_kind),
+            );
         });
         self.expect(Kind::RCurly);
-        list
     }
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
@@ -351,7 +353,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Assert if !self.cur_token().is_on_new_line() => WithClauseKeyword::Assert,
             _ => return None,
         };
-        self.bump_remap(keyword_kind);
+        self.advance(keyword_kind);
 
         let span = self.start_span();
         let opening_span = self.cur_token().span();
@@ -368,7 +370,7 @@ impl<'a> ParserImpl<'a> {
 
         let mut keys = FxHashMap::default();
         for e in &with_entries {
-            let key = e.key.as_atom().as_str();
+            let key = e.key.as_arena_str().as_str();
             let span = e.key.span();
             if let Some(old_span) = keys.insert(key, span) {
                 self.error(diagnostics::redeclaration(key, old_span, span));
@@ -402,7 +404,7 @@ impl<'a> ParserImpl<'a> {
         let expression = self.parse_assignment_expression_or_higher();
         self.asi();
         if self.ctx.has_top_level() {
-            self.module_record_builder.found_ts_export();
+            self.module_record_builder.set_module_syntax();
         }
         self.ast.alloc_ts_export_assignment(self.end_span(start_span), expression)
     }
@@ -416,7 +418,7 @@ impl<'a> ParserImpl<'a> {
         let id = self.parse_identifier_name();
         self.asi();
         if self.ctx.has_top_level() {
-            self.module_record_builder.found_ts_export();
+            self.module_record_builder.set_module_syntax();
         }
         self.ast.alloc_ts_namespace_export_declaration(self.end_span(start_span), id)
     }
@@ -517,7 +519,7 @@ impl<'a> ParserImpl<'a> {
             _ => {
                 if self.at(Kind::Export) {
                     self.error(diagnostics::modifier_already_seen(&Modifier::new(
-                        self.cur_token().span(),
+                        self.cur_token().start(),
                         ModifierKind::Export,
                     )));
                     self.bump_any();
@@ -587,7 +589,7 @@ impl<'a> ParserImpl<'a> {
 
                         // `local` becomes a reference for `export { local }`.
                         specifier.local = ModuleExportName::IdentifierReference(
-                            self.ast.identifier_reference(ident.span, ident.name.as_str()),
+                            self.ast.identifier_reference(ident.span, ident.name),
                         );
                     }
                     // No prior code path should lead to parsing `ModuleExportName` as `IdentifierReference`.
@@ -654,7 +656,7 @@ impl<'a> ParserImpl<'a> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
         let default_keyword_span = self.cur_token().span();
-        self.bump_remap(Kind::Default);
+        self.advance(Kind::Default);
         let declaration = self.parse_export_default_declaration_kind(decorators);
         let span = self.end_span(span);
         let export_default_decl = self.ast.alloc_export_default_declaration(span, declaration);
@@ -709,10 +711,7 @@ impl<'a> ParserImpl<'a> {
             if !cur_token.is_on_new_line() {
                 // export default abstract class ...
                 if is_abstract && kind == Kind::Class {
-                    let modifiers = self
-                        .ast
-                        .vec1(Modifier::new(self.end_span(modifier_span), ModifierKind::Abstract));
-                    let modifiers = Modifiers::new(Some(modifiers), ModifierFlags::ABSTRACT);
+                    let modifiers = Modifiers::new_single(ModifierKind::Abstract, modifier_span);
                     return ExportDefaultDeclarationKind::ClassDeclaration(
                         self.parse_class_declaration(decl_span, &modifiers, decorators),
                     );

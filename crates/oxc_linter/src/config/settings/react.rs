@@ -1,9 +1,10 @@
 use std::{borrow::Cow, fmt};
 
 use lazy_regex::{Lazy, Regex, lazy_regex};
-use oxc_span::CompactStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
+
+use oxc_str::CompactStr;
 
 /// Regex to validate React version strings like "18.2.0", "17.0", or "16".
 static REACT_VERSION_REGEX: Lazy<Regex> =

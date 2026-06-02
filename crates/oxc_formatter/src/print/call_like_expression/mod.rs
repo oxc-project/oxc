@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{Formatter, TailwindContextEntry, prelude::*, trivia::FormatTrailingComments},
+    formatter::{TailwindContextEntry, prelude::*, trivia::FormatTrailingComments},
     print::arrow_function_expression::is_multiline_template_starting_on_same_line,
     utils::{
         call_expression::is_test_call_expression,
@@ -19,7 +19,7 @@ use arguments::is_simple_module_import;
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let callee = self.callee();
         let type_arguments = self.type_arguments();
         let arguments = self.arguments();
@@ -28,7 +28,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
         // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
         let is_tailwind_call = f
             .options()
-            .experimental_tailwindcss
+            .sort_tailwindcss
             .as_ref()
             .is_some_and(|opts| is_tailwind_function_call(&self.callee, opts));
 
@@ -68,11 +68,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 } else {
                     write!(f, [FormatNodeWithoutTrailingComments(callee)]);
 
-                    if self.arguments.is_empty() {
+                    let character = if self.optional {
+                        // For optional calls with arguments, preserve trailing comments
+                        // between the `callee` and `?.` operator.
+                        // `alert/* comment */?.('value')` → `alert /* comment */?.("value");`
+                        Some(b'?')
+                    } else if self.arguments.is_empty() {
+                        // For empty argument calls, preserve trailing comments between
+                        // the `callee` and `()`.
+                        // `call/**/()` → `call /**/();`
+                        Some(b'(')
+                    } else {
+                        None
+                    };
+                    if let Some(character) = character {
                         let callee_trailing_comments = f
                             .context()
                             .comments()
-                            .comments_before_character(self.callee.span().end, b'(');
+                            .comments_before_character(self.callee.span().end, character);
                         write!(f, FormatTrailingComments::Comments(callee_trailing_comments));
                     }
                 }
@@ -81,7 +94,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 // If this IS a Tailwind function call, push the Tailwind context
                 let tailwind_ctx_to_push = if is_tailwind_call {
                     f.options()
-                        .experimental_tailwindcss
+                        .sort_tailwindcss
                         .as_ref()
                         .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
                 } else {
@@ -117,13 +130,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, NewExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["new", space(), self.callee(), self.type_arguments(), self.arguments()]);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["import"]);
         if let Some(phase) = &self.phase() {
             write!(f, [".", phase.as_str()]);

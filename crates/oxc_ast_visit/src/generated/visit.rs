@@ -627,8 +627,8 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_v_8_intrinsic_expression(&mut self, it: &V8IntrinsicExpression<'a>) {
-        walk_v_8_intrinsic_expression(self, it);
+    fn visit_v8_intrinsic_expression(&mut self, it: &V8IntrinsicExpression<'a>) {
+        walk_v8_intrinsic_expression(self, it);
     }
 
     #[inline]
@@ -1424,7 +1424,7 @@ pub mod walk {
             Expression::TSInstantiationExpression(it) => {
                 visitor.visit_ts_instantiation_expression(it)
             }
-            Expression::V8IntrinsicExpression(it) => visitor.visit_v_8_intrinsic_expression(it),
+            Expression::V8IntrinsicExpression(it) => visitor.visit_v8_intrinsic_expression(it),
             match_member_expression!(Expression) => {
                 visitor.visit_member_expression(it.to_member_expression())
             }
@@ -2500,6 +2500,7 @@ pub mod walk {
         let kind = AstKind::FormalParameterRest(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.visit_decorators(&it.decorators);
         visitor.visit_binding_rest_element(&it.rest);
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
@@ -2896,7 +2897,7 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_v_8_intrinsic_expression<'a, V: Visit<'a>>(
+    pub fn walk_v8_intrinsic_expression<'a, V: Visit<'a>>(
         visitor: &mut V,
         it: &V8IntrinsicExpression<'a>,
     ) {

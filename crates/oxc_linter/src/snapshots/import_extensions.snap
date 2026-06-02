@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-import(extensions): File extension "jsx" should not be included in the import declaration.
+
+  ⚠ import(extensions): File extension "jsx" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import lib from "./bar.js";
  3 │                 import component from "./bar.jsx";
@@ -10,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import lib from "./bar.js";
@@ -19,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "json" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "json" should not be included in the import declaration.
    ╭─[extensions.tsx:4:17]
  3 │                 import component from "./bar.jsx";
  4 │                 import data from "./bar.json";
@@ -28,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "jsx" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "jsx" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import lib from "./bar.js";
  3 │                 import component from "./bar.jsx";
@@ -37,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import lib from "./bar.js";
@@ -46,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "jsx" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "jsx" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import component from "./bar.jsx";
@@ -55,14 +56,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "coffee" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "coffee" should not be included in the import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import "./bar.coffee"
    · ─────────────────────
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import { B } from './something.ts';
@@ -71,7 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import barjs from "./bar.js";
@@ -80,7 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import barjs from ".";
@@ -89,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import barjs from ".";
  3 │                 import barjs2 from "..";
@@ -98,7 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import barjs from "./bar.js";
@@ -107,7 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import thing from "./fake-file.js";
@@ -116,7 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import thing from "@name/pkg/test";
@@ -125,7 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import thing from "@name/pkg/test.js";
@@ -134,7 +135,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:4:17]
  3 │                 import bar from './bar.json';
  4 │                 import Component from './Component';
@@ -143,7 +144,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:7:17]
  6 │                 import baw from '@scoped/baw/import';
  7 │                 import chart from '@/configs/chart';
@@ -152,7 +153,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:4:17]
  3 │                 import bar from './bar.json';
  4 │                 import Component from './Component';
@@ -161,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:7:17]
  6 │                 import baw from '@scoped/baw/import';
  7 │                 import chart from '@/configs/chart';
@@ -170,7 +171,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "jsx" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "jsx" should not be included in the import declaration.
    ╭─[extensions.tsx:4:17]
  3 │                 import bar from './bar.json';
  4 │                 import Component from './Component.jsx';
@@ -179,7 +180,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import foo from './foo.js';
@@ -188,7 +189,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "json" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "json" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import foo from './foo.js';
  3 │                 import bar from './bar.json';
@@ -197,7 +198,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "jsx" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "jsx" should not be included in the import declaration.
    ╭─[extensions.tsx:4:17]
  3 │                 import bar from './bar.json';
  4 │                 import Component from './Component.jsx';
@@ -206,7 +207,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in export declaration.
+  ⚠ import(extensions): Missing file extension in export declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 export { foo } from "./foo";
@@ -215,7 +216,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this export.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the export declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the export declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 export { foo } from "./foo.js";
@@ -224,21 +225,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this export.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import withExtension from "./foo.js?a=True";
    · ────────────────────────────────────────────
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import withoutExtension from "./foo?a=True.ext";
    · ────────────────────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:33]
  1 │ 
  2 │                 const { foo } = require("./foo");
@@ -247,7 +248,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:33]
  1 │ 
  2 │                 const { foo } = require("./foo.js");
@@ -256,7 +257,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import foo from "@/ImNotAScopedModule";
@@ -265,7 +266,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import foo from "@/ImNotAScopedModule";
  3 │                 import chart from "@/configs/chart";
@@ -274,7 +275,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in export declaration.
+  ⚠ import(extensions): Missing file extension in export declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 export { foo } from "./foo";
@@ -283,7 +284,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this export.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the export declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the export declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 export { foo } from "./foo.js";
@@ -292,7 +293,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this export.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in export declaration.
+  ⚠ import(extensions): Missing file extension in export declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 export * from "./foo";
@@ -301,7 +302,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this export.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the export declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the export declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 export * from "./foo.js";
@@ -310,7 +311,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this export.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import foo from "@/ImNotAScopedModule.js";
@@ -319,7 +320,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import _ from 'lodash';
  3 │                 import m from '@test-scope/some-module/index.js';
@@ -328,7 +329,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import * as test from ".";
@@ -337,7 +338,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import * as test from "..";
@@ -346,7 +347,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import type { MyType } from "./typescript-declare";
@@ -355,7 +356,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in export declaration.
+  ⚠ import(extensions): Missing file extension in export declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 export type { MyType } from "./typescript-declare";
@@ -364,7 +365,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this export.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import x from '.';
@@ -373,7 +374,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import y from '..';
@@ -382,7 +383,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import { bar } from '@scope/pkg/file.js';
@@ -391,7 +392,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import { baz } from '@org/lib/sub/index.ts';
@@ -400,7 +401,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import { bar } from '@scope/pkg/file.js';
@@ -409,7 +410,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import { baz } from '@org/lib/sub/index.ts';
@@ -418,7 +419,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import { baz } from '@org/lib/sub/index.ts';
@@ -427,7 +428,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import x from './foo';
  3 │                 import y from './bar.ts';
@@ -436,7 +437,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "vue" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "vue" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import Component from './Component.vue';
@@ -445,7 +446,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import Component from './Component';
@@ -454,7 +455,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "mjs" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "mjs" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import utils from './utils.mjs';
@@ -463,7 +464,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import utils from './utils';
@@ -472,7 +473,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "vue" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "vue" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import Component from './App.vue';
@@ -481,7 +482,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import Component from './App.vue';
  3 │                 import utils from './utils.ts';
@@ -490,7 +491,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import Component from './App';
@@ -499,7 +500,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import Component from './App';
  3 │                 import utils from './utils';
@@ -508,7 +509,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "vue" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "vue" should not be included in the import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import Component from './Component.vue';
@@ -517,7 +518,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import Component from './App.vue';
  3 │                 import utils from './utils';
@@ -526,28 +527,28 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import { x } from 'rootverse+debug:src';
    · ────────────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import { x } from 'rootverse+debug:src';
    · ────────────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import { x } from 'custom+protocol:module';
    · ───────────────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import { a } from './standard';
  3 │                 import { b } from 'custom+protocol:module';
@@ -556,7 +557,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:2:17]
  1 │ 
  2 │                 import { a } from './standard';
@@ -565,42 +566,42 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import { x } from 'workspace:packages/core/src';
    · ────────────────────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import { x } from 'MyCustom+Protocol:src';
    · ──────────────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import x from './foo?v=1';
    · ──────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import x from './foo#section';
    · ──────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import x from '@/components/Button';
    · ────────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import a from '@/utils.js';
  3 │                 import b from '~/config';
@@ -609,86 +610,107 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import x from 'workspace:packages/core';
    · ────────────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import x from '@/utils/';
    · ─────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import x from './foo.JS';
    · ─────────────────────────
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import x from './foo.Ts';
    · ─────────────────────────
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import React from 'react';
    · ──────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import crypto from 'node_crypto';
    · ─────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import fs from 'some-package';
    · ──────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import fs from '@fs/some-package';
    · ──────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import { default as crypto } from '@fs/some-package';
    · ─────────────────────────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration.
+  ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import * as fs from '@fs/some-package';
    · ───────────────────────────────────────
    ╰────
   help: Add a file extension to this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import useState from 'react/useState.ts';
    · ─────────────────────────────────────────
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+  ⚠ import(extensions): File extension "ts" should not be included in the import declaration.
    ╭─[extensions.tsx:1:1]
  1 │ import useState from '@foo/bar/useState.ts';
    · ────────────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "tsx" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import Component from './Component.stories.tsx';
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "ts" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import Component from './Component.test.ts';
+   · ────────────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import utils from './utils.spec.js';
+   · ────────────────────────────────────
    ╰────
   help: Remove the file extension from this import.

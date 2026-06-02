@@ -75,6 +75,7 @@ declare_oxc_lint!(
     NoStyledJsxInDocument,
     nextjs,
     correctness,
+    version = "0.3.3",
 );
 
 impl Rule for NoStyledJsxInDocument {

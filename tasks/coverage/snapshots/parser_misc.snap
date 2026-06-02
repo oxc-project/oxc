@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 64/64 (100.00%)
-Positive Passed: 64/64 (100.00%)
-Negative Passed: 134/134 (100.00%)
+AST Parsed     : 67/67 (100.00%)
+Positive Passed: 67/67 (100.00%)
+Negative Passed: 140/140 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -48,6 +48,14 @@ Negative Passed: 134/134 (100.00%)
  7 │ function foo4([eval]) {}
    ·                ────
  8 │ 
+   ╰────
+
+  × Cannot use await in class static initialization block
+   ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
+ 3 │     {
+ 4 │       await foo;
+   ·       ─────
+ 5 │     }
    ╰────
 
   × Cannot use export statement outside a module
@@ -280,6 +288,12 @@ Negative Passed: 134/134 (100.00%)
  1 │ import source 'module';
    ·               ────┬───
    ·                   ╰── `from` expected
+   ╰────
+
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
+   ╭─[misc/fail/import-sync-expression.js:1:11]
+ 1 │ const x = import.sync("baz");
+   ·           ───────────
    ╰────
 
   × TS(1363): A type-only import can specify a default import or named bindings, but not both.
@@ -3476,6 +3490,12 @@ Negative Passed: 134/134 (100.00%)
    ·        ─────
    ╰────
 
+  × Unexpected token
+   ╭─[misc/fail/oxc-22515.js:1:14]
+ 1 │ class extends,{
+   ·              ─
+   ╰────
+
   × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:1:8]
  1 │ const a? = "A"
@@ -3533,6 +3553,38 @@ Negative Passed: 134/134 (100.00%)
  1 │ x = (/* a */)
    ·     ─────────
    ╰────
+
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:20:22]
+ 19 │ export type LocalInterface =
+ 20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+    ·                      ─────────────────
+ 21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+    ╰────
+
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:21:22]
+ 20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+ 21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+    ·                      ─────────────────
+ 22 │ 
+    ╰────
+
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:23:49]
+ 22 │ 
+ 23 │ export const a = (null as any as import("pkg", {"resolution-mode": "require"}).RequireInterface);
+    ·                                                 ─────────────────
+ 24 │ export const b = (null as any as import("pkg", {"resolution-mode": "import"}).ImportInterface);
+    ╰────
+
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:24:49]
+ 23 │ export const a = (null as any as import("pkg", {"resolution-mode": "require"}).RequireInterface);
+ 24 │ export const b = (null as any as import("pkg", {"resolution-mode": "import"}).ImportInterface);
+    ·                                                 ─────────────────
+ 25 │ 
+    ╰────
 
   × Expected `{` but found `[`
     ╭─[misc/fail/oxc-2394.ts:38:21]
@@ -3614,7 +3666,7 @@ Negative Passed: 134/134 (100.00%)
    ╰────
   help: No modifiers are allowed here.
 
-  × TS(8037): Type assertion expressions can only be used in TypeScript files.
+  × TS(8016): Type assertion expressions can only be used in TypeScript files.
    ╭─[misc/fail/oxc-4111-1.js:1:1]
  1 │ funtransientction as longciiConÞr>ol(cde) {
    · ─────────────────────────────────
@@ -3767,6 +3819,20 @@ Negative Passed: 134/134 (100.00%)
    ╰────
   help: Add an identifier after '?.'
 
+  × Invalid rest element target in destructuring assignment
+   ╭─[misc/fail/rest-assignment-target.js:1:6]
+ 1 │ ({...[]} = {});
+   ·      ──
+   ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
+
+  × Invalid rest element target in destructuring pattern
+   ╭─[misc/fail/rest-binding-element.js:1:11]
+ 1 │ const {...[]} = obj;
+   ·           ──
+   ╰────
+  help: Expected an identifier, like `...rest`.
+
   × 'using' declarations are not allowed at the top level of a script
    ╭─[misc/fail/script-top-level-using.js:2:1]
  1 │ // 'using' is not allowed at top level in scripts
@@ -3774,6 +3840,14 @@ Negative Passed: 134/134 (100.00%)
    · ─────────────
    ╰────
   help: Wrap this code in a block or use a module
+
+  × Cannot use 'for await' in class static initialization block
+   ╭─[misc/fail/semantic-for-await-in-block-in-static-block.mjs:4:7]
+ 3 │     {
+ 4 │       for await (const x of y) {}
+   ·       ───────────────────────────
+ 5 │     }
+   ╰────
 
   × Expected switch clause
    ╭─[misc/fail/switch-invalid-clause.js:2:3]

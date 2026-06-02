@@ -1,6 +1,6 @@
 //! Token
 
-use std::{fmt, mem, ptr};
+use std::{fmt, mem, ptr::NonNull};
 
 use oxc_span::Span;
 
@@ -27,18 +27,29 @@ const HAS_SEPARATOR_SHIFT: usize = 96;
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const KIND_MASK: u128 = 0xFF; // 8 bits
+#[expect(dead_code)]
 const BOOL_MASK: u128 = 0xFF; // 8 bits
 
 const _: () = {
-    // Check flags fields are aligned on 8 and in bounds, so can be read via pointers
-    const fn is_valid_shift(shift: usize) -> bool {
-        shift.is_multiple_of(8) && shift < u128::BITS as usize
+    const fn is_valid_shift<T>(shift: usize) -> bool {
+        let align_bits = align_of::<T>() * 8;
+        shift.is_multiple_of(align_bits) && shift < u128::BITS as usize
     }
 
-    assert!(is_valid_shift(IS_ON_NEW_LINE_SHIFT));
-    assert!(is_valid_shift(ESCAPED_SHIFT));
-    assert!(is_valid_shift(LONE_SURROGATES_SHIFT));
-    assert!(is_valid_shift(HAS_SEPARATOR_SHIFT));
+    // Check `u32` fields are aligned on 32 and in bounds, so can be read/written via pointers
+    assert!(is_valid_shift::<u32>(START_SHIFT));
+    assert!(is_valid_shift::<u32>(END_SHIFT));
+
+    // Check `Kind` is 1 byte, and `KIND_SHIFT` is aligned on 8 and in bounds, so can be read/written via pointers
+    assert!(size_of::<Kind>() == 1);
+    assert!(align_of::<Kind>() == 1);
+    assert!(is_valid_shift::<Kind>(KIND_SHIFT));
+
+    // Check flags fields are aligned on 8 and in bounds, so can be read/written via pointers
+    assert!(is_valid_shift::<bool>(IS_ON_NEW_LINE_SHIFT));
+    assert!(is_valid_shift::<bool>(ESCAPED_SHIFT));
+    assert!(is_valid_shift::<bool>(LONE_SURROGATES_SHIFT));
+    assert!(is_valid_shift::<bool>(HAS_SEPARATOR_SHIFT));
 };
 
 #[derive(Clone, Copy)]
@@ -85,11 +96,44 @@ impl Token {
     }
 }
 
-// Getters and setters
+// Getters and setters.
+//
+// Prior to Rust 1.95.0, `set` methods used safe bitwise operations.
+// This regressed heavily in Rust 1.95.0 due to an LLVM bug:
+// https://github.com/oxc-project/oxc/pull/21509
+// https://github.com/rust-lang/rust/issues/155422
+//
+// To obtain the same tight assembly as before on Rust 1.95.0, we now use unsafe pointer manipulation
+// to directly write the "fields" of `Token`.
+// The original implementations are kept in comments, in case we want to revert to them once the LLVM bug is fixed.
 impl Token {
     #[inline]
     pub fn span(&self) -> Span {
         Span::new(self.start(), self.end())
+    }
+
+    // `set_span` is only exposed as public API when `mutate_tokens` feature is enabled.
+    // Otherwise, it is only accessible within `lexer` module.
+    #[cfg(feature = "mutate_tokens")]
+    #[inline]
+    pub fn set_span(&mut self, span: Span) {
+        self.set_span_impl(span);
+    }
+
+    #[cfg(not(feature = "mutate_tokens"))]
+    #[inline]
+    #[allow(dead_code, clippy::allow_attributes)]
+    pub(super) fn set_span(&mut self, span: Span) {
+        self.set_span_impl(span);
+    }
+
+    #[inline]
+    fn set_span_impl(&mut self, span: Span) {
+        // On little-endian systems, `start` and `end` fields in `Span` are in same order as in `Token`,
+        // so compiler boils this down to just a `u64` write of the `Span` into the first 8 bytes of the `Token`
+        // https://godbolt.org/z/bdY5ccad6
+        self.set_start(span.start);
+        self.set_end(span.end);
     }
 
     #[inline]
@@ -98,9 +142,15 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_start(&mut self, start: u32) {
+    pub(super) fn set_start(&mut self, start: u32) {
+        /*
+        // Original version. Perf regressed in Rust 1.95.0.
         self.0 &= !(START_MASK << START_SHIFT); // Clear current `start` bits
         self.0 |= u128::from(start) << START_SHIFT;
+        */
+
+        // SAFETY: `START_SHIFT` is a valid `u32` field position in `Token`
+        unsafe { self.write_u32(START_SHIFT, start) };
     }
 
     #[inline]
@@ -109,11 +159,18 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_end(&mut self, end: u32) {
+    pub(super) fn set_end(&mut self, end: u32) {
         let start = self.start();
         debug_assert!(end >= start, "Token end ({end}) cannot be less than start ({start})");
+
+        /*
+        // Original version. Perf regressed in Rust 1.95.0.
         self.0 &= !(END_MASK << END_SHIFT); // Clear current `end` bits
         self.0 |= u128::from(end) << END_SHIFT;
+        */
+
+        // SAFETY: `END_SHIFT` is a valid `u32` field position in `Token`
+        unsafe { self.write_u32(END_SHIFT, end) };
     }
 
     #[inline]
@@ -124,10 +181,34 @@ impl Token {
         unsafe { mem::transmute::<u8, Kind>(((self.0 >> KIND_SHIFT) & KIND_MASK) as u8) }
     }
 
+    // `set_kind` is only exposed as public API when `mutate_tokens` feature is enabled.
+    // Otherwise, it is only accessible within `lexer` module.
+    #[cfg(feature = "mutate_tokens")]
     #[inline]
-    pub(crate) fn set_kind(&mut self, kind: Kind) {
+    pub fn set_kind(&mut self, kind: Kind) {
+        self.set_kind_impl(kind);
+    }
+
+    #[cfg(not(feature = "mutate_tokens"))]
+    #[inline]
+    pub(super) fn set_kind(&mut self, kind: Kind) {
+        self.set_kind_impl(kind);
+    }
+
+    #[inline]
+    fn set_kind_impl(&mut self, kind: Kind) {
+        /*
+        // Original version. Perf regressed in Rust 1.95.0.
         self.0 &= !(KIND_MASK << KIND_SHIFT); // Clear current `kind` bits
         self.0 |= u128::from(kind as u8) << KIND_SHIFT;
+        */
+
+        const OFFSET: usize =
+            if cfg!(target_endian = "little") { KIND_SHIFT / 8 } else { 15 - (KIND_SHIFT / 8) };
+        // SAFETY: `Kind` is `#[repr(u8)]`, so writing one byte at `OFFSET` overwrites only the `kind` byte
+        // without touching adjacent fields. These bits always represent a valid `Kind`.
+        // `Token` is borrowed mutably, so the write is unaliased.
+        unsafe { *NonNull::from(self).cast::<Kind>().add(OFFSET).as_mut() = kind };
     }
 
     /// Checks if this token appears at the start of a new line.
@@ -144,9 +225,15 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_is_on_new_line(&mut self, value: bool) {
+    pub(super) fn set_is_on_new_line(&mut self, value: bool) {
+        /*
+        // Original version. Perf regressed in Rust 1.95.0.
         self.0 &= !(BOOL_MASK << IS_ON_NEW_LINE_SHIFT); // Clear current `is_on_new_line` bits
         self.0 |= u128::from(value) << IS_ON_NEW_LINE_SHIFT;
+        */
+
+        // SAFETY: `IS_ON_NEW_LINE_SHIFT` is a valid `bool` field position in `Token`
+        unsafe { self.write_bool(IS_ON_NEW_LINE_SHIFT, value) };
     }
 
     #[inline]
@@ -158,9 +245,15 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_escaped(&mut self, escaped: bool) {
+    pub(super) fn set_escaped(&mut self, escaped: bool) {
+        /*
+        // Original version. Perf regressed in Rust 1.95.0.
         self.0 &= !(BOOL_MASK << ESCAPED_SHIFT); // Clear current `escaped` bits
         self.0 |= u128::from(escaped) << ESCAPED_SHIFT;
+        */
+
+        // SAFETY: `ESCAPED_SHIFT` is a valid `bool` field position in `Token`
+        unsafe { self.write_bool(ESCAPED_SHIFT, escaped) };
     }
 
     #[inline]
@@ -172,9 +265,15 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_lone_surrogates(&mut self, value: bool) {
+    pub(super) fn set_lone_surrogates(&mut self, value: bool) {
+        /*
+        // Original version. Perf regressed in Rust 1.95.0.
         self.0 &= !(BOOL_MASK << LONE_SURROGATES_SHIFT); // Clear current `lone_surrogates` bits
         self.0 |= u128::from(value) << LONE_SURROGATES_SHIFT;
+        */
+
+        // SAFETY: `LONE_SURROGATES_SHIFT` is a valid `bool` field position in `Token`
+        unsafe { self.write_bool(LONE_SURROGATES_SHIFT, value) };
     }
 
     #[inline]
@@ -186,9 +285,15 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_has_separator(&mut self, value: bool) {
+    pub(super) fn set_has_separator(&mut self, value: bool) {
+        /*
+        // Original version. Perf regressed in Rust 1.95.0.
         self.0 &= !(BOOL_MASK << HAS_SEPARATOR_SHIFT); // Clear current `has_separator` bits
         self.0 |= u128::from(value) << HAS_SEPARATOR_SHIFT;
+        */
+
+        // SAFETY: `HAS_SEPARATOR_SHIFT` is a valid `bool` field position in `Token`
+        unsafe { self.write_bool(HAS_SEPARATOR_SHIFT, value) };
     }
 
     /// Read `bool` from 8 bits starting at bit position `shift`.
@@ -233,17 +338,60 @@ impl Token {
         // SAFETY: Caller guarantees `shift` points to valid `bool`.
         // This method borrows `Token`, so valid to read field via a reference - can't be aliased.
         unsafe {
-            let field_ptr = ptr::from_ref(self).cast::<bool>().add(offset);
-            debug_assert!(*field_ptr.cast::<u8>() <= 1);
-            *field_ptr.as_ref().unwrap_unchecked()
+            let field_ptr = NonNull::from_ref(self).cast::<bool>().add(offset);
+            debug_assert!(field_ptr.cast::<u8>().read() <= 1);
+            *field_ptr.as_ref()
         }
+    }
+
+    /// Write `bool` to the 8 bits starting at bit position `shift`.
+    ///
+    /// # SAFETY
+    ///
+    /// `shift` must be the location of a valid boolean "field" in [`Token`] e.g. `ESCAPED_SHIFT`.
+    ///
+    /// # Performance analysis
+    ///
+    /// Writing the whole byte via a pointer avoids a read-modify-write of the underlying `u128`.
+    /// LLVM stopped folding the safe `self.0 &= !mask; self.0 |= val << shift` pattern
+    /// into a single byte store as of rustc 1.95.0 - see <https://github.com/rust-lang/rust/issues/155422>.
+    /// This implementation produces `mov byte ptr [rdi + N], sil` on both affected and unaffected Rust versions.
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // So `shift` is statically known
+    unsafe fn write_bool(&mut self, shift: usize, value: bool) {
+        // Byte offset depends on endianness of the system
+        let offset = if cfg!(target_endian = "little") { shift / 8 } else { 15 - (shift / 8) };
+        // SAFETY: Caller guarantees `shift` points to a valid `bool` field.
+        // `Token` is borrowed mutably, so the write is unaliased.
+        // `as_mut` produces a `&mut bool` with `noalias` metadata for LLVM.
+        unsafe { *NonNull::from(self).cast::<bool>().add(offset).as_mut() = value };
+    }
+
+    /// Write `u32` to the 32 bits starting at bit position `shift`.
+    ///
+    /// # SAFETY
+    ///
+    /// `shift` must be the location of a valid `u32` "field" in [`Token`] i.e. `START_SHIFT` or `END_SHIFT`.
+    ///
+    /// # Performance analysis
+    ///
+    /// See `write_bool` - same story, but `mov dword ptr [rdi + N], esi`.
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // So `shift` is statically known
+    unsafe fn write_u32(&mut self, shift: usize, value: u32) {
+        // `Token` is 16 bytes = 4 `u32`s wide. Offset in `u32` units depends on endianness.
+        let offset = if cfg!(target_endian = "little") { shift / 32 } else { 3 - (shift / 32) };
+        // SAFETY: Caller guarantees `shift` points to a valid `u32` field (`start` or `end`).
+        // `Token` is `#[repr(transparent)]` over `u128`, so casting `NonNull<Token>` to `NonNull<u32>`
+        // is going from stricter to looser alignment. `Token` is borrowed mutably, so the
+        // write is unaliased - `as_mut` produces a `&mut u32` with `noalias` metadata for LLVM.
+        unsafe { *NonNull::from(self).cast::<u32>().add(offset).as_mut() = value };
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::Kind;
-    use super::Token;
+    use super::{Kind, Span, Token};
 
     // Test size of `Token`
     const _: () = assert!(size_of::<Token>() == 16);
@@ -308,11 +456,11 @@ mod test {
     fn token_setters() {
         let mut token = Token::default();
         token.set_kind(Kind::Ident);
-        token.set_start(10);
-        token.set_end(15);
+        token.set_span(Span::new(10, 15));
         // is_on_new_line, escaped, lone_surrogates, has_separator are false by default from Token::default()
 
         assert_eq!(token.start(), 10);
+        assert_eq!(token.end(), 15);
         assert!(!token.escaped());
         assert!(!token.is_on_new_line());
         assert!(!token.lone_surrogates());

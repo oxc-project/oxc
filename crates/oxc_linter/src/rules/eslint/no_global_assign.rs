@@ -1,6 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -12,6 +13,7 @@ use crate::{
 
 fn no_global_assign_diagnostic(global_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Read-only global '{global_name}' should not be modified."))
+        .with_help(format!("Use a local variable instead of modifying the global '{global_name}'."))
         .with_label(span.label(format!("Read-only global '{global_name}' should not be modified.")))
 }
 
@@ -52,7 +54,8 @@ declare_oxc_lint!(
     NoGlobalAssign,
     eslint,
     correctness,
-    config = NoGlobalAssignConfig
+    config = NoGlobalAssignConfig,
+    version = "0.0.7",
 );
 
 impl Rule for NoGlobalAssign {

@@ -14,9 +14,20 @@
    : ^
    `----
 
+  x language-options-plugin(lang): languageOptions:
+  | sourceType: script
+  | ecmaVersion: 2026
+  | parserOptions: {"sourceType":"script","ecmaFeatures":{"jsx":true,"globalReturn":false,"impliedStrict":false}}
+  | globals: {}
+  | env: {"builtin":true}
+   ,-[files/index.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
   x language-options-plugin(lang): parser:
   | object keys: name,version,parse,VisitorKeys,Syntax,latestEcmaVersion,supportedEcmaVersions
-  | name: oxc
+  | name: oxlint
   | typeof version: string
   | typeof parse: function
   | latestEcmaVersion: 17
@@ -786,17 +797,6 @@
   |     "types"
   |   ]
   | }
-   ,-[files/index.js:1:1]
- 1 | let x;
-   : ^
-   `----
-
-  x language-options-plugin(lang): languageOptions:
-  | sourceType: script
-  | ecmaVersion: 2026
-  | parserOptions: {"sourceType":"script","ecmaFeatures":{"jsx":true,"globalReturn":false,"impliedStrict":false}}
-  | globals: {}
-  | env: {"builtin":true}
    ,-[files/index.js:1:1]
  1 | let x;
    : ^

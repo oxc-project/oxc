@@ -1,6 +1,9 @@
 use std::io::BufWriter;
 
-use oxlint::cli::{CliRunResult, CliRunner, init_miette, init_tracing, lint_command, run_lsp};
+use oxlint::{
+    cli::{CliRunResult, CliRunner, init_miette, init_tracing, lint_command},
+    lsp::run_lsp,
+};
 
 #[tokio::main]
 async fn main() -> CliRunResult {
@@ -12,7 +15,12 @@ async fn main() -> CliRunResult {
 
     // If --lsp flag is set, run the language server
     if command.lsp {
-        run_lsp(None).await;
+        run_lsp(
+            None,
+            #[cfg(feature = "napi")]
+            None,
+        )
+        .await;
         return CliRunResult::LintSucceeded;
     }
 

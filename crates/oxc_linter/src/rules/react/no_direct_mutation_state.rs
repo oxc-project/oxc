@@ -90,7 +90,8 @@ declare_oxc_lint!(
     /// ```
     NoDirectMutationState,
     react,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 impl Rule for NoDirectMutationState {

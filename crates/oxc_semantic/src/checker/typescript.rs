@@ -5,7 +5,8 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
@@ -14,12 +15,10 @@ pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBu
     if param.r#in || param.out {
         let is_allowed_node = matches!(
             // skip parent TSTypeParameterDeclaration
-            ctx.nodes.ancestor_kinds(ctx.current_node_id).nth(1),
-            Some(
-                AstKind::TSInterfaceDeclaration(_)
-                    | AstKind::Class(_)
-                    | AstKind::TSTypeAliasDeclaration(_)
-            )
+            ctx.nodes.parent_kind(ctx.nodes.parent_id(ctx.current_node_id)),
+            AstKind::TSInterfaceDeclaration(_)
+                | AstKind::Class(_)
+                | AstKind::TSTypeAliasDeclaration(_)
         );
         if !is_allowed_node {
             if param.r#in {
@@ -73,6 +72,19 @@ pub fn check_ts_type_alias_declaration<'a>(
     check_type_name_is_reserved(&decl.id, ctx, "Type alias");
 }
 
+pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuilder<'a>) {
+    let is_in_conditional_extends_clause =
+        ctx.nodes.ancestor_kinds(ctx.current_node_id).any(|kind| {
+            kind.as_ts_conditional_type().is_some_and(|conditional| {
+                conditional.extends_type.span().contains_inclusive(infer_type.span)
+            })
+        });
+
+    if !is_in_conditional_extends_clause {
+        ctx.error(diagnostics::infer_declaration_only_permitted_in_extends_clause(infer_type.span));
+    }
+}
+
 pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
     if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
         check_duplicate_bound_names(params, ctx);
@@ -91,7 +103,7 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
 }
 
 fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
-    let mut idents: FxHashMap<Atom<'a>, Span> = FxHashMap::default();
+    let mut idents: FxHashMap<Str<'a>, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
         if let Some(old_span) = idents.insert(ident.name.into(), ident.span) {
             ctx.error(diagnostics::redeclaration(&ident.name, old_span, ident.span));
@@ -183,24 +195,36 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     }
 
     if !class.r#declare && !ctx.in_declare_scope() {
+        let mut is_in_overload_group = false;
         for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
             if let Some(ClassElement::MethodDefinition(a)) = a
                 && !a.r#type.is_abstract()
                 && !a.optional
                 && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
-                && b.is_none_or(|b| match b {
-                    ClassElement::StaticBlock(_)
-                    | ClassElement::PropertyDefinition(_)
-                    | ClassElement::AccessorProperty(_)
-                    | ClassElement::TSIndexSignature(_) => true,
-                    ClassElement::MethodDefinition(b) => b.key.static_name() != a.key.static_name(),
-                })
             {
-                if a.kind.is_constructor() {
-                    ctx.error(diagnostics::constructor_implementation_missing(a.key.span()));
+                let next_is_same = b.is_some_and(|b| {
+                    matches!(b,
+                        ClassElement::MethodDefinition(b)
+                            if b.key.static_name() == a.key.static_name()
+                    )
+                });
+                if next_is_same {
+                    is_in_overload_group = true;
+                } else if a.key.static_name().is_some() || is_in_overload_group {
+                    // Report error for:
+                    // 1. Methods with static names that are not followed by an implementation
+                    // 2. The last overload in a computed-name overload group (e.g. [Symbol.iterator])
+                    if a.kind.is_constructor() {
+                        ctx.error(diagnostics::constructor_implementation_missing(a.key.span()));
+                    } else {
+                        ctx.error(diagnostics::function_implementation_missing(a.key.span()));
+                    }
+                    is_in_overload_group = false;
                 } else {
-                    ctx.error(diagnostics::function_implementation_missing(a.key.span()));
+                    is_in_overload_group = false;
                 }
+            } else {
+                is_in_overload_group = false;
             }
         }
     }
@@ -252,19 +276,6 @@ fn check_type_name_is_reserved<'a>(
 
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
     let is_abstract = method.r#type.is_abstract();
-    let is_declare = ctx.class_table_builder.current_class_id.map_or(
-        ctx.source_type.is_typescript_definition(),
-        |id| {
-            let node_id = ctx.class_table_builder.classes.declarations[id];
-            let AstKind::Class(class) = ctx.nodes.get_node(node_id).kind() else {
-                #[cfg(debug_assertions)]
-                panic!("current_class_id is set, but does not point to a Class node.");
-                #[cfg(not(debug_assertions))]
-                return ctx.source_type.is_typescript_definition();
-            };
-            class.declare || ctx.source_type.is_typescript_definition()
-        },
-    );
 
     if is_abstract {
         // constructors cannot be abstract, no matter what
@@ -290,8 +301,23 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     }
 
     // Illegal to have `get foo();` or `set foo(a)`
-    if method.kind.is_accessor() && is_empty_body && !is_abstract && !is_declare {
-        ctx.error(diagnostics::accessor_without_body(method.key.span()));
+    if method.kind.is_accessor() && is_empty_body && !is_abstract {
+        let is_declare = ctx.class_table_builder.current_class_id.map_or(
+            ctx.source_type.is_typescript_definition(),
+            |id| {
+                let node_id = ctx.class_table_builder.classes.declarations[id];
+                let AstKind::Class(class) = ctx.nodes.get_node(node_id).kind() else {
+                    #[cfg(debug_assertions)]
+                    panic!("current_class_id is set, but does not point to a Class node.");
+                    #[cfg(not(debug_assertions))]
+                    return ctx.source_type.is_typescript_definition();
+                };
+                class.declare || ctx.source_type.is_typescript_definition()
+            },
+        );
+        if !is_declare {
+            ctx.error(diagnostics::accessor_without_body(method.key.span()));
+        }
     }
 }
 

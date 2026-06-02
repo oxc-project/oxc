@@ -1,0 +1,18 @@
+[
+  { "args": ["--check", "--no-error-on-unmatched-pattern", "__non__existent__file.js"] },
+  { "args": ["--check", "__non__existent__file.js"] },
+  { "args": ["--check", "__nonexistent__/**/*.js"] },
+  { "args": ["--check", "--no-error-on-unmatched-pattern", "__nonexistent__/**/*.js"] },
+  { "args": ["--check", "--no-error-on-unmatched-pattern", "ignored-by-config/bad.js"] },
+  { "args": ["--check", "--no-error-on-unmatched-pattern", "ignored-by-config"] },
+  { "args": ["--check", "--no-error-on-unmatched-pattern", "ignored-by-prettierignore/bad.js"] },
+  {
+    "args": [
+      "--check",
+      "--no-error-on-unmatched-pattern",
+      "--ignore-path",
+      "custom.ignore",
+      "ignored-by-ignore-path/bad.js"
+    ]
+  }
+]

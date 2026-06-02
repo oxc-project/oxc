@@ -85,7 +85,7 @@ declare_oxc_lint!(
     RequireLocalTestContextForConcurrentSnapshots,
     vitest,
     correctness,
-    pending
+    version = "0.8.0",
 );
 
 impl Rule for RequireLocalTestContextForConcurrentSnapshots {

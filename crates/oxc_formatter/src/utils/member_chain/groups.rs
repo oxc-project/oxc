@@ -1,10 +1,11 @@
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 
+use oxc_ast::ast::Expression;
 use oxc_span::GetSpan;
 
 use super::chain_member::ChainMember;
-use crate::formatter::{Format, Formatter, prelude::*};
+use crate::formatter::{Format, JsFormatter, prelude::*};
 
 #[derive(Default)]
 pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
@@ -96,7 +97,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Test if any group except the last group [break](FormatElements::will_break).
-    pub(super) fn any_except_last_will_break(&self, f: &Formatter<'_, 'a>) -> bool {
+    pub(super) fn any_except_last_will_break(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let count = self.groups.len().saturating_sub(1);
         for group in self.groups.iter().take(count) {
             if group.will_break(f) {
@@ -113,8 +114,8 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for TailChainGroups<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for TailChainGroups<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join().entries(self.groups.iter());
     }
 }
@@ -150,7 +151,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         self.members.extend(members);
     }
 
-    pub(super) fn inspect(&self, tail: bool, f: &mut Formatter<'_, 'a>) {
+    pub(super) fn inspect(&self, tail: bool, f: &mut JsFormatter<'_, 'a>) {
         let mut cell = self.formatted.borrow_mut();
         if cell.is_none() {
             let interned = f.intern(&FormatMemberChainGroup { group: self });
@@ -164,7 +165,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
     }
 
     /// Tests if the formatted result of this group results in a [break](FormatElements::will_break).
-    pub(super) fn will_break(&self, _f: &Formatter<'_, 'a>) -> bool {
+    pub(super) fn will_break(&self, _f: &JsFormatter<'_, 'a>) -> bool {
         let cell = self.formatted.borrow_mut();
         if let Some(formatted) = cell.as_ref() {
             formatted.will_break()
@@ -181,10 +182,20 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         self.needs_empty_line.get()
     }
 
-    fn needs_empty_line_before(&self, f: &Formatter) -> bool {
+    fn needs_empty_line_before(&self, f: &JsFormatter) -> bool {
         let Some(ChainMember::StaticMember(expression)) = self.members.first() else {
             return false;
         };
+
+        // Prettier doesn't preserve blank lines after a terminal call like `fn()`
+        // whose callee is not part of the chain: `fn()\n\n.bar()` becomes `fn().bar()`.
+        // <https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/member-chain.js#L101-L121>
+        if let Expression::CallExpression(call) = expression.object().as_ref()
+            && !call.callee.is_member_expression()
+            && !call.callee.is_call_expression()
+        {
+            return false;
+        }
 
         let source = f.source_text();
 
@@ -234,8 +245,8 @@ impl std::fmt::Debug for MemberChainGroup<'_, '_> {
     }
 }
 
-impl<'a> Format<'a> for MemberChainGroup<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for MemberChainGroup<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if let Some(formatted) = self.formatted.borrow().as_ref() {
             return f.write_element(formatted.clone());
         }
@@ -248,8 +259,8 @@ pub struct FormatMemberChainGroup<'a, 'b> {
     group: &'b MemberChainGroup<'a, 'b>,
 }
 
-impl<'a> Format<'a> for FormatMemberChainGroup<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatMemberChainGroup<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join().entries(self.group.members.iter());
     }
 }

@@ -1,7 +1,8 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use oxc_formatter::{FormatOptions, Formatter, SortImportsOptions, get_parse_options};
-use oxc_parser::Parser;
+use oxc_formatter::{
+    JsFormatOptions, JsdocOptions, SortImportsOptions, format_program, parse_for_format,
+};
 use oxc_tasks_common::TestFiles;
 
 fn bench_formatter(criterion: &mut Criterion) {
@@ -15,16 +16,19 @@ fn bench_formatter(criterion: &mut Criterion) {
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
-                let program = Parser::new(&allocator, source_text, source_type)
-                    .with_options(get_parse_options())
-                    .parse()
-                    .program;
-                let format_options = FormatOptions {
-                    experimental_sort_imports: Some(SortImportsOptions::default()),
+                // Parse in setup so the benchmark isolates formatting from parsing.
+                // `parse_for_format` + `format_program` is the AST-in path for exactly this.
+                let program = parse_for_format(&allocator, source_text, source_type).program;
+                let format_options = JsFormatOptions {
+                    sort_imports: Some(SortImportsOptions::default()),
+                    jsdoc: Some(JsdocOptions::default()),
                     ..Default::default()
                 };
                 runner.run(|| {
-                    Formatter::new(&allocator, format_options).build(&program);
+                    format_program(&allocator, &program, format_options.clone(), None)
+                        .print()
+                        .unwrap()
+                        .into_code();
                 });
             });
         });

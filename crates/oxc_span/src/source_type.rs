@@ -30,6 +30,10 @@ pub struct SourceType {
     /// Support JSX for JavaScript and TypeScript? default without JSX
     #[estree(skip)]
     pub(super) variant: LanguageVariant,
+
+    /// The original file extension, if parsed from a path.
+    #[estree(skip)]
+    pub(super) extension: Option<FileExtension>,
 }
 
 /// JavaScript or TypeScript
@@ -115,24 +119,26 @@ impl ContentEq for SourceType {
 pub const VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
 
 /// Valid file extension.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[ast]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[generate_derive(Dummy)]
 pub enum FileExtension {
     /// `.js` file extension
-    Js,
+    Js = 0,
     /// `.mjs` file extension
-    Mjs,
+    Mjs = 1,
     /// `.cjs` file extension
-    Cjs,
+    Cjs = 2,
     /// `.jsx` file extension
-    Jsx,
+    Jsx = 3,
     /// `.ts` file extension
-    Ts,
+    Ts = 4,
     /// `.mts` file extension
-    Mts,
+    Mts = 5,
     /// `.cts` file extension
-    Cts,
+    Cts = 6,
     /// `.tsx` file extension
-    Tsx,
+    Tsx = 7,
 }
 
 impl FileExtension {
@@ -146,18 +152,19 @@ impl FileExtension {
     /// - `index.mts` -> false
     /// - `index.d.css.ts` -> true
     /// - `index.d.css.mts` -> false
+    /// - `d.ts` -> false
+    /// - `d.d.ts` -> true
+    /// - `d.css.mts` -> false
     pub fn is_ts_declaration(self, file_name: &str) -> bool {
         match self {
             // https://www.typescriptlang.org/tsconfig/#allowArbitraryExtensions
             // `{file basename}.d.{extension}.ts`
             // https://github.com/microsoft/TypeScript/issues/50133
-            FileExtension::Ts => {
-                file_name[..file_name.len() - 3].split('.').rev().take(2).any(|c| c == "d")
-            }
-            FileExtension::Mts | FileExtension::Cts =>
-            {
-                #[expect(clippy::case_sensitive_file_extension_comparisons)]
-                file_name[..file_name.len() - 4].ends_with(".d")
+            FileExtension::Ts => file_name.rfind(".d.").is_some_and(|i| i != 0),
+            #[expect(clippy::case_sensitive_file_extension_comparisons)]
+            FileExtension::Mts | FileExtension::Cts => {
+                let base_file_name = &file_name[..file_name.len() - 4];
+                base_file_name.len() > 2 && base_file_name.ends_with(".d")
             }
             _ => false,
         }
@@ -206,7 +213,7 @@ impl From<FileExtension> for SourceType {
             Js | Mjs | Cjs | Ts | Mts | Cts => LanguageVariant::Standard,
         };
 
-        SourceType { language, module_kind, variant }
+        SourceType { language, module_kind, variant, extension: Some(file_ext) }
     }
 }
 
@@ -234,6 +241,7 @@ impl SourceType {
             language: Language::JavaScript,
             module_kind: ModuleKind::CommonJS,
             variant: LanguageVariant::Standard,
+            extension: None,
         }
     }
 
@@ -252,6 +260,27 @@ impl SourceType {
             language: Language::JavaScript,
             module_kind: ModuleKind::Module,
             variant: LanguageVariant::Standard,
+            extension: None,
+        }
+    }
+
+    /// Creates a [`SourceType`] representing a [`JavaScript`] script (non-module).
+    ///
+    /// ## Example
+    /// ```
+    /// # use oxc_span::SourceType;
+    ///
+    /// let script = SourceType::script();
+    /// assert!(script.is_script());
+    /// assert!(script.is_javascript());
+    /// ```
+    /// [`JavaScript`]: Language::JavaScript
+    pub const fn script() -> Self {
+        Self {
+            language: Language::JavaScript,
+            module_kind: ModuleKind::Script,
+            variant: LanguageVariant::Standard,
+            extension: None,
         }
     }
 
@@ -267,6 +296,7 @@ impl SourceType {
             language: Language::JavaScript,
             module_kind: ModuleKind::Unambiguous,
             variant: LanguageVariant::Standard,
+            extension: None,
         }
     }
 
@@ -288,8 +318,9 @@ impl SourceType {
 
     /// Creates a [`SourceType`] representing a [`TypeScript`] file.
     ///
-    /// Unlike [`SourceType::cjs`], this method creates [`modules`]. Use
-    /// [`SourceType::tsx`] for TypeScript files with [`JSX`] support.
+    /// This method creates an [`unambiguous`] source type, which will be
+    /// treated as a module if it contains ESM syntax. Use [`SourceType::tsx`]
+    /// for TypeScript files with [`JSX`] support.
     ///
     /// ## Example
     /// ```
@@ -298,18 +329,19 @@ impl SourceType {
     /// let ts = SourceType::ts();
     /// assert!(ts.is_typescript());
     /// assert!(!ts.is_typescript_definition());
-    /// assert!(ts.is_module());
+    /// assert!(ts.is_unambiguous());
     /// assert!(!ts.is_jsx());
     /// ```
     ///
     /// [`TypeScript`]: Language::TypeScript
-    /// [`modules`]: ModuleKind::Module
+    /// [`unambiguous`]: ModuleKind::Unambiguous
     /// [`JSX`]: LanguageVariant::Jsx
     pub const fn ts() -> Self {
         Self {
             language: Language::TypeScript,
-            module_kind: ModuleKind::Module,
+            module_kind: ModuleKind::Unambiguous,
             variant: LanguageVariant::Standard,
+            extension: None,
         }
     }
 
@@ -322,7 +354,7 @@ impl SourceType {
     /// let tsx = SourceType::tsx();
     /// assert!(tsx.is_typescript());
     /// assert!(!tsx.is_typescript_definition());
-    /// assert!(tsx.is_module());
+    /// assert!(tsx.is_unambiguous());
     /// assert!(tsx.is_jsx());
     /// ```
     ///
@@ -349,6 +381,7 @@ impl SourceType {
             language: Language::TypeScriptDefinition,
             module_kind: ModuleKind::Module,
             variant: LanguageVariant::Standard,
+            extension: None,
         }
     }
 
@@ -417,6 +450,11 @@ impl SourceType {
         self.is_module()
     }
 
+    /// Returns the original file extension if this source type was created from a path.
+    pub fn extension(self) -> Option<FileExtension> {
+        self.extension
+    }
+
     /// Mark this [`SourceType`] as a [script] if `yes` is `true`. No change
     /// will occur if `yes` is `false`.
     ///
@@ -437,8 +475,6 @@ impl SourceType {
     pub const fn with_module(mut self, yes: bool) -> Self {
         if yes {
             self.module_kind = ModuleKind::Module;
-        } else {
-            self.module_kind = ModuleKind::Script;
         }
         self
     }
@@ -637,7 +673,7 @@ impl Error for UnknownExtension {}
 
 #[cfg(test)]
 mod tests {
-    use super::SourceType;
+    use super::{FileExtension, SourceType};
 
     #[test]
     fn test_ts_from_path() {
@@ -655,6 +691,12 @@ mod tests {
             assert!(!ty.is_typescript_definition());
             assert!(!ty.is_javascript());
         }
+
+        // Verify extension is captured
+        assert_eq!(ts.extension(), Some(FileExtension::Ts));
+        assert_eq!(mts.extension(), Some(FileExtension::Mts));
+        assert_eq!(cts.extension(), Some(FileExtension::Cts));
+        assert_eq!(tsx.extension(), Some(FileExtension::Tsx));
 
         // .ts and .tsx use Unambiguous (content-based detection)
         assert!(ts.is_unambiguous());
@@ -723,7 +765,11 @@ mod tests {
             assert!(!ty.is_typescript(), "{ty:?}");
         }
 
-        assert_eq!(SourceType::mjs(), mjs);
+        // Verify extension is captured
+        assert_eq!(mjs.extension(), Some(FileExtension::Mjs));
+        assert_eq!(cjs.extension(), Some(FileExtension::Cjs));
+        assert_eq!(js.extension(), Some(FileExtension::Js));
+        assert_eq!(jsx.extension(), Some(FileExtension::Jsx));
 
         // .js and .jsx use Unambiguous (content-based detection)
         assert!(js.is_unambiguous());
@@ -757,10 +803,16 @@ mod file_extension_tests {
         let cases = vec![
             ("index.d.ts", true),
             ("index.ts", false),
+            ("d.ts", false),
+            (".d.ts", false),
             ("index.d.mts", true),
             ("index.mts", false),
+            ("d.mts", false),
+            (".d.mts", false),
             ("index.d.cts", true),
             ("index.cts", false),
+            ("d.cts", false),
+            (".d.cts", false),
             ("index.d.js", false),
             ("index.js", false),
             ("index.d.jsx", false),

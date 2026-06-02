@@ -805,7 +805,7 @@ fn test_issue925() {
 
     test(
         concat!("if (x[--y]) {\n", "    a = 0;\n", "} else {\n", "    a = 1;\n", "}"),
-        "a = (x[--y]) ? 0 : 1;",
+        "a = +!x[--y];",
     );
 
     test(
@@ -816,7 +816,7 @@ fn test_issue925() {
             "    a = 1;",
             "}",
         ),
-        "a = (x?.[--y]) ? 0 : 1;",
+        "a = +!x?.[--y];",
     );
 
     test("if (x++) { x += 2 } else { x += 3 }", "x++ ? x += 2 : x += 3");
@@ -1019,7 +1019,7 @@ fn test_negate_empty_if_stmt_consequent() {
 
 #[test]
 fn test_compress_conditional_expression_inside() {
-    test("x ? a = 0 : a = 1", "a = x ? 0 : 1");
+    test("x ? a = 0 : a = 1", "a = +!x");
     test(
         "x ? a = function foo() { return 'a' } : a = function bar() { return 'b' }",
         "a = x ? function () { return 'a' } : function () { return 'b' }",

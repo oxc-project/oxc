@@ -12,6 +12,7 @@ fn default_as_true() -> bool {
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum JsxRuntime {
+    /// Use the classic `React.createElement` runtime.
     Classic,
     /// The default runtime is switched to automatic in Babel 8.
     #[default]
@@ -19,10 +20,12 @@ pub enum JsxRuntime {
 }
 
 impl JsxRuntime {
+    /// Returns `true` when the classic runtime is selected.
     pub fn is_classic(self) -> bool {
         self == Self::Classic
     }
 
+    /// Returns `true` when the automatic runtime is selected.
     pub fn is_automatic(self) -> bool {
         self == Self::Automatic
     }
@@ -30,16 +33,21 @@ impl JsxRuntime {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+/// JSX transform configuration.
 pub struct JsxOptions {
+    /// Enable React JSX transform plugin.
     #[serde(skip)]
     pub jsx_plugin: bool,
 
+    /// Enable React display-name plugin.
     #[serde(skip)]
     pub display_name_plugin: bool,
 
+    /// Enable React `__self` development transform.
     #[serde(skip)]
     pub jsx_self_plugin: bool,
 
+    /// Enable React `__source` development transform.
     #[serde(skip)]
     pub jsx_source_plugin: bool,
 
@@ -114,6 +122,7 @@ impl Default for JsxOptions {
 }
 
 impl JsxOptions {
+    /// Normalize option combinations used by the JSX pipeline.
     pub fn conform(&mut self) {
         if self.development {
             self.jsx_plugin = true;
@@ -122,6 +131,7 @@ impl JsxOptions {
         }
     }
 
+    /// Create options with JSX transforms enabled.
     pub fn enable() -> Self {
         Self {
             jsx_plugin: true,
@@ -141,6 +151,7 @@ impl JsxOptions {
         }
     }
 
+    /// Create options with JSX transforms disabled.
     pub fn disable() -> Self {
         Self {
             jsx_plugin: false,
@@ -163,6 +174,7 @@ impl JsxOptions {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+/// React Fast Refresh transform configuration.
 pub struct ReactRefreshOptions {
     /// Specify the identifier of the refresh registration variable.
     ///

@@ -33,7 +33,6 @@ use basic::{EmptyArray, Null};
 /// | File                       | Compact TS | Compact JS | Pretty TS | Pretty JS |
 /// |----------------------------|------------|------------|-----------|-----------|
 /// | antd.js                    |         10 |          9 |        76 |        72 |
-/// | cal.com.tsx                |         10 |          9 |        40 |        37 |
 /// | checker.ts                 |          7 |          6 |        27 |        24 |
 /// | pdf.mjs                    |         13 |         12 |        71 |        67 |
 /// | RadixUIAdoptionSection.jsx |         10 |          9 |        45 |        44 |
@@ -121,40 +120,21 @@ impl Program<'_> {
 /// `Program` span start is 0 (not 5).
 #[ast_meta]
 #[estree(raw_deser = "
-    const localAstId = astId;
-
-    const start = IS_TS ? 0 : DESER[u32](POS_OFFSET.span.start),
-        end = DESER[u32](POS_OFFSET.span.end);
+    const start = IS_TS ? 0 : DESER[i32](POS_OFFSET.span.start),
+        end = DESER[i32](POS_OFFSET.span.end);
 
     const program = parent = {
         type: 'Program',
         body: null,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
+        /* IF !LINTER */
         hashbang: null,
-        /* IF COMMENTS */
-        get comments() {
-            // Check AST in buffer is still the same AST (buffers are reused)
-            if (localAstId !== astId) throw new Error('Comments are only accessible while linting the file');
-            // Deserialize the comments.
-            // Replace this getter with the comments array, so we don't deserialize twice.
-            const comments = DESER[Vec<Comment>](POS_OFFSET.comments);
-            // If there's a hashbang, prepend it as a `Shebang` comment
-            const { hashbang } = this;
-            if (hashbang !== null) {
-                let start, end;
-                comments.unshift({
-                    type: 'Shebang',
-                    value: hashbang.value,
-                    start: start = hashbang.start,
-                    end: end = hashbang.end,
-                    ...(RANGE && { range: [start, end] }),
-                });
-            }
-            Object.defineProperty(this, 'comments', { value: comments });
-            return comments;
-        },
         /* END_IF */
         /* IF LINTER */
+        get comments() {
+            if (comments === null) initComments();
+            return comments;
+        },
         get tokens() {
             if (tokens === null) initTokens();
             return tokens;
@@ -166,7 +146,7 @@ impl Program<'_> {
         ...(PARENT && { parent: null }),
     };
 
-    program.hashbang = DESER[Option<Hashbang>](POS_OFFSET.hashbang);
+    if (!LINTER) program.hashbang = DESER[Option<Hashbang>](POS_OFFSET.hashbang);
 
     const body = program.body = DESER[Vec<Directive>](POS_OFFSET.directives);
     body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
@@ -265,7 +245,8 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
 #[ast_meta]
 #[estree(
     ts_type = "string",
-    raw_deser = "SOURCE_TEXT.slice(THIS.start + 2, THIS.end - (THIS.type === 'Line' ? 0 : 2))"
+    raw_deser = "SOURCE_TEXT.slice(THIS.start + 2, THIS.end - (THIS.type === 'Line' ? 0 : 2))",
+    raw_deser_inline
 )]
 pub struct CommentValue<'b>(#[expect(dead_code)] pub &'b Comment);
 

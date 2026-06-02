@@ -65,6 +65,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     config = JsxNoUselessFragment,
+    version = "0.0.14",
 );
 
 impl Rule for JsxNoUselessFragment {

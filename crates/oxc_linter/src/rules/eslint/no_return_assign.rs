@@ -59,8 +59,9 @@ declare_oxc_lint!(
     NoReturnAssign,
     eslint,
     style,
-    pending, // TODO: add a suggestion
+    none,
     config = NoReturnAssignMode,
+    version = "0.9.10",
 );
 
 fn is_sentinel_node(ast_kind: AstKind) -> bool {
@@ -103,13 +104,11 @@ impl Rule for NoReturnAssign {
                     "Return statements should not contain an assignment.",
                 ));
             }
-            AstKind::ArrowFunctionExpression(arrow) => {
-                if arrow.expression {
-                    ctx.diagnostic(no_return_assign_diagnostic(
-                        assign.span(),
-                        "Arrow functions should not return an assignment.",
-                    ));
-                }
+            AstKind::ArrowFunctionExpression(arrow) if arrow.expression => {
+                ctx.diagnostic(no_return_assign_diagnostic(
+                    assign.span(),
+                    "Arrow functions should not return an assignment.",
+                ));
             }
             _ => (),
         }
@@ -144,16 +143,16 @@ fn test() {
         ("const foo = (a,b,c) => ((a = b), c)", None),
         (
             "function foo(){
-			            return (a = b)
-			        }",
+                        return (a = b)
+                    }",
             None,
         ),
         (
             "function bar(){
-			            return function foo(){
-			                return (a = b) && c
-			            }
-			        }",
+                        return function foo(){
+                            return (a = b) && c
+                        }
+                    }",
             None,
         ),
         ("const foo = (a) => (b) => (a = b)", None), // { "ecmaVersion": 6 }
@@ -177,42 +176,42 @@ fn test() {
         ),
         (
             "function foo(){
-			                return a = b
-			            }",
+                            return a = b
+                        }",
             None,
         ),
         (
             "function doSomething() {
-			                return foo = bar && foo > 0;
-			            }",
+                            return foo = bar && foo > 0;
+                        }",
             None,
         ),
         (
             "function doSomething() {
-			                return foo = function(){
-			                    return (bar = bar1)
-			                }
-			            }",
+                            return foo = function(){
+                                return (bar = bar1)
+                            }
+                        }",
             None,
         ),
         (
             "function doSomething() {
-			                return foo = () => a
-			            }",
+                            return foo = () => a
+                        }",
             None,
         ), // { "ecmaVersion": 6 },
         (
             "function doSomething() {
-			                return () => a = () => b
-			            }",
+                            return () => a = () => b
+                        }",
             None,
         ), // { "ecmaVersion": 6 },
         (
             "function foo(a){
-			                return function bar(b){
-			                    return a = b
-			                }
-			            }",
+                            return function bar(b){
+                                return a = b
+                            }
+                        }",
             None,
         ),
         ("const foo = (a) => (b) => a = b", None), // { "ecmaVersion": 6 }

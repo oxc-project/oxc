@@ -4,7 +4,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -71,7 +72,8 @@ declare_oxc_lint!(
     AutocompleteValid,
     jsx_a11y,
     correctness,
-    config = AutocompleteValidConfig
+    config = AutocompleteValidConfig,
+    version = "0.2.0",
 );
 
 static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![

@@ -44,28 +44,28 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/assignments/left-hand.ts
             "scope_id": 0
           },
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
             "id": 4,
             "name": "Foo",
             "node_id": 34,
             "scope_id": 0
           },
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
             "id": 5,
             "name": "Foo",
             "node_id": 42,
             "scope_id": 0
           },
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
             "id": 6,
             "name": "Foo",
             "node_id": 49,
             "scope_id": 0
           },
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
             "id": 7,
             "name": "Foo",
             "node_id": 57,

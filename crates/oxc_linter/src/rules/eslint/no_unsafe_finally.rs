@@ -52,7 +52,8 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeFinally,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.5",
 );
 
 impl Rule for NoUnsafeFinally {

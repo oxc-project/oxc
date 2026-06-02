@@ -133,6 +133,7 @@ pub struct ExpectFixTestCase {
     expected: Vec<ExpectFix>,
     rule_config: Option<Value>,
     path: Option<PathBuf>,
+    eslint_config: Option<Value>,
 }
 
 #[derive(Debug, Clone)]
@@ -149,6 +150,7 @@ impl<S: Into<String>> From<(S, S, Option<Value>)> for ExpectFixTestCase {
             expected: vec![ExpectFix { expected: value.1.into(), kind: ExpectFixKind::Any }],
             rule_config: value.2,
             path: None,
+            eslint_config: None,
         }
     }
 }
@@ -160,6 +162,7 @@ impl<S: Into<String>> From<(S, S)> for ExpectFixTestCase {
             expected: vec![ExpectFix { expected: value.1.into(), kind: ExpectFixKind::Any }],
             rule_config: None,
             path: None,
+            eslint_config: None,
         }
     }
 }
@@ -174,6 +177,7 @@ impl<S: Into<String>> From<(S, (S, S))> for ExpectFixTestCase {
             ],
             rule_config: None,
             path: None,
+            eslint_config: None,
         }
     }
 }
@@ -189,6 +193,7 @@ impl<S: Into<String>> From<(S, (S, S, S))> for ExpectFixTestCase {
             ],
             rule_config: None,
             path: None,
+            eslint_config: None,
         }
     }
 }
@@ -204,6 +209,24 @@ where
             expected: vec![ExpectFix { expected: expected.into(), kind: kind.into() }],
             rule_config: config,
             path: None,
+            eslint_config: None,
+        }
+    }
+}
+
+impl<S> From<(S, S, Option<Value>, Option<Value>)> for ExpectFixTestCase
+where
+    S: Into<String>,
+{
+    fn from(
+        (source, expected, config, eslint_config): (S, S, Option<Value>, Option<Value>),
+    ) -> Self {
+        Self {
+            source: source.into(),
+            expected: vec![ExpectFix { expected: expected.into(), kind: ExpectFixKind::Any }],
+            rule_config: config,
+            path: None,
+            eslint_config,
         }
     }
 }
@@ -215,6 +238,29 @@ impl<S: Into<String>> From<(S, S, Option<Value>, Option<PathBuf>)> for ExpectFix
             expected: vec![ExpectFix { expected: expected.into(), kind: ExpectFixKind::Any }],
             rule_config: config,
             path,
+            eslint_config: None,
+        }
+    }
+}
+
+impl<S: Into<String>> From<(S, S, Option<Value>, Option<PathBuf>, Option<Value>)>
+    for ExpectFixTestCase
+{
+    fn from(
+        (source, expected, config, path, eslint_config): (
+            S,
+            S,
+            Option<Value>,
+            Option<PathBuf>,
+            Option<Value>,
+        ),
+    ) -> Self {
+        Self {
+            source: source.into(),
+            expected: vec![ExpectFix { expected: expected.into(), kind: ExpectFixKind::Any }],
+            rule_config: config,
+            path,
+            eslint_config,
         }
     }
 }
@@ -499,10 +545,17 @@ impl Tester {
         };
 
         for fix in fix_test_cases {
-            let ExpectFixTestCase { source, expected, rule_config: config, path } = fix;
+            let ExpectFixTestCase { source, expected, rule_config: config, path, eslint_config } =
+                fix;
             for (index, expect) in expected.iter().enumerate() {
-                let result =
-                    self.run(&source, config.clone(), None, path.clone(), expect.kind, index as u8);
+                let result = self.run(
+                    &source,
+                    config.clone(),
+                    eslint_config.clone(),
+                    path.clone(),
+                    expect.kind,
+                    index as u8,
+                );
                 match result {
                     TestResult::Fixed(fixed_str) => {
                         if expect.expected != fixed_str {

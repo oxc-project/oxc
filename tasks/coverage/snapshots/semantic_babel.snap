@@ -1,8 +1,8 @@
-commit: 6ef16ca4
+commit: d9fe348c
 
 semantic_babel Summary:
-AST Parsed     : 2221/2221 (100.00%)
-Positive Passed: 2022/2221 (91.04%)
+AST Parsed     : 2236/2236 (100.00%)
+Positive Passed: 2037/2236 (91.10%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -25,6 +25,17 @@ Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/typescript/TSEnumBody-trailing-comma/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "E"]
+rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "E":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo"]
@@ -34,25 +45,6 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/so
 Bindings mismatch:
 after transform: ScopeId(0): ["Foo"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/async/input.js
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/async-generator/input.js
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(5): ScopeFlags(0x0)
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(6): ScopeFlags(0x0)
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(7): ScopeFlags(0x0)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 Bindings mismatch:
@@ -76,29 +68,6 @@ Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-await-using-comments/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "_usingCtx3", "_usingCtx4"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_usingCtx", "_usingCtx3", "_usingCtx4"]
-Bindings mismatch:
-after transform: ScopeId(7): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(16): []
-Symbol scope ID mismatch for "_iteratorAbruptCompletion":
-after transform: SymbolId(14): ScopeId(7)
-rebuilt        : SymbolId(13): ScopeId(3)
-Symbol scope ID mismatch for "_didIteratorError":
-after transform: SymbolId(13): ScopeId(7)
-rebuilt        : SymbolId(14): ScopeId(3)
-Symbol scope ID mismatch for "_iteratorError":
-after transform: SymbolId(15): ScopeId(7)
-rebuilt        : SymbolId(15): ScopeId(3)
-Symbol scope ID mismatch for "_iterator":
-after transform: SymbolId(16): ScopeId(7)
-rebuilt        : SymbolId(16): ScopeId(3)
-Symbol scope ID mismatch for "_step":
-after transform: SymbolId(11): ScopeId(7)
-rebuilt        : SymbolId(17): ScopeId(3)
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-for-using-binding-of-of/input.js
 Symbol reference IDs mismatch for "of":
 after transform: SymbolId(1): [ReferenceId(0)]
@@ -115,50 +84,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "of", "require"]
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-basic/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "basic"]
-rebuilt        : ScopeId(3): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(4): ["basic"]
-Symbol scope ID mismatch for "basic":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-escaped/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "ab"]
-rebuilt        : ScopeId(3): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(4): ["ab"]
-Symbol scope ID mismatch for "ab":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-non-bmp/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "𠮷"]
-rebuilt        : ScopeId(3): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(4): ["𠮷"]
-Symbol scope ID mismatch for "𠮷":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-using/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "_usingCtx3", "using"]
-rebuilt        : ScopeId(3): ["_usingCtx", "_usingCtx3"]
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(4): ["using"]
-Symbol scope ID mismatch for "using":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.
@@ -208,6 +133,11 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["v"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-call-in-conditional/input.ts
+Unresolved references mismatch:
+after transform: ["a", "arguments", "async", "b"]
+rebuilt        : ["a", "arguments", "async"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-false-positive/input.ts
 Unresolved references mismatch:
@@ -331,6 +261,11 @@ Unresolved references mismatch:
 after transform: ["T", "f"]
 rebuilt        : ["f"]
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/extends-expression-assertion/input.ts
+Unresolved references mismatch:
+after transform: ["Array", "B", "D", "T"]
+rebuilt        : ["B"]
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/extends-implements/input.ts
 Unresolved references mismatch:
 after transform: ["T", "X", "f"]
@@ -367,7 +302,6 @@ Function implementation is missing or not immediately following the declaration.
 Function implementation is missing or not immediately following the declaration.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
-An implementation cannot be declared in ambient contexts.
 Identifier `show` has already been declared
 Identifier `size` has already been declared
 
@@ -650,12 +584,7 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-asi/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "a", "b"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-equals-require/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["a"]
+after transform: ScopeId(0): ["B", "b"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/extends/input.ts
@@ -690,6 +619,30 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Bindings mismatch:
 after transform: ScopeId(0): ["N"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["N", "x"]
+rebuilt        : ScopeId(0): ["x"]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare-export-named-declaration/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["N"]
+rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-export-named-declaration/input.ts
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-import-equals-internal/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["N"]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["N"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested/input.ts
 Bindings mismatch:
@@ -734,7 +687,9 @@ after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
-Expected `,` or `)` but found `extends`
+Unresolved references mismatch:
+after transform: ["A", "B", "C", "D", "E", "F", "G"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-return/input.ts
 Unresolved references mismatch:
@@ -1281,6 +1236,16 @@ Unresolved references mismatch:
 after transform: ["A", "T"]
 rebuilt        : ["A"]
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/super-type-arguments/input.ts
+Unresolved references mismatch:
+after transform: ["B", "T"]
+rebuilt        : ["B"]
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/super-type-arguments-comments/input.ts
+Unresolved references mismatch:
+after transform: ["B", "T"]
+rebuilt        : ["B"]
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/tagged-template/input.ts
 Unresolved references mismatch:
 after transform: ["T", "f"]
@@ -1296,14 +1261,10 @@ Unresolved references mismatch:
 after transform: ["T", "f", "x"]
 rebuilt        : ["f", "x"]
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts
-Expected `{` but found `<<`
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/interface-heritage/input.ts
-Expected `{` but found `<<`
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
-Unexpected token
+Unresolved references mismatch:
+after transform: ["f"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-type-only-as-as-keyword/input.ts
 Unresolved references mismatch:
@@ -1378,6 +1339,9 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["bar"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-4/input.ts
+'infer' declarations are only permitted in the 'extends' clause of a conditional type.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/mapped-as/input.ts
 Unresolved references mismatch:

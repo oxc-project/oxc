@@ -38,7 +38,8 @@ declare_oxc_lint!(
     AriaUnsupportedElements,
     jsx_a11y,
     correctness,
-    fix
+    fix,
+    version = "0.1.1",
 );
 
 #[derive(Debug, Default, Clone)]

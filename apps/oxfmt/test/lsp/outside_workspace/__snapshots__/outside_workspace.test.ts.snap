@@ -1,0 +1,21 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP formatting outside current workspace > basic formatting > should handle basic formatting 1`] = `
+"--- URI -----------
+file://<fixture>/workspace/test.ts
+--- BEFORE ---------
+const x=1
+--- AFTER ----------
+const x = 1;
+
+--------------------
+
+--- URI -----------
+file://<fixture>/test.ts
+--- BEFORE ---------
+const x=1
+--- AFTER ----------
+const x = 1;
+
+--------------------"
+`;

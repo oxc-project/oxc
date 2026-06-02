@@ -2,3 +2,9 @@ crates/oxc_formatter/tests/fixtures/** text=auto eol=lf
 crates/oxc_formatter/tests/fixtures/js/crlf text=auto eol=crlf
 apps/oxfmt/test/**/fixtures/** text=auto eol=lf
 apps/oxlint/test/fixtures/** text=auto eol=lf
+
+# Use 'ours' merge strategy to avoid conflicts.
+# After merging, run `cargo lintgen` to regenerate with the combined rules.
+crates/oxc_linter/src/generated/rules_enum.rs linguist-generated=true merge=ours
+crates/oxc_linter/src/generated/rule_runner_impls.rs linguist-generated=true merge=ours
+crates/oxc_linter/src/generated/assert_layouts.rs linguist-generated=true

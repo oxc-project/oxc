@@ -2,7 +2,9 @@ use oxc_ecmascript::constant_evaluation::ConstantValue;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_span::{Atom, SourceType};
+use oxc_semantic::Scoping;
+use oxc_span::SourceType;
+use oxc_str::Str;
 use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
@@ -23,26 +25,42 @@ pub struct MinifierState<'a> {
     /// Private member usage for classes
     pub class_symbols_stack: ClassSymbolsStack<'a>,
 
+    /// Symbols that have `__proto__` member writes.
+    /// Writing to `__proto__` changes the prototype chain, potentially installing
+    /// setters that make subsequent property writes side-effectful.
+    pub proto_write_symbols: FxHashSet<SymbolId>,
+
     pub changed: bool,
+
+    /// Scratch buffer reused by `try_fold_concat` to build template literal
+    /// quasis without allocating a fresh `String` per call.
+    pub concat_scratch: String,
 }
 
 impl MinifierState<'_> {
-    pub fn new(source_type: SourceType, options: CompressOptions, dce: bool) -> Self {
+    pub fn new(
+        source_type: SourceType,
+        options: CompressOptions,
+        dce: bool,
+        scoping: &Scoping,
+    ) -> Self {
         Self {
             source_type,
             options,
             dce,
             pure_functions: FxHashMap::default(),
-            symbol_values: SymbolValues::default(),
+            symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
+            proto_write_symbols: FxHashSet::default(),
             changed: false,
+            concat_scratch: String::new(),
         }
     }
 }
 
 /// Stack to track class symbol information
 pub struct ClassSymbolsStack<'a> {
-    stack: NonEmptyStack<FxHashSet<Atom<'a>>>,
+    stack: NonEmptyStack<FxHashSet<Str<'a>>>,
 }
 
 impl<'a> ClassSymbolsStack<'a> {
@@ -61,7 +79,7 @@ impl<'a> ClassSymbolsStack<'a> {
     }
 
     /// Exit the current class scope
-    pub fn pop_class_scope(&mut self, declared_private_symbols: impl Iterator<Item = Atom<'a>>) {
+    pub fn pop_class_scope(&mut self, declared_private_symbols: impl Iterator<Item = Str<'a>>) {
         let mut used_private_symbols = self.stack.pop();
         declared_private_symbols.for_each(|name| {
             used_private_symbols.remove(&name);
@@ -71,12 +89,12 @@ impl<'a> ClassSymbolsStack<'a> {
     }
 
     /// Add a private member to the current class scope
-    pub fn push_private_member_to_current_class(&mut self, name: Atom<'a>) {
+    pub fn push_private_member_to_current_class(&mut self, name: Str<'a>) {
         self.stack.last_mut().insert(name);
     }
 
     /// Check if a private member is used in the current class scope
-    pub fn is_private_member_used_in_current_class(&self, name: &Atom<'a>) -> bool {
+    pub fn is_private_member_used_in_current_class(&self, name: &Str<'a>) -> bool {
         self.stack.last().contains(name)
     }
 }

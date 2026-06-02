@@ -115,8 +115,8 @@ impl<'a, T> AstNode<'a, T> {
     }
 }
 
-impl<'a> AstNode<'a, Program<'a>> {
-    pub fn new(inner: &'a Program<'a>, parent: AstNodes<'a>, allocator: &'a Allocator) -> Self {
+impl<'a, T> AstNode<'a, T> {
+    pub fn new(inner: &'a T, parent: AstNodes<'a>, allocator: &'a Allocator) -> Self {
         AstNode { inner, parent, allocator, following_span_start: 0 }
     }
 }

@@ -2,13 +2,13 @@ use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// `mangleFor`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9801>
-    pub fn minimize_for_statement(for_stmt: &mut ForStatement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn minimize_for_statement(for_stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         // Get the first statement in the loop
         let mut first = &for_stmt.body;
         if let Statement::BlockStatement(block_stmt) = first {
@@ -106,7 +106,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         body: Option<Statement<'a>>,
         replace: Option<Statement<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Statement<'a> {
         match body {
             Some(Statement::BlockStatement(mut block_stmt)) if !block_stmt.body.is_empty() => {

@@ -1,21 +1,22 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:1:29]
  1 │ (() => {})('testing', () => expect(true).toBe(false))
    ·                             ──────
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:1:1]
  1 │ expect.hasAssertions()
    · ──────
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:4:29]
  3 │                   const t = Math.random() ? it.only : it;
  4 │                   t('testing', () => expect(true).toBe(false));
@@ -24,7 +25,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:3:29]
  2 │                   const t = Math.random() ? it.only : it;
  3 │                   t('testing', () => expect(true).toBe(false));
@@ -33,49 +34,49 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:1:28]
  1 │ describe("a test", () => { expect(1).toBe(1); });
    ·                            ──────
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:1:26]
  1 │ describe("a test", () => expect(1).toBe(1));
    ·                          ──────
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:1:71]
  1 │ describe("a test", () => { const func = () => { expect(1).toBe(1); }; expect(1).toBe(1); });
    ·                                                                       ──────
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:1:63]
  1 │ describe("a test", () => {  it(() => { expect(1).toBe(1); }); expect(1).toBe(1); });
    ·                                                               ──────
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:1:1]
  1 │ expect(1).toBe(1);
    · ──────
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:1:2]
  1 │ {expect(1).toBe(1)}
    ·  ──────
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
 
-  ⚠ eslint-plugin-jest(no-standalone-expect): `expect` must be inside of a test block.
+  ⚠ jest(no-standalone-expect): `expect` must be inside of a test block.
    ╭─[no_standalone_expect.tsx:7:11]
  6 │                  ]).test('returns the result of adding %d to %d', (a, b, expected) => {
  7 │                    expect(a + b).toBe(expected);

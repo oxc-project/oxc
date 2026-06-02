@@ -7,24 +7,21 @@ use oxc_traverse::Traverse;
 
 use super::diagnostics;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{Module, context::TraverseCtx, state::TransformState};
 
-pub struct TypeScriptModule<'a, 'ctx> {
+pub struct TypeScriptModule {
     /// <https://babeljs.io/docs/babel-plugin-transform-typescript#onlyremovetypeimports>
     only_remove_type_imports: bool,
-    ctx: &'ctx TransformCtx<'a>,
+    module: Module,
 }
 
-impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
-    pub fn new(only_remove_type_imports: bool, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { only_remove_type_imports, ctx }
+impl TypeScriptModule {
+    pub fn new(only_remove_type_imports: bool, module: Module) -> Self {
+        Self { only_remove_type_imports, module }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule {
     #[inline]
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.mark_unused_import_equals_references_as_type(&program.body, ctx);
@@ -33,7 +30,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // In Babel, it will insert `use strict` in `@babel/transform-modules-commonjs` plugin.
         // Once we have a commonjs plugin, we can consider moving this logic there.
-        if self.ctx.module.is_commonjs() {
+        if self.module.is_commonjs() {
             let has_use_strict = program.directives.iter().any(Directive::is_use_strict);
             if !has_use_strict {
                 program.directives.insert(0, ctx.ast.use_strict_directive());
@@ -57,23 +54,23 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
     }
 }
 
-impl<'a> TypeScriptModule<'a, '_> {
+impl<'a> TypeScriptModule {
     /// Transform `export = expression` to `module.exports = expression`.
     fn transform_ts_export_assignment(
         &self,
         export_assignment: &mut TSExportAssignment<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        if self.ctx.module.is_esm() {
-            self.ctx.error(diagnostics::export_assignment_cannot_bed_used_in_esm(
+        if self.module.is_esm() {
+            ctx.state.error(diagnostics::export_assignment_cannot_bed_used_in_esm(
                 export_assignment.span,
             ));
         }
 
         // module.exports
         let module_exports = {
-            let reference_id =
-                ctx.create_reference_in_current_scope("module", ReferenceFlags::Read);
+            let reference_id = ctx
+                .create_reference_in_current_scope(ctx.ast.ident("module"), ReferenceFlags::Read);
             let reference =
                 ctx.ast.alloc_identifier_reference_with_reference_id(SPAN, "module", reference_id);
             let object = Expression::Identifier(reference);
@@ -109,7 +106,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         {
             // No value reference, we will remove this declaration in `TypeScriptAnnotations`
             let scope_id = ctx.current_scope_id();
-            ctx.scoping_mut().remove_binding(scope_id, &decl.id.name);
+            ctx.scoping_mut().remove_binding(scope_id, decl.id.name);
             return None;
         }
 
@@ -145,18 +142,14 @@ impl<'a> TypeScriptModule<'a, '_> {
             TSModuleReference::ExternalModuleReference(reference) => {
                 flags.insert(SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable);
 
-                if self.ctx.module.is_esm() {
-                    self.ctx.error(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
+                if self.module.is_esm() {
+                    ctx.state.error(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
                 }
 
-                let require_symbol_id =
-                    ctx.scoping().find_binding(ctx.current_scope_id(), "require");
-                let callee = ctx.create_ident_expr(
-                    SPAN,
-                    Atom::from("require"),
-                    require_symbol_id,
-                    ReferenceFlags::Read,
-                );
+                let require = ctx.ast.ident("require");
+                let require_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), require);
+                let callee =
+                    ctx.create_ident_expr(SPAN, require, require_symbol_id, ReferenceFlags::Read);
                 let arguments =
                     ctx.ast.vec1(Argument::StringLiteral(ctx.alloc(reference.expression.clone())));
                 (

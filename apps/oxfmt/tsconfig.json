@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
+    "lib": ["ESNext"],
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "noEmit": true,
     "target": "ESNext",
     "strict": true,
-    "skipLibCheck": true,
-    "noUnusedLocals": true
+    "skipLibCheck": true
   },
-  "include": ["src-js", "test/**/*.ts"],
+  "include": ["scripts", "conformance/*.ts", "src-js", "test/**/*.ts"],
   "exclude": ["test/**/fixtures"]
 }

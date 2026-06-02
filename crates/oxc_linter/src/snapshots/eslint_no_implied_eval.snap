@@ -1,0 +1,907 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout("x = 1;");
+   · ────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout("x = 1;", 100);
+   · ─────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setInterval("x = 1;");
+   · ─────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ execScript("x = 1;");
+   · ────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:18]
+ 1 │ const s = 'x=1'; setTimeout(s, 100);
+   ·                  ──────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:18]
+ 1 │ const s = `x=1`; setTimeout(s, 100);
+   ·                  ──────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:24]
+ 1 │ const s = 1 + ';' + 1; setTimeout(s, 100);
+   ·                        ──────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(s); const s = 'x';
+   · ─────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:29]
+ 1 │ const a = 'x'; const b = a; setTimeout(b);
+   ·                             ─────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:152]
+ 1 │ const a0 = 'x'; const a1 = a0; const a2 = a1; const a3 = a2; const a4 = a3; const a5 = a4; const a6 = a5; const a7 = a6; const a8 = a7; const a9 = a8; setTimeout(a9);
+   ·                                                                                                                                                        ──────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:14]
+ 1 │ let s = 'x'; setTimeout(s);
+   ·              ─────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:14]
+ 1 │ var s = 'x'; setTimeout(s);
+   ·              ─────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:23]
+ 1 │ let s = 'x'; s = foo; setTimeout(s);
+   ·                       ─────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:14]
+ 1 │ let s = 'x'; setTimeout(s); s = foo;
+   ·              ─────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:44]
+ 1 │ let s = 'x'; function mutate(){ s = foo; } setTimeout(s);
+   ·                                            ─────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(typeof foo);
+   · ──────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:23]
+ 1 │ const s = typeof foo; setTimeout(s);
+   ·                       ─────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(typeof foo.bar);
+   · ──────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(typeof 1);
+   · ────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:21]
+ 1 │ const s = typeof 1; setTimeout(s);
+   ·                     ─────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String('x=1'), 100);
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String(1), 100);
+   · ──────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String(), 100);
+   · ─────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String(undefined), 100);
+   · ──────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String(null), 100);
+   · ─────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String(true), 100);
+   · ─────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String(1n), 100);
+   · ───────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String({}));
+   · ──────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String([]));
+   · ──────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String(/x/));
+   · ───────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String(Symbol()));
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(String(foo));
+   · ───────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:27]
+ 1 │ const code = String(foo); setTimeout(code);
+   ·                           ────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:25]
+ 1 │ const code = `x${foo}`; setTimeout(code);
+   ·                         ────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:24]
+ 1 │ const o = {}; o.x = 1; setTimeout(String(o));
+   ·                        ─────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:26]
+ 1 │ const a = []; a.push(1); setTimeout(String(a));
+   ·                          ─────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(Date());
+   · ──────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.setTimeout('foo')
+   · ────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.setInterval('foo')
+   · ─────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.execScript('foo')
+   · ────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window['setTimeout']('foo')
+   · ───────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window['setInterval']('foo')
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window[`setInterval`]('foo')
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window['execScript']('foo')
+   · ───────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window[`execScript`]('foo')
+   · ───────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.window['setInterval']('foo')
+   · ───────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.window['execScript']('foo')
+   · ──────────────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window['window'].setTimeout('foo')
+   · ──────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.setTimeout('foo')
+   · ────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.setInterval('foo')
+   · ─────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.execScript('foo')
+   · ────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global['setTimeout']('foo')
+   · ───────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global['setInterval']('foo')
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global[`setInterval`]('foo')
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global['execScript']('foo')
+   · ───────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global[`execScript`]('foo')
+   · ───────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.global['setInterval']('foo')
+   · ───────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.global['execScript']('foo')
+   · ──────────────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global['global'].setTimeout('foo')
+   · ──────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ globalThis.setTimeout('foo')
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ globalThis.setInterval('foo')
+   · ─────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ globalThis.execScript('foo')
+   · ────────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ globalThis.globalThis.setTimeout('foo')
+   · ───────────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ globalThis['globalThis'].setInterval('foo')
+   · ───────────────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(`foo${bar}`)
+   · ───────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.setTimeout(`foo${bar}`)
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.window.setTimeout(`foo${bar}`)
+   · ─────────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.global.setTimeout(`foo${bar}`)
+   · ─────────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout('foo' + bar)
+   · ───────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(foo + 'bar')
+   · ───────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(`foo` + bar)
+   · ───────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout(1 + ';' + 1)
+   · ───────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.setTimeout('foo' + bar)
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.setTimeout(foo + 'bar')
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.setTimeout(`foo` + bar)
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.setTimeout(1 + ';' + 1)
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.window.setTimeout(1 + ';' + 1)
+   · ─────────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.setTimeout('foo' + bar)
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.setTimeout(foo + 'bar')
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.setTimeout(`foo` + bar)
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.setTimeout(1 + ';' + 1)
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ global.global.setTimeout(1 + ';' + 1)
+   · ─────────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ globalThis.setTimeout('foo' + bar)
+   · ──────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ ╭─▶ setTimeout('foo' + (function() {
+ 2 │ │      setTimeout(helper);
+ 3 │ │      execScript('str');
+ 4 │ │      return 'bar';
+ 5 │ ╰─▶ })())
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:3:4]
+ 2 │    setTimeout(helper);
+ 3 │    execScript('str');
+   ·    ─────────────────
+ 4 │    return 'bar';
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ ╭─▶ window.setTimeout('foo' + (function() {
+ 2 │ │      setTimeout(helper);
+ 3 │ │      window.execScript('str');
+ 4 │ │      return 'bar';
+ 5 │ ╰─▶ })())
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:3:4]
+ 2 │    setTimeout(helper);
+ 3 │    window.execScript('str');
+   ·    ────────────────────────
+ 4 │    return 'bar';
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ ╭─▶ global.setTimeout('foo' + (function() {
+ 2 │ │      setTimeout(helper);
+ 3 │ │      global.execScript('str');
+ 4 │ │      return 'bar';
+ 5 │ ╰─▶ })())
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:3:4]
+ 2 │    setTimeout(helper);
+ 3 │    global.execScript('str');
+   ·    ────────────────────────
+ 4 │    return 'bar';
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window?.setTimeout('code', 0)
+   · ─────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ (window?.setTimeout)('code', 0)
+   · ───────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window?.execScript('code')
+   · ──────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ (window?.execScript)('code')
+   · ────────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window?.window.setTimeout('code')
+   · ─────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.window?.setTimeout('code')
+   · ─────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.setTimeout?.('code')
+   · ───────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window['setTimeout']?.('code')
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window?.['setTimeout']('code')
+   · ──────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.setTimeout('foo')
+   · ──────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.setInterval('foo')
+   · ───────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.execScript('foo')
+   · ──────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self['setTimeout']('foo')
+   · ─────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self['setInterval']('foo')
+   · ──────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self[`setInterval`]('foo')
+   · ──────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self['execScript']('foo')
+   · ─────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self[`execScript`]('foo')
+   · ─────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.self['setInterval']('foo')
+   · ───────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.self['execScript']('foo')
+   · ──────────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self['self'].execScript('foo')
+   · ──────────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.setTimeout(`foo${bar}`)
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.self.setTimeout(`foo${bar}`)
+   · ─────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.setTimeout('foo' + bar)
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.setTimeout(foo + 'bar')
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.setTimeout(`foo` + bar)
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.setTimeout(1 + ';' + 1)
+   · ────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.self.setTimeout(1 + ';' + 1)
+   · ─────────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self?.setTimeout('code', 0)
+   · ───────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ (self?.setTimeout)('code', 0)
+   · ─────────────────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self?.execScript('code')
+   · ────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ (self?.execScript)('code')
+   · ──────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ self.execScript?.('code')
+   · ─────────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ (setTimeout)('x')
+   · ─────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ ((setTimeout))('x')
+   · ───────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setTimeout?.('x')
+   · ─────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Consider passing a function instead of a string.
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ setInterval?.('x')
+   · ──────────────────
+   ╰────
+  help: Pass a function callback instead of source text.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ execScript?.('x')
+   · ─────────────────
+   ╰────
+  help: Avoid executing source text at runtime.
+
+  ⚠ eslint(no-implied-eval): Implied eval. Do not use execScript().
+   ╭─[no_implied_eval.js:1:1]
+ 1 │ window.execScript('x')
+   · ──────────────────────
+   ╰────
+  help: Avoid executing source text at runtime.

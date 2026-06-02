@@ -15,7 +15,7 @@ use super::{
     super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
 };
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Transform static property initializer.
     ///
     /// Replace `this`, and references to class name, with temp var for class. Transform `super`.
@@ -123,7 +123,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         // Identifier is reference to class name. Rename it.
         let temp_binding = class_details.bindings.get_or_init_static_binding(ctx);
-        ident.name = temp_binding.name.into();
+        ident.name = temp_binding.name;
 
         let symbols = ctx.scoping_mut();
         symbols.get_reference_mut(reference_id).set_symbol_id(temp_binding.symbol_id);
@@ -187,7 +187,7 @@ impl<'a> ClassProperties<'a, '_> {
 // TODO(improve-on-babel): Updating `ScopeFlags` for strict mode makes semantic correctly for the output,
 // but actually the transform isn't right. Should wrap initializer/block in a strict mode IIFE so that
 // code runs in strict mode, as it was before within class body.
-struct StaticVisitor<'a, 'ctx, 'v> {
+struct StaticVisitor<'a, 'v> {
     /// `true` if class has name, or `ScopeFlags` need updating.
     /// Either of these neccesitates walking the whole tree. If neither applies, we only need to walk
     /// as far as functions and other constructs which define a `this`.
@@ -209,16 +209,16 @@ struct StaticVisitor<'a, 'ctx, 'v> {
     /// so `scope_depth` is ignored.
     scope_depth: u32,
     /// Converter for `super` expressions.
-    super_converter: ClassPropertiesSuperConverter<'a, 'ctx, 'v>,
+    super_converter: ClassPropertiesSuperConverter<'a, 'v>,
     /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
+impl<'a, 'v> StaticVisitor<'a, 'v> {
     fn new(
         make_sloppy_mode: bool,
         reparent_scopes: bool,
-        class_properties: &'v mut ClassProperties<'a, 'ctx>,
+        class_properties: &'v mut ClassProperties<'a>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
         let walk_deep =
@@ -243,7 +243,7 @@ impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
+impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
@@ -253,15 +253,24 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
                 self.replace_this_with_temp_var(expr, span);
                 return;
             }
+            // `new.target` is always `undefined` in class static blocks. Replace it before moving
+            // the block body outside the class.
+            Expression::MetaProperty(meta_property)
+                if self.this_depth == 0
+                    && meta_property.meta.name == "new"
+                    && meta_property.property.name == "target" =>
+            {
+                *expr = self.ctx.ast.void_0(meta_property.span);
+                return;
+            }
             // `delete this`
-            Expression::UnaryExpression(unary_expr) => {
+            Expression::UnaryExpression(unary_expr)
                 if unary_expr.operator == UnaryOperator::Delete
-                    && matches!(&unary_expr.argument, Expression::ThisExpression(_))
-                {
-                    let span = unary_expr.span;
-                    self.replace_delete_this_with_true(expr, span);
-                    return;
-                }
+                    && matches!(&unary_expr.argument, Expression::ThisExpression(_)) =>
+            {
+                let span = unary_expr.span;
+                self.replace_delete_this_with_true(expr, span);
+                return;
             }
             // `super.prop`
             Expression::StaticMemberExpression(_) if self.this_depth == 0 => {
@@ -516,7 +525,7 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
     }
 }
 
-impl<'a> StaticVisitor<'a, '_, '_> {
+impl<'a> StaticVisitor<'a, '_> {
     /// Replace `this` with reference to temp var for class.
     fn replace_this_with_temp_var(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {

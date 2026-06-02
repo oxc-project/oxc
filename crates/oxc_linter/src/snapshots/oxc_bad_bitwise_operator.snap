@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(bad-bitwise-operator): Bad bitwise operator
    ╭─[bad_bitwise_operator.tsx:1:9]
  1 │ var a = obj & obj.a

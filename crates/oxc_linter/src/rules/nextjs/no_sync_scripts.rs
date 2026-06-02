@@ -55,7 +55,8 @@ declare_oxc_lint!(
     /// ```
     NoSyncScripts,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 impl Rule for NoSyncScripts {

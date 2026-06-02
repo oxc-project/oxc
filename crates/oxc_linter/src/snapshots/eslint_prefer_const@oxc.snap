@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(prefer-const): `seen` is never reassigned.
    ╭─[prefer_const.tsx:1:10]
  1 │ for (let seen = new Set(); Math.random() < 0.5;) {

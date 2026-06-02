@@ -65,9 +65,13 @@ macro_rules! assert_ge {
 /// [`Semantic::stats`]: super::Semantic::stats
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Stats {
+    /// Number of AST nodes.
     pub nodes: u32,
+    /// Number of lexical scopes.
     pub scopes: u32,
+    /// Number of semantic symbols.
     pub symbols: u32,
+    /// Number of identifier references.
     pub references: u32,
 }
 
@@ -100,6 +104,10 @@ impl Stats {
     /// e.g. to over-allocate by 20%, pass `0.2` as `excess`.
     #[must_use]
     pub fn increase_by(mut self, excess: f64) -> Self {
+        if excess == 0.0 {
+            return self;
+        }
+
         let factor = excess + 1.0;
         #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
         let increase = |n: u32| (n as f64 * factor) as u32;

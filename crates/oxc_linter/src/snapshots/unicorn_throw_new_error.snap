@@ -1,154 +1,155 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw Error()
    ·       ───────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw (Error)()
    ·       ─────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw lib.Error()
    ·       ───────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw lib.mod.Error()
    ·       ───────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw lib[mod].Error()
    ·       ────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw (lib.mod).Error()
    ·       ─────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw Error('foo')
    ·       ────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw CustomError('foo')
    ·       ──────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw FooBarBazError('foo')
    ·       ─────────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw ABCError('foo')
    ·       ───────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw Abc3Error('foo')
    ·       ────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw TypeError()
    ·       ───────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw EvalError()
    ·       ───────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw RangeError()
    ·       ────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw ReferenceError()
    ·       ────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw SyntaxError()
    ·       ─────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw URIError()
    ·       ──────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:10]
  1 │ throw (( URIError() ))
    ·          ──────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw (( URIError ))()
    ·       ────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw getGlobalThis().Error()
    ·       ───────────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw utils.getGlobalThis().Error()
    ·       ─────────────────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
 
-  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw (( getGlobalThis().Error ))()
    ·       ─────────────────────────────

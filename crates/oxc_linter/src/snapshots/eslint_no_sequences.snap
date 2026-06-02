@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-sequences): Unexpected use of comma operator
    ╭─[no_sequences.tsx:1:2]
  1 │ 1, 2;

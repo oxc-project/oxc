@@ -56,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     NoDupeClassMembers,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.3",
 );
 
 impl Rule for NoDupeClassMembers {
@@ -129,16 +130,11 @@ fn test() {
         "class A { foo; #foo; }",
         "class A { '#foo'; #foo; }",
         // typescript-eslint
-        "class A { foo() {} bar() {} }",
-        "class A { static foo() {} foo() {} }",
-        "class A { get foo() {} set foo(value) {} }",
-        "class A { static foo() {} get foo() {} set foo(value) {} }",
         "class A { foo() {} } class B { foo() {} }",
         "class A { [foo]() {} foo() {} } ",
         "class A { foo() {} bar() {} baz() {} }",
         "class A { *foo() {} *bar() {} *baz() {} }",
         "class A { get foo() {} get bar() {} get baz() {} }",
-        "class A { 1() {} 2() {} }",
         "class Foo { foo(a: string): string; foo(a: number): number; foo(a: any): any {} }",
     ];
 

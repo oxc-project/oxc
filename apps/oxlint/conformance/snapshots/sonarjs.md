@@ -1,5 +1,7 @@
 # Conformance test results - sonarjs
 
+Tested against: [sonarjs@8852e25](https://github.com/SonarSource/SonarJS/tree/8852e2593390e00f9d9aea764b0b0b9a503d1f08) (3.0.6)
+
 ## Summary
 
 ### Rules
@@ -507,10 +509,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -627,10 +629,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -751,10 +753,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -864,10 +866,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -978,10 +980,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -1093,10 +1095,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -1206,10 +1208,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -1321,10 +1323,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -1437,10 +1439,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -1550,10 +1552,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -1663,10 +1665,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -1777,10 +1779,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -1890,10 +1892,10 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 
 
 #### S125 > S125 > Sections of code should not be commented out > invalid
@@ -2005,8 +2007,8 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 0 !== 1
 
-    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
-    at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
-    at apps/oxlint/dist/rule_tester.js
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
 

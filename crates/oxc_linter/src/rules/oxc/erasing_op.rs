@@ -22,7 +22,7 @@ pub struct ErasingOp;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Checks for erasing operations, e.g., `x * 0``.
+    /// Checks for erasing operations, e.g., `x * 0`.
     ///
     /// Based on https://rust-lang.github.io/rust-clippy/master/#/erasing_op
     ///
@@ -46,7 +46,8 @@ declare_oxc_lint!(
     ErasingOp,
     oxc,
     correctness,
-    dangerous_fix
+    dangerous_fix,
+    version = "0.1.1",
 );
 
 impl Rule for ErasingOp {

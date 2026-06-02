@@ -5,8 +5,8 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_linter::{
-    ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, FixKind, LintOptions,
-    Linter, ModuleRecord,
+    ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
+    FixKind, LintOptions, Linter, ModuleRecord,
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -31,7 +31,10 @@ fn bench_linter(criterion: &mut Criterion) {
 
                 let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
                 let path = Path::new("");
-                let semantic_ret = SemanticBuilder::new().with_cfg(true).build(&parser_ret.program);
+                let semantic_ret = SemanticBuilder::new()
+                    .with_cfg(true)
+                    .with_class_table(true)
+                    .build(&parser_ret.program);
                 let semantic = semantic_ret.semantic;
                 let module_record =
                     Arc::new(ModuleRecord::new(path, &parser_ret.module_record, &semantic));
@@ -48,7 +51,12 @@ fn bench_linter(criterion: &mut Criterion) {
                 runner.run(|| {
                     linter.run(
                         path,
-                        vec![ContextSubHost::new(semantic, Arc::clone(&module_record), 0)],
+                        vec![ContextSubHost::new(
+                            semantic,
+                            Arc::clone(&module_record),
+                            0,
+                            ContextSubHostOptions::default(),
+                        )],
                         &allocator,
                     )
                 });

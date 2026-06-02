@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Span, best_match};
 use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -10,7 +10,6 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::best_match,
 };
 
 fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
@@ -91,6 +90,7 @@ declare_oxc_lint!(
     correctness,
     conditional_fix,
     config = ValidTypeof,
+    version = "0.0.3",
 );
 
 impl Rule for ValidTypeof {
@@ -144,7 +144,7 @@ impl Rule for ValidTypeof {
 
         if let Expression::Identifier(ident) = sibling
             && ident.name == "undefined"
-            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
+            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
         {
             ctx.diagnostic_with_fix(
                 if self.require_string_literals {

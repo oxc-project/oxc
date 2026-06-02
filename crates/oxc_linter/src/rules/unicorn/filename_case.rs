@@ -193,6 +193,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     config = FilenameCaseConfigJson,
+    version = "0.0.14",
 );
 
 impl Rule for FilenameCase {
@@ -459,7 +460,6 @@ fn test() {
             "src/foo/foo_bar.test_utils.js",
             serde_json::json!([{ "case": "snakeCase", "multipleFileExtensions": false }]),
         ),
-        ("", None, None, Some(PathBuf::from("foo-bar.tsx"))),
         // Ensure all `index` files are allowed, despite being in non-conforming case.
         test_case("index.js", "camelCase"),
         test_case("index.js", "snakeCase"),

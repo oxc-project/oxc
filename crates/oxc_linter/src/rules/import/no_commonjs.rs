@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -104,6 +105,7 @@ declare_oxc_lint!(
     import,
     restriction,
     config = NoCommonjs,
+    version = "0.11.0",
 );
 
 fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
@@ -233,7 +235,11 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
+                if ctx
+                    .scoping()
+                    .find_binding(ctx.scoping().root_scope_id(), static_ident!("require"))
+                    .is_some()
+                {
                     return;
                 }
 

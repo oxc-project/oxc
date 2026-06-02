@@ -1091,7 +1091,8 @@ impl ContentEq for FormalParameterKind {
 
 impl ContentEq for FormalParameterRest<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.rest, &other.rest)
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.rest, &other.rest)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
     }
 }

@@ -15,6 +15,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
+    utils::has_ambient_typescript_ancestor,
 };
 
 fn init_declarations_diagnostic(span: Span, mode: &Mode, identifier_name: &str) -> OxcDiagnostic {
@@ -122,6 +123,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = InitDeclarations,
+    version = "0.15.11",
 );
 
 impl Rule for InitDeclarations {
@@ -138,12 +140,7 @@ impl Rule for InitDeclarations {
                 if decl.declare {
                     return;
                 }
-                let declare = ctx.nodes().ancestor_kinds(node.id()).any(|el| match el {
-                    AstKind::TSModuleDeclaration(ts_module_decl) => ts_module_decl.declare,
-                    AstKind::TSGlobalDeclaration(ts_global_decl) => ts_global_decl.declare,
-                    _ => false,
-                });
-                if declare {
+                if has_ambient_typescript_ancestor(node.id(), ctx.nodes()) {
                     return;
                 }
             }
@@ -206,6 +203,8 @@ fn test() {
         ("for (var foo of []) {}", None), // { "ecmaVersion": 6 },
         ("let a = true;", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 6 },
         ("const a = {};", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 6 },
+        ("using a = foo();", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2026 },
+        ("await using a = foo();", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2026 },
         (
             "function foo() { let a = 1, b = false; if (a) { let c = 3, d = null; } }",
             Some(serde_json::json!(["always"])),
@@ -329,6 +328,14 @@ fn test() {
             }",
             Some(serde_json::json!(["never"])),
         ),
+        (
+            "declare module 'pkg' {
+                global {
+                    var nestedGlobal: string;
+                }
+            }",
+            Some(serde_json::json!(["always"])),
+        ),
     ];
 
     let fail = vec![
@@ -393,6 +400,15 @@ fn test() {
                     }
                 }
             }",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "
+                  declare namespace myLib {
+                    let valueInside: number;
+                  }
+                    let valueOutside: number;
+                        ",
             Some(serde_json::json!(["always"])),
         ),
     ];

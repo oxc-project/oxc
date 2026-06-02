@@ -16,7 +16,7 @@ alias f := fix
 # Initialize the project by installing all necessary tools
 init:
   # Rust related init
-  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear -y
+  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.12.4 -y
   # Node.js related init
   pnpm install
 
@@ -37,6 +37,7 @@ ready:
   git diff --exit-code --quiet
   pnpm install
   typos
+  cargo lintgen
   just fmt
   just check
   just test
@@ -59,17 +60,17 @@ lint:
 
 # Format all files
 fmt:
-  -cargo shear --fix # remove all unused dependencies
+  -cargo shear --fix --check-test-targets # remove all unused dependencies
   cargo fmt
   node --run fmt
 
 [unix]
 doc:
-  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items --all-features
 
 [windows]
 doc:
-  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items
+  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items --all-features
 
 # Fix all auto-fixable format and lint issues
 fix:
@@ -117,6 +118,9 @@ conformance *args='':
 test-estree *args='':
   cargo run -p oxc_coverage --profile coverage -- estree {{args}}
 
+test-estree-tokens *args='':
+  cargo run -p oxc_coverage --profile coverage -- estree_tokens {{args}}
+
 # Get code coverage
 codecov:
   cargo codecov --html
@@ -150,10 +154,16 @@ watch-oxlint *args='':
   just watch 'cargo run -p oxlint -- --disable-nested-config {{args}}'
 
 # oxlint release build for node.js
-# After building, you can run the built version of oxlint with
-# `node apps/oxlint/dist/cli.js`
+# After building, you can run oxlint with `node <oxc-root>/apps/oxlint/dist/cli.js`
 oxlint-node:
   pnpm -C apps/oxlint run build
+
+# oxlint dev build, for testing with Node.js locally.
+# This uses a non-release Rust build without the `allocator` feature (no mimalloc) and sets DEBUG options for the JS bundle,
+# which mainly affects build time, performance, and debug assertions rather than available linting functionality.
+# After building, you can run oxlint with `node <oxc-root>/apps/oxlint/dist/cli.js`
+oxlint-node-dev:
+  pnpm -C apps/oxlint run build-dev
 
 watch-oxlint-node *args='':
   just watch 'pnpm run -C apps/oxlint build-dev && node apps/oxlint/dist/cli.js --disable-nested-config {{args}}'
@@ -161,7 +171,10 @@ watch-oxlint-node *args='':
 # Create a new lint rule for any plugin
 new-rule name plugin='eslint':
   cargo run -p rulegen {{name}} {{plugin}}
+  just linter-schema-json
+  just linter-config-ts
   just fmt
+  cargo insta test -p website_linter --accept
 
 # Update test cases for an existing lint rule from upstream
 update-rule-tests name plugin='eslint':
@@ -199,8 +212,15 @@ watch-oxfmt *args='':
   just watch 'cargo run -p oxfmt -- {{args}}'
 
 # Build oxfmt in release build
+# After building, you can run oxfmt with `node <oxc-root>/apps/oxfmt/dist/cli.js`
 oxfmt-node:
   pnpm -C apps/oxfmt run build
+
+# oxfmt dev build, for testing with Node.js locally.
+# This builds faster than the release build and may differ in performance or behavior.
+# After building, you can run oxfmt with `node <oxc-root>/apps/oxfmt/dist/cli.js`
+oxfmt-node-dev:
+  pnpm -C apps/oxfmt run build-dev
 
 watch-oxfmt-node *args='':
   just watch 'pnpm run -C apps/oxfmt build-dev && node apps/oxfmt/dist/cli.js {{args}}'
@@ -262,6 +282,7 @@ website path:
   cargo run -p website_linter rules --rules-json {{path}}/.vitepress/data/rules.json --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD) --rule-count {{path}}/src/docs/guide/usage
   cargo run -p website_linter cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website_linter schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
+  cargo run -p website_linter schema-markdown-lsp > {{path}}/src/docs/guide/usage/linter/generated-lsp-config.md
   cargo run -p website_formatter cli > {{path}}/src/docs/guide/usage/formatter/generated-cli.md
   cargo run -p website_formatter schema-markdown > {{path}}/src/docs/guide/usage/formatter/generated-config.md
 
@@ -269,13 +290,17 @@ website path:
 linter-schema-json:
   cargo run -p website_linter schema-json > npm/oxlint/configuration_schema.json
 
+# Generate linter config TypeScript types for `apps/oxlint/src-js/package/config.generated.ts`
+linter-config-ts:
+  pnpm --filter oxlint-app generate-config-types
+
 # Generate formatter schema json for `npm/oxfmt/configuration_schema.json`
 formatter-schema-json:
   cargo run -p website_formatter schema-json > npm/oxfmt/configuration_schema.json
 
-# Update VSCode extension README configuration section
-vscode-docs:
-  cargo run -p vscode_docs update
+# Generate formatter config TypeScript types for `apps/oxfmt/src-js/config.generated.ts`
+formatter-config-ts:
+  pnpm --filter oxfmt-app generate-config-types
 
 # Automatically DRY up Cargo.toml manifests in a workspace
 autoinherit:

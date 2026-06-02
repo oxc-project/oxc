@@ -14,8 +14,9 @@ use crate::{
 };
 
 fn hoisted_apis_on_top_diagnostic(span: Span) -> OxcDiagnostic {
+    // TODO: Only mention the doMock alternative if the API in question is `vi.mock()`.
     OxcDiagnostic::warn("Hoisted API cannot be used in a runtime location in this file.")
-        .with_help("Move this hoisted API to the top of the file to better reflect its behavior.\nIf possible, replace `vi.mock()` with `vi.doMock`, which is not hoisted.")
+        .with_help("Move this hoisted API to the top of the file to better reflect its behavior.\nYou may alternatively replace `vi.mock()` with `vi.doMock`, which is not hoisted.")
         .with_label(span)
 }
 
@@ -27,14 +28,21 @@ pub struct HoistedApisOnTop;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce hoisted APIs to be on top of the file.
+    /// Requires [hoisted](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting) Vitest APIs
+    /// (`vi.mock`, `vi.unmock`, and `vi.hoisted`) to appear in the top-level of the file.
     ///
     /// ### Why is this bad?
     ///
-    /// Some Vitest APIs are hoisted automatically during the transform process. Using this APIs
-    /// in look like runtime code can lead to unexpected results running tests.
+    /// Vitest hoists certain APIs to the top of the file during transformation, so they always
+    /// run before any imports — regardless of where they appear in the source. Writing them
+    /// inside conditionals, test bodies, or other runtime locations can be misleading and confusing.
+    ///
+    /// The code looks like it executes at runtime, but it actually runs first. This rule ensures
+    /// that these hoisted APIs are not allowed in confusing contexts.
     ///
     /// ### Examples
+    ///
+    /// <!-- TODO: Add comments to these example code snippets explaining what their problems are. -->
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
@@ -102,6 +110,7 @@ declare_oxc_lint!(
     vitest,
     correctness,
     suggestion,
+    version = "1.39.0",
 );
 
 impl Rule for HoistedApisOnTop {
@@ -130,7 +139,7 @@ impl HoistedApisOnTop {
             return;
         }
 
-        if !vitest_fn.members.iter().any(is_hoisted_api) {
+        if !vitest_fn.members.first().is_some_and(is_hoisted_api) {
             return;
         }
 
@@ -240,6 +249,9 @@ fn test() {
 			vi.unmock(baz);
 			    ",
         "import 'vi';\nconst foo = await vi.hoisted(async () => {});",
+        "vi.mocked(something).mock.calls",
+        "if (condition) { vi.mocked(something).mock.calls.forEach(call => {}) }",
+        "if (condition) { const calls = vi.mocked(fn).mock.calls }",
     ];
 
     let fail = vec![

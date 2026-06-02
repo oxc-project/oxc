@@ -52,28 +52,28 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/update-express
         "node": "VariableDeclarator(obj)",
         "references": [
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
             "id": 4,
             "name": "obj",
             "node_id": 27,
             "scope_id": 0
           },
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
             "id": 5,
             "name": "obj",
             "node_id": 32,
             "scope_id": 0
           },
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
             "id": 6,
             "name": "obj",
             "node_id": 37,
             "scope_id": 0
           },
           {
-            "flags": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read | MemberWriteTarget)",
             "id": 7,
             "name": "obj",
             "node_id": 42,

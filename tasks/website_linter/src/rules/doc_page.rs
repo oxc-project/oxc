@@ -39,6 +39,7 @@ impl Context {
             documentation,
             schema,
             plugin,
+            version,
             turned_on_by_default,
             autofix,
             category,
@@ -52,20 +53,24 @@ impl Context {
         );
 
         let normalized_plugin_name = get_normalized_plugin_name(plugin);
-        let title = full_rule_name(rule, normalized_plugin_name, true);
+        let rule_name = full_rule_name(rule, normalized_plugin_name, true);
 
         // Write frontmatter
         let default = if *turned_on_by_default { "true" } else { "false" };
         let type_aware = if *is_tsgolint_rule { "true" } else { "false" };
         let fix = autofix.to_string();
-        #[cfg(windows)]
-        let file = file!().replace('\\', "/");
-        #[cfg(not(windows))]
+        let upstream_line = upstream_docs_url(plugin, name)
+            .map(|url| format!("upstream: \"{url}\"\n"))
+            .unwrap_or_default();
+
         let file = file!();
+        #[cfg(windows)]
+        #[expect(clippy::disallowed_methods, reason = "file path always contains slashes")]
+        let file = &*file.replace('\\', "/");
 
         writeln!(
             self.page,
-            "---\ntitle: \"{title}\"\ncategory: \"{category}\"\ndefault: {default}\ntype_aware: {type_aware}\nfix: \"{fix}\"\n---\n"
+            "---\ntitle: \"{rule_name} | Oxlint\"\nrule: \"{rule_name}\"\ncategory: \"{category}\"\nversion: \"{version}\"\ndefault: {default}\ntype_aware: {type_aware}\nfix: \"{fix}\"\n{upstream_line}---\n"
         )?;
 
         writeln!(
@@ -92,7 +97,7 @@ const source = `{}`;{}
         )?;
 
         // Add a <RuleHeader> element, will be handled by the Vitepress site to render necessary data.
-        writeln!(self.page, "\n<RuleHeader />\n")?;
+        writeln!(self.page, "\n<RuleHeader />")?;
 
         // rule documentation
         if let Some(docs) = documentation {
@@ -117,21 +122,11 @@ const source = `{}`;{}
             }
         }
 
-        // how to use
-        writeln!(self.page, "\n## How to use\n{}", how_to_use(rule))?;
-        writeln!(self.page, "\n## References\n")?;
-
-        // rule source link(s)
+        // how-to-use and rule references components.
         writeln!(
             self.page,
-            r#"- <a v-bind:href="source" target="_blank" rel="noreferrer">Rule Source</a>"#
+            "\n## How to use\n<RuleHowToUse />\n\n## Version\nThis rule was added in v{version}.\n\n## References\n<RuleReferences />"
         )?;
-        if *is_tsgolint_rule {
-            writeln!(
-                self.page,
-                r#"- <a v-bind:href="tsgolintSource" target="_blank" rel="noreferrer">Rule Source (tsgolint)</a>"#
-            )?;
-        }
 
         Ok(self.page.take())
     }
@@ -187,7 +182,21 @@ const source = `{}`;{}
         }
         let mut rendered = section.to_md(&self.renderer);
         if rendered.trim().is_empty() {
-            return rendered;
+            // For primitive types (e.g. a single string argument) with no child
+            // sections, render the section's own type and default info directly.
+            let mut parts = String::new();
+            if let Some(ref instance_type) = section.instance_type
+                && !instance_type.is_empty()
+            {
+                write!(parts, "\ntype: `{instance_type}`\n").unwrap();
+            }
+            if let Some(ref default) = section.default {
+                write!(parts, "\ndefault: `{default}`\n").unwrap();
+            }
+            if parts.trim().is_empty() {
+                return rendered;
+            }
+            rendered = parts;
         }
 
         // Check if this is an enum-based config (oneOf with single-value enums)
@@ -252,73 +261,12 @@ fn tsgolint_rule_source(rule: &RuleTableRow) -> String {
     format!("https://github.com/oxc-project/tsgolint/blob/main/internal/rules/{rule_path}")
 }
 
-/// Returns `true` if the given plugin is a default plugin.
-/// - Example: `eslint` => true
-/// - Example: `jest` => false
-fn is_default_plugin(plugin: &str) -> bool {
-    LintPlugins::try_from(plugin).is_ok_and(|plugin| LintPlugins::default().contains(plugin))
-}
-
 /// Returns the normalized plugin name.
 /// - Example: `react_perf` -> `react-perf`
 /// - Example: `eslint` -> `eslint`
 /// - Example: `jsx_a11y` -> `jsx-a11y`
 fn get_normalized_plugin_name(plugin: &str) -> &str {
     LintPlugins::try_from(plugin).unwrap_or(LintPlugins::empty()).into()
-}
-
-fn how_to_use(rule: &RuleTableRow) -> String {
-    let plugin = &rule.plugin;
-    let normalized_plugin_name = get_normalized_plugin_name(plugin);
-    // We don't want to display the `eslint/` prefix in the how-to-use for now.
-    let rule_full_name = full_rule_name(rule, normalized_plugin_name, false);
-    let is_default_plugin = is_default_plugin(plugin);
-    let is_tsgolint_rule = rule.is_tsgolint_rule;
-
-    let type_aware_flag = if is_tsgolint_rule { "--type-aware " } else { "" };
-
-    let enable_bash_example = if is_default_plugin {
-        format!(r"oxlint {type_aware_flag}--deny {rule_full_name}")
-    } else {
-        format!(
-            r"oxlint {type_aware_flag}--deny {rule_full_name} --{normalized_plugin_name}-plugin"
-        )
-    };
-    let enable_config_example = if is_default_plugin {
-        format!(
-            r#"{{
-    "rules": {{
-        "{rule_full_name}": "error"
-    }}
-}}"#
-        )
-    } else {
-        format!(
-            r#"{{
-    "plugins": ["{normalized_plugin_name}"],
-    "rules": {{
-        "{rule_full_name}": "error"
-    }}
-}}"#
-        )
-    };
-    format!(
-        r"
-To **enable** this rule using the config file or in the CLI, you can use:
-
-::: code-group
-
-```json [Config (.oxlintrc.json)]
-{enable_config_example}
-```
-
-```bash [CLI]
-{enable_bash_example}
-```
-
-:::
-"
-    )
 }
 
 // Return the full rule name, including plugin prefix if necessary. For example:
@@ -338,6 +286,77 @@ fn full_rule_name(
     } else {
         format!("{}/{}", normalized_plugin_name, rule.name)
     }
+}
+
+/// Returns the upstream-plugin docs URL for `(plugin, name)`, where `name` is the
+/// rule's kebab-case identifier. Returns `None` for native `oxc` rules or unknown
+/// plugins. Per-rule overrides handle directories that do not match their true
+/// upstream (e.g. React Hooks rules under `react/` are sourced from
+/// `eslint-plugin-react-hooks`).
+fn upstream_docs_url(plugin: &str, name: &str) -> Option<String> {
+    let override_url: Option<&'static str> = match (plugin, name) {
+        ("react", "rules-of-hooks") => Some("https://react.dev/reference/rules/rules-of-hooks"),
+        ("react", "exhaustive-deps") => Some(
+            "https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/README.md",
+        ),
+        ("react", "only-export-components") => Some(
+            "https://github.com/ArnaudBarre/eslint-plugin-react-refresh/blob/main/docs/only-export-components.md",
+        ),
+        _ => None,
+    };
+    if let Some(url) = override_url {
+        return Some(url.to_owned());
+    }
+    Some(match plugin {
+        "eslint" => format!("https://eslint.org/docs/latest/rules/{name}"),
+        "typescript" => format!("https://typescript-eslint.io/rules/{name}/"),
+        "jest" => format!(
+            "https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/{name}.md"
+        ),
+        "unicorn" => format!(
+            "https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/docs/rules/{name}.md"
+        ),
+        "import" => format!(
+            "https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/{name}.md"
+        ),
+        "react" => format!(
+            "https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/{name}.md"
+        ),
+        "react_perf" => format!(
+            "https://github.com/cvazac/eslint-plugin-react-perf/blob/master/docs/rules/{name}.md"
+        ),
+        "jsx_a11y" => format!(
+            "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/{name}.md"
+        ),
+        "nextjs" => format!("https://nextjs.org/docs/messages/{name}"),
+        "jsdoc" => {
+            // jsdoc URLs use camelCase rule names.
+            let mut camel = String::with_capacity(name.len());
+            let mut upper = false;
+            for c in name.chars() {
+                if c == '-' {
+                    upper = true;
+                } else if upper {
+                    camel.extend(c.to_uppercase());
+                    upper = false;
+                } else {
+                    camel.push(c);
+                }
+            }
+            format!("https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/rules/{camel}.md")
+        }
+        "node" => format!(
+            "https://github.com/eslint-community/eslint-plugin-n/blob/master/docs/rules/{name}.md"
+        ),
+        "promise" => format!(
+            "https://github.com/eslint-community/eslint-plugin-promise/blob/main/docs/rules/{name}.md"
+        ),
+        "vitest" => format!(
+            "https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/{name}.md"
+        ),
+        "vue" => format!("https://eslint.vuejs.org/rules/{name}.html"),
+        _ => return None,
+    })
 }
 
 fn ordinal(n: usize) -> String {

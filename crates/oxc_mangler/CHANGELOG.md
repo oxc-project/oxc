@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.127.0] - 2026-04-20
+
+### 🐛 Bug Fixes
+
+- 50e9d26 mangler: Assign correct slot to shadowed function-expression names (#21535) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 💥 BREAKING CHANGES
+
+- 382958a span: [**BREAKING**] Remove re-exports of string types from `oxc_span` crate (#21246) (overlookmotel)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 2bf7293 mangler: [**BREAKING**] Enable `top_level` by default for modules and commonjs (#18278) (sapphi-red)
+
+### ⚡ Performance
+
+- e7595d1 mangler: Use BitSet for exported symbols set (#19023) (sapphi-red)
+- 69a8d85 mangler: Use BitSet for keep_names symbols set (#19028) (sapphi-red)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES

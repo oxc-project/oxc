@@ -8,6 +8,7 @@ use oxc_ast_visit::Visit;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{
     Parser,
+    config::{LexerConfig, NoTokensLexerConfig},
     lexer::{Kind, Lexer},
 };
 use oxc_span::SourceType;
@@ -51,7 +52,7 @@ fn bench_lexer(criterion: &mut Criterion) {
             // so we do the same here.
             let mut allocator = Allocator::default();
             b.iter(|| {
-                lex_whole_file(&allocator, source_text, source_type);
+                lex_whole_file(&allocator, source_text, source_type, NoTokensLexerConfig);
                 allocator.reset();
             });
         });
@@ -66,12 +67,13 @@ criterion_main!(lexer);
 // It's also used in `SourceCleaner` below.
 #[expect(clippy::inline_always)]
 #[inline(always)]
-fn lex_whole_file<'a>(
+fn lex_whole_file<'a, C: LexerConfig>(
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
-) -> Lexer<'a> {
-    let mut lexer = Lexer::new_for_benchmarks(allocator, source_text, source_type);
+    config: C,
+) -> Lexer<'a, C> {
+    let mut lexer = Lexer::new_for_benchmarks(allocator, source_text, source_type, config);
     if lexer.first_token().kind() != Kind::Eof {
         // Use `next_token_for_benchmarks` instead of `next_token`, to work around problem
         // where `next_token` wasn't inlined here.
@@ -94,6 +96,8 @@ fn lex_whole_file<'a>(
 /// So replace these syntaxes with strings so that lexer can complete without error:
 /// * `RegExpLiteral`
 /// * `TemplateLiteral`
+/// * `TSTemplateLiteralType` (TypeScript type-level template literal, lexically identical
+///   to `TemplateLiteral` so the lexer cannot tell them apart without parser context)
 /// * `JSXText`
 fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Allocator) -> String {
     // Parse
@@ -119,7 +123,7 @@ fn clean<'a>(source_text: &'a str, source_type: SourceType, allocator: &'a Alloc
     clean_source_text.push_str(&source_text[last_index..]);
 
     // Check lexer can lex it without any errors
-    let lexer = lex_whole_file(allocator, &clean_source_text, source_type);
+    let lexer = lex_whole_file(allocator, &clean_source_text, source_type, NoTokensLexerConfig);
     assert!(lexer.errors().is_empty());
 
     clean_source_text
@@ -156,6 +160,18 @@ impl<'a> Visit<'a> for SourceCleaner<'a> {
     }
 
     fn visit_template_literal(&mut self, lit: &TemplateLiteral<'a>) {
+        let span = lit.span;
+        let text = span.shrink(1).source_text(self.source_text);
+        let text = convert_to_string(&text.cow_replace('\n', " "));
+        self.replace(span, text);
+    }
+
+    fn visit_ts_template_literal_type(&mut self, lit: &TSTemplateLiteralType<'a>) {
+        // TS type-level template literals (e.g. `${T}-${U}` in conditional/mapped types) are
+        // lexically identical to value-level template literals. Without parser context, the
+        // bench-mode lexer can swallow large spans as a single `TemplateHead` when adjacent
+        // type templates are separated by other type syntax. Replace with a string just like
+        // `visit_template_literal` does.
         let span = lit.span;
         let text = span.shrink(1).source_text(self.source_text);
         let text = convert_to_string(&text.cow_replace('\n', " "));

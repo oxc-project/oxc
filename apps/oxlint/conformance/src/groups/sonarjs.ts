@@ -1,8 +1,9 @@
 import { createRequire } from "node:module";
 import { join as pathJoin } from "node:path";
 import { currentRule } from "../capture.ts";
+import repos from "../../repos.json" with { type: "json" };
 
-import type { TestGroup } from "../index.ts";
+import type { MockFn, TestGroup } from "../index.ts";
 import type { TestCase, TestCases, ValidTestCase, InvalidTestCase } from "../rule_tester.ts";
 import type { Rule } from "#oxlint/plugins";
 
@@ -17,6 +18,7 @@ const TEST_FILES_DIR_PATH = pathJoin(
 
 const group: TestGroup = {
   name: "sonarjs",
+  ...repos.sonarjs,
 
   submoduleName: SUBMODULE_NAME,
   testFilesDirPath: TEST_FILES_RELATIVE_DIR_PATH,
@@ -35,7 +37,7 @@ const group: TestGroup = {
     return `${meta.eslintId} (${parts[0]})`;
   },
 
-  prepare(require: NodeJS.Require, _mock: (path: string, value: unknown) => void) {
+  prepare(require: NodeJS.Require, _mock: MockFn) {
     // Patch SonarJS's rule tester classes.
     // Internally they use ESLint's `RuleTester`, which is already patched to use conformance `RuleTester`,
     // but we need to apply further patches.
@@ -90,7 +92,7 @@ const group: TestGroup = {
   },
 
   shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Error): boolean {
-    // Skip test cases which include `// eslint-disable` comments.
+    // Skip test cases which include `// eslint-disable` or `/* eslint-disable` comments.
     // These are not handled by `RuleTester`.
     if (code.match(/\/[/*]\s*eslint-disable((-next)?-line)?(\s|$)/)) return true;
 

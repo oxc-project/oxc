@@ -41,7 +41,8 @@ declare_oxc_lint!(
     /// ```
     NoExport,
     jest,
-    correctness
+    correctness,
+    version = "0.0.13",
 );
 
 // Emits a diagnostic if the file matches all of these criteria:

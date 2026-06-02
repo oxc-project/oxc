@@ -20,7 +20,7 @@ pub struct GlobalRequire;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Require `require()` calls to be placed at top-level module scope
+    /// Require `require()` calls to be placed at top-level module scope.
     ///
     /// ### Why is this bad?
     ///
@@ -98,6 +98,7 @@ declare_oxc_lint!(
     GlobalRequire,
     node,
     style,
+    version = "1.36.0",
 );
 
 impl Rule for GlobalRequire {

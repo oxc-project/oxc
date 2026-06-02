@@ -1,10 +1,9 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_semantic::{Scoping, SemanticBuilder};
-use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
-    CompressOptions,
+    CompressOptions, ReusableTraverseCtx,
     peephole::{Normalize, NormalizeOptions, PeepholeOptimizations},
     state::MinifierState,
 };
@@ -31,7 +30,8 @@ impl<'a> Compressor<'a> {
         options: CompressOptions,
     ) -> u8 {
         let max_iterations = options.max_iterations;
-        let state = MinifierState::new(program.source_type, options, /* dce */ false);
+        let state =
+            MinifierState::new(program.source_type, options, /* dce */ false, &scoping);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options = NormalizeOptions {
             convert_while_to_fors: true,
@@ -55,7 +55,7 @@ impl<'a> Compressor<'a> {
         options: CompressOptions,
     ) -> u8 {
         let max_iterations = options.max_iterations;
-        let state = MinifierState::new(program.source_type, options, /* dce */ true);
+        let state = MinifierState::new(program.source_type, options, /* dce */ true, &scoping);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options = NormalizeOptions {
             convert_while_to_fors: false,
@@ -70,7 +70,7 @@ impl<'a> Compressor<'a> {
     fn run_in_loop(
         max_iterations: Option<u8>,
         program: &mut Program<'a>,
-        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
+        ctx: &mut ReusableTraverseCtx<'a>,
     ) -> u8 {
         let mut iteration = 0u8;
         loop {

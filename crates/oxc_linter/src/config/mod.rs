@@ -23,6 +23,10 @@ pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
+pub use oxc_config::GlobSet;
+
+use crate::config::oxlintrc::OxlintOptions;
+
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
     pub(crate) plugins: LintPlugins,
@@ -33,6 +37,8 @@ pub struct LintConfig {
     pub(crate) globals: OxlintGlobals,
     /// Absolute path to the configuration file (may be `None` if there is no file).
     pub(crate) path: Option<PathBuf>,
+    /// Options for the linter.
+    pub(crate) options: OxlintOptions,
 }
 
 impl From<Oxlintrc> for LintConfig {
@@ -43,6 +49,7 @@ impl From<Oxlintrc> for LintConfig {
             env: config.env,
             globals: config.globals,
             path: Some(config.path),
+            options: config.options,
         }
     }
 }
@@ -51,9 +58,10 @@ impl From<Oxlintrc> for LintConfig {
 mod test {
     use std::env;
 
-    use oxc_span::CompactStr;
     use rustc_hash::FxHashMap;
     use serde::Deserialize;
+
+    use oxc_str::CompactStr;
 
     use super::Oxlintrc;
     use crate::{ExternalPluginStore, rules::RULES};
@@ -156,7 +164,7 @@ mod test {
             .unwrap();
 
         let (rule, _) = set.into_iter().next().unwrap();
-        assert_eq!(rule.name(), "no-disabled-tests");
-        assert_eq!(rule.plugin_name(), "jest");
+        assert_eq!(rule.name(), "valid-expect");
+        assert_eq!(rule.plugin_name(), "vitest");
     }
 }

@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:3:12]
+
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:3:15]
  2 │             enum InvalidObject {
  3 │               A = {},
    ·               ──────
@@ -10,8 +11,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:3:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:3:15]
  2 │             enum InvalidArray {
  3 │               A = [],
    ·               ──────
@@ -19,8 +20,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:3:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:3:15]
  2 │             enum InvalidTemplateLiteral {
  3 │               A = `foo ${0}`,
    ·               ──────────────
@@ -28,8 +29,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:3:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:3:15]
  2 │             enum InvalidConstructor {
  3 │               A = new Set(),
    ·               ─────────────
@@ -37,8 +38,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:3:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:3:15]
  2 │             enum InvalidExpression {
  3 │               A = 2 + 2,
    ·               ─────────
@@ -46,8 +47,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:3:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:3:15]
  2 │             enum InvalidExpression {
  3 │               A = delete 2,
    ·               ────────────
@@ -55,8 +56,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:4:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:4:15]
  3 │               A = delete 2,
  4 │               B = -a,
    ·               ──────
@@ -64,8 +65,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:5:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:5:15]
  4 │               B = -a,
  5 │               C = void 2,
    ·               ──────────
@@ -73,8 +74,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:6:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:6:15]
  5 │               C = void 2,
  6 │               D = ~2,
    ·               ──────
@@ -82,8 +83,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:7:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:7:15]
  6 │               D = ~2,
  7 │               E = !0,
    ·               ──────
@@ -91,8 +92,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:7:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:7:15]
  6 │               C,
  7 │               V = variable,
    ·               ────────────
@@ -100,8 +101,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:4:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:4:15]
  3 │               A = 'TestStr',
  4 │               B = A,
    ·               ─────
@@ -109,8 +110,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:5:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:5:15]
  4 │               A = 'TestStr',
  5 │               B = Valid.A,
    ·               ───────────
@@ -118,8 +119,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:7:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:7:15]
  6 │               A = 'TestStr',
  7 │               B = Valid.A,
    ·               ───────────
@@ -127,8 +128,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:5:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:5:15]
  4 │               A = 'TestStr',
  5 │               B = { ...a },
    ·               ────────────
@@ -136,8 +137,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:3:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:3:15]
  2 │             enum Foo {
  3 │               A = 1 << 0,
    ·               ──────────
@@ -145,8 +146,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:4:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:4:15]
  3 │               A = 1 << 0,
  4 │               B = 1 >> 0,
    ·               ──────────
@@ -154,8 +155,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:5:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:5:15]
  4 │               B = 1 >> 0,
  5 │               C = 1 >>> 0,
    ·               ───────────
@@ -163,8 +164,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:6:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:6:15]
  5 │               C = 1 >>> 0,
  6 │               D = 1 | 0,
    ·               ─────────
@@ -172,8 +173,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:7:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:7:15]
  6 │               D = 1 | 0,
  7 │               E = 1 & 0,
    ·               ─────────
@@ -181,8 +182,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:8:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:8:15]
  7 │               E = 1 & 0,
  8 │               F = 1 ^ 0,
    ·               ─────────
@@ -190,8 +191,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-    ╭─[prefer_literal_enum_member.tsx:9:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+    ╭─[prefer_literal_enum_member.tsx:9:15]
   8 │               F = 1 ^ 0,
   9 │               G = ~1,
     ·               ──────
@@ -199,8 +200,8 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:4:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:4:15]
  3 │             enum Foo {
  4 │               A = x << 0,
    ·               ──────────
@@ -208,8 +209,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:5:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:5:15]
  4 │               A = x << 0,
  5 │               B = x >> 0,
    ·               ──────────
@@ -217,8 +218,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:6:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:6:15]
  5 │               B = x >> 0,
  6 │               C = x >>> 0,
    ·               ───────────
@@ -226,8 +227,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:7:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:7:15]
  6 │               C = x >>> 0,
  7 │               D = x | 0,
    ·               ─────────
@@ -235,8 +236,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-   ╭─[prefer_literal_enum_member.tsx:8:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:8:15]
  7 │               D = x | 0,
  8 │               E = x & 0,
    ·               ─────────
@@ -244,8 +245,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-    ╭─[prefer_literal_enum_member.tsx:9:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+    ╭─[prefer_literal_enum_member.tsx:9:15]
   8 │               E = x & 0,
   9 │               F = x ^ 0,
     ·               ─────────
@@ -253,11 +254,38 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Require all enum members to be literal values.
 
-  ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
-    ╭─[prefer_literal_enum_member.tsx:10:12]
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+    ╭─[prefer_literal_enum_member.tsx:10:15]
   9 │               F = x ^ 0,
  10 │               G = ~x,
     ·               ──────
  11 │             }
     ╰────
+  help: Require all enum members to be literal values.
+
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:5:15]
+ 4 │               A = 1 << 0,
+ 5 │               B = x >> Foo.A,
+   ·               ──────────────
+ 6 │               C = x >> A,
+   ╰────
+  help: Require all enum members to be literal values.
+
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:6:15]
+ 5 │               B = x >> Foo.A,
+ 6 │               C = x >> A,
+   ·               ──────────
+ 7 │             }
+   ╰────
+  help: Require all enum members to be literal values.
+
+  ⚠ typescript(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
+   ╭─[prefer_literal_enum_member.tsx:4:15]
+ 3 │               A,
+ 4 │               B = +A,
+   ·               ──────
+ 5 │             }
+   ╰────
   help: Require all enum members to be literal values.

@@ -1,0 +1,122 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'button' interactive role must be tabbable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <Div onClick={() => void 0} role='button' />
+   · ────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` to make the element reachable via sequential keyboard navigation.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'button' interactive role must be tabbable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="button" onClick={() => void 0} />
+   · ────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` to make the element reachable via sequential keyboard navigation.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'checkbox' interactive role must be tabbable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="checkbox" onClick={() => void 0} />
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` to make the element reachable via sequential keyboard navigation.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'link' interactive role must be tabbable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="link" onClick={() => void 0} />
+   · ──────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` to make the element reachable via sequential keyboard navigation.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'searchbox' interactive role must be tabbable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="searchbox" onClick={() => void 0} />
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` to make the element reachable via sequential keyboard navigation.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'spinbutton' interactive role must be tabbable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="spinbutton" onClick={() => void 0} />
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` to make the element reachable via sequential keyboard navigation.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'switch' interactive role must be tabbable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="switch" onClick={() => void 0} />
+   · ────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` to make the element reachable via sequential keyboard navigation.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'textbox' interactive role must be tabbable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="textbox" onClick={() => void 0} />
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` to make the element reachable via sequential keyboard navigation.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'gridcell' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="gridcell" onClick={() => void 0} />
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` or `tabIndex={-1}` to make the element focusable.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'menuitem' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="menuitem" onClick={() => void 0} />
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` or `tabIndex={-1}` to make the element focusable.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'menuitemcheckbox' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="menuitemcheckbox" onClick={() => void 0} />
+   · ──────────────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` or `tabIndex={-1}` to make the element focusable.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'menuitemradio' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="menuitemradio" onClick={() => void 0} />
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` or `tabIndex={-1}` to make the element focusable.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'option' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="option" onClick={() => void 0} />
+   · ────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` or `tabIndex={-1}` to make the element focusable.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'radio' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="radio" onClick={() => void 0} />
+   · ───────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` or `tabIndex={-1}` to make the element focusable.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'slider' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="slider" onClick={() => void 0} />
+   · ────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` or `tabIndex={-1}` to make the element focusable.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'tab' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="tab" onClick={() => void 0} />
+   · ─────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` or `tabIndex={-1}` to make the element focusable.
+
+  ⚠ jsx-a11y(interactive-supports-focus): Elements with the 'treeitem' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:1]
+ 1 │ <div role="treeitem" onClick={() => void 0} />
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Add `tabIndex={0}` or `tabIndex={-1}` to make the element focusable.

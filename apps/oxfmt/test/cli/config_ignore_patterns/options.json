@@ -1,0 +1,18 @@
+[
+  {
+    "cwd": "basic",
+    "args": ["--check"]
+  },
+  {
+    "cwd": "basic",
+    "args": ["--check", "--config", "fmtrc.jsonc"]
+  },
+  {
+    "cwd": "nested_cwd/sub",
+    "args": ["--check", "."]
+  },
+  {
+    "cwd": "nested_cwd/sub",
+    "args": ["--check", "--config", "../.oxfmtrc.json", "."]
+  }
+]

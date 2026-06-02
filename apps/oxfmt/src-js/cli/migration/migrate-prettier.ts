@@ -59,6 +59,8 @@ export async function runMigratePrettier() {
   // NOTE: Some options unsupported by Oxfmt may still be valid when invoking Prettier.
   // However, to avoid inconsistency, we do not enable options that affect Oxfmt.
   const oxfmtrc = await createBlankOxfmtrcFile(cwd);
+
+  let hasSortPackageJsonPlugin = false;
   for (const [key, value] of Object.entries(prettierConfig ?? {})) {
     // Handle plugins - check for prettier-plugin-tailwindcss and warn about others
     if (key === "plugins" && Array.isArray(value)) {
@@ -66,6 +68,8 @@ export async function runMigratePrettier() {
         if (plugin === "prettier-plugin-tailwindcss") {
           // Migrate `prettier-plugin-tailwindcss` options
           migrateTailwindOptions(prettierConfig!, oxfmtrc);
+        } else if (plugin === "prettier-plugin-packagejson") {
+          hasSortPackageJsonPlugin = true;
         } else if (typeof plugin === "string") {
           console.error(`  - plugins: "${plugin}" is not supported, skipping...`);
         } else {
@@ -102,6 +106,14 @@ export async function runMigratePrettier() {
       `  - "printWidth" is not set in Prettier config, defaulting to 80 (Oxfmt default: 100)`,
     );
     oxfmtrc.printWidth = 80;
+  }
+  // `sortPackageJson` is enabled by default in Oxfmt, but Prettier does not have this.
+  // Only enable if `prettier-plugin-packagejson` is used.
+  if (hasSortPackageJsonPlugin) {
+    oxfmtrc.sortPackageJson = {};
+    console.error(`  - Migrated "prettier-plugin-packagejson" to "sortPackageJson"`);
+  } else {
+    oxfmtrc.sortPackageJson = false;
   }
   // `embeddedLanguageFormatting` is not fully supported for JS-in-XXX yet.
   if (oxfmtrc.embeddedLanguageFormatting !== "off") {
@@ -172,7 +184,7 @@ const TAILWIND_OPTION_MAPPING: Record<string, string> = {
 };
 
 /**
- * Migrate prettier-plugin-tailwindcss options to Oxfmt's experimentalTailwindcss format.
+ * Migrate prettier-plugin-tailwindcss options to Oxfmt's sortTailwindcss format.
  *
  * Prettier format:
  * ```json
@@ -186,7 +198,7 @@ const TAILWIND_OPTION_MAPPING: Record<string, string> = {
  * Oxfmt format:
  * ```json
  * {
- *   "experimentalTailwindcss": {
+ *   "sortTailwindcss": {
  *     "config": "./tailwind.config.js",
  *     "functions": ["clsx", "cn"]
  *   }
@@ -219,7 +231,7 @@ function migrateTailwindOptions(
     }
   }
 
-  // Only add experimentalTailwindcss if plugin is used or options are present
-  oxfmtrc.experimentalTailwindcss = tailwindOptions;
-  console.log("Migrated prettier-plugin-tailwindcss options to experimentalTailwindcss");
+  // Only add sortTailwindcss if plugin is used or options are present
+  oxfmtrc.sortTailwindcss = tailwindOptions;
+  console.log("Migrated prettier-plugin-tailwindcss options to sortTailwindcss");
 }

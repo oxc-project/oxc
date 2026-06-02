@@ -86,6 +86,7 @@ declare_oxc_lint!(
     react,
     style,
     config = JsxMaxDepthConfig,
+    version = "1.36.0",
 );
 
 impl Rule for JsxMaxDepth {

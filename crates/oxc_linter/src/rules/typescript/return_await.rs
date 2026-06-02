@@ -101,6 +101,7 @@ declare_oxc_lint!(
     pedantic,
     fix_suggestion,
     config = ReturnAwaitOption,
+    version = "1.12.0",
 );
 
 impl Rule for ReturnAwait {

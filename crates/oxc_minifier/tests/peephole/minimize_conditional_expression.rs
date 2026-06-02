@@ -86,3 +86,22 @@ fn compress_conditional() {
     test_same("x.y ? x.y : bar");
     test_same("x.y ? bar : x.y");
 }
+
+#[test]
+fn test_minimize_conditional_numeric() {
+    // "a ? 1 : 0" => "+a" when a is known boolean
+    test("let x = !y ? 1 : 0", "let x = +!y");
+
+    // "a ? 1 : 0" => "+!!a" when a is not known boolean (no parens needed)
+    test("let x = a ? 1 : 0", "let x = +!!a");
+
+    // "a ? 1 : 0" stays when parens + !! would make it longer
+    test("let x = a + b ? 1 : 0", "let x = a + b ? 1 : 0");
+
+    // "a ? 0 : 1" => "+!a"
+    test("let x = a ? 0 : 1", "let x = +!a");
+    test("let x = !y ? 0 : 1", "let x = +!!y");
+
+    // "a ? 0 : 1" stays when parens would make it same or longer
+    test("let x = a + b ? 0 : 1", "let x = a + b ? 0 : 1");
+}

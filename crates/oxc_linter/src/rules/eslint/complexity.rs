@@ -67,7 +67,7 @@ impl Deref for Complexity {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces a maximum cyclomatic complexity in a program, which is the number
+    /// Enforces a maximum [cyclomatic complexity](https://en.wikipedia.org/wiki/Cyclomatic_complexity) in a program, which is the number
     /// of linearly independent paths in a program.
     ///
     /// ### Why is this bad?
@@ -135,6 +135,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     config = ComplexityConfig,
+    version = "1.37.0",
 );
 
 impl Rule for Complexity {

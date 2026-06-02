@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:7]
  1 │ class A { } A = 0;
@@ -8,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │     ╰── A is re-assigned here
    ·       ╰── A is declared as class here
    ╰────
+  help: Use a different variable name instead of re-assigning the class declaration.
 
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:7]
@@ -16,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │       ╰── A is re-assigned here
    ·       ╰── A is declared as class here
    ╰────
+  help: Use a different variable name instead of re-assigning the class declaration.
 
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:7]
@@ -24,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │          ╰── A is re-assigned here
    ·       ╰── A is declared as class here
    ╰────
+  help: Use a different variable name instead of re-assigning the class declaration.
 
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:1]
@@ -32,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    · │            ╰── A is declared as class here
    · ╰── A is re-assigned here
    ╰────
+  help: Use a different variable name instead of re-assigning the class declaration.
 
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:7]
@@ -40,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │         ╰── A is re-assigned here
    ·       ╰── A is declared as class here
    ╰────
+  help: Use a different variable name instead of re-assigning the class declaration.
 
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:15]
@@ -48,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               │         ╰── A is re-assigned here
    ·               ╰── A is declared as class here
    ╰────
+  help: Use a different variable name instead of re-assigning the class declaration.
 
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:7]
@@ -56,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │     ╰── A is re-assigned here
    ·       ╰── A is declared as class here
    ╰────
+  help: Use a different variable name instead of re-assigning the class declaration.
 
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:7]
@@ -64,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       │            ╰── A is re-assigned here
    ·       ╰── A is declared as class here
    ╰────
+  help: Use a different variable name instead of re-assigning the class declaration.
 
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:18]
@@ -72,3 +81,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                  │    ╰── A is re-assigned here
    ·                  ╰── A is declared as class here
    ╰────
+  help: Use a different variable name instead of re-assigning the class declaration.

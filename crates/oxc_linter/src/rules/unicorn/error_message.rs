@@ -10,15 +10,24 @@ use crate::{AstNode, context::LintContext, rule::Rule, utils::BUILT_IN_ERRORS};
 
 fn missing_message(ctor_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Pass a message to the {ctor_name:1} constructor."))
+        .with_help(
+            "A descriptive message makes the error easier to debug when it is caught or logged.",
+        )
         .with_label(span)
 }
 
 fn empty_message(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Error message should not be an empty string.").with_label(span)
+    OxcDiagnostic::warn("Error message should not be an empty string.")
+        .with_help("Provide a non-empty string that describes what went wrong.")
+        .with_label(span)
 }
 
 fn not_string(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Error message should be a string.").with_label(span)
+    OxcDiagnostic::warn("Error message should be a string.")
+        .with_help(
+            "The first argument to an error constructor should be a string describing the error.",
+        )
+        .with_label(span)
 }
 
 #[derive(Default, Debug, Clone)]
@@ -51,7 +60,8 @@ declare_oxc_lint!(
     /// ```
     ErrorMessage,
     unicorn,
-    style
+    style,
+    version = "0.0.14",
 );
 
 impl Rule for ErrorMessage {
@@ -110,48 +120,112 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("throw new Error('error')", None),
-        ("throw new TypeError('error')", None),
-        ("throw new MyCustomError('error')", None),
-        ("throw new MyCustomError()", None),
-        ("throw generateError()", None),
-        ("throw foo()", None),
-        ("throw err", None),
-        ("throw 1", None),
-        ("new Error(\"message\", 0, 0)", None),
-        ("new Error(foo)", None),
-        ("new Error(...foo)", None),
-        ("new AggregateError(errors, \"message\")", None),
-        ("new NotAggregateError(errors)", None),
-        ("new AggregateError(...foo)", None),
-        ("new AggregateError(...foo, \"\")", None),
-        ("new AggregateError(errors, ...foo)", None),
-        ("new AggregateError(errors, message, \"\")", None),
-        ("new AggregateError(\"\", message, \"\")", None),
+        "throw new Error('error')",
+        "throw new TypeError('error')",
+        "throw new MyCustomError('error')",
+        "throw new MyCustomError()",
+        "throw generateError()",
+        "throw foo()",
+        "throw err",
+        "throw 1",
+        "const err = TypeError('error');
+            throw err;",
+        r#"new Error("message", 0, 0)"#,
+        "new Error(foo)",
+        r"const errors = [];
+            if (condition) {
+                errors.push('hello');
+            }
+            if (errors.length) {
+                throw new Error(errors.join('\\\\n'));
+            }",
+        "new Error(...foo)",
+        "/* global x */
+            const a = x;
+            throw x;",
+        // TODO: Get this passing.
+        // "const Error = function () {};
+        //     const err = new Error({
+        //         name: 'Unauthorized',
+        //     });",
+        r#"new AggregateError(errors, "message")"#,
+        "new NotAggregateError(errors)",
+        "new AggregateError(...foo)",
+        r#"new AggregateError(...foo, "")"#,
+        "new AggregateError(errors, ...foo)",
+        r#"new AggregateError(errors, message, "")"#,
+        r#"new AggregateError("", message, "")"#,
+        r#"new SuppressedError(error, suppressed, "message")"#,
+        "new NotSuppressedError(error, suppressed)",
+        "new SuppressedError(...foo)",
+        r#"new SuppressedError(...foo, "")"#,
+        "new SuppressedError(error, suppressed, ...foo)",
+        r#"new SuppressedError(error, suppressed, message, "")"#,
+        r#"new SuppressedError("", "", message, "")"#,
     ];
 
     let fail = vec![
-        ("throw new Error()", None),
-        ("throw Error()", None),
-        ("throw new Error('')", None),
-        ("throw new Error(``)", None),
-        ("const foo = new TypeError()", None),
-        ("const foo = new SyntaxError()", None),
-        ("throw new Error([])", None),
-        ("throw new Error([foo])", None),
-        ("throw new Error({})", None),
-        ("throw new Error({foo})", None),
-        ("const error = new RangeError;", None),
-        ("new AggregateError(errors)", None),
-        ("AggregateError(errors)", None),
-        ("new AggregateError(errors, \"\")", None),
-        ("new AggregateError(errors, ``)", None),
-        ("new AggregateError(errors, \"\", extraArgument)", None),
-        ("new AggregateError(errors, [])", None),
-        ("new AggregateError(errors, [foo])", None),
-        ("new AggregateError(errors, {})", None),
-        ("new AggregateError(errors, {foo})", None),
-        ("const error = new AggregateError;", None),
+        "throw new Error()",
+        "throw Error()",
+        "throw new Error('')",
+        "throw new Error(``)",
+        "const err = new Error();
+            throw err;",
+        "let err = 1;
+            err = new Error();
+            throw err;",
+        "let err = new Error();
+            err = 1;
+            throw err;",
+        "const foo = new TypeError()",
+        "const foo = new SyntaxError()",
+        // TODO: Get all of the comments tests here passing.
+        // "const errorMessage = Object.freeze({errorMessage: 1}).errorMessage;
+        //     throw new Error(errorMessage)",
+        "throw new Error([])",
+        "throw new Error([foo])",
+        // "throw new Error([0][0])",
+        "throw new Error({})",
+        "throw new Error({foo})",
+        // "throw new Error({foo: 0}.foo)",
+        // "throw new Error(lineNumber=2)",
+        "const error = new RangeError;",
+        "throw Object.assign(new Error(), {foo})",
+        "new AggregateError(errors)",
+        "AggregateError(errors)",
+        r#"new AggregateError(errors, "")"#,
+        "new AggregateError(errors, ``)",
+        r#"new AggregateError(errors, "", extraArgument)"#,
+        // "const errorMessage = Object.freeze({errorMessage: 1}).errorMessage;
+        //     throw new AggregateError(errors, errorMessage)",
+        "new AggregateError(errors, [])",
+        "new AggregateError(errors, [foo])",
+        // "new AggregateError(errors, [0][0])",
+        "new AggregateError(errors, {})",
+        "new AggregateError(errors, {foo})",
+        // "new AggregateError(errors, {foo: 0}.foo)",
+        // "new AggregateError(errors, lineNumber=2)",
+        "const error = new AggregateError;",
+        // TODO: Update the rule to get these tests working.
+        // "new SuppressedError(error, suppressed,)",
+        // "new SuppressedError(error,)",
+        // "new SuppressedError()",
+        // "SuppressedError(error, suppressed,)",
+        // "SuppressedError(error,)",
+        // "SuppressedError()",
+        // r#"new SuppressedError(error, suppressed, "")"#,
+        // "new SuppressedError(error, suppressed, ``)",
+        // r#"new SuppressedError(error, suppressed, "", options)"#,
+        // "const errorMessage = Object.freeze({errorMessage: 1}).errorMessage;
+        //     throw new SuppressedError(error, suppressed, errorMessage)",
+        // "new SuppressedError(error, suppressed, [])",
+        // "new SuppressedError(error, suppressed, [foo])",
+        // "new SuppressedError(error, suppressed, [0][0])",
+        // "new SuppressedError(error, suppressed, {})",
+        // "new SuppressedError(error, suppressed, {foo})",
+        // "new SuppressedError(error, suppressed, {foo: 0}.foo)",
+        // "new SuppressedError(error, suppressed, lineNumber=2)",
+        // "const error = new SuppressedError;",
     ];
 
     Tester::new(ErrorMessage::NAME, ErrorMessage::PLUGIN, pass, fail).test_and_snapshot();

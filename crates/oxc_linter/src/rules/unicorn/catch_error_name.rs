@@ -6,7 +6,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use oxc_str::CompactStr;
 use oxc_syntax::identifier::is_identifier_name;
 use schemars::JsonSchema;
 
@@ -94,6 +95,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = CatchErrorNameConfig,
+    version = "0.0.14",
 );
 
 impl Rule for CatchErrorName {

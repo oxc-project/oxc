@@ -196,8 +196,8 @@ macro_rules! impl_ast_node_vec_for_option {
                             parent: self.parent,
                             allocator: self.allocator,
                             following_span_start: inner_iter
-                                .next()
-                                .and_then(|opt| opt.as_ref().map(|n| n.span().start))
+                                // Skip over `None` (elision) to find the next real element's span
+                                .find_map(|opt| opt.as_ref().map(|n| n.span().start))
                                 .unwrap_or(following),
                         }
                     }))
@@ -228,11 +228,25 @@ macro_rules! impl_ast_node_vec_for_option {
                 let following = self.following_span_start;
                 let get_span = self.get_following_span_start;
                 allocator
-                    .alloc(self.inner.next().map(|inner| AstNode {
-                        parent: self.parent,
-                        inner,
-                        allocator,
-                        following_span_start: self.inner.peek().map_or(following, |n| get_span(*n)),
+                    .alloc(self.inner.next().map(|inner| {
+                        AstNode {
+                            parent: self.parent,
+                            inner,
+                            allocator,
+                            following_span_start: match self.inner.peek().map(|n| get_span(n)) {
+                                Some(span) if span != 0 => span,
+                                // Skip over `None` (elision) to find the next real element's span
+                                Some(_) => self
+                                    .inner
+                                    .clone()
+                                    .find_map(|n| {
+                                        let span = get_span(n);
+                                        (span != 0).then_some(span)
+                                    })
+                                    .unwrap_or(following),
+                                None => following,
+                            },
+                        }
                     }))
                     .as_ref()
             }

@@ -62,6 +62,7 @@ declare_oxc_lint!(
     react,
     style,
     config = PreferES6ClassOptionType,
+    version = "0.5.0",
 );
 
 impl Rule for PreferEs6Class {

@@ -41,8 +41,6 @@
 //! [`Visit`]: <http://docs.rs/oxc_ast_visit>
 //! [`VisitMut`]: <http://docs.rs/oxc_ast_visit>
 
-#![warn(missing_docs)]
-
 #[cfg(feature = "serialize")]
 mod serialize;
 

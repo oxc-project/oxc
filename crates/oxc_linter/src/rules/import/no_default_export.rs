@@ -5,7 +5,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_default_export_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer named exports").with_label(span)
+    OxcDiagnostic::warn("Prefer named exports")
+        .with_help("Replace this default export with a named export.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -41,7 +43,8 @@ declare_oxc_lint!(
     /// ```
     NoDefaultExport,
     import,
-    restriction
+    restriction,
+    version = "0.2.14",
 );
 
 impl Rule for NoDefaultExport {

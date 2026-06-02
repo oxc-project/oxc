@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::has_ambient_typescript_ancestor};
 
 fn vars_on_top_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("All 'var' declarations must be at the top of the function scope.")
@@ -89,6 +89,7 @@ declare_oxc_lint!(
     VarsOnTop,
     eslint,
     style,
+    version = "0.15.4",
 );
 
 impl Rule for VarsOnTop {
@@ -101,7 +102,7 @@ impl Rule for VarsOnTop {
         }
 
         // Skip TypeScript ambient declarations (declare global, declare module, etc.)
-        if is_in_ambient_typescript_context(node, ctx) {
+        if has_ambient_typescript_ancestor(node.id(), ctx.nodes()) {
             return;
         }
 
@@ -187,20 +188,18 @@ fn global_var_check(node: &AstNode, parent: &Program, ctx: &LintContext) {
 fn block_scope_var_check(node: &AstNode, ctx: &LintContext) {
     let parent = ctx.nodes().parent_node(node.id());
     match parent.kind() {
-        AstKind::BlockStatement(block) => {
-            if check_var_on_top_in_function_scope(node, &block.body, parent, ctx) {
-                return;
-            }
+        AstKind::BlockStatement(block)
+            if check_var_on_top_in_function_scope(node, &block.body, parent, ctx) =>
+        {
+            return;
         }
-        AstKind::FunctionBody(block) => {
-            if check_var_on_top_in_function_scope(node, &block.statements, parent, ctx) {
-                return;
-            }
+        AstKind::FunctionBody(block)
+            if check_var_on_top_in_function_scope(node, &block.statements, parent, ctx) =>
+        {
+            return;
         }
-        AstKind::StaticBlock(block) => {
-            if is_var_on_top(node, &block.body, ctx) {
-                return;
-            }
+        AstKind::StaticBlock(block) if is_var_on_top(node, &block.body, ctx) => {
+            return;
         }
         _ => {}
     }
@@ -223,15 +222,6 @@ fn check_var_on_top_in_function_scope(
     }
 
     false
-}
-
-fn is_in_ambient_typescript_context(node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes().ancestors(node.id()).any(|ancestor| match ancestor.kind() {
-        AstKind::TSModuleDeclaration(module) => module.declare,
-        // No need to check `declare` field, as `global` is only valid in ambient context
-        AstKind::TSGlobalDeclaration(_) => true,
-        _ => false,
-    })
 }
 
 #[test]

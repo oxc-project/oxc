@@ -39,7 +39,8 @@ declare_oxc_lint!(
     /// ```
     JsxNoNewFunctionAsProp,
     react_perf,
-    perf
+    perf,
+    version = "0.2.3",
 );
 
 impl ReactPerfRule for JsxNoNewFunctionAsProp {

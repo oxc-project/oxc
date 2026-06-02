@@ -1,85 +1,86 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, key}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, key}), {},);
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, key,}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, key}), Object.create(null));
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, key}), Object.create(null),);
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, key}), (( {} )));
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, key}), (( Object.create(null) )),);
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce( (( object => ({...object, key}) )) , {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce( (( (object) => ({...object, key}) )) , {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce( (( (object,) => ({...object, key}) )) , {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, [((key))] : ((value))}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
-   ╭─[prefer_object_from_entries.tsx:8:11]
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+   ╭─[prefer_object_from_entries.tsx:8:32]
  7 │                                 Object
  8 │                             )).assign(
    ·                                ──────
@@ -87,210 +88,217 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, 0: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, true: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, 0n: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, undefined: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, null: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, var: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, for: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, default: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, string: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, "string": value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, [0]: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, [true]: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, [0n]: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, [undefined]: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, [null]: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, ["for"]: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, [string]: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, ["string"]: value}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:31]
  1 │ pairs.reduce(object => Object.assign(object, {key}), {});
    ·                               ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:31]
  1 │ pairs.reduce(object => Object.assign(object, {key,}), {});
    ·                               ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:31]
  1 │ pairs.reduce(object => Object.assign(object, {[key]: value,}), {});
    ·                               ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce((object, element, index, array) => ({...object, key}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce((object, [key, value], index, array,) => ({...object, [key]: value + index + array.length}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, key: function (object) { return object; }}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, method: async () => {}}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, method: async function * (){}}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+   ╭─[prefer_object_from_entries.tsx:1:7]
+ 1 │ array.reduce<Record<string, Data & {b?: string}>>((result, entry) => ({...result, [entry.id]: entry.data}), {});
+   ·       ──────
+   ╰────
+  help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
+
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:1]
  1 │ _.fromPairs(pairs)
    · ───────────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:1]
  1 │ lodash.fromPairs(pairs)
    · ────────────────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:1]
  1 │ myFromPairsFunction(pairs)
    · ───────────────────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
-  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+  ⚠ unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:1]
  1 │ utils.object.foo(pairs)
    · ────────────────

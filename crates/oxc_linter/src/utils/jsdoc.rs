@@ -16,14 +16,23 @@ pub fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
     jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(&tag.kind.parsed()))
 }
 
-pub fn is_missing_special_tag(jsdoc_tags: &[&JSDocTag], resolved_tag_name: &str) -> bool {
-    jsdoc_tags.iter().all(|tag| tag.kind.parsed() != resolved_tag_name)
+pub fn is_missing_special_tag<'a, 'b>(
+    jsdoc_tags: impl IntoIterator<Item = &'b JSDocTag<'a>>,
+    resolved_tag_name: &str,
+) -> bool
+where
+    'a: 'b,
+{
+    jsdoc_tags.into_iter().all(|tag| tag.kind.parsed() != resolved_tag_name)
 }
 
-pub fn is_duplicated_special_tag(
-    jsdoc_tags: &Vec<&JSDocTag>,
+pub fn is_duplicated_special_tag<'a, 'b>(
+    jsdoc_tags: impl IntoIterator<Item = &'b JSDocTag<'a>>,
     resolved_returns_tag_name: &str,
-) -> Option<Span> {
+) -> Option<Span>
+where
+    'a: 'b,
+{
     let mut returns_found = false;
     for tag in jsdoc_tags {
         if tag.kind.parsed() == resolved_returns_tag_name {
@@ -60,11 +69,23 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
     semantic: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
     let mut current_node = node;
+    let source_function_id = node.id();
     // Whether the node has attached JSDoc or not is determined by `JSDocBuilder`
     while semantic.jsdoc().get_all_by_node(semantic.nodes(), current_node).is_none() {
         // Tie-breaker, otherwise every loop will end at `Program` node!
         // Maybe more checks should be added
         match current_node.kind() {
+            // Do not leak an outer function's JSDoc into nested function expressions.
+            // Keep walking only for the source function node itself, because function
+            // JSDoc can be attached on wrapper nodes like `VariableDeclaration`.
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+                if current_node.id() != source_function_id =>
+            {
+                return None;
+            }
+            // Do not apply object-level docs to functions nested in object literals.
+            // e.g. `const x = /** ... */ { method(arg) {} }`
+            AstKind::ObjectExpression(_) |
             AstKind::Program(_) => return None,
             AstKind::VariableDeclaration(_)
             | AstKind::MethodDefinition(_)

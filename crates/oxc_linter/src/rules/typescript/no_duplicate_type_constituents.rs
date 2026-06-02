@@ -65,6 +65,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     config = NoDuplicateTypeConstituentsConfig,
+    version = "1.12.0",
 );
 
 impl Rule for NoDuplicateTypeConstituents {

@@ -1,4 +1,6 @@
-use oxc_ast::ast::{AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty};
+use oxc_ast::ast::{
+    AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty, VariableDeclaration,
+};
 use oxc_ast::{AstKind, ast::VariableDeclarationKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -92,6 +94,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = PreferConst,
+    version = "1.43.0",
 );
 
 impl Rule for PreferConst {
@@ -194,7 +197,7 @@ impl PreferConst {
     /// Returns `noop` if the fix should not be applied.
     fn fix_let_to_const<'a>(
         fixer: RuleFixer<'_, 'a>,
-        decl: &oxc_ast::ast::VariableDeclaration<'a>,
+        decl: &VariableDeclaration<'a>,
         declarator_index: usize,
         all_const: bool,
         is_for_in_of_init: bool,
@@ -213,14 +216,18 @@ impl PreferConst {
         if !is_for_in_of_init && decl.declarations.iter().any(|d| d.init.is_none()) {
             return fixer.noop();
         }
-        // calculate location of `let` keyword
+        // Replace the entire declaration span to prevent conflicts with other rules
+        // (e.g., no-useless-undefined) that might also modify this declaration.
+        // By replacing the full span, overlapping fixes will conflict and only one will be applied.
         let decl_span = decl.span();
         let decl_text = decl_span.source_text(ctx.source_text());
-        #[expect(clippy::cast_possible_truncation)]
-        let let_span = decl_text.find("let").map(|start| {
-            Span::new(decl_span.start + start as u32, decl_span.start + start as u32 + 3)
-        });
-        if let Some(let_span) = let_span { fixer.replace(let_span, "const") } else { fixer.noop() }
+
+        if let Some(let_pos) = decl_text.find("let") {
+            let new_text = format!("{}const{}", &decl_text[..let_pos], &decl_text[let_pos + 3..]);
+            fixer.replace(decl_span, new_text)
+        } else {
+            fixer.noop()
+        }
     }
 
     /// Check if an assignment target contains any member expressions (recursively)
@@ -286,10 +293,19 @@ impl PreferConst {
             return false;
         }
 
+        let references: Vec<_> = symbol_table.get_resolved_references(symbol_id).collect();
+        let symbol_scope = symbol_table.symbol_scope_id(symbol_id);
+        let has_cross_scope_write = references
+            .iter()
+            .filter(|r| r.is_write())
+            .any(|r| ctx.nodes().get_node(r.node_id()).scope_id() != symbol_scope);
+        if has_cross_scope_write {
+            return false;
+        }
+
         // In "all" mode, check if this variable has more than one write
         // (one is the destructuring assignment itself)
         if matches!(self.0.destructuring, Destructuring::All) {
-            let references: Vec<_> = symbol_table.get_resolved_references(symbol_id).collect();
             let write_count = references.iter().filter(|r| r.is_write()).count();
             if write_count > 1 {
                 return false;
@@ -305,21 +321,65 @@ impl PreferConst {
         symbol_table: &oxc_semantic::Scoping,
         ctx: &LintContext<'_>,
     ) -> bool {
-        use oxc_ast::ast::AssignmentTargetMaybeDefault;
-
         for target in array_target.elements.iter().flatten() {
-            if let AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) = target {
-                // Get the symbol for this identifier
-                if let Some(reference_id) = ident.reference_id.get()
-                    && let Some(symbol_id) =
-                        ctx.semantic().scoping().get_reference(reference_id).symbol_id()
-                    && !self.can_identifier_be_const(symbol_id, symbol_table, ctx)
-                {
-                    return false;
-                }
+            if !self.can_assignment_target_maybe_default_be_const(target, symbol_table, ctx) {
+                return false;
             }
         }
         true
+    }
+
+    fn can_assignment_target_maybe_default_be_const(
+        &self,
+        target: &AssignmentTargetMaybeDefault,
+        symbol_table: &oxc_semantic::Scoping,
+        ctx: &LintContext<'_>,
+    ) -> bool {
+        match target {
+            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) => {
+                if let Some(symbol_id) =
+                    ctx.semantic().scoping().get_reference(ident.reference_id()).symbol_id()
+                {
+                    return self.can_identifier_be_const(symbol_id, symbol_table, ctx);
+                }
+                true
+            }
+            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
+                self.can_assignment_target_be_const(&t.binding, symbol_table, ctx)
+            }
+            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(array_target) => {
+                self.can_all_destructuring_identifiers_be_const(array_target, symbol_table, ctx)
+            }
+            AssignmentTargetMaybeDefault::ObjectAssignmentTarget(obj_target) => {
+                self.can_all_destructuring_identifiers_be_const_obj(obj_target, symbol_table, ctx)
+            }
+            _ => true,
+        }
+    }
+
+    fn can_assignment_target_be_const(
+        &self,
+        target: &AssignmentTarget,
+        symbol_table: &oxc_semantic::Scoping,
+        ctx: &LintContext<'_>,
+    ) -> bool {
+        match target {
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                if let Some(symbol_id) =
+                    ctx.semantic().scoping().get_reference(ident.reference_id()).symbol_id()
+                {
+                    return self.can_identifier_be_const(symbol_id, symbol_table, ctx);
+                }
+                true
+            }
+            AssignmentTarget::ArrayAssignmentTarget(array_target) => {
+                self.can_all_destructuring_identifiers_be_const(array_target, symbol_table, ctx)
+            }
+            AssignmentTarget::ObjectAssignmentTarget(obj_target) => {
+                self.can_all_destructuring_identifiers_be_const_obj(obj_target, symbol_table, ctx)
+            }
+            _ => true,
+        }
     }
 
     /// Check if all identifiers in an object destructuring assignment can be const
@@ -337,17 +397,26 @@ impl PreferConst {
             match prop {
                 AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
                     // Get the symbol for this identifier
-                    if let Some(reference_id) = ident.binding.reference_id.get()
-                        && let Some(symbol_id) =
-                            ctx.semantic().scoping().get_reference(reference_id).symbol_id()
+                    if let Some(symbol_id) = ctx
+                        .semantic()
+                        .scoping()
+                        .get_reference(ident.binding.reference_id())
+                        .symbol_id()
                         && !self.can_identifier_be_const(symbol_id, symbol_table, ctx)
                     {
                         return false;
                     }
                 }
-                AssignmentTargetProperty::AssignmentTargetPropertyProperty(_) => {
-                    // For complex properties, we can't easily check, so allow it
-                    // This is handled by the member expression check above
+                AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
+                    // Handle property-style bindings like `{ key: value }`,
+                    // including default values and nested patterns.
+                    if !self.can_assignment_target_maybe_default_be_const(
+                        &p.binding,
+                        symbol_table,
+                        ctx,
+                    ) {
+                        return false;
+                    }
                 }
             }
         }
@@ -436,9 +505,14 @@ impl PreferConst {
             return false;
         }
 
-        // For variables without initializers, check if there's exactly one write-only reference
-        // (not read+write like `a = a + 1`)
-        // The write must be in the same scope and not inside any control flow or loops
+        // For variables without initializers, there must be exactly one write in total.
+        // Then, that single write must be write-only (not read+write like `a += 1`).
+        // The write must be in the same scope and, in general, not inside control flow or loops
+        // (with explicit exceptions handled below, such as variables declared in for-in/of bodies).
+        if write_count != 1 {
+            return false;
+        }
+
         let mut write_only_refs = references.iter().filter(|r| r.is_write() && !r.is_read());
 
         let Some(write_ref) = write_only_refs.next() else {
@@ -679,6 +753,8 @@ fn test() {
         ("var x = 0;", None),
         ("let x;", None),
         ("let x; { x = 0; } foo(x);", None),
+        ("let x; x = 0; x += 1;", None),
+        ("let x; x = 0; x = x + 1;", None),
         ("let x = 0; x = 1;", None),
         ("using resource = fn();", None), // { "sourceType": "module", "ecmaVersion": 2026, },
         ("await using resource = fn();", None), // { "sourceType": "module", "ecmaVersion": 2026, },
@@ -740,6 +816,44 @@ fn test() {
         ),
         ("var a; { var b; ({ a, b } = obj); }", None),
         ("let a; { let b; ({ a, b } = obj); }", None),
+        (
+            "
+                let someOuterScopeVariable: string;
+
+                async function generatorFunction() {
+                    return {
+                        inner: 'foo',
+                        outer: 'bar',
+                    };
+                }
+
+                async function myFunction() {
+                    let innerScope: string;
+                    ({inner: innerScope, outer: someOuterScopeVariable} = await generatorFunction());
+                    console.info(`${innerScope}, ${someOuterScopeVariable}`);
+                }
+            ",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ),
+        (
+            "
+                let someOuterScopeVariable: string;
+
+                function generatorFunction() {
+                    return {
+                        inner: 'foo',
+                        outer: 'bar',
+                    };
+                }
+
+                function myFunction() {
+                    let innerScope: string;
+                    ({inner: innerScope = 'x', outer: someOuterScopeVariable} = generatorFunction());
+                    console.info(`${innerScope}, ${someOuterScopeVariable}`);
+                }
+            ",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ),
         ("var a; { var b; ([ a, b ] = obj); }", None),
         ("let a; { let b; ([ a, b ] = obj); }", None),
         ("let x; { x = 0; foo(x); }", None),
@@ -1022,10 +1136,12 @@ fn test() {
             None,
         ),
         (
-            // The original ESLint rule requires 2 passes to get the correct fix here, while
-            // we compare to the final fixed output directly.
+            // We should also be fixing the inner `let` to `const`.
+            // But to avoid conflicting with other fixers, we replace the entire statement.
+            // This means the user would have to run oxlint --fix multiple times to get all fixes.
+            // But that's better than the alternative (partial fixes causing syntax errors).
             "let someFunc = () => { let a = 1, b = 2; foo(a, b) }",
-            "const someFunc = () => { const a = 1, b = 2; foo(a, b) }",
+            "const someFunc = () => { let a = 1, b = 2; foo(a, b) }",
             None,
         ),
         ("let foo = undefined;", "const foo = undefined;", None),

@@ -63,7 +63,8 @@ declare_oxc_lint!(
     PreferArrayFlat,
     unicorn,
     pedantic,
-    conditional_dangerous_fix
+    conditional_dangerous_fix,
+    version = "0.0.20",
 );
 
 impl Rule for PreferArrayFlat {
@@ -243,16 +244,24 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
 // `[].concat(maybeArray)`
 // `[].concat(...array)`
 fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
-    if is_method_call(call_expr, None, Some(&["concat"]), Some(1), Some(1)) {
-        // `array.concat(maybeArray)`
-        if let Expression::ArrayExpression(array_expr) =
-            call_expr.callee.get_member_expr().unwrap().object()
-        {
-            if !array_expr.elements.is_empty() {
-                return;
-            }
-            ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
+    if call_expr.optional || !is_method_call(call_expr, None, Some(&["concat"]), Some(1), Some(1)) {
+        return;
+    }
+
+    let Some(member_expr) = call_expr.callee.as_member_expression() else {
+        return;
+    };
+
+    if member_expr.optional() {
+        return;
+    }
+
+    // `array.concat(maybeArray)`
+    if let Expression::ArrayExpression(array_expr) = member_expr.object() {
+        if !array_expr.elements.is_empty() {
+            return;
         }
+        ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
     }
 }
 
@@ -263,6 +272,10 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
         return;
     };
+
+    if call_expr.optional || member_expr.optional() {
+        return;
+    }
 
     if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
         let is_call_call = is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2));
@@ -298,6 +311,25 @@ fn test() {
         "array.flatMap((x, y) => x)",
         // "array.flatMap((x) => { return x; })",
         "array.flatMap(x => y)",
+        // TODO: Get this passing.
+        // "const randomObject = {
+        //         flatMap(function_) {
+        //             function_();
+        //         },
+        //     };
+        //     randomObject.flatMap(x => x);",
+        // "Effects.flatMap(x => x)",
+        // "const effects = {
+        //         flatMap(function_) {
+        //             function_();
+        //         },
+        //     };
+        //     effects.flatMap(x => x);",
+        // "const effects = new Set(); effects.flatMap(x => x);",
+        // "const mapping = new Map(); mapping.flatMap(x => x);",
+        // r#"const text = ""; text.flatMap(x => x);"#,
+        // "const handler = () => {}; handler.flatMap(x => x);",
+        // "const collection = new Foo(); collection.flatMap(x => x);",
         "new array.reduce((a, b) => a.concat(b), [])",
         "array.reduce",
         "reduce((a, b) => a.concat(b), [])",
@@ -345,8 +377,8 @@ fn test() {
         "({}).concat(array)",
         "[].concat()",
         "[].concat(array, EXTRA_ARGUMENT)",
-        // "[]?.concat(array)",
-        // "[].concat?.(array)",
+        "[]?.concat(array)",
+        "[].concat?.(array)",
         "new [].concat(...array)",
         "[][concat](...array)",
         "[].notConcat(...array)",
@@ -354,8 +386,8 @@ fn test() {
         "({}).concat(...array)",
         "[].concat()",
         "[].concat(...array, EXTRA_ARGUMENT)",
-        // "[]?.concat(...array)",
-        // "[].concat?.(...array)",
+        "[]?.concat(...array)",
+        "[].concat?.(...array)",
         "new [].concat.apply([], array)",
         "[].concat.apply",
         "[].concat.apply([], ...array)",
@@ -368,8 +400,8 @@ fn test() {
         "[][concat].apply([], array)",
         "[].concat.notApply([], array)",
         "[].notConcat.apply([], array)",
-        // "[].concat.apply?.([], array)",
-        // "[].concat?.apply([], array)",
+        "[].concat.apply?.([], array)",
+        "[].concat?.apply([], array)",
         "[]?.concat.apply([], array)",
         "new Array.prototype.concat.apply([], array)",
         "Array.prototype.concat.apply",
@@ -385,8 +417,8 @@ fn test() {
         "Array.prototype.notConcat.apply([], array)",
         "Array.notPrototype.concat.apply([], array)",
         "NotArray.prototype.concat.apply([], array)",
-        // "Array.prototype.concat.apply?.([], array)",
-        // "Array.prototype.concat?.apply([], array)",
+        "Array.prototype.concat.apply?.([], array)",
+        "Array.prototype.concat?.apply([], array)",
         "Array.prototype?.concat.apply([], array)",
         "Array?.prototype.concat.apply([], array)",
         "object.Array.prototype.concat.apply([], array)",
@@ -408,7 +440,15 @@ fn test() {
         "array.flatMap(x => x)",
         "array?.flatMap(x => x)",
         "function foo(){return[].flatMap(x => x)}",
-        "foo.flatMap(x => x) instanceof Array",
+        "foo.flatMap(x => x)instanceof Array",
+        "array.flatMap((x) => x)",
+        "Foo.bar.flatMap(x => x)",
+        "const values = getValues(); values.flatMap(x => x);",
+        "const values = []; values.flatMap(x => x);",
+        "const Items = []; Items.flatMap(x => x);",
+        "for (const value of values) {
+                value.flatMap(x => x);
+            }",
         "array.reduce((a, b) => a.concat(b), [])",
         "array?.reduce((a, b) => a.concat(b), [])",
         "function foo(){return[].reduce((a, b) => a.concat(b), [])}",
@@ -466,11 +506,11 @@ fn test() {
         // "lodash.flatten(array)",
         // "underscore.flatten(array)",
         "before()
-			Array.prototype.concat.apply([], [array].concat(array))",
+            Array.prototype.concat.apply([], [array].concat(array))",
         "before()
-			Array.prototype.concat.apply([], +1)",
+            Array.prototype.concat.apply([], +1)",
         "before()
-			Array.prototype.concat.call([], +1)",
+            Array.prototype.concat.call([], +1)",
         "Array.prototype.concat.apply([], (0, array))",
         "Array.prototype.concat.call([], (0, array))",
         "async function a() { return [].concat(await getArray()); }",
@@ -478,21 +518,21 @@ fn test() {
         // "async function a() { return _.flatten(await getArray()); }",
         // "async function a() { return _.flatten((await getArray())); }",
         "before()
-			Array.prototype.concat.apply([], 1)",
+            Array.prototype.concat.apply([], 1)",
         "before()
-			Array.prototype.concat.call([], 1)",
+            Array.prototype.concat.call([], 1)",
         "before()
-			Array.prototype.concat.apply([], 1.)",
+            Array.prototype.concat.apply([], 1.)",
         "before()
-			Array.prototype.concat.call([], 1.)",
+            Array.prototype.concat.call([], 1.)",
         "before()
-			Array.prototype.concat.apply([], .1)",
+            Array.prototype.concat.apply([], .1)",
         "before()
-			Array.prototype.concat.call([], .1)",
+            Array.prototype.concat.call([], .1)",
         "before()
-			Array.prototype.concat.apply([], 1.0)",
+            Array.prototype.concat.apply([], 1.0)",
         "before()
-			Array.prototype.concat.call([], 1.0)",
+            Array.prototype.concat.call([], 1.0)",
         "[].concat(some./**/array)",
         "[/**/].concat(some./**/array)",
         "[/**/].concat(some.array)",
@@ -502,6 +542,24 @@ fn test() {
         ("array.flatMap(x => x)", "array.flat()"),
         ("array.reduce((a, b) => a.concat(b), [])", "array.flat()"),
         ("array.reduce((a, b) => [...a, ...b], [])", "array.flat()"),
+        ("Foo.bar.flatMap(x => x)", "Foo.bar.flat()"),
+        (
+            "const values = getValues(); values.flatMap(x => x);",
+            "const values = getValues(); values.flat();",
+        ),
+        ("const values = []; values.flatMap(x => x);", "const values = []; values.flat();"),
+        ("const Items = []; Items.flatMap(x => x);", "const Items = []; Items.flat();"),
+        (
+            "for (const value of values) {
+                value.flatMap(x => x);
+            }",
+            "for (const value of values) {
+                value.flat();
+            }",
+        ),
+        // TODO: Get these passing.
+        // ("/**/[].concat.apply([], array)", "/**/array.flat()"),
+        // ("Array.prototype.concat.apply([], array)", "array.flat()"),
     ];
 
     Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::PLUGIN, pass, fail)

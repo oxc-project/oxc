@@ -105,12 +105,12 @@ impl Display for Quantifier<'_> {
             (0, None) => f.write_str("*")?,
             (1, None) => f.write_str("+")?,
             (0, Some(1)) => f.write_str("?")?,
-            (min, Some(max)) if min == max => write!(f, "{{{min}}}",)?,
+            (min, Some(max)) if min == max => write!(f, "{{{min}}}")?,
             (min, Some(max)) => {
-                write!(f, "{{{min},{max}}}",)?;
+                write!(f, "{{{min},{max}}}")?;
             }
             (min, None) => {
-                write!(f, "{{{min},}}",)?;
+                write!(f, "{{{min},}}")?;
             }
         }
 

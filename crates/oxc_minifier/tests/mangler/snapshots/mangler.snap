@@ -23,8 +23,8 @@ function foo(e) {
 }
 
 import { x } from 's'; export { x }
-import { x } from "s";
-export { x };
+import { x as e } from "s";
+export { e as x };
 
 Object.defineProperty(exports, '__esModule', { value: true })
 Object.defineProperty(exports, "__esModule", { value: true });

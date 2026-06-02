@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -12,7 +12,7 @@ impl<'a> PeepholeOptimizations {
     /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9860>
     pub fn try_minimize_if(
         if_stmt: &mut IfStatement<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
         if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
@@ -126,7 +126,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
-    fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut Ctx<'a, '_>) {
+    fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Statement::IfStatement(if2) = &mut if_stmt.consequent
             && if2.consequent.is_jump_statement()
             && if2.alternate.is_some()

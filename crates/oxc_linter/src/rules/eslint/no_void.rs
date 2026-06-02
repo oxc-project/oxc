@@ -55,6 +55,7 @@ declare_oxc_lint!(
     restriction,
     suggestion,
     config = NoVoid,
+    version = "0.2.5",
 );
 
 impl Rule for NoVoid {

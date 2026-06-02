@@ -116,7 +116,9 @@ declare_oxc_lint!(
     NoPromiseExecutorReturn,
     eslint,
     pedantic,
+    pending,
     config = NoPromiseExecutorReturnConfig,
+    version = "1.33.0",
 );
 
 impl Rule for NoPromiseExecutorReturn {

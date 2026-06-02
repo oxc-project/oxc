@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
    ╭─[prefer_object_spread.tsx:1:1]
  1 │ Object.assign({}, foo)

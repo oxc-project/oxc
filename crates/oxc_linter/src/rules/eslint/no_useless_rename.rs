@@ -77,6 +77,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     config = NoUselessRenameConfig,
+    version = "0.2.14",
 );
 
 impl Rule for NoUselessRename {
@@ -147,25 +148,21 @@ impl Rule for NoUselessRename {
                     }
                 }
             }
-            AstKind::ImportSpecifier(import_specifier) => {
+            AstKind::ImportSpecifier(import_specifier)
                 if !self.ignore_import
                     && import_specifier.imported.span() != import_specifier.local.span
-                    && import_specifier.local.name == import_specifier.imported.name()
-                {
-                    ctx.diagnostic_with_fix(
-                        no_useless_rename_diagnostic(import_specifier.local.span),
-                        |fixer| {
-                            // Always replace the entire specifier with just the local identifier
-                            // The local identifier is the name that will be used in the code
-                            let local_text = import_specifier
-                                .local
-                                .span
-                                .source_text(ctx.source_text())
-                                .to_string();
-                            fixer.replace(import_specifier.span, local_text)
-                        },
-                    );
-                }
+                    && import_specifier.local.name == import_specifier.imported.name() =>
+            {
+                ctx.diagnostic_with_fix(
+                    no_useless_rename_diagnostic(import_specifier.local.span),
+                    |fixer| {
+                        // Always replace the entire specifier with just the local identifier
+                        // The local identifier is the name that will be used in the code
+                        let local_text =
+                            import_specifier.local.span.source_text(ctx.source_text()).to_string();
+                        fixer.replace(import_specifier.span, local_text)
+                    },
+                );
             }
             AstKind::ExportNamedDeclaration(export_named_decl) => {
                 if self.ignore_export {

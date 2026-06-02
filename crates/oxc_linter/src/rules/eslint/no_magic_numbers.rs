@@ -18,11 +18,15 @@ enum NoMagicNumberReportReason {
 }
 
 fn must_use_const_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Number constants declarations must use 'const'.").with_label(span)
+    OxcDiagnostic::warn("Number constants declarations must use 'const'.")
+        .with_help("Use 'const' instead of 'let' or 'var' to declare number constants to make their immutability explicit.")
+        .with_label(span)
 }
 
 fn no_magic_number_diagnostic(span: Span, raw: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("No magic number: {raw}")).with_label(span)
+    OxcDiagnostic::warn(format!("No magic number: {raw}"))
+        .with_help("Use a named constant instead of a magic number to make the code more readable and maintainable.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -239,7 +243,8 @@ declare_oxc_lint!(
     eslint,
     style,
     pending, // TODO: enforceConst, probably copy from https://github.com/oxc-project/oxc/pull/5144
-    config = NoMagicNumbersConfig
+    config = NoMagicNumbersConfig,
+    version = "0.9.3",
 );
 
 #[derive(Debug)]

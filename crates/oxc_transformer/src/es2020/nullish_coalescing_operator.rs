@@ -35,22 +35,17 @@ use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
-pub struct NullishCoalescingOperator<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct NullishCoalescingOperator;
 
-impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl NullishCoalescingOperator {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
@@ -67,7 +62,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a, '_> 
     }
 }
 
-impl<'a> NullishCoalescingOperator<'a, '_> {
+impl<'a> NullishCoalescingOperator {
+    #[expect(clippy::unused_self)]
     fn transform_logical_expression(
         &self,
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
@@ -94,7 +90,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                     // Check binding is not mutated.
                     // TODO(improve-on-babel): Remove this check. Whether binding is mutated or not is not relevant.
                     if ctx.scoping().get_resolved_references(symbol_id).all(|r| !r.is_write()) {
-                        let binding = BoundIdentifier::new(ident.name.into(), symbol_id);
+                        let binding = BoundIdentifier::new(ident.name, symbol_id);
                         let ident_span = ident.span;
                         return Self::create_conditional_expression(
                             logical_expr.left,
@@ -185,7 +181,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            self.ctx.var_declarations.insert_var(&binding, ctx);
+            ctx.state.var_declarations.insert_var(&binding, ctx.ast);
         }
 
         new_expr

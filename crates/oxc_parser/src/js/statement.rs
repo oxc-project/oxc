@@ -1,15 +1,16 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::Str;
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
-    Context, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
-    modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{ModifierKind, Modifiers},
 };
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     // Section 12
     // The InputElementHashbangOrRegExp goal is used at the start of a Script
     // or Module.
@@ -19,7 +20,7 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
             let span = self.end_span(span);
             let src = &self.source_text[span.start as usize + 2..span.end as usize];
-            Some(self.ast.hashbang(span, Atom::from(src)))
+            Some(self.ast.hashbang(span, Str::from(src)))
         } else {
             None
         }
@@ -31,12 +32,15 @@ impl<'a> ParserImpl<'a> {
     ///     `StatementList`[?Yield, ?Await, ?Return] `StatementListItem`[?Yield, ?Await, ?Return]
     pub(crate) fn parse_directives_and_statements(
         &mut self,
+        in_ts_namespace_body: bool,
     ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
         let mut directives = self.ast.vec();
         let mut statements = self.ast.vec();
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx = StatementContext::StatementList;
+        let is_ambient_block = (is_top_level || in_ts_namespace_body) && self.ctx.has_ambient();
+        let mut reported_ambient_statement = false;
 
         // Check if we need to track potential await reparsing.
         // This is only needed in unambiguous mode at top level when not in await context.
@@ -49,9 +53,14 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
-            // Once ESM syntax is detected, enable await context for remaining statements
-            // and stop tracking (we'll reparse earlier statements at the end)
-            if track_await_reparse && self.module_record_builder.has_module_syntax() {
+            // Eagerly commit to Module goal on `export` so the statement is parsed
+            // under `Await` on the first pass; otherwise the reparse below runs it
+            // again and the export binding gets recorded twice.
+            // `import` is not eager: TypeScript's `import name = ns.foo` is a
+            // script-compatible namespace alias, not module syntax.
+            if track_await_reparse
+                && (self.module_record_builder.has_module_syntax() || self.at(Kind::Export))
+            {
                 track_await_reparse = false;
                 self.ctx = self.ctx.and_await(true);
             }
@@ -87,12 +96,25 @@ impl<'a> ParserImpl<'a> {
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
                         let directive =
-                            self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
+                            self.ast.directive(expr.span, (*string).clone(), Str::from(src));
                         directives.push(directive);
                         continue;
                     }
                 }
                 expecting_directives = false;
+            }
+            // In an internal namespace body, module-referencing `import`/`export` statements are
+            // not permitted. Validated here as each direct statement is parsed (no second pass).
+            if in_ts_namespace_body {
+                self.check_namespace_body_statement(&stmt);
+            }
+            if is_ambient_block
+                && !reported_ambient_statement
+                && !stmt.is_declaration()
+                && !stmt.is_module_declaration()
+            {
+                self.error(diagnostics::statement_in_ambient_context(stmt.span()));
+                reported_ambient_statement = true;
             }
             statements.push(stmt);
         }
@@ -109,6 +131,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Statement<'a> {
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
+        let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
 
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
@@ -165,10 +188,18 @@ impl<'a> ParserImpl<'a> {
             | Kind::Global
                 if self.is_ts && self.at_start_of_ts_declaration() =>
             {
-                self.parse_ts_declaration_statement(self.start_span())
+                self.parse_ts_declaration_statement(self.start_span(), stmt_ctx)
             }
             _ => self.parse_expression_or_labeled_statement(),
         };
+
+        // `/* #__PURE__ */ function foo() {}` - pure comment before non-expression statements cannot be applied.
+        // Expression statements handle pure comments internally in `parse_assignment_expression_or_higher_impl`.
+        if let Some(index) = pure_comment_index
+            && !matches!(stmt, Statement::ExpressionStatement(_))
+        {
+            self.lexer.trivia_builder.mark_pure_comment_not_applied(index);
+        }
 
         if has_no_side_effects_comment {
             Self::set_pure_on_function_stmt(&mut stmt);
@@ -785,8 +816,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any();
         if self.is_ts && self.at(Kind::Enum) {
-            let modifiers = self.ast.vec1(Modifier::new(self.end_span(span), ModifierKind::Const));
-            let modifiers = Modifiers::new(Some(modifiers), ModifierFlags::CONST);
+            let modifiers = Modifiers::new_single(ModifierKind::Const, span);
             Statement::from(self.parse_ts_enum_declaration(span, &modifiers))
         } else {
             self.parse_variable_statement(span, VariableDeclarationKind::Const, stmt_ctx)
@@ -817,7 +847,7 @@ impl<'a> ParserImpl<'a> {
         }
         self.rewind(checkpoint);
         if self.is_ts && self.at_start_of_ts_declaration() {
-            return self.parse_ts_declaration_statement(span);
+            return self.parse_ts_declaration_statement(span, stmt_ctx);
         }
         self.parse_expression_or_labeled_statement()
     }

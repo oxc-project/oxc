@@ -3,13 +3,13 @@
  */
 
 import { filePath } from "./context.ts";
-import { getFixes } from "./fix.ts";
+import { getFixes, getSuggestions } from "./fix.ts";
 import { initLines, lines, lineStartIndices, debugAssertLinesIsInitialized } from "./location.ts";
 import { sourceText } from "./source_code.ts";
 import { debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
-import type { Fix, FixFn } from "./fix.ts";
+import type { FixFn, FixReport } from "./fix.ts";
 import type { RuleDetails } from "./load.ts";
 import type { LineColumn, Ranged } from "./location.ts";
 
@@ -34,7 +34,7 @@ interface DiagnosticBase {
   loc?: LocationWithOptionalEnd | LineColumn;
   data?: DiagnosticData | null | undefined;
   fix?: FixFn;
-  suggest?: Suggestion[];
+  suggest?: Suggestion[] | null | undefined;
 }
 
 /**
@@ -52,27 +52,39 @@ export type DiagnosticData = Record<string, string | number | boolean | bigint |
 
 /**
  * Suggested fix.
- * NOT IMPLEMENTED YET.
  */
 export type Suggestion = RequireAtLeastOne<SuggestionBase, "desc" | "messageId">;
 
 interface SuggestionBase {
   desc?: string;
   messageId?: string;
-  fix: FixFn;
   data?: DiagnosticData | null | undefined;
+  fix: FixFn;
 }
 
-// Diagnostic in form sent to Rust.
-// Actually, the `messageId` field is removed before sending to Rust.
+/**
+ * Suggested fix in form sent to Rust.
+ */
+export interface SuggestionReport {
+  message: string;
+  // Not needed on Rust side, but `RuleTester` needs it
+  messageId: string | null;
+  fixes: FixReport[];
+}
+
+/**
+ * Diagnostic in form sent to Rust.
+ */
 export interface DiagnosticReport {
   message: string;
   start: number;
   end: number;
   ruleIndex: number;
-  fixes: Fix[] | null;
+  fixes: FixReport[] | null;
+  suggestions: SuggestionReport[] | null;
+  // Not needed on Rust side, but `RuleTester` needs it
   messageId: string | null;
-  // Only used in conformance tests
+  // Only used in conformance tests. This field is not present except in conformance build.
   loc?: LocationWithOptionalEnd | null;
 }
 
@@ -86,20 +98,25 @@ export const PLACEHOLDER_REGEX = /\{\{([^{}]+)\}\}/gu;
 /**
  * Report error.
  * @param diagnostic - Diagnostic object
+ * @param extraArgs - Extra arguments passed to `context.report()` (legacy positional forms)
  * @param ruleDetails - `RuleDetails` object, containing rule-specific details e.g. `isFixable`
  * @throws {TypeError} If `diagnostic` is invalid
  */
-export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
+export function report(
+  diagnostic: Diagnostic,
+  extraArgs: unknown[],
+  ruleDetails: RuleDetails,
+): void {
   if (filePath === null) throw new Error("Cannot report errors in `createOnce`");
 
-  // Get message, resolving message from `messageId` if present
-  let { message, messageId } = getMessage(diagnostic, ruleDetails);
+  // Handle legacy positional forms
+  if (extraArgs.length > 0) diagnostic = convertLegacyCallArgs(diagnostic, extraArgs);
 
-  // Interpolate placeholders {{key}} with data values
-  if (Object.hasOwn(diagnostic, "data")) {
-    const { data } = diagnostic;
-    if (data != null) message = replacePlaceholders(message, data);
-  }
+  const { message, messageId } = getMessage(
+    Object.hasOwn(diagnostic, "message") ? diagnostic.message : null,
+    diagnostic,
+    ruleDetails,
+  );
 
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: LocationWithOptionalEnd | LineColumn | undefined;
@@ -179,6 +196,7 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
     end,
     ruleIndex: ruleDetails.ruleIndex,
     fixes: getFixes(diagnostic, ruleDetails),
+    suggestions: getSuggestions(diagnostic, ruleDetails),
   });
 
   // We need the original location in conformance tests
@@ -186,33 +204,75 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
 }
 
 /**
- * Get message from diagnostic.
- * @param diagnostic - Diagnostic object
+ * Convert legacy `context.report()` arguments to a `Diagnostic` object.
+ *
+ * Supported:
+ * - `context.report(node, message, data?, fix?)`
+ * - `context.report(node, loc, message, data?, fix?)`
+ *
+ * @param node - Node to report (first argument)
+ * @param extraArgs - Extra arguments passed to `context.report()`
+ * @returns Diagnostic object
+ */
+function convertLegacyCallArgs(node: unknown, extraArgs: unknown[]): Diagnostic {
+  const firstExtraArg = extraArgs[0];
+  if (typeof firstExtraArg === "string") {
+    // `context.report(node, message, data, fix)`
+    return {
+      message: firstExtraArg,
+      node,
+      loc: undefined,
+      data: extraArgs[1],
+      fix: extraArgs[2],
+    } as Diagnostic;
+  }
+
+  // `context.report(node, loc, message, data, fix)`
+  return {
+    message: extraArgs[1],
+    node,
+    loc: firstExtraArg,
+    data: extraArgs[2],
+    fix: extraArgs[3],
+  } as Diagnostic;
+}
+
+/**
+ * Get message from a diagnostic or suggestion.
+ *
+ * Resolve message from `messageId` if present, and interpolate placeholders {{key}} with data values.
+ *
+ * @param message - Provided message string
+ * @param descriptor - `Diagnostic` or `Suggestion` object
  * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
- * @returns Message string and `messageId`
+ * @returns Object containing message string and message ID (if present in `descriptor`)
  * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
  */
-function getMessage(
-  diagnostic: Diagnostic,
+export function getMessage(
+  message: string | null | undefined,
+  descriptor: Diagnostic | Suggestion,
   ruleDetails: RuleDetails,
 ): { message: string; messageId: string | null } {
-  if (Object.hasOwn(diagnostic, "messageId")) {
-    const { messageId } = diagnostic;
-    if (messageId != null) {
-      return {
-        message: resolveMessageFromMessageId(messageId, ruleDetails),
-        messageId,
-      };
-    }
+  // Resolve from `messageId` if present, otherwise use `message`
+  let messageId: string | null = null;
+  if (Object.hasOwn(descriptor, "messageId")) messageId = descriptor.messageId ?? null;
+
+  if (messageId !== null) {
+    if (typeof messageId !== "string") throw new TypeError("`messageId` must be a string");
+    message = resolveMessageFromMessageId(messageId, ruleDetails);
+  } else if (message == null) {
+    throw new Error("Either `message` or `messageId` is required");
+  } else if (typeof message !== "string") {
+    throw new TypeError("`message` must be a string");
   }
 
-  if (Object.hasOwn(diagnostic, "message")) {
-    const { message } = diagnostic;
-    if (typeof message === "string") return { message, messageId: null };
-    if (message != null) throw new TypeError("`message` must be a string");
+  // Interpolate data placeholders
+  if (Object.hasOwn(descriptor, "data")) {
+    const { data } = descriptor;
+    if (data != null) message = replacePlaceholders(message, data);
   }
 
-  throw new Error("Either `message` or `messageId` is required");
+  return { message, messageId };
 }
 
 /**

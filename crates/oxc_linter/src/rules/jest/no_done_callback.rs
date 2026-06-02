@@ -75,7 +75,9 @@ declare_oxc_lint!(
     NoDoneCallback,
     jest,
     // TODO: add suggestion (see jest-community/eslint-plugin-jest#586)
-    style
+    style,
+    pending,
+    version = "0.0.13",
 );
 
 impl Rule for NoDoneCallback {

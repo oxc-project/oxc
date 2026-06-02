@@ -6,9 +6,9 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{GetSpan, SPAN};
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
+use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -17,7 +17,7 @@ use super::PeepholeOptimizations;
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 impl<'a> PeepholeOptimizations {
     #[expect(clippy::float_cmp)]
-    pub fn fold_unary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_unary_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::UnaryExpression(e) = expr else { return };
         match e.operator {
             // Do not fold `void 0` back to `undefined`.
@@ -37,7 +37,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::StaticMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
         if e.object.may_have_side_effects(ctx) {
@@ -49,7 +49,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ComputedMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
         if e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx) {
@@ -61,7 +61,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Some(changed) = match e.operator {
             LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(e, ctx),
@@ -72,30 +72,30 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_chain_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_chain_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ChainExpression(e) = expr else { return };
-        let left_expr = match &e.expression {
-            match_member_expression!(ChainElement) => {
-                let member_expr = e.expression.to_member_expression();
-                if !member_expr.optional() {
-                    return;
+        let span = e.span;
+        match try_fold_chain_at_element(&mut e.expression, ctx) {
+            ChainFold::Unfolded { .. } => {}
+            ChainFold::Flipped { has_optional } => {
+                // For `(known_obj)?.foo?.bar` the inner `?.` flips, but the
+                // outer `?.bar` keeps the wrapper alive.
+                if !has_optional {
+                    *expr = Expression::from(e.expression.take_in(ctx.ast));
                 }
-                member_expr.object()
+                ctx.state.changed = true;
             }
-            ChainElement::CallExpression(call_expr) => {
-                if !call_expr.optional {
-                    return;
-                }
-                &call_expr.callee
+            ChainFold::Collapse { base, base_has_side_effects } => {
+                *expr = if base_has_side_effects {
+                    ctx.ast.expression_sequence(
+                        span,
+                        ctx.ast.vec_from_array([base, ctx.ast.void_0(span)]),
+                    )
+                } else {
+                    ctx.value_to_expr(span, ConstantValue::Undefined)
+                };
+                ctx.state.changed = true;
             }
-            ChainElement::TSNonNullExpression(_) => return,
-        };
-        let ty = left_expr.value_type(ctx);
-        if let Some(changed) = (ty.is_null() || ty.is_undefined())
-            .then(|| ctx.value_to_expr(e.span, ConstantValue::Undefined))
-        {
-            *expr = changed;
-            ctx.state.changed = true;
         }
     }
 
@@ -104,7 +104,7 @@ impl<'a> PeepholeOptimizations {
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
     pub fn try_fold_and_or(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let op = logical_expr.operator;
         debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
@@ -116,6 +116,17 @@ impl<'a> PeepholeOptimizations {
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if if lval { op.is_or() } else { op.is_and() } {
+                // Preserve `0 && (module.exports = { ... })` — esbuild emits
+                // it on Node platform as a parse-time hint for
+                // `cjs-module-lexer` to detect named CJS exports
+                // (https://github.com/evanw/esbuild/blob/v0.28.0/internal/linker/linker.go#L5127-L5138).
+                // The expression is unreachable at runtime, but dropping it
+                // breaks ESM `import { X } from "<cjs-pkg>"` consumers.
+                // Restores the bailout removed by the #8618 refactor; the
+                // original lived at #4878.
+                if !lval && op.is_and() && is_cjs_module_exports_hint(&logical_expr.right) {
+                    return None;
+                }
                 return Some(logical_expr.left.take_in(ctx.ast));
             } else if !left.may_have_side_effects(ctx) {
                 let should_keep_indirect_access =
@@ -174,7 +185,7 @@ impl<'a> PeepholeOptimizations {
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
         let left = &logical_expr.left;
@@ -249,7 +260,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    pub fn fold_binary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_binary_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BinaryExpression(e) = expr else { return };
         // TODO: tryReduceOperandsForOp
 
@@ -344,7 +355,7 @@ impl<'a> PeepholeOptimizations {
         } else if value.is_nan() {
             "NaN".len()
         } else {
-            1 + 0.max(value.abs().log10().floor() as usize)
+            1 + value.abs().log10().floor() as usize
         };
         if value.is_sign_negative() {
             count += 1;
@@ -353,7 +364,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     // Simplified version of `tryFoldAdd` from closure compiler.
-    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &Ctx<'a, '_>) -> Option<Expression<'a>> {
+    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
         if !e.may_have_side_effects(ctx)
             && let Some(v) = e.evaluate_value(ctx)
         {
@@ -378,7 +389,7 @@ impl<'a> PeepholeOptimizations {
                     .span()
                     .merge_within(e.right.span(), e.span)
                     .unwrap_or(SPAN);
-                let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
+                let value = ctx.ast.str_from_strs_array([&left_str, &right_str]);
                 let right = ctx.ast.expression_string_literal(span, value, None);
                 let left = left_binary_expr.left.take_in(ctx.ast);
                 return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
@@ -399,7 +410,7 @@ impl<'a> PeepholeOptimizations {
         left_expr: &mut Expression<'a>,
         right_expr: &mut Expression<'a>,
         parent_span: Span,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if let Expression::TemplateLiteral(left) = left_expr {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
@@ -411,12 +422,14 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                let new_raw = left_last_quasi.value.raw.to_string() + &right_first_quasi.value.raw;
-                left_last_quasi.value.raw = ctx.ast.atom(&new_raw);
+                left_last_quasi.value.raw = ctx.ast.str_from_strs_array([
+                    left_last_quasi.value.raw.as_str(),
+                    right_first_quasi.value.raw.as_str(),
+                ]);
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    Some(ctx.ast.atom(&(cooked1.into_string() + cooked2.as_str())))
+                    Some(ctx.ast.str_from_strs_array([cooked1.as_str(), cooked2.as_str()]))
                 } else {
                     None
                 };
@@ -436,11 +449,11 @@ impl<'a> PeepholeOptimizations {
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
                 let new_raw = last_quasi.value.raw.to_string()
                     + &Self::escape_string_for_template_literal(&right_str);
-                last_quasi.value.raw = ctx.ast.atom(&new_raw);
+                last_quasi.value.raw = ctx.ast.str(&new_raw);
                 let new_cooked = last_quasi
                     .value
                     .cooked
-                    .map(|cooked| ctx.ast.atom(&(cooked.as_str().to_string() + &right_str)));
+                    .map(|cooked| ctx.ast.str(&(cooked.as_str().to_string() + &right_str)));
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx.ast));
             }
@@ -454,11 +467,11 @@ impl<'a> PeepholeOptimizations {
                     .expect("template literal must have at least one quasi");
                 let new_raw = Self::escape_string_for_template_literal(&left_str).into_owned()
                     + first_quasi.value.raw.as_str();
-                first_quasi.value.raw = ctx.ast.atom(&new_raw);
+                first_quasi.value.raw = ctx.ast.str(&new_raw);
                 let new_cooked = first_quasi
                     .value
                     .cooked
-                    .map(|cooked| ctx.ast.atom(&(left_str.into_owned() + cooked.as_str())));
+                    .map(|cooked| ctx.ast.str(&(left_str.into_owned() + cooked.as_str())));
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx.ast));
             }
@@ -486,7 +499,7 @@ impl<'a> PeepholeOptimizations {
 
     fn try_fold_left_child_op(
         e: &mut BinaryExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let op = e.operator;
         debug_assert!(matches!(
@@ -521,7 +534,7 @@ impl<'a> PeepholeOptimizations {
         ))
     }
 
-    pub fn fold_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_call_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::CallExpression(e) = expr else { return };
         if !ctx.is_global_expr("Number", &e.callee) {
             return;
@@ -561,7 +574,7 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    pub fn fold_binary_typeof_comparison(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_binary_typeof_comparison(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BinaryExpression(e) = expr else { return };
         // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
         if e.operator.is_equality()
@@ -620,8 +633,8 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_object_exp(e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
-        fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    pub fn fold_object_exp(e: &mut ObjectExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
             match e {
                 Expression::ArrayExpression(o) if o.elements.is_empty() => true,
                 Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => true,
@@ -692,7 +705,10 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    fn is_spread_inlineable_object_literal(e: &ObjectExpression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn is_spread_inlineable_object_literal(
+        e: &ObjectExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,
             ObjectPropertyKind::ObjectProperty(p) => {
@@ -712,7 +728,7 @@ impl<'a> PeepholeOptimizations {
     /// Inline constant values in template literals
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
-    pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
         let has_expr_to_inline = t
             .expressions
             .iter()
@@ -721,7 +737,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let mut inline_exprs = Vec::new();
+        let mut inline_exprs = Vec::with_capacity(t.expressions.len());
         let new_exprs =
             ctx.ast.vec_from_iter(t.expressions.drain(..).enumerate().filter_map(|(idx, expr)| {
                 if expr.may_have_side_effects(ctx) {
@@ -741,16 +757,15 @@ impl<'a> PeepholeOptimizations {
             let idx = idx - i;
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];
-            let new_raw = quasi.value.raw.into_string()
-                + &Self::escape_string_for_template_literal(&str)
-                + next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
-            quasi.value.raw = ctx.ast.atom(&new_raw);
+            let escaped = Self::escape_string_for_template_literal(&str);
+            let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
+            quasi.value.raw =
+                ctx.ast.str_from_strs_array([quasi.value.raw.as_str(), &escaped, next_raw]);
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
-                let v =
-                    cooked1.into_string() + &str + cooked2.map(|c| c.as_str()).unwrap_or_default();
-                Some(ctx.ast.atom(&v))
+                let cooked2_str = cooked2.map(|c| c.as_str()).unwrap_or_default();
+                Some(ctx.ast.str_from_strs_array([cooked1.as_str(), &str, cooked2_str]))
             } else {
                 None
             };
@@ -762,4 +777,153 @@ impl<'a> PeepholeOptimizations {
 
         ctx.state.changed = true;
     }
+}
+
+/// Outcome of folding an optional-chain at the deepest optional position.
+///
+/// `has_optional` carries the same notion in both `Unfolded` and `Flipped`:
+/// whether any unresolved `?.` exists in the chain segment seen so far —
+/// below the current level while still searching, above the fold point
+/// after firing. It gates outer fold attempts and the wrapper unwrap.
+enum ChainFold<'a> {
+    Unfolded {
+        has_optional: bool,
+    },
+    Flipped {
+        has_optional: bool,
+    },
+    /// `base_has_side_effects` is computed here so the caller doesn't walk
+    /// the base subtree a second time.
+    Collapse {
+        base: Expression<'a>,
+        base_has_side_effects: bool,
+    },
+}
+
+/// Try folding the *deepest* (= leftmost in source order) optional in a
+/// chain. Recurses inward through `.object` / `.callee` first so the
+/// short-circuit point is found before any outer access.
+///
+/// Nested `ChainExpression`s (e.g. `(a?.b)?.c`) are not descended into —
+/// the compressor's separate flattening pass merges them into a single
+/// chain on a later iteration, after which this fold fires.
+fn try_fold_chain_at_element<'a>(
+    elem: &mut ChainElement<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> ChainFold<'a> {
+    match elem {
+        ChainElement::CallExpression(c) => try_fold_call_expression(c, ctx),
+        match_member_expression!(ChainElement) => {
+            try_fold_member_expression(elem.to_member_expression_mut(), ctx)
+        }
+        ChainElement::TSNonNullExpression(t) => try_fold_chain_at_expr(&mut t.expression, ctx),
+    }
+}
+
+fn try_fold_chain_at_expr<'a>(expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) -> ChainFold<'a> {
+    match expr.get_inner_expression_mut() {
+        Expression::CallExpression(c) => try_fold_call_expression(c, ctx),
+        match_member_expression!(Expression) => {
+            try_fold_member_expression(expr.to_member_expression_mut(), ctx)
+        }
+        _ => ChainFold::Unfolded { has_optional: false },
+    }
+}
+
+fn try_fold_call_expression<'a>(
+    call: &mut CallExpression<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> ChainFold<'a> {
+    match try_fold_chain_at_expr(&mut call.callee, ctx) {
+        ChainFold::Flipped { has_optional } => {
+            ChainFold::Flipped { has_optional: has_optional || call.optional }
+        }
+        collapse @ ChainFold::Collapse { .. } => collapse,
+        ChainFold::Unfolded { has_optional } => {
+            try_fold_at_optional(&mut call.optional, &mut call.callee, has_optional, ctx)
+                .unwrap_or(ChainFold::Unfolded { has_optional: has_optional || call.optional })
+        }
+    }
+}
+
+fn try_fold_member_expression<'a>(
+    member: &mut MemberExpression<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> ChainFold<'a> {
+    let (optional_mut, object) = member_expression_optional_and_object_mut(member);
+    let optional = *optional_mut;
+    match try_fold_chain_at_expr(object, ctx) {
+        ChainFold::Flipped { has_optional } => {
+            ChainFold::Flipped { has_optional: has_optional || optional }
+        }
+        collapse @ ChainFold::Collapse { .. } => collapse,
+        ChainFold::Unfolded { has_optional } => {
+            try_fold_at_optional(optional_mut, object, has_optional, ctx)
+                .unwrap_or(ChainFold::Unfolded { has_optional: has_optional || optional })
+        }
+    }
+}
+
+fn member_expression_optional_and_object_mut<'a, 'b>(
+    member: &'b mut MemberExpression<'a>,
+) -> (&'b mut bool, &'b mut Expression<'a>) {
+    match member {
+        MemberExpression::StaticMemberExpression(m) => {
+            let m = &mut **m;
+            (&mut m.optional, &mut m.object)
+        }
+        MemberExpression::ComputedMemberExpression(m) => {
+            let m = &mut **m;
+            (&mut m.optional, &mut m.object)
+        }
+        MemberExpression::PrivateFieldExpression(m) => {
+            let m = &mut **m;
+            (&mut m.optional, &mut m.object)
+        }
+    }
+}
+
+fn try_fold_at_optional<'a>(
+    optional: &mut bool,
+    base: &mut Expression<'a>,
+    has_optional: bool,
+    ctx: &TraverseCtx<'a>,
+) -> Option<ChainFold<'a>> {
+    if !*optional || has_optional {
+        return None;
+    }
+    match base.value_type(ctx) {
+        ValueType::Null | ValueType::Undefined => {
+            let base_has_side_effects = base.may_have_side_effects(ctx);
+            let taken = base.take_in(ctx.ast);
+            Some(ChainFold::Collapse { base: taken, base_has_side_effects })
+        }
+        ValueType::Undetermined => None,
+        _ => {
+            *optional = false;
+            Some(ChainFold::Flipped { has_optional: false })
+        }
+    }
+}
+
+/// `true` when `expr` matches esbuild's [`cjs-module-lexer`] hint shape:
+/// `module.exports = { ... }`. Used by [`PeepholeOptimizations`] to keep
+/// constant-folding and unused-expression removal from dropping the
+/// surrounding `0 && (module.exports = { ... })` statement.
+///
+/// esbuild emits this single shape (no `||`, no `exports.X`, no chains) on
+/// the Node platform; see [linker.go#L5127-L5139][esbuild] for the
+/// construction site.
+///
+/// [`cjs-module-lexer`]: https://github.com/nodejs/cjs-module-lexer
+/// [esbuild]: https://github.com/evanw/esbuild/blob/v0.28.0/internal/linker/linker.go#L5127-L5138
+pub(super) fn is_cjs_module_exports_hint(expr: &Expression<'_>) -> bool {
+    let Expression::AssignmentExpression(assign) = expr.get_inner_expression() else {
+        return false;
+    };
+    assign.operator == AssignmentOperator::Assign
+        && assign
+            .left
+            .as_member_expression()
+            .is_some_and(|m| m.is_specific_member_access("module", "exports"))
 }

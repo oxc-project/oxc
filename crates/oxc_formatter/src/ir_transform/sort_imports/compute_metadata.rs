@@ -219,7 +219,6 @@ fn to_path_kind(source: &str, options: &SortImportsOptions) -> ImportPathKind {
         return ImportPathKind::Internal;
     }
 
-    // Subpath imports (e.g., `#foo`) are also considered external
     ImportPathKind::External
 }
 

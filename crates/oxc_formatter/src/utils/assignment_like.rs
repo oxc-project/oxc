@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, BufferExtensions, Format, Formatter, VecBuffer,
+        Buffer, BufferExtensions, Format, JsFormatter, VecBuffer,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },
@@ -26,6 +26,7 @@ pub enum AssignmentLike<'a, 'b> {
     ObjectProperty(&'b AstNode<'a, ObjectProperty<'a>>),
     BindingProperty(&'b AstNode<'a, BindingProperty<'a>>),
     PropertyDefinition(&'b AstNode<'a, PropertyDefinition<'a>>),
+    AccessorProperty(&'b AstNode<'a, AccessorProperty<'a>>),
     TSTypeAliasDeclaration(&'b AstNode<'a, TSTypeAliasDeclaration<'a>>),
 }
 
@@ -137,7 +138,7 @@ pub enum AssignmentLikeLayout {
 fn format_left_trailing_comments(
     start: u32,
     should_print_as_leading: bool,
-    f: &mut Formatter<'_, '_>,
+    f: &mut JsFormatter<'_, '_>,
 ) {
     let end_of_line_comments = f.context().comments().end_of_line_comments_after(start);
 
@@ -168,7 +169,7 @@ fn should_print_as_leading(expr: &Expression) -> bool {
 const MIN_OVERLAP_FOR_BREAK: u8 = 3;
 
 impl<'a> AssignmentLike<'a, '_> {
-    fn write_left(&self, f: &mut Formatter<'_, 'a>) -> bool {
+    fn write_left(&self, f: &mut JsFormatter<'_, 'a>) -> bool {
         match self {
             AssignmentLike::VariableDeclarator(declarator) => {
                 if let Some(init) = &declarator.init {
@@ -291,6 +292,40 @@ impl<'a> AssignmentLike<'a, '_> {
 
                 false // Class properties don't use "short" key logic
             }
+            AssignmentLike::AccessorProperty(property) => {
+                write!(f, [property.decorators()]);
+
+                if let Some(accessibility) = property.accessibility {
+                    write!(f, [accessibility.as_str(), space()]);
+                }
+                if property.r#static {
+                    write!(f, ["static", space()]);
+                }
+                if property.r#type.is_abstract() {
+                    write!(f, ["abstract", space()]);
+                }
+                if property.r#override {
+                    write!(f, ["override", space()]);
+                }
+                write!(f, ["accessor", space()]);
+
+                // Write the property key
+                if property.computed {
+                    write!(f, ["[", property.key(), "]"]);
+                } else {
+                    format_property_key(property.key(), f);
+                }
+
+                // Write definite and type annotation
+                if property.definite {
+                    write!(f, "!");
+                }
+                if let Some(type_annotation) = property.type_annotation() {
+                    write!(f, type_annotation);
+                }
+
+                false // Class properties don't use "short" key logic
+            }
             AssignmentLike::TSTypeAliasDeclaration(declaration) => {
                 write!(f, [declaration.declare.then_some("declare "), "type "]);
 
@@ -329,7 +364,10 @@ impl<'a> AssignmentLike<'a, '_> {
                 };
                 if let Some(span) = type_span {
                     let comments = f.context().comments().comments_before(span.start);
-                    if comments.len() == 1 {
+                    // Only relocate inline comments (not own-line comments).
+                    // Own-line comments (e.g. JSDoc on its own line before the union)
+                    // must stay as leading comments of the union type so they get proper indentation.
+                    if comments.len() == 1 && !comments[0].preceded_by_newline() {
                         write!(f, [FormatTrailingComments::Comments(comments)]);
                     }
                 }
@@ -339,7 +377,7 @@ impl<'a> AssignmentLike<'a, '_> {
         }
     }
 
-    fn write_operator(&self, f: &mut Formatter<'_, 'a>) {
+    fn write_operator(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::VariableDeclarator(variable_declarator) => {
                 debug_assert!(variable_declarator.init.is_some());
@@ -362,13 +400,17 @@ impl<'a> AssignmentLike<'a, '_> {
                 debug_assert!(property_class_member.value().is_some());
                 write!(f, [space(), "="]);
             }
+            Self::AccessorProperty(property) => {
+                debug_assert!(property.value().is_some());
+                write!(f, [space(), "="]);
+            }
             Self::TSTypeAliasDeclaration(_) => {
                 write!(f, [space(), "="]);
             }
         }
     }
 
-    fn write_right(&self, f: &mut Formatter<'_, 'a>, layout: AssignmentLikeLayout) {
+    fn write_right(&self, f: &mut JsFormatter<'_, 'a>, layout: AssignmentLikeLayout) {
         match self {
             Self::VariableDeclarator(declarator) => {
                 write!(f, [with_assignment_layout(declarator.init().unwrap(), Some(layout))]);
@@ -385,6 +427,9 @@ impl<'a> AssignmentLike<'a, '_> {
                 write!(f, property.value());
             }
             Self::PropertyDefinition(property) => {
+                write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
+            }
+            Self::AccessorProperty(property) => {
                 write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
             }
             Self::TSTypeAliasDeclaration(declaration) => {
@@ -404,7 +449,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         is_left_short: bool,
         left_may_break: bool,
-        f: &Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) -> AssignmentLikeLayout {
         let right_expression = self.get_right_expression();
         if let Some(expr) = right_expression {
@@ -462,6 +507,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::PropertyDefinition(property_class_member) => {
                 property_class_member.value()
             }
+            AssignmentLike::AccessorProperty(property) => property.value(),
             AssignmentLike::BindingProperty(_) | AssignmentLike::TSTypeAliasDeclaration(_) => None,
         }
     }
@@ -473,6 +519,7 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::AssignmentExpression(_) | Self::TSTypeAliasDeclaration(_) => false,
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
             Self::PropertyDefinition(property) => property.value().is_none(),
+            Self::AccessorProperty(property) => property.value().is_none(),
             Self::BindingProperty(property) => {
                 // Treats binding property has a left-hand side only
                 // when the value is an assignment pattern,
@@ -566,7 +613,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         right_expression: Option<&AstNode<'a, Expression<'a>>>,
         is_left_short: bool,
-        f: &Formatter<'_, 'a>,
+        f: &mut JsFormatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
         if let Some(right_expression) = right_expression {
@@ -651,6 +698,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::ObjectProperty(_)
             | AssignmentLike::BindingProperty(_)
             | AssignmentLike::PropertyDefinition(_)
+            | AssignmentLike::AccessorProperty(_)
             | AssignmentLike::TSTypeAliasDeclaration(_) => false,
         }
     }
@@ -662,7 +710,7 @@ impl<'a> AssignmentLike<'a, '_> {
 fn should_break_after_operator<'a>(
     right: &AstNode<'a, Expression<'a>>,
     is_left_short: bool,
-    f: &Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     if right.is_jsx() {
         return false;
@@ -740,8 +788,8 @@ fn get_innermost_expression<'a, 'b>(
     current
 }
 
-impl<'a> Format<'a> for AssignmentLike<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // If there's only left hand side, we just write it and return
         if self.has_only_left_hand_side() {
             self.write_left(f);
@@ -799,7 +847,24 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
                         );
                     }
                     AssignmentLikeLayout::BreakAfterOperator => {
-                        write!(f, [group(&soft_line_indent_or_space(&right))]);
+                        // Preserve the original order of trailing line comments after `=`
+                        // by flushing them via `line_suffix_boundary()`.
+                        // Otherwise the line comment gets pushed past the right-hand side,
+                        // changing which token the comment semantically attaches to.
+                        //
+                        // NOTE: Currently scoped to non-conditional `TSTypeAliasDeclaration`.
+                        // Expanding the condition would preserve the order in other nodes too.
+                        // (e.g. `VariableDeclarator`) But for those we follow Prettier's current behavior.
+                        // See also https://github.com/prettier/prettier/issues/14617
+                        if matches!(
+                            self,
+                            AssignmentLike::TSTypeAliasDeclaration(decl)
+                                if !matches!(decl.type_annotation, TSType::TSConditionalType(_))
+                        ) {
+                            write!(f, [line_suffix_boundary(), soft_line_indent_or_space(&right)]);
+                        } else {
+                            write!(f, [group(&soft_line_indent_or_space(&right))]);
+                        }
                     }
                     AssignmentLikeLayout::NeverBreakAfterOperator => {
                         write!(f, [space(), right]);
@@ -854,8 +919,8 @@ pub fn with_assignment_layout<'a, 'b>(
     WithAssignmentLayout { expression, layout }
 }
 
-impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for WithAssignmentLayout<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self.expression.as_ast_nodes() {
             AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
                 FormatJsArrowFunctionExpressionOptions {
@@ -874,7 +939,7 @@ impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
 fn is_poorly_breakable_member_or_call_chain<'a>(
     expression: &AstNode<'a, Expression<'a>>,
-    f: &Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let threshold = f.options().line_width.value() / 4;
 
@@ -957,10 +1022,9 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
             return false;
         }
 
-        let is_breakable_type_arguments = match &call_expression.type_arguments {
-            Some(type_arguments) => is_complex_type_arguments(type_arguments),
-            None => false,
-        };
+        let is_breakable_type_arguments = call_expression
+            .type_arguments()
+            .is_some_and(|type_arguments| is_complex_type_arguments(type_arguments, f));
 
         if is_breakable_type_arguments {
             return false;
@@ -974,7 +1038,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
 /// We need it to decide if [`CallExpression`] with the argument is breakable or not
 /// If the argument is short the function call isn't breakable
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/utils/index.js#L433-L484>
-fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bool {
+fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> bool {
     match argument {
         Expression::Identifier(identifier) => identifier.name.len() <= threshold as usize,
         Expression::UnaryExpression(unary_expression) => {
@@ -1016,45 +1080,27 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
 /// We need it to decide if `CallExpression` with the type arguments is breakable or not.
 /// If the type arguments is complex the function call is breakable.
 ///
-/// NOTE: This function does not follow Prettier exactly.
-/// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432>
-fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> bool {
-    let is_complex_ts_type = |ts_type: &TSType| {
-        matches!(
-            ts_type,
-            TSType::TSUnionType(_)
-                | TSType::TSIntersectionType(_)
-                | TSType::TSTypeLiteral(_)
-                // NOTE: Prettier does not contain `TSMappedType` in its check.
-                // But it makes sense to consider mapped types as complex,
-                // because it is the same as type literals in terms of structure.
-                | TSType::TSMappedType(_)
-        )
-    };
-
-    if type_arguments.params.len() > 1 {
+/// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
+fn is_complex_type_arguments<'a>(
+    type_arguments: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
+) -> bool {
+    let params = &type_arguments.params;
+    if params.len() > 1 {
         return true;
     }
 
-    type_arguments.params.first().is_some_and(|first_argument| {
-        if is_complex_ts_type(first_argument) {
-            return true;
-        }
+    if params.first().is_some_and(|param| {
+        matches!(
+            param,
+            TSType::TSUnionType(_) | TSType::TSIntersectionType(_) | TSType::TSTypeLiteral(_)
+        )
+    }) {
+        return true;
+    }
 
-        // NOTE: Prettier checks `willBreak(print(typeArgs))` here.
-        // Our equivalent is `type_arguments.memoized().inspect(f).will_break()`,
-        // but we avoid using it because:
-        // - `inspect(f)` (= `f.intern()`) will update the comment counting state in `f`
-        // - And resulted IRs are discarded after this check
-        // So we approximate it by checking if the type arguments contain complex types.
-        if let TSType::TSTypeReference(type_ref) = first_argument
-            && let Some(type_args) = &type_ref.type_arguments
-        {
-            return type_args.params.iter().any(is_complex_ts_type);
-        }
-
-        false
-    })
+    // Prettier: `willBreak(print(typeArgsKeyName))`
+    f.speculate_will_break(type_arguments)
 }
 
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/fde0b49d7866e203ca748c306808a87b7c15548f/src/language-js/print/assignment.js#L278>

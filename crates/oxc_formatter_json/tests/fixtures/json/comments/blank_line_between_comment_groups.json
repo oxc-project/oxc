@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    /* Projects */
+    // "incremental": true,
+    // "composite": true,
+
+    /* Language and Environment */
+    "target": "es2016"
+  }
+}

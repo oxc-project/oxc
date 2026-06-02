@@ -1,7 +1,8 @@
 mod sort_imports;
 
 use oxc_formatter::{
-    CustomGroupDefinition, FormatOptions, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
+    CustomGroupDefinition, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
+    JsdocOptions, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
 };
 use serde::Deserialize;
 
@@ -53,14 +54,18 @@ pub fn assert_format(code: &str, config_json: &str, expected: &str) {
 struct TestConfig {
     single_quote: Option<bool>,
     semi: Option<bool>,
-    experimental_sort_imports: Option<TestSortImportsConfig>,
+    sort_imports: Option<TestSortImportsConfig>,
+    jsdoc: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct TestCustomGroupDefinition {
     group_name: String,
+    #[serde(default)]
     element_name_pattern: Vec<String>,
+    selector: Option<String>,
+    modifiers: Option<Vec<String>>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -74,48 +79,54 @@ struct TestSortImportsConfig {
     newlines_between: Option<bool>,
     internal_pattern: Option<Vec<String>>,
     #[serde(default, deserialize_with = "deserialize_groups")]
-    groups: Option<Vec<Vec<String>>>,
+    groups: Option<ParsedGroups>,
     custom_groups: Option<Vec<TestCustomGroupDefinition>>,
 }
 
-fn deserialize_groups<'de, D>(deserializer: D) -> Result<Option<Vec<Vec<String>>>, D::Error>
+#[derive(Debug, Default)]
+struct ParsedGroups {
+    groups: Vec<Vec<GroupEntry>>,
+    newline_boundary_overrides: Vec<Option<bool>>,
+}
+
+fn deserialize_groups<'de, D>(deserializer: D) -> Result<Option<ParsedGroups>, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
-    use serde::de::Error;
     use serde_json::Value;
 
-    let value: Option<Value> = Option::deserialize(deserializer)?;
-    match value {
-        None => Ok(None),
-        Some(Value::Array(arr)) => {
-            let mut groups = Vec::new();
-            for item in arr {
-                match item {
-                    Value::String(s) => groups.push(vec![s]),
-                    Value::Array(group_arr) => {
-                        let mut group = Vec::new();
-                        for g in group_arr {
-                            if let Value::String(s) = g {
-                                group.push(s);
-                            } else {
-                                return Err(D::Error::custom("groups must contain strings"));
-                            }
-                        }
-                        groups.push(group);
-                    }
-                    _ => return Err(D::Error::custom("groups must be strings or arrays")),
-                }
+    let Some(Value::Array(arr)) = Option::deserialize(deserializer)? else {
+        return Ok(None);
+    };
+
+    let mut groups = Vec::new();
+    let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
+    let mut pending_override: Option<bool> = None;
+
+    for item in arr {
+        if let Value::Object(obj) = item {
+            pending_override = obj.get("newlinesBetween").and_then(Value::as_bool);
+        } else {
+            if !groups.is_empty() {
+                newline_boundary_overrides.push(pending_override.take());
             }
-            Ok(Some(groups))
+            let group = match item {
+                Value::String(s) => vec![GroupEntry::parse(&s)],
+                Value::Array(a) => {
+                    a.into_iter().filter_map(|v| v.as_str().map(GroupEntry::parse)).collect()
+                }
+                _ => continue,
+            };
+            groups.push(group);
         }
-        Some(_) => Err(D::Error::custom("groups must be an array")),
     }
+
+    Ok(Some(ParsedGroups { groups, newline_boundary_overrides }))
 }
 
-fn parse_test_config(json: &str) -> FormatOptions {
+fn parse_test_config(json: &str) -> JsFormatOptions {
     let config: TestConfig = serde_json::from_str(json).expect("Invalid test config JSON");
-    let mut options = FormatOptions::default();
+    let mut options = JsFormatOptions::default();
 
     if let Some(single_quote) = config.single_quote {
         options.quote_style = if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
@@ -123,7 +134,10 @@ fn parse_test_config(json: &str) -> FormatOptions {
     if let Some(semi) = config.semi {
         options.semicolons = if semi { Semicolons::Always } else { Semicolons::AsNeeded };
     }
-    if let Some(sort_config) = config.experimental_sort_imports {
+    if config.jsdoc == Some(true) {
+        options.jsdoc = Some(JsdocOptions::default());
+    }
+    if let Some(sort_config) = config.sort_imports {
         let mut sort_imports = SortImportsOptions::default();
         if let Some(v) = sort_config.partition_by_newline {
             sort_imports.partition_by_newline = v;
@@ -150,7 +164,8 @@ fn parse_test_config(json: &str) -> FormatOptions {
             sort_imports.internal_pattern = v;
         }
         if let Some(v) = sort_config.groups {
-            sort_imports.groups = v;
+            sort_imports.groups = v.groups;
+            sort_imports.newline_boundary_overrides = v.newline_boundary_overrides;
         }
         if let Some(v) = sort_config.custom_groups {
             sort_imports.custom_groups = v
@@ -158,29 +173,31 @@ fn parse_test_config(json: &str) -> FormatOptions {
                 .map(|value| CustomGroupDefinition {
                     group_name: value.group_name,
                     element_name_pattern: value.element_name_pattern,
+                    selector: value.selector.as_deref().and_then(ImportSelector::parse),
+                    modifiers: value
+                        .modifiers
+                        .unwrap_or_default()
+                        .iter()
+                        .filter_map(|s| ImportModifier::parse(s))
+                        .collect(),
                 })
                 .collect();
         }
-        options.experimental_sort_imports = Some(sort_imports);
+        options.sort_imports = Some(sort_imports);
     }
 
     options
 }
 
-fn format_code(code: &str, options: &FormatOptions) -> String {
+fn format_code(code: &str, options: &JsFormatOptions) -> String {
     use oxc_allocator::Allocator;
-    use oxc_formatter::{Formatter, get_parse_options};
-    use oxc_parser::Parser;
     use oxc_span::SourceType;
 
     let allocator = Allocator::new();
     let source_type = SourceType::from_path("dummy.tsx").unwrap();
 
-    let ret = Parser::new(&allocator, code, source_type).with_options(get_parse_options()).parse();
-
-    if let Some(error) = ret.errors.first() {
-        panic!("💥 Parser error: {}", error.message);
+    match oxc_formatter::format(&allocator, code, source_type, options.clone(), None) {
+        Ok(formatted) => formatted.print().unwrap().into_code(),
+        Err(error) => panic!("💥 Parser error: {}", error.message),
     }
-
-    Formatter::new(&allocator, options.clone()).build(&ret.program)
 }

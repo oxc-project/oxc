@@ -50,7 +50,7 @@ fn main() -> std::io::Result<()> {
             .into_iter()
             .map(|error| format!("{:?}", error.with_source_code(Arc::clone(&source_text))))
             .join("\n");
-        println!("Parsing failed:\n\n{error_message}",);
+        println!("Parsing failed:\n\n{error_message}");
         return Ok(());
     }
 
@@ -69,7 +69,7 @@ fn main() -> std::io::Result<()> {
             .into_iter()
             .map(|error| format!("{:?}", error.with_source_code(Arc::clone(&source_text))))
             .join("\n");
-        println!("Semantic analysis failed:\n\n{error_message}",);
+        println!("Semantic analysis failed:\n\n{error_message}");
     }
 
     // Display symbol information if requested
@@ -91,9 +91,7 @@ fn main() -> std::io::Result<()> {
 
         for sym in semantic.semantic.scoping().symbol_ids() {
             let symbol_name = semantic.semantic.scoping().symbol_name(sym);
-            let declaration_node_id = semantic.semantic.scoping().symbol_declaration(sym);
-            let declaration_span =
-                semantic.semantic.nodes().get_node(declaration_node_id).kind().span();
+            let declaration_span = semantic.semantic.scoping().symbol_span(sym);
 
             let reference_spans = semantic.semantic.symbol_references(sym).map(|reference| {
                 (

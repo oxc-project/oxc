@@ -1,9 +1,13 @@
 //! Declare symbol for `BindingIdentifier`s
 
+use smallvec::SmallVec;
+
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
-use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
+use oxc_span::GetSpan;
+use oxc_str::Ident;
+use oxc_syntax::{node::NodeId, scope::ScopeFlags, scope::ScopeId, symbol::SymbolFlags};
 
 use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};
 
@@ -38,13 +42,16 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
         if self.kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
-                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+                let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
             });
         } else {
             // ------------------ var hosting ------------------
             let mut target_scope_id = builder.current_scope_id;
-            let mut var_scope_ids = vec![];
+            // Stack-allocated: nesting depth from a `var`/`let`/`const` to the
+            // enclosing function (or program) scope is small in practice — 8
+            // covers almost all real-world cases without heap allocation.
+            let mut var_scope_ids: SmallVec<[ScopeId; 8]> = SmallVec::new();
 
             // Collect all scopes where variable hoisting can occur
             for scope_id in builder.scoping.scope_ancestors(target_scope_id) {
@@ -63,19 +70,19 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
                 for &scope_id in &var_scope_ids {
                     if let Some(symbol_id) =
-                        builder.check_redeclaration(scope_id, span, &name, excludes, true)
+                        builder.check_redeclaration(scope_id, span, name, excludes)
                     {
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
 
                         // Hoist current symbol to target scope when it is not already declared
                         // in the target scope.
-                        if !builder.scoping.scope_has_binding(target_scope_id, &name) {
+                        if !builder.scoping.scope_has_binding(target_scope_id, name) {
                             // remove current scope binding and add to target scope
                             // avoid same symbols appear in multi-scopes
-                            builder.scoping.remove_binding(scope_id, &name);
-                            builder.scoping.add_binding(target_scope_id, &name, symbol_id);
-                            builder.scoping.symbol_scope_ids[symbol_id] = target_scope_id;
+                            builder.scoping.remove_binding(scope_id, name);
+                            builder.scoping.add_binding(target_scope_id, name, symbol_id);
+                            builder.scoping.set_symbol_scope_id(symbol_id, target_scope_id);
                         }
                         break;
                     }
@@ -85,24 +92,14 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 // we don't need to create another symbol with the same name
                 // to make sure they point to the same symbol.
                 let symbol_id = declared_symbol_id.unwrap_or_else(|| {
-                    builder.declare_symbol_on_scope(
-                        span,
-                        &name,
-                        target_scope_id,
-                        includes,
-                        excludes,
-                    )
+                    builder.declare_symbol_on_scope(span, name, target_scope_id, includes, excludes)
                 });
                 ident.symbol_id.set(Some(symbol_id));
 
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
                 for &scope_id in &var_scope_ids {
-                    builder
-                        .hoisting_variables
-                        .entry(scope_id)
-                        .or_default()
-                        .insert(name.into(), symbol_id);
+                    builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
                 }
             });
         }
@@ -123,7 +120,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 }
 
 impl<'a> Binder<'a> for Class<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let includes = if self.declare {
             SymbolFlags::Class | SymbolFlags::Ambient
         } else {
@@ -131,13 +128,13 @@ impl<'a> Binder<'a> for Class<'a> {
         };
         let Some(ident) = &self.id else { return };
         let symbol_id =
-            builder.declare_symbol(ident.span, &ident.name, includes, SymbolFlags::ClassExcludes);
+            builder.declare_symbol(ident.span, ident.name, includes, SymbolFlags::ClassExcludes);
         ident.symbol_id.set(Some(symbol_id));
     }
 }
 
 impl<'a> Binder<'a> for Function<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let is_declaration = self.is_declaration();
 
         if let Some(ident) = &self.id {
@@ -158,8 +155,42 @@ impl<'a> Binder<'a> for Function<'a> {
                 SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
             };
 
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
+
+            // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
+            // scopes also create an implicit var-like binding in the enclosing function
+            // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
+            let scope_flags = builder.current_scope_flags();
+            if is_declaration // function expressions are bound in their own (var) scope
+                && !self.r#async // Annex B only applies to plain functions
+                && !self.generator // not generators or async generators
+                && !builder.source_type.is_typescript() // Annex B is JavaScript-only
+                && !scope_flags.is_var() // already in a var scope, no hoisting needed
+                && !scope_flags.is_strict_mode()
+            // no Annex B in strict mode / modules
+            {
+                let block_scope_id = builder.current_scope_id;
+                let var_scope_id = builder
+                    .scoping
+                    .scope_ancestors(block_scope_id)
+                    .skip(1)
+                    .find(|&id| builder.scoping.scope_flags(id).is_var());
+                if let Some(var_scope_id) = var_scope_id
+                    && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
+                {
+                    builder.scoping.move_binding_by_symbol_id(
+                        block_scope_id,
+                        var_scope_id,
+                        symbol_id,
+                    );
+                    builder
+                        .hoisting_variables
+                        .entry(block_scope_id)
+                        .or_default()
+                        .insert(ident.name, symbol_id);
+                }
+            }
 
             // Save `@__NO_SIDE_EFFECTS__`
             if self.pure {
@@ -191,7 +222,7 @@ impl<'a> Binder<'a> for Function<'a> {
 
 impl<'a> Binder<'a> for BindingRestElement<'a> {
     // Binds the FormalParameters's rest of a function or method.
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
         let AstKind::FormalParameters(_) = parent_kind else {
             return;
@@ -201,7 +232,7 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
         let excludes =
             SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes;
         self.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
         });
     }
@@ -209,7 +240,7 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
 
 impl<'a> Binder<'a> for FormalParameter<'a> {
     // Binds the FormalParameter of a function or method.
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
         let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
 
@@ -236,7 +267,7 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
         };
 
         self.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
         });
     }
@@ -244,7 +275,7 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
 
 impl<'a> Binder<'a> for FormalParameterRest<'a> {
     // Binds the FormalParameter of a function or method.
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
         let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
 
@@ -271,14 +302,14 @@ impl<'a> Binder<'a> for FormalParameterRest<'a> {
         };
 
         self.rest.argument.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
         });
     }
 }
 
 impl<'a> Binder<'a> for CatchParameter<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let current_scope_id = builder.current_scope_id;
         // https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
         // It is a Syntax Error if any element of the BoundNames of CatchParameter also occurs in the VarDeclaredNames of Block
@@ -286,13 +317,13 @@ impl<'a> Binder<'a> for CatchParameter<'a> {
         if let BindingPattern::BindingIdentifier(ident) = &self.pattern {
             let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
             let symbol_id =
-                builder.declare_shadow_symbol(&ident.name, ident.span, current_scope_id, includes);
+                builder.declare_shadow_symbol(ident.name, ident.span, current_scope_id, includes);
             ident.symbol_id.set(Some(symbol_id));
         } else {
             self.pattern.bound_names(&mut |ident| {
                 let symbol_id = builder.declare_symbol(
                     ident.span,
-                    &ident.name,
+                    ident.name,
                     SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
                     SymbolFlags::BlockScopedVariableExcludes,
                 );
@@ -302,10 +333,10 @@ impl<'a> Binder<'a> for CatchParameter<'a> {
     }
 }
 
-fn declare_symbol_for_import_specifier(
-    ident: &BindingIdentifier,
+fn declare_symbol_for_import_specifier<'a>(
+    ident: &BindingIdentifier<'a>,
     is_type: bool,
-    builder: &mut SemanticBuilder,
+    builder: &mut SemanticBuilder<'a>,
 ) {
     let includes = if is_type
         || matches!(builder.nodes.parent_kind(builder.current_node_id), AstKind::ImportDeclaration(decl) if decl.import_kind.is_type(),
@@ -317,7 +348,7 @@ fn declare_symbol_for_import_specifier(
 
     let symbol_id = builder.declare_symbol(
         ident.span,
-        &ident.name,
+        ident.name,
         includes,
         SymbolFlags::ImportBindingExcludes,
     );
@@ -325,31 +356,31 @@ fn declare_symbol_for_import_specifier(
 }
 
 impl<'a> Binder<'a> for ImportSpecifier<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         declare_symbol_for_import_specifier(&self.local, self.import_kind.is_type(), builder);
     }
 }
 
 impl<'a> Binder<'a> for ImportDefaultSpecifier<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         declare_symbol_for_import_specifier(&self.local, false, builder);
     }
 }
 
 impl<'a> Binder<'a> for ImportNamespaceSpecifier<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         declare_symbol_for_import_specifier(&self.local, false, builder);
     }
 }
 
 impl<'a> Binder<'a> for TSImportEqualsDeclaration<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         declare_symbol_for_import_specifier(&self.id, false, builder);
     }
 }
 
 impl<'a> Binder<'a> for TSTypeAliasDeclaration<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let includes = if self.declare {
             SymbolFlags::TypeAlias | SymbolFlags::Ambient
         } else {
@@ -357,7 +388,7 @@ impl<'a> Binder<'a> for TSTypeAliasDeclaration<'a> {
         };
         let symbol_id = builder.declare_symbol(
             self.id.span,
-            &self.id.name,
+            self.id.name,
             includes,
             SymbolFlags::TypeAliasExcludes,
         );
@@ -366,7 +397,7 @@ impl<'a> Binder<'a> for TSTypeAliasDeclaration<'a> {
 }
 
 impl<'a> Binder<'a> for TSInterfaceDeclaration<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let includes = if self.declare {
             SymbolFlags::Interface | SymbolFlags::Ambient
         } else {
@@ -374,7 +405,7 @@ impl<'a> Binder<'a> for TSInterfaceDeclaration<'a> {
         };
         let symbol_id = builder.declare_symbol(
             self.id.span,
-            &self.id.name,
+            self.id.name,
             includes,
             SymbolFlags::InterfaceExcludes,
         );
@@ -383,7 +414,7 @@ impl<'a> Binder<'a> for TSInterfaceDeclaration<'a> {
 }
 
 impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let is_const = self.r#const;
         let includes = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::empty() };
         let (includes, excludes) = if is_const {
@@ -391,16 +422,21 @@ impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
         } else {
             (SymbolFlags::RegularEnum | includes, SymbolFlags::RegularEnumExcludes)
         };
-        let symbol_id = builder.declare_symbol(self.id.span, &self.id.name, includes, excludes);
+        let symbol_id = builder.declare_symbol(self.id.span, self.id.name, includes, excludes);
         self.id.symbol_id.set(Some(symbol_id));
     }
 }
 
 impl<'a> Binder<'a> for TSEnumMember<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
+        // Extract Ident directly from Identifier variant to preserve precomputed hash.
+        let name = match &self.id {
+            TSEnumMemberName::Identifier(ident) => ident.name,
+            _ => Ident::from(self.id.static_name()),
+        };
         builder.declare_symbol(
-            self.span,
-            self.id.static_name().as_str(),
+            self.id.span(),
+            name,
             SymbolFlags::EnumMember,
             SymbolFlags::EnumMemberExcludes,
         );
@@ -421,7 +457,7 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
         if self.declare {
             includes |= SymbolFlags::Ambient;
         }
-        let symbol_id = builder.declare_symbol(id.span, &id.name, includes, excludes);
+        let symbol_id = builder.declare_symbol(id.span, id.name, includes, excludes);
 
         id.set_symbol_id(symbol_id);
     }
@@ -621,20 +657,20 @@ fn get_module_instance_state_for_alias_target<'a>(
                     }
                 },
                 Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {
-                    ExportDefaultDeclarationKind::FunctionDeclaration(decl) => {
-                        if decl.id.as_ref().is_some_and(|id| id.name == name) {
-                            found = true;
-                        }
+                    ExportDefaultDeclarationKind::FunctionDeclaration(decl)
+                        if decl.id.as_ref().is_some_and(|id| id.name == name) =>
+                    {
+                        found = true;
                     }
-                    ExportDefaultDeclarationKind::ClassDeclaration(decl) => {
-                        if decl.id.as_ref().is_some_and(|id| id.name == name) {
-                            found = true;
-                        }
+                    ExportDefaultDeclarationKind::ClassDeclaration(decl)
+                        if decl.id.as_ref().is_some_and(|id| id.name == name) =>
+                    {
+                        found = true;
                     }
-                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl) => {
-                        if decl.id.name == name {
-                            found = true;
-                        }
+                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
+                        if decl.id.name == name =>
+                    {
+                        found = true;
                     }
                     _ => {}
                 },
@@ -659,16 +695,18 @@ fn get_module_instance_state_for_alias_target<'a>(
             }
         }
 
-        let Some(node) = builder.nodes.ancestors(current_node_id).find(|node| {
-            matches!(
-                node.kind(),
-                AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::BlockStatement(_)
-            )
-        }) else {
+        let Some((node_id, node)) =
+            builder.nodes.ancestors_enumerated(current_node_id).find(|(_, node)| {
+                matches!(
+                    node.kind(),
+                    AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::BlockStatement(_)
+                )
+            })
+        else {
             break;
         };
 
-        current_node_id = node.id();
+        current_node_id = node_id;
         current_block_stmts.clear();
         // Didn't find the declaration whose name matches export specifier
         // in the current block, so we need to check the parent block.
@@ -685,7 +723,7 @@ fn get_module_instance_state_for_alias_target<'a>(
 }
 
 impl<'a> Binder<'a> for TSTypeParameter<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let scope_id = if matches!(
             builder.nodes.parent_kind(builder.current_node_id),
             AstKind::TSInferType(_)
@@ -700,7 +738,7 @@ impl<'a> Binder<'a> for TSTypeParameter<'a> {
 
         let symbol_id = builder.declare_symbol_on_scope(
             self.name.span,
-            &self.name.name,
+            self.name.name,
             scope_id.unwrap_or(builder.current_scope_id),
             SymbolFlags::TypeParameter,
             SymbolFlags::TypeParameterExcludes,
@@ -710,10 +748,10 @@ impl<'a> Binder<'a> for TSTypeParameter<'a> {
 }
 
 impl<'a> Binder<'a> for TSMappedType<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let symbol_id = builder.declare_symbol_on_scope(
             self.key.span,
-            &self.key.name,
+            self.key.name,
             builder.current_scope_id,
             SymbolFlags::TypeParameter,
             SymbolFlags::TypeParameterExcludes,

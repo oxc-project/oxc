@@ -52,9 +52,9 @@ export type RuleDetails = CreateRuleDetails | CreateOnceRuleDetails;
 
 interface RuleDetailsBase {
   // Static properties of the rule
-  readonly fullName: string;
-  readonly context: Readonly<Context>;
+  readonly context: Context;
   readonly isFixable: boolean;
+  readonly hasSuggestions: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
   readonly defaultOptions: Readonly<Options>;
   // Function to validate options against schema.
@@ -63,7 +63,6 @@ interface RuleDetailsBase {
   readonly optionsSchemaValidator: SchemaValidator | false | null;
   // Updated for each file
   ruleIndex: number;
-  options: Readonly<Options> | null; // Initially `null`, set to options object before linting a file
 }
 
 interface CreateRuleDetails extends RuleDetailsBase {
@@ -172,6 +171,7 @@ export function registerPlugin(
 
     // Validate `rule.meta` and convert to vars with standardized shape
     let isFixable = false,
+      hasSuggestions = false,
       messages: Record<string, string> | null = null,
       defaultOptions: Readonly<Options> = DEFAULT_OPTIONS,
       schemaValidator: SchemaValidator | false | null = null;
@@ -192,6 +192,13 @@ export function registerPlugin(
           throw new TypeError("Invalid `rule.meta.fixable`");
         }
         isFixable = (fixable as "code" | "whitespace" | true | false) !== false;
+      }
+
+      const inputHasSuggestions = ruleMeta.hasSuggestions;
+      if (inputHasSuggestions === true) {
+        hasSuggestions = true;
+      } else if (inputHasSuggestions != null && inputHasSuggestions !== false) {
+        throw new TypeError("Invalid `rule.meta.hasSuggestions`");
       }
 
       // If `schema` provided, compile schema to validator for applying schema defaults to options
@@ -241,15 +248,14 @@ export function registerPlugin(
 
     // Create `RuleDetails` object for rule.
     const ruleDetails: RuleDetails = {
-      fullName: fullRuleName,
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
       context: null!, // Filled in below
       isFixable,
+      hasSuggestions,
       messages,
       defaultOptions,
       optionsSchemaValidator: schemaValidator,
       ruleIndex: 0,
-      options: null,
       visitor: null,
       beforeHook: null,
       afterHook: null,
@@ -290,6 +296,10 @@ export function registerPlugin(
       (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).beforeHook = beforeHook;
       (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
     }
+
+    // Set `id` property on `Context` object.
+    // Do this after calling `createOnce` - `createOnce` should not have access to `id` property.
+    Object.defineProperty(ruleDetails.context, "id", { value: fullRuleName });
 
     registeredRules.push(ruleDetails);
   }

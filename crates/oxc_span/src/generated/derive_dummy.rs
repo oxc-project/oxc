@@ -1,7 +1,9 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/dummy.rs`.
 
-#![allow(unused_variables, clippy::inline_always)]
+#![allow(unused_imports, unused_variables, clippy::inline_always)]
+
+use std::cell::Cell;
 
 use oxc_allocator::{Allocator, Dummy};
 
@@ -16,6 +18,7 @@ impl<'a> Dummy<'a> for SourceType {
             language: Dummy::dummy(allocator),
             module_kind: Dummy::dummy(allocator),
             variant: Dummy::dummy(allocator),
+            extension: Dummy::dummy(allocator),
         }
     }
 }
@@ -47,5 +50,15 @@ impl<'a> Dummy<'a> for LanguageVariant {
     #[inline(always)]
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::Standard
+    }
+}
+
+impl<'a> Dummy<'a> for FileExtension {
+    /// Create a dummy [`FileExtension`].
+    ///
+    /// Does not allocate any data into arena.
+    #[inline(always)]
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::Js
     }
 }

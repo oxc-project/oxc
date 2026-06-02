@@ -9,7 +9,9 @@ use oxc_span::{ContentEq, Span};
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn eslint_prefer_spread_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use spread operators instead of `.apply()`.").with_label(span)
+    OxcDiagnostic::warn("Use spread operators instead of `.apply()`.")
+        .with_help("Replace `.apply()` with spread syntax (`...args`).")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -62,7 +64,8 @@ declare_oxc_lint!(
     /// ```
     PreferSpread,
     eslint,
-    style
+    style,
+    version = "0.0.17",
 );
 
 impl Rule for PreferSpread {

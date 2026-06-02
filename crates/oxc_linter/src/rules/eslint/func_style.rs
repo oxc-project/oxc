@@ -197,7 +197,8 @@ declare_oxc_lint!(
     eslint,
     style,
     fix = pending,
-    config = FuncStyle
+    config = FuncStyle,
+    version = "0.15.11",
 );
 
 fn is_ancestor_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {

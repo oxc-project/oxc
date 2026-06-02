@@ -18,7 +18,7 @@ severity: Some(Warning)
 source: Some("oxc")
 tags: None
 
-code: "typescript-eslint(no-floating-promises)"
+code: "typescript(no-floating-promises)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited, add void operator to ignore.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 8 } }
@@ -29,7 +29,7 @@ severity: Some(Warning)
 source: Some("oxc")
 tags: None
 
-code: "typescript-eslint(no-floating-promises)"
+code: "typescript(no-floating-promises)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited, add void operator to ignore.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 7, character: 0 }, end: Position { line: 7, character: 32 } }
@@ -40,7 +40,7 @@ severity: Some(Warning)
 source: Some("oxc")
 tags: None
 
-code: "typescript-eslint(no-floating-promises)"
+code: "typescript(no-floating-promises)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited, add void operator to ignore.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 9, character: 0 }, end: Position { line: 9, character: 32 } }
@@ -51,7 +51,7 @@ severity: Some(Warning)
 source: Some("oxc")
 tags: None
 
-code: "typescript-eslint(no-floating-promises)"
+code: "typescript(no-floating-promises)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited, add void operator to ignore.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 11, character: 0 }, end: Position { line: 11, character: 34 } }
@@ -62,7 +62,7 @@ severity: Some(Warning)
 source: Some("oxc")
 tags: None
 
-code: "typescript-eslint(no-floating-promises)"
+code: "typescript(no-floating-promises)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "An array of Promises may be unintentional.\nhelp: Consider handling the promises' fulfillment or rejection with Promise.all or similar, or explicitly marking the expression as ignored with the `void` operator."
 range: Range { start: Position { line: 13, character: 0 }, end: Position { line: 13, character: 34 } }
@@ -76,7 +76,7 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-unused-expressions for this line
-Is Preferred: Some(true)
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -111,7 +111,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -129,7 +129,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -183,7 +183,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -201,7 +201,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -255,7 +255,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -273,7 +273,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -327,7 +327,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -345,7 +345,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -400,7 +400,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable typescript/no-floating-promises for this line
-Is Preferred: Some(true)
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -435,58 +435,4 @@ TextEdit: TextEdit {
 
 
 ########### Fix All Action
-CodeAction: 
-Title: quick fix
-Is Preferred: Some(true)
-TextEdit: TextEdit {
-    range: Range {
-        start: Position {
-            line: 1,
-            character: 0,
-        },
-        end: Position {
-            line: 1,
-            character: 0,
-        },
-    },
-    new_text: "void ",
-}
-TextEdit: TextEdit {
-    range: Range {
-        start: Position {
-            line: 7,
-            character: 0,
-        },
-        end: Position {
-            line: 7,
-            character: 0,
-        },
-    },
-    new_text: "void ",
-}
-TextEdit: TextEdit {
-    range: Range {
-        start: Position {
-            line: 9,
-            character: 0,
-        },
-        end: Position {
-            line: 9,
-            character: 0,
-        },
-    },
-    new_text: "void ",
-}
-TextEdit: TextEdit {
-    range: Range {
-        start: Position {
-            line: 11,
-            character: 0,
-        },
-        end: Position {
-            line: 11,
-            character: 0,
-        },
-    },
-    new_text: "void ",
-}
+None

@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// ```
     NoDocumentImportInPage,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.1",
 );
 
 impl Rule for NoDocumentImportInPage {
@@ -89,15 +90,15 @@ fn test() {
         (
             r#"import Document from "next/document"
 
-			export default class MyDocument extends Document {
-			  render() {
-				return (
-				  <Html>
-				  </Html>
-				);
-			  }
-			}
-			"#,
+            export default class MyDocument extends Document {
+              render() {
+                return (
+                  <Html>
+                  </Html>
+                );
+              }
+            }
+            "#,
             None,
             None,
             Some(PathBuf::from("pages/_document.js")),
@@ -105,15 +106,15 @@ fn test() {
         (
             r#"import Document from "next/document"
 
-				export default class MyDocument extends Document {
-				render() {
-					return (
-					<Html>
-					</Html>
-					);
-				}
-				}
-			"#,
+                export default class MyDocument extends Document {
+                render() {
+                    return (
+                    <Html>
+                    </Html>
+                    );
+                }
+                }
+            "#,
             None,
             None,
             Some(PathBuf::from("pages/_document.js")),
@@ -121,15 +122,15 @@ fn test() {
         (
             r#"import NextDocument from "next/document"
 
-        	    export default class MyDocument extends NextDocument {
-        	      render() {
-        	        return (
-        	          <Html>
-        	          </Html>
-        	        );
-        	      }
-        	    }
-        	"#,
+                export default class MyDocument extends NextDocument {
+                  render() {
+                    return (
+                      <Html>
+                      </Html>
+                    );
+                  }
+                }
+            "#,
             None,
             None,
             Some(PathBuf::from("pages/_document.tsx")),
@@ -145,7 +146,7 @@ fn test() {
                 );
               }
             }
-        	"#,
+            "#,
             None,
             None,
             Some(PathBuf::from("pages/_document.page.tsx")),
@@ -161,7 +162,7 @@ fn test() {
                 );
               }
             }
-        	"#,
+            "#,
             None,
             None,
             Some(PathBuf::from("pages/_document/index.js")),
@@ -177,7 +178,7 @@ fn test() {
                 );
               }
             }
-        	"#,
+            "#,
             None,
             None,
             Some(PathBuf::from("pages/_document/index.tsx")),
@@ -185,15 +186,15 @@ fn test() {
         (
             r#"import Document from "next/document"
 
-        	    export default class MyDocument extends Document {
-        	      render() {
-        	        return (
-        	          <Html>
-        	          </Html>
-        	        );
-        	      }
-        	    }
-        	"#,
+                export default class MyDocument extends Document {
+                  render() {
+                    return (
+                      <Html>
+                      </Html>
+                    );
+                  }
+                }
+            "#,
             None,
             None,
             Some(PathBuf::from("pagesapp/src/pages/_document.js")),
@@ -204,8 +205,8 @@ fn test() {
         (
             r#"import Document from "next/document"
 
-        	    export const Test = () => <p>Test</p>
-			"#,
+                export const Test = () => <p>Test</p>
+            "#,
             None,
             None,
             Some(PathBuf::from("components/test.js")),
@@ -213,8 +214,8 @@ fn test() {
         (
             r#"import Document from "next/document"
 
-        	    export const Test = () => <p>Test</p>
-        	"#,
+                export const Test = () => <p>Test</p>
+            "#,
             None,
             None,
             Some(PathBuf::from("pages/test.js")),
@@ -222,8 +223,8 @@ fn test() {
         (
             r#"import Document from "next/document"
 
-        	    export const Test = () => <p>Test</p>
-			"#,
+                export const Test = () => <p>Test</p>
+            "#,
             None,
             None,
             Some(PathBuf::from("src/pages/user/test.tsx")),
@@ -231,8 +232,8 @@ fn test() {
         (
             r#"import Document from "next/document"
 
-        	    export const Test = () => <p>Test</p>
-			"#,
+                export const Test = () => <p>Test</p>
+            "#,
             None,
             None,
             Some(PathBuf::from("src/pages/user/_document.tsx")),

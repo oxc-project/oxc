@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-unused-vars): Variable 'x' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:9]
+ 1 │ const { x, y } = obj; console.log(y)
+   ·         ┬
+   ·         ╰── 'x' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Function '_foo' is marked as ignored but is used.
+   ╭─[no_unused_vars.tsx:1:10]
+ 1 │ function _foo() {} _foo()
+   ·          ──┬─
+   ·            ╰── '_foo' is declared here
+   ╰────
+  help: Consider renaming this function to 'foo'.
+
+  ⚠ eslint(no-unused-vars): Variable '_x' is marked as ignored but is used.
+   ╭─[no_unused_vars.tsx:1:12]
+ 1 │ const { x: _x, ...rest } = obj; console.log(_x, rest)
+   ·            ─┬
+   ·             ╰── '_x' is declared here
+   ╰────
+  help: Consider renaming this variable to 'x'.
+
+  ⚠ eslint(no-unused-vars): Variable '_x' is marked as ignored but is used.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ arr.map(({ x: _x, ...rest }) => ({ x: _x, ...rest }))
+   ·               ─┬
+   ·                ╰── '_x' is declared here
+   ╰────
+  help: Consider renaming this variable.
+
+  ⚠ eslint(no-unused-vars): Variable 'unused' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:21]
+ 1 │ const { a: { b: [c, unused], ...rest } } = obj; console.log(c, rest);
+   ·                     ───┬──
+   ·                        ╰── 'unused' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable '_c' is marked as ignored but is used.
+   ╭─[no_unused_vars.tsx:1:18]
+ 1 │ const { a: { b: [_c], ...rest } } = obj; console.log(_c, rest);
+   ·                  ─┬
+   ·                   ╰── '_c' is declared here
+   ╰────
+  help: Consider renaming this variable.
+
+  ⚠ eslint(no-unused-vars): Variable '_b' is marked as ignored but is used.
+   ╭─[no_unused_vars.tsx:1:11]
+ 1 │ const [a, _b] = arr; console.log(a, _b)
+   ·           ─┬
+   ·            ╰── '_b' is declared here
+   ╰────
+  help: Consider renaming this variable.
+
+  ⚠ eslint(no-unused-vars): Variable '_bar' is marked as ignored but is used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function foo(_bar) { return _bar; } foo(1)
+   ·              ──┬─
+   ·                ╰── '_bar' is declared here
+   ╰────
+  help: Consider renaming this variable.
+
+  ⚠ eslint(no-unused-vars): Catch parameter '_err' is marked as ignored but is used.
+   ╭─[no_unused_vars.tsx:1:22]
+ 1 │ try { foo() } catch (_err) { console.error(_err) }
+   ·                      ──┬─
+   ·                        ╰── '_err' is declared here
+   ╰────
+  help: Consider renaming this catch parameter.

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-useless-return): Unnecessary return statement.
    ╭─[no_useless_return.tsx:1:18]
  1 │ function foo() { return; }

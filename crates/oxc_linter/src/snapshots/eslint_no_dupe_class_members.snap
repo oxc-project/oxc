@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
    ╭─[no_dupe_class_members.tsx:1:11]
  1 │ class A { foo() {} foo() {} }

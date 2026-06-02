@@ -1,9 +1,10 @@
 use oxc_span::Span;
 
-use super::{Kind, Lexer, Token};
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
-impl Lexer<'_> {
+use super::{Kind, Lexer, Token};
+
+impl<C: Config> Lexer<'_, C> {
     /// Section 12.8 Punctuators
     pub(super) fn read_dot(&mut self) -> Kind {
         if self.peek_2_bytes() == Some([b'.', b'.']) {
@@ -36,7 +37,7 @@ impl Lexer<'_> {
             Some(b'!') if self.remaining().starts_with("!--") => {
                 if self.source_type.is_module() {
                     if self.token.is_on_new_line() {
-                        let span = Span::new(self.token.start(), self.token.start() + 4);
+                        let span = Span::sized(self.token.start(), 4);
                         self.errors.push(diagnostics::html_comment_in_module(span));
                         None
                     } else {
@@ -79,15 +80,15 @@ impl Lexer<'_> {
     /// Defer HTML comment error for unambiguous mode (emitted if file resolves to module)
     fn defer_html_comment_error(&mut self, len: u32) {
         if self.source_type.is_unambiguous() {
-            let span = Span::new(self.token.start(), self.token.start() + len);
+            let span = Span::sized(self.token.start(), len);
             self.deferred_module_errors.push(diagnostics::html_comment_in_module(span));
         }
     }
 
     pub(crate) fn re_lex_right_angle(&mut self) -> Token {
-        self.token.set_start(self.offset());
+        self.token.set_start(self.offset() - 1);
         let kind = self.read_right_angle();
-        self.finish_next(kind)
+        self.finish_next_retokenized(kind)
     }
 
     fn read_right_angle(&mut self) -> Kind {

@@ -31,6 +31,14 @@ pub struct ParserOptions {
     #[napi(ts_type = "boolean")]
     pub range: Option<bool>,
 
+    /// Controls whether parser should return tokens.
+    ///
+    /// This option is not stable yet, and only available with experimental raw transfer.
+    ///
+    /// @default false
+    #[napi(skip_typescript, js_name = "experimentalTokens")]
+    pub tokens: Option<bool>,
+
     /// Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
     ///
     /// If this option is true, parenthesized expressions are represented by

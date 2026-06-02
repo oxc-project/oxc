@@ -9,7 +9,7 @@ use oxc_span::ContentEq;
 
 use crate::precedence::{GetPrecedence, Precedence};
 
-/// Operators that may be used in assignment epxressions.
+/// Operators that may be used in assignment expressions.
 ///
 /// ## References
 /// - [13.15 Assignment Operators](https://tc39.es/ecma262/#sec-assignment-operators)

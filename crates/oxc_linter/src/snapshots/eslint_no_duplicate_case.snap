@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-duplicate-case): Duplicate case label
    ╭─[no_duplicate_case.tsx:1:29]
  1 │ var a = 1; switch (a) {case 1: break; case 1: break; case 2: break; default: break;}

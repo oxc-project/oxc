@@ -1,68 +1,122 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:10]
  1 │ 'foobar'.indexOf('foo') !== -1
    ·          ───────
    ╰────
+  help: Replace `'foobar'.indexOf('foo') !== -1` with `'foobar'.includes('foo')`.
 
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:5]
  1 │ str.indexOf('foo') != -1
    ·     ───────
    ╰────
+  help: Replace `str.indexOf('foo') != -1` with `str.includes('foo')`.
 
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:5]
  1 │ str.indexOf('foo') > -1
    ·     ───────
    ╰────
+  help: Replace `str.indexOf('foo') > -1` with `str.includes('foo')`.
 
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:5]
  1 │ str.indexOf('foo') == -1
    ·     ───────
    ╰────
+  help: Replace `str.indexOf('foo') == -1` with `!str.includes('foo')`.
 
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:10]
  1 │ 'foobar'.indexOf('foo') >= 0
    ·          ───────
    ╰────
+  help: Replace `'foobar'.indexOf('foo') >= 0` with `'foobar'.includes('foo')`.
 
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:9]
  1 │ [1,2,3].indexOf(4) !== -1
    ·         ───────
    ╰────
+  help: Replace `[1,2,3].indexOf(4) !== -1` with `[1,2,3].includes(4)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:5]
  1 │ str.indexOf('foo') < 0
    ·     ───────
    ╰────
+  help: Replace `str.indexOf('foo') < 0` with `!str.includes('foo')`.
 
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:4]
  1 │ ''.indexOf('foo') < 0
    ·    ───────
    ╰────
+  help: Replace `''.indexOf('foo') < 0` with `!''.includes('foo')`.
 
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:10]
  1 │ (a || b).indexOf('foo') === -1
    ·          ───────
    ╰────
+  help: Replace `(a || b).indexOf('foo') === -1` with `!(a || b).includes('foo')`.
 
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:5]
  1 │ foo.indexOf(bar, 0) !== -1
    ·     ───────
    ╰────
+  help: Replace `foo.indexOf(bar, 0) !== -1` with `foo.includes(bar, 0)`.
 
-  ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:5]
  1 │ foo.indexOf(bar, 1) !== -1
    ·     ───────
    ╰────
+  help: Replace `foo.indexOf(bar, 1) !== -1` with `foo.includes(bar, 1)`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:6]
+ 1 │ foo?.indexOf('x') !== -1
+   ·      ───────
+   ╰────
+  help: Replace `foo?.indexOf('x') !== -1` with `foo?.includes('x') !== false`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:5]
+ 1 │ foo.indexOf?.('x') === -1
+   ·     ───────
+   ╰────
+  help: Replace `foo.indexOf?.('x') === -1` with `foo.includes?.('x') === false`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:6]
+ 1 │ foo?.indexOf?.('x') == -1
+   ·      ───────
+   ╰────
+  help: Replace `foo?.indexOf?.('x') == -1` with `foo?.includes?.('x') === false`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:6]
+ 1 │ foo?.indexOf('x') > -1
+   ·      ───────
+   ╰────
+  help: Replace `foo?.indexOf('x') > -1` with `foo?.includes('x') === true`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:6]
+ 1 │ foo?.indexOf('x') >= 0
+   ·      ───────
+   ╰────
+  help: Replace `foo?.indexOf('x') >= 0` with `foo?.includes('x') === true`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:6]
+ 1 │ foo?.indexOf('x') < 0
+   ·      ───────
+   ╰────
+  help: Replace `foo?.indexOf('x') < 0` with `foo?.includes('x') === false`.

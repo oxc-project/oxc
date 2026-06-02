@@ -1,7 +1,7 @@
 use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_span::SPAN;
+use oxc_span::{SPAN, Span};
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
     scope::{ScopeFlags, ScopeId},
@@ -9,30 +9,25 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 use super::{
     TypeScriptOptions,
     diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
 };
 
-pub struct TypeScriptNamespace<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-
+pub struct TypeScriptNamespace {
     // Options
     allow_namespaces: bool,
 }
 
-impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, allow_namespaces: options.allow_namespaces }
+impl TypeScriptNamespace {
+    pub fn new(options: &TypeScriptOptions) -> Self {
+        Self { allow_namespaces: options.allow_namespaces }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // namespace declaration is only allowed at the top level
@@ -49,7 +44,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
-                        self.ctx.error(namespace_not_supported(decl.span));
+                        ctx.state.error(namespace_not_supported(decl.span));
                     }
 
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
@@ -57,7 +52,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
                 }
                 Statement::TSGlobalDeclaration(decl) => {
                     if !self.allow_namespaces {
-                        self.ctx.error(namespace_not_supported(decl.span));
+                        ctx.state.error(namespace_not_supported(decl.span));
                     }
                     continue;
                 }
@@ -75,7 +70,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
                     };
 
                     if !self.allow_namespaces {
-                        self.ctx.error(namespace_not_supported(decl.span));
+                        ctx.state.error(namespace_not_supported(decl.span));
                     }
 
                     self.handle_nested(decl, /* is_export */ true, &mut new_stmts, None, ctx);
@@ -91,7 +86,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
     }
 }
 
-impl<'a> TypeScriptNamespace<'a, '_> {
+impl<'a> TypeScriptNamespace {
+    #[expect(clippy::self_only_used_in_recursion)]
     fn handle_nested(
         &self,
         decl: ArenaBox<'a, TSModuleDeclaration<'a>>,
@@ -108,7 +104,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         let TSModuleDeclaration { span, id, body, scope_id, .. } = decl.unbox();
 
         let TSModuleDeclarationName::Identifier(ident) = id else {
-            self.ctx.error(ambient_module_nested(span));
+            ctx.state.error(ambient_module_nested(span));
             return;
         };
 
@@ -256,7 +252,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                             Declaration::VariableDeclaration(var_decl) => {
                                 var_decl.declarations.iter().for_each(|decl| {
                                     if !decl.kind.is_const() {
-                                        self.ctx.error(namespace_exporting_non_const(decl.span));
+                                        ctx.state.error(namespace_exporting_non_const(decl.span));
                                     }
                                 });
                                 let stmts =
@@ -284,10 +280,10 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         }
 
         if !Self::is_redeclaration_namespace(&ident, ctx) {
-            let declaration = Self::create_variable_declaration(&binding, ctx);
+            let declaration = Self::create_variable_declaration(&binding, span, ctx);
             if is_export {
                 let export_named_decl =
-                    ctx.ast.plain_export_named_declaration_declaration(SPAN, declaration);
+                    ctx.ast.plain_export_named_declaration_declaration(span, declaration);
                 let stmt = Statement::ExportNamedDeclaration(export_named_decl);
                 parent_stmts.push(stmt);
             } else {
@@ -311,15 +307,16 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     //                         ^^^^^^^
     fn create_variable_declaration(
         binding: &BoundIdentifier<'a>,
+        span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
             let pattern = binding.create_binding_pattern(ctx);
-            let decl = ctx.ast.variable_declarator(SPAN, kind, pattern, NONE, None, false);
+            let decl = ctx.ast.variable_declarator(span, kind, pattern, NONE, None, false);
             ctx.ast.vec1(decl)
         };
-        ctx.ast.declaration_variable(SPAN, kind, declarations, false)
+        ctx.ast.declaration_variable(span, kind, declarations, false)
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -343,7 +340,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
             let function_expr =
                 Expression::FunctionExpression(ctx.ast.alloc_plain_function_with_scope_id(
                     FunctionType::FunctionExpression,
-                    SPAN,
+                    span,
                     None,
                     params,
                     func_body,
@@ -351,7 +348,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 ));
             *ctx.scoping_mut().scope_flags_mut(scope_id) =
                 ScopeFlags::Function | ScopeFlags::StrictMode;
-            ctx.ast.expression_parenthesized(SPAN, function_expr)
+            ctx.ast.expression_parenthesized(span, function_expr)
         };
 
         // (function (_N) { var M; (function (_M) { var x; })(M || (M = _N.M || (_N.M = {})));})(N || (N = {}));
@@ -407,7 +404,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
             ctx.ast.vec1(Argument::from(expr))
         };
 
-        let expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
+        let expr = ctx.ast.expression_call(span, callee, NONE, arguments, false);
         ctx.ast.statement_expression(span, expr)
     }
 

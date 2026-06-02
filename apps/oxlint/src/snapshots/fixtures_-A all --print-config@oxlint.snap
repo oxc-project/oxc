@@ -40,6 +40,9 @@ working directory: fixtures
     },
     "vitest": {
       "typecheck": false
+    },
+    "jest": {
+      "version": null
     }
   },
   "env": {

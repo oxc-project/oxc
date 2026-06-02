@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(prefer-const): `x` is never reassigned.
    ╭─[prefer_const.tsx:1:5]
  1 │ let x = 1; foo(x);

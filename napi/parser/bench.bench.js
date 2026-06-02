@@ -2,13 +2,13 @@ import { writeFile } from "node:fs/promises";
 import { join as pathJoin } from "node:path";
 import { bench, describe } from "vitest";
 import { parseRawSync } from "./src-js/bindings.js";
-import { parseAsync, parseSync } from "./src-js/index.js";
+import { parse as parseAsync, parseSync } from "./src-js/index.js";
 
 // Internals
-import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from "./generated/constants.js";
-import { deserialize as deserializeJS } from "./generated/deserialize/js.js";
-import { deserialize as deserializeTS } from "./generated/deserialize/ts.js";
-import { walkProgram } from "./generated/lazy/walk.js";
+import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from "./src-js/generated/constants.js";
+import { deserialize as deserializeJS } from "./src-js/generated/deserialize/js.js";
+import { deserialize as deserializeTS } from "./src-js/generated/deserialize/ts.js";
+import { walkProgram } from "./src-js/generated/lazy/walk.js";
 import { isJsAst, prepareRaw, returnBufferToCache } from "./src-js/raw-transfer/common.js";
 import { TOKEN } from "./src-js/raw-transfer/lazy-common.js";
 import { getVisitorsArr, Visitor } from "./src-js/raw-transfer/visitor.js";
@@ -16,7 +16,7 @@ import { getVisitorsArr, Visitor } from "./src-js/raw-transfer/visitor.js";
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [
   "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts",
-  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx",
+  "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
   "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
   "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
   "https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js",
@@ -189,7 +189,7 @@ for (const { filename, code } of fixtures) {
       token: TOKEN,
     };
 
-    const programPos = buffer.uint32[DATA_POINTER_POS_32] + PROGRAM_OFFSET;
+    const programPos = buffer.int32[DATA_POINTER_POS_32] + PROGRAM_OFFSET;
 
     benchRaw("parser_napi_raw_lazy_visit_only(debugger)", () => {
       ast.nodes = new Map();

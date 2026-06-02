@@ -27,10 +27,27 @@ export declare const enum Severity {
   Advice = 'Advice'
 }
 /**
- * Get offset within a `Uint8Array` which is aligned on `BUFFER_ALIGN`.
+ * Apply fixes to source text and return the fixed code.
+ *
+ * - `source_text` is the original source code.
+ * - `fixes_json` is a JSON string containing `Vec<Vec<JsFix>>` — an array of fix groups,
+ *    one group per diagnostic which provides fixes.
+ *    Each inner array should have length of 1 at minimum.
+ *
+ * If source text starts with a BOM, `JSFix`es must have offsets relative to the start
+ * of the source text *without* the BOM.
+ *
+ * Each group's fixes are merged, then all merged fixes are applied to `source_text`.
+ *
+ * Fix ranges are converted from UTF-16 code units to UTF-8 bytes.
+ */
+export declare function applyFixes(sourceText: string, fixesJson: string): string | null
+
+/**
+ * Get offset within a `Uint8Array` which is aligned on `BLOCK_ALIGN`.
  *
  * Does not check that the offset is within bounds of `buffer`.
- * To ensure it always is, provide a `Uint8Array` of at least `BUFFER_SIZE + BUFFER_ALIGN` bytes.
+ * To ensure it always is, provide a `Uint8Array` of at least `BLOCK_SIZE + BLOCK_ALIGN` bytes.
  */
 export declare function getBufferOffset(buffer: Uint8Array): number
 

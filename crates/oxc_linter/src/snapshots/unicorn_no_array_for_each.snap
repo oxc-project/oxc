@@ -1,98 +1,99 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:5]
  1 │ foo.forEach?.(element => bar(element))
    ·     ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:4]
  1 │ 1?.forEach((a, b) => call(a, b))
    ·    ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:7]
  1 │ array.forEach((arrayInArray) => arrayInArray.forEach(element => bar(element)));
    ·       ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:46]
  1 │ array.forEach((arrayInArray) => arrayInArray.forEach(element => bar(element)));
    ·                                              ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:7]
  1 │ array.forEach((arrayInArray) => arrayInArray?.forEach(element => bar(element)));
    ·       ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:47]
  1 │ array.forEach((arrayInArray) => arrayInArray?.forEach(element => bar(element)));
    ·                                               ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:7]
  1 │ array.forEach((element, index = element) => {})
    ·       ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:7]
  1 │ array.forEach(({foo}, index = foo) => {})
    ·       ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:7]
  1 │ array.forEach((element, {bar = element}) => {})
    ·       ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:7]
  1 │ array.forEach(({foo}, {bar = foo}) => {})
    ·       ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:5]
  1 │ foo.forEach(function(element, element1) {})
    ·     ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:5]
  1 │ foo.forEach(function element(element, element1) {})
    ·     ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:17]
  1 │ this._listeners.forEach((listener: () => void) => listener());
    ·                 ───────
    ╰────
   help: Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
-  ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
+  ⚠ unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:12]
  1 │ return foo.forEach(element => {bar(element)});
    ·            ───────

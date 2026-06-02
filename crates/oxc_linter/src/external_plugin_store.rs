@@ -45,7 +45,6 @@ pub struct ExternalPluginStore {
     /// The rule ID is also stored, so that can merge options with the rule's default options on JS side.
     options: IndexVec<ExternalOptionsId, (ExternalRuleId, SmallVec<[serde_json::Value; 1]>)>,
 
-    /// `true` for `oxlint`, `false` for language server
     is_enabled: bool,
 }
 
@@ -250,7 +249,7 @@ impl fmt::Display for ExternalRuleLookupError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ExternalRuleLookupError::PluginNotFound { plugin } => {
-                write!(f, "Plugin '{plugin}' not found",)
+                write!(f, "Plugin '{plugin}' not found")
             }
             ExternalRuleLookupError::RuleNotFound { plugin, rule } => {
                 write!(f, "Rule '{rule}' not found in plugin '{plugin}'")

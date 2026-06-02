@@ -25,7 +25,7 @@ import { run_code } from "./sandbox";
 function run(input: string, expected: string[], prepend_code?: string) {
   const consoleMock = vi.spyOn(console, "log").mockImplementation(() => undefined);
   try {
-    const minified = minifySync("test.cjs", input).code;
+    const minified = minifySync("test.cjs", input, { mangle: { toplevel: false } }).code;
     expect(minified).not.toBeFalsy();
     // Use `consoleMock` instead of the returned output.
     const _ = run_code(minified, prepend_code);
@@ -4392,7 +4392,9 @@ test("collapse_rhs_lhs", () => {
   run(code, expected);
 });
 
-test("window_access_is_impure", () => {
+// Oxc follows Rollup/Rolldown behavior: `window` is a known global,
+// so accessing it is side-effect-free.
+test.skip("window_access_is_impure", () => {
   const code = 'try{window}catch(e){console.log("PASS")}';
   const expected = ["PASS"];
   run(code, expected);

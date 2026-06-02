@@ -99,7 +99,11 @@ declare_oxc_lint!(
     NoDuplicates,
     import,
     style,
+    // This rule intentionally does not have a fixer, as `eslint/no-duplicate-imports` does the
+    // same thing as this rule and is also pending a fixer.
+    none,
     config = NoDuplicates,
+    version = "0.2.11",
 );
 
 impl Rule for NoDuplicates {

@@ -77,7 +77,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         errors
     }
 
-    fn add_module_request(&mut self, name: Atom<'a>, requested_module: RequestedModule) {
+    fn add_module_request(&mut self, name: Str<'a>, requested_module: RequestedModule) {
         self.module_record
             .requested_modules
             .entry(name)
@@ -105,7 +105,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.star_export_entries.push(entry);
     }
 
-    fn add_export_binding(&mut self, name: Atom<'a>, span: Span) {
+    fn add_export_binding(&mut self, name: Str<'a>, span: Span) {
         if let Some(old_node) = self.module_record.exported_bindings.insert(name, span) {
             self.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
         }
@@ -384,13 +384,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.has_module_syntax = true;
     }
 
-    pub fn found_ts_export(&mut self) {
-        self.module_record.has_module_syntax = true;
-    }
-
-    /// Mark the file as ESM when unambiguous top-level await is detected.
-    /// This is similar to Babel's `sawUnambiguousESM` flag.
-    pub fn found_unambiguous_await(&mut self) {
+    pub fn set_module_syntax(&mut self) {
         self.module_record.has_module_syntax = true;
     }
 }

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
    ╭─[no_unused_vars.tsx:2:18]
  1 │ 
@@ -44,5 +45,18 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───┬──
    ·              ╰── it was last assigned here
  4 │         
+   ╰────
+  help: Did you mean to use this variable?
+
+  ⚠ eslint(no-unused-vars): Variable 'chain' is assigned a value but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:4:13]
+ 3 │ 
+ 4 │         let chain = new Chain();
+   ·             ──┬──
+   ·               ╰── 'chain' is declared here
+ 5 │         chain = chain.extend();
+   ·         ──┬──
+   ·           ╰── it was last assigned here
+ 6 │         
    ╰────
   help: Did you mean to use this variable?

@@ -12,6 +12,7 @@ use crate::tester::{
 fn cases() {
     test_same_ignore_parse_errors("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
     test_same_ignore_parse_errors("function foo(@foo x = @bar class {}) {}\n");
+    test_same_ignore_parse_errors("function foo(@foo ...rest) {}\n");
 }
 
 #[test]
@@ -29,11 +30,20 @@ fn module_decl() {
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
+    test(
+        "export { default } from './foo.js' with { type: 'json' }",
+        "export { default } from \"./foo.js\" with { type: \"json\" };\n",
+    );
+    test("export {} from './foo.js' with {}", "export {} from \"./foo.js\" with {};\n");
     test_minify("export { '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify("export { '☿' as '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify(
         "import x from './foo.custom' with { 'type': 'json' }",
         "import x from\"./foo.custom\"with{\"type\":\"json\"};",
+    );
+    test_minify(
+        "export { default } from './foo.js' with { type: 'json' }",
+        "export{default}from\"./foo.js\"with{type:\"json\"};",
     );
 }
 
@@ -427,20 +437,29 @@ fn pure_comment() {
     test_same("/* @__PURE__ */ pureOperation();\n");
     test_same("/* @__PURE__ */ new PureConsutrctor();\n");
     test("/* @__PURE__ */\npureOperation();\n", "/* @__PURE__ */ pureOperation();\n");
+    test_same("/* @__PURE__ The comment may contain additional text */ pureOperation();\n");
+    test_same(
+        "/* #__PURE__ -- @preserve */ pureOperation();\n", // rolldown#9408
+    );
+    // A `@__NO_SIDE_EFFECTS__` comment sharing the call site's `attached_to`
+    // must not be emitted in place of the pure-call annotation. Without the
+    // kind filter, `FxHashMap` last-write-wins would print the wrong
+    // annotation kind in front of a CallExpression.
     test(
-        "/* @__PURE__ The comment may contain additional text */ pureOperation();\n",
+        "/* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ pureOperation();\n",
         "/* @__PURE__ */ pureOperation();\n",
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
 
-    test("/* #__PURE__ */ function foo() {}\n", "function foo() {}\n");
+    test_same("/* #__PURE__ */ function foo() {}\n"); // INVALID: not before a call/new expression
 
     test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
     test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
-    test("/*#__PURE__*/ (foo(), bar());", "foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
+    test("/*#__PURE__*/ (foo(), bar());", "/*#__PURE__*/ foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
 
     test_same("/* @__PURE__ */ a.b().c.d();\n");
-    test("/* @__PURE__ */ a().b;", "a().b;\n"); // INVALID, it does not end with a call
+    // PURE applies to the innermost call; codegen wraps to keep the annotation on the call.
+    test("/* @__PURE__ */ a().b;", "(/* @__PURE__ */ a()).b;\n");
     test_same("(/* @__PURE__ */ a()).b;\n");
 
     // More
@@ -629,6 +648,51 @@ fn string() {
         r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
     );
     test_minify(r#"foo("\n")"#, "foo(`\n`);");
+
+    // https://github.com/oxc-project/oxc/issues/22342
+    test_minify(
+        r#"Object.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
+        r#"Object.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
+    );
+    test_minify(
+        r#"Reflect.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
+        r#"Reflect.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
+    );
+    test_minify(
+        r#"exports["has-dash"] = a; module.exports["__esModule"] = true;"#,
+        r#"exports["has-dash"]=a;module.exports["__esModule"]=true;"#,
+    );
+    test_minify(r#"obj["not-exports"] = a;"#, "obj[`not-exports`]=a;");
+
+    // require() should preserve string quotes for cjs-module-lexer compatibility
+    test_minify(
+        r#"__exportStar(require("./decorators"), exports);"#,
+        r#"__exportStar(require("./decorators"),exports);"#,
+    );
+    test_minify(r#"var a = require("./foo");"#, r#"var a=require("./foo");"#);
+    test_minify(r#"require("./foo");"#, r#"require("./foo");"#);
+    // Non-require calls should still use backtick optimization
+    test_minify(r#"foo("./bar")"#, "foo(`./bar`);");
+    // Dynamic require is not affected
+    test_minify("require(foo);", "require(foo);");
+    // Single-quoted require
+    test_minify(r"require('./foo');", r#"require("./foo");"#);
+
+    // `cjs-module-lexer` re-export detection requires `"default"` and
+    // `"__esModule"` to stay as plain string literals in equality comparisons.
+    test_minify(
+        r#"function f(key) { if (key === "default" || key === "__esModule") return; }"#,
+        r#"function f(key){if(key==="default"||key==="__esModule")return}"#,
+    );
+    test_minify(r#"a = x !== "default""#, r#"a=x!=="default";"#);
+    test_minify(r#"a = x == "__esModule""#, r#"a=x=="__esModule";"#);
+    test_minify(r#"a = x != "default""#, r#"a=x!="default";"#);
+    // Magic string on the left side of an equality is also preserved.
+    test_minify(r#"a = "default" === x"#, r#"a="default"===x;"#);
+    // Other strings in equality comparisons are unaffected.
+    test_minify(r#"a = x === "foo""#, "a=x===`foo`;");
+    // The two magic strings are unaffected when not in equality comparisons.
+    test_minify(r#"a = "default""#, "a=`default`;");
 }
 
 #[test]
@@ -706,7 +770,7 @@ fn template_literal_escape_when_building_ast() {
     // backtick, ${, and backslash
     // Pass escape_raw: true to automatically escape the raw field
     let cooked = "hello`world${foo}\\bar";
-    let value = TemplateElementValue { raw: ast.atom(cooked), cooked: Some(ast.atom(cooked)) };
+    let value = TemplateElementValue { raw: ast.str(cooked), cooked: Some(ast.str(cooked)) };
     let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
     let quasis = ast.vec1(element);
     let template_literal = ast.template_literal(SPAN, quasis, ast.vec());

@@ -39,8 +39,6 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
 /// * `TemplateLiteral`s and `TSTemplateLiteralType`s, where `quasis` and `expressions` are interleaved.
 /// * Decorators before `export` in `@dec export class C {}` / `@dec export default class {}`
 ///   have span before the start of `ExportNamedDeclaration` / `ExportDefaultDeclaration` span.
-/// * `BindingPattern` where `type_annotation` has span within `BindingPatternKind`.
-///   Except for `BindingRestElement`, where `type_annotation`'s span is after `BindingPatternKind`.
 /// * `FormalParameters` where span can include a `TSThisParameter` which is visited before it.
 /// * `TSGlobalDeclaration` which has a separate `Span` for `global` keyword.
 ///
@@ -55,8 +53,6 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     let custom_visitor_type_ids = [
         "FormalParameters",
         "ObjectProperty",
-        "BindingPattern",
-        "BindingRestElement",
         "BindingProperty",
         "ExportNamedDeclaration",
         "ExportDefaultDeclaration",
@@ -68,9 +64,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     ]
     .map(|type_name| schema.type_names[type_name]);
 
-    let methods = schema.types.iter().filter_map(|type_def| {
-        let struct_def = type_def.as_struct()?;
-
+    let methods = schema.structs().filter_map(|struct_def| {
         // Skip `Comment` because we handle adjusting comment spans separately
         if struct_def.id == comment_type_id {
             return None;

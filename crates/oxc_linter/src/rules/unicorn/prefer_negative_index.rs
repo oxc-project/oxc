@@ -31,11 +31,12 @@ enum TypeOptions {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer negative index over `.length` - index when possible
+    /// Prefer using a negative index over `.length - index` when possible.
     ///
     /// ### Why is this bad?
     ///
-    /// Conciseness and readability
+    /// Using a negative index with `at` or `slice` is generally more readable
+    /// and concise than using `.length - index`.
     ///
     /// ### Examples
     ///
@@ -53,7 +54,8 @@ declare_oxc_lint!(
     PreferNegativeIndex,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.13.2",
 );
 
 impl Rule for PreferNegativeIndex {

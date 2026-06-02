@@ -44,7 +44,8 @@ declare_oxc_lint!(
     /// ```
     NoNamedExport,
     import,
-    style
+    style,
+    version = "1.19.0",
 );
 
 impl Rule for NoNamedExport {

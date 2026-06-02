@@ -97,6 +97,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = ConsistentVitestConfig,
+    version = "1.37.0",
 );
 
 impl Rule for ConsistentVitestVi {

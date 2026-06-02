@@ -4,6 +4,56 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- ee659b6 transformer/legacy-decorator: Add `strictNullChecks` option for nullable-union design:type (#22266) (Kyle Cannon)
+
+## [0.128.0] - 2026-04-27
+
+### 📚 Documentation
+
+- e4cea25 transform: Use the `node:` namespace in the example (#19998) (루밀LuMir)
+
+### 🛡️ Security
+
+- d8076c9 deps: Update rolldown (#21639) (renovate)
+
+## [0.126.0] - 2026-04-15
+
+### 🚀 Features
+
+- f5deb55 napi/transform: Expose `optimizeConstEnums` and `optimizeEnums` options (#21388) (Dunqing)
+
+## [0.125.0] - 2026-04-13
+
+### 🚀 Features
+
+- e7e1aea transformer/typescript: Add `optimize_enums` option for regular enum inlining (#20539) (Dunqing)
+
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 487601b napi: Disable mimalloc on Windows to fix worker_threads crash (#18923) (Boshen)
+
+## [0.112.0] - 2026-02-02
+
+### 📚 Documentation
+
+- 3d01fa1 transformer: Update links to use Oxc docs (#18722) (sapphi-red)
+
 ## [0.111.0] - 2026-01-26
 
 ### 📚 Documentation

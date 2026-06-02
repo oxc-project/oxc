@@ -17,13 +17,14 @@ use super::{
 
 #[derive(Debug, Default)]
 pub struct ClassTableBuilder<'a> {
+    pub enabled: bool,
     pub current_class_id: Option<ClassId>,
     pub classes: ClassTable<'a>,
 }
 
 impl<'a> ClassTableBuilder<'a> {
     pub fn new() -> Self {
-        Self { current_class_id: None, classes: ClassTable::default() }
+        Self { enabled: false, current_class_id: None, classes: ClassTable::default() }
     }
 
     pub fn build(self) -> ClassTable<'a> {
@@ -36,6 +37,9 @@ impl<'a> ClassTableBuilder<'a> {
         current_node_id: NodeId,
         nodes: &AstNodes,
     ) {
+        if !self.enabled {
+            return;
+        }
         let parent_id = nodes.parent_id(current_node_id);
         self.current_class_id = Some(self.classes.declare_class(self.current_class_id, parent_id));
 
@@ -101,6 +105,9 @@ impl<'a> ClassTableBuilder<'a> {
         current_node_id: NodeId,
         nodes: &AstNodes,
     ) {
+        if !self.enabled {
+            return;
+        }
         let parent_kind = nodes.parent_kind(current_node_id);
 
         if (matches!(parent_kind, AstKind::PrivateInExpression(_))
@@ -108,11 +115,11 @@ impl<'a> ClassTableBuilder<'a> {
             && let Some(class_id) = self.current_class_id
         {
             let element_ids =
-                self.classes.get_element_ids(class_id, &ident.name, /* is_private */ true);
+                self.classes.get_element_ids(class_id, ident.name, /* is_private */ true);
 
             let reference = PrivateIdentifierReference::new(
                 current_node_id,
-                ident.name.into(),
+                ident.name,
                 ident.span,
                 element_ids,
             );
@@ -152,6 +159,9 @@ impl<'a> ClassTableBuilder<'a> {
     }
 
     pub fn pop_class(&mut self) {
+        if !self.enabled {
+            return;
+        }
         self.current_class_id = self
             .current_class_id
             .and_then(|current_class_id| self.classes.parent_ids.get(&current_class_id).copied());

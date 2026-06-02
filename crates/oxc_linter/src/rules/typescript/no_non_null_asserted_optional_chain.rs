@@ -57,7 +57,8 @@ declare_oxc_lint!(
     NoNonNullAssertedOptionalChain,
     typescript,
     correctness,
-    suggestion
+    suggestion,
+    version = "0.0.6",
 );
 
 impl Rule for NoNonNullAssertedOptionalChain {

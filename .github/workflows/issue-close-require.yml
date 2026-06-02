@@ -1,0 +1,24 @@
+name: Issue Close Require
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  close-issues:
+    if: github.repository == 'oxc-project/oxc'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: needs reproduction
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cutoff="$(date -u --date '72 hours ago' +%Y-%m-%dT%H:%M:%SZ)"
+          gh search issues --repo "$GH_REPO" --state open --label "needs reproduction" --updated "<=$cutoff" --limit 1000 --json number --jq '.[].number' \
+            | while read -r issue_number; do
+              gh issue close "$issue_number"
+            done

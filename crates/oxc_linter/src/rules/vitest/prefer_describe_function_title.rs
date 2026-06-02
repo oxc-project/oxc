@@ -1,5 +1,3 @@
-use itertools::Itertools;
-
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -26,14 +24,14 @@ pub struct PreferDescribeFunctionTitle;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// When testing a specific function, this rule aims to enforce passing a named function to describe()
+    /// When testing a specific function, this rule aims to enforce passing a named function to `describe()`
     /// instead of an equivalent hardcoded string.
     ///
     /// ### Why is this bad?
     ///
-    /// Tests that are related to a specific function, if the function being tested is renamed,
-    /// the describe title will be not match anymore and can make confusion in the future. Using the function
-    /// ensure a consistency even if the function is renamed.
+    /// For tests that are related to a specific function, if the function being tested is renamed,
+    /// the describe title will no longer match and can cause confusion in the future. Using the function
+    /// directly ensures consistency even if the function is renamed.
     ///
     /// ### Examples
     ///
@@ -60,6 +58,7 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
+    version = "1.39.0",
 );
 
 impl Rule for PreferDescribeFunctionTitle {
@@ -93,8 +92,19 @@ impl PreferDescribeFunctionTitle {
             return;
         }
 
-        let mut imported_entries =
-            ctx.module_record().import_entries.iter().map(|entry| entry.local_name.name.as_ref());
+        let is_imported_name = |name: &str| {
+            ctx.module_record()
+                .import_entries
+                .iter()
+                .any(|entry| entry.local_name.name.as_ref() == name)
+        };
+
+        let is_value_imported_name = |name: &str| {
+            ctx.module_record()
+                .import_entries
+                .iter()
+                .any(|entry| !entry.is_type && entry.local_name.name.as_ref() == name)
+        };
 
         let Some(title_arg) = call_expr.arguments.first() else {
             return;
@@ -106,9 +116,16 @@ impl PreferDescribeFunctionTitle {
                     return;
                 };
 
-                if title_expression.property.name == "name"
-                    && !imported_entries.contains(identifier.name.as_ref())
+                if title_expression.property.name != "name"
+                    || !is_imported_name(identifier.name.as_ref())
                 {
+                    return;
+                }
+
+                if !is_value_imported_name(identifier.name.as_ref()) {
+                    ctx.diagnostic(prefer_describe_function_title_diagnostic(
+                        title_expression.span,
+                    ));
                     return;
                 }
 
@@ -122,12 +139,17 @@ impl PreferDescribeFunctionTitle {
                 );
             }
             Argument::StringLiteral(string_title) => {
-                if !imported_entries.contains(string_title.value.as_ref()) {
+                if !is_imported_name(string_title.value.as_ref()) {
                     return;
                 }
 
                 if ctx.settings().vitest.typecheck {
                     // TODO https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/src/rules/prefer-describe-function-title.ts#L85C9-L92C10
+                    return;
+                }
+
+                if !is_value_imported_name(string_title.value.as_ref()) {
+                    ctx.diagnostic(prefer_describe_function_title_diagnostic(string_title.span));
                     return;
                 }
 
@@ -237,18 +259,27 @@ fn test() {
         ),
         (
             r#"
-			        import { myFunction } from "./myFunction.js"
-			        describe(otherFunction.name, () => {})
-			      "#,
+				        import { myFunction } from "./myFunction.js"
+				        describe(otherFunction.name, () => {})
+				      "#,
             None,
             None,
             Some(PathBuf::from("myFunction.test.ts")),
         ),
         (
             r#"
-			        declare const myFunction: () => unknown
-			        describe("myFunction", () => {})
-			      "#,
+				        import { myFunction } from "./myFunction.js"
+				        describe(myFunction.title, () => {})
+				      "#,
+            None,
+            None,
+            Some(PathBuf::from("myFunction.test.ts")),
+        ),
+        (
+            r#"
+				        declare const myFunction: () => unknown
+				        describe("myFunction", () => {})
+				      "#,
             None,
             None,
             Some(PathBuf::from("myFunction.test.ts")),
@@ -320,6 +351,15 @@ fn test() {
             None,
             Some(PathBuf::from("myFunction.test.ts")),
         ),
+        (
+            r#"
+			        import type { Button } from "./button"
+			        describe("Button", () => {})
+			      "#,
+            None,
+            None,
+            Some(PathBuf::from("button.test.ts")),
+        ),
         /*
         (
             r#"
@@ -379,6 +419,17 @@ fn test() {
             r#"
 			        import { myFunction } from "./myFunction"
 			        describe(myFunction, () => {})
+			      "#,
+            None,
+        ),
+        (
+            r#"
+			        import type { Button } from "./button"
+			        describe("Button", () => {})
+			      "#,
+            r#"
+			        import type { Button } from "./button"
+			        describe("Button", () => {})
 			      "#,
             None,
         ),

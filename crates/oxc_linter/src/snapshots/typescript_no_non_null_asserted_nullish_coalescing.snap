@@ -1,64 +1,149 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
    ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
  1 │ foo! ?? bar;
    · ────
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
    ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
  1 │ foo! ?? bar!;
    · ────
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
    ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
  1 │ foo.bazz! ?? bar;
    · ─────────
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
    ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
  1 │ foo.bazz! ?? bar!;
    · ─────────
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
    ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
  1 │ foo!.bazz! ?? bar;
    · ──────────
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
    ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
  1 │ foo!.bazz! ?? bar!;
    · ──────────
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
    ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
  1 │ foo()! ?? bar;
    · ──────
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
    ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
  1 │ foo()! ?? bar!;
    · ──────
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:10]
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ foo['bar']! ?? baz;
+   · ───────────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ foo[bar]! ?? baz;
+   · ─────────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ (foo)! ?? bar;
+   · ──────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ ((foo))! ?? bar;
+   · ────────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ (foo ? bar : baz)! ?? qux;
+   · ──────────────────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ (foo || bar)! ?? baz;
+   · ─────────────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ foo/* keep */! ?? bar;
+   · ──────────────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ foo!! ?? bar;
+   · ─────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ (foo!)! ?? bar;
+   · ───────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ ((foo!)!)! ?? bar;
+   · ──────────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
+ 1 │ foo()! ?? bar; baz()! ?? qux;
+   · ──────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:16]
+ 1 │ foo()! ?? bar; baz()! ?? qux;
+   ·                ──────
+   ╰────
+  help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
+
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:13]
  2 │             let x!: string;
  3 │             x! ?? '';
    ·             ──
@@ -66,8 +151,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:10]
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:13]
  3 │             x = foo();
  4 │             x! ?? '';
    ·             ──
@@ -75,8 +160,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:10]
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:13]
  3 │             x = foo();
  4 │             x! ?? '';
    ·             ──
@@ -84,8 +169,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:10]
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:13]
  2 │             let x = foo();
  3 │             x! ?? '';
    ·             ──
@@ -93,8 +178,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:19]
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:22]
  3 │               let x!: string;
  4 │               return x! ?? '';
    ·                      ──
@@ -102,8 +187,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:19]
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:22]
  3 │             function foo() {
  4 │               return x! ?? '';
    ·                      ──
@@ -111,8 +196,8 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
-  ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:10]
+  ⚠ typescript(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:13]
  2 │             let x = foo();
  3 │             x  ! ?? '';
    ·             ────

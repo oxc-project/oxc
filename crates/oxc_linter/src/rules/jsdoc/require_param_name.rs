@@ -44,6 +44,7 @@ declare_oxc_lint!(
     RequireParamName,
     jsdoc,
     pedantic,
+    version = "0.4.3",
 );
 
 impl Rule for RequireParamName {

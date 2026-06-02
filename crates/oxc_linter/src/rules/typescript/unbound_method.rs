@@ -97,6 +97,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = UnboundMethodConfig,
+    version = "1.12.0",
 );
 
 impl Rule for UnboundMethod {

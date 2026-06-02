@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:8]
  1 │ 123 == NaN;

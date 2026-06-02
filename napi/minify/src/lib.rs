@@ -2,7 +2,13 @@
 
 #[cfg(all(
     feature = "allocator",
-    not(any(target_arch = "arm", target_os = "freebsd", target_family = "wasm"))
+    not(any(
+        target_arch = "arm",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "windows",
+        target_family = "wasm"
+    ))
 ))]
 #[global_allocator]
 static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
@@ -31,6 +37,9 @@ pub struct MinifyResult {
     pub code: String,
     pub map: Option<SourceMap>,
     pub errors: Vec<OxcError>,
+    /// Legal comments extracted from the source code.
+    /// Only populated when `codegen.legalComments` is `"linked"` or `"external"`.
+    pub legal_comments: Vec<String>,
 }
 
 fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>) -> MinifyResult {
@@ -68,7 +77,19 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
         // Need to remove all comments.
         Some(Either::A(false)) => CodegenOptions { minify: false, ..CodegenOptions::minify() },
         None | Some(Either::A(true)) => CodegenOptions::minify(),
-        Some(Either::B(o)) => CodegenOptions::from(o),
+        Some(Either::B(o)) => match o.to_codegen_options() {
+            Ok(opts) => opts,
+            Err(error) => {
+                return MinifyResult {
+                    errors: OxcError::from_diagnostics(
+                        filename,
+                        source_text,
+                        vec![OxcDiagnostic::error(error)],
+                    ),
+                    ..MinifyResult::default()
+                };
+            }
+        },
     };
 
     if options.sourcemap == Some(true) {
@@ -77,10 +98,14 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
 
     let ret = Codegen::new().with_options(codegen_options).with_scoping(scoping).build(&program);
 
+    let legal_comments =
+        ret.legal_comments.iter().map(|c| c.span.source_text(source_text).to_string()).collect();
+
     MinifyResult {
         code: ret.code,
         map: ret.map.map(oxc_sourcemap::napi::SourceMap::from),
         errors: OxcError::from_diagnostics(filename, source_text, parser_ret.errors),
+        legal_comments,
     }
 }
 

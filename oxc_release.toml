@@ -20,8 +20,9 @@ versioned_files = [
   "apps/oxlint/Cargo.toml",
   "apps/oxlint/package.json",
   "crates/oxc_linter/Cargo.toml",
-  "editors/vscode/package.json",
   "npm/oxlint/package.json",
+  "npm/oxlint-plugin-eslint/package.json",
+  "npm/oxlint-plugins/package.json",
 ]
 
 [[releases]]
@@ -30,6 +31,8 @@ scopes_for_breaking_change = ["format"]
 versioned_files = [
   "apps/oxfmt/Cargo.toml",
   "apps/oxfmt/package.json",
+  "crates/oxc_formatter_core/Cargo.toml",
   "crates/oxc_formatter/Cargo.toml",
+  "crates/oxc_formatter_json/Cargo.toml",
   "npm/oxfmt/package.json",
 ]

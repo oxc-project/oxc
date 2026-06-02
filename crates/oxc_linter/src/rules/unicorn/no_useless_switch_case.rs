@@ -18,37 +18,39 @@ pub struct NoUselessSwitchCase;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows useless default cases in switch statements.
+    /// Disallows useless `default` cases in `switch` statements.
     ///
     /// ### Why is this bad?
     ///
-    /// An empty case before the last default case is useless.
+    /// An empty case before the last `default` case is useless, as the
+    /// `default` case will catch it regardless.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// switch (foo) {
-    /// 	case 1:
-    /// 	default:
-    /// 		handleDefaultCase();
-    /// 		break;
+    ///   case 1:
+    ///   default:
+    ///     handleDefaultCase();
+    ///     break;
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// switch (foo) {
-    ///	case 1:
-    ///	case 2:
-    ///		handleCase1And2();
-    ///		break;
+    ///   case 1:
+    ///   case 2:
+    ///     handleCase1And2();
+    ///     break;
     /// }
     /// ```
     NoUselessSwitchCase,
     unicorn,
     pedantic,
-    pending
+    pending,
+    version = "0.0.18",
 );
 
 impl Rule for NoUselessSwitchCase {
@@ -97,7 +99,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"
+        "
         switch (foo) {
             case a:
             case b:
@@ -105,7 +107,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 handleCaseA();
@@ -115,7 +117,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 handleCaseA();
@@ -124,7 +126,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 break;
@@ -133,7 +135,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 handleCaseA();
@@ -143,7 +145,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             default:
@@ -154,7 +156,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (1) {
                 // This is not useless
                 case 1:
@@ -164,7 +166,7 @@ fn test() {
                         console.log('2')
         }
         ",
-        r"
+        "
         switch (1) {
             default:
                 handleDefaultCase1();
@@ -178,7 +180,7 @@ fn test() {
     ];
 
     let fail = vec![
-        r"
+        "
         switch (foo) {
             case a:
             default:
@@ -186,7 +188,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a: {
             }
@@ -195,7 +197,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a: {
                 ;;
@@ -211,7 +213,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             case (( b ))         :
@@ -220,7 +222,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             case b:
@@ -233,7 +235,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             case b:
@@ -242,7 +244,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             // eslint-disable-next-line
             case a:
@@ -252,7 +254,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             // eslint-disable-next-line

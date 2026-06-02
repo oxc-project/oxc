@@ -38,11 +38,11 @@ impl Default for NoBaseToStringConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule requires toString() and toLocaleString() calls to only be called on objects which provide useful information when stringified.
+    /// This rule requires `toString()` and `toLocaleString()` calls to only be called on objects which provide useful information when stringified.
     ///
     /// ### Why is this bad?
     ///
-    /// JavaScript's toString() method returns '[object Object]' on plain objects, which is not useful information. This rule prevents toString() and toLocaleString() from being called on objects that return less useful strings.
+    /// JavaScript's `toString()` method returns '[object Object]' on plain objects, which is not useful information. This rule prevents `toString()` and `toLocaleString()` from being called on objects that return less useful strings.
     ///
     /// ### Examples
     ///
@@ -79,6 +79,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     config = NoBaseToStringConfig,
+    version = "1.12.0",
 );
 
 impl Rule for NoBaseToString {

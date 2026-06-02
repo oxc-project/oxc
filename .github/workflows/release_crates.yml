@@ -16,19 +16,27 @@ concurrency:
 
 jobs:
   release:
+    if: github.repository == 'oxc-project/oxc'
     name: Release crates
     runs-on: ubuntu-latest
+    environment: crates
     permissions:
       contents: write # For git tag push
       id-token: write # Required for OIDC token exchange
     steps:
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          token: ${{ secrets.OXC_BOT_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0 # for changelog
           persist-credentials: true
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
           cache-key: warm
           tools: cargo-release-oxc
@@ -40,7 +48,7 @@ jobs:
           mkdir -p target
           cargo release-oxc changelog --release crates
 
-      - uses: rust-lang/crates-io-auth-action@b7e9a28eded4986ec6b1fa40eeee8f8f165559ec # v1.0.3
+      - uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
         id: auth
 
       - name: Run
@@ -52,17 +60,9 @@ jobs:
           echo "TAG=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        with:
-          body_path: ./target/CRATES_CHANGELOG
-          name: oxc ${{ steps.run.outputs.TAG }}
-          tag_name: ${{ steps.run.outputs.TAG }}
-          target_commitish: ${{ github.sha }}
-          draft: false
-          make_latest: false # latest is reserved for apps
-
-      # Workaround for https://github.com/softprops/action-gh-release/issues/703
-      - name: Mark release as not latest
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit ${{ steps.run.outputs.TAG }} --latest=false
+          GH_TOKEN: ${{ github.token }}
+          GIT_TAG: ${{ steps.run.outputs.TAG }}
+          GIT_TARGET: ${{ github.sha }}
+          TITLE: "oxc ${{ steps.run.outputs.TAG }}"
+        run: gh release create ${GIT_TAG} --latest=false --title "${TITLE}" --notes-file ./target/CRATES_CHANGELOG --target ${GIT_TARGET}

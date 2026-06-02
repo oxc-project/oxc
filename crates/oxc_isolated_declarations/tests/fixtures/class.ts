@@ -155,3 +155,49 @@ export class PrivateConstructorWithDefaultParameters {
 		normalParam: string = "normal",
 	) {}
 }
+
+// https://github.com/oxc-project/oxc/issues/21503
+// A typed private setter should provide the return type for its paired
+// public/protected getter when the getter has no explicit return type.
+export class AccessorPairWithPrivateSetter {
+	get isRunning() {
+		return true;
+	}
+
+	private set isRunning(val: boolean) {}
+}
+
+export class AccessorPairWithProtectedPrivateSetter {
+	protected get value() {
+		return 1;
+	}
+
+	private set value(v: number) {}
+}
+
+// Private parameter properties on a private constructor need no explicit type:
+// the constructor signature is collapsed and the class member is type-erased.
+class InferredDefault {}
+export class PrivateConstructorWithPrivateParamPropertyInferredDefault {
+	private constructor(
+		private readonly a = new InferredDefault(),
+		private b = new InferredDefault(),
+	) {}
+}
+
+// Non-private parameter properties on a private constructor still need a type,
+// because the class member is still emitted.
+export class PrivateConstructorWithPublicParamPropertyInferredDefault {
+	private constructor(
+		public readonly a = new InferredDefault(),
+	) {}
+}
+
+// The suppression must be limited to `private` constructors — a `protected`
+// constructor keeps its signature, so a private parameter property with an
+// uninferrable default still requires an explicit type.
+export class ProtectedConstructorWithPrivateParamPropertyInferredDefault {
+	protected constructor(
+		private readonly a = new InferredDefault(),
+	) {}
+}

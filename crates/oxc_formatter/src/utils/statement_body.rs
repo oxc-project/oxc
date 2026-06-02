@@ -4,12 +4,13 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Format, Formatter,
+        Buffer, Format, JsFormatContext, JsFormatter,
         prelude::{format_once, soft_line_indent_or_space, space},
-        trivia::FormatTrailingComments,
+        trivia::{FormatTrailingComments, format_leading_comments},
     },
     print::FormatWrite,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    utils::suppressed::FormatSuppressedNode,
     write,
 };
 
@@ -31,8 +32,8 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
             // Add space before empty statement if it has leading comments
             // e.g., `for (x of y) /*comment*/ ;`
@@ -72,7 +73,12 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
                         if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
                     );
                     if is_consequent_of_if_statement_parent {
-                        write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        if f.context().comments().has_trailing_suppression_comment(body_span.end) {
+                            write!(f, format_leading_comments(body_span));
+                            write!(f, FormatSuppressedNode(body_span));
+                        } else {
+                            write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        }
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);
                         FormatTrailingComments::Comments(comments).fmt(f);

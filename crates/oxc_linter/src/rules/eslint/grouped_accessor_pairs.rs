@@ -95,7 +95,7 @@ pub struct GroupedAccessorPairsConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Require grouped accessor pairs in object literals and classes
+    /// Require grouped accessor pairs in object literals and classes.
     ///
     /// ### Why is this bad?
     ///
@@ -182,6 +182,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = GroupedAccessorPairs,
+    version = "0.15.12",
 );
 
 impl Rule for GroupedAccessorPairs {

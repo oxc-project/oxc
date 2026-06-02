@@ -409,11 +409,11 @@ fn test_template() {
     test("let x = `$\\{y}`", "let x = `$\\{y}`;\n");
 
     test("await tag`x`", "await tag`x`;\n");
-    test("await (tag`x`)", "await tag`x`;\n");
+    test("await (tag`x`)", "await(tag`x`);\n");
     test("(await tag)`x`", "(await tag)`x`;\n");
 
     test("await tag`${x}`", "await tag`${x}`;\n");
-    test("await (tag`${x}`)", "await tag`${x}`;\n");
+    test("await (tag`${x}`)", "await(tag`${x}`);\n");
     test("(await tag)`${x}`", "(await tag)`${x}`;\n");
 
     test("new tag`x`", "new tag`x`();\n");
@@ -559,7 +559,7 @@ fn test_pure_comment() {
 
     test("new (function() {})", "new (function() {})();\n");
     test("new (function() {})()", "new (function() {})();\n");
-    test("/*@__PURE__*/new (function() {})()", "/* @__PURE__ */ new (function() {})();\n");
+    test("/*@__PURE__*/new (function() {})()", "/*@__PURE__*/ new (function() {})();\n");
 
     test("export default (function() { foo() })", "export default (function() {\n\tfoo();\n});\n");
     test(
@@ -568,7 +568,7 @@ fn test_pure_comment() {
     );
     test(
         "export default /*@__PURE__*/(function() { foo() })()",
-        "export default /* @__PURE__ */ (function() {\n\tfoo();\n})();\n",
+        "export default /*@__PURE__*/ (function() {\n\tfoo();\n})();\n",
     );
 }
 

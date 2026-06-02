@@ -1,0 +1,4 @@
+# Comment line
+dist
+node_modules
+*.min.js

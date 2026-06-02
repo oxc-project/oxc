@@ -47,7 +47,8 @@ declare_oxc_lint!(
     EmptyBraceSpaces,
     unicorn,
     style,
-    fix
+    fix,
+    version = "0.0.18",
 );
 
 impl Rule for EmptyBraceSpaces {

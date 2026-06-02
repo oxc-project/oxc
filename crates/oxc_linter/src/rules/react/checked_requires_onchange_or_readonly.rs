@@ -78,6 +78,7 @@ declare_oxc_lint!(
     react,
     pedantic,
     config = CheckedRequiresOnchangeOrReadonly,
+    version = "0.2.15",
 );
 
 impl Rule for CheckedRequiresOnchangeOrReadonly {

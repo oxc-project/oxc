@@ -9,12 +9,7 @@ use oxc_ast::ast::*;
 
 use crate::QuoteStyle;
 use crate::formatter::Comments;
-use crate::{
-    ast_nodes::AstNode,
-    format_args,
-    formatter::{Formatter, prelude::*},
-    write,
-};
+use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
 pub static JSX_WHITESPACE_CHARS: [u8; 4] = [b' ', b'\n', b'\t', b'\r'];
 
@@ -22,7 +17,7 @@ pub static JSX_WHITESPACE_CHARS: [u8; 4] = [b' ', b'\n', b'\t', b'\r'];
 /// characters, or does not contain a newline. Whitespace is defined as ASCII
 /// whitespace.
 ///
-/// ```
+/// ```text
 /// use oxc_formatter::utils::jsx::is_meaningful_jsx_text;
 ///
 /// assert_eq!(is_meaningful_jsx_text("     \t\r   "), true);
@@ -86,8 +81,8 @@ pub enum WrapState {
 #[derive(Default)]
 pub struct JsxSpace;
 
-impl<'a> Format<'a> for JsxSpace {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for JsxSpace {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(
             f,
             [
@@ -100,8 +95,8 @@ impl<'a> Format<'a> for JsxSpace {
 
 pub struct JsxRawSpace;
 
-impl<'a> Format<'a> for JsxRawSpace {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for JsxRawSpace {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let jsx_space = match f.options().quote_style {
             QuoteStyle::Double => r#"{" "}"#,
             QuoteStyle::Single => "{' '}",
@@ -200,10 +195,15 @@ impl<'a> JsxWord<'a> {
     pub(crate) fn is_single_character(&self) -> bool {
         self.text.chars().count() == 1
     }
+
+    pub(crate) fn is_single_alphabetic_character(&self) -> bool {
+        let mut chars = self.text.chars();
+        matches!(chars.next(), Some(c) if c.is_alphabetic()) && chars.next().is_none()
+    }
 }
 
-impl<'a> Format<'a> for JsxWord<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for JsxWord<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [text_without_whitespace(self.text)]);
     }
 }
@@ -331,12 +331,10 @@ pub fn jsx_split_children<'a, 'b>(
                 }
             }
 
-            JSXChild::ExpressionContainer(container) => {
-                if is_whitespace_jsx_expression(container.as_ref(), comments) {
-                    builder.entry(JsxChild::Whitespace);
-                } else {
-                    builder.entry(JsxChild::NonText(child));
-                }
+            JSXChild::ExpressionContainer(container)
+                if is_whitespace_jsx_expression(container.as_ref(), comments) =>
+            {
+                builder.entry(JsxChild::Whitespace);
             }
             _ => {
                 builder.entry(JsxChild::NonText(child));
@@ -383,7 +381,7 @@ impl<'a, 'b> JsxSplitChildrenBuilder<'a, 'b> {
 /// An iterator adaptor that allows a lookahead of three tokens
 ///
 /// # Examples
-/// ```
+/// ```text
 /// use oxc_formatter::utils::jsx::JsxChildrenIterator;
 ///
 /// let buffer = vec![1, 2, 3, 4];

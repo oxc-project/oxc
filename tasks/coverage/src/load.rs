@@ -5,6 +5,8 @@ use std::{
     process::{Command, Stdio},
 };
 
+use cow_utils::CowUtils;
+
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc::{span::SourceType, transformer::BabelOptions};
@@ -12,17 +14,22 @@ use rayon::prelude::*;
 use walkdir::WalkDir;
 
 use crate::{
-    BabelFile, MiscFile, Test262File, TestData, TypeScriptFile, babel, test262, typescript,
-    workspace_root,
+    AcornJsxFile, BabelFile, MiscFile, Test262File, TestData, TypeScriptFile, babel, test262,
+    typescript, workspace_root,
 };
 
 impl TestData {
     pub fn load(filter: Option<&str>) -> Self {
-        let ((test262, babel), (typescript, misc)) = rayon::join(
+        let ((test262, babel), (typescript, (misc, acorn_jsx))) = rayon::join(
             || rayon::join(|| load_test262(filter), || load_babel(filter)),
-            || rayon::join(|| load_typescript(filter), || load_misc(filter)),
+            || {
+                rayon::join(
+                    || load_typescript(filter),
+                    || rayon::join(|| load_misc(filter), || load_acorn_jsx(filter)),
+                )
+            },
         );
-        Self { test262, babel, typescript, misc }
+        Self { test262, babel, typescript, misc, acorn_jsx }
     }
 }
 
@@ -71,11 +78,11 @@ fn walk_and_read(
                     .ok()?;
                 Some(content)
             })?;
-            // Remove BOM
-            let code = match code.strip_prefix('\u{feff}') {
-                Some(stripped) => stripped.to_string(),
-                None => code,
-            };
+            // Remove BOM without reallocating
+            let mut code = code;
+            if code.starts_with('\u{feff}') {
+                code.drain(..'\u{feff}'.len_utf8());
+            }
             let rel_path = path.strip_prefix(&base).unwrap().to_owned();
             Some((rel_path, code))
         })
@@ -85,7 +92,7 @@ fn walk_and_read(
 fn load_test262(filter: Option<&str>) -> Vec<Test262File> {
     let skip_path = |path: &Path| {
         let s = path.to_string_lossy();
-        let s = s.replace('\\', "/");
+        let s = s.cow_replace('\\', "/");
         s.contains("test262/test/staging")
             || path.extension().is_some_and(|e| e.eq_ignore_ascii_case("md"))
             || s.contains("_FIXTURE")
@@ -104,7 +111,7 @@ fn load_test262(filter: Option<&str>) -> Vec<Test262File> {
 fn load_babel(filter: Option<&str>) -> Vec<BabelFile> {
     let skip_path = |path: &Path| {
         let s = path.to_string_lossy();
-        let s = s.replace('\\', "/");
+        let s = s.cow_replace('\\', "/");
         let not_supported = [
             "experimental",
             "record-and-tuple",
@@ -136,7 +143,7 @@ fn load_babel(filter: Option<&str>) -> Vec<BabelFile> {
             "core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-true",
         ]
         .iter()
-        .any(|p| s.ends_with(&format!("{p}/input.js")));
+        .any(|p| s.strip_suffix("/input.js").is_some_and(|s| s.ends_with(p)));
         let bad_ext = path.extension().is_none_or(|ext| ext == "json" || ext == "md");
         not_supported || not_interesting || bad_ext
     };
@@ -253,4 +260,17 @@ fn load_misc(filter: Option<&str>) -> Vec<MiscFile> {
     }
 
     files
+}
+
+fn load_acorn_jsx(filter: Option<&str>) -> Vec<AcornJsxFile> {
+    let skip_path = |path: &Path| path.extension().is_none_or(|ext| ext != "jsx");
+
+    walk_and_read(Path::new("estree-conformance/tests/acorn-jsx"), filter, skip_path)
+        .into_par_iter()
+        .map(|(path, code)| {
+            let should_fail =
+                path.parent().and_then(Path::file_name).is_some_and(|name| name == "fail");
+            AcornJsxFile { path, code, should_fail }
+        })
+        .collect()
 }

@@ -1,10 +1,4 @@
 {
-  "compilerOptions": {
-    "module": "Preserve",
-    "moduleResolution": "Bundler",
-    "noEmit": true,
-    "target": "ESNext",
-    "allowImportingTsExtensions": true,
-    "noUnusedLocals": true
-  }
+  "files": [],
+  "references": [{ "path": "./tsconfig.node.json" }, { "path": "./tsconfig.browser.json" }]
 }

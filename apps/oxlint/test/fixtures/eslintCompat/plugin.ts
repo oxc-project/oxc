@@ -1,6 +1,8 @@
 import { eslintCompatPlugin } from "#oxlint/plugins";
 
-import type { Node, Rule } from "#oxlint/plugins";
+import type { Node, Rule, Visitor, ESTree } from "#oxlint/plugins";
+
+type ESTreeNode = ESTree.Node;
 
 const SPAN: Node = {
   start: 0,
@@ -107,6 +109,205 @@ const createOnceRule: Rule = {
     };
   },
 };
+
+// This tests that `after` hook runs after all visit functions, even high-specificity ones matching `Program`.
+const createOnceSelectorRule: Rule = {
+  createOnce(context) {
+    // `fileNum` should be different for each file
+    let fileNum = 0;
+    // Note: Files are processed in unpredictable order, so `files/1.js` may be `fileNum` 1 or 2.
+    // Therefore, collect all visits and check them in `after` hook of the 2nd file.
+    const visits: { fileNum: number; selector: string }[] = [];
+
+    return {
+      before() {
+        fileNum++;
+      },
+      "*:exit"(node) {
+        if (node.type !== "Program") return;
+
+        visits.push({ fileNum, selector: "*" });
+
+        context.report({
+          message: `*:exit visit fn:\n` + `filename: ${context.filename}`,
+          node,
+        });
+      },
+      "Program:exit"(node) {
+        visits.push({ fileNum, selector: "Program" });
+
+        context.report({
+          message: `Program:exit visit fn:\n` + `filename: ${context.filename}`,
+          node,
+        });
+      },
+      "[body]:exit"(node) {
+        visits.push({ fileNum, selector: "[body]" });
+
+        context.report({
+          message: `[body]:exit visit fn:\n` + `filename: ${context.filename}`,
+          node,
+        });
+      },
+      "[body][body][body]:exit"(node) {
+        visits.push({ fileNum, selector: "[body][body][body]" });
+
+        context.report({
+          message: `[body][body][body]:exit visit fn:\n` + `filename: ${context.filename}`,
+          node,
+        });
+      },
+      after() {
+        context.report({
+          message: "after hook:\n" + `filename: ${context.filename}`,
+          node: SPAN,
+        });
+
+        visits.push({ fileNum, selector: "after" });
+
+        if (fileNum === 2) {
+          visits.sort((v1, v2) => v1.fileNum - v2.fileNum);
+
+          const expectedVisits = [
+            { fileNum: 1, selector: "*" },
+            { fileNum: 1, selector: "Program" },
+            { fileNum: 1, selector: "[body]" },
+            { fileNum: 1, selector: "[body][body][body]" },
+            { fileNum: 1, selector: "after" },
+            { fileNum: 2, selector: "*" },
+            { fileNum: 2, selector: "Program" },
+            { fileNum: 2, selector: "[body]" },
+            { fileNum: 2, selector: "[body][body][body]" },
+            { fileNum: 2, selector: "after" },
+          ];
+
+          if (
+            visits.length !== expectedVisits.length ||
+            visits.some(
+              (v, i) =>
+                v.fileNum !== expectedVisits[i].fileNum ||
+                v.selector !== expectedVisits[i].selector,
+            )
+          ) {
+            context.report({
+              message: `Unexpected visits: ${JSON.stringify(visits)}`,
+              node: SPAN,
+            });
+          }
+        }
+      },
+    };
+  },
+};
+
+// This tests that `after` hook runs after all CFG event handlers.
+// These rules are only run on `files/cfg.js`, to ensure CFG events handlers do not affect behavior of other rules
+// which don't use CFG event listeners.
+// Collect all visits and check them in `after` hook.
+// Run 2 copies of the rule, to ensure that `after` hooks for both rules run after all visits for both rules.
+const visits: { ruleNum: number; event: string; nodeType?: string }[] = [];
+
+function createCfgRule(ruleNum: number): Rule {
+  function addEvent(event: string, nodeType?: string) {
+    visits.push({ ruleNum, event, nodeType });
+  }
+
+  return {
+    createOnce(context) {
+      return {
+        before() {
+          addEvent("before");
+        },
+        onCodePathStart(_codePath: unknown, node: ESTreeNode) {
+          addEvent("onCodePathStart", node.type);
+        },
+        onCodePathEnd(_codePath: unknown, node: ESTreeNode) {
+          addEvent("onCodePathEnd", node.type);
+        },
+        onCodePathSegmentStart(_segment: unknown, node: ESTreeNode) {
+          addEvent("onCodePathSegmentStart", node.type);
+        },
+        onCodePathSegmentEnd(_segment: unknown, node: ESTreeNode) {
+          addEvent("onCodePathSegmentEnd", node.type);
+        },
+        onUnreachableCodePathSegmentStart(_segment: unknown, node: ESTreeNode) {
+          addEvent("onUnreachableCodePathSegmentStart", node.type);
+        },
+        onUnreachableCodePathSegmentEnd(_segment: unknown, node: ESTreeNode) {
+          addEvent("onUnreachableCodePathSegmentEnd", node.type);
+        },
+        onCodePathSegmentLoop(_fromSegment: unknown, _toSegment: unknown, node: ESTreeNode) {
+          addEvent("onCodePathSegmentLoop", node.type);
+        },
+        after() {
+          context.report({
+            message: "after hook:\n" + `filename: ${context.filename}`,
+            node: SPAN,
+          });
+
+          addEvent("after");
+
+          if (ruleNum === 1) return;
+
+          const expectedVisits: typeof visits = [
+            { ruleNum: 1, event: "before" },
+            { ruleNum: 2, event: "before" },
+            { ruleNum: 1, event: "onCodePathStart", nodeType: "Program" },
+            { ruleNum: 2, event: "onCodePathStart", nodeType: "Program" },
+            { ruleNum: 1, event: "onCodePathSegmentStart", nodeType: "Program" },
+            { ruleNum: 2, event: "onCodePathSegmentStart", nodeType: "Program" },
+            { ruleNum: 1, event: "onCodePathSegmentEnd", nodeType: "BinaryExpression" },
+            { ruleNum: 2, event: "onCodePathSegmentEnd", nodeType: "BinaryExpression" },
+            { ruleNum: 1, event: "onCodePathSegmentStart", nodeType: "BinaryExpression" },
+            { ruleNum: 2, event: "onCodePathSegmentStart", nodeType: "BinaryExpression" },
+            { ruleNum: 1, event: "onCodePathSegmentEnd", nodeType: "UpdateExpression" },
+            { ruleNum: 2, event: "onCodePathSegmentEnd", nodeType: "UpdateExpression" },
+            { ruleNum: 1, event: "onCodePathSegmentStart", nodeType: "UpdateExpression" },
+            { ruleNum: 2, event: "onCodePathSegmentStart", nodeType: "UpdateExpression" },
+            { ruleNum: 1, event: "onCodePathSegmentLoop", nodeType: "BlockStatement" },
+            { ruleNum: 2, event: "onCodePathSegmentLoop", nodeType: "BlockStatement" },
+            { ruleNum: 1, event: "onCodePathSegmentEnd", nodeType: "BlockStatement" },
+            { ruleNum: 2, event: "onCodePathSegmentEnd", nodeType: "BlockStatement" },
+            { ruleNum: 1, event: "onCodePathSegmentStart", nodeType: "BlockStatement" },
+            { ruleNum: 2, event: "onCodePathSegmentStart", nodeType: "BlockStatement" },
+            { ruleNum: 1, event: "onCodePathSegmentEnd", nodeType: "BlockStatement" },
+            { ruleNum: 2, event: "onCodePathSegmentEnd", nodeType: "BlockStatement" },
+            { ruleNum: 1, event: "onUnreachableCodePathSegmentStart", nodeType: "BlockStatement" },
+            { ruleNum: 2, event: "onUnreachableCodePathSegmentStart", nodeType: "BlockStatement" },
+            { ruleNum: 1, event: "onUnreachableCodePathSegmentEnd", nodeType: "ForStatement" },
+            { ruleNum: 2, event: "onUnreachableCodePathSegmentEnd", nodeType: "ForStatement" },
+            { ruleNum: 1, event: "onCodePathSegmentStart", nodeType: "ForStatement" },
+            { ruleNum: 2, event: "onCodePathSegmentStart", nodeType: "ForStatement" },
+            { ruleNum: 1, event: "onCodePathSegmentEnd", nodeType: "Program" },
+            { ruleNum: 2, event: "onCodePathSegmentEnd", nodeType: "Program" },
+            { ruleNum: 1, event: "onCodePathEnd", nodeType: "Program" },
+            { ruleNum: 2, event: "onCodePathEnd", nodeType: "Program" },
+            { ruleNum: 1, event: "after" },
+            { ruleNum: 2, event: "after" },
+          ];
+
+          if (
+            visits.length !== expectedVisits.length ||
+            visits.some(
+              (v, i) =>
+                v.ruleNum !== expectedVisits[i].ruleNum ||
+                v.event !== expectedVisits[i].event ||
+                v.nodeType !== expectedVisits[i].nodeType,
+            )
+          ) {
+            context.report({
+              message: `Unexpected visits:\n${JSON.stringify(visits, null, 2)}`,
+              node: SPAN,
+            });
+          }
+        },
+      } as unknown as Visitor; // TODO: Our types don't include CFG event handlers at present
+    },
+  };
+}
+
+const createOnceCfgRule = createCfgRule(1);
+const createOnceCfgRule2 = createCfgRule(2);
 
 // Tests that `before` hook returning `false` disables visiting AST for the file.
 const createOnceBeforeFalseRule: Rule = {
@@ -217,6 +418,9 @@ export default eslintCompatPlugin({
   rules: {
     create: createRule,
     "create-once": createOnceRule,
+    "create-once-selector": createOnceSelectorRule,
+    "create-once-cfg": createOnceCfgRule,
+    "create-once-cfg2": createOnceCfgRule2,
     "create-once-before-false": createOnceBeforeFalseRule,
     "create-once-before-only": createOnceBeforeOnlyRule,
     "create-once-after-only": createOnceAfterOnlyRule,

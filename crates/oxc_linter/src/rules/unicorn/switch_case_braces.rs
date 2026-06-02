@@ -92,6 +92,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = SwitchCaseBracesConfig,
+    version = "0.0.15",
 );
 
 impl Rule for SwitchCaseBraces {

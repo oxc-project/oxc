@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: var foo = 0;

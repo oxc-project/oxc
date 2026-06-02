@@ -314,6 +314,20 @@ pub struct TypeScriptOptions {
     ///
     /// Defaults to `false`.
     pub remove_class_fields_without_initializer: Option<bool>,
+    /// When true, optimize const enums by inlining their values at usage sites
+    /// and removing the enum declaration.
+    ///
+    /// @default false
+    pub optimize_const_enums: Option<bool>,
+    /// When true, optimize regular (non-const) enums by inlining their member
+    /// accesses at usage sites when the member value is statically known.
+    ///
+    /// Non-exported enum declarations are also removed when all members are
+    /// evaluable and no references to the enum as a runtime value exist
+    /// (e.g., `console.log(Foo)`, `typeof Foo`, or passing the enum as an argument).
+    ///
+    /// @default false
+    pub optimize_enums: Option<bool>,
     /// Also generate a `.d.ts` declaration file for TypeScript files.
     ///
     /// The source file must be compliant with all
@@ -345,7 +359,8 @@ impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
                 .unwrap_or(ops.only_remove_type_imports),
             allow_namespaces: options.allow_namespaces.unwrap_or(ops.allow_namespaces),
             allow_declare_fields: options.allow_declare_fields.unwrap_or(ops.allow_declare_fields),
-            optimize_const_enums: false,
+            optimize_const_enums: options.optimize_const_enums.unwrap_or(ops.optimize_const_enums),
+            optimize_enums: options.optimize_enums.unwrap_or(ops.optimize_enums),
             remove_class_fields_without_initializer: options
                 .remove_class_fields_without_initializer
                 .unwrap_or(ops.remove_class_fields_without_initializer),
@@ -389,6 +404,17 @@ pub struct DecoratorOptions {
     /// @see https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata
     /// @default false
     pub emit_decorator_metadata: Option<bool>,
+
+    /// Aligns nullable-union `design:type` emission with `--strictNullChecks`.
+    ///
+    /// When `true` (default), `T | null` and `T | undefined` emit `Object`, matching tsc strict.
+    /// When `false`, `null` and `undefined` are elided from the union so the underlying
+    /// primitive constructor is emitted, matching tsc with `--strictNullChecks=false`
+    /// and `babel-plugin-transform-typescript-metadata`.
+    ///
+    /// @see https://www.typescriptlang.org/tsconfig/#strictNullChecks
+    /// @default true
+    pub strict_null_checks: Option<bool>,
 }
 
 impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
@@ -396,6 +422,7 @@ impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
         oxc::transformer::DecoratorOptions {
             legacy: options.legacy.unwrap_or_default(),
             emit_decorator_metadata: options.emit_decorator_metadata.unwrap_or_default(),
+            strict_null_checks: options.strict_null_checks.unwrap_or(true),
         }
     }
 }

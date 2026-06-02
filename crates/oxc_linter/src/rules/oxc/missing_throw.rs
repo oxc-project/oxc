@@ -39,7 +39,8 @@ declare_oxc_lint!(
     MissingThrow,
     oxc,
     correctness,
-    suggestion
+    suggestion,
+    version = "0.0.3",
 );
 
 impl Rule for MissingThrow {

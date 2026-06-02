@@ -73,6 +73,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = SelfClosingComp,
+    version = "0.9.3",
 );
 
 impl Rule for SelfClosingComp {

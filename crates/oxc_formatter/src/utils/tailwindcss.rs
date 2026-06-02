@@ -11,9 +11,9 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, TailwindcssOptions,
+    Buffer, SortTailwindcssOptions,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatElement, Formatter, TailwindContextEntry, prelude::*},
+    formatter::{FormatElement, TailwindContextEntry, prelude::*},
     write,
 };
 
@@ -31,7 +31,7 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 /// - The string contains whitespace (indicating multiple classes to sort)
 pub fn tailwind_context_for_string_literal<'a>(
     string: &AstNode<'a, StringLiteral<'a>>,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> Option<TailwindContextEntry> {
     f.context().tailwind_context().copied().filter(|ctx| {
         let text = f.source_text().text_for(string);
@@ -51,7 +51,7 @@ pub fn tailwind_context_for_string_literal<'a>(
 /// - Custom attributes specified in `attributes` option
 pub fn is_tailwind_jsx_attribute(
     attr_name: &JSXAttributeName<'_>,
-    options: &TailwindcssOptions,
+    options: &SortTailwindcssOptions,
 ) -> bool {
     let JSXAttributeName::Identifier(ident) = attr_name else {
         return false;
@@ -79,7 +79,10 @@ pub fn is_tailwind_jsx_attribute(
 /// - `foo().clsx(...)` - chained calls
 ///
 /// Based on [prettier-plugin-tailwindcss's `isSortableExpression`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L584-L605).
-pub fn is_tailwind_function_call(callee: &Expression<'_>, options: &TailwindcssOptions) -> bool {
+pub fn is_tailwind_function_call(
+    callee: &Expression<'_>,
+    options: &SortTailwindcssOptions,
+) -> bool {
     if options.functions.is_empty() {
         return false;
     }
@@ -164,7 +167,7 @@ impl CollapseWhitespace {
 pub fn can_collapse_whitespace<'a, 'b>(
     span: Span,
     ancestors: impl Iterator<Item = &'b AstNodes<'a>>,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> CollapseWhitespace
 where
     'a: 'b,
@@ -185,24 +188,33 @@ where
 
     // 2. Check binary concat context (walk parent chain)
     for ancestor in ancestors {
-        let AstNodes::BinaryExpression(binary) = ancestor else {
-            break;
-        };
+        match ancestor {
+            AstNodes::BinaryExpression(binary) if binary.operator() == BinaryOperator::Addition => {
+                let left = binary.left().span();
+                let right = binary.right().span();
 
-        if binary.operator() != BinaryOperator::Addition {
-            break;
-        }
+                // Left operand needs trailing space for separation from `+ right`
+                if left.contains_inclusive(span) {
+                    collapse.end = false;
+                }
+                // Right operand needs leading space for separation from `left +`
+                if right.contains_inclusive(span) {
+                    collapse.start = false;
+                }
 
-        let left = binary.left().span();
-        let right = binary.right().span();
-
-        // Left operand needs trailing space for separation from `+ right`
-        if left.contains_inclusive(span) {
-            collapse.end = false;
-        }
-        // Right operand needs leading space for separation from `left +`
-        if right.contains_inclusive(span) {
-            collapse.start = false;
+                // Both flags are one-way latches; no need to continue once both are set.
+                if !collapse.start && !collapse.end {
+                    break;
+                }
+            }
+            // Transparent nodes: skip through to find outer BinaryExpression(+)
+            AstNodes::ConditionalExpression(_)
+            | AstNodes::ParenthesizedExpression(_)
+            | AstNodes::TSAsExpression(_)
+            | AstNodes::TSSatisfiesExpression(_)
+            | AstNodes::TSNonNullExpression(_)
+            | AstNodes::TSTypeAssertion(_) => {}
+            _ => break,
         }
     }
 
@@ -222,7 +234,7 @@ where
 pub fn write_tailwind_string_literal<'a>(
     string_literal: &AstNode<'a, StringLiteral<'a>>,
     ctx: TailwindContextEntry,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     debug_assert!(
         !string_literal.value.is_empty(),
@@ -310,7 +322,7 @@ pub fn write_tailwind_string_literal<'a>(
 pub fn write_tailwind_template_element<'a>(
     element: &AstNode<'a, TemplateElement<'a>>,
     ctx: TailwindContextEntry,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     let content = f.source_text().text_for(element);
 
@@ -374,7 +386,7 @@ fn can_collapse_whitespace_template<'a>(
     element: &AstNode<'a, TemplateElement<'a>>,
     is_first: bool,
     is_last: bool,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> CollapseWhitespace {
     // Only first/last quasis can be affected by binary expression context
     if !is_first && !is_last {

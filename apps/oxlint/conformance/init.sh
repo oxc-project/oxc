@@ -1,17 +1,24 @@
 #!/bin/bash
 set -e
 
-ESLINT_SHA="8f360ad6a7a743d33a83eed8973ee4a50731e55b" # 10.0.0-rc.0
-REACT_SHA="612e371fb215498edde4c853bd1e0c8e9203808f" # 19.2.3
-STYLISTIC_SHA="5c4b512a225a314fa5f41eead9fdc4d51fc243d7" # 5.7.1
-SONAR_SHA="8852e2593390e00f9d9aea764b0b0b9a503d1f08" # 3.0.6
+# Path to repos.json (resolved before any `cd` changes the working directory)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPOS_JSON="$SCRIPT_DIR/repos.json"
 
-# Shallow clone a repo at a specific commit.
+# Read a field from repos.json for a given repo key.
+# Usage: repo_field <key> <field>
+# e.g. `repo_field eslint commitSha`
+repo_field() {
+  node -p "require('$REPOS_JSON')['$1'].$2"
+}
+
+# Shallow clone a repo at a specific commit, and `cd` into the cloned directory.
+# Reads the repo URL and commit SHA from repos.json using the given key.
 # Git commands copied from `.github/scripts/clone-parallel.mjs`.
-clone() {
+clone_repo() {
   local dir="$1"
-  local url="$2"
-  local ref="$3"
+  local url="$(repo_field "$dir" repoUrl).git"
+  local ref="$(repo_field "$dir" commitSha)"
 
   git clone --single-branch --depth 1 "$url" "$dir"
   cd "$dir"
@@ -30,28 +37,20 @@ cd submodules
 ###############################################################################
 
 # Clone ESLint repo into `submodules/eslint`
-clone eslint https://github.com/eslint/eslint.git "$ESLINT_SHA"
+clone_repo eslint
 
 # Install dependencies
-pnpm install --ignore-workspace
-
-# Copy TS-ESLint parser shim into `node_modules/@typescript-eslint/parser`
-rm node_modules/@typescript-eslint/parser
-cp -r tools/typescript-eslint-parser node_modules/@typescript-eslint/parser
-cd node_modules/@typescript-eslint/parser
-
-# Install dependencies of TS-ESLint parser shim
-pnpm install --ignore-workspace
+pnpm install --ignore-workspace --config.strict-dep-builds=false
 
 # Return to `submodules` directory
-cd ../../../..
+cd ..
 
 ###############################################################################
 # React
 ###############################################################################
 
 # Clone React repo into `submodules/react`
-clone react https://github.com/facebook/react.git "$REACT_SHA"
+clone_repo react
 
 # Install dependencies
 yarn
@@ -59,20 +58,35 @@ yarn
 # Install `eslint-plugin-react-hooks` dependency
 cd packages/eslint-plugin-react-hooks
 yarn add eslint-plugin-react-hooks
+cd ../..
+
+# @overlookmotel says: @camc314 added the next block to this script, but it doesn't seem to work on my machine.
+# Presumably it's because we're using different versions of `yarn`, but I can't track down the problem exactly.
+# So I'm commenting it out again for now.
+# @connorshea says: I also ran into the problem cam had, I'm using yarn v1 via homebrew.
+
+# Ensure `eslint-plugin-react-hooks` can be resolved from the React tests directory.
+# In recent React workspace setups this is already satisfied after `yarn`, and forcing
+# `yarn add` here can fail with workspace invariant errors.
+# if ! node -e "require.resolve('eslint-plugin-react-hooks/package.json')" >/dev/null 2>&1; then
+#   cd packages/eslint-plugin-react-hooks
+#   yarn add eslint-plugin-react-hooks
+#   cd ../..
+# fi
 
 # Return to `submodules` directory
-cd ../../..
+cd ..
 
 ###############################################################################
 # Stylistic
 ###############################################################################
 
 # Clone ESLint Stylistic repo into `submodules/stylistic`
-clone stylistic https://github.com/eslint-stylistic/eslint-stylistic.git "$STYLISTIC_SHA"
+clone_repo stylistic
 
 # Install dependencies.
 # No `--ignore-workspace` because `eslint-stylistic` has its own `pnpm-workspace.yaml`.
-pnpm install
+pnpm install --config.strict-dep-builds=false
 
 # Patch `package.json` files to add Node.js subpath imports.
 # ESLint Stylistic uses TypeScript `paths` in `tsconfig.base.json` (e.g. `#test`),
@@ -127,10 +141,10 @@ cd ..
 ###############################################################################
 
 # Clone SonarJS repo into `submodules/sonarjs`
-clone sonarjs https://github.com/SonarSource/SonarJS.git "$SONAR_SHA"
+clone_repo sonarjs
 
 # Install dependencies
-pnpm install --ignore-workspace
+pnpm install --ignore-workspace --config.strict-dep-builds=false
 
 # Build
 # (ignore errors, it's just typecheck fail)
@@ -164,6 +178,97 @@ if [[ "$OSTYPE" == darwin* ]]; then
 else
   sed -i "$PATTERN3" "$CHECKER_PATH"
 fi
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# E18E
+###############################################################################
+
+# Clone E18E ESLint plugin repo into `submodules/e18e`
+clone_repo e18e
+
+# Install dependencies
+pnpm install --ignore-workspace --config.strict-dep-builds=false
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# Testing Library
+###############################################################################
+
+# Clone `eslint-plugin-testing-library` repo into `submodules/testing_library`
+clone_repo testing_library
+
+# Install dependencies
+pnpm install --ignore-workspace --config.strict-dep-builds=false
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# Storybook
+###############################################################################
+
+# Clone `eslint-plugin-storybook` repo into `submodules/storybook`
+clone_repo storybook
+
+# Install dependencies
+yarn install
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# Playwright
+###############################################################################
+
+# Clone `eslint-plugin-playwright` repo into `submodules/playwright`
+clone_repo playwright
+
+# Install dependencies
+yarn install
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# Cypress
+###############################################################################
+
+# Clone `eslint-plugin-cypress` repo into `submodules/cypress`
+clone_repo cypress
+
+# Install dependencies
+npm install
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# Mocha
+###############################################################################
+
+# Clone `eslint-plugin-mocha` repo into `submodules/mocha`
+clone_repo mocha
+
+# Install dependencies
+npm install
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# Regexp
+###############################################################################
+
+# Clone `eslint-plugin-regexp` repo into `submodules/regexp`
+clone_repo regexp
+
+# Install dependencies
+npm install
 
 # Return to `submodules` directory
 cd ..

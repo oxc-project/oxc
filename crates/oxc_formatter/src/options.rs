@@ -1,9 +1,15 @@
-use std::{fmt, num::ParseIntError, str::FromStr};
+use std::{fmt, str::FromStr};
 
-pub use crate::formatter::{Buffer, Format, FormatResult, token::string::Quote};
+use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
+
+/// JS-facing alias for the language-agnostic [`oxc_formatter_core::util::Quote`].
+/// Kept as `QuoteStyle` so existing public API (`JsFormatOptions::quote_style`)
+/// continues to compile.
+pub use oxc_formatter_core::util::Quote as QuoteStyle;
+
 use crate::{
     formatter::{
-        formatter::Formatter,
+        Buffer, Format, JsFormatContext, JsFormatter,
         prelude::{if_group_breaks, token},
         printer::PrinterOptions,
     },
@@ -12,7 +18,7 @@ use crate::{
 };
 
 #[derive(Debug, Default, Clone)]
-pub struct FormatOptions {
+pub struct JsFormatOptions {
     /// The indent style.
     pub indent_style: IndentStyle,
 
@@ -69,16 +75,107 @@ pub struct FormatOptions {
     /// - `false` - Retain the default behavior of ternaries; keep question marks on the same line as the consequent.
     pub experimental_ternaries: bool,
 
+    /// Whether HTML whitespace sensitivity is set to "ignore".
+    /// When true, HTML-in-JS templates always use hard line breaks for wrapping.
+    pub html_whitespace_sensitivity_ignore: bool,
+
     /// Enable formatting for embedded languages (e.g., CSS, SQL, GraphQL) within template literals. Defaults to "auto".
     pub embedded_language_formatting: EmbeddedLanguageFormatting,
 
     /// Sort import statements. By default disabled.
-    pub experimental_sort_imports: Option<SortImportsOptions>,
+    pub sort_imports: Option<SortImportsOptions>,
 
     /// Enable Tailwind CSS class sorting in JSX class/className attributes.
     /// When enabled, class strings will be collected and passed to a callback for sorting.
     /// Defaults to None (disabled).
-    pub experimental_tailwindcss: Option<TailwindcssOptions>,
+    pub sort_tailwindcss: Option<SortTailwindcssOptions>,
+
+    /// Enable JSDoc comment formatting.
+    /// When enabled, JSDoc comments will be normalized and reformatted.
+    /// Defaults to None (disabled).
+    pub jsdoc: Option<JsdocOptions>,
+}
+
+/// How to format JSDoc comment blocks: single-line, multi-line, or preserve original.
+///
+/// Maps to upstream's `jsdocCommentLineStrategy`.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum CommentLineStrategy {
+    /// Convert to single-line `/** content */` when possible.
+    #[default]
+    SingleLine,
+    /// Always use multi-line format.
+    Multiline,
+    /// Preserve original formatting (single-line stays single-line, multi-line stays multi-line).
+    Keep,
+}
+
+/// Strategy for wrapping description lines at print width.
+///
+/// Maps to upstream's `jsdocLineWrappingStyle`.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum LineWrappingStyle {
+    /// Always re-wrap text to fit within print width.
+    #[default]
+    Greedy,
+    /// Preserve original line breaks if all lines fit within print width.
+    Balance,
+}
+
+/// Options for JSDoc comment formatting.
+#[derive(Debug, Clone)]
+pub struct JsdocOptions {
+    /// Capitalize the first letter of tag descriptions. Default: true.
+    /// Maps to upstream's `jsdocCapitalizeDescription`.
+    pub capitalize_descriptions: bool,
+    /// How to format comment blocks. Default: SingleLine.
+    /// Maps to upstream's `jsdocCommentLineStrategy`.
+    pub comment_line_strategy: CommentLineStrategy,
+    /// Add blank lines between different tag groups (e.g. between @param and @returns). Default: false.
+    /// Maps to upstream's `jsdocSeparateTagGroups`.
+    pub separate_tag_groups: bool,
+    /// Add a blank line between the last @param and @returns. Default: false.
+    /// Maps to upstream's `jsdocSeparateReturnsFromParam`.
+    pub separate_returns_from_param: bool,
+    /// Add spaces inside JSDoc type braces: `{string}` → `{ string }`. Default: false.
+    /// Maps to upstream's `jsdocBracketSpacing`.
+    pub bracket_spacing: bool,
+    /// Add a trailing dot to the end of descriptions. Default: false.
+    /// Maps to upstream's `jsdocDescriptionWithDot`.
+    pub description_with_dot: bool,
+    /// Append default values to @param descriptions (e.g. "Default is \`value\`"). Default: true.
+    /// Maps to upstream's `jsdocAddDefaultToDescription`.
+    pub add_default_to_description: bool,
+    /// Use fenced code blocks (```) instead of 4-space indentation for code without a language tag. Default: false.
+    /// Maps to upstream's `jsdocPreferCodeFences`.
+    pub prefer_code_fences: bool,
+    /// Strategy for wrapping description lines. Default: Greedy.
+    /// Maps to upstream's `jsdocLineWrappingStyle`.
+    pub line_wrapping_style: LineWrappingStyle,
+    /// Emit `@description` tag instead of inline description. Default: false.
+    /// Maps to upstream's `jsdocDescriptionTag`.
+    pub description_tag: bool,
+    /// Preserve indentation in unparsable @example code. Default: false.
+    /// Maps to upstream's `jsdocKeepUnParseAbleExampleIndent`.
+    pub keep_unparsable_example_indent: bool,
+}
+
+impl Default for JsdocOptions {
+    fn default() -> Self {
+        Self {
+            capitalize_descriptions: true,
+            comment_line_strategy: CommentLineStrategy::default(),
+            separate_tag_groups: false,
+            separate_returns_from_param: false,
+            bracket_spacing: false,
+            description_with_dot: false,
+            add_default_to_description: true,
+            prefer_code_fences: false,
+            line_wrapping_style: LineWrappingStyle::default(),
+            description_tag: false,
+            keep_unparsable_example_indent: false,
+        }
+    }
 }
 
 /// Options for Tailwind CSS class sorting.
@@ -86,7 +183,7 @@ pub struct FormatOptions {
 ///
 /// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
 #[derive(Debug, Default, Clone)]
-pub struct TailwindcssOptions {
+pub struct SortTailwindcssOptions {
     /// Path to your Tailwind CSS configuration file (v3).
     ///
     /// Note: Paths are resolved relative to the Oxfmt configuration file.
@@ -126,7 +223,7 @@ pub struct TailwindcssOptions {
     pub preserve_duplicates: bool,
 }
 
-impl FormatOptions {
+impl JsFormatOptions {
     pub fn new() -> Self {
         Self {
             indent_style: IndentStyle::default(),
@@ -145,25 +242,49 @@ impl FormatOptions {
             expand: Expand::default(),
             experimental_operator_position: OperatorPosition::default(),
             experimental_ternaries: false,
+            html_whitespace_sensitivity_ignore: false,
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
-            experimental_sort_imports: None,
-            experimental_tailwindcss: None,
+            sort_imports: None,
+            sort_tailwindcss: None,
+            jsdoc: None,
         }
-    }
-
-    pub fn as_print_options(&self) -> PrinterOptions {
-        PrinterOptions::from(self)
     }
 }
 
-impl fmt::Display for FormatOptions {
+impl oxc_formatter_core::FormatOptions for JsFormatOptions {
+    fn indent_style(&self) -> IndentStyle {
+        self.indent_style
+    }
+
+    fn indent_width(&self) -> IndentWidth {
+        self.indent_width
+    }
+
+    fn line_width(&self) -> LineWidth {
+        self.line_width
+    }
+
+    fn line_ending(&self) -> LineEnding {
+        self.line_ending
+    }
+
+    fn as_print_options(&self) -> PrinterOptions {
+        PrinterOptions::default()
+            .with_indent_style(self.indent_style)
+            .with_indent_width(self.indent_width)
+            .with_print_width(self.line_width.into())
+            .with_line_ending(self.line_ending)
+    }
+}
+
+impl fmt::Display for JsFormatOptions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Indent style: {}", self.indent_style)?;
         writeln!(f, "Indent width: {}", self.indent_width.value())?;
         writeln!(f, "Line ending: {}", self.line_ending)?;
         writeln!(f, "Line width: {}", self.line_width.value())?;
-        writeln!(f, "Quote style: {}", self.quote_style)?;
-        writeln!(f, "JSX quote style: {}", self.jsx_quote_style)?;
+        writeln!(f, "Quote style: {} Quotes", self.quote_style)?;
+        writeln!(f, "JSX quote style: {} Quotes", self.jsx_quote_style)?;
         writeln!(f, "Quote properties: {}", self.quote_properties)?;
         writeln!(f, "Trailing commas: {}", self.trailing_commas)?;
         writeln!(f, "Semicolons: {}", self.semicolons)?;
@@ -174,387 +295,9 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Expand lists: {}", self.expand)?;
         writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
         writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
-        writeln!(f, "Experimental sort imports: {:?}", self.experimental_sort_imports)?;
-        writeln!(f, "Experimental tailwindcss: {:?}", self.experimental_tailwindcss)
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy, Eq, Hash, PartialEq)]
-pub enum IndentStyle {
-    /// Tab
-    Tab,
-    /// Space
-    #[default]
-    Space,
-}
-
-impl IndentStyle {
-    pub const DEFAULT_SPACES: u8 = 2;
-
-    /// Returns `true` if this is an [IndentStyle::Tab].
-    pub const fn is_tab(self) -> bool {
-        matches!(self, IndentStyle::Tab)
-    }
-
-    /// Returns `true` if this is an [IndentStyle::Space].
-    pub const fn is_space(self) -> bool {
-        matches!(self, IndentStyle::Space)
-    }
-}
-
-impl FromStr for IndentStyle {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "tab" => Ok(Self::Tab),
-            "space" => Ok(Self::Space),
-            // TODO: replace this error with a diagnostic
-            _ => Err("Unsupported value for this option"),
-        }
-    }
-}
-
-impl fmt::Display for IndentStyle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            IndentStyle::Tab => "Tab",
-            IndentStyle::Space => "Space",
-        };
-        f.write_str(s)
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Default)]
-pub enum LineEnding {
-    ///  Line Feed only (\n), common on Linux and macOS as well as inside git repos
-    #[default]
-    Lf,
-    /// Carriage Return + Line Feed characters (\r\n), common on Windows
-    Crlf,
-    /// Carriage Return character only (\r), used very rarely
-    Cr,
-}
-
-impl LineEnding {
-    #[inline]
-    pub const fn as_bytes(self) -> &'static [u8] {
-        match self {
-            LineEnding::Lf => b"\n",
-            LineEnding::Crlf => b"\r\n",
-            LineEnding::Cr => b"\r",
-        }
-    }
-
-    /// Returns `true` if this is a [LineEnding::Lf].
-    pub const fn is_line_feed(self) -> bool {
-        matches!(self, LineEnding::Lf)
-    }
-
-    /// Returns `true` if this is a [LineEnding::Crlf].
-    pub const fn is_carriage_return_line_feed(self) -> bool {
-        matches!(self, LineEnding::Crlf)
-    }
-
-    /// Returns `true` if this is a [LineEnding::Cr].
-    pub const fn is_carriage_return(self) -> bool {
-        matches!(self, LineEnding::Cr)
-    }
-}
-
-impl FromStr for LineEnding {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "lf" => Ok(Self::Lf),
-            "crlf" => Ok(Self::Crlf),
-            "cr" => Ok(Self::Cr),
-            _ => Err("Value not supported for LineEnding"),
-        }
-    }
-}
-
-impl fmt::Display for LineEnding {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            LineEnding::Lf => "LF",
-            LineEnding::Crlf => "CRLF",
-            LineEnding::Cr => "CR",
-        };
-        f.write_str(s)
-    }
-}
-
-#[derive(Clone, Copy, Eq, Hash, PartialEq)]
-pub struct IndentWidth(u8);
-
-impl IndentWidth {
-    pub const MAX: u8 = 24;
-    pub const MIN: u8 = 0;
-
-    /// Return the numeric value for this [IndentWidth]
-    pub fn value(self) -> u8 {
-        self.0
-    }
-}
-
-impl Default for IndentWidth {
-    fn default() -> Self {
-        Self(2)
-    }
-}
-
-impl FromStr for IndentWidth {
-    type Err = ParseFormatNumberError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let value = u8::from_str(s).map_err(ParseFormatNumberError::ParseError)?;
-        let value = Self::try_from(value).map_err(ParseFormatNumberError::TryFromU8Error)?;
-        Ok(value)
-    }
-}
-
-impl TryFrom<u8> for IndentWidth {
-    type Error = IndentWidthFromIntError;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        if (Self::MIN..=Self::MAX).contains(&value) {
-            Ok(Self(value))
-        } else {
-            Err(IndentWidthFromIntError(value))
-        }
-    }
-}
-
-impl fmt::Display for IndentWidth {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value = self.value();
-        f.write_str(&std::format!("{value}"))
-    }
-}
-
-impl fmt::Debug for IndentWidth {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        fmt::Display::fmt(self, f)
-    }
-}
-
-/// Validated value for the `line_width` formatter options
-///
-/// The allowed range of values is 1..=320
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub struct LineWidth(u16);
-
-impl LineWidth {
-    /// Maximum allowed value for a valid [LineWidth]
-    pub const MAX: u16 = 320;
-    /// Minimum allowed value for a valid [LineWidth]
-    pub const MIN: u16 = 1;
-
-    /// Return the numeric value for this [LineWidth]
-    pub fn value(self) -> u16 {
-        self.0
-    }
-}
-
-impl Default for LineWidth {
-    fn default() -> Self {
-        Self(100)
-    }
-}
-
-impl fmt::Display for LineWidth {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value = self.value();
-        f.write_str(&std::format!("{value}"))
-    }
-}
-
-impl fmt::Debug for LineWidth {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        fmt::Display::fmt(self, f)
-    }
-}
-
-/// Error type returned when parsing a [LineWidth] or [IndentWidth] from a string fails
-#[expect(clippy::enum_variant_names)]
-pub enum ParseFormatNumberError {
-    /// The string could not be parsed to a number
-    ParseError(ParseIntError),
-    /// The `u16` value of the string is not a valid [LineWidth]
-    TryFromU16Error(LineWidthFromIntError),
-    /// The `u8 value of the string is not a valid [IndentWidth]
-    TryFromU8Error(IndentWidthFromIntError),
-}
-
-impl From<IndentWidthFromIntError> for ParseFormatNumberError {
-    fn from(value: IndentWidthFromIntError) -> Self {
-        Self::TryFromU8Error(value)
-    }
-}
-
-impl From<LineWidthFromIntError> for ParseFormatNumberError {
-    fn from(value: LineWidthFromIntError) -> Self {
-        Self::TryFromU16Error(value)
-    }
-}
-
-impl From<ParseIntError> for ParseFormatNumberError {
-    fn from(value: ParseIntError) -> Self {
-        Self::ParseError(value)
-    }
-}
-
-impl fmt::Debug for ParseFormatNumberError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        fmt::Display::fmt(self, f)
-    }
-}
-
-impl fmt::Display for ParseFormatNumberError {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ParseFormatNumberError::ParseError(err) => fmt::Display::fmt(err, fmt),
-            ParseFormatNumberError::TryFromU16Error(err) => fmt::Display::fmt(err, fmt),
-            ParseFormatNumberError::TryFromU8Error(err) => fmt::Display::fmt(err, fmt),
-        }
-    }
-}
-
-impl TryFrom<u16> for LineWidth {
-    type Error = LineWidthFromIntError;
-
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
-        if (Self::MIN..=Self::MAX).contains(&value) {
-            Ok(Self(value))
-        } else {
-            Err(LineWidthFromIntError(value))
-        }
-    }
-}
-
-impl FromStr for LineWidth {
-    type Err = ParseFormatNumberError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let value = u16::from_str(s).map_err(ParseFormatNumberError::ParseError)?;
-        let value = Self::try_from(value).map_err(ParseFormatNumberError::TryFromU16Error)?;
-        Ok(value)
-    }
-}
-
-/// Error type returned when converting a u16 to a [LineWidth] fails
-#[derive(Clone, Copy, Debug)]
-pub struct IndentWidthFromIntError(pub u8);
-
-impl fmt::Display for IndentWidthFromIntError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "The indent width should be between {} and {}", LineWidth::MIN, LineWidth::MAX,)
-    }
-}
-
-/// Error type returned when converting a u16 to a [LineWidth] fails
-#[derive(Clone, Copy, Debug)]
-pub struct LineWidthFromIntError(pub u16);
-
-impl fmt::Display for LineWidthFromIntError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "The line width should be between {} and {}", LineWidth::MIN, LineWidth::MAX,)
-    }
-}
-
-impl From<LineWidth> for u16 {
-    fn from(value: LineWidth) -> Self {
-        value.0
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum QuoteStyle {
-    #[default]
-    Double,
-    Single,
-}
-
-impl QuoteStyle {
-    pub fn from_byte(byte: u8) -> Option<QuoteStyle> {
-        match byte {
-            b'"' => Some(QuoteStyle::Double),
-            b'\'' => Some(QuoteStyle::Single),
-            _ => None,
-        }
-    }
-
-    pub fn as_char(self) -> char {
-        match self {
-            QuoteStyle::Double => '"',
-            QuoteStyle::Single => '\'',
-        }
-    }
-
-    pub fn as_str(self) -> &'static str {
-        match self {
-            QuoteStyle::Double => "\"",
-            QuoteStyle::Single => "'",
-        }
-    }
-
-    pub fn as_byte(self) -> u8 {
-        self.as_char() as u8
-    }
-
-    /// Returns the quote in HTML entity
-    pub fn as_html_entity(&self) -> &str {
-        match self {
-            QuoteStyle::Double => "&quot;",
-            QuoteStyle::Single => "&apos;",
-        }
-    }
-
-    /// Given the current quote, it returns the other one
-    #[must_use]
-    pub fn other(self) -> Self {
-        match self {
-            QuoteStyle::Double => QuoteStyle::Single,
-            QuoteStyle::Single => QuoteStyle::Double,
-        }
-    }
-
-    pub const fn is_double(self) -> bool {
-        matches!(self, Self::Double)
-    }
-}
-
-impl FromStr for QuoteStyle {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "double" => Ok(Self::Double),
-            "single" => Ok(Self::Single),
-            // TODO: replace this error with a diagnostic
-            _ => Err("Value not supported for QuoteStyle"),
-        }
-    }
-}
-
-impl fmt::Display for QuoteStyle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            QuoteStyle::Double => "Double Quotes",
-            QuoteStyle::Single => "Single Quotes",
-        };
-        f.write_str(s)
-    }
-}
-
-impl From<QuoteStyle> for Quote {
-    fn from(quote: QuoteStyle) -> Self {
-        match quote {
-            QuoteStyle::Double => Self::Double,
-            QuoteStyle::Single => Self::Single,
-        }
+        writeln!(f, "Sort imports: {:?}", self.sort_imports)?;
+        writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)?;
+        writeln!(f, "JSDoc: {:?}", self.jsdoc)
     }
 }
 
@@ -728,7 +471,7 @@ pub enum TrailingSeparator {
 
 impl FormatTrailingCommas {
     /// This function returns corresponding [TrailingSeparator] for `format_separated` function.
-    pub fn trailing_separator(self, options: &FormatOptions) -> TrailingSeparator {
+    pub fn trailing_separator(self, options: &JsFormatOptions) -> TrailingSeparator {
         if options.trailing_commas.is_none() {
             return TrailingSeparator::Omit;
         }
@@ -746,8 +489,8 @@ impl FormatTrailingCommas {
     }
 }
 
-impl Format<'_> for FormatTrailingCommas {
-    fn fmt(&self, f: &mut Formatter) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingCommas {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().trailing_commas.is_none() {
             return;
         }
@@ -840,49 +583,6 @@ impl FromStr for AttributePosition {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct BracketSpacing(bool);
-
-impl BracketSpacing {
-    /// Return the boolean value for this [BracketSpacing]
-    pub fn value(self) -> bool {
-        self.0
-    }
-}
-
-impl Default for BracketSpacing {
-    fn default() -> Self {
-        Self(true)
-    }
-}
-
-impl From<bool> for BracketSpacing {
-    fn from(value: bool) -> Self {
-        Self(value)
-    }
-}
-
-impl fmt::Display for BracketSpacing {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        fmt::Display::fmt(&self.value(), f)
-    }
-}
-
-impl FromStr for BracketSpacing {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let value = bool::from_str(s);
-
-        match value {
-            Ok(value) => Ok(Self(value)),
-            Err(_) => Err(
-                "Value not supported for BracketSpacing. Supported values are 'true' and 'false'.",
-            ),
-        }
-    }
-}
-
 /// Put the `>` of a multi-line HTML or JSX element at the end of the last line instead of being alone on the next line (does not apply to self closing elements).
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct BracketSameLine(bool);
@@ -916,38 +616,6 @@ impl FromStr for BracketSameLine {
                 "Value not supported for BracketSameLine. Supported values are 'true' and 'false'.",
             ),
         }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum Expand {
-    /// Objects are expanded when the first property has a leading newline. Arrays are always
-    /// expanded if they are shorter than the line width.
-    #[default]
-    Auto,
-    /// Objects and arrays are never expanded, if they are shorter than the line width.
-    Never,
-}
-
-impl FromStr for Expand {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "auto" => Ok(Self::Auto),
-            "never" => Ok(Self::Never),
-            _ => Err(std::format!("unknown expand literal: {s}")),
-        }
-    }
-}
-
-impl fmt::Display for Expand {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Expand::Auto => "Auto",
-            Expand::Never => "Never",
-        };
-        f.write_str(s)
     }
 }
 

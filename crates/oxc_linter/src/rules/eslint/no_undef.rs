@@ -13,7 +13,11 @@ use crate::{
 };
 
 fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is not defined.")).with_label(span)
+    OxcDiagnostic::warn(format!("'{name}' is not defined."))
+        .with_help(format!(
+            "Either define '{name}' or remove the reference to it. If '{name}' is a global variable, add it to the 'globals' configuration."
+        ))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
@@ -49,6 +53,7 @@ declare_oxc_lint!(
     eslint,
     nursery,
     config = NoUndef,
+    version = "0.0.8",
 );
 
 impl Rule for NoUndef {
@@ -69,11 +74,7 @@ impl Rule for NoUndef {
 
                 let name = ctx.semantic().reference_name(reference);
 
-                if ctx.env_contains_var(name) {
-                    continue;
-                }
-
-                if ctx.globals().is_enabled(name) {
+                if ctx.is_global_defined(name) {
                     continue;
                 }
 
@@ -148,6 +149,13 @@ fn test() {
         ("var a; ({b: a} = {});", None, None),
         ("var obj; [obj.a, obj.b] = [0, 1];", None, None),
         ("URLSearchParams;", None, Some(serde_json::json!({"env": { "browser": true }}))),
+        (
+            "URLSearchParams;",
+            None,
+            Some(
+                serde_json::json!({"env": { "browser": false }, "globals": { "URLSearchParams": "readonly" }}),
+            ),
+        ),
         ("Intl;", None, Some(serde_json::json!({"env": { "browser": true }}))),
         ("IntersectionObserver;", None, Some(serde_json::json!({"env": { "browser": true }}))),
         ("Credential;", None, Some(serde_json::json!({"env": { "browser": true }}))),

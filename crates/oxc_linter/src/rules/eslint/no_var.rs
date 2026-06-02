@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::has_ambient_typescript_ancestor};
 
 fn no_var_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected var, use let or const instead.")
@@ -49,7 +49,8 @@ declare_oxc_lint!(
     NoVar,
     eslint,
     restriction,
-    conditional_fix
+    conditional_fix,
+    version = "0.1.1",
 );
 
 impl Rule for NoVar {
@@ -58,11 +59,7 @@ impl Rule for NoVar {
             && dec.kind == VariableDeclarationKind::Var
         {
             // Skip TypeScript ambient declarations (declare global/module/namespace)
-            if ctx.nodes().ancestors(node.id()).any(|ancestor| match ancestor.kind() {
-                AstKind::TSModuleDeclaration(module) => module.declare,
-                AstKind::TSGlobalDeclaration(_) => true,
-                _ => false,
-            }) {
+            if has_ambient_typescript_ancestor(node.id(), ctx.nodes()) {
                 return;
             }
 
@@ -187,7 +184,7 @@ fn test() {
         ("{ var foo = 1 }", None),
         ("if (true) { var foo = 1 }", None),
         ("var foo = 1", None),
-        ("declare var foo = 2;", None),
+        ("declare var foo: 2;", None),
         ("function foo() { var let; }", None),
         ("function foo() { var { let } = {}; }", None),
         (
@@ -221,7 +218,7 @@ fn test() {
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
         ),
-        ("declare var foo = 2;", "declare let foo = 2;"),
+        ("declare var foo: 2;", "declare let foo: 2;"),
     ];
 
     Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

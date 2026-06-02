@@ -45,7 +45,8 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let decl = semantic.scoping().get_binding(semantic.scoping().root_scope_id(), target);
+        let decl =
+            semantic.scoping().get_binding(semantic.scoping().root_scope_id(), target.into());
         let data = decl.map_or_else(
             || Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
             Ok,

@@ -42,7 +42,8 @@ declare_oxc_lint!(
     NoProto,
     eslint,
     restriction,
-    pending
+    pending,
+    version = "0.2.14",
 );
 
 impl Rule for NoProto {

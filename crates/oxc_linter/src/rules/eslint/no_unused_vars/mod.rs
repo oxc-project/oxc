@@ -11,8 +11,11 @@ mod usage;
 
 use std::ops::Deref;
 
-use options::{IgnorePattern, NoUnusedVarsOptions};
-use oxc_ast::AstKind;
+use allowed::FunctionParameterKind;
+use ignored::IgnoreReason;
+use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
+use oxc_ast::{AstKind, ast::CatchParameter};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
 use oxc_span::{GetSpan, Span};
@@ -189,8 +192,9 @@ declare_oxc_lint!(
     NoUnusedVars,
     eslint,
     correctness,
-    dangerous_suggestion,
-    config = NoUnusedVarsOptions
+    fix = conditional_dangerous_fix_or_suggestion,
+    config = NoUnusedVarsOptions,
+    version = "0.7.0",
 );
 
 impl Deref for NoUnusedVars {
@@ -233,28 +237,26 @@ impl NoUnusedVars {
     fn run_on_symbol_internal<'a>(&self, symbol: &Symbol<'_, 'a>, ctx: &LintContext<'a>) {
         let is_ignored = self.is_ignored(symbol);
 
-        if is_ignored && !self.report_used_ignore_pattern {
+        if is_ignored.is_some() && !self.report_used_ignore_pattern {
             return;
         }
 
         // Order matters. We want to call cheap/high "yield" functions first.
         let is_used = symbol.is_exported() || symbol.has_usages(self);
 
-        match (is_used, is_ignored) {
-            (true, true) => {
+        match (is_used, *is_ignored) {
+            // used, ignored because variable name matches one of several
+            // ignore patterns. Report if used.
+            (true, Some(IgnoreReason::NamePattern)) => {
                 if self.report_used_ignore_pattern {
                     ctx.diagnostic(diagnostic::used_ignored(symbol, &self.vars_ignore_pattern));
                 }
                 return;
-            },
-            // not used but ignored, no violation
-            (false, true)
-            // used and not ignored, no violation
-            | (true, false) => {
-                return
-            },
+            }
+            // used, ignored because of other ignore reason (e.g. rest siblings)
+            (_, Some(_)) | (true, None) => return,
             // needs acceptance check and/or reporting
-            (false, false) => {}
+            (false, None) => {}
         }
 
         let declaration = symbol.declaration();
@@ -273,7 +275,7 @@ impl NoUnusedVars {
                     });
 
                 if let Some(declaration) = declaration {
-                    ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    Self::report_with_fix_mode(self.fix.imports, ctx, diagnostic, |fixer| {
                         self.remove_unused_import_declaration(fixer, symbol, declaration)
                     });
                 } else {
@@ -296,23 +298,48 @@ impl NoUnusedVars {
                     ),
                 };
 
-                ctx.diagnostic_with_suggestion(report, |fixer| {
+                Self::report_with_fix_mode(self.fix.variables, ctx, report, |fixer| {
                     // NOTE: suggestions produced by this fixer are all flagged
                     // as dangerous
                     self.rename_or_remove_var_declaration(fixer, symbol, decl, declaration.id())
                 });
             }
             AstKind::FormalParameter(param) => {
-                if self.is_allowed_argument(ctx.semantic(), ctx.module_record(), symbol, param) {
+                if self.is_allowed_argument(
+                    ctx.semantic(),
+                    ctx.module_record(),
+                    symbol,
+                    &FunctionParameterKind::Normal(param),
+                ) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::param(symbol, &self.args_ignore_pattern));
+                Self::report_with_fix_mode(
+                    self.fix.variables,
+                    ctx,
+                    diagnostic::param(
+                        symbol,
+                        &self.args_ignore_pattern,
+                        symbol.is_used_in_return_type_predicate()
+                            || symbol.has_reference_used_as_type_query(),
+                    ),
+                    |fixer| self.rename_unused_function_parameter(fixer, symbol, param),
+                );
             }
-            AstKind::FormalParameterRest(_) => {
-                if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
+            AstKind::FormalParameterRest(param) => {
+                if self.is_allowed_argument(
+                    ctx.semantic(),
+                    ctx.module_record(),
+                    symbol,
+                    &FunctionParameterKind::Rest(param),
+                ) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::param(symbol, &self.vars_ignore_pattern));
+                ctx.diagnostic(diagnostic::param(
+                    symbol,
+                    &self.args_ignore_pattern,
+                    symbol.is_used_in_return_type_predicate()
+                        || symbol.has_reference_used_as_type_query(),
+                ));
             }
             AstKind::BindingRestElement(_) => {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
@@ -343,26 +370,36 @@ impl NoUnusedVars {
             AstKind::CatchParameter(catch) => {
                 // NOTE: these are safe suggestions as deleting unused catch
                 // bindings wont have any side effects.
-                ctx.diagnostic_with_suggestion(
+                Self::report_with_fix_mode(
+                    self.fix.variables,
+                    ctx,
                     diagnostic::declared(symbol, &self.caught_errors_ignore_pattern, false),
-                    |fixer| {
-                        let Span { start, end, .. } = catch.span();
-
-                        let (Some(paren_start), Some(paren_end_offset)) = (
-                            ctx.find_prev_token_from(start, "("),
-                            ctx.find_next_token_from(end, ")"),
-                        ) else {
-                            return fixer.noop();
-                        };
-
-                        let paren_end = end + paren_end_offset;
-                        let delete_span = Span::new(paren_start, paren_end + 1);
-                        fixer.delete_range(delete_span)
-                    },
+                    |fixer| remove_unused_catch_parameter(fixer, ctx, catch),
                 );
             }
             _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false)),
         }
+    }
+
+    fn report_with_fix_mode<'a, F>(
+        mode: NoUnusedVarsFixMode,
+        ctx: &LintContext<'a>,
+        diagnostic: OxcDiagnostic,
+        fix: F,
+    ) where
+        F: FnOnce(crate::fixer::RuleFixer<'_, 'a>) -> crate::fixer::RuleFix,
+    {
+        let kind = match mode {
+            NoUnusedVarsFixMode::Off => {
+                ctx.diagnostic(diagnostic);
+                return;
+            }
+            NoUnusedVarsFixMode::Suggestion => FixKind::Suggestion,
+            NoUnusedVarsFixMode::Fix => FixKind::DangerousFix,
+            NoUnusedVarsFixMode::SafeFix => FixKind::SafeFix,
+        };
+
+        ctx.diagnostic_with_fix_of_kind(diagnostic, kind, fix);
     }
 
     fn should_skip_symbol(symbol: &Symbol<'_, '_>) -> bool {
@@ -401,6 +438,24 @@ impl NoUnusedVars {
 
         false
     }
+}
+
+fn remove_unused_catch_parameter<'a>(
+    fixer: crate::fixer::RuleFixer<'_, 'a>,
+    ctx: &LintContext<'a>,
+    catch: &CatchParameter<'a>,
+) -> crate::fixer::RuleFix {
+    let Span { start, end, .. } = catch.span();
+
+    let (Some(paren_start), Some(paren_end_offset)) =
+        (ctx.find_prev_token_from(start, "("), ctx.find_next_token_from(end, ")"))
+    else {
+        return fixer.noop();
+    };
+
+    let paren_end = end + paren_end_offset;
+    let delete_span = Span::new(paren_start, paren_end + 1);
+    fixer.delete_range(delete_span)
 }
 
 impl Symbol<'_, '_> {

@@ -1,6 +1,6 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr, sync::OnceLock};
 
-use bpaf::Bpaf;
+use bpaf::{Bpaf, doc::Style};
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 
 use crate::output_formatter::OutputFormat;
@@ -58,12 +58,30 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_check: bool,
 
+    /// Run only TypeScript type checking diagnostics without regular lint diagnostics
+    #[bpaf(long("type-check-only"), switch, hide)]
+    pub type_check_only: bool,
+
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
+
+    #[bpaf(external)]
+    pub suppression_options: SuppressionOptions,
 
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Clone, Bpaf)]
+pub struct SuppressionOptions {
+    /// Generate suppressions for all current violations
+    #[bpaf(switch, hide)]
+    pub suppress_all: bool,
+
+    /// Remove entries for violations that no longer exist
+    #[bpaf(switch, hide)]
+    pub prune_suppressions: bool,
 }
 
 impl LintCommand {
@@ -75,8 +93,16 @@ impl LintCommand {
     ///
     /// If `--threads` option is not used, or `--threads 0` is given,
     /// default to the number of available CPU cores.
+    ///
+    /// Idempotent: rayon's global pool can only be initialized once per
+    /// process. The `OnceLock` guarantees we only call `build_global` once,
+    /// so the napi `lint()` entry point can be invoked more than once in
+    /// the same Node process. The thread count from the first call wins;
+    /// subsequent calls keep that pool.
     #[expect(clippy::print_stderr)]
     fn init_rayon_thread_pool(threads: Option<usize>) {
+        static RAYON_INIT: OnceLock<()> = OnceLock::new();
+
         // Always initialize thread pool, even if using default thread count,
         // to ensure thread pool's thread count is locked after this point.
         // `rayon::current_num_threads()` will always return the same number after this point.
@@ -106,7 +132,9 @@ impl LintCommand {
             1
         };
 
-        rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+        RAYON_INIT.get_or_init(|| {
+            rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+        });
     }
 }
 
@@ -114,16 +142,24 @@ impl LintCommand {
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
     /// Oxlint configuration file
-    ///  * only `.json` extension is supported
+    ///  * `.json` and `.jsonc` config files are supported in all runtimes
+    ///  * JavaScript/TypeScript config files are experimental and require running via Node.js
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
     ///
-    /// If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
+    /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` file in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
-    /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin.
-    /// If not provided, will look for `tsconfig.json` in the current working directory.
+    /// Override the TypeScript config used for import resolution.
+    /// Oxlint automatically discovers the relevant `tsconfig.json` for each file.
+    /// Use this only when your project uses a non-standard tsconfig name or location.
+    ///
+    /// ::: warning
+    /// Avoid using this option. It can cause differences between import resolution,
+    /// and type-aware linting. Type aware linting **does not** respect this option,
+    /// and will always discover the appropriate `tsconfig.json` for each file automatically.
+    /// :::
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
 
@@ -186,6 +222,7 @@ pub struct FixOptions {
     /// Fix as many issues as possible. Only unfixed issues are reported in the output.
     #[bpaf(switch, hide_usage)]
     pub fix: bool,
+
     /// Apply auto-fixable suggestions. May change program behavior.
     #[bpaf(switch, hide_usage)]
     pub fix_suggestions: bool,
@@ -208,10 +245,7 @@ impl FixOptions {
         }
 
         if self.fix_dangerously {
-            if kind.is_none() {
-                kind.set(FixKind::Fix, true);
-            }
-            kind.set(FixKind::Dangerous, true);
+            kind.set(FixKind::DangerousFixOrSuggestion, true);
         }
 
         kind
@@ -243,9 +277,107 @@ pub struct WarningOptions {
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
-    /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
-    #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
+    /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
+    #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
+
+    #[bpaf(
+        long("debug"),
+        argument::<DebugOptions>("OPTIONS"),
+        fallback(DebugOptions::default()),
+        help(DebugOptions::HELP),
+        hide_usage
+    )]
+    pub debug: DebugOptions,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DebugOption {
+    /// Print the list of files that will be linted
+    Files,
+
+    /// Enable per-rule timing information
+    Timings,
+}
+
+impl DebugOption {
+    const FILES_NAME: &str = "files";
+    const FILES_HELP: &str = "Print the list of files that will be linted, then exit";
+    const TIMINGS_NAME: &str = "timings";
+    const TIMINGS_HELP: &str = "Enable per-rule timing information";
+}
+
+impl FromStr for DebugOption {
+    type Err = String;
+
+    fn from_str(option: &str) -> Result<Self, Self::Err> {
+        match option {
+            Self::FILES_NAME => Ok(Self::Files),
+            Self::TIMINGS_NAME => Ok(Self::Timings),
+            _ => Err(format!("'{option}' is not a known debug option")),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct DebugOptions {
+    options: Vec<DebugOption>,
+}
+
+impl DebugOptions {
+    const HELP: &'static [(&'static str, Style)] = &[
+        (
+            "Enable debug output options. Options are comma-separated. Possible values:\n",
+            Style::Text,
+        ),
+        ("  * `", Style::Text),
+        (DebugOption::FILES_NAME, Style::Text),
+        ("` - ", Style::Text),
+        (DebugOption::FILES_HELP, Style::Text),
+        (".\n", Style::Text),
+        ("  * `", Style::Text),
+        (DebugOption::TIMINGS_NAME, Style::Text),
+        ("` - ", Style::Text),
+        (DebugOption::TIMINGS_HELP, Style::Text),
+        (".", Style::Text),
+    ];
+
+    pub fn contains(&self, option: DebugOption) -> bool {
+        self.options.contains(&option)
+    }
+}
+
+impl FromStr for DebugOptions {
+    type Err = String;
+
+    fn from_str(options: &str) -> Result<Self, Self::Err> {
+        let options = options
+            .split(',')
+            .filter(|option| !option.is_empty())
+            .map(DebugOption::from_str)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        if options.contains(&DebugOption::Files)
+            && options.iter().any(|option| *option != DebugOption::Files)
+        {
+            return Err("debug option 'files' cannot be combined with other debug options".into());
+        }
+
+        Ok(Self { options })
+    }
+}
+
+#[expect(clippy::unnecessary_wraps)]
+fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
+    if cfg!(debug_assertions) {
+        Ok(OutputFormat::Default)
+    } else if !cfg!(test) && crate::agent_detection::is_agent() {
+        Ok(OutputFormat::Agent)
+    } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
+        Ok(OutputFormat::Github)
+    } else {
+        Ok(OutputFormat::Default)
+    }
 }
 
 /// Enable/Disable Plugins
@@ -277,8 +409,6 @@ pub struct EnablePlugins {
     pub typescript_plugin: OverrideToggle,
 
     /// Enable import plugin and detect ESM problems.
-    /// It should be used with the `--tsconfig` flag if your project has a
-    /// tsconfig with a name other than `tsconfig.json`.
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub import_plugin: OverrideToggle,
 
@@ -396,11 +526,6 @@ impl EnablePlugins {
         self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
         self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
         self.vue_plugin.inspect(|yes| plugins.set(LintPlugins::VUE, yes));
-
-        // Without this, jest plugins adapted to vitest will not be enabled.
-        if self.vitest_plugin.is_enabled() && self.jest_plugin.is_not_set() {
-            plugins.set(LintPlugins::JEST, true);
-        }
     }
 }
 
@@ -469,7 +594,7 @@ mod plugins {
         let mut plugins = LintPlugins::default();
         let enable =
             EnablePlugins { vitest_plugin: OverrideToggle::Enable, ..EnablePlugins::default() };
-        let expected = LintPlugins::default() | LintPlugins::VITEST | LintPlugins::JEST;
+        let expected = LintPlugins::default() | LintPlugins::VITEST;
 
         enable.apply_overrides(&mut plugins);
         assert_eq!(plugins, expected);
@@ -511,7 +636,7 @@ mod lint_options {
 
     use oxc_linter::AllowWarnDeny;
 
-    use super::{LintCommand, OutputFormat, lint_command};
+    use super::{DebugOption, DebugOptions, LintCommand, OutputFormat, lint_command};
 
     fn get_lint_options(arg: &str) -> LintCommand {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -525,6 +650,7 @@ mod lint_options {
         assert!(!options.fix_options.fix);
         assert!(!options.list_rules);
         assert_eq!(options.output_options.format, OutputFormat::Default);
+        assert_eq!(options.output_options.debug, DebugOptions::default());
     }
 
     #[test]
@@ -586,6 +712,42 @@ mod lint_options {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
         assert!(options.paths.is_empty());
+
+        let options = get_lint_options("-f agent");
+        assert_eq!(options.output_options.format, OutputFormat::Agent);
+    }
+
+    #[test]
+    fn debug() {
+        let options = get_lint_options("--debug timings src");
+        assert!(options.output_options.debug.contains(DebugOption::Timings));
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
+
+        let options = get_lint_options("--debug files src");
+        assert!(options.output_options.debug.contains(DebugOption::Files));
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
+    }
+
+    #[test]
+    fn debug_files_is_exclusive() {
+        let args = "--debug files,timings"
+            .split(' ')
+            .map(std::string::ToString::to_string)
+            .collect::<Vec<_>>();
+        let result = lint_command().run_inner(args.as_slice());
+        assert!(result.is_err_and(|err| err.unwrap_stderr()
+            == "couldn't parse `files,timings`: debug option 'files' cannot be combined with other debug options"));
+    }
+
+    #[test]
+    fn debug_error() {
+        let args =
+            "--debug foo".split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
+        let result = lint_command().run_inner(args.as_slice());
+        assert!(
+            result.is_err_and(|err| err.unwrap_stderr()
+                == "couldn't parse `foo`: 'foo' is not a known debug option")
+        );
     }
 
     #[test]
@@ -625,6 +787,35 @@ mod lint_options {
         assert!(options.type_check);
         let options = get_lint_options(".");
         assert!(!options.type_check);
+    }
+
+    #[test]
+    fn type_check_only() {
+        let options = get_lint_options("--type-check-only");
+        assert!(options.type_check_only);
+        let options = get_lint_options(".");
+        assert!(!options.type_check_only);
+    }
+
+    #[test]
+    fn suppress_rules() {
+        let options = get_lint_options("--suppress-all");
+        assert!(options.suppression_options.suppress_all);
+        assert!(!options.suppression_options.prune_suppressions);
+    }
+
+    #[test]
+    fn prune_suppressions() {
+        let options = get_lint_options("--prune-suppressions");
+        assert!(options.suppression_options.prune_suppressions);
+        assert!(!options.suppression_options.suppress_all);
+    }
+
+    #[test]
+    fn suppress_and_prune() {
+        let options = get_lint_options("--suppress-all --prune-suppressions");
+        assert!(options.suppression_options.prune_suppressions);
+        assert!(options.suppression_options.suppress_all);
     }
 }
 

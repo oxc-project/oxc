@@ -16,7 +16,7 @@
 )]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
-// They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// They are purely markers for codegen used in `tasks/ast_tools`. See docs in that crate.
 // Read [`macro@oxc_ast_macros::ast`] for more information.
 
 use std::cell::Cell;
@@ -24,8 +24,9 @@ use std::cell::Cell;
 use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
-use oxc_syntax::scope::ScopeId;
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
+use oxc_str::Str;
+use oxc_syntax::{node::NodeId, scope::ScopeId};
 
 use super::{inherit_variants, js::*, literal::*};
 
@@ -48,6 +49,7 @@ use super::{inherit_variants, js::*, literal::*};
     field_order(decorators, name, optional, type_annotation, span),
 )]
 pub struct TSThisParameter<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(skip)]
     pub this_span: Span,
@@ -79,6 +81,7 @@ pub struct TSThisParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSEnumDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     pub body: TSEnumBody<'a>,
@@ -104,6 +107,7 @@ pub struct TSEnumDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSEnumBody<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub members: Vec<'a, TSEnumMember<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -131,6 +135,7 @@ pub struct TSEnumBody<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(computed = TSEnumMemberComputed))]
 pub struct TSEnumMember<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: TSEnumMemberName<'a>,
     pub initializer: Option<Expression<'a>>,
@@ -177,6 +182,7 @@ pub enum TSEnumMemberName<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeAnnotation<'a> {
     /// starts at the `:` token and ends at the end of the type annotation
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The actual type in the annotation
     pub type_annotation: TSType<'a>,
@@ -200,6 +206,7 @@ pub struct TSTypeAnnotation<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSLiteralType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub literal: TSLiteral<'a>,
 }
@@ -337,6 +344,7 @@ pub use match_ts_type;
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSConditionalType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The type before `extends` in the test expression.
     pub check_type: TSType<'a>,
@@ -364,6 +372,7 @@ pub struct TSConditionalType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSUnionType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The types in the union.
     pub types: Vec<'a, TSType<'a>>,
@@ -386,6 +395,7 @@ pub struct TSUnionType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSIntersectionType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub types: Vec<'a, TSType<'a>>,
 }
@@ -404,6 +414,7 @@ pub struct TSIntersectionType<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(via = TSParenthesizedTypeConverter)]
 pub struct TSParenthesizedType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
 }
@@ -421,6 +432,7 @@ pub struct TSParenthesizedType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeOperator<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub operator: TSTypeOperatorOperator,
     /// The type being operated on
@@ -452,6 +464,7 @@ pub enum TSTypeOperatorOperator {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSArrayType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub element_type: TSType<'a>,
 }
@@ -471,6 +484,7 @@ pub struct TSArrayType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSIndexedAccessType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub object_type: TSType<'a>,
     pub index_type: TSType<'a>,
@@ -489,6 +503,7 @@ pub struct TSIndexedAccessType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTupleType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub element_types: Vec<'a, TSTupleElement<'a>>,
 }
@@ -508,6 +523,7 @@ pub struct TSTupleType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNamedTupleMember<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub label: IdentifierName<'a>,
     pub element_type: TSTupleElement<'a>,
@@ -527,6 +543,7 @@ pub struct TSNamedTupleMember<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSOptionalType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
 }
@@ -543,6 +560,7 @@ pub struct TSOptionalType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSRestType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
 }
@@ -581,6 +599,7 @@ pub enum TSTupleElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSAnyKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -597,6 +616,7 @@ pub struct TSAnyKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSStringKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -613,6 +633,7 @@ pub struct TSStringKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSBooleanKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -629,6 +650,7 @@ pub struct TSBooleanKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNumberKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -646,6 +668,7 @@ pub struct TSNumberKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNeverKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -663,6 +686,7 @@ pub struct TSNeverKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSIntrinsicKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -681,6 +705,7 @@ pub struct TSIntrinsicKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSUnknownKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -698,6 +723,7 @@ pub struct TSUnknownKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNullKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -717,6 +743,7 @@ pub struct TSNullKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSUndefinedKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -724,6 +751,7 @@ pub struct TSUndefinedKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSVoidKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -731,6 +759,7 @@ pub struct TSVoidKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSSymbolKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -738,6 +767,7 @@ pub struct TSSymbolKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSThisType {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -745,6 +775,7 @@ pub struct TSThisType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSObjectKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -752,6 +783,7 @@ pub struct TSObjectKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSBigIntKeyword {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }
 
@@ -770,6 +802,7 @@ pub struct TSBigIntKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeReference<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_name: TSTypeName<'a>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -810,6 +843,7 @@ pub use match_ts_type_name;
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSQualifiedName<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub left: TSTypeName<'a>,
     pub right: IdentifierName<'a>,
@@ -819,6 +853,7 @@ pub struct TSQualifiedName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeParameterInstantiation<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub params: Vec<'a, TSType<'a>>,
 }
@@ -844,6 +879,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeParameter<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The name of the parameter, e.g. `T` in `type Foo<T> = ...`.
     pub name: BindingIdentifier<'a>,
@@ -863,6 +899,7 @@ pub struct TSTypeParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeParameterDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub params: Vec<'a, TSTypeParameter<'a>>,
 }
@@ -880,6 +917,7 @@ pub struct TSTypeParameterDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeAliasDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     pub id: BindingIdentifier<'a>,
@@ -914,6 +952,7 @@ pub enum TSAccessibility {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[plural(TSClassImplementsList)]
 pub struct TSClassImplements<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(via = TSClassImplementsExpression)]
     pub expression: TSTypeName<'a>,
@@ -940,6 +979,7 @@ pub struct TSClassImplements<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSInterfaceDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
@@ -959,6 +999,7 @@ pub struct TSInterfaceDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSInterfaceBody<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub body: Vec<'a, TSSignature<'a>>,
 }
@@ -983,6 +1024,7 @@ pub struct TSInterfaceBody<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(accessibility = Null, r#static = False))]
 pub struct TSPropertySignature<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub computed: bool,
     pub optional: bool,
@@ -1018,6 +1060,7 @@ pub enum TSSignature<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(accessibility = Null))]
 pub struct TSIndexSignature<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
@@ -1030,6 +1073,7 @@ pub struct TSIndexSignature<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSCallSignatureDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
@@ -1066,6 +1110,7 @@ pub enum TSMethodSignatureKind {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(add_fields(accessibility = Null, readonly = False, r#static = False))]
 pub struct TSMethodSignature<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub key: PropertyKey<'a>,
     pub computed: bool,
@@ -1086,6 +1131,7 @@ pub struct TSMethodSignature<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSConstructSignatureDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
@@ -1102,9 +1148,10 @@ pub struct TSConstructSignatureDeclaration<'a> {
     field_order(decorators, name, optional, type_annotation, span),
 )]
 pub struct TSIndexSignatureName<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Str<'a>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
 }
 
@@ -1112,6 +1159,7 @@ pub struct TSIndexSignatureName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSInterfaceHeritage<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1141,6 +1189,7 @@ pub struct TSInterfaceHeritage<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypePredicate<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The identifier the predicate operates on
     pub parameter_name: TSTypePredicateName<'a>,
@@ -1159,7 +1208,7 @@ pub struct TSTypePredicate<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub enum TSTypePredicateName<'a> {
     Identifier(Box<'a, IdentifierName<'a>>) = 0,
-    This(TSThisType) = 1,
+    This(Box<'a, TSThisType>) = 1,
 }
 
 /// TypeScript Module and Namespace Declarations
@@ -1188,6 +1237,7 @@ pub enum TSTypePredicateName<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(via = TSModuleDeclarationConverter, add_fields(global = False))]
 pub struct TSModuleDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The name of the module/namespace being declared.
     #[estree(ts_type = "BindingIdentifier | StringLiteral | TSQualifiedName")]
@@ -1280,6 +1330,7 @@ pub enum TSModuleDeclarationBody<'a> {
     field_order(id, body, kind, declare, global, span),
 )]
 pub struct TSGlobalDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Span of `global` keyword
     #[estree(skip)]
@@ -1294,6 +1345,7 @@ pub struct TSGlobalDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSModuleBlock<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,
@@ -1304,6 +1356,7 @@ pub struct TSModuleBlock<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeLiteral<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub members: Vec<'a, TSSignature<'a>>,
 }
@@ -1325,6 +1378,7 @@ pub struct TSTypeLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSInferType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The type bound when the
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
@@ -1343,6 +1397,7 @@ pub struct TSInferType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeQuery<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expr_name: TSTypeQueryExprName<'a>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1379,6 +1434,7 @@ pub enum TSTypeQueryExprName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSImportType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub source: StringLiteral<'a>,
     pub options: Option<Box<'a, ObjectExpression<'a>>>,
@@ -1410,6 +1466,7 @@ pub enum TSImportTypeQualifier<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "TSQualifiedName")]
 pub struct TSImportTypeQualifiedName<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub left: TSImportTypeQualifier<'a>,
     pub right: IdentifierName<'a>,
@@ -1428,6 +1485,7 @@ pub struct TSImportTypeQualifiedName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSFunctionType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Generic type parameters
     ///
@@ -1462,6 +1520,7 @@ pub struct TSFunctionType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSConstructorType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub r#abstract: bool,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1497,6 +1556,7 @@ pub struct TSConstructorType<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(field_order(key, constraint, name_type, type_annotation, optional, readonly, span))]
 pub struct TSMappedType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
     pub key: BindingIdentifier<'a>,
@@ -1562,6 +1622,7 @@ pub enum TSMappedTypeModifierOperator {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTemplateLiteralType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The string parts of the template literal.
     pub quasis: Vec<'a, TemplateElement<'a>>,
@@ -1573,6 +1634,7 @@ pub struct TSTemplateLiteralType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSAsExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
@@ -1594,6 +1656,7 @@ pub struct TSAsExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSSatisfiesExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     /// The value expression being constrained.
     pub expression: Expression<'a>,
@@ -1613,6 +1676,7 @@ pub struct TSSatisfiesExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSTypeAssertion<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
     pub expression: Expression<'a>,
@@ -1622,6 +1686,7 @@ pub struct TSTypeAssertion<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSImportEqualsDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     pub module_reference: TSModuleReference<'a>,
@@ -1652,6 +1717,7 @@ pub enum TSModuleReference<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSExternalModuleReference<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: StringLiteral<'a>,
 }
@@ -1660,6 +1726,7 @@ pub struct TSExternalModuleReference<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNonNullExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1692,6 +1759,7 @@ pub struct TSNonNullExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct Decorator<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1703,6 +1771,7 @@ pub struct Decorator<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSExportAssignment<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1714,6 +1783,7 @@ pub struct TSExportAssignment<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSNamespaceExportDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: IdentifierName<'a>,
 }
@@ -1722,6 +1792,7 @@ pub struct TSNamespaceExportDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSInstantiationExpression<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_arguments: Box<'a, TSTypeParameterInstantiation<'a>>,
@@ -1746,6 +1817,7 @@ pub enum ImportOrExportKind {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "TSJSDocNullableType")]
 pub struct JSDocNullableType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
     /// Was `?` after the type annotation?
@@ -1758,6 +1830,7 @@ pub struct JSDocNullableType<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "TSJSDocNonNullableType")]
 pub struct JSDocNonNullableType<'a> {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
     pub type_annotation: TSType<'a>,
     pub postfix: bool,
@@ -1769,5 +1842,6 @@ pub struct JSDocNonNullableType<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "TSJSDocUnknownType")]
 pub struct JSDocUnknownType {
+    pub node_id: Cell<NodeId>,
     pub span: Span,
 }

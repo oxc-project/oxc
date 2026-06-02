@@ -11,6 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::Ident;
 use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword_or_global_object};
 
 use schemars::JsonSchema;
@@ -219,6 +220,7 @@ declare_oxc_lint!(
     style,
     conditional_fix_suggestion,
     config = FuncNames,
+    version = "0.7.0",
 );
 
 impl Rule for FuncNames {
@@ -234,7 +236,7 @@ impl Rule for FuncNames {
             if is_invalid_function(config, func, parent_node) {
                 // For named functions, check if they're recursive (need their name for recursion)
                 if let Some(func_name) = func.name()
-                    && is_recursive_function(func, func_name.as_str(), ctx)
+                    && is_recursive_function(func, func_name, ctx)
                 {
                     return;
                 }
@@ -244,7 +246,7 @@ impl Rule for FuncNames {
     }
 }
 
-fn is_recursive_function(func: &Function, func_name: &str, ctx: &LintContext) -> bool {
+fn is_recursive_function(func: &Function, func_name: Ident<'_>, ctx: &LintContext) -> bool {
     let Some(func_scope_id) = func.scope_id.get() else {
         return false;
     };
@@ -298,8 +300,9 @@ fn diagnostic_invalid_function(
 
     let function_name = guess_function_name(ctx, node.id()).map(Cow::into_owned);
 
-    let is_safe_fix =
-        function_name.as_ref().is_some_and(|name| can_safely_apply_fix(func, name, ctx));
+    let is_safe_fix = function_name
+        .as_ref()
+        .is_some_and(|name| can_safely_apply_fix(func, name.as_str().into(), ctx));
 
     let msg = unnamed_diagnostic(&func_name_complete, report_span);
 
@@ -415,7 +418,7 @@ fn is_invalid_function(
 }
 
 /// Returns whether it's safe to insert a function name without breaking shadowing rules
-fn can_safely_apply_fix(func: &Function, name: &str, ctx: &LintContext) -> bool {
+fn can_safely_apply_fix(func: &Function, name: Ident<'_>, ctx: &LintContext) -> bool {
     !ctx.scoping().find_binding(func.scope_id(), name).is_some_and(|shadowed_var| {
         ctx.semantic().symbol_references(shadowed_var).any(|reference| {
             func.span.contains_inclusive(ctx.nodes().get_node(reference.node_id()).kind().span())

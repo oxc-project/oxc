@@ -4,13 +4,14 @@ let _y, _y2, _y3, _y4, _a, _c, _y5, _a2, _c2;
 class Cls {
   constructor() {
     this.y = 1;
+    this.#y = 1;
     this[_y] = 1;
   }
   static {
     x, _y = y, z;
   }
   #x;
-  #y = 1;
+  #y;
   @dce #z;
 }
 

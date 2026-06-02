@@ -8,6 +8,7 @@
 // Use the conformance testing version of `RuleTester`,
 // which modifies test cases before they run
 import { RuleTester as OxlintRuleTester } from "./src/rule_tester.ts";
+import { setCurrentGroup } from "./src/capture.ts";
 // // @ts-expect-error - internal module of ESLint with no types
 // import { RuleTester as ESLintRuleTester } from "./submodules/eslint/lib/rule-tester/index.js";
 import { RuleTester as ESLintRuleTester } from "eslint";
@@ -37,6 +38,9 @@ OxlintRuleTesterOriginal.it = simpleIt;
 // Set global `describe` and `it` for ESLint's `RuleTester`
 (globalThis as any).describe = simpleDescribe;
 (globalThis as any).it = simpleIt;
+
+// Set a dummy group to set CWD in `RuleTester` to current directory
+setCurrentGroup({ testFilesDirPath: import.meta.dirname } as any);
 
 /* -----------------------------------------------------------------------------
 

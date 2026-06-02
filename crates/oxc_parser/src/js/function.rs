@@ -1,12 +1,12 @@
-use oxc_allocator::Box;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use super::FunctionKind;
 use crate::{
-    Context, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
-    modifiers::{ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
 impl FunctionKind {
@@ -19,7 +19,7 @@ impl FunctionKind {
     }
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
             || self.at(Kind::Async) && {
@@ -34,8 +34,9 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::LCurly);
 
         // Add Return context, remove TopLevel context
-        let (directives, statements) =
-            self.context(Context::Return, Context::TopLevel, Self::parse_directives_and_statements);
+        let (directives, statements) = self.context(Context::Return, Context::TopLevel, |p| {
+            p.parse_directives_and_statements(/* in_ts_namespace_body */ false)
+        });
 
         self.expect_closing(Kind::RCurly, opening_span);
         self.ast.alloc_function_body(self.end_span(span), directives, statements)
@@ -118,33 +119,55 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
+            let span = self.start_span();
+            let decorators = self.parse_decorators();
+
             if self.at(Kind::Dot3) {
                 let rest_element = self.parse_rest_element_for_formal_parameter();
-                let rest_span = rest_element.span;
                 let type_annotation =
                     if self.is_ts { self.parse_ts_type_annotation() } else { None };
+
+                let are_decorators_allowed =
+                    matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
+                        && self.is_ts;
+                if !are_decorators_allowed {
+                    for decorator in &decorators {
+                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                    }
+                }
+
                 rest = Some(self.ast.alloc_formal_parameter_rest(
-                    rest_span,
+                    self.end_span(span),
+                    decorators,
                     rest_element,
                     type_annotation,
                 ));
             } else {
-                list.push(self.parse_formal_parameter(func_kind));
+                list.push(self.parse_formal_parameter_with_decorators(func_kind, span, decorators));
             }
         }
 
         (list, rest)
     }
 
-    fn parse_formal_parameter(&mut self, func_kind: FunctionKind) -> FormalParameter<'a> {
-        let span = self.start_span();
-        let decorators = self.parse_decorators();
+    fn parse_formal_parameter_with_decorators(
+        &mut self,
+        func_kind: FunctionKind,
+        span: u32,
+        decorators: Vec<'a, Decorator<'a>>,
+    ) -> FormalParameter<'a> {
         let modifiers = self.parse_modifiers(false, false);
         if self.is_ts {
             let allowed_modifiers = if func_kind == FunctionKind::Constructor {
-                ModifierFlags::ACCESSIBILITY | ModifierFlags::OVERRIDE | ModifierFlags::READONLY
+                ModifierKinds::new([
+                    ModifierKind::Public,
+                    ModifierKind::Private,
+                    ModifierKind::Protected,
+                    ModifierKind::Override,
+                    ModifierKind::Readonly,
+                ])
             } else {
-                ModifierFlags::empty()
+                ModifierKinds::none()
             };
             self.verify_modifiers(
                 &modifiers,
@@ -155,7 +178,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::empty(),
+                ModifierKinds::none(),
                 true,
                 diagnostics::parameter_modifiers_in_ts,
             );
@@ -179,7 +202,7 @@ impl<'a> ParserImpl<'a> {
             None
         };
 
-        if (modifiers.accessibility().is_some()
+        if (modifiers.contains_accessibility()
             || modifiers.contains_readonly()
             || modifiers.contains_override())
             && !pattern.is_binding_identifier()
@@ -219,7 +242,7 @@ impl<'a> ParserImpl<'a> {
         generator: bool,
         func_kind: FunctionKind,
         param_kind: FormalParameterKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, Function<'a>> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
@@ -263,15 +286,33 @@ impl<'a> ParserImpl<'a> {
             self.asi();
         }
 
+        // A function declaration's implementation (body) cannot be declared in an ambient context,
+        // whether the ambient context comes from the function's own `declare` modifier or is
+        // inherited from an enclosing `declare module`/`declare namespace` or a `.d.ts` file
+        // (TS1183). Class methods are checked separately in `check_method_definition`, so they are
+        // excluded here to avoid a duplicate diagnostic.
         if ctx.has_ambient()
-            && modifiers.contains_declare()
+            && matches!(
+                func_kind,
+                FunctionKind::Declaration
+                    | FunctionKind::DefaultExport
+                    | FunctionKind::TSDeclaration
+            )
             && let Some(body) = &body
         {
             self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
+
+        if generator {
+            if ctx.has_ambient() {
+                self.error(diagnostics::generator_in_ambient_context(self.end_span(span)));
+            } else if body.is_none() {
+                self.error(diagnostics::overload_signature_generator(self.end_span(span)));
+            }
+        }
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::DECLARE | ModifierFlags::ASYNC,
+            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Async]),
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
@@ -344,7 +385,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: u32,
         func_kind: FunctionKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Box<'a, Function<'a>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function);

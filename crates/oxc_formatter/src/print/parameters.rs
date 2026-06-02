@@ -5,7 +5,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
     formatter::{
-        Format, Formatter,
+        Format, JsFormatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
@@ -27,7 +27,7 @@ pub fn get_this_param<'a>(parent: &AstNodes<'a>) -> Option<&'a AstNode<'a, TSThi
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // `function foo /**/ () {}`
         //               ^^^ keep comments printed before parameters
         let comments = f.context().comments().comments_before(self.span.start);
@@ -98,7 +98,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let content = format_with(|f| {
             let left = format_with(|f| {
                 if let Some(accessibility) = self.accessibility() {
@@ -114,7 +114,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
                 if self.optional {
                     write!(f, "?");
                 }
-                write!(f, self.type_annotation());
+
+                if let Some(type_ann) = self.type_annotation() {
+                    if f.comments().has_comment_before(type_ann.span().start) {
+                        write!(f, space());
+                    }
+                    write!(f, type_ann);
+                }
             })
             .memoized();
 
@@ -154,7 +160,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["this", self.type_annotation()]);
     }
 }
@@ -175,8 +181,8 @@ impl GetSpan for Parameter<'_, '_> {
     }
 }
 
-impl<'a> Format<'a> for Parameter<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for Parameter<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::This(param) => param.fmt(f),
             Self::Formal(param) => param.fmt(f),
@@ -214,6 +220,7 @@ pub struct ParameterList<'a, 'b> {
     list: &'b AstNode<'a, FormalParameters<'a>>,
     this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
     layout: Option<ParameterLayout>,
+    trailing_separator_override: Option<TrailingSeparator>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -255,12 +262,21 @@ impl<'a, 'b> ParameterList<'a, 'b> {
         this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
         layout: ParameterLayout,
     ) -> Self {
-        Self { list, this, layout: Some(layout) }
+        Self { list, this, layout: Some(layout), trailing_separator_override: None }
+    }
+
+    /// Suppresses trailing commas regardless of the `trailingComma` option.
+    /// This is used for fragment formatting like `v-for="(item, index) in items"`.
+    ///                                                    ^^^^^^^^^^^
+    #[must_use]
+    pub fn with_omit_trailing_separator(mut self) -> Self {
+        self.trailing_separator_override = Some(TrailingSeparator::Omit);
+        self
     }
 }
 
-impl<'a> Format<'a> for ParameterList<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for ParameterList<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self.layout {
             None | Some(ParameterLayout::Default | ParameterLayout::NoParameters) => {
                 let has_trailing_rest = self.list.rest().is_some();
@@ -270,6 +286,8 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                 // added there either.
                 let trailing_separator = if has_trailing_rest {
                     TrailingSeparator::Disallowed
+                } else if let Some(ts) = self.trailing_separator_override {
+                    ts
                 } else {
                     FormatTrailingCommas::All.trailing_separator(f.options())
                 };
@@ -299,7 +317,7 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
 }
 
 /// Returns `true` if parentheses can be safely avoided and the `arrow_parentheses` formatter option allows it
-pub fn can_avoid_parentheses(arrow: &ArrowFunctionExpression<'_>, f: &Formatter<'_, '_>) -> bool {
+pub fn can_avoid_parentheses(arrow: &ArrowFunctionExpression<'_>, f: &JsFormatter<'_, '_>) -> bool {
     f.options().arrow_parentheses.is_as_needed()
         && arrow.params.items.len() == 1
         && arrow.params.rest.is_none()
@@ -319,7 +337,7 @@ pub fn should_hug_function_parameters<'a>(
     parameters: &AstNode<'a, FormalParameters<'a>>,
     this_param: Option<&AstNode<'a, TSThisParameter<'a>>>,
     parentheses_not_needed: bool,
-    f: &Formatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> bool {
     let list = &parameters.items();
 

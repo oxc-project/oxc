@@ -4,6 +4,106 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.52.0] - 2026-05-26
+
+### 🚀 Features
+
+- 16b8058 oxfmt: Support `vite-plus/resolveConfig` for vite.config.ts (#22454) (leaysgur)
+
+## [0.50.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- 43b9978 formatter/sort_imports: Treat subpath imports as internal (#22440) (leaysgur)
+
+## [0.49.0] - 2026-05-11
+
+### 🚀 Features
+
+- 6e8e818 oxfmt: Experimental .svelte support (#21700) (leaysgur)
+
+## [0.45.0] - 2026-04-13
+
+### 🐛 Bug Fixes
+
+- 50c389b oxfmt: Support `.editorconfig` `quote_type` (#20989) (leaysgur)
+
+## [0.44.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- dd2df87 npm: Export package.json for oxlint and oxfmt (#20784) (kazuya kawaguchi)
+- 4216380 oxfmt: Support `.editorconfig` `tab_width` fallback (#20988) (leaysgur)
+
+## [0.43.0] - 2026-03-30
+
+### 🚀 Features
+
+- 6ef440a oxfmt: Support bool for object style options (#20853) (leaysgur)
+
+## [0.42.0] - 2026-03-24
+
+### 🚀 Features
+
+- 416865a formatter,oxfmt: Add doc comments for `JsdocConfig` (#20644) (leaysgur)
+- 4fec907 formatter: Add JSDoc comment formatting support (#19828) (Dunqing)
+
+## [0.40.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+
+## [0.36.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- 04e6223 npm: Add `preferUnplugged` for Yarn PnP compatibility (#19829) (Boshen)
+
+### 📚 Documentation
+
+- 2fa936f README.md: Map npm package links to npmx.dev (#19666) (Boshen)
+
+## [0.35.0] - 2026-02-23
+
+### 🚀 Features
+
+- 984dc07 oxfmt: Strip `"experimental"SortXxx` prefix (#19567) (leaysgur)
+
+## [0.34.0] - 2026-02-19
+
+### 🐛 Bug Fixes
+
+- 6c61b70 oxfmt: Fix outdated `sortImports.groups` doc comments (#19513) (leaysgur)
+
+## [0.33.0] - 2026-02-16
+
+### 💥 BREAKING CHANGES
+
+- 9c34f72 formatter/sort_imports: [**BREAKING**] Report invalid group name with renaming `side-effect` > `side_effect` (#19416) (leaysgur)
+
+### 🚀 Features
+
+- 4baebef formatter/sort_imports: Support `{ newlinesBetween: bool }` inside `groups` (#19358) (leaysgur)
+- d1c2fb6 formatter/sort_imports: Support `customGroups` attributes(`selector` and `modifiers`) (#19356) (leaysgur)
+
+## [0.30.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 1b2f354 ci: Add missing riscv64/s390x napi targets for oxfmt and oxlint (#19217) (Cameron)
+
+## [0.29.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 856a01f formatter/sort_imports: [**BREAKING**] Replace prefix match with glob pattern in `customGroups.elementNamePattern` (#19066) (leaysgur)
+
+### 🚀 Features
+
+- 6ee2d59 oxfmt: Use `oxc_formatter` in js-in-xxx part (#18373) (leaysgur)
+- 9788a96 oxlint,oxfmt: Add more native builds (#18853) (Boshen)
+
 ## [0.27.0] - 2026-01-26
 
 ### 📚 Documentation

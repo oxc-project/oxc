@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
     fmt::{self, Display},
+    iter,
     ops::Deref,
 };
 
@@ -388,6 +389,33 @@ impl PossibleFixes {
     }
 }
 
+impl From<Option<Fix>> for PossibleFixes {
+    /// Create a new [`PossibleFixes`] from an `Option<Fix>`.
+    fn from(fix: Option<Fix>) -> Self {
+        match fix {
+            Some(fix) => PossibleFixes::Single(fix),
+            None => PossibleFixes::None,
+        }
+    }
+}
+
+impl FromIterator<Fix> for PossibleFixes {
+    /// Create a new [`PossibleFixes`] from an iterator of [`Fix`]es.
+    fn from_iter<T: IntoIterator<Item = Fix>>(fixes: T) -> Self {
+        let mut fixes = fixes.into_iter();
+
+        if let Some(first_fix) = fixes.next() {
+            if let Some(second_fix) = fixes.next() {
+                PossibleFixes::Multiple(iter::chain([first_fix, second_fix], fixes).collect())
+            } else {
+                PossibleFixes::Single(first_fix)
+            }
+        } else {
+            PossibleFixes::None
+        }
+    }
+}
+
 // NOTE (@DonIsaac): having these variants is effectively the same as interning
 // single or 0-element Vecs. I experimented with using smallvec here, but the
 // resulting struct size was larger (40 bytes vs 32). So, we're sticking with
@@ -570,7 +598,7 @@ impl CompositeFix {
             return Ok(fixes.pop().unwrap());
         }
 
-        fixes.sort_unstable_by(|a, b| a.span.cmp(&b.span));
+        fixes.sort_unstable_by_key(|a| a.span);
 
         // safe, as fixes.len() > 1
         let start = fixes[0].span.start;

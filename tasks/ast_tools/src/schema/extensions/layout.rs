@@ -121,11 +121,16 @@ impl Niche {
 
 /// Offset of a struct field.
 #[derive(Clone, Copy, Default, Debug)]
+#[expect(clippy::struct_field_names)]
 pub struct Offset {
     /// Offset in bytes on 64-bit platforms
     pub offset_64: u32,
     /// Offset in bytes on 32-bit platforms
     pub offset_32: u32,
+    /// Index of field in memory layout order.
+    /// Order of `offset_64` / `offset_32` is not sufficient to determine layout order whenever ZST fields are present,
+    /// since they may share an offset with each other or with non-ZST fields.
+    pub layout_index: u32,
 }
 
 /// Trait to get layout of a type.

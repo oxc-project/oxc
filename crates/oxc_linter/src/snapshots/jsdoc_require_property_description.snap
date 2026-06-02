@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in `@property` tag.
+
+  ⚠ jsdoc(require-property-description): Missing description in `@property` tag.
    ╭─[require_property_description.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @property foo
@@ -10,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a description to this `@property` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in `@property` tag.
+  ⚠ jsdoc(require-property-description): Missing description in `@property` tag.
    ╭─[require_property_description.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @property {string}
@@ -19,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a description to this `@property` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in `@property` tag.
+  ⚠ jsdoc(require-property-description): Missing description in `@property` tag.
    ╭─[require_property_description.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @property {string} foo
@@ -28,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add a description to this `@property` tag.
 
-  ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in `@property` tag.
+  ⚠ jsdoc(require-property-description): Missing description in `@property` tag.
    ╭─[require_property_description.tsx:4:17]
  3 │                        * @typedef {SomeType} SomeTypedef
  4 │                        * @prop foo

@@ -536,10 +536,9 @@ impl VisitBuilder<'_> {
 
         // Generate walk functions
         let enum_ident = enum_def.ident();
-        let has_kind = enum_def.kind.has_kind;
-        let (enter_node, leave_node) = generate_enter_and_leave_node(&enum_ident, has_kind, false);
+        let (enter_node, leave_node) = generate_enter_and_leave_node(&enum_ident, false, false);
         let (enter_node_mut, leave_node_mut) =
-            generate_enter_and_leave_node(&enum_ident, has_kind, true);
+            generate_enter_and_leave_node(&enum_ident, false, true);
 
         let mut match_arm_count = 0usize;
         let (variant_match_arms, variant_match_arms_mut): (TokenStream, TokenStream) = enum_def

@@ -97,6 +97,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = Mode,
+    version = "0.16.11",
 );
 
 impl Rule for ConsistentTypeSpecifierStyle {

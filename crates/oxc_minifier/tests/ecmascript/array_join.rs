@@ -24,7 +24,7 @@ fn test() {
     elements.push(ArrayExpressionElement::BigIntLiteral(ast.alloc(ast.big_int_literal(
         SPAN,
         "42",
-        Some(Atom::from("42n")),
+        Some(Str::from("42n")),
         BigintBase::Decimal,
     ))));
     let array = ast.array_expression(SPAN, elements.clone_in(&allocator));

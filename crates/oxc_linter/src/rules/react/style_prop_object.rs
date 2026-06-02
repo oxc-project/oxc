@@ -7,7 +7,8 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -83,6 +84,7 @@ declare_oxc_lint!(
     react,
     suspicious,
     config = StylePropObjectConfig,
+    version = "0.11.0",
 );
 
 fn is_invalid_type(ty: &TSType) -> bool {

@@ -44,7 +44,8 @@ declare_oxc_lint!(
     /// ```
     Unambiguous,
     import,
-    restriction
+    restriction,
+    version = "0.11.1",
 );
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/unambiguous.md>

@@ -1,60 +1,58 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::{Arc, RwLock},
+};
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
 use tracing::{debug, error, warn};
 
 use oxc_data_structures::rope::{Rope, get_line_column};
-use oxc_language_server::{Capabilities, Tool, ToolBuilder, ToolRestartChanges};
+use oxc_language_server::{
+    Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
+};
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
-    resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
+    ResolveOutcome, SourceFormatter, classify_file_kind, config_discovery,
+    resolve_editorconfig_path, resolve_file_scope_config, utils,
 };
-use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
+use crate::lsp::create_fake_file_path_from_language_id;
+use crate::lsp::options::FormatOptions as LSPFormatOptions;
 
 pub struct ServerFormatterBuilder {
+    js_config_loader: JsConfigLoaderCb,
     external_formatter: ExternalFormatter,
 }
 
 impl ServerFormatterBuilder {
-    pub fn new(external_formatter: ExternalFormatter) -> Self {
-        Self { external_formatter }
+    pub fn new(js_config_loader: JsConfigLoaderCb, external_formatter: ExternalFormatter) -> Self {
+        Self { js_config_loader, external_formatter }
     }
 
     /// Create a dummy `ServerFormatterBuilder` for testing.
     #[cfg(test)]
     pub fn dummy() -> Self {
-        Self { external_formatter: ExternalFormatter::dummy() }
+        Self {
+            js_config_loader: std::sync::Arc::new(|_| {
+                Err("JS config not supported in tests".to_string())
+            }),
+            external_formatter: ExternalFormatter::dummy(),
+        }
     }
 
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
-        let options = match serde_json::from_value::<LSPFormatOptions>(options) {
-            Ok(opts) => opts,
-            Err(err) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {err}, falling back to default options"
-                );
-                LSPFormatOptions::default()
-            }
-        };
+        let options = deserialize_lsp_options(options);
 
         let root_path = root_uri.to_file_path().unwrap();
         debug!("root_path = {:?}", root_path.display());
 
-        // Build `ConfigResolver` from config paths
-        let (config_resolver, ignore_patterns) =
-            match Self::build_config_resolver(&root_path, options.config_path.as_ref()) {
-                Ok((resolver, patterns)) => (resolver, patterns),
-                Err(err) => {
-                    warn!("Failed to build config resolver: {err}, falling back to default config");
-                    Self::default_config_resolver()
-                }
-            };
+        // Resolve workspace-level concerns only here.
+        // Per-file config resolution is deferred to format time.
 
-        let gitignore_glob = match Self::create_ignore_globs(&root_path, &ignore_patterns) {
+        let prettierignore_glob = match Self::create_prettierignore_glob(&root_path) {
             Ok(glob) => Some(glob),
             Err(err) => {
                 warn!("Failed to create gitignore globs: {err}, proceeding without ignore globs");
@@ -62,19 +60,26 @@ impl ServerFormatterBuilder {
             }
         };
 
+        // If `configPath` is explicitly set, load it eagerly as the single config for all files.
+        let explicit_config_path = options.config_path.filter(|s| !s.is_empty()).map(PathBuf::from);
+
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
-            // TODO: Plugins support
-            Ok(_) => {}
-            Err(err) => {
-                error!("Failed to setup external formatter.\n{err}\n");
-            }
+        if let Err(err) =
+            tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads))
+        {
+            error!("Failed to setup external formatter.\n{err}\n");
         }
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_formatter(Some(self.external_formatter.clone()));
 
-        ServerFormatter::new(source_formatter, config_resolver, gitignore_glob)
+        ServerFormatter::new(
+            root_path.to_path_buf(),
+            source_formatter,
+            JsConfigLoaderCb::clone(&self.js_config_loader),
+            prettierignore_glob,
+            explicit_config_path,
+        )
     }
 }
 
@@ -94,74 +99,49 @@ impl ToolBuilder for ServerFormatterBuilder {
 }
 
 impl ServerFormatterBuilder {
-    /// Build a `ConfigResolver` from config paths.
-    /// Returns the resolver and ignore patterns.
-    ///
-    /// # Errors
-    /// Returns error if config file parsing fails.
-    fn build_config_resolver(
-        root_path: &Path,
-        config_path: Option<&String>,
-    ) -> Result<(ConfigResolver, Vec<String>), String> {
-        let oxfmtrc_path =
-            resolve_oxfmtrc_path(root_path, config_path.filter(|s| !s.is_empty()).map(Path::new));
-        let editorconfig_path = resolve_editorconfig_path(root_path);
-
-        let mut resolver = ConfigResolver::from_config_paths(
-            root_path,
-            oxfmtrc_path.as_deref(),
-            editorconfig_path.as_deref(),
-        )?;
-
-        // Validate config and cache options, returns ignore patterns
-        let ignore_patterns = resolver.build_and_validate()?;
-
-        Ok((resolver, ignore_patterns))
-    }
-
-    /// Create a default `ConfigResolver` when config loading fails.
-    fn default_config_resolver() -> (ConfigResolver, Vec<String>) {
-        let mut resolver = ConfigResolver::from_config_paths(Path::new("."), None, None)
-            .expect("Default ConfigResolver should never fail");
-        let ignore_patterns = resolver
-            .build_and_validate()
-            .expect("Default ConfigResolver validation should never fail");
-        (resolver, ignore_patterns)
-    }
-
-    fn create_ignore_globs(
-        root_path: &Path,
-        ignore_patterns: &[String],
-    ) -> Result<Gitignore, String> {
+    /// Create `.prettierignore` glob (workspace-level only).
+    fn create_prettierignore_glob(root_path: &Path) -> Result<Gitignore, String> {
         let mut builder = GitignoreBuilder::new(root_path);
         for ignore_path in &load_ignore_paths(root_path) {
             if builder.add(ignore_path).is_some() {
                 return Err(format!("Failed to add ignore file: {}", ignore_path.display()));
             }
         }
-        for pattern in ignore_patterns {
-            builder
-                .add_line(None, pattern)
-                .map_err(|e| format!("Invalid ignore pattern: {pattern}: {e}"))?;
-        }
-
         builder.build().map_err(|_| "Failed to build ignore globs".to_string())
     }
 }
 
 // ---
 
+/// Per-rebuild config snapshot.
+///
+/// Held behind `RwLock<Arc<_>>` on [`ServerFormatter`] so a watch event can
+/// swap a fresh state in without blocking concurrent format requests:
+/// in-flight readers clone the `Arc` and continue using the old snapshot,
+/// while subsequent reads see the new one.
+struct FormatterState {
+    /// Workspace-root resolver.
+    /// Used as the fallback when no nested config matches.
+    root_resolver: Arc<ConfigResolver>,
+    /// Lazy nested-config probe cache.
+    /// Each ancestor directory is loaded at most once for the lifetime of this state.
+    nested_ctx: NestedConfigCtx,
+}
+
 pub struct ServerFormatter {
+    root_path: PathBuf,
     source_formatter: SourceFormatter,
-    config_resolver: ConfigResolver,
-    gitignore_glob: Option<Gitignore>,
+    js_config_loader: JsConfigLoaderCb,
+    /// `.prettierignore` glob (workspace-level, shared across all scopes).
+    prettierignore_glob: Option<Gitignore>,
+    /// Explicit `fmt.configPath` from LSP settings. When set, disables nested
+    /// config discovery; all files use this single config.
+    explicit_config_path: Option<PathBuf>,
+    /// Current config snapshot. Swapped wholesale on watched-file changes.
+    state: RwLock<Arc<FormatterState>>,
 }
 
 impl Tool for ServerFormatter {
-    fn name(&self) -> &'static str {
-        "formatter"
-    }
-
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
@@ -171,27 +151,8 @@ impl Tool for ServerFormatter {
         old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
-        let old_option = match serde_json::from_value::<LSPFormatOptions>(old_options_json.clone())
-        {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPFormatOptions::default()
-            }
-        };
-
-        let new_option = match serde_json::from_value::<LSPFormatOptions>(new_options_json.clone())
-        {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPFormatOptions::default()
-            }
-        };
+        let old_option = deserialize_lsp_options(old_options_json.clone());
+        let new_option = deserialize_lsp_options(new_options_json.clone());
 
         if old_option == new_option {
             return ToolRestartChanges { tool: None, watch_patterns: None };
@@ -204,21 +165,18 @@ impl Tool for ServerFormatter {
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
-        let options = match serde_json::from_value::<LSPFormatOptions>(options) {
-            Ok(opts) => opts,
-            Err(e) => {
-                warn!(
-                    "Failed to deserialize LSPFormatOptions from JSON: {e}. Falling back to default options."
-                );
-                LSPFormatOptions::default()
-            }
-        };
+        let options = deserialize_lsp_options(options);
 
         let mut patterns: Vec<Pattern> =
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
                 vec![config_path.clone()]
             } else {
-                FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
+                // Watch for config files in all subdirectories (nested config support)
+                config_discovery()
+                    .config_file_names()
+                    .into_iter()
+                    .map(|name| format!("**/{name}"))
+                    .collect()
             };
 
         patterns.push(".editorconfig".to_string());
@@ -227,49 +185,61 @@ impl Tool for ServerFormatter {
 
     fn handle_watched_file_change(
         &self,
-        builder: &dyn ToolBuilder,
+        _builder: &dyn ToolBuilder,
         _changed_uri: &Uri,
-        root_uri: &Uri,
-        options: serde_json::Value,
+        _root_uri: &Uri,
+        _options: serde_json::Value,
     ) -> ToolRestartChanges {
-        // TODO: Check if the changed file is actually a config file
-        builder.shutdown(root_uri);
-        let new_formatter = builder.build_boxed(root_uri, options);
+        // Rebuild the snapshot wholesale.
+        //
+        // `NestedConfigCtx` has no per-entry invalidation API by design (its caches are walk-scoped).
+        // Rebuilding is cheap: the ctx itself starts empty (lazy probes),
+        // and only the root resolver does eager file IO.
+        // The trade-off is over-eviction, a config change in one nested dir also drops cached probes elsewhere.
+        // But format requests are sporadic enough that lazy re-population costs nothing observable.
+        let new_state = Self::build_state(
+            &self.root_path,
+            self.explicit_config_path.as_deref(),
+            &self.js_config_loader,
+        );
+        *self.state.write().expect("state rwlock poisoned") = Arc::new(new_state);
 
-        ToolRestartChanges {
-            tool: Some(new_formatter),
-            // TODO: update watch patterns if config_path changed
-            watch_patterns: None,
-        }
+        ToolRestartChanges { tool: None, watch_patterns: None }
     }
 
-    fn run_format(&self, uri: &Uri, content: Option<&str>) -> Result<Vec<TextEdit>, String> {
-        let Some(path) = uri.to_file_path() else { return Err("Invalid file URI".to_string()) };
+    fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
+        let file_content;
+        let (result, source_text) = if document.uri.scheme().as_str() == "file" {
+            let Some(path) = document.uri.to_file_path() else {
+                return Err("Invalid file URI".to_string());
+            };
 
-        if self.is_ignored(&path) {
-            debug!("File is ignored: {}", path.display());
-            return Ok(Vec::new());
-        }
+            let source_text = if let Some(c) = document.text.as_deref() {
+                c
+            } else {
+                file_content = utils::read_to_string(&path)
+                    .map_err(|e| format!("Failed to read file: {e}"))?;
+                &file_content
+            };
 
-        // Determine format strategy from file path (supports JS/TS, JSON, YAML, CSS, etc.)
-        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
-            debug!("Unsupported file type for formatting: {}", path.display());
-            return Ok(Vec::new());
+            let Some(result) = self.format_file(&path, source_text) else {
+                return Ok(vec![]); // No formatting for this file (unsupported or ignored)
+            };
+
+            (result, source_text)
+        } else {
+            let source_text = document
+                .text
+                .as_deref()
+                .ok_or_else(|| "In-memory formatting requires content".to_string())?;
+
+            let Some(result) =
+                self.format_in_memory(document.uri, source_text, &document.language_id)
+            else {
+                return Ok(vec![]); // currently not supported
+            };
+            (result, source_text)
         };
-        let source_text = match content {
-            Some(c) => c,
-            None => {
-                &utils::read_to_string(&path).map_err(|e| format!("Failed to read file: {e}"))?
-            }
-        };
-
-        // Resolve options for this file
-        let resolved_options = self.config_resolver.resolve(&strategy);
-        debug!("resolved_options = {resolved_options:?}");
-
-        let result = tokio::task::block_in_place(|| {
-            self.source_formatter.format(&strategy, source_text, resolved_options)
-        });
 
         // Handle result
         match result {
@@ -302,27 +272,173 @@ impl Tool for ServerFormatter {
 
 impl ServerFormatter {
     pub fn new(
+        root_path: PathBuf,
         source_formatter: SourceFormatter,
-        config_resolver: ConfigResolver,
-        gitignore_glob: Option<Gitignore>,
+        js_config_loader: JsConfigLoaderCb,
+        prettierignore_glob: Option<Gitignore>,
+        explicit_config_path: Option<PathBuf>,
     ) -> Self {
-        Self { source_formatter, config_resolver, gitignore_glob }
+        let state =
+            Self::build_state(&root_path, explicit_config_path.as_deref(), &js_config_loader);
+        Self {
+            root_path,
+            source_formatter,
+            js_config_loader,
+            prettierignore_glob,
+            explicit_config_path,
+            state: RwLock::new(Arc::new(state)),
+        }
     }
 
-    fn is_ignored(&self, path: &Path) -> bool {
-        if let Some(glob) = &self.gitignore_glob {
-            if !path.starts_with(glob.path()) {
-                return false;
-            }
+    /// Build a fresh [`FormatterState`] from scratch.
+    ///
+    /// Called once in [`Self::new`] and again on every watched-file change.
+    /// `.editorconfig` is re-resolved here so add/remove events are picked up
+    /// without a separate code path.
+    fn build_state(
+        root_path: &Path,
+        explicit_config_path: Option<&Path>,
+        js_config_loader: &JsConfigLoaderCb,
+    ) -> FormatterState {
+        let editorconfig_path = resolve_editorconfig_path(root_path);
+        let root_resolver = Self::load_root_resolver(
+            root_path,
+            explicit_config_path,
+            editorconfig_path.as_deref(),
+            js_config_loader,
+        );
+        let nested_ctx = NestedConfigCtx::new(
+            editorconfig_path.as_deref().map(Arc::from),
+            Some(JsConfigLoaderCb::clone(js_config_loader)),
+        );
+        FormatterState { root_resolver: Arc::new(root_resolver), nested_ctx }
+    }
 
-            glob.matched_path_or_any_parents(path, path.is_dir()).is_ignore()
-        } else {
-            false
+    /// Load the workspace-root resolver,
+    /// falling back to the default empty config on any load or validation error.
+    ///
+    /// LSP must keep editing usable even when the user's config is broken,
+    /// so we surface a warning instead of bubbling the error up.
+    fn load_root_resolver(
+        root_path: &Path,
+        explicit_config_path: Option<&Path>,
+        editorconfig_path: Option<&Path>,
+        js_config_loader: &JsConfigLoaderCb,
+    ) -> ConfigResolver {
+        let result = ConfigResolver::from_config(
+            root_path,
+            explicit_config_path,
+            editorconfig_path,
+            Some(js_config_loader),
+        )
+        .and_then(|mut resolver| {
+            resolver.build_and_validate()?;
+            Ok(resolver)
+        });
+
+        result.unwrap_or_else(|err| {
+            warn!(
+                "Failed to load config at {}: {err}, falling back to default",
+                root_path.display()
+            );
+            let mut resolver = ConfigResolver::from_json_config(None, None)
+                .expect("Default ConfigResolver should never fail");
+            resolver
+                .build_and_validate()
+                .expect("Default ConfigResolver validation should never fail");
+            resolver
+        })
+    }
+
+    /// Resolve config and format a file at the given path.
+    /// Returns `None` if the file is unsupported or ignored.
+    fn resolve_and_format(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+        // Snapshot the current state.
+        // In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
+        let state = Arc::clone(&self.state.read().expect("state rwlock poisoned"));
+
+        // Explicit config path applies uniformly to every file;
+        // passing `None` tells `resolve_file_scope_config` to bypass nested probing.
+        let nested_ctx = self.explicit_config_path.is_none().then_some(&state.nested_ctx);
+        let resolver = match resolve_file_scope_config(path, &state.root_resolver, nested_ctx) {
+            Ok(r) => r,
+            Err(err) => {
+                warn!(
+                    "Failed to resolve nested config for {}: {err}, falling back to root",
+                    path.display()
+                );
+                Arc::clone(&state.root_resolver)
+            }
+        };
+
+        if resolver.is_path_ignored(path, path.is_dir()) {
+            debug!("File is ignored by config ignorePatterns: {}", path.display());
+            return None;
         }
+
+        let Some(kind) = classify_file_kind(Arc::from(path)) else {
+            debug!("Unsupported file type for formatting: {}", path.display());
+            return None;
+        };
+        let strategy = match resolver.resolve(kind) {
+            Ok(ResolveOutcome::Format(strategy)) => strategy,
+            Ok(ResolveOutcome::MissingPlugin(plugin)) => {
+                warn!(
+                    "Skipping `.{plugin}`: `{plugin}` plugin is not enabled in resolved config: {}",
+                    path.display()
+                );
+                return None;
+            }
+            Err(err) => {
+                debug!("Config resolve error for {}: {err}", path.display());
+                return None;
+            }
+        };
+        debug!("strategy = {strategy:?}");
+
+        Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, strategy)))
+    }
+
+    fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+        if self.prettierignore_glob.as_ref().is_some_and(|glob| {
+            path.starts_with(glob.path())
+                && glob.matched_path_or_any_parents(path, path.is_dir()).is_ignore()
+        }) {
+            debug!("File is ignored by .prettierignore: {}", path.display());
+            return None;
+        }
+        self.resolve_and_format(path, source_text)
+    }
+
+    fn format_in_memory(
+        &self,
+        uri: &Uri,
+        source_text: &str,
+        language_id: &LanguageId,
+    ) -> Option<FormatResult> {
+        let Some(path) = create_fake_file_path_from_language_id(language_id, &self.root_path, uri)
+        else {
+            debug!("Unsupported language id for in-memory formatting: {language_id:?}");
+            return None;
+        };
+        self.resolve_and_format(&path, source_text)
     }
 }
 
 // ---
+
+/// Deserialize `LSPFormatOptions` from JSON, falling back to defaults on failure.
+fn deserialize_lsp_options(value: serde_json::Value) -> LSPFormatOptions {
+    match serde_json::from_value::<LSPFormatOptions>(value) {
+        Ok(opts) => opts,
+        Err(err) => {
+            warn!(
+                "Failed to deserialize LSPFormatOptions from JSON: {err}, falling back to default options"
+            );
+            LSPFormatOptions::default()
+        }
+    }
+}
 
 /// Returns the minimal text edit (start, end, replacement) to transform `source_text` into `formatted_text`
 #[expect(clippy::cast_possible_truncation)]
@@ -365,15 +481,15 @@ fn compute_minimal_text_edit<'a>(
     (start, end, replacement)
 }
 
-// Almost the same as `oxfmt::walk::load_ignore_paths`, but does not handle custom ignore files.
+// Almost the same as `cli::walk::load_ignore_paths`, but does not handle custom ignore files.
+//
+// NOTE: `.gitignore` is intentionally NOT included here.
+// In LSP, every file is explicitly opened by the user (like directly specifying a file in CLI),
+// so `.gitignore` should not prevent formatting.
+// Only formatter-specific ignore files apply.
 fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
-    [".gitignore", ".prettierignore"]
-        .iter()
-        .filter_map(|file_name| {
-            let path = cwd.join(file_name);
-            if path.exists() { Some(path) } else { None }
-        })
-        .collect::<Vec<_>>()
+    let path = cwd.join(".prettierignore");
+    if path.exists() { vec![path] } else { vec![] }
 }
 
 // ---
@@ -393,40 +509,6 @@ mod tests_builder {
         builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         assert_eq!(capabilities.document_formatting_provider, Some(OneOf::Left(true)));
-    }
-}
-
-#[cfg(test)]
-mod test_watchers {
-    // formatter file watcher-system does not depend on the actual file system,
-    // so we can use a fake directory for testing.
-    const FAKE_DIR: &str = "fixtures/formatter/watchers";
-
-    mod handle_configuration_change {
-        use crate::lsp::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
-        use oxc_language_server::ToolRestartChanges;
-        use serde_json::json;
-
-        #[test]
-        fn test_no_change() {
-            let ToolRestartChanges { watch_patterns, .. } =
-                Tester::new(FAKE_DIR, json!({})).handle_configuration_change(json!({}));
-
-            assert!(watch_patterns.is_none());
-        }
-
-        #[test]
-        fn test_formatter_custom_config_path() {
-            let ToolRestartChanges { watch_patterns, .. } = Tester::new(FAKE_DIR, json!({}))
-                .handle_configuration_change(json!({
-                    "fmt.configPath": "configs/formatter.json"
-                }));
-
-            assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
-            assert_eq!(watch_patterns.as_ref().unwrap()[0], "configs/formatter.json");
-            assert_eq!(watch_patterns.as_ref().unwrap()[1], ".editorconfig");
-        }
     }
 }
 

@@ -49,7 +49,9 @@ declare_oxc_lint!(
     NoDefaults,
     jsdoc,
     correctness,
+    pending,
     config = NoDefaultsConfig,
+    version = "0.3.2",
 );
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]

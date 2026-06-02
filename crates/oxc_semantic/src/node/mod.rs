@@ -10,7 +10,6 @@ use oxc_syntax::{node::NodeId, scope::ScopeId};
 /// Semantic node contains all the semantic information about an ast node.
 #[derive(Debug, Clone, Copy)]
 pub struct AstNode<'a> {
-    id: NodeId,
     /// A pointer to the ast node, which resides in the memory arena.
     kind: AstKind<'a>,
 
@@ -19,20 +18,20 @@ pub struct AstNode<'a> {
 }
 
 impl<'a> AstNode<'a> {
-    pub(crate) fn new(kind: AstKind<'a>, scope_id: ScopeId, id: NodeId) -> Self {
-        Self { id, kind, scope_id }
-    }
-
-    /// This node's unique identifier.
-    #[inline]
-    pub fn id(&self) -> NodeId {
-        self.id
+    pub(crate) fn new(kind: AstKind<'a>, scope_id: ScopeId) -> Self {
+        Self { kind, scope_id }
     }
 
     /// Access the underlying struct from [`oxc_ast`].
     #[inline]
     pub fn kind(&self) -> AstKind<'a> {
         self.kind
+    }
+
+    /// Node id assigned to this AST node.
+    #[inline]
+    pub fn id(&self) -> NodeId {
+        self.kind.node_id()
     }
 
     /// The scope in which this node was declared.

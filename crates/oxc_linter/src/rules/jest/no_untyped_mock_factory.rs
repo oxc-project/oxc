@@ -85,7 +85,8 @@ declare_oxc_lint!(
     NoUntypedMockFactory,
     jest,
     style,
-    conditional_fix
+    conditional_fix,
+    version = "0.2.15",
 );
 
 impl Rule for NoUntypedMockFactory {

@@ -33,7 +33,7 @@ pub struct NoConfusingSetTimeout;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow confusing usages of jest.setTimeout
+    /// Disallow confusing usages of `jest.setTimeout`.
     ///
     /// ### Why is this bad?
     ///
@@ -72,7 +72,8 @@ declare_oxc_lint!(
     /// ```
     NoConfusingSetTimeout,
     jest,
-    style
+    style,
+    version = "0.0.14",
 );
 
 impl Rule for NoConfusingSetTimeout {

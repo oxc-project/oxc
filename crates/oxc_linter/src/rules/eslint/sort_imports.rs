@@ -92,6 +92,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = SortImportsOptions,
+    version = "0.4.4",
 );
 
 impl Rule for SortImports {

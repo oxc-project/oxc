@@ -26,7 +26,7 @@ pub struct NoDupeElseIf;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow duplicate conditions in if-else-if chains
+    /// Disallow duplicate conditions in if-else-if chains.
     ///
     /// ### Why is this bad?
     ///
@@ -105,7 +105,8 @@ declare_oxc_lint!(
     /// ```
     NoDupeElseIf,
     eslint,
-    correctness
+    correctness,
+    version = "0.0.5",
 );
 
 impl Rule for NoDupeElseIf {

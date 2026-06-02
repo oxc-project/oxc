@@ -95,7 +95,7 @@ impl NoUnusedVars {
             .sum();
         span.end += trailing_newlines;
 
-        fixer.delete_range(span).dangerously()
+        fixer.delete_range(span)
     }
 
     /// Remove the entire `{ ... }` block when all named imports are removed
@@ -131,7 +131,7 @@ impl NoUnusedVars {
         let delete_end = last_named.span().end + brace_offset;
 
         let span = Span::new(delete_start, delete_end);
-        fixer.delete_range(span).dangerously()
+        fixer.delete_range(span)
     }
 
     /// Remove the default import when there are other imports remaining
@@ -180,7 +180,7 @@ impl NoUnusedVars {
         };
 
         let delete_span = Span::new(default_span.start, next_specifier_start);
-        fixer.delete_range(delete_span).dangerously()
+        fixer.delete_range(delete_span)
     }
 
     /// Remove the namespace import when there's a default import remaining
@@ -204,7 +204,7 @@ impl NoUnusedVars {
         let delete_end = specifier.span().end;
 
         let span = Span::new(delete_start, delete_end);
-        fixer.delete_range(span).dangerously()
+        fixer.delete_range(span)
     }
 
     /// Remove a specifier from a list, handling comma placement properly
@@ -250,16 +250,16 @@ impl NoUnusedVars {
                         .map(|c| c.len_utf8() as u32)
                         .sum();
                     let delete_span = Span::new(delete_start, delete_end + trailing_space);
-                    return fixer.delete_range(delete_span).dangerously();
+                    return fixer.delete_range(delete_span);
                 }
 
                 let delete_span = Span::new(delete_start, delete_end);
-                return fixer.delete_range(delete_span).dangerously();
+                return fixer.delete_range(delete_span);
             }
         }
 
         let text_after = &source[(span.end as usize)..];
         let trailing = count_whitespace_or_commas(text_after.chars());
-        fixer.delete_range(span.expand_right(trailing)).dangerously()
+        fixer.delete_range(span.expand_right(trailing))
     }
 }

@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
+use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{Box, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
@@ -14,9 +15,8 @@ use oxc_regular_expression::{
     RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
 };
 use oxc_span::SPAN;
-use oxc_traverse::Ancestor;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -25,7 +25,7 @@ type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
 /// Minimize With Known Methods
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
 impl<'a> PeepholeOptimizations {
-    pub fn replace_known_global_methods(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn replace_known_global_methods(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::CallExpression(ce) = node else { return };
 
         // Use constant evaluation for known method calls
@@ -66,7 +66,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         arguments: &mut Arguments<'a>,
         object: &Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if !ctx.supports_feature(ESFeature::ES2016ExponentiationOperator) {
             return None;
@@ -104,7 +104,7 @@ impl<'a> PeepholeOptimizations {
         arguments: &mut Arguments<'a>,
         name: &str,
         object: &Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if !Self::validate_global_reference(object, "Array", ctx) {
             return None;
@@ -120,7 +120,7 @@ impl<'a> PeepholeOptimizations {
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
-    pub fn replace_concat_chain(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn replace_concat_chain(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let original_span = if let Expression::CallExpression(root_call_expr) = node {
             root_call_expr.span
         } else {
@@ -206,7 +206,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         args: &mut Arguments<'a>,
         callee: &mut Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // let concat chaining reduction handle it first
         if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent()
@@ -286,62 +286,69 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
 
-                let mut quasi_strs: Vec<Cow<'a, str>> =
-                    vec![Cow::Borrowed(base_str.value.as_str())];
-                let mut expressions = ctx.ast.vec_with_capacity(expression_count);
-                let mut pushed_quasi = true;
+                // `AstBuilder` is `Copy`; take a local copy so the arena
+                // builder stays available alongside `&mut ctx.state` (the
+                // borrow checker would otherwise reject the simultaneous use).
+                let ast = ctx.ast;
+                // Reuse a scratch `String` held on `MinifierState` across calls
+                // to accumulate the cooked text of the in-progress quasi. On
+                // flush we copy the text into the arena and clear the scratch.
+                //
+                // INVARIANT: every flush must end with `scratch.clear()` so
+                // the next string-arg `push_str` starts a fresh quasi. Two
+                // expressions in a row rely on this — the second one's flush
+                // sees an empty `scratch`, producing the required empty
+                // separator quasi without a state-machine flag.
+                let scratch = &mut ctx.state.concat_scratch;
+                scratch.clear();
+                scratch.push_str(base_str.value.as_str());
+
+                let mut expressions = ast.vec_with_capacity(expression_count);
+                let mut quasis = ast.vec_with_capacity(expression_count + 1);
+
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
-                        if pushed_quasi {
-                            let last_quasi = quasi_strs
-                                .last_mut()
-                                .expect("last element should exist because pushed_quasi is true");
-                            last_quasi.to_mut().push_str(&str_lit.value);
-                        } else {
-                            quasi_strs.push(Cow::Borrowed(str_lit.value.as_str()));
-                        }
-                        pushed_quasi = true;
+                        // Append onto the in-progress quasi.
+                        scratch.push_str(&str_lit.value);
                     } else {
-                        if !pushed_quasi {
-                            // need a pair
-                            quasi_strs.push(Cow::Borrowed(""));
-                        }
+                        // Flush the current quasi (possibly empty) before
+                        // pushing the next expression.
+                        let cooked = ast.str(scratch);
+                        let raw_cow = Self::escape_string_for_template_literal(scratch);
+                        let raw = ast.str(&raw_cow);
+                        quasis.push(ast.template_element(
+                            SPAN,
+                            TemplateElementValue { raw, cooked: Some(cooked) },
+                            false,
+                            false, // raw is already escaped
+                        ));
+                        scratch.clear(); // maintains INVARIANT above
                         // checked that all the arguments are expression above
                         expressions.push(argument.into_expression());
-                        pushed_quasi = false;
                     }
-                }
-                if !pushed_quasi {
-                    quasi_strs.push(Cow::Borrowed(""));
                 }
 
                 if expressions.is_empty() {
-                    debug_assert_eq!(quasi_strs.len(), 1);
-                    return Some(ctx.ast.expression_string_literal(
-                        span,
-                        ctx.ast.atom_from_cow(&quasi_strs.pop().unwrap()),
-                        None,
-                    ));
+                    debug_assert_eq!(quasis.len(), 0);
+                    let s = ast.str(scratch);
+                    return Some(ast.expression_string_literal(span, s, None));
                 }
 
-                let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
-                    let cooked = ctx.ast.atom_from_cow(&s);
-                    ctx.ast.template_element(
-                        SPAN,
-                        TemplateElementValue {
-                            raw: ctx.ast.atom(&Self::escape_string_for_template_literal(&s)),
-                            cooked: Some(cooked),
-                        },
-                        false,
-                        false, // raw is already escaped by escape_string_for_template_literal
-                    )
-                }));
-                if let Some(last_quasi) = quasis.last_mut() {
-                    last_quasi.tail = true;
-                }
+                // Flush the trailing quasi. If the last arg was an expression
+                // `scratch` is empty, giving the required trailing empty
+                // quasi; otherwise it holds the accumulated tail text.
+                let cooked = ast.str(scratch);
+                let raw_cow = Self::escape_string_for_template_literal(scratch);
+                let raw = ast.str(&raw_cow);
+                quasis.push(ast.template_element(
+                    SPAN,
+                    TemplateElementValue { raw, cooked: Some(cooked) },
+                    true, // tail
+                    false,
+                ));
 
                 debug_assert_eq!(quasis.len(), expressions.len() + 1);
-                Some(ctx.ast.expression_template_literal(span, quasis, expressions))
+                Some(ast.expression_template_literal(span, quasis, expressions))
             }
             _ => None,
         }
@@ -353,7 +360,7 @@ impl<'a> PeepholeOptimizations {
                 s.cow_replace("\\", "\\\\")
                     .cow_replace("`", "\\`")
                     .cow_replace("$", "\\$")
-                    .cow_replace("\r\n", "\\r\n")
+                    .cow_replace('\r', "\\r")
                     .into_owned(),
             )
         } else {
@@ -361,7 +368,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn replace_known_property_access(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn replace_known_property_access(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // property access should be kept to keep `this` value
         if matches!(
             ctx.parent(),
@@ -484,7 +491,7 @@ impl<'a> PeepholeOptimizations {
     fn try_fold_number_constants(
         name: &str,
         span: Span,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let num = |span: Span, n: f64| {
             ctx.ast.expression_numeric_literal(span, n, None, NumberBase::Decimal)
@@ -550,7 +557,7 @@ impl<'a> PeepholeOptimizations {
         object: &mut Expression<'a>,
         property: u32,
         span: Span,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if object.may_have_side_effects(ctx) {
             return None;
@@ -562,7 +569,7 @@ impl<'a> PeepholeOptimizations {
                     s.value.as_str().char_at(Some(property.into()))
                 {
                     s.span = span;
-                    s.value = ctx.ast.atom(&c.to_string());
+                    s.value = ctx.ast.str(&c.to_string());
                     s.raw = None;
                     Some(object.take_in(ctx.ast))
                 } else {
@@ -589,7 +596,11 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn validate_global_reference(expr: &Expression<'a>, target: &str, ctx: &Ctx<'a, '_>) -> bool {
+    fn validate_global_reference(
+        expr: &Expression<'a>,
+        target: &str,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
         ctx.is_global_reference(ident) && ident.name == target
     }

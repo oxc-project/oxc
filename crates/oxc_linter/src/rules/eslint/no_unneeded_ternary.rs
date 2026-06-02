@@ -45,7 +45,7 @@ impl Default for NoUnneededTernary {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow ternary operators when simpler alternatives exist
+    /// Disallow ternary operators when simpler alternatives exist.
     ///
     /// ### Why is this bad?
     ///
@@ -77,6 +77,7 @@ declare_oxc_lint!(
     suspicious,
     fix_dangerous,
     config = NoUnneededTernary,
+    version = "0.15.12",
 );
 
 impl Rule for NoUnneededTernary {

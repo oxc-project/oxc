@@ -1,6 +1,6 @@
 // oxlint-disable jest/no-conditional-expect
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   NODE_TYPES_COUNT,
   LEAF_NODE_TYPES_COUNT,
@@ -10,7 +10,7 @@ import {
   addVisitorToCompiled,
   compiledVisitor,
   finalizeCompiledVisitor,
-  initCompiledVisitor,
+  resetCompiledVisitor,
   VISITOR_EMPTY,
   VISITOR_NOT_EMPTY,
 } from "../src-js/plugins/visitor.ts";
@@ -40,8 +40,10 @@ const SPAN: Node = {
 };
 
 describe("compile visitor", () => {
-  beforeEach(initCompiledVisitor);
-  afterEach(finalizeCompiledVisitor);
+  afterEach(() => {
+    finalizeCompiledVisitor();
+    resetCompiledVisitor();
+  });
 
   it("throws if visitor is not an object", () => {
     const expectedErr = new TypeError("Visitor returned from `create` method must be an object");

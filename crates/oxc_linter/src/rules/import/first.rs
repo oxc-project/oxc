@@ -80,6 +80,7 @@ declare_oxc_lint!(
     style,
     pending, // TODO: fixer
     config = AbsoluteFirst,
+    version = "0.11.1",
 );
 
 fn is_relative_path(path: &str) -> bool {

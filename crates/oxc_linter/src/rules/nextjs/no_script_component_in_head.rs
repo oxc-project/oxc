@@ -62,7 +62,8 @@ declare_oxc_lint!(
     /// ```
     NoScriptComponentInHead,
     nextjs,
-    correctness
+    correctness,
+    version = "0.2.0",
 );
 
 impl Rule for NoScriptComponentInHead {

@@ -91,6 +91,7 @@ declare_oxc_lint!(
     // If the code depends on the order of evaluation, then this might break it.
     conditional_suggestion,
     config = NoPlusplus,
+    version = "0.9.5",
 );
 
 impl Rule for NoPlusplus {

@@ -41,6 +41,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         param: &FormalParameter<'a>,
         is_remaining_params_have_required: bool,
+        in_private_constructor: bool,
     ) -> Option<FormalParameter<'a>> {
         let pattern = &param.pattern;
         if param.initializer.is_some()
@@ -69,9 +70,14 @@ impl<'a> IsolatedDeclarations<'a> {
                 .as_ref()
                 .map(|type_annotation| type_annotation.type_annotation.clone_in(self.ast.allocator))
                 .or_else(|| {
-                    // report error for has no type annotation
                     let new_type = self.infer_type_from_formal_parameter(param);
-                    if new_type.is_none() {
+                    // A private parameter property on a private constructor needs no
+                    // explicit type: the constructor signature is collapsed to
+                    // `private constructor();` and the class member is emitted as
+                    // `private readonly name;` with no type annotation.
+                    let is_elided_private_param = in_private_constructor
+                        && param.accessibility.is_some_and(TSAccessibility::is_private);
+                    if new_type.is_none() && !is_elided_private_param {
                         self.error(parameter_must_have_explicit_type(param.span));
                     }
                     new_type
@@ -132,7 +138,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_formal_parameters(
         &self,
         params: &FormalParameters<'a>,
-        skip_no_accessibility_param: bool,
+        in_private_constructor: bool,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
             return self.ast.alloc(params.clone_in(self.ast.allocator));
@@ -143,14 +149,18 @@ impl<'a> IsolatedDeclarations<'a> {
                 .items
                 .iter()
                 .enumerate()
-                .filter(|(_, item)| !skip_no_accessibility_param || item.has_modifier())
+                .filter(|(_, item)| !in_private_constructor || item.has_modifier())
                 .filter_map(|(index, item)| {
                     let is_remaining_params_have_required = params
                         .items
                         .iter()
                         .skip(index)
                         .any(|item| !(item.optional || item.initializer.is_some()));
-                    self.transform_formal_parameter(item, is_remaining_params_have_required)
+                    self.transform_formal_parameter(
+                        item,
+                        is_remaining_params_have_required,
+                        in_private_constructor,
+                    )
                 }),
         );
 

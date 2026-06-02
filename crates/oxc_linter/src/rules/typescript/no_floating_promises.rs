@@ -108,6 +108,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     config = NoFloatingPromisesConfig,
+    version = "1.11.0",
 );
 
 impl Rule for NoFloatingPromises {

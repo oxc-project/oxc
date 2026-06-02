@@ -42,6 +42,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     suggestion,
+    version = "0.0.21",
 );
 
 impl Rule for NoAccessKey {
@@ -58,14 +59,13 @@ impl Rule for NoAccessKey {
                         fixer.delete(&attr.span)
                     });
                 }
-                Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                    if container.expression.is_expression() && !container.expression.is_undefined()
-                    {
-                        ctx.diagnostic_with_suggestion(
-                            no_access_key_diagnostic(attr.span),
-                            |fixer| fixer.delete(&attr.span),
-                        );
-                    }
+                Some(JSXAttributeValue::ExpressionContainer(container))
+                    if container.expression.is_expression()
+                        && !container.expression.is_undefined() =>
+                {
+                    ctx.diagnostic_with_suggestion(no_access_key_diagnostic(attr.span), |fixer| {
+                        fixer.delete(&attr.span)
+                    });
                 }
                 _ => {}
             }

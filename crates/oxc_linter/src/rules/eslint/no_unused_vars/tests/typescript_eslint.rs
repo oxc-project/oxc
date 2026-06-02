@@ -935,16 +935,16 @@ fn test() {
             ",
             None,
         ),
-        // (
-        //     "
-        // namespace foo.bar {
-        //   export interface User {
-        //     name: string;
-        //   }
-        // }
-        //     ",
-        //     None,
-        // ),
+        (
+            "
+        namespace foo.bar {
+          export interface User {
+            name: string;
+          }
+        }
+            ",
+            None,
+        ),
         // exported self-referencing types
         (
             "
@@ -1127,7 +1127,7 @@ fn test() {
             "
         declare module 'foo' {
           type Test = 1;
-          const x: Test = 1;
+          const x: Test;
           export = x;
         }
             ",
@@ -1472,6 +1472,17 @@ fn test() {
             ",
             None,
         ),
+        (
+            "
+        const foo = { KEY: 'token' };
+        declare function Inject(token: unknown): ParameterDecorator;
+
+        export class C {
+          constructor(@Inject(foo.KEY) private readonly foo: number) {}
+        }
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1610,14 +1621,6 @@ fn test() {
           EMAIL = 'email',
         }
             ",
-            None,
-        ),
-        (
-            "
-          import test from 'test';
-          import baz from 'baz';
-          export interface Bar extends baz.test {}
-                ",
             None,
         ),
         (
@@ -2018,9 +2021,9 @@ fn test_d_ts() {
         declare function func();
         declare enum Enum {}
         declare namespace Name {}
-        declare const v1 = 1;
-        declare var v2 = 1;
-        declare let v3 = 1;
+        declare const v1: 1;
+        declare var v2: 1;
+        declare let v3: 1;
         declare const { v4 };
         declare const { v4: v5 };
         declare const [v6];

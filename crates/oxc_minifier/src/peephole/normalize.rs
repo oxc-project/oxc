@@ -1,3 +1,4 @@
+use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
@@ -5,14 +6,9 @@ use oxc_ecmascript::{
     side_effects::is_valid_regexp,
 };
 use oxc_semantic::IsGlobalReference;
-use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
-use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
-use crate::{
-    ctx::{Ctx, TraverseCtx},
-    state::MinifierState,
-};
+use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
@@ -46,16 +42,12 @@ pub struct Normalize {
 }
 
 impl<'a> Normalize {
-    pub fn build(
-        &mut self,
-        program: &mut Program<'a>,
-        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
-    ) {
+    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
-impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
+impl<'a> Traverse<'a> for Normalize {
     fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
             node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
@@ -63,10 +55,13 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        stmts.retain(|stmt| {
-            !(matches!(stmt, Statement::EmptyStatement(_))
-                || Self::drop_debugger(stmt, ctx)
-                || Self::drop_console(stmt, ctx))
+        stmts.retain(|stmt| match stmt {
+            Statement::EmptyStatement(_) => false,
+            Statement::DebuggerStatement(_) if ctx.state.options.drop_debugger => false,
+            Statement::ExpressionStatement(expr) if ctx.state.options.drop_console => {
+                !Self::is_console_expression(&expr.expression)
+            }
+            _ => true,
         });
     }
 
@@ -103,8 +98,11 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
                 Self::recover_arrow_expression_after_drop_console(e, ctx);
                 None
             }
-            Expression::CallExpression(_) if ctx.state.options.drop_console => {
-                Self::compress_console(expr, ctx)
+            Expression::CallExpression(call_expr)
+                if ctx.state.options.drop_console
+                    && Self::is_console_call_expression(call_expr) =>
+            {
+                Some(ctx.ast.void_0(call_expr.span))
             }
             Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
             _ => None,
@@ -133,23 +131,6 @@ impl<'a> Normalize {
         Self { options }
     }
 
-    /// Drop `drop_debugger` statement.
-    ///
-    /// Enabled by `compress.drop_debugger`
-    fn drop_debugger(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        matches!(stmt, Statement::DebuggerStatement(_)) && ctx.state.options.drop_debugger
-    }
-
-    fn compress_console(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
-        debug_assert!(ctx.state.options.drop_console);
-        Self::is_console(expr).then(|| ctx.ast.void_0(expr.span()))
-    }
-
-    fn drop_console(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        ctx.state.options.drop_console
-            && matches!(stmt, Statement::ExpressionStatement(expr) if Self::is_console(&expr.expression))
-    }
-
     fn recover_arrow_expression_after_drop_console(
         expr: &mut ArrowFunctionExpression<'a>,
         ctx: &TraverseCtx<'a>,
@@ -159,8 +140,11 @@ impl<'a> Normalize {
         }
     }
 
-    fn is_console(expr: &Expression<'_>) -> bool {
-        let Expression::CallExpression(call_expr) = &expr else { return false };
+    fn is_console_expression(expr: &Expression<'_>) -> bool {
+        matches!(expr, Expression::CallExpression(call_expr) if Self::is_console_call_expression(call_expr))
+    }
+
+    fn is_console_call_expression(call_expr: &CallExpression<'_>) -> bool {
         let Some(member_expr) = call_expr.callee.as_member_expression() else { return false };
         let obj = member_expr.object();
         let Some(ident) = obj.get_identifier_reference() else { return false };
@@ -271,7 +255,7 @@ impl<'a> Normalize {
 
     fn fold_number_nan_to_nan(
         e: &StaticMemberExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let Expression::Identifier(ident) = &e.object else { return None };
         if ident.name != "Number" {
@@ -280,13 +264,16 @@ impl<'a> Normalize {
         if e.property.name != "NaN" {
             return None;
         }
-        if !Ctx::new(ctx).is_global_reference(ident) {
+        if !ctx.is_global_reference(ident) {
             return None;
         }
         Some(ctx.ast.nan(ident.span))
     }
 
-    fn set_no_side_effects_to_call_expr(call_expr: &mut CallExpression<'a>, ctx: &TraverseCtx<'a>) {
+    pub(crate) fn set_no_side_effects_to_call_expr(
+        call_expr: &mut CallExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
         if call_expr.pure {
             return;
         }
@@ -303,9 +290,9 @@ impl<'a> Normalize {
 
     /// Set `pure` on side effect free `new Expr()`s.
     /// `PC` or `PC_WITH_ARRAY` in <https://github.com/rollup/rollup/blob/v4.42.0/src/ast/nodes/shared/knownGlobals.ts>
-    fn set_pure_or_no_side_effects_to_new_expr(
+    pub(crate) fn set_pure_or_no_side_effects_to_new_expr(
         new_expr: &mut NewExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         if new_expr.pure {
             return;
@@ -321,7 +308,6 @@ impl<'a> Normalize {
             return;
         }
         // callee is a global reference.
-        let ctx = Ctx::new(ctx);
         let len = new_expr.arguments.len();
 
         let (zero_arg_throws_error, one_arg_array_throws_error, one_arg_throws_error): (
@@ -371,7 +357,7 @@ impl<'a> Normalize {
             | "TypeError" | "URIError" | "Number" | "Object" | "String" => (false, false, &[]),
             // RegExp needs special validation using the regex parser
             "RegExp" => {
-                if Self::can_set_pure(ident, &ctx) && is_valid_regexp(&new_expr.arguments) {
+                if Self::can_set_pure(ident, ctx) && is_valid_regexp(&new_expr.arguments) {
                     new_expr.pure = true;
                 }
                 return;
@@ -379,7 +365,7 @@ impl<'a> Normalize {
             _ => return,
         };
 
-        if !Self::can_set_pure(ident, &ctx) {
+        if !Self::can_set_pure(ident, ctx) {
             return;
         }
 
@@ -409,7 +395,7 @@ impl<'a> Normalize {
         }
     }
 
-    fn can_set_pure(ident: &IdentifierReference<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn can_set_pure(ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
         ctx.is_global_reference(ident)
             // Throw is never pure.
             && !matches!(ctx.parent(), Ancestor::ThrowStatementArgument(_))

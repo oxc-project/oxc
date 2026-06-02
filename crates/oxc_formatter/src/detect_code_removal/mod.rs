@@ -2,11 +2,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{AstKind, ast};
-use oxc_parser::{Parser, ParserReturn};
+use oxc_parser::ParserReturn;
 use oxc_semantic::{AstNode, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
-use crate::get_parse_options;
+use crate::parse_for_format;
 
 pub fn detect_code_removal(
     before_text: &str,
@@ -21,9 +21,9 @@ pub fn detect_code_removal(
 
 /// Collect statistics from source code.
 fn collect(code: &str, source_type: SourceType) -> StatsCollector {
+    // Parse the way the formatter does (so the before/after comparison matches the formatter's view).
     let allocator = Allocator::default();
-    let parser = Parser::new(&allocator, code, source_type).with_options(get_parse_options());
-    let ParserReturn { program, errors, .. } = parser.parse();
+    let ParserReturn { program, errors, .. } = parse_for_format(&allocator, code, source_type);
 
     let mut collector = StatsCollector::default();
 
@@ -54,8 +54,7 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
             let after_count = after.get(key).copied().unwrap_or(0);
 
             if before_count != after_count {
-                errors
-                    .push(format!("Count mismatch for '{key}': {before_count} -> {after_count}",));
+                errors.push(format!("Count mismatch for '{key}': {before_count} -> {after_count}"));
             }
         }
 
@@ -82,7 +81,7 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
 
         // Sometimes, formatter trims trailing whitespaces.
         // e.g.
-        // ```
+        // ```text
         // // if extra whitespaces here ->
         // ```
         // (rustfmt also removes...)
@@ -90,7 +89,7 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
         //
         // Sometimes, line comments are merged.
         // e.g.
-        // ```
+        // ```text
         // for (x
         // in //a
         // y); //b
@@ -208,6 +207,8 @@ impl StatsCollector {
         if matches!(
             parent_kind,
             AstKind::ObjectProperty(_)
+                | AstKind::BindingProperty(_)
+                | AstKind::AssignmentTargetPropertyProperty(_)
                 | AstKind::MethodDefinition(_)
                 | AstKind::PropertyDefinition(_)
                 | AstKind::ImportAttribute(_)
@@ -229,7 +230,7 @@ impl StatsCollector {
 
         // `JSXText` with only whitespace can be safely removed.
         // e.g.
-        // ```
+        // ```text
         // return (
         //   <div>
         //     {children}
@@ -263,6 +264,12 @@ impl StatsCollector {
         }
 
         let count_key = match kind {
+            // `TemplateLiteral` content may change when formatted as embedded template (html, css, etc.).
+            // The number of quasis is already tracked via `TemplateElement` nodes,
+            // so we only need to count `TemplateLiteral` instances without content.
+            AstKind::TemplateLiteral(t) => {
+                format!("TEMPLATE_LITERAL({},{})", t.quasis.len(), t.expressions.len())
+            }
             // `JSXText` may contain redundant whitespaces.
             // e.g. `<p>World    </p>` -> `<p>World </p>`
             // Redundant whitespaces can be truncated even if they are inside.
@@ -329,6 +336,8 @@ mod tests {
             ("for ((let.a) of foo);", "for ((let).a of foo);"),
             ("for ((let[a]) of foo);", "for ((let)[a] of foo);"),
             ("for ((let.a) in foo);", "for (let.a in foo);"),
+            (r#"const { index, "0": code } = match;"#, r"const { index, 0: code } = match;"),
+            (r#"({ "0": code } = match);"#, r"({ 0: code } = match);"),
             ("<div>{' '}</div>", "<div> </div>"),
             ("type T = | A;", "type T = A;"),
             ("type T = & A;", "type T = A;"),

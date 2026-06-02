@@ -4,6 +4,172 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.68.0] - 2026-06-01
+
+### 🚀 Features
+
+- e4b1f46 linter/typescript: Implement `method-signature-style` rule (#22679) (Mikhail Baev)
+- bc462ca linter/vue: Implement no-reserved-component-names rule (#22741) (bab)
+- ef9e751 linter/vue: Implement component-definition-name-casing rule (#22818) (bab)
+- d67f51a linter/vue: Implement require-prop-type-constructor rule (#22708) (bab)
+- 8422e8b linter/jsdoc: Implement `require-yields-description` rule (#22805) (Mikhail Baev)
+- fe93f97 linter/eslint: Implement `prefer-named-capture-group` rule (#22759) (Sebastian Poxhofer)
+
+## [1.67.0] - 2026-05-26
+
+### 🚀 Features
+
+- b84941e linter/vue: Implement no-expose-after-await rule (#22675) (bab)
+- 98b98c1 linter/vue: Implement no-computed-properties-in-data rule (#22674) (bab)
+- 2d4c919 oxlint: Support `vite-plus/resolveConfig` for vite.config.ts (#22456) (leaysgur)
+- 2a60012 linter/vue: Implement require-render-return rule (#22613) (bab)
+- 9f227fd linter/vue: Implement no-deprecated-props-default-this rule (#21892) (bab)
+- 87f065e linter/vue: Implement return-in-emits-validator rule (#21935) (bab)
+- ea0380c linter/unicorn: Implement `import-style` rule (#22173) (Hao Chen)
+- dde40fe linter/vue: Implement no-watch-after-await rule (#22006) (bab)
+- a735eb0 linter/vue: Implement valid-next-tick rule (#22531) (bab)
+- 6dc615d linter/vue: Implement no-shared-component-data rule (#21842) (bab)
+- a656418 linter/vue: Implement valid-define-options rule (#22107) (bab)
+- bb6f1b2 linter/vue: Implement require-slots-as-functions rule (#22244) (bab)
+- 5fa4774 linter/n: Implement `callback-return` rule (#22470) (Mikhail Baev)
+
+## [1.66.0] - 2026-05-18
+
+### 🚀 Features
+
+- 0440b0f linter/eslint: Implement `id-match` rule (#22379) (Vladislav Sayapin)
+- 65bf119 linter: Implement react no-object-type-as-default-prop (#22481) (uhyo)
+- 2a6ddce linter/eslint: Implement `no-implied-eval` rule (#22391) (Vladislav Sayapin)
+- 625758a linter/vitest: Implement padding-around-after-all-blocks rule (#21788) (kapobajza)
+- 37680b0 linter: Implement react no-unstable-nested-components (#22248) (Jovi De Croock)
+- d8d9c74 linter: Implement import/newline-after-import rule (#19142) (Ryuya Yanagi)
+
+## [1.65.0] - 2026-05-15
+
+### 🚀 Features
+
+- 5478fb5 linter/jsdoc: Implement `require-throws-description` rule (#22386) (Mikhail Baev)
+- c73225e linter/eslint: Implement `prefer-arrow-callback` rule (#22312) (박천(Cheon Park))
+- de82b59 linter: Add support for `eslint-plugin-jsx-a11y-x` (#22356) (mehm8128)
+- f44b6c8 linter: Fill schemas `DummyRuleMap` with built-in rules (#22288) (Sysix)
+
+## [1.64.0] - 2026-05-11
+
+### 🚀 Features
+
+- fbb8f22 linter: Support `ignores` in overrides (#22148) (camc314)
+
+### 🐛 Bug Fixes
+
+- 25b7017 linter: Undocument override `ignores` option (#22213) (camc314)
+
+## [1.63.0] - 2026-05-05
+
+### 📚 Documentation
+
+- cacbc4a linter: Fix jest settings docs. (#22127) (connorshea)
+
+## [1.62.0] - 2026-04-27
+
+### 🚀 Features
+
+- 348f46c linter: Add `respectEslintDisableDirectives` option (#21384) (Christian Vuerings)
+
+### 🐛 Bug Fixes
+
+- 8c425db linter: Allow string for jest version in config schema (#21649) (camc314)
+
+## [1.61.0] - 2026-04-20
+
+### 🚀 Features
+
+- 38d8090 linter/jest: Implemented jest `version` settings in config file. (#21522) (Said Atrahouch)
+
+## [1.60.0] - 2026-04-13
+
+### 📚 Documentation
+
+- cfd8a4f linter: Don't rely on old eslint doc for available globals (#21334) (Nicolas Le Cam)
+
+## [1.59.0] - 2026-04-06
+
+### 🐛 Bug Fixes
+
+- dd2df87 npm: Export package.json for oxlint and oxfmt (#20784) (kazuya kawaguchi)
+
+## [1.58.0] - 2026-03-30
+
+### 🚀 Features
+
+- 16516de linter: Enhance types for `DummyRule` (#20751) (camc314)
+
+### 📚 Documentation
+
+- be3dcc1 linter: Add note about node version + custom TS plugin (#19381) (camc314)
+
+## [1.55.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+
+### 📚 Documentation
+
+- f339f10 linter/plugins: Promote JS plugins to alpha status (#20281) (overlookmotel)
+
+## [1.54.0] - 2026-03-12
+
+### 📚 Documentation
+
+- 0c7da4f linter: Fix extra closing brace in example config. (#20253) (connorshea)
+
+## [1.52.0] - 2026-03-09
+
+### 🚀 Features
+
+- 61bf388 linter: Add `options.reportUnusedDisableDirectives` to config file (#19799) (Peter Wagenet)
+- 2919313 linter: Introduce denyWarnings config options (#19926) (camc314)
+- a607119 linter: Introduce maxWarnings config option (#19777) (camc314)
+
+### 📚 Documentation
+
+- 6c0e0b5 linter: Add oxlint.config.ts to the config docs. (#19941) (connorshea)
+- 160e423 linter: Add a note that the typeAware and typeCheck options require oxlint-tsgolint (#19940) (connorshea)
+
+## [1.51.0] - 2026-03-02
+
+### 🚀 Features
+
+- f34f6fa linter: Introduce typeCheck config option (#19764) (camc314)
+- 694be7d linter: Introduce typeAware as config options (#19614) (camc314)
+
+### 🐛 Bug Fixes
+
+- 04e6223 npm: Add `preferUnplugged` for Yarn PnP compatibility (#19829) (Boshen)
+
+### 📚 Documentation
+
+- 2fa936f README.md: Map npm package links to npmx.dev (#19666) (Boshen)
+
+## [1.45.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 1b2f354 ci: Add missing riscv64/s390x napi targets for oxfmt and oxlint (#19217) (Cameron)
+
+## [1.44.0] - 2026-02-10
+
+### 🚀 Features
+
+- ee2925b oxlint/lsp: Enable JS plugins (#18834) (overlookmotel)
+- 9788a96 oxlint,oxfmt: Add more native builds (#18853) (Boshen)
+
+### 📚 Documentation
+
+- 9561e7f linter/plugins: Alter JS plugins example (#18900) (overlookmotel)
+- b425a0c linter: Document jsPlugins examples (#18671) (Cameron)
+- df2b7fa linter: Expand settings example with reference to custom plugins (#18670) (camc314)
+
 ## [1.42.0] - 2026-01-26
 
 ### 🚀 Features

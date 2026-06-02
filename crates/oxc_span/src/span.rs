@@ -89,9 +89,11 @@ pub const SPAN: Span = Span::new(0, 0);
 )]
 pub struct Span {
     /// The zero-based start offset of the span
+    #[estree(via = "SpanStart")]
     pub start: u32,
     /// The zero-based end offset of the span. This may be equal to [`start`](Span::start) if
     /// the span is empty, but should not be less than it.
+    #[estree(via = "SpanEnd")]
     pub end: u32,
     /// Align `Span` on 8 on 64-bit platforms
     #[estree(skip)]
@@ -677,6 +679,11 @@ impl PointerAlign {
         Self([])
     }
 }
+
+/// Dummy struct to ensure `i32` is in AST schema, so it can be used by `raw_deser` implementations for `Span` fields.
+#[cfg_attr(not(debug_assertions), expect(dead_code))]
+#[ast]
+pub struct I32Dummy(i32);
 
 #[cfg(test)]
 mod test {
