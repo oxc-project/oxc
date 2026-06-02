@@ -1,4 +1,4 @@
-name: Ecosystem CI (oxfmt)
+name: Ecosystem CI
 
 on:
   pull_request:
@@ -7,13 +7,16 @@ on:
 permissions: {}
 
 concurrency:
-  group: ecosystem-ci-oxfmt-${{ github.event.pull_request.number }}
+  group: ecosystem-ci-${{ github.event.pull_request.number }}-${{ github.event.label.name }}
   cancel-in-progress: true
 
 jobs:
   trigger:
     if: >
-      github.event.label.name == 'run-oxfmt-ecosystem-ci' &&
+      (
+        github.event.label.name == 'run-oxlint-ecosystem-ci' ||
+        github.event.label.name == 'run-oxfmt-ecosystem-ci'
+      ) &&
       github.repository == 'oxc-project/oxc'
     runs-on: ubuntu-latest
     steps:
@@ -34,7 +37,10 @@ jobs:
           script: |
             const issueNumber = context.payload.pull_request.number;
             const branch = context.payload.pull_request.head.ref;
-            const body = `Triggering Oxfmt Ecosystem CI for \`${branch}\`\nhttps://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml`;
+            const isOxlint = context.payload.label.name === 'run-oxlint-ecosystem-ci';
+            const project = isOxlint ? 'Oxlint' : 'Oxfmt';
+            const workflow = isOxlint ? 'oxlint-ci.yml' : 'oxfmt-ci.yml';
+            const body = `Triggering ${project} Ecosystem CI for \`${branch}\`\nhttps://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/${workflow}`;
 
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
@@ -45,7 +51,7 @@ jobs:
             const existing = comments.findLast((c) =>
               c.user.login === 'oxc-guard[bot]' &&
               c.body &&
-              (c.body.startsWith('Triggering Oxfmt Ecosystem CI') || c.body.startsWith('## [Oxfmt Ecosystem CI]'))
+              (c.body.startsWith(`Triggering ${project} Ecosystem CI`) || c.body.startsWith(`## [${project} Ecosystem CI]`))
             );
 
             let commentId;
@@ -69,11 +75,12 @@ jobs:
 
             core.setOutput('ref', `refs/pull/${issueNumber}/head`);
             core.setOutput('comment-id', commentId);
+            core.setOutput('workflow', workflow);
 
       - uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
         with:
           repo: oxc-project/oxc-ecosystem-ci
-          workflow: oxfmt-ci.yml
+          workflow: ${{ steps.prepare.outputs.workflow }}
           token: ${{ steps.app-token.outputs.token }}
           ref: main
           inputs: >-
@@ -92,7 +99,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.pull_request.number,
-                name: 'run-oxfmt-ecosystem-ci',
+                name: context.payload.label.name,
               });
             } catch (error) {
               if (error.status !== 404) throw error;
