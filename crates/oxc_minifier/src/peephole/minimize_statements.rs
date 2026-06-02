@@ -66,18 +66,31 @@ impl<'a> PeepholeOptimizations {
         let mut keep_var = KeepVar::new(ctx.ast);
         let mut known_bool_symbols = FxHashMap::<SymbolId, bool>::default();
         let mut function_decl_scopes = FxHashMap::<SymbolId, ScopeId>::default();
-        Self::collect_function_declaration_scopes(&old_stmts, &mut function_decl_scopes);
+        let mut function_write_cache = FxHashMap::<(ScopeId, SymbolId), bool>::default();
+        let mut bool_tracking_enabled =
+            old_stmts.iter().any(Self::statement_can_seed_known_booleans);
+        if bool_tracking_enabled {
+            Self::collect_function_declaration_scopes(&old_stmts, &mut function_decl_scopes);
+        }
         let mut identity_drops = 0u32;
         for i in 0..old_stmts.len() {
             let mut stmt = old_stmts[i].take_in(ctx.ast);
 
-            Self::fold_if_with_known_booleans(&mut stmt, &known_bool_symbols, ctx);
-            Self::update_known_boolean_symbols(
-                &stmt,
-                &mut known_bool_symbols,
-                &function_decl_scopes,
-                ctx,
-            );
+            if bool_tracking_enabled {
+                Self::fold_if_with_known_booleans(&mut stmt, &known_bool_symbols, ctx);
+                Self::update_known_boolean_symbols(
+                    &stmt,
+                    &mut known_bool_symbols,
+                    &function_decl_scopes,
+                    &mut function_write_cache,
+                    ctx,
+                );
+                if known_bool_symbols.is_empty()
+                    && !Self::statement_can_seed_known_booleans(&stmt)
+                {
+                    bool_tracking_enabled = false;
+                }
+            }
 
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
@@ -508,6 +521,7 @@ impl<'a> PeepholeOptimizations {
         stmt: &Statement<'a>,
         known_bool_symbols: &mut FxHashMap<SymbolId, bool>,
         function_decl_scopes: &FxHashMap<SymbolId, ScopeId>,
+        function_write_cache: &mut FxHashMap<(ScopeId, SymbolId), bool>,
         ctx: &TraverseCtx<'a>,
     ) {
         match stmt {
@@ -520,6 +534,7 @@ impl<'a> PeepholeOptimizations {
                     &expr_stmt.expression,
                     known_bool_symbols,
                     function_decl_scopes,
+                    function_write_cache,
                     ctx,
                 );
             }
@@ -528,6 +543,7 @@ impl<'a> PeepholeOptimizations {
                     if_stmt,
                     known_bool_symbols,
                     function_decl_scopes,
+                    function_write_cache,
                     ctx,
                 );
             }
@@ -537,6 +553,7 @@ impl<'a> PeepholeOptimizations {
                         stmt,
                         known_bool_symbols,
                         function_decl_scopes,
+                        function_write_cache,
                         ctx,
                     );
                 }
@@ -569,6 +586,7 @@ impl<'a> PeepholeOptimizations {
         if_stmt: &IfStatement<'a>,
         known_bool_symbols: &mut FxHashMap<SymbolId, bool>,
         function_decl_scopes: &FxHashMap<SymbolId, ScopeId>,
+        function_write_cache: &mut FxHashMap<(ScopeId, SymbolId), bool>,
         ctx: &TraverseCtx<'a>,
     ) {
         let mut entry_env = known_bool_symbols.clone();
@@ -576,6 +594,7 @@ impl<'a> PeepholeOptimizations {
             &if_stmt.test,
             &mut entry_env,
             function_decl_scopes,
+            function_write_cache,
             ctx,
         );
 
@@ -593,6 +612,7 @@ impl<'a> PeepholeOptimizations {
                 branch,
                 known_bool_symbols,
                 function_decl_scopes,
+                function_write_cache,
                 ctx,
             );
             return;
@@ -603,6 +623,7 @@ impl<'a> PeepholeOptimizations {
             &if_stmt.consequent,
             &mut consequent_env,
             function_decl_scopes,
+            function_write_cache,
             ctx,
         );
         let mut alternate_env = entry_env;
@@ -611,6 +632,7 @@ impl<'a> PeepholeOptimizations {
                 alternate,
                 &mut alternate_env,
                 function_decl_scopes,
+                function_write_cache,
                 ctx,
             );
         }
@@ -624,6 +646,7 @@ impl<'a> PeepholeOptimizations {
         expr: &Expression<'a>,
         known_bool_symbols: &mut FxHashMap<SymbolId, bool>,
         function_decl_scopes: &FxHashMap<SymbolId, ScopeId>,
+        function_write_cache: &mut FxHashMap<(ScopeId, SymbolId), bool>,
         ctx: &TraverseCtx<'a>,
     ) {
         match expr {
@@ -633,6 +656,7 @@ impl<'a> PeepholeOptimizations {
                         expr,
                         known_bool_symbols,
                         function_decl_scopes,
+                        function_write_cache,
                         ctx,
                     );
                 }
@@ -642,6 +666,7 @@ impl<'a> PeepholeOptimizations {
                     &assign_expr.right,
                     known_bool_symbols,
                     function_decl_scopes,
+                    function_write_cache,
                     ctx,
                 );
                 let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left else {
@@ -679,6 +704,7 @@ impl<'a> PeepholeOptimizations {
                     &call_expr.callee,
                     known_bool_symbols,
                     function_decl_scopes,
+                    function_write_cache,
                     ctx,
                 );
                 for arg in &call_expr.arguments {
@@ -688,6 +714,7 @@ impl<'a> PeepholeOptimizations {
                                 &spread.argument,
                                 known_bool_symbols,
                                 function_decl_scopes,
+                                function_write_cache,
                                 ctx,
                             );
                         }
@@ -695,6 +722,7 @@ impl<'a> PeepholeOptimizations {
                             arg.to_expression(),
                             known_bool_symbols,
                             function_decl_scopes,
+                            function_write_cache,
                             ctx,
                         ),
                     }
@@ -710,9 +738,10 @@ impl<'a> PeepholeOptimizations {
                         .keys()
                         .copied()
                         .filter(|symbol_id| {
-                            Self::function_call_may_write_symbol(
+                            Self::function_call_may_write_symbol_cached(
                                 *function_scope_id,
                                 *symbol_id,
+                                function_write_cache,
                                 ctx,
                             )
                         })
@@ -742,6 +771,11 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    #[inline]
+    fn statement_can_seed_known_booleans(stmt: &Statement<'a>) -> bool {
+        matches!(stmt, Statement::VariableDeclaration(decl) if !decl.kind.is_var())
+    }
+
     fn function_call_may_write_symbol(
         function_scope_id: ScopeId,
         symbol_id: SymbolId,
@@ -755,6 +789,21 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 )
         })
+    }
+
+    #[inline]
+    fn function_call_may_write_symbol_cached(
+        function_scope_id: ScopeId,
+        symbol_id: SymbolId,
+        function_write_cache: &mut FxHashMap<(ScopeId, SymbolId), bool>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        if let Some(value) = function_write_cache.get(&(function_scope_id, symbol_id)) {
+            return *value;
+        }
+        let value = Self::function_call_may_write_symbol(function_scope_id, symbol_id, ctx);
+        function_write_cache.insert((function_scope_id, symbol_id), value);
+        value
     }
 
     fn is_scope_inside_function_execution(
