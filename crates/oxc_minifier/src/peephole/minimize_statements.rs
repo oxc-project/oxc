@@ -85,8 +85,7 @@ impl<'a> PeepholeOptimizations {
                     &mut function_write_cache,
                     ctx,
                 );
-                if known_bool_symbols.is_empty()
-                    && !Self::statement_can_seed_known_booleans(&stmt)
+                if known_bool_symbols.is_empty() && !Self::statement_can_seed_known_booleans(&stmt)
                 {
                     bool_tracking_enabled = false;
                 }
