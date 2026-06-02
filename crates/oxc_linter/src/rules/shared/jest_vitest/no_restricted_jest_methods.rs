@@ -1,19 +1,17 @@
+use crate::{
+    context::LintContext,
+    utils::{
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call,
+        object_with_nullable_string_schema,
+    },
+};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
-use schemars::{
-    JsonSchema,
-    r#gen::SchemaGenerator,
-    schema::{InstanceType, ObjectValidation, Schema, SchemaObject, SubschemaValidation},
-};
+use schemars::JsonSchema;
 use serde::Deserialize;
-
-use crate::{
-    context::LintContext,
-    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
-};
 
 fn restricted_jest_method(method_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use of `{method_name}` is not allowed")).with_label(span)
@@ -62,40 +60,9 @@ test('plays video', () => {
 pub struct NoRestrictedJestMethodsConfig {
     /// A mapping of restricted Jest method names to custom messages - or
     /// `null`, for a generic message.
-    #[schemars(schema_with = "restricted_methods_schema")]
+    #[schemars(schema_with = "object_with_nullable_string_schema")]
     #[serde(flatten)]
     pub restricted_methods: FxHashMap<String, Option<CompactStr>>,
-}
-
-fn restricted_methods_schema(_gen: &mut SchemaGenerator) -> Schema {
-    let value_schema = SchemaObject {
-        subschemas: Some(Box::new(SubschemaValidation {
-            any_of: Some(vec![
-                SchemaObject {
-                    instance_type: Some(InstanceType::String.into()),
-                    ..Default::default()
-                }
-                .into(),
-                SchemaObject {
-                    instance_type: Some(InstanceType::Null.into()),
-                    ..Default::default()
-                }
-                .into(),
-            ]),
-            ..Default::default()
-        })),
-        ..Default::default()
-    };
-
-    SchemaObject {
-        instance_type: Some(InstanceType::Object.into()),
-        object: Some(Box::new(ObjectValidation {
-            additional_properties: Some(Box::new(value_schema.into())),
-            ..Default::default()
-        })),
-        ..Default::default()
-    }
-    .into()
 }
 
 impl NoRestrictedJestMethodsConfig {
