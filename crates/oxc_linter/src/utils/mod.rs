@@ -32,6 +32,7 @@ mod unicorn;
 mod url;
 mod vitest;
 mod vue;
+pub mod vue_casing;
 
 pub use self::{
     comment::*, config::*, control_flow::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*,
