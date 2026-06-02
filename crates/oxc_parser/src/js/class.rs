@@ -408,6 +408,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::accessor_modifier,
         );
+        if definite
+            && ((self.ctx.has_ambient() && !modifiers.contains(ModifierKind::Declare))
+                || r#type.is_abstract())
+        {
+            self.error(diagnostics::definite_assignment_assertion_not_permitted(
+                self.end_span(span),
+            ));
+        }
         self.ast.class_element_accessor_property(
             self.end_span(span),
             r#type,
@@ -678,6 +686,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(
                 initializer.span(),
+            ));
+        }
+        if definite && (self.ctx.has_ambient() || r#abstract) {
+            self.error(diagnostics::definite_assignment_assertion_not_permitted(
+                self.end_span(span),
             ));
         }
         self.ast.class_element_property_definition(
