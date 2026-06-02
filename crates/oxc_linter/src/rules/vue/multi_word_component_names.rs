@@ -13,7 +13,7 @@ use crate::{
     context::{ContextHost, LintContext},
     frameworks::FrameworkOptions,
     rule::Rule,
-    utils::{find_property, is_vue_component_options_object},
+    utils::{find_property, is_vue_component_options_object, vue_casing},
 };
 
 const VUE_BUILTIN_COMPONENTS: &[&str] = &[
@@ -285,73 +285,14 @@ fn is_valid_component_name(name: &str, ignores: &[String]) -> bool {
         if ignore == name {
             return true;
         }
-        if is_pascal_case(ignore) && kebab_case(ignore) == name {
+        if !ignore.is_empty()
+            && vue_casing::is_pascal_case(ignore)
+            && vue_casing::kebab_case(ignore) == name
+        {
             return true;
         }
     }
-    kebab_case(name).split('-').count() > 1
-}
-
-// Mirrors upstream `lib/utils/casing.js` `kebabCase`:
-//   str.replace(/_/gu, '-').replace(/\B([A-Z])/gu, '-$1').toLowerCase()
-fn kebab_case(s: &str) -> String {
-    let chars: Vec<char> = s.chars().map(|c| if c == '_' { '-' } else { c }).collect();
-    let mut result = String::with_capacity(chars.len());
-    for (i, &ch) in chars.iter().enumerate() {
-        if ch.is_ascii_uppercase() && i > 0 && chars[i - 1].is_ascii_alphanumeric() {
-            result.push('-');
-        }
-        result.extend(ch.to_lowercase());
-    }
-    result
-}
-
-fn is_pascal_case(s: &str) -> bool {
-    if s.is_empty() {
-        return false;
-    }
-    if s.starts_with(|c: char| c.is_ascii_lowercase()) {
-        return false;
-    }
-    if has_symbols(s) {
-        return false;
-    }
-    !s.chars().any(|c| matches!(c, '-' | '_') || c.is_whitespace())
-}
-
-fn has_symbols(s: &str) -> bool {
-    s.chars().any(|c| {
-        matches!(
-            c,
-            '!' | '"'
-                | '#'
-                | '%'
-                | '&'
-                | '\''
-                | '('
-                | ')'
-                | '*'
-                | '+'
-                | ','
-                | '.'
-                | '/'
-                | ':'
-                | ';'
-                | '<'
-                | '='
-                | '>'
-                | '?'
-                | '@'
-                | '['
-                | '\\'
-                | ']'
-                | '^'
-                | '`'
-                | '{'
-                | '|'
-                | '}'
-        )
-    })
+    vue_casing::kebab_case(name).split('-').count() > 1
 }
 
 #[test]
