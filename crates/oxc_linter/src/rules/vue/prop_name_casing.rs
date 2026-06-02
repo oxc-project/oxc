@@ -19,7 +19,7 @@ use crate::{
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{Rule, TupleRuleConfig},
-    utils::{find_property, is_vue_component_options_object_excluding_instance},
+    utils::{find_property, is_vue_component_options_object_excluding_instance, vue_casing},
 };
 
 fn prop_name_casing_diagnostic(span: Span, name: &str, case_type: &str) -> OxcDiagnostic {
@@ -249,65 +249,9 @@ fn property_key_static_name<'a>(
 
 fn check_case(s: &str, case_type: CaseType) -> bool {
     match case_type {
-        CaseType::CamelCase => is_camel_case(s),
-        CaseType::SnakeCase => is_snake_case(s),
+        CaseType::CamelCase => vue_casing::is_camel_case(s),
+        CaseType::SnakeCase => vue_casing::is_snake_case(s),
     }
-}
-
-fn has_symbols(s: &str) -> bool {
-    // [!"#%&'()*+,./:;<=>?@[\]^`{|}] — without " ", "$", "-" and "_"
-    s.chars().any(|c| {
-        matches!(
-            c,
-            '!' | '"'
-                | '#'
-                | '%'
-                | '&'
-                | '\''
-                | '('
-                | ')'
-                | '*'
-                | '+'
-                | ','
-                | '.'
-                | '/'
-                | ':'
-                | ';'
-                | '<'
-                | '='
-                | '>'
-                | '?'
-                | '@'
-                | '['
-                | '\\'
-                | ']'
-                | '^'
-                | '`'
-                | '{'
-                | '|'
-                | '}'
-        )
-    })
-}
-
-fn has_upper(s: &str) -> bool {
-    s.chars().any(|c| c.is_ascii_uppercase())
-}
-
-fn is_camel_case(s: &str) -> bool {
-    !has_symbols(s)
-        && !s.chars().next().is_some_and(|c| c.is_ascii_uppercase())
-        && !s.chars().any(|c| matches!(c, '-' | '_') || c.is_whitespace())
-}
-
-fn is_snake_case(s: &str) -> bool {
-    if has_upper(s) || has_symbols(s) {
-        return false;
-    }
-    if s.contains('-') || s.contains("__") || s.chars().any(char::is_whitespace) {
-        return false;
-    }
-    true
 }
 
 /// Matches upstream `toRegExpGroupMatcher`: a pattern wrapped in slashes
