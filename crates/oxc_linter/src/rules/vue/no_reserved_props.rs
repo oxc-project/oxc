@@ -106,7 +106,7 @@ impl Rule for NoReservedProps {
                 if !prop.key.is_specific_static_name("props") {
                     return;
                 }
-                let Some(parent) = ctx.nodes().ancestors(node.id()).next() else { return };
+                let parent = ctx.nodes().parent_node(node.id());
                 if !is_vue_component_options_object(parent, ctx) {
                     return;
                 }
