@@ -31,18 +31,6 @@ fn require_direct_export_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn disallow_functional_component_function_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Functional component functions are not allowed.")
-        .with_help(
-            "Export a component object directly instead of using a functional component function.",
-        )
-        .with_label(span)
-}
-
-fn missing_function_return_value_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Function component must return a value.").with_label(span)
-}
-
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireDirectExport {
@@ -118,18 +106,18 @@ impl Rule for RequireDirectExport {
             // e.g. export default function () {}
             ExportDefaultDeclarationKind::FunctionDeclaration(func_decl) => {
                 if self.disallow_functional_component_function {
-                    ctx.diagnostic(disallow_functional_component_function_diagnostic(
-                        export_decl.span,
-                    ));
+                    ctx.diagnostic(require_direct_export_diagnostic(export_decl.span));
                 } else if !has_function_return_value(func_decl) {
-                    ctx.diagnostic(missing_function_return_value_diagnostic(export_decl.span));
+                    ctx.diagnostic(require_direct_export_diagnostic(export_decl.span));
                 }
             }
             match_expression!(ExportDefaultDeclarationKind) => {
                 let expr = export_decl.declaration.to_expression();
                 check_expression(expr, export_decl.span, ctx, self);
             }
-            _ => {}
+            _ => {
+                ctx.diagnostic(require_direct_export_diagnostic(export_decl.span));
+            }
         }
     }
 
@@ -155,16 +143,16 @@ fn check_expression<'a>(
         // e.g. export default (props) => { return h('div', props.msg) }
         Expression::ArrowFunctionExpression(arrow_func) => {
             if rule.disallow_functional_component_function {
-                ctx.diagnostic(disallow_functional_component_function_diagnostic(span));
+                ctx.diagnostic(require_direct_export_diagnostic(span));
             } else if !has_arrow_function_return_value(arrow_func) {
-                ctx.diagnostic(missing_function_return_value_diagnostic(span));
+                ctx.diagnostic(require_direct_export_diagnostic(span));
             }
         }
         Expression::FunctionExpression(func) => {
             if rule.disallow_functional_component_function {
-                ctx.diagnostic(disallow_functional_component_function_diagnostic(span));
+                ctx.diagnostic(require_direct_export_diagnostic(span));
             } else if !has_function_return_value(func) {
-                ctx.diagnostic(missing_function_return_value_diagnostic(span));
+                ctx.diagnostic(require_direct_export_diagnostic(span));
             }
         }
         // Check for CallExpression (Vue.extend, defineComponent)
@@ -178,16 +166,19 @@ fn check_expression<'a>(
 fn check_call_expression<'a>(call_expr: &CallExpression<'a>, span: Span, ctx: &LintContext<'a>) {
     // Check for defineComponent
     if let Some(callee_ident) = call_expr.callee.get_identifier_reference()
-        && callee_ident.name.as_str() == "defineComponent"
-        && !has_object_expression_argument(call_expr)
+        && callee_ident.name == "defineComponent"
     {
-        ctx.diagnostic(require_direct_export_diagnostic(span));
+        if !has_object_expression_argument(call_expr) {
+            ctx.diagnostic(require_direct_export_diagnostic(span));
+        }
         return;
     }
 
-    if is_method_call(call_expr, Some(&["Vue"]), Some(&["extend"]), None, None)
-        && !has_object_expression_argument(call_expr)
-    {
+    if is_method_call(call_expr, Some(&["Vue"]), Some(&["extend"]), None, None) {
+        if !has_object_expression_argument(call_expr) {
+            ctx.diagnostic(require_direct_export_diagnostic(span));
+        }
+    } else {
         ctx.diagnostic(require_direct_export_diagnostic(span));
     }
 }
@@ -245,8 +236,9 @@ impl<'a> Visit<'a> for ReturnFinder {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("", None, None, Some(PathBuf::from("test.vue"))),
@@ -543,6 +535,14 @@ export default (props) => {
         ),
         (
             "<script>
+                  export default createComponent({})
+                  </script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "<script>
              import { defineComponent } from 'vue'
              export default defineComponent()
              </script>",
@@ -583,6 +583,14 @@ export default (props) => {
                   import { defineComponent } from 'vue'
                   const A = {}
                   export default (defineComponent(A))
+                  </script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "<script>
+                  export default class Component {}
                   </script>",
             None,
             None,
