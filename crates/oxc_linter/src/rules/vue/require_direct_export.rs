@@ -105,9 +105,9 @@ impl Rule for RequireDirectExport {
         match &export_decl.declaration {
             // e.g. export default function () {}
             ExportDefaultDeclarationKind::FunctionDeclaration(func_decl) => {
-                if self.disallow_functional_component_function {
-                    ctx.diagnostic(require_direct_export_diagnostic(export_decl.span));
-                } else if !has_function_return_value(func_decl) {
+                if self.disallow_functional_component_function
+                    || !has_function_return_value(func_decl)
+                {
                     ctx.diagnostic(require_direct_export_diagnostic(export_decl.span));
                 }
             }
@@ -142,16 +142,14 @@ fn check_expression<'a>(
         }
         // e.g. export default (props) => { return h('div', props.msg) }
         Expression::ArrowFunctionExpression(arrow_func) => {
-            if rule.disallow_functional_component_function {
-                ctx.diagnostic(require_direct_export_diagnostic(span));
-            } else if !has_arrow_function_return_value(arrow_func) {
+            if rule.disallow_functional_component_function
+                || !has_arrow_function_return_value(arrow_func)
+            {
                 ctx.diagnostic(require_direct_export_diagnostic(span));
             }
         }
         Expression::FunctionExpression(func) => {
-            if rule.disallow_functional_component_function {
-                ctx.diagnostic(require_direct_export_diagnostic(span));
-            } else if !has_function_return_value(func) {
+            if rule.disallow_functional_component_function || !has_function_return_value(func) {
                 ctx.diagnostic(require_direct_export_diagnostic(span));
             }
         }
