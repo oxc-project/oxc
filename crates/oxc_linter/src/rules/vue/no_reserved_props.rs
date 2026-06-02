@@ -38,6 +38,7 @@ fn no_reserved_props_diagnostic(prop_name: &str, span: Span) -> OxcDiagnostic {
 struct NoReservedPropsConfig {
     /// Vue major version whose reserved attribute set is applied. Vue 2 reserves
     /// more names (`is`, `slot`, `class`, `style`, ...) than Vue 3.
+    #[serde(deserialize_with = "deserialize_vue_version")]
     vue_version: u8,
 }
 
@@ -237,6 +238,18 @@ impl NoReservedProps {
         };
         let Some(name) = key.static_name() else { return };
         self.report(name.as_ref(), key.span(), ctx);
+    }
+}
+
+fn deserialize_vue_version<'de, D>(deserializer: D) -> Result<u8, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let version = u8::deserialize(deserializer)?;
+    if matches!(version, 2 | 3) {
+        Ok(version)
+    } else {
+        Err(serde::de::Error::custom("vueVersion must be either 2 or 3"))
     }
 }
 
