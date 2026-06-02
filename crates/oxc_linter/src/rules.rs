@@ -872,6 +872,7 @@ pub(crate) mod vue {
     pub mod prefer_import_from_vue;
     pub mod prop_name_casing;
     pub mod require_default_export;
+    pub mod require_direct_export;
     pub mod require_prop_type_constructor;
     pub mod require_prop_types;
     pub mod require_render_return;
