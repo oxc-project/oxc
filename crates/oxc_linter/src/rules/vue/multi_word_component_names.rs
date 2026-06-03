@@ -15,7 +15,7 @@ use oxc_span::Span;
 use crate::{
     context::{ContextHost, LintContext},
     frameworks::FrameworkOptions,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{find_property, is_vue_component_options_object, vue_casing},
 };
 
@@ -45,7 +45,7 @@ fn multi_word_component_names_diagnostic(span: Span, name: &str) -> OxcDiagnosti
 pub struct MultiWordComponentNames(Box<MultiWordComponentNamesConfig>);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct MultiWordComponentNamesConfig {
     /// Component names to allow.
     ignores: Vec<String>,
@@ -97,13 +97,7 @@ declare_oxc_lint!(
 
 impl Rule for MultiWordComponentNames {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
-        let ignores: Vec<String> = value
-            .get(0)
-            .and_then(|v| v.get("ignores"))
-            .and_then(serde_json::Value::as_array)
-            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
-            .unwrap_or_default();
-        Ok(Self(Box::new(MultiWordComponentNamesConfig { ignores })))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
