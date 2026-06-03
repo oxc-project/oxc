@@ -56,7 +56,7 @@ impl From<ForbidElementsConfig> for ForbidElements {
 
 /// A forbidden element, either as a plain element name or with a custom message.
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(untagged)]
+#[serde(untagged, deny_unknown_fields)]
 pub enum ForbidItem {
     ElementName(CompactStr),
     ElementWithMessage {

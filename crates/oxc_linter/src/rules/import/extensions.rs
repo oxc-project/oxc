@@ -146,7 +146,7 @@ impl PathGroupOverride {
 /// **Default behavior (no configuration)**: All imports - of all kinds - pass.
 /// Unconfigured file extensions are ignored, to avoid false positives.
 #[derive(Debug, Clone, JsonSchema, Serialize, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExtensionsConfig {
     /// Whether to ignore package imports when enforcing extension rules.
     ///

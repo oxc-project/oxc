@@ -316,6 +316,40 @@ fn object_close_brace_lands_at_close_brace() {
     assert!(has_mapping(&tokens, pos(0, src_brace), pos(0, src_brace)));
 }
 
+// When a callee/object ends in `)` or `]` it has no trailing identifier for V8
+// to anchor a stack frame on, so the chain punctuation (`(`/`.`) right after it
+// must be mapped — otherwise the column resolves one too far left (off-by-one
+// stack traces reported by vitest via vite-ecosystem-ci).
+
+// Curried call: V8 reports the outer call at the `(` after the inner `)`.
+#[test]
+fn nested_call_outer_open_paren_resolves_to_source() {
+    let tokens = sourcemap_tokens("factory()()", SourceType::mjs());
+    assert!(has_mapping(&tokens, pos(0, 9), pos(0, 9)), "outer `(` of `factory()()`");
+}
+
+// Member/getter access on a call result: reported at the `.` after the `)`.
+#[test]
+fn member_access_after_call_resolves_to_source() {
+    let tokens = sourcemap_tokens("expect(x).resolves", SourceType::mjs());
+    assert!(has_mapping(&tokens, pos(0, 9), pos(0, 9)), "`.` after `expect(x)`");
+}
+
+// Same gap for a computed-member result: reported at the `(` after the `]`.
+#[test]
+fn call_after_computed_member_resolves_to_source() {
+    let tokens = sourcemap_tokens("arr[i]()", SourceType::mjs());
+    assert!(has_mapping(&tokens, pos(0, 6), pos(0, 6)), "`(` after `arr[i]`");
+}
+
+// A tagged template whose tag is a call result (`` f()`x` ``) is the same shape
+// — the tag is a postfix operand, so the backtick after the `)` is mapped too.
+#[test]
+fn tagged_template_after_call_resolves_to_source() {
+    let tokens = sourcemap_tokens("f()`x`", SourceType::mjs());
+    assert!(has_mapping(&tokens, pos(0, 3), pos(0, 3)), "backtick after `f()`");
+}
+
 #[test]
 #[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))] // we run big endian tests on docker that does not have node installed; skip 32-bit as well
 fn stacktrace_is_correct() {
@@ -391,6 +425,16 @@ fn('name', () => {
     Error.stackTraceLimit = 2;
     throw new Error()
 })",
+        // Getter accessed on a call result (`expect(x).resolves` shape): V8
+        // reports the access at the `.` right after the call's `)`.
+        "\
+const make = () => ({
+    get prop() {
+        Error.stackTraceLimit = 2;
+        throw new Error()
+    }
+})
+make().prop",
     ];
 
     let node_version = std::process::Command::new("node").arg("--version").output().map_or_else(

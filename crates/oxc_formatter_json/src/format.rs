@@ -17,16 +17,16 @@ use crate::{
     print::{FmtJsonValue, JsonFormatter},
 };
 
-/// Parse `source` as JSON and build its formatter IR.
+/// Parse `source_text` as JSON and build its formatter IR.
 ///
 /// # Errors
-/// Returns an [`OxcDiagnostic`] when the parser rejects `source`.
+/// Returns an [`OxcDiagnostic`] when the parser rejects `source_text`.
 pub fn format<'a>(
     allocator: &'a Allocator,
-    source: &str,
+    source_text: &str,
     options: JsonFormatOptions,
 ) -> Result<Formatted<'a, JsonFormatContext<'a>>, OxcDiagnostic> {
-    let parsed = parse_json(allocator, source, options.variant)?;
+    let parsed = parse_json(allocator, source_text, options.variant)?;
 
     let context = JsonFormatContext::new(
         options,
@@ -38,8 +38,8 @@ pub fn format<'a>(
     // TODO: Use `with_capacity` for perf, like `oxc_formatter` does
     let mut buffer = VecBuffer::new(&mut state);
 
-    // BOM detection runs on the original `source`; `wrapped_source` may prepend `(`.
-    let has_bom = source.starts_with(ZWNBSP);
+    // BOM detection runs on the original `source_text`; `wrapped_source` may prepend `(`.
+    let has_bom = source_text.starts_with(ZWNBSP);
     write!(&mut buffer, FormatJsonRoot { expression: parsed.expression, has_bom });
 
     let elements = buffer.into_vec();

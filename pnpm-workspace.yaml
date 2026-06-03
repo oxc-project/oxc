@@ -15,13 +15,13 @@ catalog:
   "@napi-rs/wasm-runtime": 1.1.4
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  degit: 3.0.0
+  degit: 3.3.2
   eslint: 10.4.0
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.21
-  rolldown: 1.0.3
+  rolldown: 1.1.0
   tsdown: 0.22.1
-  vite-plus: 0.1.23
+  vite-plus: 0.1.24
   vitest: 4.1.7
 
 overrides:
@@ -34,3 +34,23 @@ allowBuilds:
   "@nestjs/core@11.1.9": false
 
 verifyDepsBeforeRun: install
+minimumReleaseAgeExclude:
+  - "@oxc-parser/*"
+  - "@oxc-project/*"
+  - "@oxfmt/*"
+  - "@oxlint-tsgolint/*"
+  - "@oxlint/*"
+  - "@rolldown/*"
+  - "@tsdown/*"
+  - "@vitejs/devtools"
+  - "@vitest/*"
+  - "@voidzero-dev/*"
+  - oxc-parser
+  - oxfmt
+  - oxlint
+  - oxlint-tsgolint
+  - rolldown
+  - tsdown
+  - vite
+  - vite-plus
+  - vitest

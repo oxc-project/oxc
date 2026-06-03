@@ -31,7 +31,7 @@ impl Default for JestConfig {
 pub struct NoDeprecatedFunctions(Box<NoDeprecatedFunctionsConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDeprecatedFunctionsConfig {
     /// Jest configuration options.
     /// Deprecated config, it will be removed in future versions.

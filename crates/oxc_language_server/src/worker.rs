@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::json;
@@ -400,12 +400,19 @@ fn registration_watcher_id(root_uri: &Uri, patterns: Vec<String>) -> Registratio
         register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
             watchers: patterns
                 .into_iter()
-                .map(|pattern| FileSystemWatcher {
-                    glob_pattern: GlobPattern::Relative(RelativePattern {
-                        base_uri: OneOf::Right(root_uri.clone()),
-                        pattern,
-                    }),
-                    kind: Some(WatchKind::all()), // created, deleted, changed
+                .map(|pattern| {
+                    let glob_pattern = if Path::new(&pattern).is_absolute() {
+                        GlobPattern::String(pattern)
+                    } else {
+                        GlobPattern::Relative(RelativePattern {
+                            base_uri: OneOf::Right(root_uri.clone()),
+                            pattern,
+                        })
+                    };
+                    FileSystemWatcher {
+                        glob_pattern,
+                        kind: Some(WatchKind::all()), // created, deleted, changed
+                    }
                 })
                 .collect::<Vec<_>>(),
         })),
@@ -419,7 +426,10 @@ mod tests {
     use std::sync::Arc;
     use tower_lsp_server::{
         jsonrpc::ErrorCode,
-        ls_types::{CodeActionContext, CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri},
+        ls_types::{
+            CodeActionContext, CodeActionOrCommand, DidChangeWatchedFilesRegistrationOptions,
+            FileChangeType, FileEvent, GlobPattern, Range, Uri,
+        },
     };
 
     use crate::{
@@ -480,6 +490,26 @@ mod tests {
         worker_no_watchers.start_worker(serde_json::json!({"some_option": true})).await;
         let registration_no_watchers = worker_no_watchers.init_watchers().await;
         assert!(registration_no_watchers.is_none());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_registration_watcher_absolute_pattern() {
+        let root_uri = Uri::from_str("file:///root/").unwrap();
+        let registration =
+            super::registration_watcher_id(&root_uri, vec!["/etc/**/*.json".to_string()]);
+
+        let register_options = registration.register_options.unwrap();
+        let options: DidChangeWatchedFilesRegistrationOptions =
+            serde_json::from_value(register_options).unwrap();
+
+        assert_eq!(options.watchers.len(), 1);
+        match &options.watchers[0].glob_pattern {
+            GlobPattern::String(pattern) => assert_eq!(pattern, "/etc/**/*.json"),
+            GlobPattern::Relative(_) => {
+                panic!("Expected absolute glob to be encoded as GlobPattern::String")
+            }
+        }
     }
 
     #[tokio::test]

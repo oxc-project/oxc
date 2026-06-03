@@ -1,6 +1,6 @@
 [package]
 name = "oxc_formatter_json"
-version = "0.52.0"
+version = "0.53.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,6 +28,8 @@ oxc_syntax = { workspace = true, features = ["to_js_string"] }
 [dev-dependencies]
 insta = { workspace = true }
 oxc_formatter_core = { workspace = true, features = ["test_harness"] }
+oxc_tasks_common = { workspace = true }
+pico-args = { workspace = true }
 
 [build-dependencies]
 oxc_formatter_core = { workspace = true, features = ["test_harness"] }

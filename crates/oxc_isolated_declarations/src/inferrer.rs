@@ -64,9 +64,6 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::TSNonNullExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
             }
-            Expression::TSSatisfiesExpression(expr) => {
-                self.infer_type_from_expression(&expr.expression)
-            }
             Expression::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {
                     self.infer_type_from_expression(&expr.argument)

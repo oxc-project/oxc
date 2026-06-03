@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::{FileExtension, GetSpan};
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
@@ -455,7 +455,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /* ----------------------- declare --------------------- */
 
-    pub(crate) fn parse_ts_declaration_statement(&mut self, start_span: u32) -> Statement<'a> {
+    pub(crate) fn parse_ts_declaration_statement(
+        &mut self,
+        start_span: u32,
+        stmt_ctx: StatementContext,
+    ) -> Statement<'a> {
         let reserved_ctx = self.ctx;
         let modifiers = self.eat_modifiers_before_declaration();
         if let Some(modifier) = modifiers.get(ModifierKind::Declare)
@@ -470,6 +474,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .and_await(modifiers.contains_async());
         let decl = self.parse_declaration(start_span, &modifiers, self.ast.vec());
         self.ctx = reserved_ctx;
+        // A TypeScript declaration (`interface`, `type`, `enum`, `namespace`, …) is a
+        // `Declaration`, not a `Statement`, so it cannot stand alone as the body of
+        // `if`/`for`/`while`/`with`/a label — it must be wrapped in a block.
+        if stmt_ctx.is_single_statement() {
+            self.error(diagnostics::declaration_single_statement(decl.span()));
+        }
         Statement::from(decl)
     }
 

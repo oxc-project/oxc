@@ -38,7 +38,7 @@ pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
-pub use fragment::{FormatVueBindingParams, FormatVueScriptGeneric};
+pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use function::FormatFunctionOptions;
 
 use cow_utils::CowUtils;

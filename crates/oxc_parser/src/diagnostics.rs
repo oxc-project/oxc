@@ -320,6 +320,13 @@ pub fn declare_in_ambient_context(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn declaration_single_statement(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Declaration cannot appear in a single-statement context")
+        .with_help("Wrap this declaration in a block statement")
+        .with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)
@@ -573,6 +580,12 @@ pub fn optional_definite_property(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn definite_assignment_assertion_not_permitted(span: Span) -> OxcDiagnostic {
+    ts_error("1255", "A definite assignment assertion '!' is not permitted in this context.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn identifier_async(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in an async context"))
         .with_label(span1)
@@ -741,6 +754,11 @@ pub fn v8_intrinsic_spread_elem(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn a_set_accessor_cannot_have_a_return_type_annotation(span: Span) -> OxcDiagnostic {
     ts_error("1095", "A 'set' accessor cannot have a return type annotation.").with_label(span)
+}
+
+#[cold]
+pub fn accessor_cannot_have_type_parameters(span: Span) -> OxcDiagnostic {
+    ts_error("1094", "An accessor cannot have type parameters.").with_label(span)
 }
 
 #[cold]

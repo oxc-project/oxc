@@ -16,9 +16,8 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{Formatter, JsFormatOptions, enable_jsx_source_type, get_parse_options};
+use oxc_formatter::JsFormatOptions;
 use oxc_formatter_json::JsonFormatOptions;
-use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use crate::{
@@ -425,19 +424,12 @@ impl TestRunner {
         format_options: JsFormatOptions,
     ) -> Option<String> {
         let allocator = Allocator::default();
-
         let source_type = SourceType::from_path(path).unwrap();
-        let source_type = enable_jsx_source_type(source_type);
 
-        let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(get_parse_options())
-            .parse();
-        if !ret.errors.is_empty() {
-            return None;
-        }
-
-        let formatted = Formatter::new(&allocator, format_options).build(&ret.program);
-        Some(formatted)
+        let formatted =
+            oxc_formatter::format(&allocator, source_text, source_type, format_options, None)
+                .ok()?;
+        Some(formatted.print().ok()?.into_code())
     }
 
     fn run_json_formatter(source_text: &str, format_options: JsonFormatOptions) -> Option<String> {

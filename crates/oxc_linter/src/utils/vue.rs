@@ -1,3 +1,5 @@
+use phf::{Set, phf_set};
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -8,6 +10,56 @@ use oxc_ast::{
 use oxc_span::GetSpan;
 
 use crate::{AstNode, ContextSubHost, LintContext, frameworks::FrameworkOptions};
+
+// These sets mirror eslint-plugin-vue's `vue/no-reserved-component-names`.
+// `globals::HTML_TAG` has a broader DOM/ARIA scope and different message
+// grouping, so it is not a drop-in replacement for this Vue rule.
+pub const VUE_RESERVED_HTML_ELEMENTS: Set<&'static str> = phf_set! {
+    "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi", "bdo",
+    "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code", "col", "colgroup",
+    "data", "datalist", "dd", "del", "details", "dfn", "dialog", "div", "dl", "dt", "em", "embed",
+    "fencedframe", "fieldset", "figcaption", "figure", "footer", "form", "geolocation", "h1",
+    "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "iframe",
+    "img", "input", "ins", "kbd", "label", "legend", "li", "link", "main", "map", "mark",
+    "menu", "meta", "meter", "nav", "noscript", "object", "ol", "optgroup", "option", "output",
+    "p", "picture", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script", "search",
+    "section", "select", "selectedcontent", "slot", "small", "source", "span", "strong", "style",
+    "sub", "summary", "sup", "table", "tbody", "td", "template", "textarea", "tfoot", "th",
+    "thead", "time", "title", "tr", "track", "u", "ul", "var", "video", "wbr",
+};
+
+pub const VUE_RESERVED_DEPRECATED_HTML_ELEMENTS: Set<&'static str> = phf_set! {
+    "acronym", "applet", "basefont", "bgsound", "big", "blink", "center", "dir", "font", "frame",
+    "frameset", "isindex", "keygen", "listing", "marquee", "menuitem", "multicol", "nextid",
+    "nobr", "noembed", "noframes", "param", "plaintext", "rb", "rtc", "spacer", "strike", "tt",
+    "xmp",
+};
+
+pub const VUE_RESERVED_SVG_ELEMENTS: Set<&'static str> = phf_set! {
+    "a", "animate", "animateMotion", "animateTransform", "circle", "clipPath", "defs", "desc",
+    "ellipse", "feBlend", "feColorMatrix", "feComponentTransfer", "feComposite",
+    "feConvolveMatrix", "feDiffuseLighting", "feDisplacementMap", "feDistantLight", "feDropShadow",
+    "feFlood", "feFuncA", "feFuncB", "feFuncG", "feFuncR", "feGaussianBlur", "feImage", "feMerge",
+    "feMergeNode", "feMorphology", "feOffset", "fePointLight", "feSpecularLighting", "feSpotLight",
+    "feTile", "feTurbulence", "filter", "foreignObject", "g", "image", "line", "linearGradient",
+    "marker", "mask", "metadata", "mpath", "path", "pattern", "polygon", "polyline",
+    "radialGradient", "rect", "script", "set", "stop", "style", "svg", "switch", "symbol", "text",
+    "textPath", "title", "tspan", "use", "view",
+};
+
+pub const VUE_RESERVED_KEBAB_CASE_ELEMENTS: Set<&'static str> = phf_set! {
+    "annotation-xml", "color-profile", "font-face", "font-face-src", "font-face-uri",
+    "font-face-format", "font-face-name", "missing-glyph",
+};
+
+pub const VUE2_BUILTIN_COMPONENT_NAMES: Set<&'static str> = phf_set! {
+    "template", "slot", "component", "Component", "transition", "Transition", "transition-group",
+    "TransitionGroup", "keep-alive", "KeepAlive",
+};
+
+pub const VUE3_BUILTIN_COMPONENT_NAMES_EXTRA: Set<&'static str> = phf_set! {
+    "teleport", "Teleport", "suspense", "Suspense",
+};
 
 /// Check if any of the other contexts has a default export with the `name` property.
 ///

@@ -480,6 +480,16 @@ export interface OxlintOverride {
    */
   env?: OxlintEnv;
   /**
+   * A list of glob patterns to exclude from this override.
+   *
+   * Files matching these patterns are not globally ignored; this override
+   * simply does not apply to them.
+   *
+   * ## Example
+   * `[ "*.generated.ts", "fixtures/**" ]`
+   */
+  excludeFiles?: GlobSet;
+  /**
    * A list of glob patterns to override.
    *
    * ## Example
@@ -993,6 +1003,7 @@ export interface DummyRuleMap {
   "typescript/explicit-function-return-type"?: DummyRule;
   "typescript/explicit-member-accessibility"?: DummyRule;
   "typescript/explicit-module-boundary-types"?: DummyRule;
+  "typescript/method-signature-style"?: DummyRule;
   "typescript/no-array-delete"?: DummyRule;
   "typescript/no-base-to-string"?: DummyRule;
   "typescript/no-confusing-non-null-assertion"?: DummyRule;
@@ -1311,12 +1322,18 @@ export interface DummyRuleMap {
   "vue/no-lifecycle-after-await"?: DummyRule;
   "vue/no-multiple-slot-args"?: DummyRule;
   "vue/no-required-prop-with-default"?: DummyRule;
+  "vue/no-reserved-component-names"?: DummyRule;
+  "vue/no-reserved-keys"?: DummyRule;
+  "vue/no-reserved-props"?: DummyRule;
   "vue/no-shared-component-data"?: DummyRule;
   "vue/no-this-in-before-route-enter"?: DummyRule;
   "vue/no-watch-after-await"?: DummyRule;
   "vue/prefer-import-from-vue"?: DummyRule;
+  "vue/prop-name-casing"?: DummyRule;
   "vue/require-default-export"?: DummyRule;
+  "vue/require-direct-export"?: DummyRule;
   "vue/require-prop-type-constructor"?: DummyRule;
+  "vue/require-prop-types"?: DummyRule;
   "vue/require-render-return"?: DummyRule;
   "vue/require-slots-as-functions"?: DummyRule;
   "vue/require-typed-ref"?: DummyRule;

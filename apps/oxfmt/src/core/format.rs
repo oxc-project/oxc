@@ -6,9 +6,8 @@ use tracing::instrument;
 
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter::{Formatter, JsFormatOptions, enable_jsx_source_type, get_parse_options};
+use oxc_formatter::JsFormatOptions;
 use oxc_formatter_json::JsonFormatOptions;
-use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -287,16 +286,7 @@ impl SourceFormatter {
         format_options: JsFormatOptions,
         #[cfg(feature = "napi")] config: &FormatConfig,
     ) -> Result<String, OxcDiagnostic> {
-        let source_type = enable_jsx_source_type(source_type);
         let allocator = self.allocator_pool.get();
-
-        let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(get_parse_options())
-            .parse();
-        if !ret.errors.is_empty() {
-            // Return the first error for simplicity
-            return Err(ret.errors.into_iter().next().unwrap());
-        }
 
         #[cfg(feature = "napi")]
         let external_callbacks = Some(self.build_external_callbacks(&format_options, config, path));
@@ -306,9 +296,13 @@ impl SourceFormatter {
             None
         };
 
-        let base_formatter = Formatter::new(&allocator, format_options);
-        let formatted =
-            base_formatter.format_with_external_callbacks(&ret.program, external_callbacks);
+        let formatted = oxc_formatter::format(
+            &allocator,
+            source_text,
+            source_type,
+            format_options,
+            external_callbacks,
+        )?;
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
