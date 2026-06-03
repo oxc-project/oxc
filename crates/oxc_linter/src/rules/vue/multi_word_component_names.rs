@@ -47,6 +47,7 @@ pub struct MultiWordComponentNames(Box<MultiWordComponentNamesConfig>);
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct MultiWordComponentNamesConfig {
+    /// Component names to allow.
     ignores: Vec<String>,
 }
 
