@@ -31,6 +31,7 @@ tasks/coverage/node-compat-table/
 tasks/prettier_conformance/prettier/
 
 # Ignore accidental files from the root
+/.envrc.local
 /*.js
 /*.jsx
 /*.ts

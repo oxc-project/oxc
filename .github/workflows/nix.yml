@@ -1,0 +1,93 @@
+name: Nix
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - ".github/workflows/nix.yml"
+      - ".envrc"
+      - "flake.lock"
+      - "flake.nix"
+      - "shell.nix"
+      - "rust-toolchain.toml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "apps/**"
+      - "crates/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/nix.yml"
+      - ".envrc"
+      - "flake.lock"
+      - "flake.nix"
+      - "shell.nix"
+      - "rust-toolchain.toml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "apps/**"
+      - "crates/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  evaluate:
+    name: Evaluate all systems
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+
+      - name: Check flake outputs
+        run: nix flake check --no-build --all-systems
+
+      - name: Check shell.nix
+        run: nix-shell --run "rustc --version"
+
+  build:
+    name: Build ${{ matrix.system }}
+    needs: evaluate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: x86_64-linux
+            os: ubuntu-latest
+          - system: aarch64-linux
+            os: ubuntu-24.04-arm
+          - system: x86_64-darwin
+            os: macos-15-intel
+          - system: aarch64-darwin
+            os: macos-15
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+
+      - name: Confirm runner system
+        run: |
+          actual="$(nix eval --raw --impure --expr builtins.currentSystem)"
+          if [ "$actual" != "${{ matrix.system }}" ]; then
+            echo "Expected ${{ matrix.system }}, got $actual" >&2
+            exit 1
+          fi
+
+      - name: Build packages
+        run: |
+          nix build \
+            ".#packages.${{ matrix.system }}.oxcfmt" \
+            ".#packages.${{ matrix.system }}.oxclint" \
+            --no-link
+
+      - name: Smoke test apps
+        run: |
+          nix run ".#apps.${{ matrix.system }}.oxcfmt" -- --version
+          nix run ".#apps.${{ matrix.system }}.oxclint" -- --version
