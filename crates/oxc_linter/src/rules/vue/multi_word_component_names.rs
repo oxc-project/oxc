@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression},
+    ast::{
+        Argument, CallExpression, ExportDefaultDeclarationKind, Expression, NewExpression,
+        ObjectExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -13,6 +16,7 @@ use oxc_semantic::Semantic;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
@@ -100,63 +104,67 @@ impl Rule for MultiWordComponentNames {
         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        let semantic = ctx.semantic();
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let is_script_setup = ctx.frameworks_options() == FrameworkOptions::VueSetup;
-        let mut has_name = false;
-        let mut has_vue = is_script_setup;
-
-        // Visit current sub-host (the one whose context we report on).
-        for node in semantic.nodes() {
-            match node.kind() {
-                AstKind::ObjectExpression(obj) if is_vue_component_options_object(node, ctx) => {
-                    has_vue = true;
-                    if let Some(prop) = find_property(obj, "name") {
-                        has_name = true;
-                        validate_value(ctx, &prop.value, &self.ignores);
-                    }
+        match node.kind() {
+            AstKind::ObjectExpression(obj) => {
+                if !is_vue_component_options_object(node, ctx) {
+                    return;
                 }
-                AstKind::CallExpression(call) => {
-                    if is_dot_component_call(call) {
-                        has_vue = true;
-                        if call.arguments.len() == 2
-                            && let Some(arg) = call.arguments.first()
-                        {
-                            has_name = true;
-                            validate_argument(ctx, arg, &self.ignores);
-                        }
-                    } else if is_script_setup
-                        && is_define_options_call(call)
-                        && let Some(Argument::ObjectExpression(obj)) = call.arguments.first()
-                    {
-                        has_vue = true;
-                        if let Some(prop) = find_property(obj, "name") {
-                            has_name = true;
-                            validate_value(ctx, &prop.value, &self.ignores);
-                        }
-                    }
+                if let Some(prop) = find_property(obj, "name") {
+                    validate_value(ctx, &prop.value, &self.ignores);
                 }
-                _ => {}
             }
+            AstKind::CallExpression(call) => {
+                if is_dot_component_call(call)
+                    && call.arguments.len() == 2
+                    && let Some(arg) = call.arguments.first()
+                {
+                    validate_argument(ctx, arg, &self.ignores);
+                } else if is_script_setup
+                    && is_define_options_call(call)
+                    && let Some(Argument::ObjectExpression(obj)) = call.arguments.first()
+                    && let Some(prop) = find_property(obj, "name")
+                {
+                    validate_value(ctx, &prop.value, &self.ignores);
+                }
+            }
+            _ => {}
         }
+    }
 
+    fn run_once(&self, ctx: &LintContext) {
         // Filename fallback only runs once per file, on the first sub-host.
         if !ctx.is_first_sub_host() {
             return;
         }
 
+        let path = ctx.file_path();
+        if path.extension().and_then(|ext| ext.to_str()) != Some("vue") {
+            return;
+        }
+
+        let semantic = ctx.semantic();
+        let is_script_setup = ctx.frameworks_options() == FrameworkOptions::VueSetup;
+        let mut has_name = false;
+        let mut has_vue = is_script_setup;
         let mut body_count = semantic.nodes().program().body.len();
 
-        // Collect state from other script blocks. `is_vue_component_options_object` ties to
-        // the current `LintContext`, so a lightweight handwritten check is used for other hosts.
-        for other in ctx.other_file_hosts() {
-            let other_setup = other.framework_options() == FrameworkOptions::VueSetup;
-            if other_setup {
-                has_vue = true;
+        collect_state(semantic, is_script_setup, &mut has_name, &mut has_vue);
+
+        if !has_name {
+            for other in ctx.other_file_hosts() {
+                let other_setup = other.framework_options() == FrameworkOptions::VueSetup;
+                if other_setup {
+                    has_vue = true;
+                }
+                let other_semantic = other.semantic();
+                body_count += other_semantic.nodes().program().body.len();
+                collect_state(other_semantic, other_setup, &mut has_name, &mut has_vue);
+                if has_name {
+                    break;
+                }
             }
-            let other_semantic = other.semantic();
-            body_count += other_semantic.nodes().program().body.len();
-            collect_state_from_other(other_semantic, other_setup, &mut has_name, &mut has_vue);
         }
 
         if has_name {
@@ -168,10 +176,6 @@ impl Rule for MultiWordComponentNames {
             return;
         }
 
-        let path = ctx.file_path();
-        if path.extension().and_then(|ext| ext.to_str()) != Some("vue") {
-            return;
-        }
         let Some(file_stem) = path.file_stem().and_then(|s| s.to_str()) else {
             return;
         };
@@ -186,7 +190,12 @@ impl Rule for MultiWordComponentNames {
     }
 }
 
-fn collect_state_from_other(
+// Aggregates `has_name` / `has_vue` over `semantic.nodes()` for filename
+// fallback only. Violation reporting is handled via the main `fn run` lane
+// (`AstKind::ObjectExpression` / `AstKind::CallExpression` matches), which
+// piggybacks on the linter's shared node walk. This helper is intentionally
+// independent of `LintContext` so it can be reused for `other_file_hosts()`.
+fn collect_state(
     semantic: &Semantic<'_>,
     is_script_setup: bool,
     has_name: &mut bool,
@@ -205,29 +214,72 @@ fn collect_state_from_other(
                     _ => None,
                 };
                 if let Some(obj) = obj {
-                    *has_vue = true;
-                    if find_property(obj, "name").is_some() {
-                        *has_name = true;
-                    }
+                    record_options_object(obj, has_name, has_vue);
+                }
+            }
+            AstKind::NewExpression(new_expr) => {
+                if let Some(obj) = new_vue_options_object(new_expr) {
+                    record_options_object(obj, has_name, has_vue);
                 }
             }
             AstKind::CallExpression(call) => {
                 if is_dot_component_call(call) && call.arguments.len() == 2 {
                     *has_vue = true;
                     *has_name = true;
+                } else if let Some(obj) = dot_vue_definition_object(call) {
+                    record_options_object(obj, has_name, has_vue);
+                } else if let Some(obj) = identifier_vue_definition_object(call) {
+                    record_options_object(obj, has_name, has_vue);
                 } else if is_script_setup
                     && is_define_options_call(call)
                     && let Some(Argument::ObjectExpression(obj)) = call.arguments.first()
                 {
-                    *has_vue = true;
-                    if find_property(obj, "name").is_some() {
-                        *has_name = true;
-                    }
+                    record_options_object(obj, has_name, has_vue);
                 }
             }
             _ => {}
         }
     }
+}
+
+fn record_options_object(obj: &ObjectExpression<'_>, has_name: &mut bool, has_vue: &mut bool) {
+    *has_vue = true;
+    if find_property(obj, "name").is_some() {
+        *has_name = true;
+    }
+}
+
+fn new_vue_options_object<'a, 'b>(
+    new_expr: &'b NewExpression<'a>,
+) -> Option<&'b ObjectExpression<'a>> {
+    let Expression::Identifier(callee) = &new_expr.callee else {
+        return None;
+    };
+    if callee.name != "Vue" {
+        return None;
+    }
+    new_expr.arguments.first().and_then(extract_object_argument)
+}
+
+fn dot_vue_definition_object<'a, 'b>(
+    call: &'b CallExpression<'a>,
+) -> Option<&'b ObjectExpression<'a>> {
+    let Expression::StaticMemberExpression(member) = &call.callee else {
+        return None;
+    };
+    if !matches!(member.property.name.as_str(), "mixin" | "extend") {
+        return None;
+    }
+    call.arguments.last().and_then(extract_object_argument)
+}
+
+fn identifier_vue_definition_object<'a, 'b>(
+    call: &'b CallExpression<'a>,
+) -> Option<&'b ObjectExpression<'a>> {
+    if !is_vue_definition_call(call) {
+        return None;
+    }
+    call.arguments.last().and_then(extract_object_argument)
 }
 
 fn extract_object_argument<'a, 'b>(arg: &'b Argument<'a>) -> Option<&'b ObjectExpression<'a>> {
