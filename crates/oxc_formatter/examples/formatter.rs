@@ -77,14 +77,12 @@ fn main() -> Result<(), String> {
     if show_diff {
         // First diff: compare formatted output to original input
         if source_text == formatted_code {
-            println!("{formatted_code}");
+            print!("{formatted_code}");
         } else {
             print_diff_in_terminal(&source_text, &formatted_code);
         }
     } else {
-        // println!("--- Formatted Code ---");
-        // println!("{formatted_code}");
-        // println!("--- End Formatted Code ---");
+        print!("{formatted_code}");
     }
 
     Ok(())
