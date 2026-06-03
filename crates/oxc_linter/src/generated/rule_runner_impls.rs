@@ -4989,9 +4989,8 @@ impl RuleRunner for crate::rules::vue::max_props::MaxProps {
 }
 
 impl RuleRunner for crate::rules::vue::multi_word_component_names::MultiWordComponentNames {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::Program]));
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::vue::no_arrow_functions_in_watch::NoArrowFunctionsInWatch {
