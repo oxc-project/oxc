@@ -4,14 +4,17 @@ use oxc_allocator::StringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
     Buffer, Format, SourceText,
-    builders::{empty_line, expand_parent, hard_line_break, space, text},
+    builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
     util::is_suppression_marker,
     write,
 };
 use oxc_span::Span;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
-use crate::{context::JsonFormatContext, print::JsonFormatter};
+use crate::{
+    context::JsonFormatContext,
+    print::{JsonFormatter, format_with},
+};
 
 /// Cursor over a sorted comment list that hands out unprinted slices in span order.
 ///
@@ -166,11 +169,21 @@ pub fn write_trailing_inside_comments(
     let source = f.context().source_text();
     let mut prev_end = lower_bound;
     for comment in comments {
-        write_gap(source.bytes_range(prev_end, comment.span.start), f);
-        write_single_comment(comment, f);
-        // To prevent `[a, // this comment breaks -> ]`
+        let gap = source.bytes_range(prev_end, comment.span.start);
         if comment.is_line() {
-            write!(f, expand_parent());
+            // Defer a trailing line comment to the `line_suffix()`,
+            // so its width is not counted toward the `fits` measurement of the preceding group
+            // (mirrors `oxc_formatter`'s `FormatTrailingComments`).
+            // `expand_parent()` keeps the enclosing container multi-line,
+            // so `[a, // comment -> ]` doesn't collapse.
+            let content = format_with(move |f: &mut JsonFormatter<'_, '_>| {
+                write_gap(gap, f);
+                write_single_comment(comment, f);
+            });
+            write!(f, [line_suffix(&content), expand_parent()]);
+        } else {
+            write_gap(gap, f);
+            write_single_comment(comment, f);
         }
         prev_end = comment.span.end;
     }
