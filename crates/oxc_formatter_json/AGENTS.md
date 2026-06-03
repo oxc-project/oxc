@@ -10,12 +10,21 @@ Prettier compatible JSON/JSONC/JSON5 formatter (`oxfmt`'s Tier 1 backend), using
 - Parses with `oxc_parser`, not `serde_json`
   - For Prettier, JSON is not spec compliant JSON
   - They are subsets of JS expression syntax, so the comments, unquoted key, etc... are allowed as input
+- A simplified, independent reimplementation that does not share `oxc_formatter`'s code
+  - But JSON is a subset of JS, so `oxc_formatter` (`crates/oxc_formatter/`) is the canonical reference
+  - For layout / comment / blank-line decisions when the simplified version is unclear or diverges from Prettier
 
 ### `JsonVariant`
 
-All variants share lenient parsing (comments, trailing commas, single quotes, unquoted keys all parse regardless of variant).
+- Json
+- Jsonc
+- Json5
+- JsonStringify
 
-What differs is the output formatting. See the doc comments on `JsonVariant` in `src/options.rs` for the per-variant rules.
+All variants share lenient parsing (comments, trailing commas, single quotes, unquoted keys all parse regardless of variant).
+What differs is the output formatting.
+
+See the doc comments on `JsonVariant` in `src/options.rs` for the per-variant rules.
 
 ## Verification
 
