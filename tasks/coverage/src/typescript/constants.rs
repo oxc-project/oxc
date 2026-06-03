@@ -113,7 +113,6 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "1064", // The return type of an async function or method must be the global Promise<T> type. Did you mean to write 'Promise<string>'?
     "1065", // The return type of an async function or method must be the global Promise<T> type.
     "1084", // Invalid 'reference' directive syntax.
-    "1147", // Import declarations in a namespace cannot reference a module.
     "1148", // Cannot use imports, exports, or module augmentations when '--module' is 'none'.
     "1166", // A computed property name in a class property declaration must have a simple literal type or a 'unique symbol' type.
     "1169", // A computed property name in an interface must refer to an expression whose type is a literal type or a 'unique symbol' type.

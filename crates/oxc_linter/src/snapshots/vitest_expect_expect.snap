@@ -67,6 +67,20 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vitest(expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail with implicit defaults', () => request.post().send().expect(457));
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail with explicit defaults', () => request.put().send().expect(458));
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
  1 │ test('should fail', () => tester.request(123));
    · ────
    ╰────

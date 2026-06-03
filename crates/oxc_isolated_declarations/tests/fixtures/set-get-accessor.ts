@@ -18,6 +18,9 @@ class Cls {
   accessor d: string;
   private accessor e: string;
   private static accessor f: string;
+  accessor g!: string;
+  private accessor h!: string;
+  public accessor i!: string;
 }
 
 // Incorrect
@@ -65,5 +68,3 @@ class GlobalSymbol4 {
     return GlobalSymbol4;
   }
 }
-
-

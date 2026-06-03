@@ -1171,7 +1171,7 @@ fn test() {
         (
             "
                             /** @abstract */
-                            { declare let a; }
+                            declare namespace b { let a; }
                           ",
             Some(serde_json::json!([
               {
@@ -1182,9 +1182,9 @@ fn test() {
         ),
         (
             "
-                            function test() {
+                            declare namespace test {
                               /** @abstract */
-                              declare let a;
+                              let a;
                             }
                           ",
             Some(serde_json::json!([

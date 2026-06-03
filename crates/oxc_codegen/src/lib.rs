@@ -56,7 +56,7 @@ pub struct CodegenReturn {
     ///
     /// You must set [`CodegenOptions::source_map_path`] for this to be [`Some`].
     #[cfg(feature = "sourcemap")]
-    pub map: Option<oxc_sourcemap::SourceMap>,
+    pub map: Option<oxc_sourcemap::OwnedSourceMap>,
 
     /// All the legal comments returned from [LegalComment::Linked] or [LegalComment::External].
     pub legal_comments: Vec<Comment>,
@@ -991,6 +991,31 @@ impl<'a> Codegen<'a> {
     #[inline]
     #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping_end(&mut self, _span: Span) {}
+
+    /// A postfix operand ending in `)` or `]` (a call or index result) leaves no
+    /// trailing identifier for a source-map consumer to anchor on, so the chain
+    /// punctuation after it (`.`/`[`/`(`/`` ` ``) would be unmapped and V8 would
+    /// resolve the stack frame one column too far left — the off-by-one in
+    /// `f(a)(b)` and `expect(x).resolves`. Map that punctuation back to the
+    /// operand's `span.end`. Called from `print_expr`, mirroring how Babel and TSC
+    /// give every node a trailing end-mapping. Synthesized nodes whose `span.end`
+    /// has no source byte are skipped.
+    #[cfg(feature = "sourcemap")]
+    fn add_source_mapping_after_postfix(&mut self, span: Span, precedence: Precedence) {
+        if precedence == Precedence::Postfix
+            && let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+            && matches!(self.code.as_bytes().last(), Some(b')' | b']'))
+            && self.source_text.is_none_or(|src| (span.end as usize) < src.len())
+        {
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+        }
+    }
+
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
+    fn add_source_mapping_after_postfix(&mut self, _span: Span, _precedence: Precedence) {}
 
     #[cfg(feature = "sourcemap")]
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {

@@ -1496,8 +1496,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ));
         }
         self.expect(Kind::RBrack);
-        if params.len() != 1 {
-            self.error(diagnostics::index_signature_one_parameter(self.end_span(span)));
+        match params.as_slice() {
+            [param] => match &param.type_annotation.type_annotation {
+                TSType::TSLiteralType(ty) => {
+                    self.error(diagnostics::index_signature_parameter_literal_type(ty.span));
+                }
+                TSType::TSStringKeyword(_)
+                | TSType::TSNumberKeyword(_)
+                | TSType::TSSymbolKeyword(_)
+                | TSType::TSAnyKeyword(_) => {}
+                ty if ty.is_keyword() => {
+                    self.error(diagnostics::index_signature_parameter_type(param.span));
+                }
+                _ => {}
+            },
+            _ => self.error(diagnostics::index_signature_one_parameter(self.end_span(span))),
         }
         let Some(type_annotation) = self.parse_ts_type_annotation() else {
             return self

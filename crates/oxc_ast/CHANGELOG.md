@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.134.0] - 2026-06-01
+
+### 🚀 Features
+
+- 9c71f2e ast, codegen, formatter: Add `WithClauseKeyword::as_str` helper and use it (#22791) (camc314)
+
 ## [0.128.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES

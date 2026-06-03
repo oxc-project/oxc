@@ -1,0 +1,42 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  // prettier-ignore
+  "with_line_marker": [1,2,3],
+
+  /* prettier-ignore */
+  "with_block_marker": {"a":1,"b":2},
+
+  "sibling_formats_normally": true
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  // prettier-ignore
+  "with_line_marker": [1,2,3],
+
+  /* prettier-ignore */
+  "with_block_marker": {"a":1,"b":2},
+
+  "sibling_formats_normally": true
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  // prettier-ignore
+  "with_line_marker": [1,2,3],
+
+  /* prettier-ignore */
+  "with_block_marker": {"a":1,"b":2},
+
+  "sibling_formats_normally": true
+}
+
+===================== End =====================

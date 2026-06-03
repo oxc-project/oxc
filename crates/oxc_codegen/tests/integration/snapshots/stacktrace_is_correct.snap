@@ -112,7 +112,7 @@ obj.fn()();
 
 Error
     at fn2 (/project/input.js:5:19)
-    at <anonymous> (/project/input.js:9:8)
+    at <anonymous> (/project/input.js:9:9)
 
 ------------------------------------------------------
 ## Input
@@ -143,7 +143,7 @@ obj.fn([1])();
 
 Error
     at <anonymous> (/project/input.js:5:19)
-    at <anonymous> (/project/input.js:9:11)
+    at <anonymous> (/project/input.js:9:12)
 
 ------------------------------------------------------
 ## Input
@@ -172,7 +172,7 @@ factory()();
 
 Error
     at <anonymous> (/project/input.js:4:15)
-    at <anonymous> (/project/input.js:7:9)
+    at <anonymous> (/project/input.js:7:10)
 
 ------------------------------------------------------
 ## Input
@@ -205,7 +205,7 @@ obj.fn({ a })();
 
 Error
     at <anonymous> (/project/input.js:6:19)
-    at <anonymous> (/project/input.js:10:11)
+    at <anonymous> (/project/input.js:10:12)
 
 ------------------------------------------------------
 ## Input
@@ -235,3 +235,30 @@ fn("name", () => {
 Error
     at <anonymous> (/project/input.js:6:11)
     at fn (/project/input.js:2:5)
+
+------------------------------------------------------
+## Input
+const make = () => ({
+    get prop() {
+        Error.stackTraceLimit = 2;
+        throw new Error()
+    }
+})
+make().prop
+
+## Output
+const make = () => ({ get prop() {
+	Error.stackTraceLimit = 2;
+	throw new Error();
+} });
+make().prop;
+
+
+## Stderr
+/project/input.js:4
+        throw new Error()
+              ^
+
+Error
+    at Object.get prop (/project/input.js:4:15)
+    at <anonymous> (/project/input.js:7:7)

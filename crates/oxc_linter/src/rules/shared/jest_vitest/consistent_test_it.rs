@@ -1,12 +1,11 @@
 use std::borrow::Cow;
 
-use oxc_ast::{AstKind, ast::Expression};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::ScopeId;
-use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_ast::{AstKind, ast::Expression};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -125,12 +124,12 @@ impl ConsistentTestItConfig {
     }
 
     pub fn run_once(self, ctx: &LintContext) {
-        let mut describe_nesting_hash: FxHashMap<ScopeId, i32> = FxHashMap::default();
+        let mut describe_stack = vec![];
         let mut possible_jest_nodes = collect_possible_jest_call_node(ctx);
         possible_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in &possible_jest_nodes {
-            self.run(&mut describe_nesting_hash, possible_jest_node, ctx);
+            self.run(&mut describe_stack, possible_jest_node, ctx);
         }
     }
 }
@@ -138,11 +137,16 @@ impl ConsistentTestItConfig {
 impl ConsistentTestItConfig {
     fn run<'a>(
         self,
-        describe_nesting_hash: &mut FxHashMap<ScopeId, i32>,
+        describe_stack: &mut Vec<Span>,
         possible_jest_node: &PossibleJestNode<'a, '_>,
         ctx: &LintContext<'a>,
     ) {
         let node = possible_jest_node.node;
+        let node_span = node.span();
+        while describe_stack.last().is_some_and(|span| !span.contains_inclusive(node_span)) {
+            describe_stack.pop();
+        }
+
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -153,16 +157,15 @@ impl ConsistentTestItConfig {
         };
 
         if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
-            let scope_id = node.scope_id();
-            let current_count = describe_nesting_hash.get(&scope_id).unwrap_or(&0);
-            describe_nesting_hash.insert(scope_id, *current_count + 1);
+            describe_stack.push(node_span);
             return;
         }
 
         let is_test = matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test));
+        let is_within_describe = !describe_stack.is_empty();
         let fn_to_str = self.r#fn.as_str();
 
-        if is_test && describe_nesting_hash.is_empty() && !jest_fn_call.name.ends_with(&fn_to_str) {
+        if is_test && !is_within_describe && !jest_fn_call.name.ends_with(&fn_to_str) {
             let opposite_test_keyword = Self::get_opposite_test_case(self.r#fn);
             if let Some((span, prefer_test_name)) = Self::get_prefer_test_name_and_span(
                 call_expr.callee.get_inner_expression(),
@@ -178,10 +181,7 @@ impl ConsistentTestItConfig {
 
         let describe_to_str = self.within_describe.as_str();
 
-        if is_test
-            && !describe_nesting_hash.is_empty()
-            && !jest_fn_call.name.ends_with(&describe_to_str)
-        {
+        if is_test && is_within_describe && !jest_fn_call.name.ends_with(&describe_to_str) {
             let opposite_test_keyword = Self::get_opposite_test_case(self.within_describe);
             if let Some((span, prefer_test_name)) = Self::get_prefer_test_name_and_span(
                 call_expr.callee.get_inner_expression(),

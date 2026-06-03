@@ -142,7 +142,11 @@ impl<'a> Minifier {
             .options
             .mangle
             .map(|options| {
-                let mut semantic = SemanticBuilder::new().with_stats(stats).build(program).semantic;
+                let mut semantic = SemanticBuilder::new()
+                    .with_stats(stats)
+                    .with_class_table(true)
+                    .build(program)
+                    .semantic;
                 let class_private_mappings = Mangler::default()
                     .with_options(options)
                     .build_with_semantic(&mut semantic, program);

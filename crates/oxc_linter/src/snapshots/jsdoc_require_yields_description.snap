@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsdoc(require-yields-description): Missing JSDoc `@yields` description.
+   ╭─[require_yields_description.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @yields
+   ·                        ───────
+ 4 │                      */
+   ╰────
+  help: Add description comment to `@yields` tag.
+
+  ⚠ jsdoc(require-yields-description): Missing JSDoc `@yields` description.
+   ╭─[require_yields_description.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @yield
+   ·                        ──────
+ 4 │                      */
+   ╰────
+  help: Add description comment to `@yields` tag.
+
+  ⚠ jsdoc(require-yields-description): Missing JSDoc `@yields` description.
+   ╭─[require_yields_description.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @yields {SomeType}
+   ·                        ───────
+ 4 │                      */
+   ╰────
+  help: Add description comment to `@yields` tag.
+
+  ⚠ jsdoc(require-yields-description): Missing JSDoc `@yields` description.
+   ╭─[require_yields_description.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @yield {SomeType}
+   ·                        ──────
+ 4 │                      */
+   ╰────
+  help: Add description comment to `@yields` tag.
+
+  ⚠ jsdoc(require-yields-description): Missing JSDoc `@yields` description.
+   ╭─[require_yields_description.tsx:3:24]
+ 2 │                     /**
+ 3 │                      * @yields {T}   
+   ·                        ───────
+ 4 │                      */
+   ╰────
+  help: Add description comment to `@yields` tag.

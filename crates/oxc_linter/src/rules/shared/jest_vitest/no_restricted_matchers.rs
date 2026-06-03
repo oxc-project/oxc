@@ -3,6 +3,7 @@ use std::path::Path;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
+use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -11,7 +12,7 @@ use crate::{
     context::LintContext,
     utils::{
         JestFnKind, KnownMemberExpressionProperty, PossibleJestNode, is_type_of_jest_fn_call,
-        parse_expect_jest_fn_call,
+        object_with_nullable_string_schema, parse_expect_jest_fn_call,
     },
 };
 
@@ -86,12 +87,14 @@ describe('when an error happens', () => {
 "#;
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRestrictedMatchersConfig {
     /// A map of restricted matchers/modifiers to custom messages.
     /// The key is the matcher/modifier name (e.g., "toBeFalsy", "resolves", "not.toHaveBeenCalledWith").
     /// The value is an optional custom message to display when the matcher/modifier is used.
-    pub restricted_matchers: FxHashMap<String, String>,
+    #[schemars(schema_with = "object_with_nullable_string_schema")]
+    #[serde(flatten)]
+    pub restricted_matchers: FxHashMap<String, Option<CompactStr>>,
 }
 
 const MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];
@@ -139,10 +142,10 @@ impl NoRestrictedMatchersConfig {
 
         for (restriction, message) in &self.restricted_matchers {
             if Self::check_restriction(chain_call.as_str(), restriction.as_str()) {
-                if message.is_empty() {
-                    ctx.diagnostic(restricted_chain(&chain_call, span));
-                } else {
+                if let Some(message) = message {
                     ctx.diagnostic(restricted_chain_with_message(&chain_call, message, span));
+                } else {
+                    ctx.diagnostic(restricted_chain(&chain_call, span));
                 }
             }
         }
@@ -160,12 +163,10 @@ impl NoRestrictedMatchersConfig {
 
     pub fn compile_restricted_matchers(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> FxHashMap<String, String> {
+    ) -> FxHashMap<String, Option<CompactStr>> {
         matchers
             .iter()
-            .map(|(key, value)| {
-                (String::from(key), String::from(value.as_str().unwrap_or_default()))
-            })
+            .map(|(key, value)| (String::from(key), value.as_str().map(CompactStr::from)))
             .collect()
     }
 }
