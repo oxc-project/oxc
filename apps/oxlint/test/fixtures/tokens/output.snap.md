@@ -10,6 +10,12 @@
    : ^
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify includes loc: true
+   ,-[files/bom.js:1:4]
+ 1 | ﻿a = b;
+   : ^
+   `----
+
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Identifier",
@@ -31,6 +37,12 @@
   |     }
   |   }
   | }
+   ,-[files/bom.js:1:4]
+ 1 | ﻿a = b;
+   : ^
+   `----
+
+  x tokens-plugin(tokens): Token spread includes loc: true
    ,-[files/bom.js:1:4]
  1 | ﻿a = b;
    : ^
@@ -343,6 +355,14 @@
  3 | 
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify includes loc: true
+   ,-[files/escaped_idents.js:2:1]
+ 1 | // abc
+ 2 | var \u{61}b\u0063;
+   : ^^^
+ 3 | 
+   `----
+
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
@@ -364,6 +384,14 @@
   |     }
   |   }
   | }
+   ,-[files/escaped_idents.js:2:1]
+ 1 | // abc
+ 2 | var \u{61}b\u0063;
+   : ^^^
+ 3 | 
+   `----
+
+  x tokens-plugin(tokens): Token spread includes loc: true
    ,-[files/escaped_idents.js:2:1]
  1 | // abc
  2 | var \u{61}b\u0063;
@@ -1097,6 +1125,13 @@
  2 |   fn: <T>(arg: T): T => {
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify includes loc: true
+   ,-[files/generic_arrow.ts:1:1]
+ 1 | const obj = {
+   : ^^^^^
+ 2 |   fn: <T>(arg: T): T => {
+   `----
+
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
@@ -1118,6 +1153,13 @@
   |     }
   |   }
   | }
+   ,-[files/generic_arrow.ts:1:1]
+ 1 | const obj = {
+   : ^^^^^
+ 2 |   fn: <T>(arg: T): T => {
+   `----
+
+  x tokens-plugin(tokens): Token spread includes loc: true
    ,-[files/generic_arrow.ts:1:1]
  1 | const obj = {
    : ^^^^^
@@ -1534,6 +1576,14 @@
  4 | 
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify includes loc: true
+   ,-[files/index.js:3:1]
+ 2 | 
+ 3 | let x = /* inline comment */ 1;
+   : ^^^
+ 4 | 
+   `----
+
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
@@ -1555,6 +1605,14 @@
   |     }
   |   }
   | }
+   ,-[files/index.js:3:1]
+ 2 | 
+ 3 | let x = /* inline comment */ 1;
+   : ^^^
+ 4 | 
+   `----
+
+  x tokens-plugin(tokens): Token spread includes loc: true
    ,-[files/index.js:3:1]
  2 | 
  3 | let x = /* inline comment */ 1;
@@ -1674,6 +1732,13 @@
  2 |   return <div className="test">Hello</div>;
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify includes loc: true
+   ,-[files/jsx_element.tsx:1:1]
+ 1 | const Component = () => {
+   : ^^^^^
+ 2 |   return <div className="test">Hello</div>;
+   `----
+
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
@@ -1695,6 +1760,13 @@
   |     }
   |   }
   | }
+   ,-[files/jsx_element.tsx:1:1]
+ 1 | const Component = () => {
+   : ^^^^^
+ 2 |   return <div className="test">Hello</div>;
+   `----
+
+  x tokens-plugin(tokens): Token spread includes loc: true
    ,-[files/jsx_element.tsx:1:1]
  1 | const Component = () => {
    : ^^^^^
@@ -2015,6 +2087,13 @@
  2 |   // Identifier tokens
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify includes loc: true
+   ,-[files/keywords.js:1:1]
+ 1 | const obj = {
+   : ^^^^^
+ 2 |   // Identifier tokens
+   `----
+
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
@@ -2036,6 +2115,13 @@
   |     }
   |   }
   | }
+   ,-[files/keywords.js:1:1]
+ 1 | const obj = {
+   : ^^^^^
+ 2 |   // Identifier tokens
+   `----
+
+  x tokens-plugin(tokens): Token spread includes loc: true
    ,-[files/keywords.js:1:1]
  1 | const obj = {
    : ^^^^^
@@ -2462,6 +2548,14 @@
  3 | 
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify includes loc: true
+   ,-[files/ts_angle_relex.ts:2:1]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | const a = n << 2;
+   : ^^^^^
+ 3 | 
+   `----
+
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Keyword",
@@ -2483,6 +2577,14 @@
   |     }
   |   }
   | }
+   ,-[files/ts_angle_relex.ts:2:1]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | const a = n << 2;
+   : ^^^^^
+ 3 | 
+   `----
+
+  x tokens-plugin(tokens): Token spread includes loc: true
    ,-[files/ts_angle_relex.ts:2:1]
  1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
  2 | const a = n << 2;
@@ -2763,6 +2865,13 @@
  2 | // 😀🤪😆😎🤮
    `----
 
+  x tokens-plugin(tokens): Token JSON.stringify includes loc: true
+   ,-[files/unicode.js:1:1]
+ 1 | a;
+   : ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
   x tokens-plugin(tokens): Token JSON.stringify:
   | {
   |   "type": "Identifier",
@@ -2784,6 +2893,13 @@
   |     }
   |   }
   | }
+   ,-[files/unicode.js:1:1]
+ 1 | a;
+   : ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
+  x tokens-plugin(tokens): Token spread includes loc: true
    ,-[files/unicode.js:1:1]
  1 | a;
    : ^
@@ -2845,7 +2961,7 @@
    :  ^
    `----
 
-Found 0 warnings and 251 errors.
+Found 0 warnings and 267 errors.
 Finished in Xms on 8 files with 1 rules using X threads.
 ```
 

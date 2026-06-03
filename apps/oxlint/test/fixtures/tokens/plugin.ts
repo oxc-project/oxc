@@ -22,6 +22,11 @@ const rule: Rule = {
       assert(range === tokenOrComment.range);
       assert(loc === tokenOrComment.loc);
 
+      // Cloning comment with spread should include `loc` and it should be the same object
+      const clone = { ...tokenOrComment };
+      assert(Object.hasOwn(clone, "loc"));
+      assert(tokenOrComment.loc === clone.loc);
+
       // Check `getRange` and `getLoc` return the same objects too
       assert(sourceCode.getRange(tokenOrComment) === range);
       assert(sourceCode.getLoc(tokenOrComment) === loc);
@@ -94,6 +99,20 @@ const rule: Rule = {
     if (firstToken) {
       context.report({
         message: `Token JSON.stringify:\n${JSON.stringify(firstToken, null, 2)}`,
+        node: firstToken,
+      });
+
+      const clone = { ...firstToken };
+      const cloneHasLoc = Object.hasOwn(clone, "loc") && clone.loc === firstToken.loc;
+      context.report({
+        message: `Token spread includes loc: ${cloneHasLoc}`,
+        node: firstToken,
+      });
+
+      // Check `JSON.stringify` on comment includes `loc`
+      const jsonHasLoc = Object.hasOwn(JSON.parse(JSON.stringify(firstToken)), "loc");
+      context.report({
+        message: `Token JSON.stringify includes loc: ${jsonHasLoc}`,
         node: firstToken,
       });
     }

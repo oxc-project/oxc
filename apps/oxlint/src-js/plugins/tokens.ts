@@ -157,6 +157,17 @@ let deserializedTokensLen = 0;
 // not *total* number of tokens.
 const DESERIALIZED_TOKEN_INDEXES_MIN_CAPACITY = 16;
 
+// `__defineGetter__` bound to `Function.prototype.call` so it can be called without a
+// `Object.prototype` lookup at each call site.
+const defineGetter = Function.prototype.call.bind(
+  // @ts-expect-error - `__defineGetter__` is not in `Object.prototype`'s type definition, but it does exist at runtime and is widely supported in JS engines, including V8.
+  Object.prototype.__defineGetter__,
+) as (obj: object, prop: string, getter: () => unknown) => void;
+
+// Getter for the `loc` property on a `Token` class instance.
+// Copied into a `const` below after being defined in class static block.
+let getTokenLocTemp: (this: Token) => Location;
+
 // Reset `#loc` field on a `Token` class instance.
 // Copied into a `const` below after being defined in class static block.
 let resetLocTemp: (token: Token) => void;
@@ -168,9 +179,14 @@ let getTokenPrivateLoc: (token: Token) => Location | null;
 /**
  * Token implementation with lazy `loc` caching via private field.
  *
- * Using a class with a private `#loc` field avoids hidden class transitions that would occur
- * with `Object.defineProperty` / `delete` on plain objects.
- * All `Token` instances always have the same V8 hidden class, keeping property access monomorphic.
+ * `loc` is defined as an own accessor property via `__defineGetter__` in the constructor,
+ * using a shared getter function (`getTokenLoc`). This makes `loc` an own enumerable property,
+ * so `{...token}` spreads it and `JSON.stringify(token)` serializes it, without needing
+ * a `toJSON()` method.
+ *
+ * The computed `Location` value is cached in the private `#loc` field on first access.
+ * All instances share the same getter function, keeping the V8 hidden class transition
+ * identical across instances. Reset only clears the `#loc` field.
  */
 class Token {
   type: TokenType["type"] = null!; // Overwritten later
@@ -179,36 +195,35 @@ class Token {
   start: number = 0;
   end: number = 0;
   range: [number, number] = [0, 0];
+  declare loc: Location; // Overwritten by __defineGetter__ at construction time
 
   #loc: Location | null = null;
 
-  get loc(): Location {
-    const loc = this.#loc;
-    if (loc !== null) return loc;
-
-    // Store token in `tokensWithLoc` array. `resetTokens` will clear the `#loc` property.
-    // Note: The comparison `activeTokensWithLocCount < tokensWithLoc.length` must be this way around
-    // so that V8 can remove the bounds check on `tokensWithLoc[activeTokensWithLocCount]`.
-    // `tokensWithLoc.length > activeTokensWithLocCount` would *not* remove the bounds check in Maglev compiler.
-    if (activeTokensWithLocCount < tokensWithLoc.length) {
-      tokensWithLoc[activeTokensWithLocCount] = this;
-    } else {
-      tokensWithLoc.push(this);
-    }
-    activeTokensWithLocCount++;
-
-    return (this.#loc = computeLoc(this.start, this.end));
-  }
-
-  // Include `loc` in `JSON.stringify` output.
-  // `loc` is a prototype getter, and `JSON.stringify` only serializes own properties,
-  // so without this method, `loc` would be excluded.
-  toJSON() {
-    // oxlint-disable-next-line typescript/no-misused-spread
-    return { ...this, loc: this.loc };
+  constructor() {
+    // Define `loc` as an own getter property (enumerable + configurable by default).
+    // This makes `{...token}` spread `loc` and `JSON.stringify(token)` serialize it.
+    defineGetter(this, "loc", getTokenLoc);
   }
 
   static {
+    getTokenLocTemp = function (this: Token): Location {
+      const loc = this.#loc;
+      if (loc !== null) return loc;
+
+      // Store token in `tokensWithLoc` array. `resetTokens` will clear the `#loc` property.
+      // Note: The comparison `activeTokensWithLocCount < tokensWithLoc.length` must be this way around
+      // so that V8 can remove the bounds check on `tokensWithLoc[activeTokensWithLocCount]`.
+      // `tokensWithLoc.length > activeTokensWithLocCount` would *not* remove the bounds check in Maglev compiler.
+      if (activeTokensWithLocCount < tokensWithLoc.length) {
+        tokensWithLoc[activeTokensWithLocCount] = this;
+      } else {
+        tokensWithLoc.push(this);
+      }
+      activeTokensWithLocCount++;
+
+      return (this.#loc = computeLoc(this.start, this.end));
+    };
+
     // Defined in static block to avoid exposing this as a public method
     resetLocTemp = (token: Token) => {
       token.#loc = null;
@@ -218,12 +233,9 @@ class Token {
   }
 }
 
-// Reset `#loc` field on a `Token` class instance.
-// Copied into a const here to avoid checks at call site (`let` binding could be re-assigned).
-const resetLoc = resetLocTemp;
-
-// Make `loc` property enumerable so that `for (const key in token) ...` includes `loc` in the keys it iterates over
-Object.defineProperty(Token.prototype, "loc", { enumerable: true });
+// Copied into consts here to avoid checks at call site (`let` binding could be re-assigned).
+const getTokenLoc = getTokenLocTemp!;
+const resetLoc = resetLocTemp!;
 
 // `ESTreeKind` discriminants (set by Rust side)
 const PRIVATE_IDENTIFIER_KIND = 2;
