@@ -147,61 +147,64 @@ fn has_matching_type_alias<'a>(
     if !matches!(import_decl.import_kind, ImportOrExportKind::Value) {
         return false;
     }
-
     let Some(specifiers) = &import_decl.specifiers else { return false };
 
-    // collect import specifier identifiers
-    let import_names: FxHashSet<&str> = specifiers
-        .iter()
-        .map(|specifier| match specifier {
-            ImportDeclarationSpecifier::ImportSpecifier(import_spec) => {
-                import_spec.local.name.as_str()
-            }
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(default_spec) => {
-                default_spec.local.name.as_str()
-            }
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(namespace_spec) => {
-                namespace_spec.local.name.as_str()
-            }
-        })
-        .collect();
+    let import_names: FxHashSet<&str> =
+        specifiers.iter().map(|specifier| specifier.local().name.as_str()).collect();
 
-    ctx.semantic()
-        .nodes()
-        .iter()
-        .filter(|node| matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_)))
-        .any(|node| {
-            if let AstKind::TSTypeAliasDeclaration(decl) = node.kind() {
-                import_names.contains(decl.id.name.as_str())
-            } else {
-                false
+    let scoping = ctx.scoping();
+    let root_scope_id = scoping.root_scope_id();
+    let root_bindings = scoping.get_bindings(root_scope_id);
+
+    for (_, &symbol_id) in root_bindings {
+        for declaration_node_id in scoping.symbol_declarations(symbol_id) {
+            let node = ctx.nodes().get_node(declaration_node_id);
+            if let AstKind::TSTypeAliasDeclaration(decl) = node.kind()
+                && import_names.contains(decl.id.name.as_str())
+            {
+                return true;
             }
-        })
+        }
+    }
+
+    false
 }
 
 fn find_corresponding_export<'a>(
     ctx: &LintContext<'a>,
     import_decl: &'a ImportDeclaration<'a>,
 ) -> Option<&'a ExportNamedDeclaration<'a>> {
-    ctx.semantic().nodes().iter().find_map(|n| {
-        if let AstKind::ExportNamedDeclaration(export_decl) = n.kind()
-            && let Some(ref src) = export_decl.source
-            && src.value == import_decl.source.value
-        {
-            if import_decl.import_kind == export_decl.export_kind {
+    let source = import_decl.source.value.as_str();
+    let program = ctx.nodes().program();
+
+    for stmt in &program.body {
+        let Statement::ExportNamedDeclaration(export_decl) = stmt else {
+            continue;
+        };
+
+        if export_decl.source.is_none() {
+            continue;
+        }
+
+        if export_decl.source.as_ref().unwrap().value.as_str() != source {
+            continue;
+        }
+
+        if import_decl.import_kind == export_decl.export_kind {
+            return Some(export_decl);
+        }
+        if matches!(import_decl.import_kind, ImportOrExportKind::Type) {
+            let all_type = export_decl
+                .specifiers
+                .iter()
+                .all(|s| matches!(s.export_kind, ImportOrExportKind::Type));
+            if all_type {
                 return Some(export_decl);
-            } else if matches!(import_decl.import_kind, ImportOrExportKind::Type) {
-                let specifiers = &export_decl.specifiers;
-                let is_all_type = specifiers
-                    .iter()
-                    .all(|specifier| matches!(specifier.export_kind, ImportOrExportKind::Type));
-                if is_all_type {
-                    return Some(export_decl);
-                }
             }
         }
-        None
-    })
+    }
+
+    None
 }
 
 // Helper function to check if a reference is not in an export statement
