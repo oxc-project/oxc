@@ -25,6 +25,11 @@ pub struct Redeclaration {
     pub span: Span,
     pub declaration: NodeId,
     pub flags: SymbolFlags,
+    /// Whether this declaration is an `async` function and/or a generator.
+    ///
+    /// Read by `check_function_redeclaration` (Annex B.3.3) to classify a previous declaration
+    /// without reading its AST node, which may no longer be reachable.
+    pub is_async_or_generator: bool,
 }
 
 impl CloneIn<'_> for Redeclaration {
@@ -32,7 +37,12 @@ impl CloneIn<'_> for Redeclaration {
 
     #[inline]
     fn clone_in(&self, _allocator: &Allocator) -> Self::Cloned {
-        Self { span: self.span, declaration: NodeId::DUMMY, flags: self.flags }
+        Self {
+            span: self.span,
+            declaration: NodeId::DUMMY,
+            flags: self.flags,
+            is_async_or_generator: self.is_async_or_generator,
+        }
     }
 
     #[inline]
@@ -473,6 +483,8 @@ impl Scoping {
         flags: SymbolFlags,
         declaration: NodeId,
         span: Span,
+        is_async_or_generator: bool,
+        first_declaration_is_async_or_generator: bool,
     ) {
         let is_first_redeclared =
             !self.cell.borrow_dependent().symbol_redeclarations.contains_key(&symbol_id);
@@ -482,10 +494,11 @@ impl Scoping {
             span: self.symbol_span(symbol_id),
             declaration: self.symbol_declaration(symbol_id),
             flags: self.symbol_flags(symbol_id),
+            is_async_or_generator: first_declaration_is_async_or_generator,
         });
 
         self.cell.with_dependent_mut(|allocator, cell| {
-            let redeclaration = Redeclaration { span, declaration, flags };
+            let redeclaration = Redeclaration { span, declaration, flags, is_async_or_generator };
             match cell.symbol_redeclarations.entry(symbol_id) {
                 Entry::Occupied(occupied) => {
                     occupied.into_mut().push(redeclaration);

@@ -72,7 +72,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     if let Some(symbol_id) =
                         builder.check_redeclaration(scope_id, span, name, excludes)
                     {
-                        builder.add_redeclare_variable(symbol_id, includes, span);
+                        builder.add_redeclare_variable(symbol_id, includes, span, false);
                         declared_symbol_id = Some(symbol_id);
 
                         // Hoist current symbol to target scope when it is not already declared
@@ -155,7 +155,13 @@ impl<'a> Binder<'a> for Function<'a> {
                 SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
             };
 
-            let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
+            let symbol_id = builder.declare_function_symbol(
+                ident.span,
+                ident.name,
+                includes,
+                excludes,
+                self.r#async || self.generator,
+            );
             ident.symbol_id.set(Some(symbol_id));
 
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block

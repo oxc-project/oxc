@@ -16,6 +16,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexVec;
 use oxc_span::{SourceType, Span};
 use oxc_str::{Ident, IdentHashMap};
 use oxc_syntax::{
@@ -95,6 +96,11 @@ pub struct SemanticBuilder<'a> {
     pub(crate) nodes: AstNodes<'a>,
     pub(crate) scoping: Scoping,
 
+    /// Build-only scratch (discarded after the build): whether each symbol's declaration is an
+    /// `async`/generator function, indexed by `SymbolId` and kept in sync with symbol creation.
+    /// Read by the redeclaration checks so they needn't reach a previous declaration's node.
+    symbol_is_async_or_generators: IndexVec<SymbolId, bool>,
+
     pub(crate) unresolved_references: UnresolvedReferences<'a>,
     /// Checkpoint for early resolution of function parameter / catch parameter references.
     /// Tracks the start index in the flat unresolved references list.
@@ -159,6 +165,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
             scoping,
+            symbol_is_async_or_generators: IndexVec::new(),
             unresolved_references: UnresolvedReferences::new(),
             unresolved_references_checkpoint: 0,
             unused_labels: UnusedLabels::default(),
@@ -438,20 +445,54 @@ impl<'a> SemanticBuilder<'a> {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
+        self.declare_symbol_on_scope_impl(span, name, scope_id, includes, excludes, false)
+    }
+
+    /// Declare a function symbol, recording whether it is `async`/generator so the redeclaration
+    /// checks can classify it without reading its node.
+    pub(crate) fn declare_function_symbol(
+        &mut self,
+        span: Span,
+        name: Ident<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+        is_async_or_generator: bool,
+    ) -> SymbolId {
+        self.declare_symbol_on_scope_impl(
+            span,
+            name,
+            self.current_scope_id,
+            includes,
+            excludes,
+            is_async_or_generator,
+        )
+    }
+
+    fn declare_symbol_on_scope_impl(
+        &mut self,
+        span: Span,
+        name: Ident<'a>,
+        scope_id: ScopeId,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+        is_async_or_generator: bool,
+    ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes) {
-            self.add_redeclare_variable(symbol_id, includes, span);
+            self.add_redeclare_variable(symbol_id, includes, span, is_async_or_generator);
             self.scoping.union_symbol_flag(symbol_id, includes);
             return symbol_id;
         }
 
-        self.scoping.create_symbol_with_binding(
+        let symbol_id = self.scoping.create_symbol_with_binding(
             span,
             name,
             includes,
             scope_id,
             scope_id,
             self.current_node_id,
-        )
+        );
+        self.record_symbol_is_async_or_generator(symbol_id, is_async_or_generator);
+        symbol_id
     }
 
     /// Declare a new symbol on the current scope.
@@ -525,14 +566,16 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
-        self.scoping.create_symbol_with_binding(
+        let symbol_id = self.scoping.create_symbol_with_binding(
             span,
             name,
             includes,
             self.current_scope_id,
             scope_id,
             self.current_node_id,
-        )
+        );
+        self.record_symbol_is_async_or_generator(symbol_id, false);
+        symbol_id
     }
 
     /// Resolve all collected references by walking up the scope chain from each
@@ -648,13 +691,33 @@ impl<'a> SemanticBuilder<'a> {
         self.unresolved_references.truncate(write_idx);
     }
 
+    /// Record whether a freshly created symbol's declaration is an `async`/generator function,
+    /// in build-only scratch indexed by `SymbolId` (kept in sync with symbol creation).
+    fn record_symbol_is_async_or_generator(
+        &mut self,
+        symbol_id: SymbolId,
+        is_async_or_generator: bool,
+    ) {
+        let index = self.symbol_is_async_or_generators.push(is_async_or_generator);
+        debug_assert_eq!(index, symbol_id);
+    }
+
     pub(crate) fn add_redeclare_variable(
         &mut self,
         symbol_id: SymbolId,
         flags: SymbolFlags,
         span: Span,
+        is_async_or_generator: bool,
     ) {
-        self.scoping.add_symbol_redeclaration(symbol_id, flags, self.current_node_id, span);
+        let first_declaration_is_async_or_generator = self.symbol_is_async_or_generators[symbol_id];
+        self.scoping.add_symbol_redeclaration(
+            symbol_id,
+            flags,
+            self.current_node_id,
+            span,
+            is_async_or_generator,
+            first_declaration_is_async_or_generator,
+        );
     }
 
     fn visit_parameter_decorators(&mut self, decorators: &oxc_allocator::Vec<'a, Decorator<'a>>) {

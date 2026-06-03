@@ -766,8 +766,7 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     } else if !(current_scope_flags.is_strict_mode() || func.r#async || func.generator) {
         // `class a {}; function a() {}` and `async function a() {} function a () {}` are
         // invalid in both strict and non-strict mode.
-        let prev_function = ctx.nodes.kind(prev.declaration).as_function();
-        if prev_function.is_some_and(|func| !(func.r#async || func.generator)) {
+        if prev.flags.contains(SymbolFlags::Function) && !prev.is_async_or_generator {
             return;
         }
     }
