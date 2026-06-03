@@ -1369,10 +1369,13 @@ mod test {
         assert_eq!(parent_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
 
         // Test 3: Child config that extends parent without specifying plugins
-        // Should inherit parent's plugins
+        // Should inherit parent's plugins and apply the default plugins from the child config
         let child_no_plugins_config =
             config_store_from_path("fixtures/extends_config/plugins/child_no_plugins.json");
-        assert_eq!(child_no_plugins_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
+        assert_eq!(
+            child_no_plugins_config.plugins(),
+            LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::OXC | LintPlugins::UNICORN
+        );
 
         // Test 4: Child config that extends parent and specifies additional plugins
         // Should have parent's plugins plus its own
@@ -1432,7 +1435,8 @@ mod test {
                 "extends": [
                     "fixtures/extends_config/plugins/jest.json",
                     "fixtures/extends_config/plugins/react.json"
-                ]
+                ],
+                "plugins": []
             }
             "#,
         );

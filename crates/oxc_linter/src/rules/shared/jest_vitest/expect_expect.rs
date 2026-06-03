@@ -45,7 +45,7 @@ test('should assert something', () => {});
 ```
 ";
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExpectExpectConfig {
     /// A list of function names that should be treated as assertion functions.
     ///

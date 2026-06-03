@@ -27,7 +27,7 @@ fn complexity_diagnostic(span: Span, name: &str, complexity: usize, max: usize) 
 const THRESHOLD_DEFAULT: usize = 20;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ComplexityConfig {
     /// Maximum amount of cyclomatic complexity
     #[serde(alias = "maximum")]
