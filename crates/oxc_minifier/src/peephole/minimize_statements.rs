@@ -726,6 +726,9 @@ impl<'a> PeepholeOptimizations {
                         ),
                     }
                 }
+                if known_bool_symbols.is_empty() {
+                    return;
+                }
                 // A function call only affects constants once it is reachable/executed.
                 // For direct calls to function declarations, kill only symbols that the callee may write.
                 if let Expression::Identifier(callee_ident) = &call_expr.callee
@@ -733,21 +736,14 @@ impl<'a> PeepholeOptimizations {
                         ctx.scoping().get_reference(callee_ident.reference_id()).symbol_id()
                     && let Some(function_scope_id) = function_decl_scopes.get(&callee_symbol_id)
                 {
-                    let mutated = known_bool_symbols
-                        .keys()
-                        .copied()
-                        .filter(|symbol_id| {
-                            Self::function_call_may_write_symbol_cached(
-                                *function_scope_id,
-                                *symbol_id,
-                                function_write_cache,
-                                ctx,
-                            )
-                        })
-                        .collect::<std::vec::Vec<_>>();
-                    for symbol_id in mutated {
-                        known_bool_symbols.remove(&symbol_id);
-                    }
+                    known_bool_symbols.retain(|symbol_id, _| {
+                        !Self::function_call_may_write_symbol_cached(
+                            *function_scope_id,
+                            *symbol_id,
+                            function_write_cache,
+                            ctx,
+                        )
+                    });
                     return;
                 }
                 known_bool_symbols.clear();
