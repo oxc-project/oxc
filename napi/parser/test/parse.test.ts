@@ -689,6 +689,26 @@ describe("parse", () => {
     });
   });
 
+  describe("comments", () => {
+    it("sets comment values after the full marker", () => {
+      const cases = [
+        ["// line\n", { type: "Line", value: " line", start: 0, end: 7 }],
+        ["/* block */", { type: "Block", value: " block ", start: 0, end: 11 }],
+        ["/* multi\nline */", { type: "Block", value: " multi\nline ", start: 0, end: 16 }],
+        ["<!--a\n", { type: "Line", value: "a", start: 0, end: 5 }],
+        ["-->", { type: "Line", value: "", start: 0, end: 3 }],
+        ["<!--", { type: "Line", value: "", start: 0, end: 4 }],
+      ] as const;
+
+      for (const [sourceText, comment] of cases) {
+        const ret = parseSync("test.js", sourceText, { sourceType: "script" });
+        expect(ret.errors).toHaveLength(0);
+        expect(ret.comments).toHaveLength(1);
+        expect(ret.comments[0]).toEqual(comment);
+      }
+    });
+  });
+
   describe("preserveParens", () => {
     it("should include parens when true", () => {
       let ret = parseSync("test.js", "(x)");

@@ -20,6 +20,12 @@ pub enum CommentKind {
     /// Multi-line block comment (contains line breaks)
     #[estree(rename = "Block")]
     MultiLineBlock = 2,
+    /// HTML open line comment `<!--`
+    #[estree(rename = "Line")]
+    HTMLOpenLine = 3,
+    /// HTML close line comment `-->`
+    #[estree(rename = "Line")]
+    HTMLCloseLine = 4,
 }
 
 /// Information about a comment's position relative to a token.
@@ -184,6 +190,8 @@ impl Comment {
     pub fn content_span(&self) -> Span {
         match self.kind {
             CommentKind::Line => Span::new(self.span.start + 2, self.span.end),
+            CommentKind::HTMLOpenLine => Span::new(self.span.start + 4, self.span.end),
+            CommentKind::HTMLCloseLine => Span::new(self.span.start + 3, self.span.end),
             CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
                 Span::new(self.span.start + 2, self.span.end - 2)
             }
@@ -193,7 +201,10 @@ impl Comment {
     /// Returns `true` if this is a line comment.
     #[inline]
     pub fn is_line(self) -> bool {
-        self.kind == CommentKind::Line
+        matches!(
+            self.kind,
+            CommentKind::Line | CommentKind::HTMLOpenLine | CommentKind::HTMLCloseLine
+        )
     }
 
     /// Returns `true` if this is a block comment (either single-line or multi-line).

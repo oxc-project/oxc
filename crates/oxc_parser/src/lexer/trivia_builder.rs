@@ -76,7 +76,12 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     pub fn add_line_comment(&mut self, start: u32, end: u32, source_text: &str) {
-        self.add_comment(Comment::new(start, end, CommentKind::Line), source_text);
+        let kind = match source_text.as_bytes().get(start as usize..) {
+            Some(bytes) if bytes.starts_with(b"<!--") => CommentKind::HTMLOpenLine,
+            Some(bytes) if bytes.starts_with(b"-->") => CommentKind::HTMLCloseLine,
+            _ => CommentKind::Line,
+        };
+        self.add_comment(Comment::new(start, end, kind), source_text);
     }
 
     pub fn add_block_comment(

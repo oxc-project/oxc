@@ -1467,6 +1467,10 @@ struct Constants {
     deserialized_flag_offset: u32,
     /// Discriminant value for `CommentKind::Line`
     comment_line_kind: u8,
+    /// Discriminant value for `CommentKind::HTMLOpenLine`
+    comment_html_open_line_kind: u8,
+    /// Discriminant value for `CommentKind::HTMLCloseLine`
+    comment_html_close_line_kind: u8,
     /// Size of `RawTransferMetadata` in bytes
     raw_metadata_size: u32,
     /// Alignment of `RawTransferMetadata`
@@ -1493,6 +1497,8 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         comment_kind_offset,
         deserialized_flag_offset,
         comment_line_kind,
+        comment_html_open_line_kind,
+        comment_html_close_line_kind,
         raw_metadata_size,
         raw_metadata_align,
     } = consts;
@@ -1605,6 +1611,16 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
          * Discriminant value for `CommentKind::Line`.
          */
         export const COMMENT_LINE_KIND = {comment_line_kind};
+
+        /**
+         * Discriminant value for `CommentKind::HTMLOpenLine`.
+         */
+        export const COMMENT_HTML_OPEN_LINE_KIND = {comment_html_open_line_kind};
+
+        /**
+         * Discriminant value for `CommentKind::HTMLCloseLine`.
+         */
+        export const COMMENT_HTML_CLOSE_LINE_KIND = {comment_html_close_line_kind};
     ");
 
     let block_size = number_lit(BLOCK_SIZE);
@@ -1752,6 +1768,18 @@ fn get_constants(schema: &Schema) -> Constants {
     let comment_kind_enum = schema.type_by_name("CommentKind").as_enum().unwrap();
     let comment_line_kind =
         comment_kind_enum.variants.iter().find(|v| v.name() == "Line").unwrap().discriminant;
+    let comment_html_open_line_kind = comment_kind_enum
+        .variants
+        .iter()
+        .find(|v| v.name() == "HTMLOpenLine")
+        .unwrap()
+        .discriminant;
+    let comment_html_close_line_kind = comment_kind_enum
+        .variants
+        .iter()
+        .find(|v| v.name() == "HTMLCloseLine")
+        .unwrap()
+        .discriminant;
 
     Constants {
         buffer_size,
@@ -1771,6 +1799,8 @@ fn get_constants(schema: &Schema) -> Constants {
         comment_kind_offset,
         deserialized_flag_offset,
         comment_line_kind,
+        comment_html_open_line_kind,
+        comment_html_close_line_kind,
         raw_metadata_size,
         raw_metadata_align,
     }
