@@ -797,9 +797,10 @@ impl DisableDirectivesBuilder {
     fn match_disable_directive<'a>(&self, text: &'a str) -> Option<(DirectivePrefix, &'a str)> {
         if let Some(rest) = text.strip_prefix(DirectivePrefix::Oxlint.disable_directive_name()) {
             Some((DirectivePrefix::Oxlint, rest))
-        } else if self.respect_eslint_disable_directives {
-            text.strip_prefix(DirectivePrefix::Eslint.disable_directive_name())
-                .map(|rest| (DirectivePrefix::Eslint, rest))
+        } else if self.respect_eslint_disable_directives
+            && let Some(rest) = text.strip_prefix(DirectivePrefix::Eslint.disable_directive_name())
+        {
+            Some((DirectivePrefix::Eslint, rest))
         } else {
             None
         }
@@ -808,9 +809,10 @@ impl DisableDirectivesBuilder {
     fn match_enable_directive<'a>(&self, text: &'a str) -> Option<(DirectivePrefix, &'a str)> {
         if let Some(rest) = text.strip_prefix(DirectivePrefix::Oxlint.enable_directive_name()) {
             Some((DirectivePrefix::Oxlint, rest))
-        } else if self.respect_eslint_disable_directives {
-            text.strip_prefix(DirectivePrefix::Eslint.enable_directive_name())
-                .map(|rest| (DirectivePrefix::Eslint, rest))
+        } else if self.respect_eslint_disable_directives
+            && let Some(rest) = text.strip_prefix(DirectivePrefix::Eslint.enable_directive_name())
+        {
+            Some((DirectivePrefix::Eslint, rest))
         } else {
             None
         }
