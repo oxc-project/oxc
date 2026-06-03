@@ -4,7 +4,7 @@ use oxc_allocator::StringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
     Buffer, Format, SourceText,
-    builders::{empty_line, hard_line_break, space, text},
+    builders::{empty_line, expand_parent, hard_line_break, space, text},
     util::is_suppression_marker,
     write,
 };
@@ -168,6 +168,10 @@ pub fn write_trailing_inside_comments(
     for comment in comments {
         write_gap(source.bytes_range(prev_end, comment.span.start), f);
         write_single_comment(comment, f);
+        // To prevent `[a, // this comment breaks -> ]`
+        if comment.is_line() {
+            write!(f, expand_parent());
+        }
         prev_end = comment.span.end;
     }
 }

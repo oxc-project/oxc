@@ -63,7 +63,13 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
         // so the fill measurer counts it toward "does this item fit on the current line?".
         // Without that, the comma trailing the last on-line item gets pushed past `line_width`.
         // The separator carries only the break (or `empty_line` to preserve a user blank).
-        if can_concisely_print(&self.array.elements) {
+        // Prettier drops out of `printArrayElementsConcisely` (fill mode)
+        // as soon as the array carries any comment, falling back to one element per line.
+        // Any comment still pending inside the array span (leading comments were already drained)
+        // means a concise layout would miss-place it, so gate it out.
+        let has_inner_comment =
+            f.context().comments().iter_before(self.array.span.end).next().is_some();
+        if !has_inner_comment && can_concisely_print(&self.array.elements) {
             let elements = &self.array.elements;
             let source = f.context().source_text();
             let last_idx = elements.len() - 1;
