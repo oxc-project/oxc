@@ -1,22 +1,26 @@
 use std::ops::Deref;
 
+use oxc_ast::{
+    AstKind,
+    ast::{
+        Argument, CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind,
+        Expression, NewExpression, ObjectExpression,
+    },
+};
+use oxc_ast_visit::{Visit, walk};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression},
-};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::Semantic;
-use oxc_span::Span;
-
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
-    utils::{find_property, is_vue_component_options_object, vue_casing},
+    utils::{find_property, vue_casing},
 };
 
 const VUE_BUILTIN_COMPONENTS: &[&str] = &[
@@ -100,63 +104,49 @@ impl Rule for MultiWordComponentNames {
         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        let semantic = ctx.semantic();
-        let is_script_setup = ctx.frameworks_options() == FrameworkOptions::VueSetup;
-        let mut has_name = false;
-        let mut has_vue = is_script_setup;
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::Program(program) = node.kind() else {
+            return;
+        };
 
-        // Visit current sub-host (the one whose context we report on).
-        for node in semantic.nodes() {
-            match node.kind() {
-                AstKind::ObjectExpression(obj) if is_vue_component_options_object(node, ctx) => {
-                    has_vue = true;
-                    if let Some(prop) = find_property(obj, "name") {
-                        has_name = true;
-                        validate_value(ctx, &prop.value, &self.ignores);
-                    }
-                }
-                AstKind::CallExpression(call) => {
-                    if is_dot_component_call(call) {
-                        has_vue = true;
-                        if call.arguments.len() == 2
-                            && let Some(arg) = call.arguments.first()
-                        {
-                            has_name = true;
-                            validate_argument(ctx, arg, &self.ignores);
-                        }
-                    } else if is_script_setup
-                        && is_define_options_call(call)
-                        && let Some(Argument::ObjectExpression(obj)) = call.arguments.first()
-                    {
-                        has_vue = true;
-                        if let Some(prop) = find_property(obj, "name") {
-                            has_name = true;
-                            validate_value(ctx, &prop.value, &self.ignores);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
+        let is_script_setup = ctx.frameworks_options() == FrameworkOptions::VueSetup;
+
+        // Scan and report violations on the current sub-host with a focused
+        // visitor (no whole-`semantic.nodes()` walk).
+        let mut visitor = NameChecker::reporting(ctx, &self.ignores, is_script_setup);
+        visitor.visit_program(program);
+        let current = ScanState { has_name: visitor.has_name, has_vue: visitor.has_vue };
 
         // Filename fallback only runs once per file, on the first sub-host.
         if !ctx.is_first_sub_host() {
             return;
         }
+        if current.has_name {
+            return;
+        }
 
-        let mut body_count = semantic.nodes().program().body.len();
+        let mut has_name = false;
+        let mut has_vue = is_script_setup || current.has_vue;
+        let mut body_count = program.body.len();
 
-        // Collect state from other script blocks. `is_vue_component_options_object` ties to
-        // the current `LintContext`, so a lightweight handwritten check is used for other hosts.
         for other in ctx.other_file_hosts() {
             let other_setup = other.framework_options() == FrameworkOptions::VueSetup;
             if other_setup {
                 has_vue = true;
             }
             let other_semantic = other.semantic();
-            body_count += other_semantic.nodes().program().body.len();
-            collect_state_from_other(other_semantic, other_setup, &mut has_name, &mut has_vue);
+            let other_program = other_semantic.nodes().program();
+            body_count += other_program.body.len();
+
+            let mut other_visitor = NameChecker::scan_only(other_setup);
+            other_visitor.visit_program(other_program);
+            if other_visitor.has_vue {
+                has_vue = true;
+            }
+            if other_visitor.has_name {
+                has_name = true;
+                break;
+            }
         }
 
         if has_name {
@@ -186,47 +176,102 @@ impl Rule for MultiWordComponentNames {
     }
 }
 
-fn collect_state_from_other(
-    semantic: &Semantic<'_>,
+struct ScanState {
+    has_name: bool,
+    has_vue: bool,
+}
+
+/// AST visitor that locates Vue component options objects via their entry
+/// points (`export default { ... }`, `defineComponent(...)`, `new Vue(...)`,
+/// `Vue.component(...)`, `defineOptions(...)`), updates `has_name`/`has_vue`,
+/// and (in reporting mode) emits multi-word violations as it walks. Used
+/// instead of `is_vue_component_options_object`, which requires an
+/// `AstNode` and an ancestor walk.
+struct NameChecker<'a, 'b> {
+    /// `Some` for the current sub-host (report individual violations through
+    /// `ctx.diagnostic`); `None` for scan-only passes over other sub-hosts
+    /// where we just want the aggregated flags.
+    ctx: Option<&'b LintContext<'a>>,
+    /// Slice of upstream `ignores` option values. Only used in reporting mode.
+    ignores: &'b [String],
     is_script_setup: bool,
-    has_name: &mut bool,
-    has_vue: &mut bool,
-) {
-    for node in semantic.nodes() {
-        match node.kind() {
-            AstKind::ExportDefaultDeclaration(decl) if !is_script_setup => {
-                let obj = match &decl.declaration {
-                    ExportDefaultDeclarationKind::ObjectExpression(obj) => Some(obj.as_ref()),
-                    ExportDefaultDeclarationKind::CallExpression(call)
-                        if is_vue_definition_call(call) =>
-                    {
-                        call.arguments.last().and_then(extract_object_argument)
-                    }
-                    _ => None,
-                };
-                if let Some(obj) = obj {
-                    *has_vue = true;
-                    if find_property(obj, "name").is_some() {
-                        *has_name = true;
-                    }
-                }
-            }
-            AstKind::CallExpression(call) => {
-                if is_dot_component_call(call) && call.arguments.len() == 2 {
-                    *has_vue = true;
-                    *has_name = true;
-                } else if is_script_setup
-                    && is_define_options_call(call)
-                    && let Some(Argument::ObjectExpression(obj)) = call.arguments.first()
-                {
-                    *has_vue = true;
-                    if find_property(obj, "name").is_some() {
-                        *has_name = true;
-                    }
-                }
-            }
-            _ => {}
+    has_name: bool,
+    has_vue: bool,
+}
+
+impl<'a> NameChecker<'a, '_> {
+    fn reporting<'b>(
+        ctx: &'b LintContext<'a>,
+        ignores: &'b [String],
+        is_script_setup: bool,
+    ) -> NameChecker<'a, 'b> {
+        NameChecker { ctx: Some(ctx), ignores, is_script_setup, has_name: false, has_vue: false }
+    }
+
+    fn scan_only<'b>(is_script_setup: bool) -> NameChecker<'a, 'b> {
+        NameChecker { ctx: None, ignores: &[], is_script_setup, has_name: false, has_vue: false }
+    }
+
+    fn check_options_object(&mut self, obj: &ObjectExpression<'a>) {
+        self.has_vue = true;
+        let Some(prop) = find_property(obj, "name") else { return };
+        self.has_name = true;
+        if let Some(ctx) = self.ctx {
+            validate_value(ctx, &prop.value, self.ignores);
         }
+    }
+}
+
+impl<'a> Visit<'a> for NameChecker<'a, '_> {
+    fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
+        // `<script>` only: `export default {...}` is a Vue options object.
+        // In `<script setup>`, `export default` is invalid SFC and is ignored.
+        if !self.is_script_setup {
+            let obj = match &decl.declaration {
+                ExportDefaultDeclarationKind::ObjectExpression(obj) => Some(obj.as_ref()),
+                ExportDefaultDeclarationKind::CallExpression(call)
+                    if is_vue_definition_call(call) =>
+                {
+                    call.arguments.last().and_then(extract_object_argument)
+                }
+                _ => None,
+            };
+            if let Some(obj) = obj {
+                self.check_options_object(obj);
+            }
+        }
+        walk::walk_export_default_declaration(self, decl);
+    }
+
+    fn visit_new_expression(&mut self, new_expr: &NewExpression<'a>) {
+        // `new Vue({...})` — Instance kind.
+        if let Expression::Identifier(callee) = &new_expr.callee
+            && callee.name == "Vue"
+            && let Some(arg) = new_expr.arguments.first().and_then(extract_object_argument)
+        {
+            self.check_options_object(arg);
+        }
+        walk::walk_new_expression(self, new_expr);
+    }
+
+    fn visit_call_expression(&mut self, call: &CallExpression<'a>) {
+        if is_dot_component_call(call) {
+            self.has_vue = true;
+            if call.arguments.len() == 2
+                && let Some(arg) = call.arguments.first()
+            {
+                self.has_name = true;
+                if let Some(ctx) = self.ctx {
+                    validate_argument(ctx, arg, self.ignores);
+                }
+            }
+        } else if self.is_script_setup
+            && is_define_options_call(call)
+            && let Some(Argument::ObjectExpression(obj)) = call.arguments.first()
+        {
+            self.check_options_object(obj);
+        }
+        walk::walk_call_expression(self, call);
     }
 }
 
