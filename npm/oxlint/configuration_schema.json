@@ -2674,6 +2674,9 @@
         "vue/require-default-export": {
           "$ref": "#/definitions/DummyRule"
         },
+        "vue/require-default-prop": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/require-prop-type-constructor": {
           "$ref": "#/definitions/DummyRule"
         },
