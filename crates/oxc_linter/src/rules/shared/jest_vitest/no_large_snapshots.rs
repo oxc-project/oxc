@@ -114,7 +114,7 @@ line 4
 ";
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoLargeSnapshotsConfig {
     /// Maximum number of lines allowed for external snapshot files.
     pub max_size: usize,
