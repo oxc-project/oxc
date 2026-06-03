@@ -1,7 +1,0 @@
-{
-  "jsPlugins": [{ "name": "unicorn-js", "specifier": "eslint-plugin-unicorn" }],
-  "rules": {
-    "unicorn-js/expiring-todo-comments": "error",
-    "no-unused-vars": "off"
-  }
-}

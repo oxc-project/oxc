@@ -82,6 +82,17 @@ const EMPTY_COMMENTS: CommentType[] = Object.freeze([]) as unknown as CommentTyp
 const COMMENT_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Comment` in Rust
 debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);
 
+// `__defineGetter__` bound to `Function.prototype.call` so it can be called without a
+// `Object.prototype` lookup at each call site.
+const defineGetter = Function.prototype.call.bind(
+  // @ts-expect-error - `__defineGetter__` is not in `Object.prototype`'s type definition, but it does exist at runtime and is widely supported in JS engines, including V8.
+  Object.prototype.__defineGetter__,
+) as (obj: object, prop: string, getter: () => unknown) => void;
+
+// Getter for the `loc` property on a `Comment` class instance.
+// Copied into a `const` below after being defined in class static block.
+let getCommentLocTemp: (this: Comment) => Location;
+
 // Reset `#loc` field on a `Comment` class instance.
 // Copied into a `const` below after being defined in class static block.
 let resetCommentLocTemp: (comment: Comment) => void;
@@ -93,14 +104,14 @@ let getCommentPrivateLoc: (comment: Comment) => Location | null;
 /**
  * Comment class.
  *
- * `loc` is defined as an own accessor property via `Object.defineProperty` in the constructor,
- * using a shared descriptor (`#LOC_DESC`). This makes `loc` an own enumerable property,
+ * `loc` is defined as an own accessor property via `__defineGetter__` in the constructor,
+ * using a shared getter function (`getCommentLoc`). This makes `loc` an own enumerable property,
  * so `{...comment}` spreads it and `JSON.stringify(comment)` serializes it, without needing
  * a Proxy or `toJSON()`.
  *
  * The computed `Location` value is cached in the private `#loc` field on first access.
- * All instances share the same getter function via the static descriptor, keeping the V8
- * hidden class transition identical across instances. Reset only clears the `#loc` field.
+ * All instances share the same getter function, keeping the V8 hidden class transition
+ * identical across instances. Reset only clears the `#loc` field.
  */
 class Comment implements Span {
   type: CommentType["type"] = null!; // Overwritten later
@@ -108,22 +119,21 @@ class Comment implements Span {
   start: number = 0;
   end: number = 0;
   range: [number, number] = [0, 0];
-  loc: Location = null!; // Overwritten by Object.defineProperty at construction time
+  loc: Location = null!; // Overwritten by __defineGetter__ at construction time
 
   #loc: Location | null = null;
 
   constructor() {
-    // Define `loc` as an own accessor property with a shared getter.
-    // This makes `loc` enumerable, so `{...comment}` spreads it and `JSON.stringify` serializes it.
-    Object.defineProperty(this, "loc", Comment.#LOC_DESC);
+    // Define `loc` as an own getter property (enumerable + configurable by default).
+    // This makes `{...comment}` spread `loc` and `JSON.stringify(comment)` serialize it.
+    defineGetter(this, "loc", getCommentLoc);
   }
 
-  static #LOC_DESC = {
-    get(this: Comment): Location {
-      let loc = this.#loc;
+  static {
+    getCommentLocTemp = function (this: Comment): Location {
+      const loc = this.#loc;
       if (loc !== null) return loc;
 
-      this.#loc = loc = computeLoc(this.start, this.end);
       // Note: The comparison `activeCommentsWithLocCount < commentsWithLoc.length` must be this way around
       // so that V8 can remove the bounds check on `commentsWithLoc[activeCommentsWithLocCount]`.
       // `commentsWithLoc.length > activeCommentsWithLocCount` would *not* remove the bounds check in Maglev compiler.
@@ -134,13 +144,9 @@ class Comment implements Span {
       }
       activeCommentsWithLocCount++;
 
-      return loc;
-    },
-    enumerable: true,
-    configurable: true,
-  };
+      return (this.#loc = computeLoc(this.start, this.end));
+    };
 
-  static {
     // Defined in static block to avoid exposing this as a public method
     resetCommentLocTemp = (comment: Comment) => {
       comment.#loc = null;
@@ -150,9 +156,9 @@ class Comment implements Span {
   }
 }
 
-// Reset `#loc` field on a `Comment` class instance.
-// Copied into a const here to avoid checks at call site (`let` binding could be re-assigned).
-const resetCommentLoc = resetCommentLocTemp;
+// Copied into consts here to avoid checks at call site (`let` binding could be re-assigned).
+const getCommentLoc = getCommentLocTemp!;
+const resetCommentLoc = resetCommentLocTemp!;
 
 /**
  * Deserialize all comments and build the `comments` array.

@@ -50,6 +50,15 @@ const testCommentsRule: Rule = {
         message: `Comment JSON.stringify:\n${JSON.stringify(firstComment, null, 2)}`,
         node: firstComment,
       });
+
+      // Check `{...comment}` spread includes `loc`
+      const spread = { ...firstComment };
+      assert("loc" in spread, "spread should include loc");
+      assert.deepEqual(spread.loc, firstComment.loc, "spread loc should equal comment.loc");
+      context.report({
+        message: `Comment spread includes loc: ${"loc" in spread}`,
+        node: firstComment,
+      });
     }
 
     const [, topLevelVariable2, topLevelFunctionExport] = ast.body;

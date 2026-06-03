@@ -91,6 +91,14 @@
  3 | const topLevelVariable2 = 2; /* Block comment 1 */
    `----
 
+  x test-comments(test-comments): Comment spread includes loc: true
+   ,-[files/comments.js:2:1]
+ 1 | const topLevelVariable1 = 1;
+ 2 | // Line comment 1
+   : ^^^^^^^^^^^^^^^^^
+ 3 | const topLevelVariable2 = 2; /* Block comment 1 */
+   `----
+
   x test-comments(test-comments): VariableDeclaration(topLevelVariable2):
   | getCommentsBefore: 1 comment
   |   [0] Line: " Line comment 1" at [29, 46]
@@ -277,6 +285,13 @@
   |     }
   |   }
   | }
+   ,-[files/hashbang.js:1:1]
+ 1 | #!/usr/bin/env node
+   : ^^^^^^^^^^^^^^^^^^^
+ 2 | // Line comment after hashbang
+   `----
+
+  x test-comments(test-comments): Comment spread includes loc: true
    ,-[files/hashbang.js:1:1]
  1 | #!/usr/bin/env node
    : ^^^^^^^^^^^^^^^^^^^
@@ -510,7 +525,7 @@
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
 
-Found 0 warnings and 34 errors.
+Found 0 warnings and 36 errors.
 Finished in Xms on 3 files with 1 rules using X threads.
 ```
 
