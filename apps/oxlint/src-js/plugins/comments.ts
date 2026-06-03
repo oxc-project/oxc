@@ -134,6 +134,7 @@ class Comment implements Span {
       const loc = this.#loc;
       if (loc !== null) return loc;
 
+      // Store comment in `commentsWithLoc` array. `resetComments` will clear the `#loc` property.
       // Note: The comparison `activeCommentsWithLocCount < commentsWithLoc.length` must be this way around
       // so that V8 can remove the bounds check on `commentsWithLoc[activeCommentsWithLocCount]`.
       // `commentsWithLoc.length > activeCommentsWithLocCount` would *not* remove the bounds check in Maglev compiler.
