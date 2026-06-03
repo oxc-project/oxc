@@ -8,6 +8,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Semantic;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -38,10 +40,11 @@ fn multi_word_component_names_diagnostic(span: Span, name: &str) -> OxcDiagnosti
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MultiWordComponentNames(Box<MultiWordComponentNamesConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
 pub struct MultiWordComponentNamesConfig {
     ignores: Vec<String>,
 }
@@ -86,6 +89,7 @@ declare_oxc_lint!(
     MultiWordComponentNames,
     vue,
     correctness,
+    config = MultiWordComponentNames,
     version = "next",
 );
 
