@@ -1,5 +1,8 @@
 use std::ops::Deref;
 
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression},
@@ -8,8 +11,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Semantic;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     context::{ContextHost, LintContext},
