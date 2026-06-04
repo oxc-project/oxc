@@ -804,6 +804,28 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    /// Whether a static-block statement forces keeping an otherwise-unused class.
+    ///
+    /// An unused class is never evaluated, so statements such as direct `eval(...)`
+    /// inside a static block do not need to be preserved.
+    fn static_block_stmt_keeps_unused_class(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        if !stmt.may_have_side_effects(ctx) {
+            return false;
+        }
+        let Statement::ExpressionStatement(expr_stmt) = stmt else {
+            return true;
+        };
+        let Expression::CallExpression(call) = &expr_stmt.expression else {
+            return true;
+        };
+        if !call.optional
+            && call.callee.get_identifier_reference().is_some_and(|ident| ident.name == "eval")
+        {
+            return false;
+        }
+        true
+    }
+
     pub fn remove_unused_class(
         c: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -824,7 +846,15 @@ impl<'a> PeepholeOptimizations {
             match e {
                 e if e.has_decorator() => return None,
                 ClassElement::TSIndexSignature(_) => return None,
-                ClassElement::StaticBlock(block) if !block.body.is_empty() => return None,
+                ClassElement::StaticBlock(block)
+                    if !block.body.is_empty()
+                        && block
+                            .body
+                            .iter()
+                            .any(|stmt| Self::static_block_stmt_keeps_unused_class(stmt, ctx)) =>
+                {
+                    return None;
+                }
                 ClassElement::PropertyDefinition(prop)
                     if prop.r#static
                         && prop.value.as_ref().is_some_and(|v| v.may_have_side_effects(ctx)) =>
