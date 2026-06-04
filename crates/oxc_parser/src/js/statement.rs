@@ -42,10 +42,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let is_ambient_block = (is_top_level || in_ts_namespace_body) && self.ctx.has_ambient();
         let mut reported_ambient_statement = false;
 
-        // Check if we need to track potential await reparsing.
-        // This is only needed in unambiguous mode at top level when not in await context.
-        let mut track_await_reparse =
-            is_top_level && self.source_type.is_unambiguous() && !self.ctx.has_await();
+        // In unambiguous mode, top-level `await` parses as an identifier until ESM
+        // syntax commits to the Module goal.
+        let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
         while !self.has_fatal_error() {
@@ -53,33 +52,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 break;
             }
 
-            // Eagerly commit to Module goal on `export` so the statement is parsed
-            // under `Await` on the first pass; otherwise the reparse below runs it
-            // again and the export binding gets recorded twice.
-            // `import` is not eager: TypeScript's `import name = ns.foo` is a
-            // script-compatible namespace alias, not module syntax.
-            if track_await_reparse
-                && (self.module_record_builder.has_module_syntax() || self.at(Kind::Export))
-            {
-                track_await_reparse = false;
-                self.ctx = self.ctx.and_await(true);
-            }
-
-            // Take checkpoint for every statement when tracking await reparse.
-            // We reset the flag and only store the checkpoint if an await identifier
-            // was actually encountered during parsing.
-            let checkpoint = if track_await_reparse {
-                self.state.encountered_await_identifier = false;
-                Some((statements.len(), self.checkpoint()))
+            // Commit once module syntax is detected (`export` commits eagerly in
+            // `parse_export_declaration`; `has_module_syntax()` excludes TS's
+            // script-compatible `import x = ns.foo`). Until committed, checkpoint each
+            // statement so an `await` identifier in it can be reparsed.
+            let checkpoint = if track_await_reparse && !self.ctx.has_await() {
+                if self.module_record_builder.has_module_syntax() {
+                    self.ctx = self.ctx.and_await(true);
+                    None
+                } else {
+                    self.state.encountered_await_identifier = false;
+                    Some((statements.len(), self.checkpoint()))
+                }
             } else {
                 None
             };
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
 
-            // Store checkpoint only if await identifier was encountered
+            // Don't reparse a module declaration: `export` already committed to the
+            // Module goal while parsing, so reparsing would record the export twice.
+            // e.g. `@foo export default class C { x = await + 1 }`
             if let Some((stmt_index, checkpoint)) = checkpoint
                 && self.state.encountered_await_identifier
+                && !stmt.is_module_declaration()
             {
                 self.state.potential_await_reparse.push((stmt_index, checkpoint));
             }

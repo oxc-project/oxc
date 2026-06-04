@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 67/67 (100.00%)
 Positive Passed: 67/67 (100.00%)
-Negative Passed: 140/140 (100.00%)
+Negative Passed: 141/141 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3547,6 +3547,14 @@ Negative Passed: 140/140 (100.00%)
    ·                      ─
    ╰────
   help: Remove the `?`
+
+  × The keyword 'await' is reserved
+    ╭─[misc/fail/oxc-22684.js:9:7]
+  8 │ export default class C {
+  9 │   x = await + 1;
+    ·       ─────
+ 10 │ }
+    ╰────
 
   × Empty parenthesized expression
    ╭─[misc/fail/oxc-232.js:1:5]
