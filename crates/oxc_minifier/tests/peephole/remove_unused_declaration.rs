@@ -208,6 +208,16 @@ fn remove_unused_class_static_block_shadowed_eval() {
     );
 }
 
+/// Eval inside a named function *expression* still runs when the expression is evaluated.
+#[test]
+fn remove_unused_declaration_eval_in_named_function_expression() {
+    let options = CompressOptions::smallest();
+    test_same_options(
+        "(function helper() { eval('target()') })(); function target() {}",
+        &options,
+    );
+}
+
 /// Edge cases where eval runs eagerly, not inside the function/class body (#20992).
 #[test]
 fn remove_unused_declaration_direct_eval_edge_cases() {

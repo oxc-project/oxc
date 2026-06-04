@@ -807,8 +807,8 @@ impl<'a> PeepholeOptimizations {
 
     /// Whether a static-block statement forces keeping an otherwise-unused class.
     ///
-    /// An unused class is never evaluated, so statements such as direct `eval(...)`
-    /// inside a static block do not need to be preserved.
+    /// The minifier treats an unused class binding like dead code (same as unused static
+    /// fields). Direct `eval(...)` in a static block therefore does not keep the class.
     fn static_block_stmt_keeps_unused_class(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
         if !stmt.may_have_side_effects(ctx) {
             return false;

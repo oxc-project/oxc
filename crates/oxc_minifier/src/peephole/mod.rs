@@ -166,7 +166,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx.state.changed = false;
         let prepass = direct_eval::collect_prepass_data(ctx.scoping(), program);
         ctx.state.direct_eval_scopes = prepass.direct_eval_scopes;
-        ctx.state.named_declaration_body_scopes = prepass.named_declaration_body_scopes;
+        ctx.state.declaration_body_scope_to_symbol = prepass.declaration_body_scope_to_symbol;
+        ctx.state.direct_eval_unused_containers = prepass.direct_eval_unused_containers;
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {

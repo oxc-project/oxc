@@ -34,8 +34,11 @@ pub struct MinifierState<'a> {
     /// Lexical scopes of direct `eval(...)` call sites (not ancestor-propagated).
     pub direct_eval_scopes: FxHashSet<ScopeId>,
 
-    /// `(symbol_id, body_scope_id)` for named functions and classes.
-    pub named_declaration_body_scopes: Vec<(SymbolId, ScopeId)>,
+    /// Body scope of each named function/class declaration -> its symbol.
+    pub declaration_body_scope_to_symbol: FxHashMap<ScopeId, SymbolId>,
+
+    /// Per direct-eval scope: unused declaration symbols whose body contains the call.
+    pub direct_eval_unused_containers: FxHashMap<ScopeId, Vec<SymbolId>>,
 
     pub changed: bool,
 
@@ -60,7 +63,8 @@ impl MinifierState<'_> {
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
             direct_eval_scopes: FxHashSet::default(),
-            named_declaration_body_scopes: Vec::new(),
+            declaration_body_scope_to_symbol: FxHashMap::default(),
+            direct_eval_unused_containers: FxHashMap::default(),
             changed: false,
             concat_scratch: String::new(),
         }

@@ -88,18 +88,17 @@ impl<'a> PeepholeOptimizations {
         }
         let Some(id) = &f.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::keep_top_level_var_in_script_mode(ctx)
-            || direct_eval::direct_eval_blocks_unused_declaration_removal(
-                f.scope_id(),
-                symbol_id,
-                &ctx.state.direct_eval_scopes,
-                &ctx.state.named_declaration_body_scopes,
-                ctx.scoping(),
-            )
+        if Self::keep_top_level_var_in_script_mode(ctx) || !ctx.scoping().symbol_is_unused(symbol_id)
         {
             return;
         }
-        if !ctx.scoping().symbol_is_unused(symbol_id) {
+        if direct_eval::direct_eval_blocks_unused_declaration_removal(
+            f.scope_id(),
+            symbol_id,
+            &ctx.state.direct_eval_scopes,
+            &ctx.state.direct_eval_unused_containers,
+            ctx.scoping(),
+        ) {
             return;
         }
         *stmt = ctx.ast.statement_empty(f.span);
@@ -113,18 +112,17 @@ impl<'a> PeepholeOptimizations {
         }
         let Some(id) = &c.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::keep_top_level_var_in_script_mode(ctx)
-            || direct_eval::direct_eval_blocks_unused_declaration_removal(
-                c.scope_id(),
-                symbol_id,
-                &ctx.state.direct_eval_scopes,
-                &ctx.state.named_declaration_body_scopes,
-                ctx.scoping(),
-            )
+        if Self::keep_top_level_var_in_script_mode(ctx) || !ctx.scoping().symbol_is_unused(symbol_id)
         {
             return;
         }
-        if !ctx.scoping().symbol_is_unused(symbol_id) {
+        if direct_eval::direct_eval_blocks_unused_declaration_removal(
+            c.scope_id(),
+            symbol_id,
+            &ctx.state.direct_eval_scopes,
+            &ctx.state.direct_eval_unused_containers,
+            ctx.scoping(),
+        ) {
             return;
         }
         if let Some(changed) = Self::remove_unused_class(c, ctx).map(|exprs| {
