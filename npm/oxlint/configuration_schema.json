@@ -1429,7 +1429,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "id-length": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/IdLengthConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "id-match": {
           "$ref": "#/definitions/DummyRule"
@@ -8294,6 +8311,61 @@
       },
       "additionalProperties": false
     },
+    "IdLengthConfig": {
+      "type": "object",
+      "properties": {
+        "checkGeneric": {
+          "description": "Whether to check TypeScript generic type parameter names.\nDefaults to `true`.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check TypeScript generic type parameter names.\nDefaults to `true`."
+        },
+        "exceptionPatterns": {
+          "description": "An array of regex patterns for identifiers to exclude from the rule.\nFor example, `[\"^x.*\"]` would exclude all identifiers starting with \"x\".",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of regex patterns for identifiers to exclude from the rule.\nFor example, `[\"^x.*\"]` would exclude all identifiers starting with \"x\"."
+        },
+        "exceptions": {
+          "description": "An array of identifier names that are excluded from the rule.\nFor example, `[\"x\", \"y\", \"z\"]` would allow single-letter identifiers \"x\", \"y\", and \"z\".",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of identifier names that are excluded from the rule.\nFor example, `[\"x\", \"y\", \"z\"]` would allow single-letter identifiers \"x\", \"y\", and \"z\"."
+        },
+        "max": {
+          "description": "The maximum number of graphemes allowed in an identifier.\nDefaults to no maximum (effectively unlimited).",
+          "default": 18446744073709551615,
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0,
+          "markdownDescription": "The maximum number of graphemes allowed in an identifier.\nDefaults to no maximum (effectively unlimited)."
+        },
+        "min": {
+          "description": "The minimum number of graphemes required in an identifier.",
+          "default": 2,
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0,
+          "markdownDescription": "The minimum number of graphemes required in an identifier."
+        },
+        "properties": {
+          "description": "Whether to check property names for length.",
+          "default": "always",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PropertyKind"
+            }
+          ],
+          "markdownDescription": "Whether to check property names for length."
+        }
+      },
+      "additionalProperties": false
+    },
     "IgnoreClassWithImplements": {
       "oneOf": [
         {
@@ -11772,6 +11844,26 @@
       },
       "additionalProperties": false,
       "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+    },
+    "PropertyKind": {
+      "oneOf": [
+        {
+          "description": "Property names are checked just like other identifiers",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Property names are checked just like other identifiers"
+        },
+        {
+          "description": "Property names are not checked for length.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Property names are not checked for length."
+        }
+      ]
     },
     "ReactPluginSettings": {
       "description": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)",

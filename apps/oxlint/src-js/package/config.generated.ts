@@ -79,6 +79,7 @@ export type FuncNamesConfigType = "always" | "as-needed" | "never";
 export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
+export type PropertyKind = "always" | "never";
 export type Mode3 = "always" | "never";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type LogicalAssignmentOperatorsMode = "always" | "never";
@@ -698,7 +699,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, PairOrder]
     | [AllowWarnDeny, PairOrder, GroupedAccessorPairsConfig];
   "guard-for-in"?: RuleNoConfig;
-  "id-length"?: DummyRule;
+  "id-length"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, IdLengthConfig];
   "id-match"?: DummyRule;
   "import/consistent-type-specifier-style"?:
     | AllowWarnDeny
@@ -1798,6 +1799,36 @@ export interface GroupedAccessorPairsConfig {
    * ```
    */
   enforceForTSTypes?: boolean;
+}
+export interface IdLengthConfig {
+  /**
+   * Whether to check TypeScript generic type parameter names.
+   * Defaults to `true`.
+   */
+  checkGeneric?: boolean;
+  /**
+   * An array of regex patterns for identifiers to exclude from the rule.
+   * For example, `["^x.*"]` would exclude all identifiers starting with "x".
+   */
+  exceptionPatterns?: string[];
+  /**
+   * An array of identifier names that are excluded from the rule.
+   * For example, `["x", "y", "z"]` would allow single-letter identifiers "x", "y", and "z".
+   */
+  exceptions?: string[];
+  /**
+   * The maximum number of graphemes allowed in an identifier.
+   * Defaults to no maximum (effectively unlimited).
+   */
+  max?: number;
+  /**
+   * The minimum number of graphemes required in an identifier.
+   */
+  min?: number;
+  /**
+   * Whether to check property names for length.
+   */
+  properties?: PropertyKind;
 }
 export interface Namespace {
   /**
