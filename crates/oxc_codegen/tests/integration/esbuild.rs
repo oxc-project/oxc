@@ -178,12 +178,23 @@ fn test_new() {
     test("new (import('foo')[bar])", "new (import(\"foo\"))[bar]();\n");
     test("new (import('foo'))[bar]", "new (import(\"foo\"))[bar]();\n");
 
+    test("new (foo?.bar)()", "new (foo?.bar)();\n");
+    test("new (foo()?.bar)()", "new ((foo())?.bar)();\n");
+    test("new (foo.bar()?.baz)()", "new ((foo.bar())?.baz)();\n");
+    test("new ((foo?.bar).baz)()", "new (foo?.bar).baz();\n");
+    test("new ((foo?.bar)[baz])()", "new (foo?.bar)[baz]();\n");
+
     test_minify("new x", "new x;");
     test_minify("new x.y", "new x.y;");
     test_minify("(new x).y", "new x().y;");
     test_minify("new x().y", "new x().y;");
     test_minify("new x() + y", "new x+y;");
     test_minify("new x() ** 2", "new x**2;");
+    test_minify("new (foo?.bar)()", "new(foo?.bar);");
+    test_minify("new (foo()?.bar)()", "new((foo())?.bar);");
+    test_minify("new (foo.bar()?.baz)()", "new((foo.bar())?.baz);");
+    test_minify("new ((foo?.bar).baz)()", "new(foo?.bar).baz;");
+    test_minify("new ((foo?.bar)[baz])()", "new(foo?.bar)[baz];");
 
     // Test preservation of Webpack-specific comments
     test(
@@ -438,11 +449,17 @@ fn test_template() {
     test("new tag`${x}`", "new tag`${x}`();\n");
     test("new (tag`${x}`)", "new tag`${x}`();\n");
     test("new (foo()`${x}`)()", "new (foo()`${x}`)();\n");
+    test("new ((foo?.bar)`x`)()", "new (foo?.bar)`x`();\n");
+    test("new ((foo?.bar)`x`.baz)()", "new (foo?.bar)`x`.baz();\n");
+    test("new ((foo?.bar())`x`)()", "new (foo?.bar())`x`();\n");
     test("new tag()`${x}`", "new tag()`${x}`;\n");
     test("(new tag)`${x}`", "new tag()`${x}`;\n");
     test_minify("new tag`${x}`", "new tag`${x}`;");
     test_minify("new (tag`${x}`)", "new tag`${x}`;");
     test_minify("new (foo()`${x}`)()", "new(foo()`${x}`);");
+    test_minify("new ((foo?.bar)`x`)()", "new(foo?.bar)`x`;");
+    test_minify("new ((foo?.bar)`x`.baz)()", "new(foo?.bar)`x`.baz;");
+    test_minify("new ((foo?.bar())`x`)()", "new(foo?.bar())`x`;");
     test_minify("new tag()`${x}`", "new tag()`${x}`;");
     test_minify("(new tag)`${x}`", "new tag()`${x}`;");
 }
