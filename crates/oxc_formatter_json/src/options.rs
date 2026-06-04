@@ -1,6 +1,5 @@
 use oxc_formatter_core::{
-    BracketSpacing, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth,
-    PrinterOptions,
+    FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions,
 };
 
 /// JSON parser variant.
@@ -17,7 +16,7 @@ pub enum JsonVariant {
     #[default]
     Json,
     /// Prettier's `parser: jsonc` equivalent.
-    /// Output: double-quoted strings, quoted object keys;
+    /// Output: double-quoted strings, quoted object keys,
     /// trailing commas follow the user option.
     /// Empty input is allowed.
     Jsonc,
@@ -26,7 +25,7 @@ pub enum JsonVariant {
     /// string quote style and trailing commas follow user options.
     Json5,
     /// Prettier's `parser: json-stringify` equivalent.
-    /// Output: `JSON.parse()`-compatible.
+    /// Output: `JSON.parse()`-compatible,
     /// double-quoted strings, quoted keys, no trailing commas,
     /// always pretty-printed with hard line breaks between entries.
     /// The only variant that rejects comments at parse time.
@@ -42,6 +41,77 @@ pub struct JsonFormatOptions {
     pub variant: JsonVariant,
     pub bracket_spacing: BracketSpacing,
     pub expand: Expand,
+    pub trailing_commas: TrailingCommas,
+}
+
+impl JsonFormatOptions {
+    /// Whether a trailing comma may follow the last entry of a multi-line object/array,
+    /// per the active variant and [`Self::trailing_commas`].
+    ///
+    /// `json` and `json-stringify` never emit one, but Prettier achieves this differently:
+    /// - `json`: the option is force-normalized to `trailingComma: "none"`.
+    /// - `json-stringify`: a separate `estree-json` printer is used
+    ///   - Always hard-breaks entries and never emits a trailing comma (the option is irrelevant)
+    ///   - So full `json-stringify` parity will also need always-expand + no concise arrays, not just this flag
+    ///
+    /// `jsonc` and `json5` follow the user option (`Always` emits, `Never` does not).
+    /// Both go through Prettier's shared `estree` printer with `shouldPrintTrailingComma` fixed at the `es5` level,
+    /// which is why Prettier's `all` and `es5` are indistinguishable here (both map to `Always`).
+    pub fn allow_trailing_comma(&self) -> bool {
+        match self.variant {
+            JsonVariant::Json | JsonVariant::JsonStringify => false,
+            JsonVariant::Jsonc | JsonVariant::Json5 => {
+                matches!(self.trailing_commas, TrailingCommas::Always)
+            }
+        }
+    }
+}
+
+/// Whether to insert spaces around brackets in object.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct BracketSpacing(bool);
+
+impl BracketSpacing {
+    pub fn value(self) -> bool {
+        self.0
+    }
+}
+
+impl Default for BracketSpacing {
+    fn default() -> Self {
+        Self(true)
+    }
+}
+
+impl From<bool> for BracketSpacing {
+    fn from(value: bool) -> Self {
+        Self(value)
+    }
+}
+
+/// Whether objects keep their authored multi-line shape or collapse to one line when they fit.
+/// Mirrors Prettier's `objectWrap` option.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum Expand {
+    /// `objectWrap: "preserve"`. Stays multi-line when the source has a newline right after `{`.
+    #[default]
+    Auto,
+    /// `objectWrap: "collapse"`. Collapses when it fits regardless of authored shape.
+    Never,
+}
+
+/// Whether to print a trailing comma after the last entry of a multi-line object/array.
+///
+/// Mirrors Prettier's `trailingComma`, but JSON only has two meaningful states:
+/// the `all`/`es5` distinction is dead for JSON (no constructs beyond ES5), so they collapse into `Always`.
+#[derive(Clone, Copy, Default, Debug, Eq, Hash, PartialEq)]
+pub enum TrailingCommas {
+    /// Trailing comma where valid (objects, arrays). Maps from Prettier `all`/`es5`.
+    /// `Always` keeps Prettier's `all` default; `Never` would drop trailing commas.
+    #[default]
+    Always,
+    /// No trailing comma. Maps from Prettier `none`.
+    Never,
 }
 
 impl FormatOptions for JsonFormatOptions {

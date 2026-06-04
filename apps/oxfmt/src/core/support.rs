@@ -36,13 +36,14 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     if is_extra_js_file(file_name, extension) {
         return Some(FileKind::OxcFormatter { path, source_type: SourceType::default() });
     }
-
     if is_toml_file(file_name) {
         return Some(FileKind::OxfmtToml { path });
     }
-
     if is_json_file(file_name, extension) {
         return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::Json });
+    }
+    if is_jsonc_file(extension) {
+        return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::Jsonc });
     }
 
     // External formatter files are only supported with the `napi` feature
@@ -218,8 +219,6 @@ static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
 // ---
 
 /// Returns `true` if this is a plain JSON file (handled by `oxc_formatter_json`).
-///
-/// NOTE: `jsonc`, `json5` and `json-stringify` variants are still handled by Prettier.
 fn is_json_file(file_name: &str, extension: Option<&str>) -> bool {
     if matches!(file_name, "package.json" | "composer.json") {
         return false;
@@ -276,6 +275,31 @@ static JSON_FILENAMES: phf::Set<&'static str> = phf_set! {
     ".swcrc",
 };
 
+/// Returns `true` if this is a JSONC file (handled by `oxc_formatter_json` with the `jsonc` variant).
+fn is_jsonc_file(extension: Option<&str>) -> bool {
+    extension.is_some_and(|ext| JSONC_EXTENSIONS.contains(ext))
+}
+
+static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "jsonc",
+    "code-snippets",
+    "code-workspace",
+    "sublime-build",
+    "sublime-color-scheme",
+    "sublime-commands",
+    "sublime-completions",
+    "sublime-keymap",
+    "sublime-macro",
+    "sublime-menu",
+    "sublime-mousemap",
+    "sublime-project",
+    "sublime-settings",
+    "sublime-theme",
+    "sublime-workspace",
+    "sublime_metrics",
+    "sublime_session",
+};
+
 // ---
 
 /// Returns parser name for external formatter, if supported.
@@ -283,15 +307,11 @@ static JSON_FILENAMES: phf::Set<&'static str> = phf_set! {
 #[cfg(feature = "napi")]
 fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
     // JSON and variants
-    // NOTE: `parser: json` is already supported by `oxc_formatter_json`,
-    // others are routed to Prettier here.
+    // NOTE: `parser: json` and `parser: jsonc` are already supported by
+    // `oxc_formatter_json` (handled in `classify_file_kind`);
+    // `json5` and `json-stringify` are routed to Prettier here.
     if file_name == "composer.json" || extension == Some("importmap") {
         return Some("json-stringify");
-    }
-    if let Some(ext) = extension
-        && JSONC_EXTENSIONS.contains(ext)
-    {
-        return Some("jsonc");
     }
     if extension == Some("json5") {
         return Some("json5");
@@ -372,27 +392,6 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
 
     None
 }
-
-#[cfg(feature = "napi")]
-static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "jsonc",
-    "code-snippets",
-    "code-workspace",
-    "sublime-build",
-    "sublime-color-scheme",
-    "sublime-commands",
-    "sublime-completions",
-    "sublime-keymap",
-    "sublime-macro",
-    "sublime-menu",
-    "sublime-mousemap",
-    "sublime-project",
-    "sublime-settings",
-    "sublime-theme",
-    "sublime-workspace",
-    "sublime_metrics",
-    "sublime_session",
-};
 
 #[cfg(feature = "napi")]
 static HTML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
@@ -609,7 +608,8 @@ mod tests {
             // Plain JSON (e.g. `data.json`, `schema.avsc`) is routed to
             // `oxc_formatter_json` and excluded from this map.
             ("config.importmap", Some("json-stringify")),
-            ("config.code-workspace", Some("jsonc")),
+            // NOTE: jsonc (e.g. `config.code-workspace`) is handled in
+            // classify_file_kind by `oxc_formatter_json`, not here.
             ("settings.json5", Some("json5")),
             // HTML
             ("index.html", Some("html")),
@@ -691,8 +691,32 @@ mod tests {
         for file_name in json_files {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxcFormatterJson { .. })),
-                "`{file_name}` should be routed to oxc_formatter_json"
+                matches!(
+                    result,
+                    Some(FileKind::OxcFormatterJson { variant: JsonVariant::Json, .. })
+                ),
+                "`{file_name}` should be routed to oxc_formatter_json (json)"
+            );
+        }
+    }
+
+    #[test]
+    fn test_jsonc_files_route_to_oxc_formatter_json() {
+        let jsonc_files = vec![
+            "settings.jsonc",
+            "project.code-workspace",
+            "keymap.sublime-keymap",
+            "theme.sublime-theme",
+        ];
+
+        for file_name in jsonc_files {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(
+                    result,
+                    Some(FileKind::OxcFormatterJson { variant: JsonVariant::Jsonc, .. })
+                ),
+                "`{file_name}` should be routed to oxc_formatter_json (jsonc)"
             );
         }
     }

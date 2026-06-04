@@ -1,8 +1,8 @@
 use oxc_ast::ast::{ObjectExpression, ObjectPropertyKind, PropertyKey};
 use oxc_formatter_core::{
-    Buffer, Expand, Format, FormatContext,
+    Buffer, Format, FormatContext,
     builders::{block_indent, group, soft_block_indent_with_maybe_space, space, text},
-    util::{NumberFormatOptions, format_trimmed_number, is_simple_number},
+    spec::{format_trimmed_number, is_simple_number},
     write,
 };
 use oxc_span::GetSpan;
@@ -14,6 +14,7 @@ use crate::{
         is_suppressed_before, write_dangling_comments,
     },
     context::JsonFormatContext,
+    options::Expand,
 };
 
 use crate::separated::{TrailingSeparator, write_separated};
@@ -37,7 +38,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
                 write!(f, "}");
                 return;
             }
-            let inner = format_with(move |f: &mut JsonFormatter<'_, 'a>| {
+            let inner = format_with(move |f| {
                 write_dangling_comments(dangling, f);
             });
             write!(f, [block_indent(&inner), "}"]);
@@ -46,8 +47,10 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
 
         // Collect property spans up-front for blank-line detection
         let spans: Vec<_> = self.object.properties.iter().map(oxc_span::GetSpan::span).collect();
-        let properties = format_with(|f: &mut JsonFormatter<'_, 'a>| {
-            write_separated(f, &spans, TrailingSeparator::Disallowed, |i, f| {
+        let trailing =
+            TrailingSeparator::when_breaking(f.context().options().allow_trailing_comma());
+        let properties = format_with(|f| {
+            write_separated(f, &spans, trailing, self.object.span.end, |i, f| {
                 let property = &self.object.properties[i];
                 match property {
                     ObjectPropertyKind::ObjectProperty(prop) => {
@@ -88,7 +91,9 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
         let options = f.context().options();
         let expand = match options.expand {
             Expand::Auto => {
-                f.context().source_text().has_newline_after_opening_brace(self.object.span.start)
+                // `+ 1` skips the opening `{`.
+                let after_brace = self.object.span.start + 1;
+                f.context().source_text().has_newline_after_skipping_comments(after_brace)
             }
             Expand::Never => false,
         };
@@ -133,8 +138,9 @@ fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) {
         }
         PropertyKey::NumericLiteral(lit) => {
             let raw = lit.raw.as_ref().map_or("", oxc_ast::ast::Str::as_str);
+            // JSON keeps one trailing decimal zero (`x.00000` -> `x.0`); see `format_trimmed_number`.
             let printed =
-                format_trimmed_number(raw, NumberFormatOptions::keep_one_trailing_decimal_zero());
+                format_trimmed_number(raw, /* keep_one_trailing_decimal_zero */ true);
             let printed_str = arena_cow_str(printed, f);
 
             if should_quote_numeric_key(printed_str) {

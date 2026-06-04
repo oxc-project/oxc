@@ -7,10 +7,10 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, JsFormatOptions, OperatorPosition,
-    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, JsFormatOptions,
+    OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
-use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -134,11 +134,13 @@ impl VisitMut<'_> for SpecParser {
             return;
         }
 
-        // For the JSON language we accept only calls whose first parser is `"json"`.
-        // `json5` / `json-stringify` calls share the same `format.test.js` but are
-        // out of scope until later phases.
-        if matches!(self.language, TestLanguage::Json) && !parsers.iter().any(|p| p == "json") {
-            return;
+        // The `json` / `jsonc` languages each accept only their own parser's calls.
+        // A single `format.test.js` may list several parsers (e.g. `with-comment/`),
+        // so we filter per-language; `json5` / `json-stringify` stay out of scope.
+        match self.language {
+            TestLanguage::Json if !parsers.iter().any(|p| p == "json") => return,
+            TestLanguage::Jsonc if !parsers.iter().any(|p| p == "jsonc") => return,
+            _ => {}
         }
 
         let mut js_options = JsFormatOptions {
@@ -146,9 +148,14 @@ impl VisitMut<'_> for SpecParser {
             line_width: LineWidth::try_from(80).unwrap(),
             ..Default::default()
         };
+        // The variant follows the language: `Json` -> `json`, `Jsonc` -> `jsonc`.
+        let variant = match self.language {
+            TestLanguage::Jsonc => JsonVariant::Jsonc,
+            _ => JsonVariant::Json,
+        };
         let mut json_options = JsonFormatOptions {
             line_width: LineWidth::try_from(80).unwrap(),
-            variant: JsonVariant::Json,
+            variant,
             ..Default::default()
         };
 
@@ -224,6 +231,11 @@ impl VisitMut<'_> for SpecParser {
                                 "trailingComma" => {
                                     js_options.trailing_commas =
                                         TrailingCommas::from_str(s).unwrap();
+                                    json_options.trailing_commas = match s {
+                                        "all" | "es5" => oxc_formatter_json::TrailingCommas::Always,
+                                        "none" => oxc_formatter_json::TrailingCommas::Never,
+                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
+                                    };
                                 }
                                 "endOfLine" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
@@ -292,7 +304,7 @@ impl VisitMut<'_> for SpecParser {
         snapshot_options.sort_by(|a, b| a.0.cmp(&b.0));
 
         let options = match self.language {
-            TestLanguage::Json => SpecOptions::Json(json_options),
+            TestLanguage::Json | TestLanguage::Jsonc => SpecOptions::Json(json_options),
             TestLanguage::Js | TestLanguage::Ts => SpecOptions::Js(Box::new(js_options)),
         };
         self.calls.push((options, snapshot_options));

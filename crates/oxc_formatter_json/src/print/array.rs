@@ -1,8 +1,9 @@
 use oxc_ast::ast::{ArrayExpression, ArrayExpressionElement, Expression};
 use oxc_formatter_core::{
-    Buffer, Format,
+    Buffer, Format, FormatContext,
     builders::{
-        block_indent, empty_line, group, soft_block_indent, soft_line_break_or_space, text,
+        block_indent, empty_line, group, if_group_breaks, soft_block_indent,
+        soft_line_break_or_space, text,
     },
     write,
 };
@@ -26,14 +27,15 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
 
         if self.array.elements.is_empty() {
             let dangling = f.context().comments().take_before(self.array.span.end);
-            if dangling.is_empty() {
-                write!(f, "]");
-                return;
+            if !dangling.is_empty() {
+                write!(
+                    f,
+                    [block_indent(&format_with(move |f| {
+                        write_dangling_comments(dangling, f);
+                    }))]
+                );
             }
-            let inner = format_with(move |f: &mut JsonFormatter<'_, 'a>| {
-                write_dangling_comments(dangling, f);
-            });
-            write!(f, [block_indent(&inner), "]"]);
+            write!(f, "]");
             return;
         }
 
@@ -73,13 +75,19 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
             let elements = &self.array.elements;
             let source = f.context().source_text();
             let last_idx = elements.len() - 1;
-            let body = format_with(|f: &mut JsonFormatter<'_, 'a>| {
+            let allow_trailing = f.context().options().allow_trailing_comma();
+            // The trailing comma sits on the last fill item,
+            // so its `if_group_breaks` must reference the outer array group explicitly.
+            // Which is inside a `fill`, the nearest enclosing group isn't the array group.
+            // Only allocated when a trailing comma is possible (otherwise no group needs an id).
+            let group_id = allow_trailing.then(|| f.state().group_id("json-concise-array"));
+            let body = format_with(move |f| {
                 let mut filler = f.fill();
                 let mut prev_end: Option<u32> = None;
                 for (i, element) in elements.iter().enumerate() {
                     let curr_start = element.span().start;
                     let pe = prev_end;
-                    let sep = format_with(move |f: &mut JsonFormatter<'_, 'a>| {
+                    let sep = format_with(move |f| {
                         if let Some(pe_val) = pe {
                             let between = source.bytes_range(pe_val, curr_start);
                             if blank_line_after_comma(between) {
@@ -89,10 +97,12 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
                             }
                         }
                     });
-                    let item = format_with(move |f: &mut JsonFormatter<'_, 'a>| {
+                    let item = format_with(move |f| {
                         write_array_element(element, f);
                         if i < last_idx {
                             write!(f, ",");
+                        } else if allow_trailing {
+                            write!(f, if_group_breaks(&",").with_group_id(group_id));
                         }
                     });
                     filler.entry(&sep, &item);
@@ -111,13 +121,20 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
                     }
                 );
             });
-            write!(f, [group(&soft_block_indent(&body)), "]"]);
+            write!(f, [group(&soft_block_indent(&body)).with_group_id(group_id), "]"]);
             return;
         }
 
         let spans: Vec<_> = self.array.elements.iter().map(oxc_span::GetSpan::span).collect();
-        let elements = format_with(|f: &mut JsonFormatter<'_, 'a>| {
-            write_separated(f, &spans, TrailingSeparator::Disallowed, |i, f| {
+        let elements = format_with(|f| {
+            // An elision-forced trailing comma is load-bearing and always literal,
+            // so it overrides the variant's group-break separator.
+            let sep = if trailing_comma {
+                TrailingSeparator::Disallowed
+            } else {
+                TrailingSeparator::when_breaking(f.context().options().allow_trailing_comma())
+            };
+            write_separated(f, &spans, sep, self.array.span.end, |i, f| {
                 write_array_element(&self.array.elements[i], f);
             });
 

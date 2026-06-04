@@ -28,10 +28,10 @@ mod options;
 pub mod printer;
 mod simple_context;
 mod source_text;
+pub mod spec;
 mod state;
 mod text_range;
 mod traits;
-pub mod util;
 
 #[cfg(feature = "test_harness")]
 pub mod test_support;
@@ -57,8 +57,8 @@ pub use formatted::Formatted;
 pub use formatter::Formatter;
 pub use group_id::{GroupId, UniqueGroupIdBuilder};
 pub use options::{
-    BracketSpacing, Expand, IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding,
-    LineWidth, LineWidthFromIntError, ParseFormatNumberError,
+    IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,
+    LineWidthFromIntError, ParseFormatNumberError,
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
 pub(crate) use simple_context::SimpleFormatContext;

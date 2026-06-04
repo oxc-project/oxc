@@ -1,29 +1,10 @@
-//! Prettier-compatible number-literal normalization, shared by every language
-//! the formatter targets (JS/TS/JSON/JSON5/...).
-
 use std::{borrow::Cow, num::NonZeroUsize};
 
 use cow_utils::CowUtils;
 
-#[derive(Debug, Default, Clone, Copy)]
-pub struct NumberFormatOptions {
-    /// Controls how numbers with trailing decimal zeroes are formatted.
-    ///
-    /// Prettier behaves differently when printing numbers like `x.00000` in different languages:
-    /// - In JavaScript: `x.00000` is printed as `x.0`
-    /// - In CSS: `x.00000` is printed as `x`
-    keep_one_trailing_decimal_zero: bool,
-}
-
-impl NumberFormatOptions {
-    pub fn keep_one_trailing_decimal_zero() -> Self {
-        Self { keep_one_trailing_decimal_zero: true }
-    }
-}
-
 /// Checks if a number string is "simple" - only digits, or digits.digits.
-/// Matches Prettier's `isSimpleNumber`: `/^(?:\d+|\d+\.\d+)$/u`
 ///
+/// Matches Prettier's `isSimpleNumber`: `/^(?:\d+|\d+\.\d+)$/u`
 /// <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/property.js#L11-L14>
 ///
 /// Examples of simple numbers: "1", "123", "1.5", "0.1"
@@ -93,7 +74,10 @@ struct FormatNumberLiteralExponent {
 
 // Regex-free version of https://github.com/prettier/prettier/blob/ca246afacee8e6d5db508dae01730c9523bbff1d/src/common/util.js#L341-L356
 // TODO: Use arena String to construct the cleaned text.
-pub fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, str> {
+//
+// `keep_one_trailing_decimal_zero` is a per-language policy.
+// (Prettier prints `x.00000` as `x.0` in JS but `x` in CSS)
+pub fn format_trimmed_number(text: &str, keep_one_trailing_decimal_zero: bool) -> Cow<'_, str> {
     use FormatNumberLiteralState::{DecimalPart, Exponent, IntegerPart};
 
     let text = text.cow_to_ascii_lowercase();
@@ -140,7 +124,7 @@ pub fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_
                 (curr_index, Some(b'e') | None),
             ) => {
                 // The decimal part equals zero, ignore it completely. However when the `keep_one_trailing_decimal_zero` option is enabled, print `.0` unless there was *only* a trailing dot.
-                if curr_index > dot_index + 1 && options.keep_one_trailing_decimal_zero {
+                if curr_index > dot_index + 1 && keep_one_trailing_decimal_zero {
                     cleaned_text.push_str(&text[copied_or_ignored_chars..=*dot_index]);
                     cleaned_text.push('0');
                 } else {

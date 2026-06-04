@@ -10,6 +10,7 @@ mod ir_transform;
 mod options;
 mod parentheses;
 mod print;
+mod source_text;
 mod utils;
 
 use oxc_allocator::Allocator;

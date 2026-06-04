@@ -2026,7 +2026,6 @@ dependencies = [
  "oxc_allocator",
  "oxc_data_structures",
  "oxc_span",
- "oxc_syntax",
  "rustc-hash",
  "serde_json",
  "unicode-width",

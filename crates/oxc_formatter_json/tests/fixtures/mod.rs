@@ -2,10 +2,12 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter_core::{
-    BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth,
+    IndentStyle, IndentWidth, LineEnding, LineWidth,
     test_support::{FixtureFormatter, OptionSet, build_fixture_snapshot},
 };
-use oxc_formatter_json::{JsonFormatOptions, JsonVariant, format};
+use oxc_formatter_json::{
+    BracketSpacing, Expand, JsonFormatOptions, JsonVariant, TrailingCommas, format,
+};
 
 struct JsonHarness;
 
@@ -55,6 +57,17 @@ impl FixtureFormatter for JsonHarness {
                             "json5" => JsonVariant::Json5,
                             "json-stringify" => JsonVariant::JsonStringify,
                             _ => options.variant,
+                        };
+                    }
+                }
+                "trailingComma" => {
+                    if let Some(s) = value.as_str() {
+                        // Translate Prettier's vocabulary into JSON's neutral two states here,
+                        // in the harness — the JSON type itself knows no "es5".
+                        options.trailing_commas = match s {
+                            "all" | "es5" => TrailingCommas::Always,
+                            "none" => TrailingCommas::Never,
+                            _ => options.trailing_commas,
                         };
                     }
                 }
