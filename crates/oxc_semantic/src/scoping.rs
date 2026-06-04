@@ -3,7 +3,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, BitSet, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, BitSet, CloneIn, ThinVec, Vec as ArenaVec};
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident};
@@ -18,7 +18,8 @@ use oxc_syntax::{
 use crate::multi_index_vec::multi_index_vec;
 
 pub type Bindings<'a> = ArenaIdentHashMap<'a, SymbolId>;
-pub type UnresolvedReferences<'a> = ArenaIdentHashMap<'a, ArenaVec<'a, ReferenceId>>;
+pub type ReferenceIds<'a> = ThinVec<'a, ReferenceId>;
+pub type UnresolvedReferences<'a> = ArenaIdentHashMap<'a, ReferenceIds<'a>>;
 
 #[derive(Clone, Debug)]
 pub struct Redeclaration {
@@ -271,7 +272,7 @@ use scoping_cell::ScopingCell;
 pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
     symbol_names: ArenaVec<'cell, Ident<'cell>>,
-    resolved_references: ArenaVec<'cell, ArenaVec<'cell, ReferenceId>>,
+    resolved_references: ArenaVec<'cell, ReferenceIds<'cell>>,
     /// Redeclarations of a symbol.
     ///
     /// NOTE:
@@ -314,7 +315,7 @@ impl Scoping {
     }
 
     /// Iterate resolved reference ID lists for each symbol.
-    pub fn resolved_references(&self) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
+    pub fn resolved_references(&self) -> impl Iterator<Item = &ReferenceIds<'_>> + '_ {
         self.cell.borrow_dependent().resolved_references.iter()
     }
 
@@ -441,7 +442,7 @@ impl Scoping {
     ) -> SymbolId {
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.symbol_names.push(name.clone_in(allocator));
-            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.resolved_references.push(ReferenceIds::new());
         });
         self.symbol_table.push(span, flags, scope_id, node_id)
     }
@@ -460,7 +461,7 @@ impl Scoping {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = name.clone_in(allocator);
             cell.symbol_names.push(name);
-            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.resolved_references.push(ReferenceIds::new());
             cell.bindings[binding_scope_id].insert(name, symbol_id);
         });
         symbol_id
@@ -576,8 +577,8 @@ impl Scoping {
 
     /// Add a reference to a symbol.
     pub fn add_resolved_reference(&mut self, symbol_id: SymbolId, reference_id: ReferenceId) {
-        self.cell.with_dependent_mut(|_allocator, cell| {
-            cell.resolved_references[symbol_id.index()].push(reference_id);
+        self.cell.with_dependent_mut(|allocator, cell| {
+            cell.resolved_references[symbol_id.index()].push(reference_id, allocator);
         });
     }
 
@@ -793,10 +794,7 @@ impl Scoping {
     pub fn add_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = name.clone_in(allocator);
-            cell.root_unresolved_references
-                .entry(name)
-                .or_insert_with(|| ArenaVec::new_in(allocator))
-                .push(reference_id);
+            cell.root_unresolved_references.entry(name).or_default().push(reference_id, allocator);
         });
     }
 
