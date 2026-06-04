@@ -2,11 +2,12 @@ use oxc_ast::AstKind;
 use oxc_ast::ast::{
     Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
     ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
+    VariableDeclarationKind, VariableDeclarator,
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{IsGlobalReference, ScopeFlags};
+use oxc_semantic::{IsGlobalReference, ScopeFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_str::static_ident;
 use schemars::JsonSchema;
@@ -50,6 +51,7 @@ pub struct PreserveCaughtError(PreserveCaughtErrorOptions);
 
 struct ThrowFinder<'a, 'ctx> {
     catch_param: &'a BindingPattern<'a>,
+    catch_param_aliases: Vec<SymbolId>,
     ctx: &'ctx LintContext<'a>,
 }
 
@@ -66,7 +68,7 @@ impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
         }
 
         if let Some(Argument::ObjectExpression(obj_expr)) = args.get(1)
-            && has_cause_property(obj_expr, self.catch_param, self.ctx)
+            && has_cause_property(obj_expr, self.catch_param, &self.catch_param_aliases, self.ctx)
         {
             return;
         }
@@ -186,6 +188,24 @@ impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
         });
     }
 
+    fn visit_variable_declarator(&mut self, declarator: &VariableDeclarator<'a>) {
+        if declarator.kind == VariableDeclarationKind::Const
+            && let Some(init) = &declarator.init
+            && is_catch_parameter_or_alias(
+                init,
+                self.catch_param,
+                &self.catch_param_aliases,
+                self.ctx,
+            )
+            && let BindingPattern::BindingIdentifier(binding) = &declarator.id
+            && let Some(alias) = binding.symbol_id.get()
+        {
+            self.catch_param_aliases.push(alias);
+        }
+
+        walk::walk_variable_declarator(self, declarator);
+    }
+
     // Do not traverse into nested functions/closures within the catch block
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
 
@@ -211,6 +231,7 @@ fn is_aggregate_error(ident: &IdentifierReference, ctx: &LintContext) -> bool {
 fn has_cause_property(
     obj_expr: &ObjectExpression,
     catch_param: &BindingPattern,
+    catch_param_aliases: &[SymbolId],
     ctx: &LintContext,
 ) -> bool {
     for prop in &obj_expr.properties {
@@ -220,7 +241,12 @@ fn has_cause_property(
                     continue;
                 };
                 if ident.name == "cause" {
-                    return is_catch_parameter(&prop.value, catch_param, ctx);
+                    return is_catch_parameter_or_alias(
+                        &prop.value,
+                        catch_param,
+                        catch_param_aliases,
+                        ctx,
+                    );
                 }
             }
             ObjectPropertyKind::SpreadProperty(_) => return true,
@@ -248,6 +274,25 @@ fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &Lin
     };
 
     symbol_id == catch_symbol_id
+}
+
+fn is_catch_parameter_or_alias(
+    expr: &Expression,
+    catch_param: &BindingPattern,
+    catch_param_aliases: &[SymbolId],
+    ctx: &LintContext,
+) -> bool {
+    is_catch_parameter(expr, catch_param, ctx)
+        || expression_symbol_id(expr, ctx)
+            .is_some_and(|symbol_id| catch_param_aliases.contains(&symbol_id))
+}
+
+fn expression_symbol_id(expr: &Expression, ctx: &LintContext) -> Option<SymbolId> {
+    let Expression::Identifier(ident) = expr else {
+        return None;
+    };
+
+    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
 }
 
 declare_oxc_lint!(
@@ -296,8 +341,11 @@ impl PreserveCaughtError {
 
     fn check_catch_clause<'a>(&self, catch_clause: &'a CatchClause<'a>, ctx: &LintContext<'a>) {
         if let Some(catch_param) = &catch_clause.param {
-            let mut finder: ThrowFinder<'a, '_> =
-                ThrowFinder { catch_param: &catch_param.pattern, ctx };
+            let mut finder: ThrowFinder<'a, '_> = ThrowFinder {
+                catch_param: &catch_param.pattern,
+                catch_param_aliases: Vec::new(),
+                ctx,
+            };
             finder.visit_block_statement(catch_clause.body.as_ref());
         } else if self.0.require_catch_parameter {
             ctx.diagnostic(missing_catch_parameter_diagnostic(catch_clause.span));
@@ -344,6 +392,24 @@ fn test() {
 			        doSomething();
 			    } catch (err) {
 			        throw new Error("Failed", { cause: err, extra: 42 });
+			    }"#,
+            None,
+        ),
+        (
+            r#"try {
+			        doSomething();
+			    } catch (err) {
+			        const alias = err;
+			        throw new Error("Failed", { cause: alias });
+			    }"#,
+            None,
+        ),
+        (
+            r#"try {
+			        doSomething();
+			    } catch (err) {
+			        const e = err;
+			        throw new Error("Failed", { cause: e });
 			    }"#,
             None,
         ),
@@ -436,17 +502,18 @@ fn test() {
         (
             r#"try {
 			            doSomething();
-			        } catch (err) {
-			            const e = err;
-			            throw new Error("Failed", { cause: e });
+			        } catch (error) {
+			            throw new Error("Failed", { cause: error.message });
 			        }"#,
             None,
         ),
         (
             r#"try {
 			            doSomething();
-			        } catch (error) {
-			            throw new Error("Failed", { cause: error.message });
+			        } catch (err) {
+			            register(err, (alias) => {
+			                throw new Error("Failed", { cause: alias });
+			            });
 			        }"#,
             None,
         ),
@@ -745,23 +812,6 @@ fn test() {
                         doSomething();
                     } catch (err) {
                         const unrelated = new Error("other");
-                        throw new Error("Something failed", { cause: err });
-                    }"#,
-            None,
-        ),
-        // Throws a new Error, cause property is present but value is a different identifier
-        // Note: This should actually be a valid case since e === err, but still reporting as it's hard to track.
-        (
-            r#"try {
-                        doSomething();
-                    } catch (err) {
-                        const e = err;
-                        throw new Error("Something failed", { cause: e });
-                    }"#,
-            r#"try {
-                        doSomething();
-                    } catch (err) {
-                        const e = err;
                         throw new Error("Something failed", { cause: err });
                     }"#,
             None,

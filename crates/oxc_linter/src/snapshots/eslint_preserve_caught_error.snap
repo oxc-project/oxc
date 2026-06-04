@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
 ---
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
@@ -21,20 +22,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Preserve the original error by using the `cause` property when re-throwing errors.
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
-   ╭─[preserve_caught_error.tsx:5:16]
- 4 │                         const e = err;
- 5 │                         throw new Error("Failed", { cause: e });
-   ·                         ────────────────────────────────────────
- 6 │                     }
-   ╰────
-  help: Preserve the original error by using the `cause` property when re-throwing errors.
-
-  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:16]
  3 │                     } catch (error) {
  4 │                         throw new Error("Failed", { cause: error.message });
    ·                         ────────────────────────────────────────────────────
  5 │                     }
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:5:20]
+ 4 │                         register(err, (alias) => {
+ 5 │                             throw new Error("Failed", { cause: alias });
+   ·                             ────────────────────────────────────────────
+ 6 │                         });
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
 
