@@ -12,6 +12,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::symbol::SymbolId;
 
 use super::PeepholeOptimizations;
+use super::direct_eval;
 use super::fold_constants::is_cjs_module_exports_hint;
 
 impl<'a> PeepholeOptimizations {
@@ -818,9 +819,11 @@ impl<'a> PeepholeOptimizations {
         let Expression::CallExpression(call) = &expr_stmt.expression else {
             return true;
         };
-        if !call.optional
-            && call.callee.get_identifier_reference().is_some_and(|ident| ident.name == "eval")
-        {
+        if direct_eval::is_direct_eval_call(ctx.scoping(), call) {
+            return false;
+        }
+        // A call to a shadowed `eval` binding is indirect; it does not run when the class is unused.
+        if call.callee.get_identifier_reference().is_some_and(|ident| ident.name == "eval") {
             return false;
         }
         true

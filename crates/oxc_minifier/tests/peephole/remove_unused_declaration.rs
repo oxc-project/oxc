@@ -197,6 +197,17 @@ fn remove_unused_declaration_with_direct_eval_inside_body() {
     test_options("class C { static { eval('C') } }", "", &options);
 }
 
+#[test]
+fn remove_unused_class_static_block_shadowed_eval() {
+    let options = CompressOptions::smallest();
+    // Shadowed `eval` is not direct eval; class is unused so the static block never runs.
+    test_options(
+        "class C { static { function eval() {} eval('x') } }",
+        "",
+        &options,
+    );
+}
+
 /// Edge cases where eval runs eagerly, not inside the function/class body (#20992).
 #[test]
 fn remove_unused_declaration_direct_eval_edge_cases() {

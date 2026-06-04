@@ -89,9 +89,11 @@ impl<'a> PeepholeOptimizations {
         let Some(id) = &f.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
         if Self::keep_top_level_var_in_script_mode(ctx)
-            || direct_eval::direct_eval_outside_scope_body(
+            || direct_eval::direct_eval_blocks_unused_declaration_removal(
                 f.scope_id(),
+                symbol_id,
                 &ctx.state.direct_eval_scopes,
+                &ctx.state.named_declaration_body_scopes,
                 ctx.scoping(),
             )
         {
@@ -112,9 +114,11 @@ impl<'a> PeepholeOptimizations {
         let Some(id) = &c.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
         if Self::keep_top_level_var_in_script_mode(ctx)
-            || direct_eval::direct_eval_outside_scope_body(
+            || direct_eval::direct_eval_blocks_unused_declaration_removal(
                 c.scope_id(),
+                symbol_id,
                 &ctx.state.direct_eval_scopes,
+                &ctx.state.named_declaration_body_scopes,
                 ctx.scoping(),
             )
         {

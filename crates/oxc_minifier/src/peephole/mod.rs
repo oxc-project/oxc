@@ -164,8 +164,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx.state.symbol_values.reset();
         ctx.state.proto_write_symbols.clear();
         ctx.state.changed = false;
-        ctx.state.direct_eval_scopes =
-            direct_eval::collect_direct_eval_scopes(ctx.scoping(), program);
+        let prepass = direct_eval::collect_prepass_data(ctx.scoping(), program);
+        ctx.state.direct_eval_scopes = prepass.direct_eval_scopes;
+        ctx.state.named_declaration_body_scopes = prepass.named_declaration_body_scopes;
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {

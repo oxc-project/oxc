@@ -34,6 +34,9 @@ pub struct MinifierState<'a> {
     /// Lexical scopes of direct `eval(...)` call sites (not ancestor-propagated).
     pub direct_eval_scopes: FxHashSet<ScopeId>,
 
+    /// `(symbol_id, body_scope_id)` for named functions and classes.
+    pub named_declaration_body_scopes: Vec<(SymbolId, ScopeId)>,
+
     pub changed: bool,
 
     /// Scratch buffer reused by `try_fold_concat` to build template literal
@@ -57,6 +60,7 @@ impl MinifierState<'_> {
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
             direct_eval_scopes: FxHashSet::default(),
+            named_declaration_body_scopes: Vec::new(),
             changed: false,
             concat_scratch: String::new(),
         }
