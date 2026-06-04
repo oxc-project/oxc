@@ -2257,30 +2257,20 @@ impl Gen for TemplateLiteral<'_> {
     }
 }
 
-fn tagged_template_tag_needs_wrap_for_new_callee(tag: &Expression<'_>) -> bool {
-    match tag {
-        Expression::CallExpression(_)
-        | Expression::ImportExpression(_)
-        | Expression::V8IntrinsicExpression(_) => true,
-        Expression::StaticMemberExpression(expr) => {
-            tagged_template_tag_needs_wrap_for_new_callee(&expr.object)
+fn tagged_template_tag_needs_wrap_for_new_callee(mut tag: &Expression<'_>) -> bool {
+    loop {
+        match tag {
+            Expression::CallExpression(_)
+            | Expression::ImportExpression(_)
+            | Expression::V8IntrinsicExpression(_) => return true,
+            Expression::StaticMemberExpression(expr) => tag = &expr.object,
+            Expression::ComputedMemberExpression(expr) => tag = &expr.object,
+            Expression::PrivateFieldExpression(expr) => tag = &expr.object,
+            Expression::ParenthesizedExpression(expr) => tag = &expr.expression,
+            Expression::TSNonNullExpression(expr) => tag = &expr.expression,
+            Expression::TSInstantiationExpression(expr) => tag = &expr.expression,
+            _ => return false,
         }
-        Expression::ComputedMemberExpression(expr) => {
-            tagged_template_tag_needs_wrap_for_new_callee(&expr.object)
-        }
-        Expression::PrivateFieldExpression(expr) => {
-            tagged_template_tag_needs_wrap_for_new_callee(&expr.object)
-        }
-        Expression::ParenthesizedExpression(expr) => {
-            tagged_template_tag_needs_wrap_for_new_callee(&expr.expression)
-        }
-        Expression::TSNonNullExpression(expr) => {
-            tagged_template_tag_needs_wrap_for_new_callee(&expr.expression)
-        }
-        Expression::TSInstantiationExpression(expr) => {
-            tagged_template_tag_needs_wrap_for_new_callee(&expr.expression)
-        }
-        _ => false,
     }
 }
 
