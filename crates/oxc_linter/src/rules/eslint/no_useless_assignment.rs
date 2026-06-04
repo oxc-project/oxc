@@ -389,10 +389,25 @@ impl Rule for NoUselessAssignment {
 
                         match op.op {
                             Operation::Write => {
-                                if !scratch_live.has_bit(compact_idx)
+                                let for_update_observed =
+                                    Self::is_for_update_write_observed_by_loop(
+                                        ctx,
+                                        op.node,
+                                        compact_idx,
+                                        &cfg_ops,
+                                    );
+                                let for_update_has_break =
+                                    Self::is_for_update_write_in_breaking_loop(ctx, op.node);
+                                let is_live = scratch_live.has_bit(compact_idx)
+                                    && (!for_update_has_break
+                                        || !Self::is_for_update_write(ctx, op.node)
+                                        || for_update_observed);
+
+                                if !is_live
                                     && !scratch_catch.has_bit(compact_idx)
                                     && !tracked_symbol.is_exported
                                     && !tracked_symbol.has_captured_read
+                                    && !for_update_observed
                                     && !*is_in_try_block.get_or_insert_with(|| {
                                         Self::is_in_try_block(graph, block_node_id)
                                     })
@@ -474,6 +489,9 @@ impl NoUselessAssignment {
 
         if reference.is_read() {
             Self::push_op(ctx, graph, cfg_ops, op_node, Operation::Read, compact_idx);
+            if let Some(try_node_id) = Self::enclosing_finally_try_node(ctx, op_node) {
+                Self::push_op(ctx, graph, cfg_ops, try_node_id, Operation::Read, compact_idx);
+            }
             tracked_symbol.is_used = true;
             if !tracked_symbol.has_captured_read
                 && !Self::has_same_parent_variable_scope(
@@ -558,6 +576,290 @@ impl NoUselessAssignment {
         graph.edges_directed(block_node_id, Direction::Outgoing).any(|e| {
             matches!(e.weight(), EdgeType::Error(ErrorEdgeKind::Explicit) | EdgeType::Finalize)
         })
+    }
+
+    fn is_for_update_write_observed_by_loop(
+        ctx: &LintContext,
+        node_id: NodeId,
+        compact_idx: usize,
+        cfg_ops: &CfgOps,
+    ) -> bool {
+        let Some((test_span, body_span, body_node_id, for_node_id)) =
+            Self::enclosing_for_update_read_spans(ctx, node_id)
+        else {
+            return false;
+        };
+
+        cfg_ops.iter().flatten().any(|op| {
+            op.compact_idx as usize == compact_idx && op.op == Operation::Read && {
+                let span = ctx.nodes().get_node(op.node).span();
+                test_span.is_some_and(|test_span| test_span.contains_inclusive(span))
+                    || (body_span.contains_inclusive(span)
+                        && !Self::has_loop_body_update_skipping_abrupt_after_read(
+                            ctx,
+                            body_node_id,
+                            for_node_id,
+                            body_span,
+                            span,
+                        ))
+            }
+        })
+    }
+
+    fn is_for_update_write(ctx: &LintContext, node_id: NodeId) -> bool {
+        Self::enclosing_for_update_read_spans(ctx, node_id).is_some()
+    }
+
+    fn is_for_update_write_in_breaking_loop(ctx: &LintContext, node_id: NodeId) -> bool {
+        let Some((_, body_span, body_node_id, for_node_id)) =
+            Self::enclosing_for_update_read_spans(ctx, node_id)
+        else {
+            return false;
+        };
+
+        Self::has_update_skipping_abrupt_completion(ctx, body_span, body_node_id, for_node_id)
+    }
+
+    fn has_update_skipping_abrupt_completion(
+        ctx: &LintContext,
+        body_span: Span,
+        body_node_id: NodeId,
+        for_node_id: NodeId,
+    ) -> bool {
+        ctx.nodes().iter().any(|node| {
+            body_span.contains_inclusive(node.span())
+                && Self::is_update_skipping_abrupt(ctx, node.id(), body_node_id, for_node_id)
+        })
+    }
+
+    fn has_loop_body_update_skipping_abrupt_after_read(
+        ctx: &LintContext,
+        body_node_id: NodeId,
+        for_node_id: NodeId,
+        body_span: Span,
+        read_span: Span,
+    ) -> bool {
+        ctx.nodes().iter().any(|node| {
+            Self::is_update_skipping_abrupt(ctx, node.id(), body_node_id, for_node_id)
+                && node.span().start > read_span.end
+                && Self::is_in_terminal_body_statement(ctx, node.id(), body_node_id, body_span)
+        })
+    }
+
+    fn is_in_terminal_body_statement(
+        ctx: &LintContext,
+        node_id: NodeId,
+        body_node_id: NodeId,
+        body_span: Span,
+    ) -> bool {
+        let mut current_id = node_id;
+
+        while current_id != NodeId::ROOT {
+            let parent = ctx.nodes().parent_node(current_id);
+            if parent.id() == body_node_id {
+                return !Self::has_following_sibling(ctx, parent.id(), current_id, body_span);
+            }
+            if matches!(parent.kind(), AstKind::BlockStatement(_))
+                && Self::has_following_sibling(ctx, parent.id(), current_id, parent.span())
+            {
+                return false;
+            }
+            if matches!(
+                parent.kind(),
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Class(_)
+            ) {
+                return false;
+            }
+            current_id = parent.id();
+        }
+
+        false
+    }
+
+    fn has_following_sibling(
+        ctx: &LintContext,
+        parent_id: NodeId,
+        child_id: NodeId,
+        parent_span: Span,
+    ) -> bool {
+        let child_span = ctx.nodes().get_node(child_id).span();
+        ctx.nodes().iter().any(|node| {
+            ctx.nodes().parent_node(node.id()).id() == parent_id
+                && node.span().start > child_span.end
+                && parent_span.contains_inclusive(node.span())
+        })
+    }
+
+    fn is_update_skipping_abrupt(
+        ctx: &LintContext,
+        node_id: NodeId,
+        body_node_id: NodeId,
+        for_node_id: NodeId,
+    ) -> bool {
+        let node = ctx.nodes().get_node(node_id);
+        match node.kind() {
+            AstKind::BreakStatement(break_stmt) => Self::break_exits_for_update(
+                ctx,
+                node_id,
+                body_node_id,
+                for_node_id,
+                break_stmt.label.as_ref().map(|label| label.name.as_str()),
+            ),
+            AstKind::ReturnStatement(_) | AstKind::ThrowStatement(_) => {
+                Self::is_in_loop_body_control_context(ctx, node_id, body_node_id)
+            }
+            _ => false,
+        }
+    }
+
+    fn break_exits_for_update(
+        ctx: &LintContext,
+        break_node_id: NodeId,
+        body_node_id: NodeId,
+        for_node_id: NodeId,
+        label_name: Option<&str>,
+    ) -> bool {
+        if let Some(label_name) = label_name {
+            return Self::label_targets_for(
+                ctx,
+                break_node_id,
+                body_node_id,
+                for_node_id,
+                label_name,
+            );
+        }
+
+        let mut current_id = break_node_id;
+        while current_id != NodeId::ROOT {
+            let parent = ctx.nodes().parent_node(current_id);
+            if matches!(
+                parent.kind(),
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Class(_)
+            ) {
+                return false;
+            }
+            if Self::is_breakable_statement(parent.kind()) {
+                return parent.id() == for_node_id;
+            }
+            current_id = parent.id();
+        }
+
+        false
+    }
+
+    fn label_targets_for(
+        ctx: &LintContext,
+        break_node_id: NodeId,
+        body_node_id: NodeId,
+        for_node_id: NodeId,
+        label_name: &str,
+    ) -> bool {
+        let for_span = ctx.nodes().get_node(for_node_id).span();
+        let mut current_id = break_node_id;
+
+        while current_id != NodeId::ROOT {
+            let parent = ctx.nodes().parent_node(current_id);
+            if matches!(
+                parent.kind(),
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Class(_)
+            ) {
+                return false;
+            }
+            if let AstKind::LabeledStatement(labeled_stmt) = parent.kind()
+                && labeled_stmt.label.name.as_str() == label_name
+            {
+                return parent.span().contains_inclusive(for_span);
+            }
+            if parent.id() == body_node_id {
+                current_id = parent.id();
+                continue;
+            }
+            current_id = parent.id();
+        }
+
+        false
+    }
+
+    fn is_breakable_statement(kind: AstKind) -> bool {
+        matches!(
+            kind,
+            AstKind::DoWhileStatement(_)
+                | AstKind::WhileStatement(_)
+                | AstKind::ForStatement(_)
+                | AstKind::ForInStatement(_)
+                | AstKind::ForOfStatement(_)
+                | AstKind::SwitchStatement(_)
+        )
+    }
+
+    fn is_in_loop_body_control_context(
+        ctx: &LintContext,
+        node_id: NodeId,
+        body_node_id: NodeId,
+    ) -> bool {
+        let mut current_id = node_id;
+
+        while current_id != NodeId::ROOT {
+            let parent = ctx.nodes().parent_node(current_id);
+            if parent.id() == body_node_id {
+                return true;
+            }
+            if matches!(
+                parent.kind(),
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Class(_)
+            ) {
+                return false;
+            }
+            current_id = parent.id();
+        }
+
+        false
+    }
+
+    fn enclosing_for_update_read_spans(
+        ctx: &LintContext,
+        node_id: NodeId,
+    ) -> Option<(Option<Span>, Span, NodeId, NodeId)> {
+        let node_span = ctx.nodes().get_node(node_id).span();
+        let mut current = ctx.nodes().get_node(node_id);
+
+        while current.id() != NodeId::ROOT {
+            current = ctx.nodes().parent_node(current.id());
+            if let AstKind::ForStatement(for_stmt) = current.kind()
+                && for_stmt
+                    .update
+                    .as_ref()
+                    .is_some_and(|update| update.span().contains_inclusive(node_span))
+            {
+                return Some((
+                    for_stmt.test.as_ref().map(GetSpan::span),
+                    for_stmt.body.span(),
+                    for_stmt.body.node_id(),
+                    current.id(),
+                ));
+            }
+        }
+
+        None
+    }
+
+    fn enclosing_finally_try_node(ctx: &LintContext, node_id: NodeId) -> Option<NodeId> {
+        let node_span = ctx.nodes().get_node(node_id).span();
+        let mut current = ctx.nodes().get_node(node_id);
+
+        while current.id() != NodeId::ROOT {
+            current = ctx.nodes().parent_node(current.id());
+            if let AstKind::TryStatement(try_stmt) = current.kind()
+                && try_stmt
+                    .finalizer
+                    .as_ref()
+                    .is_some_and(|finalizer| finalizer.span.contains_inclusive(node_span))
+            {
+                return Some(current.id());
+            }
+        }
+
+        None
     }
 
     fn get_parent_variable_scope(ctx: &LintContext, scope_id: ScopeId) -> ScopeId {
@@ -756,6 +1058,27 @@ fn test() {
                             v = 'used in next iteration';
                         }
                     }",
+        "function foo(startIdx, forward, nodeKeys) {
+                        for (
+                            let i = startIdx;
+                            forward ? i < nodeKeys.length : i >= 0;
+                            forward ? i++ : i--
+                        ) {
+                            const nodeKey = nodeKeys[i];
+                        }
+                    }",
+        "async function foo() {
+                        for (let attempt = 0; ; attempt++) {
+                            try {
+                                return await runOnce();
+                            } catch (error) {
+                                if (!isRetryable(error) || attempt + 1 >= maxAttempts) {
+                                    throw error;
+                                }
+                                await wait(delayMs);
+                            }
+                        }
+                    }",
         "function foo () {
                         let i = 0;
                         i++;
@@ -880,6 +1203,35 @@ fn test() {
                         bar();
                         console.log(v);
                     }",
+        "function foo(flag) {
+                        let value = 0;
+                        for (; flag; value = 1) {
+                            console.log(value);
+                            const getValue = () => {
+                                return value;
+                            };
+                            console.log(getValue());
+                        }
+                    }",
+        "function foo(flag) {
+                        let value = 0;
+                        for (; flag; value = 1) {
+                            console.log(value);
+                            while (flag) {
+                                break;
+                            }
+                        }
+                    }",
+        "function foo(flag, kind) {
+                        let value = 0;
+                        for (; flag; value = 1) {
+                            console.log(value);
+                            switch (kind) {
+                                case 1:
+                                    break;
+                            }
+                        }
+                    }",
         "function foo () {
                         let v = 'used';
                         console.log(v);
@@ -895,6 +1247,20 @@ fn test() {
                                 continue;
                             }
                             console.log(v);
+                        }
+                    }",
+        "async function foo(timeoutAt) {
+                        let releaseRequested = false;
+                        let backoffMillis = 10;
+                        while (!done) {
+                            if (!releaseRequested) {
+                                releaseRequested = true;
+                            }
+                            const waitUntil = Math.min(Date.now() + backoffMillis, timeoutAt);
+                            backoffMillis *= 2;
+                            if (waitUntil <= timeoutAt) {
+                                await new Promise(resolve => setTimeout(resolve, waitUntil));
+                            }
                         }
                     }",
         "/* globals foo */
@@ -928,6 +1294,17 @@ fn test() {
                         // ignore
                     }
                     console.log(message)",
+        "function foo() {
+                        let shouldCleanup = true;
+                        try {
+                            acquire();
+                            shouldCleanup = false;
+                        } catch (error) {
+                            if (shouldCleanup) {
+                                cleanup();
+                            }
+                        }
+                    }",
         "let v = 'init';
                     try {
                         v = callA();
@@ -958,6 +1335,57 @@ fn test() {
                         a = 5;
                     }
                     console.log(a);",
+        "function foo(resource) {
+                        const handle = createHandle();
+                        let shouldDispose = true;
+                        try {
+                            prepare(resource);
+                            attach(resource, handle);
+                            shouldDispose = false;
+                        } finally {
+                            if (shouldDispose) {
+                                handle.dispose();
+                            }
+                        }
+                    }",
+        "function foo(shouldReturn) {
+                        let shouldCleanup = true;
+                        try {
+                            acquire();
+                            if (shouldReturn) {
+                                return;
+                            }
+                            shouldCleanup = false;
+                        } finally {
+                            if (shouldCleanup) {
+                                cleanup();
+                            }
+                        }
+                    }",
+        "function foo(resource) {
+                        let handle = createHandle();
+                        let shouldDispose = true;
+                        try {
+                            attach(resource, handle);
+                            shouldDispose = false;
+                        } finally {
+                            if (shouldDispose) {
+                                handle.dispose();
+                            }
+                        }
+                    }",
+        "function foo(current, replacement) {
+                        let shouldDisposeReplacement = true;
+                        try {
+                            attach(current, replacement);
+                            shouldDisposeReplacement = false;
+                        } finally {
+                            if (shouldDisposeReplacement) {
+                                replacement.dispose();
+                            }
+                        }
+                        current = replacement;
+                    }",
         "const obj = { a: 5 };
                     const { a, b = a } = obj;
                     console.log(b); // 5",
@@ -1312,6 +1740,63 @@ fn test() {
                             a--;
                         }",
         "function foo() {
+                            let a = 0;
+                            console.log(a);
+                            for (let i = 0; i < 10; a = 1) {
+                                i++;
+                            }
+                        }",
+        "function foo(flag) {
+                            let value = 0;
+                            for (; flag; value = 1) {
+                                console.log(value);
+                                break;
+                            }
+                        }",
+        "function foo(flag) {
+                            let value = 0;
+                            for (; flag; value = 1) {
+                                console.log(value);
+                                if (flag) {
+                                    break;
+                                }
+                            }
+                        }",
+        "function foo(flag) {
+                            let value = 0;
+                            for (; flag; value = 1) {
+                                console.log(value);
+                                if (flag) {
+                                    return;
+                                }
+                            }
+                        }",
+        "function foo(flag) {
+                            let value = 0;
+                            for (; flag; value = 1) {
+                                console.log(value);
+                                if (flag) {
+                                    throw new Error();
+                                }
+                            }
+                        }",
+        "function foo(flag) {
+                            let value = 0;
+                            outer: for (; flag; value = 1) {
+                                console.log(value);
+                                while (flag) {
+                                    break outer;
+                                }
+                            }
+                        }",
+        "function foo(flag) {
+                            let value = 0;
+                            for (; flag; value = 1) {
+                                console.log(value);
+                                return;
+                            }
+                        }",
+        "function foo() {
                             let a = 'used', b = 'used', c = 'used', d = 'used';
                             console.log(a, b, c, d);
                             ({ a, arr: [b, c,, ...d] } = fn());
@@ -1398,6 +1883,25 @@ fn test() {
                             message = 'used';
                         }
                         console.log(message)",
+        "function foo() {
+                            let value = 0;
+                            value = 1;
+                            try {
+                                doThing();
+                            } finally {
+                                console.log(value);
+                            }
+                        }",
+        "function foo() {
+                            let value = 0;
+                            value = 1;
+                            try {
+                                doThing();
+                            } finally {
+                                value = 2;
+                                console.log(value);
+                            }
+                        }",
         "let message = 'unused';
                         try {
                             message = 'used';

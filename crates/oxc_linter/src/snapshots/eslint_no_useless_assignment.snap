@@ -182,6 +182,69 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:53]
+ 3 │                             console.log(a);
+ 4 │                             for (let i = 0; i < 10; a = 1) {
+   ·                                                     ─
+ 5 │                                 i++;
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:3:42]
+ 2 │                             let value = 0;
+ 3 │                             for (; flag; value = 1) {
+   ·                                          ─────
+ 4 │                                 console.log(value);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:3:42]
+ 2 │                             let value = 0;
+ 3 │                             for (; flag; value = 1) {
+   ·                                          ─────
+ 4 │                                 console.log(value);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:3:42]
+ 2 │                             let value = 0;
+ 3 │                             for (; flag; value = 1) {
+   ·                                          ─────
+ 4 │                                 console.log(value);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:3:42]
+ 2 │                             let value = 0;
+ 3 │                             for (; flag; value = 1) {
+   ·                                          ─────
+ 4 │                                 console.log(value);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:3:49]
+ 2 │                             let value = 0;
+ 3 │                             outer: for (; flag; value = 1) {
+   ·                                                 ─────
+ 4 │                                 console.log(value);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:3:42]
+ 2 │                             let value = 0;
+ 3 │                             for (; flag; value = 1) {
+   ·                                          ─────
+ 4 │                                 console.log(value);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
    ╭─[no_useless_assignment.tsx:4:51]
  3 │                             console.log(a, b, c, d);
  4 │                             ({ a, arr: [b, c,, ...d] } = fn());
@@ -330,6 +393,24 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let message = 'unused';
    ·     ───────
  2 │                         try {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:2:33]
+ 1 │ function foo() {
+ 2 │                             let value = 0;
+   ·                                 ─────
+ 3 │                             value = 1;
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:2:33]
+ 1 │ function foo() {
+ 2 │                             let value = 0;
+   ·                                 ─────
+ 3 │                             value = 1;
    ╰────
   help: Consider removing or reusing the assigned value.
 
