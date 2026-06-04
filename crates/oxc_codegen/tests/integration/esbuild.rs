@@ -173,6 +173,11 @@ fn test_new() {
     test("new (foo()[bar])", "new (foo())[bar]();\n");
     test("new (foo())[bar]", "new (foo())[bar]();\n");
 
+    test(
+        "new (import('foo'))()",
+        r#"new (import("foo"))();
+"#,
+    );
     test("new (import('foo').bar)", "new (import(\"foo\")).bar();\n");
     test("new (import('foo')).bar", "new (import(\"foo\")).bar();\n");
     test("new (import('foo')[bar])", "new (import(\"foo\"))[bar]();\n");
@@ -190,6 +195,7 @@ fn test_new() {
     test_minify("new x().y", "new x().y;");
     test_minify("new x() + y", "new x+y;");
     test_minify("new x() ** 2", "new x**2;");
+    test_minify("new (import('foo'))()", "new(import(`foo`));");
     test_minify("new (foo?.bar)()", "new(foo?.bar);");
     test_minify("new (foo()?.bar)()", "new((foo())?.bar);");
     test_minify("new (foo.bar()?.baz)()", "new((foo.bar())?.baz);");
