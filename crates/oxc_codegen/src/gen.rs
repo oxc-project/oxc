@@ -1257,7 +1257,7 @@ impl GenExpr for Expression<'_> {
             Self::NewExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Template literals
             Self::TemplateLiteral(literal) => literal.print(p, ctx),
-            Self::TaggedTemplateExpression(expr) => expr.print(p, ctx),
+            Self::TaggedTemplateExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Other literals
             Self::RegExpLiteral(lit) => lit.print(p, ctx),
             Self::BigIntLiteral(lit) => lit.print_expr(p, precedence, ctx),
@@ -2257,14 +2257,51 @@ impl Gen for TemplateLiteral<'_> {
     }
 }
 
+fn tagged_template_tag_needs_wrap_for_new_callee(tag: &Expression<'_>) -> bool {
+    match tag {
+        Expression::CallExpression(_)
+        | Expression::ImportExpression(_)
+        | Expression::V8IntrinsicExpression(_) => true,
+        Expression::StaticMemberExpression(expr) => {
+            tagged_template_tag_needs_wrap_for_new_callee(&expr.object)
+        }
+        Expression::ComputedMemberExpression(expr) => {
+            tagged_template_tag_needs_wrap_for_new_callee(&expr.object)
+        }
+        Expression::PrivateFieldExpression(expr) => {
+            tagged_template_tag_needs_wrap_for_new_callee(&expr.object)
+        }
+        Expression::ParenthesizedExpression(expr) => {
+            tagged_template_tag_needs_wrap_for_new_callee(&expr.expression)
+        }
+        Expression::TSNonNullExpression(expr) => {
+            tagged_template_tag_needs_wrap_for_new_callee(&expr.expression)
+        }
+        Expression::TSInstantiationExpression(expr) => {
+            tagged_template_tag_needs_wrap_for_new_callee(&expr.expression)
+        }
+        _ => false,
+    }
+}
+
 impl Gen for TaggedTemplateExpression<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span);
-        self.tag.print_expr(p, Precedence::Postfix, Context::empty());
-        if let Some(type_parameters) = &self.type_arguments {
-            type_parameters.print(p, ctx);
-        }
-        self.quasi.print(p, ctx);
+        self.print_expr(p, Precedence::Lowest, ctx);
+    }
+}
+
+impl GenExpr for TaggedTemplateExpression<'_> {
+    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
+        let wrap = ctx.forbid_call() && tagged_template_tag_needs_wrap_for_new_callee(&self.tag);
+
+        p.wrap(wrap, |p| {
+            p.add_source_mapping(self.span);
+            self.tag.print_expr(p, Precedence::Postfix, Context::empty());
+            if let Some(type_parameters) = &self.type_arguments {
+                type_parameters.print(p, ctx);
+            }
+            self.quasi.print(p, ctx);
+        });
     }
 }
 
