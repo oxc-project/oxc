@@ -61,6 +61,7 @@ export type LintPlugins = LintPluginOptionsSchema[];
 export type Mode2 = "as-needed" | "always" | "never";
 export type RuleNoConfig = AllowWarnDeny | [AllowWarnDeny];
 export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+export type IgnoreClassWithImplements = "all" | "public-fields";
 /**
  * The enforcement type for the curly rule.
  */
@@ -669,7 +670,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, Mode2, ArrowBodyStyleConfig];
   "block-scoped-var"?: RuleNoConfig;
   "capitalized-comments"?: DummyRule;
-  "class-methods-use-this"?: DummyRule;
+  "class-methods-use-this"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ClassMethodsUseThisConfig];
   complexity?: DummyRule;
   "constructor-super"?: RuleNoConfig;
   curly?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, CurlyType] | [AllowWarnDeny, CurlyType, CurlyConsistent];
@@ -1646,6 +1647,25 @@ export interface ArrayCallbackReturn {
 }
 export interface ArrowBodyStyleConfig {
   requireReturnForObjectLiteral?: boolean;
+}
+export interface ClassMethodsUseThisConfig {
+  /**
+   * Enforce this rule for class fields that are functions.
+   */
+  enforceForClassFields?: boolean;
+  /**
+   * List of method names to exempt from this rule. Names can include the hash for private methods.
+   * Example: `save`, `#rerender`
+   */
+  exceptMethods?: string[];
+  /**
+   * Whether to ignore classes that implement interfaces.
+   */
+  ignoreClassesWithImplements?: IgnoreClassWithImplements;
+  /**
+   * Whether to ignore methods that are overridden.
+   */
+  ignoreOverrideMethods?: boolean;
 }
 export interface DefaultCaseConfig {
   /**

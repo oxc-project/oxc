@@ -647,6 +647,43 @@
         }
       ]
     },
+    "ClassMethodsUseThisConfig": {
+      "type": "object",
+      "properties": {
+        "enforceForClassFields": {
+          "description": "Enforce this rule for class fields that are functions.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Enforce this rule for class fields that are functions."
+        },
+        "exceptMethods": {
+          "description": "List of method names to exempt from this rule. Names can include the hash for private methods.\nExample: `save`, `#rerender`",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of method names to exempt from this rule. Names can include the hash for private methods.\nExample: `save`, `#rerender`"
+        },
+        "ignoreClassesWithImplements": {
+          "description": "Whether to ignore classes that implement interfaces.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnoreClassWithImplements"
+            }
+          ],
+          "markdownDescription": "Whether to ignore classes that implement interfaces."
+        },
+        "ignoreOverrideMethods": {
+          "description": "Whether to ignore methods that are overridden.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore methods that are overridden."
+        }
+      },
+      "additionalProperties": false
+    },
     "CompareType": {
       "oneOf": [
         {
@@ -1128,7 +1165,24 @@
           "$ref": "#/definitions/DummyRule"
         },
         "class-methods-use-this": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ClassMethodsUseThisConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "complexity": {
           "$ref": "#/definitions/DummyRule"
@@ -8191,6 +8245,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "IgnoreClassWithImplements": {
+      "oneOf": [
+        {
+          "description": "Ignores all classes that implement interfaces",
+          "type": "string",
+          "enum": [
+            "all"
+          ],
+          "markdownDescription": "Ignores all classes that implement interfaces"
+        },
+        {
+          "description": "Only ignores public fields in classes that implement interfaces",
+          "type": "string",
+          "enum": [
+            "public-fields"
+          ],
+          "markdownDescription": "Only ignores public fields in classes that implement interfaces"
+        }
+      ]
     },
     "ImportKind": {
       "type": "string",
