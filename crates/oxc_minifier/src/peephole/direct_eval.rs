@@ -1,11 +1,8 @@
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk::walk_call_expression, walk::walk_statement};
 use oxc_semantic::{IsGlobalReference, Scoping};
-use oxc_syntax::{
-    scope::ScopeId,
-    symbol::SymbolId,
-};
-use rustc_hash::{FxHashMap, FxHashSet};
+use oxc_syntax::scope::ScopeId;
+use rustc_hash::FxHashSet;
 
 /// Whether `call` is a direct call to the global `eval` binding.
 #[inline]
@@ -36,56 +33,32 @@ pub fn record_direct_eval_call(
 /// Pre-pass data for unused-declaration removal and `refresh_direct_eval_flags`.
 pub struct PrepassData {
     pub direct_eval_scopes: FxHashSet<ScopeId>,
-    pub declaration_body_scope_to_symbol: FxHashMap<ScopeId, SymbolId>,
-    pub direct_eval_unused_containers: FxHashMap<ScopeId, Vec<SymbolId>>,
+    pub unused_declaration_body_scopes: FxHashSet<ScopeId>,
 }
 
-fn record_named_declaration_body(
-    map: &mut FxHashMap<ScopeId, SymbolId>,
+fn try_record_unused_declaration_body(
+    scopes: &mut FxHashSet<ScopeId>,
+    scoping: &Scoping,
     id: Option<&BindingIdentifier<'_>>,
     scope_id: ScopeId,
 ) {
     if let Some(id) = id
         && let Some(symbol_id) = id.symbol_id.get()
+        && scoping.symbol_is_unused(symbol_id)
     {
-        map.insert(scope_id, symbol_id);
+        scopes.insert(scope_id);
     }
 }
 
-fn build_direct_eval_unused_containers(
-    direct_eval_scopes: &FxHashSet<ScopeId>,
-    declaration_body_scope_to_symbol: &FxHashMap<ScopeId, SymbolId>,
-    scoping: &Scoping,
-) -> FxHashMap<ScopeId, Vec<SymbolId>> {
-    let mut map = FxHashMap::default();
-    for &eval_scope in direct_eval_scopes {
-        let mut containers = Vec::new();
-        let mut current = Some(eval_scope);
-        while let Some(scope_id) = current {
-            if let Some(&symbol_id) = declaration_body_scope_to_symbol.get(&scope_id)
-                && scoping.symbol_is_unused(symbol_id)
-                && !containers.contains(&symbol_id)
-            {
-                containers.push(symbol_id);
-            }
-            current = scoping.scope_parent_id(scope_id);
-        }
-        if !containers.is_empty() {
-            map.insert(eval_scope, containers);
-        }
-    }
-    map
-}
-
-/// Collect direct-eval scopes and top-level named declaration body scopes in one walk.
+/// Collect direct-eval scopes and unused named declaration body scopes in one walk.
 ///
-/// Only `function` / `class` declarations (including exported) are recorded -> not named
+/// Only `function` / `class` declarations (including exported) are recorded — not named
 /// function/class expressions, whose bodies may still run when the expression is evaluated.
 pub fn collect_prepass_data<'a>(scoping: &Scoping, program: &Program<'a>) -> PrepassData {
     struct Collector<'a> {
         scoping: &'a Scoping,
         direct_eval_scopes: FxHashSet<ScopeId>,
-        declaration_body_scope_to_symbol: FxHashMap<ScopeId, SymbolId>,
+        unused_declaration_body_scopes: FxHashSet<ScopeId>,
     }
 
     impl<'a> Visit<'a> for Collector<'a> {
@@ -97,15 +70,17 @@ pub fn collect_prepass_data<'a>(scoping: &Scoping, program: &Program<'a>) -> Pre
         fn visit_statement(&mut self, stmt: &Statement<'a>) {
             match stmt {
                 Statement::FunctionDeclaration(f) => {
-                    record_named_declaration_body(
-                        &mut self.declaration_body_scope_to_symbol,
+                    try_record_unused_declaration_body(
+                        &mut self.unused_declaration_body_scopes,
+                        self.scoping,
                         f.id.as_ref(),
                         f.scope_id(),
                     );
                 }
                 Statement::ClassDeclaration(c) => {
-                    record_named_declaration_body(
-                        &mut self.declaration_body_scope_to_symbol,
+                    try_record_unused_declaration_body(
+                        &mut self.unused_declaration_body_scopes,
+                        self.scoping,
                         c.id.as_ref(),
                         c.scope_id(),
                     );
@@ -114,15 +89,17 @@ pub fn collect_prepass_data<'a>(scoping: &Scoping, program: &Program<'a>) -> Pre
                     if let Some(decl) = &exp.declaration {
                         match decl {
                             Declaration::FunctionDeclaration(f) => {
-                                record_named_declaration_body(
-                                    &mut self.declaration_body_scope_to_symbol,
+                                try_record_unused_declaration_body(
+                                    &mut self.unused_declaration_body_scopes,
+                                    self.scoping,
                                     f.id.as_ref(),
                                     f.scope_id(),
                                 );
                             }
                             Declaration::ClassDeclaration(c) => {
-                                record_named_declaration_body(
-                                    &mut self.declaration_body_scope_to_symbol,
+                                try_record_unused_declaration_body(
+                                    &mut self.unused_declaration_body_scopes,
+                                    self.scoping,
                                     c.id.as_ref(),
                                     c.scope_id(),
                                 );
@@ -133,15 +110,17 @@ pub fn collect_prepass_data<'a>(scoping: &Scoping, program: &Program<'a>) -> Pre
                 }
                 Statement::ExportDefaultDeclaration(exp) => match &exp.declaration {
                     ExportDefaultDeclarationKind::FunctionDeclaration(f) => {
-                        record_named_declaration_body(
-                            &mut self.declaration_body_scope_to_symbol,
+                        try_record_unused_declaration_body(
+                            &mut self.unused_declaration_body_scopes,
+                            self.scoping,
                             f.id.as_ref(),
                             f.scope_id(),
                         );
                     }
                     ExportDefaultDeclarationKind::ClassDeclaration(c) => {
-                        record_named_declaration_body(
-                            &mut self.declaration_body_scope_to_symbol,
+                        try_record_unused_declaration_body(
+                            &mut self.unused_declaration_body_scopes,
+                            self.scoping,
                             c.id.as_ref(),
                             c.scope_id(),
                         );
@@ -157,18 +136,12 @@ pub fn collect_prepass_data<'a>(scoping: &Scoping, program: &Program<'a>) -> Pre
     let mut collector = Collector {
         scoping,
         direct_eval_scopes: FxHashSet::default(),
-        declaration_body_scope_to_symbol: FxHashMap::default(),
+        unused_declaration_body_scopes: FxHashSet::default(),
     };
     collector.visit_program(program);
-    let direct_eval_unused_containers = build_direct_eval_unused_containers(
-        &collector.direct_eval_scopes,
-        &collector.declaration_body_scope_to_symbol,
-        scoping,
-    );
     PrepassData {
         direct_eval_scopes: collector.direct_eval_scopes,
-        declaration_body_scope_to_symbol: collector.declaration_body_scope_to_symbol,
-        direct_eval_unused_containers,
+        unused_declaration_body_scopes: collector.unused_declaration_body_scopes,
     }
 }
 
@@ -186,23 +159,23 @@ pub fn is_scope_descendant_of(scoping: &Scoping, scope_id: ScopeId, ancestor_id:
 }
 
 /// Whether any live direct `eval` outside `body_scope_id` blocks removing the unused
-/// declaration `symbol_id`.
+/// declaration at `body_scope_id`.
 ///
 /// Eval inside another unused function/class **declaration** body never runs, so it must
 /// not block removal of the current unused declaration.
 pub fn direct_eval_blocks_unused_declaration_removal(
     body_scope_id: ScopeId,
-    symbol_id: SymbolId,
     direct_eval_scopes: &FxHashSet<ScopeId>,
-    direct_eval_unused_containers: &FxHashMap<ScopeId, Vec<SymbolId>>,
+    unused_declaration_body_scopes: &FxHashSet<ScopeId>,
     scoping: &Scoping,
 ) -> bool {
     direct_eval_scopes.iter().any(|&eval_scope| {
         if is_scope_descendant_of(scoping, eval_scope, body_scope_id) {
             return false;
         }
-        direct_eval_unused_containers.get(&eval_scope).is_none_or(|containers| {
-            containers.iter().all(|&container_sym| container_sym == symbol_id)
+        !unused_declaration_body_scopes.iter().any(|&other_scope| {
+            other_scope != body_scope_id
+                && is_scope_descendant_of(scoping, eval_scope, other_scope)
         })
     })
 }
