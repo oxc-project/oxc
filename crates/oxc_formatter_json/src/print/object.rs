@@ -37,7 +37,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
                 write!(f, "}");
                 return;
             }
-            let inner = format_with(move |f: &mut JsonFormatter<'_, 'a>| {
+            let inner = format_with(move |f| {
                 write_dangling_comments(dangling, f);
             });
             write!(f, [block_indent(&inner), "}"]);
@@ -46,8 +46,10 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
 
         // Collect property spans up-front for blank-line detection
         let spans: Vec<_> = self.object.properties.iter().map(oxc_span::GetSpan::span).collect();
-        let properties = format_with(|f: &mut JsonFormatter<'_, 'a>| {
-            write_separated(f, &spans, TrailingSeparator::Disallowed, |i, f| {
+        let trailing =
+            TrailingSeparator::when_breaking(f.context().options().allow_trailing_comma());
+        let properties = format_with(|f| {
+            write_separated(f, &spans, trailing, self.object.span.end, |i, f| {
                 let property = &self.object.properties[i];
                 match property {
                     ObjectPropertyKind::ObjectProperty(prop) => {

@@ -378,3 +378,58 @@ impl fmt::Display for Expand {
         f.write_str(s)
     }
 }
+
+/// Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
+/// Mirrors Prettier's `trailingComma` option.
+///
+/// The `All` vs `Es5` distinction only matters for languages with constructs beyond ES5 (e.g. function, type parameters).
+/// For JSON-family languages, both behave identically.
+#[derive(Clone, Copy, Default, Debug, Eq, Hash, PartialEq)]
+pub enum TrailingCommas {
+    /// Trailing commas wherever possible (including function parameters and calls).
+    #[default]
+    All,
+    /// Trailing commas where valid in ES5 (objects, arrays, etc.). No trailing commas in type parameters in TypeScript.
+    Es5,
+    /// No trailing commas.
+    None,
+}
+
+impl TrailingCommas {
+    pub const fn is_es5(self) -> bool {
+        matches!(self, TrailingCommas::Es5)
+    }
+
+    pub const fn is_all(self) -> bool {
+        matches!(self, TrailingCommas::All)
+    }
+
+    pub const fn is_none(self) -> bool {
+        matches!(self, TrailingCommas::None)
+    }
+}
+
+impl FromStr for TrailingCommas {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "es5" => Ok(Self::Es5),
+            "all" => Ok(Self::All),
+            "none" => Ok(Self::None),
+            // TODO: replace this error with a diagnostic
+            _ => Err("Value not supported for TrailingCommas"),
+        }
+    }
+}
+
+impl fmt::Display for TrailingCommas {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            TrailingCommas::Es5 => "ES5",
+            TrailingCommas::All => "All",
+            TrailingCommas::None => "None",
+        };
+        f.write_str(s)
+    }
+}

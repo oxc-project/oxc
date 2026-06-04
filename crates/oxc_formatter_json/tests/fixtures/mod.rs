@@ -1,8 +1,8 @@
-use std::path::Path;
+use std::{path::Path, str::FromStr};
 
 use oxc_allocator::Allocator;
 use oxc_formatter_core::{
-    BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth,
+    BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth, TrailingCommas,
     test_support::{FixtureFormatter, OptionSet, build_fixture_snapshot},
 };
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant, format};
@@ -56,6 +56,13 @@ impl FixtureFormatter for JsonHarness {
                             "json-stringify" => JsonVariant::JsonStringify,
                             _ => options.variant,
                         };
+                    }
+                }
+                "trailingComma" => {
+                    if let Some(s) = value.as_str()
+                        && let Ok(trailing_commas) = TrailingCommas::from_str(s)
+                    {
+                        options.trailing_commas = trailing_commas;
                     }
                 }
                 "bracketSpacing" => {

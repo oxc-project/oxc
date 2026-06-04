@@ -58,7 +58,7 @@ pub use formatter::Formatter;
 pub use group_id::{GroupId, UniqueGroupIdBuilder};
 pub use options::{
     BracketSpacing, Expand, IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding,
-    LineWidth, LineWidthFromIntError, ParseFormatNumberError,
+    LineWidth, LineWidthFromIntError, ParseFormatNumberError, TrailingCommas,
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
 pub(crate) use simple_context::SimpleFormatContext;

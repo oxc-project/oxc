@@ -21,12 +21,21 @@ use crate::{
 /// Whether a trailing `,` should follow the last entry.
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum TrailingSeparator {
-    /// Never emit a trailing separator. Used for the `json` variant.
+    /// Never emit a trailing separator.
+    /// Used for the `json` / `json-stringify` variants (and elision-forced arrays).
     #[default]
     Disallowed,
     /// Emit `,` only when the enclosing group breaks (multi-line).
-    #[expect(dead_code)] // Reserved for future `jsonc` / `json5` variants.
+    /// Used for the `jsonc` / `json5` variants when the user option allows it.
     AllowedWhenBreaking,
+}
+
+impl TrailingSeparator {
+    /// `AllowedWhenBreaking` when `allow` (the variant + user option permit a trailing comma),
+    /// otherwise `Disallowed`.
+    pub fn when_breaking(allow: bool) -> Self {
+        if allow { Self::AllowedWhenBreaking } else { Self::Disallowed }
+    }
 }
 
 /// Writes entries with `, ` (or a soft line break) between them.
@@ -40,6 +49,7 @@ pub fn write_separated<'a, F>(
     f: &mut JsonFormatter<'_, 'a>,
     spans: &[Span],
     trailing: TrailingSeparator,
+    upper_bound: u32,
     mut emit_entry: F,
 ) where
     F: FnMut(usize, &mut JsonFormatter<'_, 'a>),
@@ -56,10 +66,42 @@ pub fn write_separated<'a, F>(
         match trailing {
             TrailingSeparator::Disallowed => {}
             TrailingSeparator::AllowedWhenBreaking => {
-                write!(f, if_group_breaks(&","));
+                write_trailing_separator(upper_bound, f);
             }
         }
     }
+}
+
+/// Emits the optional trailing `,` for the last entry,
+/// threading the last entry's same-line trailing block comments before the comma.
+///
+/// Mirrors [`write_inter_entry_separator`]'s rule applied to the final position:
+/// a block comment that sits on the same line as the last value is part of that value's trailing,
+/// so it prints before the separator (`value /* block */,`).
+/// Line comments and own-line comments stay pending for the caller's [`crate::comments::FormatTrailingInsideComments`] pass.
+/// Landing after the comma (`value, // line`) which is correct,
+/// since a line comment terminates the line.
+///
+/// `upper_bound` (the container's closing-delimiter position) bounds the comment scan
+/// so nested/outer comments aren't pulled in.
+fn write_trailing_separator(upper_bound: u32, f: &mut JsonFormatter<'_, '_>) {
+    // Leading run of same-line block comments (no preceding newline, not a line comment).
+    let block_end = f
+        .context()
+        .comments()
+        .iter_before(upper_bound)
+        .take_while(|c| !c.preceded_by_newline() && !c.is_line())
+        .last()
+        .map(|c| c.span.end);
+
+    if let Some(block_end) = block_end {
+        for c in f.context().comments().take_before(block_end) {
+            write!(f, space());
+            write_single_comment(c, f);
+        }
+    }
+
+    write!(f, if_group_breaks(&","));
 }
 
 /// Writes the `,` separator between two entries,

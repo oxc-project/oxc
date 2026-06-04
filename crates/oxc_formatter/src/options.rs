@@ -1,11 +1,10 @@
 use std::{fmt, str::FromStr};
 
 use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
-
-/// JS-facing alias for the language-agnostic [`oxc_formatter_core::util::Quote`].
-/// Kept as `QuoteStyle` so existing public API (`JsFormatOptions::quote_style`)
-/// continues to compile.
-pub use oxc_formatter_core::util::Quote as QuoteStyle;
+// Re-exported so the crate root's `pub use crate::options::*` keeps them on the public API.
+// `QuoteStyle` is the JS-facing alias for the language-agnostic [`oxc_formatter_core::util::Quote`]
+// (kept so `JsFormatOptions::quote_style` continues to compile).
+pub use oxc_formatter_core::{TrailingCommas, util::Quote as QuoteStyle};
 
 use crate::{
     formatter::{
@@ -498,57 +497,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingCommas {
         if matches!(self, FormatTrailingCommas::ES5) || f.options().trailing_commas.is_all() {
             write!(f, [if_group_breaks(&token(","))]);
         }
-    }
-}
-
-/// Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
-#[derive(Clone, Copy, Default, Debug, Eq, Hash, PartialEq)]
-pub enum TrailingCommas {
-    /// Trailing commas wherever possible (including function parameters and calls).
-    #[default]
-    All,
-    /// Trailing commas where valid in ES5 (objects, arrays, etc.). No trailing commas in type parameters in TypeScript.
-    Es5,
-    /// No trailing commas.
-    None,
-}
-
-impl TrailingCommas {
-    pub const fn is_es5(self) -> bool {
-        matches!(self, TrailingCommas::Es5)
-    }
-
-    pub const fn is_all(self) -> bool {
-        matches!(self, TrailingCommas::All)
-    }
-
-    pub const fn is_none(self) -> bool {
-        matches!(self, TrailingCommas::None)
-    }
-}
-
-impl FromStr for TrailingCommas {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "es5" => Ok(Self::Es5),
-            "all" => Ok(Self::All),
-            "none" => Ok(Self::None),
-            // TODO: replace this error with a diagnostic
-            _ => Err("Value not supported for TrailingCommas"),
-        }
-    }
-}
-
-impl fmt::Display for TrailingCommas {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            TrailingCommas::Es5 => "ES5",
-            TrailingCommas::All => "All",
-            TrailingCommas::None => "None",
-        };
-        f.write_str(s)
     }
 }
 
