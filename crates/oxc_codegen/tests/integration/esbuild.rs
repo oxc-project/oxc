@@ -420,12 +420,18 @@ fn test_template() {
     test("new (tag`x`)", "new tag`x`();\n");
     test("new (foo()`x`)()", "new (foo()`x`)();\n");
     test("new (foo().bar`x`)()", "new (foo().bar`x`)();\n");
+    test("new (import('foo')`x`)()", "new (import(\"foo\")`x`)();\n");
+    test("new (super()`x`)()", "new (super()`x`)();\n");
+    test("new (foo!()`x`)()", "new (foo!()`x`)();\n");
+    test("new (import('foo')!`x`)()", "new (import(\"foo\")!`x`)();\n");
     test("new tag()`x`", "new tag()`x`;\n");
     test("(new tag)`x`", "new tag()`x`;\n");
     test_minify("new tag`x`", "new tag`x`;");
     test_minify("new (tag`x`)", "new tag`x`;");
     test_minify("new (foo()`x`)()", "new(foo()`x`);");
     test_minify("new (foo().bar`x`)()", "new(foo().bar`x`);");
+    test_minify("new (import('foo')`x`)()", "new(import(`foo`)`x`);");
+    test_minify("new (super()`x`)()", "new(super()`x`);");
     test_minify("new tag()`x`", "new tag()`x`;");
     test_minify("(new tag)`x`", "new tag()`x`;");
 
