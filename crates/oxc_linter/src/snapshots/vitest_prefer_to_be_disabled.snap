@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(prefer-to-be-disabled): Prefer `toBeDisabled()` over checking the `disabled` attribute.
+   ╭─[prefer_to_be_disabled.tsx:1:17]
+ 1 │ expect(locator).toHaveAttribute('disabled');
+   ·                 ───────────────
+   ╰────
+  help: Replace `toHaveAttribute('disabled')` with `toBeDisabled()`.
+
+  ⚠ vitest(prefer-to-be-disabled): Prefer `toBeDisabled()` over checking the `disabled` attribute.
+   ╭─[prefer_to_be_disabled.tsx:1:17]
+ 1 │ expect(locator).toHaveAttribute("disabled");
+   ·                 ───────────────
+   ╰────
+  help: Replace `toHaveAttribute("disabled")` with `toBeDisabled()`.
+
+  ⚠ vitest(prefer-to-be-disabled): Prefer `toBeDisabled()` over checking the `disabled` attribute.
+   ╭─[prefer_to_be_disabled.tsx:1:17]
+ 1 │ expect(locator).toHaveAttribute(`disabled`);
+   ·                 ───────────────
+   ╰────
+  help: Replace `toHaveAttribute(`disabled`)` with `toBeDisabled()`.
+
+  ⚠ vitest(prefer-to-be-disabled): Prefer `toBeDisabled()` over checking the `disabled` attribute.
+   ╭─[prefer_to_be_disabled.tsx:1:17]
+ 1 │ expect(locator)["toHaveAttribute"]('disabled');
+   ·                 ─────────────────
+   ╰────
+  help: Replace `["toHaveAttribute"]('disabled')` with `["toBeDisabled"]()`.
+
+  ⚠ vitest(prefer-to-be-disabled): Prefer `toBeDisabled()` over checking the `disabled` attribute.
+   ╭─[prefer_to_be_disabled.tsx:1:26]
+ 1 │ expect(locator).resolves.toHaveAttribute('disabled');
+   ·                          ───────────────
+   ╰────
+  help: Replace `toHaveAttribute('disabled')` with `toBeDisabled()`.

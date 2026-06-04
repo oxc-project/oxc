@@ -809,6 +809,7 @@ pub(crate) mod vitest {
     pub mod prefer_strict_boolean_matchers;
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
+    pub mod prefer_to_be_disabled;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
