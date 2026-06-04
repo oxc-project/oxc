@@ -1,5 +1,4 @@
-use oxc_formatter_core::{BracketSpacing, Expand, TrailingCommas};
-use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
+use oxc_formatter_json::{BracketSpacing, Expand, JsonFormatOptions, JsonVariant, TrailingCommas};
 
 use super::{
     super::oxfmtrc::{FormatConfig, ObjectWrapConfig, TrailingCommaConfig},
@@ -31,12 +30,11 @@ pub fn to_oxc_formatter_json(
 
     // [Prettier] trailingComma: "all" | "es5" | "none" (default "all").
     // Only honored by `jsonc`/`json5`, `json`/`json-stringify` ignore it.
-    // And "all" and "es5" are the same for JSON.
+    // And "all" and "es5" are indistinguishable for JSON.
     if let Some(commas) = config.trailing_comma {
         options.trailing_commas = match commas {
-            TrailingCommaConfig::All => TrailingCommas::All,
-            TrailingCommaConfig::Es5 => TrailingCommas::Es5,
-            TrailingCommaConfig::None => TrailingCommas::None,
+            TrailingCommaConfig::All | TrailingCommaConfig::Es5 => TrailingCommas::Always,
+            TrailingCommaConfig::None => TrailingCommas::Never,
         };
     }
     // [Prettier] bracketSpacing: boolean

@@ -7,10 +7,10 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, JsFormatOptions, OperatorPosition,
-    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, JsFormatOptions,
+    OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
-use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -229,9 +229,13 @@ impl VisitMut<'_> for SpecParser {
                             let s = literal.value.as_str();
                             match name.as_ref() {
                                 "trailingComma" => {
-                                    let trailing_commas = TrailingCommas::from_str(s).unwrap();
-                                    js_options.trailing_commas = trailing_commas;
-                                    json_options.trailing_commas = trailing_commas;
+                                    js_options.trailing_commas =
+                                        TrailingCommas::from_str(s).unwrap();
+                                    json_options.trailing_commas = match s {
+                                        "all" | "es5" => oxc_formatter_json::TrailingCommas::Always,
+                                        "none" => oxc_formatter_json::TrailingCommas::Never,
+                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
+                                    };
                                 }
                                 "endOfLine" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`

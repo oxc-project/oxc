@@ -1,12 +1,11 @@
 use rustc_hash::FxHashSet;
 
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, CustomGroupDefinition,
-    EmbeddedLanguageFormatting, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
-    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, SortTailwindcssOptions,
-    TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
+    EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier, ImportSelector,
+    JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
+    SortTailwindcssOptions, TrailingCommas,
 };
-use oxc_formatter_core::{BracketSpacing, Expand};
 
 use super::{
     super::oxfmtrc::{
@@ -345,8 +344,7 @@ pub(super) fn to_jsdoc(
 
 #[cfg(test)]
 mod tests {
-    use oxc_formatter::GroupName;
-    use oxc_formatter_core::Expand;
+    use oxc_formatter::{Expand, GroupName};
 
     use super::super::validate::validate;
     use super::*;

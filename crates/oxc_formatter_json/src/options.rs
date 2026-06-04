@@ -1,6 +1,5 @@
 use oxc_formatter_core::{
-    BracketSpacing, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth,
-    PrinterOptions, TrailingCommas,
+    FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions,
 };
 
 /// JSON parser variant.
@@ -55,15 +54,64 @@ impl JsonFormatOptions {
     ///   - Always hard-breaks entries and never emits a trailing comma (the option is irrelevant)
     ///   - So full `json-stringify` parity will also need always-expand + no concise arrays, not just this flag
     ///
-    /// `jsonc` and `json5` follow the user option (`all`/`es5` both emit, `none` does not).
+    /// `jsonc` and `json5` follow the user option (`Always` emits, `Never` does not).
     /// Both go through Prettier's shared `estree` printer with `shouldPrintTrailingComma` fixed at the `es5` level,
-    /// which is why `all` and `es5` are indistinguishable here.
+    /// which is why Prettier's `all` and `es5` are indistinguishable here (both map to `Always`).
     pub fn allow_trailing_comma(&self) -> bool {
         match self.variant {
             JsonVariant::Json | JsonVariant::JsonStringify => false,
-            JsonVariant::Jsonc | JsonVariant::Json5 => !self.trailing_commas.is_none(),
+            JsonVariant::Jsonc | JsonVariant::Json5 => {
+                matches!(self.trailing_commas, TrailingCommas::Always)
+            }
         }
     }
+}
+
+/// Whether to insert spaces around brackets in object.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct BracketSpacing(bool);
+
+impl BracketSpacing {
+    pub fn value(self) -> bool {
+        self.0
+    }
+}
+
+impl Default for BracketSpacing {
+    fn default() -> Self {
+        Self(true)
+    }
+}
+
+impl From<bool> for BracketSpacing {
+    fn from(value: bool) -> Self {
+        Self(value)
+    }
+}
+
+/// Whether objects keep their authored multi-line shape or collapse to one line when they fit.
+/// Mirrors Prettier's `objectWrap` option.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum Expand {
+    /// `objectWrap: "preserve"`. Stays multi-line when the source has a newline right after `{`.
+    #[default]
+    Auto,
+    /// `objectWrap: "collapse"`. Collapses when it fits regardless of authored shape.
+    Never,
+}
+
+/// Whether to print a trailing comma after the last entry of a multi-line object/array.
+///
+/// Mirrors Prettier's `trailingComma`, but JSON only has two meaningful states:
+/// the `all`/`es5` distinction is dead for JSON (no constructs beyond ES5), so they collapse into `Always`.
+#[derive(Clone, Copy, Default, Debug, Eq, Hash, PartialEq)]
+pub enum TrailingCommas {
+    /// Trailing comma where valid (objects, arrays). Maps from Prettier `all`/`es5`.
+    /// `Always` keeps Prettier's `all` default; `Never` would drop trailing commas.
+    #[default]
+    Always,
+    /// No trailing comma. Maps from Prettier `none`.
+    Never,
 }
 
 impl FormatOptions for JsonFormatOptions {

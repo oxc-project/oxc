@@ -1,12 +1,12 @@
 use std::ops::Deref;
 
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::{
-    identifier::is_white_space_single_line,
-    line_terminator::{CR, LF, is_line_terminator},
-};
 
-/// Source text wrapper providing utilities for text analysis in the formatter.
+/// Source text wrapper providing mechanical byte/offset access for the formatter.
+///
+/// This owns only language-agnostic, offset-keyed access (slicing, raw-byte newline checks).
+/// Lexical-semantic scanning whose answer is language-defined
+/// ("what counts as a newline / comment / trivia") lives in each consumer. (e.g. `oxc_formatter`'s `SourceTextExt`)
 ///
 /// All positions are `u32` UTF-8 byte offsets into `text`.
 /// This is the only hard prerequisite for any consumer:
@@ -28,27 +28,11 @@ impl Deref for SourceText<'_> {
 }
 
 impl<'a> SourceText<'a> {
-    /// Create a new SourceText wrapper
     pub fn new(text: &'a str) -> Self {
         Self { text }
     }
 
-    /// Extract text for an object that has a span
-    pub fn text_for<T: GetSpan>(&self, obj: &T) -> &'a str {
-        obj.span().source_text(self.text)
-    }
-
     // Text slicing
-    /// Get text from position to end
-    fn slice_from(&self, position: u32) -> &'a str {
-        &self.text[position as usize..]
-    }
-
-    /// Get text from start to position
-    fn slice_to(&self, position: u32) -> &'a str {
-        &self.text[..position as usize]
-    }
-
     /// Get text between two positions
     pub fn slice_range(&self, start: u32, end: u32) -> &'a str {
         &self.text[start as usize..end as usize]
@@ -78,22 +62,7 @@ impl<'a> SourceText<'a> {
             .is_some_and(|b| b == expected_byte)
     }
 
-    /// Get first byte at position
-    fn byte_at(&self, position: u32) -> Option<u8> {
-        self.text.as_bytes().get(position as usize).copied()
-    }
-
     // Newline detection
-    /// Check if span contains line terminators
-    pub fn contains_newline(&self, span: Span) -> bool {
-        self.contains_newline_between(span.start, span.end)
-    }
-
-    /// Check if range contains line terminators
-    pub fn contains_newline_between(&self, start: u32, end: u32) -> bool {
-        self.slice_range(start, end).chars().any(is_line_terminator)
-    }
-
     /// Check for newlines before position, stopping at first non-whitespace
     pub fn has_newline_before(&self, position: u32) -> bool {
         for byte in self.bytes_to(position) {
@@ -118,11 +87,16 @@ impl<'a> SourceText<'a> {
         false
     }
 
-    /// Check for a newline after an opening brace `{`.
-    /// Unlike `has_newline_after`, this method scans through comments to find newlines.
-    /// This matches Prettier's behavior for detecting newlines in `{ /* comment */\n`.
-    pub fn has_newline_after_opening_brace(&self, position: u32) -> bool {
-        let mut iter = self.bytes_from(position + 1).peekable();
+    /// Check for a newline starting at `position`, scanning through comments.
+    /// Unlike [`Self::has_newline_after`], a comment between `position` and the newline is
+    /// transparent (matches Prettier detecting the newline in `{ /* comment */\n`).
+    ///
+    /// NOTE: comment scanning assumes C-family comment syntax (`//`, `/* */`),
+    /// shared by all current consumers (JS/TS and JSON, a JS subset).
+    /// A future non-C-family consumer must supply its own comment-aware scan,
+    /// or make this more generic. (e.g. pass comments ranges to skip)
+    pub fn has_newline_after_skipping_comments(&self, position: u32) -> bool {
+        let mut iter = self.bytes_from(position).peekable();
 
         while let Some(byte) = iter.next() {
             match byte {
@@ -168,187 +142,18 @@ impl<'a> SourceText<'a> {
     {
         self.bytes_range(start, end).iter().all(|&b| predicate(b))
     }
+}
+
+// Span-based access
+impl<'a> SourceText<'a> {
+    /// Extract text for an object that has a span
+    pub fn text_for<T: GetSpan>(&self, obj: &T) -> &'a str {
+        obj.span().source_text(self.text)
+    }
 
     // Utility methods
     /// Get character count of span
     pub fn span_width(&self, span: Span) -> usize {
         self.text_for(&span).chars().count()
-    }
-
-    /// Count consecutive line breaks after position, returning `0` if only whitespace follows
-    pub fn lines_after(&self, end: u32) -> usize {
-        let mut count = 0;
-        let mut chars = self.slice_from(end).chars().peekable();
-        while let Some(char) = chars.next() {
-            if is_white_space_single_line(char) {
-                continue;
-            }
-
-            if is_line_terminator(char) {
-                count += 1;
-                if char == CR && chars.peek() == Some(&LF) {
-                    chars.next();
-                }
-                continue;
-            }
-
-            return count;
-        }
-
-        // No non-whitespace characters found after position, so return `0` to avoid adding extra new lines
-        0
-    }
-}
-
-// Language-specific methods.
-//
-// Everything above is language-neutral text scanning.
-// The methods in this block encode front-end-specific trivia rules,
-// so they are deliberately kept separate from the neutral primitives.
-//
-// Each one documents the language whose rules it implements;
-// do NOT call them from a consumer with different trivia semantics.
-impl SourceText<'_> {
-    /// Count line breaks between syntax nodes, considering comments and parentheses.
-    ///
-    /// NOTE: This encodes JS/TS leading-trivia rules.
-    /// It skips an ASI semicolon (`;(function(){});`) and discounts newlines inside non-preserved parens (`(`…`)`).
-    /// Other front-ends (JSON, ...) currently don't call it;
-    /// a consumer with different trivia semantics should not assume this is language-neutral.
-    ///
-    /// `first_unprinted_comment` is the span of the first not-yet-printed comment
-    /// (the JS front-end's `Comments::unprinted_comments().first()`), or `None`.
-    /// Only the span is needed: when that comment ends before `span.start`,
-    /// its leading trivia is included in the count.
-    pub fn get_lines_before(&self, span: Span, first_unprinted_comment: Option<Span>) -> usize {
-        let mut start = span.start;
-
-        // Should skip the leading comments of the node.
-        if let Some(comment) = first_unprinted_comment
-            && comment.end <= start
-        {
-            start = comment.start;
-        } else if start != 0 && matches!(self.byte_at(start - 1), Some(b';')) {
-            // Skip leading semicolon if present
-            // `;(function() {});`
-            start -= 1;
-        }
-
-        // Count the newlines in the leading trivia of the next node
-        let mut count = 0;
-        let mut following_source = self.bytes_from(span.end);
-        let mut chars = self.slice_to(start).chars().rev().peekable();
-        while let Some(c) = chars.next() {
-            if is_white_space_single_line(c) {
-                continue;
-            }
-
-            if c == '(' {
-                // We don't have a parenthesis node when `preserveParens` is turned off,
-                // but we will find the `(` and `)` around the node if it exists.
-                // If we find a `(`, we try to find the matching `)` and reset the count.
-                // This is necessary to avoid counting the newlines inside the parenthesis.
-
-                for c in following_source.by_ref() {
-                    if c.is_ascii_whitespace() {
-                        continue;
-                    }
-
-                    if c == b')' {
-                        break;
-                    }
-
-                    return count;
-                }
-
-                count = 0;
-                continue;
-            }
-
-            if !is_line_terminator(c) {
-                return count;
-            }
-
-            count += 1;
-            if c == LF && chars.peek() == Some(&CR) {
-                chars.next();
-            }
-        }
-
-        0
-    }
-}
-
-// NOTE: Our test fixtures are managed under `.gitattributes` to enforce LF line endings.
-// Therefore, we explicitly test CRLF and mixed line endings here.
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_source_text() {
-        let source_text = r"
-const x = 1;
-
-const y = 2;
-
-
-const z = 3;
-"
-        .trim();
-        let source_text = SourceText::new(source_text);
-
-        let span_x = Span::new(0, 12);
-        let span_y = Span::new(14, 26);
-        let span_z = Span::new(29, 41);
-        assert_eq!(source_text.text_for(&span_x), "const x = 1;");
-        assert_eq!(source_text.text_for(&span_y), "const y = 2;");
-        assert_eq!(source_text.text_for(&span_z), "const z = 3;");
-
-        assert_eq!(source_text.get_lines_before(span_x, None), 0);
-        assert_eq!(source_text.get_lines_before(span_y, None), 2);
-        assert_eq!(source_text.get_lines_before(span_z, None), 3);
-
-        assert_eq!(source_text.lines_after(span_x.end), 2);
-        assert_eq!(source_text.lines_after(span_y.end), 3);
-        assert_eq!(source_text.lines_after(span_z.end), 0);
-    }
-
-    #[test]
-    fn test_source_text_with_crlf() {
-        let source_text = "const x = 1;\r\n\r\nconst y = 2;\r\n\r\n\r\nconst z = 3;";
-        let source_text = SourceText::new(source_text);
-
-        let span_x = Span::new(0, 12);
-        let span_y = Span::new(16, 28);
-        let span_z = Span::new(34, 46);
-        assert_eq!(source_text.text_for(&span_x), "const x = 1;");
-        assert_eq!(source_text.text_for(&span_y), "const y = 2;");
-        assert_eq!(source_text.text_for(&span_z), "const z = 3;");
-
-        assert_eq!(source_text.get_lines_before(span_y, None), 2);
-        assert_eq!(source_text.get_lines_before(span_z, None), 3);
-
-        assert_eq!(source_text.lines_after(span_x.end), 2);
-        assert_eq!(source_text.lines_after(span_y.end), 3);
-    }
-
-    #[test]
-    fn test_source_text_with_mixed_line_endings() {
-        let source_text = "const x = 1;\n\r\nconst y = 2;\r\n\nconst z = 3;";
-        let source_text = SourceText::new(source_text);
-
-        let span_x = Span::new(0, 12);
-        let span_y = Span::new(15, 27);
-        let span_z = Span::new(30, 42);
-        assert_eq!(source_text.text_for(&span_x), "const x = 1;");
-        assert_eq!(source_text.text_for(&span_y), "const y = 2;");
-        assert_eq!(source_text.text_for(&span_z), "const z = 3;");
-
-        assert_eq!(source_text.get_lines_before(span_y, None), 2);
-        assert_eq!(source_text.get_lines_before(span_z, None), 2);
-
-        assert_eq!(source_text.lines_after(span_x.end), 2);
-        assert_eq!(source_text.lines_after(span_y.end), 2);
     }
 }

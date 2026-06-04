@@ -20,7 +20,6 @@ workspace = true
 oxc_allocator = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["code_buffer"] }
 oxc_span = { workspace = true }
-oxc_syntax = { workspace = true }
 
 cow-utils = { workspace = true }
 rustc-hash = { workspace = true }

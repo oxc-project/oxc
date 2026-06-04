@@ -5,7 +5,7 @@ use oxc_ast::Comment;
 use oxc_formatter_core::{
     Buffer, Format, SourceText,
     builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
-    util::is_suppression_marker,
+    spec::is_suppression_marker,
     write,
 };
 use oxc_span::Span;
@@ -221,8 +221,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FormatTrailingInsideComments {
 /// Returns `true` if `comment` is an ignore marker (`oxfmt-ignore` / `prettier-ignore`).
 /// Mirrors `oxc_formatter`'s suppression rule so JSON honors the same authoring convention as JS/TS.
 pub fn is_suppression_comment(source: SourceText<'_>, comment: &Comment) -> bool {
-    let body = source.text_for(&comment.content_span());
-    is_suppression_marker(body)
+    is_suppression_marker(source.text_for(&comment.content_span()))
 }
 
 /// Returns `true` if any pending comment up to `before` is a suppression marker.

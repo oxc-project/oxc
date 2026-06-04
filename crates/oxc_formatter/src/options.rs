@@ -1,10 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
-// Re-exported so the crate root's `pub use crate::options::*` keeps them on the public API.
-// `QuoteStyle` is the JS-facing alias for the language-agnostic [`oxc_formatter_core::util::Quote`]
-// (kept so `JsFormatOptions::quote_style` continues to compile).
-pub use oxc_formatter_core::{TrailingCommas, util::Quote as QuoteStyle};
+use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 
 use crate::{
     formatter::{
@@ -322,6 +318,68 @@ impl From<TabWidth> for u8 {
     }
 }
 
+/// Which ASCII quote character delimits a string literal — JS/TS's public quote option.
+///
+/// Owned by this crate: each language formatter owns its own quote-style vocabulary.
+/// `oxc_formatter_core` deals only in raw quote bytes (see `spec::string::normalize_string`),
+/// so this is intentionally *not* lifted into core.
+#[derive(Debug, Default, Clone, Copy, Eq, Hash, PartialEq)]
+pub enum QuoteStyle {
+    #[default]
+    Double,
+    Single,
+}
+
+impl QuoteStyle {
+    pub fn from_byte(byte: u8) -> Option<Self> {
+        match byte {
+            b'"' => Some(Self::Double),
+            b'\'' => Some(Self::Single),
+            _ => None,
+        }
+    }
+
+    pub const fn as_char(self) -> char {
+        match self {
+            Self::Double => '"',
+            Self::Single => '\'',
+        }
+    }
+
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Double => "\"",
+            Self::Single => "'",
+        }
+    }
+
+    pub const fn as_byte(self) -> u8 {
+        self.as_char() as u8
+    }
+
+    /// Returns the opposite quote.
+    #[must_use]
+    pub const fn other(self) -> Self {
+        match self {
+            Self::Double => Self::Single,
+            Self::Single => Self::Double,
+        }
+    }
+
+    pub const fn is_double(self) -> bool {
+        matches!(self, Self::Double)
+    }
+}
+
+impl fmt::Display for QuoteStyle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::Double => "Double",
+            Self::Single => "Single",
+        })
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum QuoteProperties {
     /// Only add quotes around object properties where required.
@@ -358,6 +416,60 @@ impl fmt::Display for QuoteProperties {
             QuoteProperties::AsNeeded => "As needed",
             QuoteProperties::Preserve => "Preserve",
             QuoteProperties::Consistent => "Consistent",
+        };
+        f.write_str(s)
+    }
+}
+
+/// Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
+/// Mirrors Prettier's `trailingComma` option.
+///
+/// The `All` vs `Es5` distinction only matters for languages with constructs beyond ES5 (e.g. function, type parameters).
+#[derive(Clone, Copy, Default, Debug, Eq, Hash, PartialEq)]
+pub enum TrailingCommas {
+    /// Trailing commas wherever possible (including function parameters and calls).
+    #[default]
+    All,
+    /// Trailing commas where valid in ES5 (objects, arrays, etc.). No trailing commas in type parameters in TypeScript.
+    Es5,
+    /// No trailing commas.
+    None,
+}
+
+impl TrailingCommas {
+    pub const fn is_es5(self) -> bool {
+        matches!(self, TrailingCommas::Es5)
+    }
+
+    pub const fn is_all(self) -> bool {
+        matches!(self, TrailingCommas::All)
+    }
+
+    pub const fn is_none(self) -> bool {
+        matches!(self, TrailingCommas::None)
+    }
+}
+
+impl FromStr for TrailingCommas {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "es5" => Ok(Self::Es5),
+            "all" => Ok(Self::All),
+            "none" => Ok(Self::None),
+            // TODO: replace this error with a diagnostic
+            _ => Err("Value not supported for TrailingCommas"),
+        }
+    }
+}
+
+impl fmt::Display for TrailingCommas {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            TrailingCommas::Es5 => "ES5",
+            TrailingCommas::All => "All",
+            TrailingCommas::None => "None",
         };
         f.write_str(s)
     }
@@ -528,6 +640,64 @@ impl FromStr for AttributePosition {
                 "Value not supported for attribute_position. Supported values are 'auto' and 'multiline'.",
             ),
         }
+    }
+}
+
+/// Whether objects keep their authored multi-line shape or collapse to one line when they fit.
+/// Mirrors Prettier's `objectWrap` option.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum Expand {
+    /// `objectWrap: "preserve"`.
+    /// An object stays multi-line when there is a newline right after `{` in the source;
+    /// otherwise it collapses when it fits.
+    #[default]
+    Auto,
+    /// `objectWrap: "collapse"`.
+    /// Objects collapse when they fit regardless of the authored shape.
+    Never,
+}
+
+impl FromStr for Expand {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "auto" => Ok(Self::Auto),
+            "never" => Ok(Self::Never),
+            _ => Err(std::format!("unknown expand literal: {s}")),
+        }
+    }
+}
+
+impl fmt::Display for Expand {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            Expand::Auto => "Auto",
+            Expand::Never => "Never",
+        };
+        f.write_str(s)
+    }
+}
+
+/// Whether to insert spaces around brackets in object.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct BracketSpacing(bool);
+
+impl BracketSpacing {
+    pub fn value(self) -> bool {
+        self.0
+    }
+}
+
+impl Default for BracketSpacing {
+    fn default() -> Self {
+        Self(true)
+    }
+}
+
+impl From<bool> for BracketSpacing {
+    fn from(value: bool) -> Self {
+        Self(value)
     }
 }
 
