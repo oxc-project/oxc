@@ -62,6 +62,7 @@ export type Mode2 = "as-needed" | "always" | "never";
 export type RuleNoConfig = AllowWarnDeny | [AllowWarnDeny];
 export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type IgnoreClassWithImplements = "all" | "public-fields";
+export type Variant = "classic" | "modified";
 /**
  * The enforcement type for the curly rule.
  */
@@ -671,7 +672,7 @@ export interface DummyRuleMap {
   "block-scoped-var"?: RuleNoConfig;
   "capitalized-comments"?: DummyRule;
   "class-methods-use-this"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ClassMethodsUseThisConfig];
-  complexity?: DummyRule;
+  complexity?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | ComplexityConfig];
   "constructor-super"?: RuleNoConfig;
   curly?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, CurlyType] | [AllowWarnDeny, CurlyType, CurlyConsistent];
   "default-case"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DefaultCaseConfig];
@@ -1666,6 +1667,16 @@ export interface ClassMethodsUseThisConfig {
    * Whether to ignore methods that are overridden.
    */
   ignoreOverrideMethods?: boolean;
+}
+export interface ComplexityConfig {
+  /**
+   * Maximum amount of cyclomatic complexity
+   */
+  max?: number;
+  /**
+   * The cyclomatic complexity variant to use
+   */
+  variant?: Variant;
 }
 export interface DefaultCaseConfig {
   /**

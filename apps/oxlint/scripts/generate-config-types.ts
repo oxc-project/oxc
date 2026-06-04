@@ -70,6 +70,83 @@ function sanitizeSchema(value: any): void {
 
 sanitizeSchema(schema);
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getEnumPrimitiveType(definition: unknown): "string" | "number" | "boolean" | null {
+  if (!isRecord(definition)) {
+    return null;
+  }
+
+  const definitionType = definition.type;
+  if (
+    (definitionType === "string" || definitionType === "number" || definitionType === "boolean") &&
+    Array.isArray(definition.enum)
+  ) {
+    return definitionType;
+  }
+
+  if (!Array.isArray(definition.oneOf) || definition.oneOf.length === 0) {
+    return null;
+  }
+
+  let primitiveType: "string" | "number" | "boolean" | null = null;
+  for (const variant of definition.oneOf) {
+    if (!isRecord(variant) || !Array.isArray(variant.enum) || variant.enum.length !== 1) {
+      return null;
+    }
+
+    const variantType = variant.type;
+    if (variantType !== "string" && variantType !== "number" && variantType !== "boolean") {
+      return null;
+    }
+
+    if (primitiveType === null) {
+      primitiveType = variantType;
+      continue;
+    }
+
+    if (primitiveType !== variantType) {
+      return null;
+    }
+  }
+
+  return primitiveType;
+}
+
+function getEnumDefinitionTypes(schema: any): Map<string, "string" | "number" | "boolean"> {
+  const { definitions } = schema;
+  const enumDefinitionTypes = new Map<string, "string" | "number" | "boolean">();
+
+  if (!isRecord(definitions)) {
+    return enumDefinitionTypes;
+  }
+
+  for (const [name, definition] of Object.entries(definitions)) {
+    const primitiveType = getEnumPrimitiveType(definition);
+    if (primitiveType !== null) {
+      enumDefinitionTypes.set(name, primitiveType);
+    }
+  }
+
+  return enumDefinitionTypes;
+}
+
+function collapseEnumPrimitiveIntersections(
+  source: string,
+  enumDefinitionTypes: Map<string, "string" | "number" | "boolean">,
+): string {
+  let result = source;
+
+  for (const [name, primitiveType] of enumDefinitionTypes) {
+    const pattern = new RegExp(`\\b${name}\\s*&\\s*${primitiveType}\\b`, "g");
+    result = result.replace(pattern, name);
+  }
+
+  return result;
+}
+
 const dummyRuleMap = schema.definitions?.DummyRuleMap;
 const dummyRuleMapAdditionalProperties = dummyRuleMap?.additionalProperties;
 if (
@@ -88,7 +165,12 @@ const bannerComment =
   " * Run `just linter-config-ts` to regenerate.\n" +
   " */";
 
-const ts = await compile(schema, "OxlintConfig", { bannerComment });
+const enumDefinitionTypes = getEnumDefinitionTypes(schema);
+
+const ts = collapseEnumPrimitiveIntersections(
+  await compile(schema, "OxlintConfig", { bannerComment }),
+  enumDefinitionTypes,
+);
 
 writeFileSync(outputPath, ts);
 console.log(`Wrote ${outputPath}`);

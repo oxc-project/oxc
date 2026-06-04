@@ -708,6 +708,30 @@ expression: json
         }
       ]
     },
+    "ComplexityConfig": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "Maximum amount of cyclomatic complexity",
+          "default": 20,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum amount of cyclomatic complexity"
+        },
+        "variant": {
+          "description": "The cyclomatic complexity variant to use",
+          "default": "classic",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Variant"
+            }
+          ],
+          "markdownDescription": "The cyclomatic complexity variant to use"
+        }
+      },
+      "additionalProperties": false
+    },
     "Config": {
       "type": "array",
       "items": [
@@ -1189,7 +1213,31 @@ expression: json
           ]
         },
         "complexity": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "$ref": "#/definitions/ComplexityConfig"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "constructor-super": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -12559,6 +12607,26 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "Variant": {
+      "oneOf": [
+        {
+          "description": "Classic means McCabe cyclomatic complexity",
+          "type": "string",
+          "enum": [
+            "classic"
+          ],
+          "markdownDescription": "Classic means McCabe cyclomatic complexity"
+        },
+        {
+          "description": "Modified means classic cyclomatic complexity but a switch statement increases\ncomplexity by 1 irrespective of the number of `case` statements",
+          "type": "string",
+          "enum": [
+            "modified"
+          ],
+          "markdownDescription": "Modified means classic cyclomatic complexity but a switch statement increases\ncomplexity by 1 irrespective of the number of `case` statements"
+        }
+      ]
     },
     "VitestPluginSettings": {
       "description": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference.",

@@ -64,6 +64,18 @@ impl Deref for Complexity {
     }
 }
 
+#[cfg(feature = "ruledocs")]
+impl Complexity {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<ComplexityConfig>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
+    }
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
