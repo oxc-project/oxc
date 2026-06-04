@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 use itertools::Itertools;
 use oxc_ast::Comment;
@@ -110,6 +110,7 @@ enum DisabledRule {
         fix_span: Span,
         /// Whether this is a line-specific directive (`-next-line` or `-line`).
         is_next_line: bool,
+        used_index: usize,
     },
     /// Disables a single specific linting rule for a span of code.
     /// Used by directives like `eslint-disable rule-name`, `eslint-disable-next-line rule-name`, or `eslint-disable-line rule-name`.
@@ -140,6 +141,7 @@ enum DisabledRule {
         /// When true, only diagnostics starting within the interval are suppressed.
         /// When false, any diagnostic overlapping the interval is suppressed.
         is_next_line: bool,
+        used_index: usize,
     },
 }
 
@@ -162,6 +164,14 @@ impl DisabledRule {
         match self {
             DisabledRule::All { is_next_line, .. } | DisabledRule::Single { is_next_line, .. } => {
                 *is_next_line
+            }
+        }
+    }
+
+    pub fn used_index(&self) -> usize {
+        match self {
+            DisabledRule::All { used_index, .. } | DisabledRule::Single { used_index, .. } => {
+                *used_index
             }
         }
     }
@@ -294,13 +304,25 @@ pub struct DisableDirectives {
     disable_rule_comments: Box<[DisableRuleComment]>,
     /// Spans of unused enable directives
     unused_enable_comments: Box<[(DirectivePrefix, Option<String>, Span)]>,
-    /// Spans of used enable directives, to filter out unused
-    used_disable_comments: RefCell<Vec<DisabledRule>>,
+    /// Number of tracked disable entries that have not been matched yet.
+    unused_directives_remaining: Cell<usize>,
+    /// Disable directives that were matched by at least one diagnostic, keyed by used index.
+    used_disable_comments: RefCell<Vec<bool>>,
 }
 
 impl DisableDirectives {
-    fn mark_disable_directive_used(&self, disable_directive: DisabledRule) {
-        self.used_disable_comments.borrow_mut().push(disable_directive);
+    fn mark_disable_directive_used(&self, disable_directive: &DisabledRule) {
+        let remaining = self.unused_directives_remaining.get();
+        if remaining == 0 {
+            return;
+        }
+
+        let used_index = disable_directive.used_index();
+        let mut used = self.used_disable_comments.borrow_mut();
+        if !used[used_index] {
+            used[used_index] = true;
+            self.unused_directives_remaining.set(remaining - 1);
+        }
     }
 
     pub fn contains(&self, rule_name: &str, span: Span) -> bool {
@@ -357,7 +379,7 @@ impl DisableDirectives {
             };
 
             if span_covered {
-                self.mark_disable_directive_used(interval.val.clone());
+                self.mark_disable_directive_used(&interval.val);
                 has_match = true;
             }
         }
@@ -372,7 +394,15 @@ impl DisableDirectives {
         &self.unused_enable_comments
     }
 
+    fn has_unused_disable_comments(&self) -> bool {
+        self.unused_directives_remaining.get() != 0
+    }
+
     pub fn collect_unused_disable_comments(&self) -> Vec<DisableRuleComment> {
+        if !self.has_unused_disable_comments() {
+            return Vec::new();
+        }
+
         let used = self.used_disable_comments.borrow();
 
         self.intervals
@@ -396,7 +426,7 @@ impl DisableDirectives {
                 let rules: Vec<RuleCommentRule> = group_vec
                     .iter()
                     .filter_map(|interval| {
-                        if used.contains(&interval.val) {
+                        if used[interval.val.used_index()] {
                             return None;
                         }
                         match &interval.val {
@@ -446,11 +476,13 @@ pub struct DisableDirectivesBuilder {
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule>,
     /// Start of `eslint-disable` or `oxlint-disable`
-    disable_all_start: Option<(u32, DirectivePrefix, Span, Span)>,
+    disable_all_start: Option<(u32, DirectivePrefix, Span, Span, usize)>,
     /// Start of `eslint-disable` or `oxlint-disable` rule_name`
-    disable_start_map: FxHashMap<String, (u32, DirectivePrefix, Span, Span, Span)>,
+    disable_start_map: FxHashMap<String, (u32, DirectivePrefix, Span, Span, Span, usize)>,
     /// All comments that disable one or more specific rules
     disable_rule_comments: Vec<DisableRuleComment>,
+    /// Number of individually trackable disable entries.
+    tracked_disable_directives_count: usize,
     /// Spans of unused enable directives
     unused_enable_comments: Vec<(DirectivePrefix, Option<String>, Span)>,
 }
@@ -463,6 +495,7 @@ impl DisableDirectivesBuilder {
             disable_all_start: None,
             disable_start_map: FxHashMap::default(),
             disable_rule_comments: vec![],
+            tracked_disable_directives_count: 0,
             unused_enable_comments: vec![],
         }
     }
@@ -483,12 +516,19 @@ impl DisableDirectivesBuilder {
             intervals: self.intervals,
             disable_rule_comments: self.disable_rule_comments.into_boxed_slice(),
             unused_enable_comments: self.unused_enable_comments.into_boxed_slice(),
-            used_disable_comments: RefCell::new(Vec::new()),
+            unused_directives_remaining: Cell::new(self.tracked_disable_directives_count),
+            used_disable_comments: RefCell::new(vec![false; self.tracked_disable_directives_count]),
         }
     }
 
     fn add_interval(&mut self, start: u32, stop: u32, val: DisabledRule) {
         self.intervals.insert(Interval { start, stop, val });
+    }
+
+    fn allocate_used_index(&mut self) -> usize {
+        let used_index = self.tracked_disable_directives_count;
+        self.tracked_disable_directives_count += 1;
+        used_index
     }
 
     /// Computes the fix span for a disable-directive comment.
@@ -565,11 +605,13 @@ impl DisableDirectivesBuilder {
                 DirectiveKind::Disable => {
                     if rule_names.is_empty() {
                         if self.disable_all_start.is_none() {
+                            let used_index = self.allocate_used_index();
                             self.disable_all_start = Some((
                                 comment_span.end,
                                 directive_prefix,
                                 outer_span,
                                 comment_fix_span,
+                                used_index,
                             ));
                         }
                         self.disable_rule_comments.push(DisableRuleComment {
@@ -583,13 +625,20 @@ impl DisableDirectivesBuilder {
                         let mut rules = vec![];
                         for (rule_name, name_span) in rule_names {
                             let name_span = name_span.move_right(rule_list_start);
-                            self.disable_start_map.entry(rule_name.to_string()).or_insert((
-                                comment_span.end,
-                                directive_prefix,
-                                name_span,
-                                outer_span,
-                                comment_fix_span,
-                            ));
+                            if !self.disable_start_map.contains_key(rule_name) {
+                                let used_index = self.allocate_used_index();
+                                self.disable_start_map.insert(
+                                    rule_name.to_string(),
+                                    (
+                                        comment_span.end,
+                                        directive_prefix,
+                                        name_span,
+                                        outer_span,
+                                        comment_fix_span,
+                                        used_index,
+                                    ),
+                                );
+                            }
                             rules.push(RuleCommentRule {
                                 directive_prefix,
                                 rule_name: rule_name.to_string(),
@@ -620,6 +669,7 @@ impl DisableDirectivesBuilder {
                     }
 
                     if rule_names.is_empty() {
+                        let used_index = self.allocate_used_index();
                         self.add_interval(
                             comment_span.end,
                             stop,
@@ -628,6 +678,7 @@ impl DisableDirectivesBuilder {
                                 comment_span: outer_span,
                                 fix_span: comment_fix_span,
                                 is_next_line: true,
+                                used_index,
                             },
                         );
                         self.disable_rule_comments.push(DisableRuleComment {
@@ -641,6 +692,7 @@ impl DisableDirectivesBuilder {
                         let mut rules = vec![];
                         for (rule_name, name_span) in rule_names {
                             let name_span = name_span.move_right(rule_list_start);
+                            let used_index = self.allocate_used_index();
                             self.add_interval(
                                 comment_span.end,
                                 stop,
@@ -651,6 +703,7 @@ impl DisableDirectivesBuilder {
                                     comment_span: outer_span,
                                     fix_span: comment_fix_span,
                                     is_next_line: true,
+                                    used_index,
                                 },
                             );
                             rules.push(RuleCommentRule {
@@ -676,6 +729,7 @@ impl DisableDirectivesBuilder {
                     let stop = comment_span.start;
 
                     if rule_names.is_empty() {
+                        let used_index = self.allocate_used_index();
                         self.add_interval(
                             start,
                             stop,
@@ -684,6 +738,7 @@ impl DisableDirectivesBuilder {
                                 comment_span: outer_span,
                                 fix_span: comment_fix_span,
                                 is_next_line: true,
+                                used_index,
                             },
                         );
                         self.disable_rule_comments.push(DisableRuleComment {
@@ -697,6 +752,7 @@ impl DisableDirectivesBuilder {
                         let mut rules = vec![];
                         for (rule_name, name_span) in rule_names {
                             let name_span = name_span.move_right(rule_list_start);
+                            let used_index = self.allocate_used_index();
                             self.add_interval(
                                 start,
                                 stop,
@@ -707,6 +763,7 @@ impl DisableDirectivesBuilder {
                                     comment_span: outer_span,
                                     fix_span: comment_fix_span,
                                     is_next_line: true,
+                                    used_index,
                                 },
                             );
                             rules.push(RuleCommentRule {
@@ -725,7 +782,9 @@ impl DisableDirectivesBuilder {
                 }
                 DirectiveKind::Enable => {
                     if rule_names.is_empty() {
-                        if let Some((start, disable_prefix, _, _)) = self.disable_all_start.take() {
+                        if let Some((start, disable_prefix, _, _, used_index)) =
+                            self.disable_all_start.take()
+                        {
                             self.add_interval(
                                 start,
                                 comment_span.start,
@@ -734,6 +793,7 @@ impl DisableDirectivesBuilder {
                                     comment_span: outer_span,
                                     fix_span: comment_fix_span,
                                     is_next_line: false,
+                                    used_index,
                                 },
                             );
                         } else {
@@ -744,7 +804,7 @@ impl DisableDirectivesBuilder {
                         // `eslint-enable rule-name1, rule-name2`
                         for (rule_name, name_span) in rule_names {
                             let name_span = name_span.move_right(rule_list_start);
-                            if let Some((start, disable_prefix, _, _, _)) =
+                            if let Some((start, disable_prefix, _, _, _, used_index)) =
                                 self.disable_start_map.remove(rule_name)
                             {
                                 self.add_interval(
@@ -757,6 +817,7 @@ impl DisableDirectivesBuilder {
                                         comment_span: outer_span,
                                         fix_span: comment_fix_span,
                                         is_next_line: false,
+                                        used_index,
                                     },
                                 );
                             } else {
@@ -774,17 +835,25 @@ impl DisableDirectivesBuilder {
         }
 
         // Lone `eslint-disable`
-        if let Some((start, directive_prefix, comment_span, fix_span)) = self.disable_all_start {
+        if let Some((start, directive_prefix, comment_span, fix_span, used_index)) =
+            self.disable_all_start
+        {
             self.add_interval(
                 start,
                 source_len,
-                DisabledRule::All { directive_prefix, comment_span, fix_span, is_next_line: false },
+                DisabledRule::All {
+                    directive_prefix,
+                    comment_span,
+                    fix_span,
+                    is_next_line: false,
+                    used_index,
+                },
             );
         }
 
         // Lone `eslint-disable rule_name`
         let disable_start_map = self.disable_start_map.drain().collect::<Vec<_>>();
-        for (rule_name, (start, directive_prefix, name_span, comment_span, fix_span)) in
+        for (rule_name, (start, directive_prefix, name_span, comment_span, fix_span, used_index)) in
             disable_start_map
         {
             self.add_interval(
@@ -797,6 +866,7 @@ impl DisableDirectivesBuilder {
                     comment_span,
                     fix_span,
                     is_next_line: false,
+                    used_index,
                 },
             );
         }
@@ -1716,21 +1786,23 @@ mod tests {
                 let fix_span_0 = comment_fix_span(&comments[0], source_text);
                 let fix_span_1 = comment_fix_span(&comments[1], source_text);
 
-                directives.mark_disable_directive_used(DisabledRule::Single {
+                directives.mark_disable_directive_used(&DisabledRule::Single {
                     directive_prefix: directive_prefix_for_comment(&comments[0], source_text),
                     rule_name: "no-console".to_string(),
                     name_span: Span::sized(comments[0].content_span().start + 16, 10),
                     comment_span: comments[0].span,
                     fix_span: fix_span_0,
                     is_next_line: false,
+                    used_index: 0,
                 });
-                directives.mark_disable_directive_used(DisabledRule::Single {
+                directives.mark_disable_directive_used(&DisabledRule::Single {
                     directive_prefix: directive_prefix_for_comment(&comments[1], source_text),
                     rule_name: "no-debugger".to_string(),
                     name_span: Span::sized(comments[1].content_span().start + 16, 11),
                     comment_span: comments[1].span,
                     fix_span: fix_span_1,
                     is_next_line: false,
+                    used_index: 1,
                 });
 
                 assert!(directives.collect_unused_disable_comments().is_empty());
