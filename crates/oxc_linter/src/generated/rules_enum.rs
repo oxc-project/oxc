@@ -820,6 +820,7 @@ pub use crate::rules::vue::no_watch_after_await::NoWatchAfterAwait as VueNoWatch
 pub use crate::rules::vue::prefer_import_from_vue::PreferImportFromVue as VuePreferImportFromVue;
 pub use crate::rules::vue::prop_name_casing::PropNameCasing as VuePropNameCasing;
 pub use crate::rules::vue::require_default_export::RequireDefaultExport as VueRequireDefaultExport;
+pub use crate::rules::vue::require_default_prop::RequireDefaultProp as VueRequireDefaultProp;
 pub use crate::rules::vue::require_direct_export::RequireDirectExport as VueRequireDirectExport;
 pub use crate::rules::vue::require_prop_type_constructor::RequirePropTypeConstructor as VueRequirePropTypeConstructor;
 pub use crate::rules::vue::require_prop_types::RequirePropTypes as VueRequirePropTypes;
@@ -1662,6 +1663,7 @@ pub enum RuleEnum {
     VuePreferImportFromVue(VuePreferImportFromVue),
     VuePropNameCasing(VuePropNameCasing),
     VueRequireDefaultExport(VueRequireDefaultExport),
+    VueRequireDefaultProp(VueRequireDefaultProp),
     VueRequireDirectExport(VueRequireDirectExport),
     VueRequirePropTypeConstructor(VueRequirePropTypeConstructor),
     VueRequirePropTypes(VueRequirePropTypes),
@@ -2591,7 +2593,8 @@ const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID 
 const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_NO_WATCH_AFTER_AWAIT_ID + 1usize;
 const VUE_PROP_NAME_CASING_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
 const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PROP_NAME_CASING_ID + 1usize;
-const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
+const VUE_REQUIRE_DEFAULT_PROP_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
+const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = VUE_REQUIRE_DEFAULT_PROP_ID + 1usize;
 const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = VUE_REQUIRE_DIRECT_EXPORT_ID + 1usize;
 const VUE_REQUIRE_PROP_TYPES_ID: usize = VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID + 1usize;
 const VUE_REQUIRE_RENDER_RETURN_ID: usize = VUE_REQUIRE_PROP_TYPES_ID + 1usize;
@@ -3544,6 +3547,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VUE_PREFER_IMPORT_FROM_VUE_ID,
             Self::VuePropNameCasing(_) => VUE_PROP_NAME_CASING_ID,
             Self::VueRequireDefaultExport(_) => VUE_REQUIRE_DEFAULT_EXPORT_ID,
+            Self::VueRequireDefaultProp(_) => VUE_REQUIRE_DEFAULT_PROP_ID,
             Self::VueRequireDirectExport(_) => VUE_REQUIRE_DIRECT_EXPORT_ID,
             Self::VueRequirePropTypeConstructor(_) => VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID,
             Self::VueRequirePropTypes(_) => VUE_REQUIRE_PROP_TYPES_ID,
@@ -4482,6 +4486,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::NAME,
             Self::VuePropNameCasing(_) => VuePropNameCasing::NAME,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::NAME,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::NAME,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::NAME,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::NAME,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::NAME,
@@ -5478,6 +5483,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::CATEGORY,
             Self::VuePropNameCasing(_) => VuePropNameCasing::CATEGORY,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::CATEGORY,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::CATEGORY,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::CATEGORY,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::CATEGORY,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::CATEGORY,
@@ -6417,6 +6423,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FIX,
             Self::VuePropNameCasing(_) => VuePropNameCasing::FIX,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::FIX,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::FIX,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::FIX,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::FIX,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::FIX,
@@ -7616,6 +7623,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::documentation(),
             Self::VuePropNameCasing(_) => VuePropNameCasing::documentation(),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::documentation(),
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::documentation(),
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::documentation(),
             Self::VueRequirePropTypeConstructor(_) => {
                 VueRequirePropTypeConstructor::documentation()
@@ -9973,6 +9981,8 @@ impl RuleEnum {
                 .or_else(|| VuePropNameCasing::schema(generator)),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::config_schema(generator)
                 .or_else(|| VueRequireDefaultExport::schema(generator)),
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::config_schema(generator)
+                .or_else(|| VueRequireDefaultProp::schema(generator)),
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::config_schema(generator)
                 .or_else(|| VueRequireDirectExport::schema(generator)),
             Self::VueRequirePropTypeConstructor(_) => {
@@ -10821,6 +10831,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => "vue",
             Self::VuePropNameCasing(_) => "vue",
             Self::VueRequireDefaultExport(_) => "vue",
+            Self::VueRequireDefaultProp(_) => "vue",
             Self::VueRequireDirectExport(_) => "vue",
             Self::VueRequirePropTypeConstructor(_) => "vue",
             Self::VueRequirePropTypes(_) => "vue",
@@ -13458,6 +13469,9 @@ impl RuleEnum {
             Self::VueRequireDefaultExport(_) => Ok(Self::VueRequireDefaultExport(
                 VueRequireDefaultExport::from_configuration(value)?,
             )),
+            Self::VueRequireDefaultProp(_) => {
+                Ok(Self::VueRequireDefaultProp(VueRequireDefaultProp::from_configuration(value)?))
+            }
             Self::VueRequireDirectExport(_) => {
                 Ok(Self::VueRequireDirectExport(VueRequireDirectExport::from_configuration(value)?))
             }
@@ -14314,6 +14328,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
             Self::VuePropNameCasing(rule) => rule.to_configuration(),
             Self::VueRequireDefaultExport(rule) => rule.to_configuration(),
+            Self::VueRequireDefaultProp(rule) => rule.to_configuration(),
             Self::VueRequireDirectExport(rule) => rule.to_configuration(),
             Self::VueRequirePropTypeConstructor(rule) => rule.to_configuration(),
             Self::VueRequirePropTypes(rule) => rule.to_configuration(),
@@ -15152,6 +15167,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
                 Self::VuePropNameCasing(rule) => rule.run(node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run(node, ctx),
                 Self::VueRequireDirectExport(rule) => rule.run(node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run(node, ctx),
                 Self::VueRequirePropTypes(rule) => rule.run(node, ctx),
@@ -15983,6 +15999,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
                 Self::VuePropNameCasing(rule) => rule.run(node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run(node, ctx),
                 Self::VueRequireDirectExport(rule) => rule.run(node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run(node, ctx),
                 Self::VueRequirePropTypes(rule) => rule.run(node, ctx),
@@ -16821,6 +16838,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
                 Self::VuePropNameCasing(rule) => rule.run_once(ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run_once(ctx),
                 Self::VueRequireDirectExport(rule) => rule.run_once(ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_once(ctx),
                 Self::VueRequirePropTypes(rule) => rule.run_once(ctx),
@@ -17652,6 +17670,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
                 Self::VuePropNameCasing(rule) => rule.run_once(ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run_once(ctx),
                 Self::VueRequireDirectExport(rule) => rule.run_once(ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_once(ctx),
                 Self::VueRequirePropTypes(rule) => rule.run_once(ctx),
@@ -18747,6 +18766,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePropNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDirectExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequirePropTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19834,6 +19854,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePropNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDirectExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequirePropTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20663,6 +20684,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.should_run(ctx),
             Self::VuePropNameCasing(rule) => rule.should_run(ctx),
             Self::VueRequireDefaultExport(rule) => rule.should_run(ctx),
+            Self::VueRequireDefaultProp(rule) => rule.should_run(ctx),
             Self::VueRequireDirectExport(rule) => rule.should_run(ctx),
             Self::VueRequirePropTypeConstructor(rule) => rule.should_run(ctx),
             Self::VueRequirePropTypes(rule) => rule.should_run(ctx),
@@ -21861,6 +21883,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
             Self::VuePropNameCasing(_) => VuePropNameCasing::IS_TSGOLINT_RULE,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::IS_TSGOLINT_RULE,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::IS_TSGOLINT_RULE,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::IS_TSGOLINT_RULE,
             Self::VueRequirePropTypeConstructor(_) => {
                 VueRequirePropTypeConstructor::IS_TSGOLINT_RULE
@@ -22861,6 +22884,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
             Self::VuePropNameCasing(_) => VuePropNameCasing::VERSION,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::VERSION,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::VERSION,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::VERSION,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::VERSION,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::VERSION,
@@ -23896,6 +23920,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
             Self::VuePropNameCasing(_) => VuePropNameCasing::HAS_CONFIG,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::HAS_CONFIG,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::HAS_CONFIG,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::HAS_CONFIG,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::HAS_CONFIG,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::HAS_CONFIG,
@@ -24724,6 +24749,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.types_info(),
             Self::VuePropNameCasing(rule) => rule.types_info(),
             Self::VueRequireDefaultExport(rule) => rule.types_info(),
+            Self::VueRequireDefaultProp(rule) => rule.types_info(),
             Self::VueRequireDirectExport(rule) => rule.types_info(),
             Self::VueRequirePropTypeConstructor(rule) => rule.types_info(),
             Self::VueRequirePropTypes(rule) => rule.types_info(),
@@ -25552,6 +25578,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_info(),
             Self::VuePropNameCasing(rule) => rule.run_info(),
             Self::VueRequireDefaultExport(rule) => rule.run_info(),
+            Self::VueRequireDefaultProp(rule) => rule.run_info(),
             Self::VueRequireDirectExport(rule) => rule.run_info(),
             Self::VueRequirePropTypeConstructor(rule) => rule.run_info(),
             Self::VueRequirePropTypes(rule) => rule.run_info(),
@@ -26512,6 +26539,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VuePreferImportFromVue(VuePreferImportFromVue::default()),
         RuleEnum::VuePropNameCasing(VuePropNameCasing::default()),
         RuleEnum::VueRequireDefaultExport(VueRequireDefaultExport::default()),
+        RuleEnum::VueRequireDefaultProp(VueRequireDefaultProp::default()),
         RuleEnum::VueRequireDirectExport(VueRequireDirectExport::default()),
         RuleEnum::VueRequirePropTypeConstructor(VueRequirePropTypeConstructor::default()),
         RuleEnum::VueRequirePropTypes(VueRequirePropTypes::default()),
