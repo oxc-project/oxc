@@ -274,7 +274,7 @@ pub struct FormatConfig {
     /// Whether to wrap assignment expressions used as non-statement expressions in parentheses.
     ///
     /// - `"always"` — Always wrap, e.g. `fn((x = 1))`. Prettier-compatible default.
-    /// - `"avoid"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens
+    /// - `"required"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens
     ///   that are syntactically required (object destructuring at statement start, arrow-function body, etc.).
     ///
     /// - Languages: JS, JSX, TS, TSX
@@ -417,7 +417,7 @@ pub enum EmbeddedLanguageFormattingConfig {
 #[serde(rename_all = "lowercase")]
 pub enum AssignmentExpressionParensConfig {
     Always,
-    Avoid,
+    Required,
 }
 
 // ---

@@ -121,11 +121,11 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
         };
     }
 
-    // [Oxfmt] assignmentExpressionParens: "always" | "avoid"
+    // [Oxfmt] assignmentExpressionParens: "always" | "required"
     if let Some(parens) = config.assignment_expression_parens {
         format_options.assignment_expression_parentheses = match parens {
             AssignmentExpressionParensConfig::Always => AssignmentExpressionParentheses::Always,
-            AssignmentExpressionParensConfig::Avoid => AssignmentExpressionParentheses::AsNeeded,
+            AssignmentExpressionParensConfig::Required => AssignmentExpressionParentheses::Required,
         };
     }
 

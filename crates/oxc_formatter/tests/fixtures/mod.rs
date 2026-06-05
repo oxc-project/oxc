@@ -112,7 +112,7 @@ impl FixtureFormatter for JsHarness {
                     if let Some(s) = value.as_str() {
                         options.assignment_expression_parentheses = match s {
                             "always" => AssignmentExpressionParentheses::Always,
-                            "avoid" => AssignmentExpressionParentheses::AsNeeded,
+                            "required" => AssignmentExpressionParentheses::Required,
                             _ => options.assignment_expression_parentheses,
                         };
                     }

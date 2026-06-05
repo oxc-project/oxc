@@ -1,4 +1,4 @@
 [
   { "assignmentExpressionParens": "always" },
-  { "assignmentExpressionParens": "avoid" }
+  { "assignmentExpressionParens": "required" }
 ]

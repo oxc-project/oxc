@@ -577,7 +577,7 @@ pub enum AssignmentExpressionParentheses {
     Always,
     /// Omit the extra parentheses added purely for style; only keep those that are
     /// syntactically required (e.g. object-destructuring at statement start, arrow-function body).
-    AsNeeded,
+    Required,
 }
 
 impl AssignmentExpressionParentheses {
@@ -585,8 +585,8 @@ impl AssignmentExpressionParentheses {
         matches!(self, Self::Always)
     }
 
-    pub const fn is_as_needed(self) -> bool {
-        matches!(self, Self::AsNeeded)
+    pub const fn is_required(self) -> bool {
+        matches!(self, Self::Required)
     }
 }
 
