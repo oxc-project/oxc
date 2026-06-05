@@ -91,6 +91,24 @@ export type Mode3 = "always" | "never";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type LogicalAssignmentOperatorsMode = "always" | "never";
 export type CountThis = "always" | "never" | "except-void";
+/**
+ * Kinds of functions that can be allowed to be empty.
+ */
+export type AllowKind =
+  | "functions"
+  | "arrowFunctions"
+  | "generatorFunctions"
+  | "methods"
+  | "generatorMethods"
+  | "getters"
+  | "setters"
+  | "constructors"
+  | "asyncFunctions"
+  | "asyncMethods"
+  | "privateConstructors"
+  | "protectedConstructors"
+  | "decoratedFunctions"
+  | "overrideMethods";
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
@@ -945,7 +963,7 @@ export interface DummyRuleMap {
   "no-else-return"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoElseReturn];
   "no-empty"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoEmpty];
   "no-empty-character-class"?: RuleNoConfig;
-  "no-empty-function"?: DummyRule;
+  "no-empty-function"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoEmptyFunctionConfig];
   "no-empty-pattern"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoEmptyPattern];
   "no-empty-static-block"?: RuleNoConfig;
   "no-eq-null"?: RuleNoConfig;
@@ -2479,6 +2497,29 @@ export interface NoEmpty {
    * If set to `true`, allows an empty `catch` block without triggering the linter.
    */
   allowEmptyCatch?: boolean;
+}
+export interface NoEmptyFunctionConfig {
+  /**
+   * Types of functions that are allowed to be empty.
+   *
+   * By default, no function kinds are allowed to be empty, but this option can be used to
+   * permit specific kinds of functions.
+   *
+   * Example:
+   * ```json
+   * {
+   *   "no-empty-function": [
+   *     "error",
+   *     {
+   *       "allow": [
+   *         "constructors"
+   *       ]
+   *     }
+   *   ]
+   * }
+   * ```
+   */
+  allow?: AllowKind[];
 }
 export interface NoEmptyPattern {
   /**
