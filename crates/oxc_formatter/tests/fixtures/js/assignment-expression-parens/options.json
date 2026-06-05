@@ -1,0 +1,4 @@
+[
+  { "assignmentExpressionParens": "always" },
+  { "assignmentExpressionParens": "avoid" }
+]

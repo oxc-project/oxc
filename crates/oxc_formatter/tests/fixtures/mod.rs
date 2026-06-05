@@ -2,8 +2,8 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    ArrowParentheses, BracketSameLine, BracketSpacing, JsFormatOptions, JsdocOptions,
-    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+    ArrowParentheses, AssignmentExpressionParentheses, BracketSameLine, BracketSpacing,
+    JsFormatOptions, JsdocOptions, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_core::{
     IndentStyle, IndentWidth, LineEnding, LineWidth,
@@ -105,6 +105,15 @@ impl FixtureFormatter for JsHarness {
                             "preserve" => QuoteProperties::Preserve,
                             "consistent" => QuoteProperties::Consistent,
                             _ => QuoteProperties::default(),
+                        };
+                    }
+                }
+                "assignmentExpressionParens" => {
+                    if let Some(s) = value.as_str() {
+                        options.assignment_expression_parentheses = match s {
+                            "always" => AssignmentExpressionParentheses::Always,
+                            "avoid" => AssignmentExpressionParentheses::AsNeeded,
+                            _ => options.assignment_expression_parentheses,
                         };
                     }
                 }
