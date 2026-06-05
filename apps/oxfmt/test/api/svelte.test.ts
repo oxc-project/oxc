@@ -152,6 +152,18 @@ let n: number = $state(0);
   });
 
   describe("Template section", () => {
+    it("should format Svelte 5 declaration tags", async () => {
+      const input = `{#each boxes as box}
+{const area = box.width * box.height}
+{const label = \`\${box.width} x \${box.height} = \${area}\`}
+<p>{label}</p>
+{/each}
+`;
+      const result = await format("App.svelte", input, { svelte: {} });
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).toMatchSnapshot();
+    });
+
     it("should sort Tailwind classes in template attributes (within `{#each}` block)", async () => {
       // Embedding the attribute inside an `{#each}` block also incidentally
       // exercises Svelte block markup formatting via `prettier-plugin-svelte`.

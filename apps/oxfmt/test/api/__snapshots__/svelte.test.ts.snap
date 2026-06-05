@@ -68,6 +68,15 @@ exports[`Svelte support > Script section (JS) > should sort imports inside \`<sc
 "
 `;
 
+exports[`Svelte support > Template section > should format Svelte 5 declaration tags 1`] = `
+"{#each boxes as box}
+  {const area = box.width * box.height}
+  {const label = \`\${box.width} x \${box.height} = \${area}\`}
+  <p>{label}</p>
+{/each}
+"
+`;
+
 exports[`Svelte support > Template section > should sort Tailwind classes in template attributes (within \`{#each}\` block) 1`] = `
 "<script>
   let items = $state([1, 2, 3]);
