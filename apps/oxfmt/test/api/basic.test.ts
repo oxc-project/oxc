@@ -42,13 +42,22 @@ describe("Format non-js", () => {
   it("should return Prettier formatFile errors as data", async () => {
     const result = await formatFileSafe({
       code: `{`,
-      options: { parser: "jsonc", filepath: "broken.jsonc" },
+      options: { parser: "json5", filepath: "broken.json5" },
     });
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).not.toBe("File formatting failed");
       expect(result.error).toMatch(/Unexpected|JSON|end/i);
     }
+  });
+
+  it("should surface Prettier parse errors from format API", async () => {
+    const result = await format("broken.json5", `{`, {});
+
+    expect(result.code).toBe(`{`);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]?.message).not.toBe("File formatting failed");
+    expect(result.errors[0]?.message).toMatch(/Unexpected|JSON|end/i);
   });
 });
 
