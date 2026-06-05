@@ -75,8 +75,33 @@ impl std::ops::Deref for CapitalizedComments {
     }
 }
 
+#[cfg(feature = "ruledocs")]
+impl CapitalizedComments {
+    #[expect(clippy::unnecessary_wraps, unused)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        #[derive(Deserialize, JsonSchema)]
+        #[serde(rename_all = "camelCase", untagged, deny_unknown_fields)]
+        enum OptionsJsonDoc {
+            Base(CommentConfigJson),
+            Difference { line: Option<CommentConfigJson>, block: Option<CommentConfigJson> },
+        }
+
+        /// Configuration for the capitalized-comments rule.
+        ///
+        /// The first element specifies whether comments should `"always"` or `"never"`
+        /// begin with a capital letter. The second element is an optional object
+        /// containing additional options.
+        #[derive(JsonSchema, Deserialize)]
+        struct CapitalizedCommentsOptionsDocs(CapitalizeOption, Option<OptionsJsonDoc>);
+
+        Some(r#gen.subschema_for::<CapitalizedCommentsOptionsDocs>())
+    }
+}
+
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[expect(clippy::struct_field_names)]
 struct CommentConfigJson {
     /// A regex pattern. Comments that match the pattern will not cause violations.
@@ -116,15 +141,6 @@ struct OptionsJson {
     block: Option<CommentConfigJson>,
 }
 
-/// Configuration for the capitalized-comments rule.
-///
-/// The first element specifies whether comments should `"always"` or `"never"`
-/// begin with a capital letter. The second element is an optional object
-/// containing additional options.
-#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
-#[expect(dead_code)]
-struct CapitalizedCommentsOptions(CapitalizeOption, Option<OptionsJson>);
-
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -153,7 +169,6 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
-    config = CapitalizedCommentsOptions,
     version = "1.34.0",
 );
 
