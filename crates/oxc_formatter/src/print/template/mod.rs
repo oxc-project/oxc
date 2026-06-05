@@ -469,8 +469,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
 impl<'a> TemplateExpression<'a, '_> {
     fn has_new_line_in_range(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let span = self.span();
-        f.source_text().has_newline_before(span.start)
-            || f.source_text().has_newline_after(span.end)
+        f.source_text().has_line_terminator_before(span.start)
+            || f.source_text().has_line_terminator_after(span.end)
             || f.source_text().contains_newline(span)
     }
 }

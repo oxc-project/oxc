@@ -11,6 +11,7 @@ use oxc_formatter_core::{
 use oxc_span::Span;
 use oxc_syntax::line_terminator::{
     LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, LineTerminatorSplitter, PS_LAST_2_BYTES,
+    is_line_terminator,
 };
 
 use crate::{
@@ -129,16 +130,13 @@ pub fn write_leading_comments(
     }
 }
 
-/// Counts ECMAScript line terminators in `slice`, treating `\r\n` as a single break.
+/// Recognizes `\n`, lone `\r`, `\r\n`, and LS(U+2028) / PS(U+2029), the full ECMAScript line-terminator set.
 ///
-/// Recognizes `\n`, lone `\r`, `\r\n`, and U+2028 / U+2029 — the full ECMAScript line-terminator
-/// set. CR/LF cover every JSON variant; U+2028 / U+2029 are line terminators only in JSON5 (ES5 lexis).
-///
-/// Recognizing U+2028 / U+2029 unconditionally is observably a no-op for `json` / `jsonc`: in valid
-/// input they can only appear inside string literals, never in the inter-entry gaps this scans, so
-/// they reach this function only for JSON5 (or already-invalid input, where Prettier — which routes
-/// every variant through its JS printer — also treats them as breaks). This keeps `count_newlines`
-/// a pure `&[u8]` helper with no variant threading, and aligns with core's raw-byte newline checks.
+/// LS/PS recognition is unconditional (no `JsonVariant` threading), keeping this a pure `&[u8]` helper.
+/// It is required for JSON5 (ES5 lexis), and is not a no-op for `json` / `jsonc` either:
+/// this crate parses every variant leniently as JS, so the lexer accepts a bare LS/PS in an inter-entry gap regardless of variant.
+/// A spec-strict JSON document keeps them inside string literals, so the branch rarely fires for `json` / `jsonc`.
+/// But when it does, treating it as a break matches Prettier (every variant goes through its JS printer).
 pub fn count_newlines(slice: &[u8]) -> usize {
     let mut count = 0;
     let mut i = 0;
@@ -167,6 +165,43 @@ pub fn count_newlines(slice: &[u8]) -> usize {
         i += 1;
     }
     count
+}
+
+/// Does a line terminator precede the first property / `}`, treating a comment as transparent?
+///
+/// `text` is the source slice starting just after the opening `{` (up to the container's end).
+/// Recognizes the full ECMAScript line-terminator set unconditionally, for the same reason as [`count_newlines`].
+pub fn has_line_terminator_after_skipping_comments(text: &str) -> bool {
+    let mut chars = text.chars().peekable();
+    while let Some(c) = chars.next() {
+        match c {
+            ' ' | '\t' => {}
+            _ if is_line_terminator(c) => return true,
+            '/' => match chars.peek() {
+                Some(&'/') => {
+                    chars.next();
+                    // Line comment: a terminator anywhere up to its end counts.
+                    return chars.any(is_line_terminator);
+                }
+                Some(&'*') => {
+                    chars.next();
+                    // Block comment: scan for `*/`, returning early on any inner terminator.
+                    while let Some(c) = chars.next() {
+                        if is_line_terminator(c) {
+                            return true;
+                        }
+                        if c == '*' && chars.peek() == Some(&'/') {
+                            chars.next();
+                            break;
+                        }
+                    }
+                }
+                _ => return false,
+            },
+            _ => return false,
+        }
+    }
+    false
 }
 
 /// Emits the formatter element that reproduces the vertical spacing implied by `gap`:
@@ -284,7 +319,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FormatSuppressedNode {
 
 #[cfg(test)]
 mod tests {
-    use super::count_newlines;
+    use super::{count_newlines, has_line_terminator_after_skipping_comments};
 
     // NOTE: source fixtures are LF-only (enforced via `.gitattributes`),
     // so CR / CRLF / mixed / Unicode endings are exercised here instead.
@@ -317,5 +352,21 @@ mod tests {
         assert_eq!(count_newlines("a\r\n\u{2029}b".as_bytes()), 2);
         // Other `0xE2`-led characters must NOT be counted (em dash U+2014, bullet U+2022).
         assert_eq!(count_newlines("a\u{2014}b\u{2022}c".as_bytes()), 0);
+    }
+
+    #[test]
+    fn has_line_terminator_after_skipping_comments_is_ls_ps_aware() {
+        // `text` is the slice just after `{`. A bare terminator before the first token → true.
+        for src in ["\nx", "\rx", "\r\nx", "\u{2028}x", "\u{2029}x", "  \u{2028}x"] {
+            assert!(has_line_terminator_after_skipping_comments(src), "{src:?}");
+        }
+        // Terminator hidden behind a comment is still detected.
+        assert!(has_line_terminator_after_skipping_comments(" /* c */\u{2028}x"));
+        assert!(has_line_terminator_after_skipping_comments(" /* c\u{2029} */ x"));
+        assert!(has_line_terminator_after_skipping_comments(" // c\u{2028}x"));
+        // No terminator before the next token (incl. other 0xE2-led chars).
+        for src in [" x", " /* c */ x", "\u{2014}x"] {
+            assert!(!has_line_terminator_after_skipping_comments(src), "{src:?}");
+        }
     }
 }

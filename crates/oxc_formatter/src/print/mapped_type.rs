@@ -29,7 +29,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
         // Because the break is not immediately after `{`.
         // `+ 1` skips the opening `{`.
         let should_expand =
-            f.source_text().has_newline_after_skipping_comments(self.span.start + 1);
+            f.source_text().has_line_terminator_after_skipping_comments(self.span.start + 1);
 
         let format_inner = format_with(|f| {
             if should_expand {

@@ -49,6 +49,10 @@ pub fn parse_json<'a>(
     // from being swallowed by a trailing line comment in `source`.
     let wrapped_source: &'a str = allocator.alloc_concat_strs_array(["(", source, "\n)"]);
 
+    // NOTE: We use `oxc_parser` which parses according to JavaScript rules, not JSON.
+    // So the JS lexer rules apply uniformly regardless of `variant`.
+    // e.g. line terminators (incl. U+2028 / U+2029), trailing commas, single quotes
+    // Downstream newline scans must therefore be LS/PS-aware for all variants, not just JSON5.
     let options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
     let ret =
         Parser::new(allocator, wrapped_source, SourceType::default()).with_options(options).parse();

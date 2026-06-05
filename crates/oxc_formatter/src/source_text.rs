@@ -32,6 +32,19 @@ pub trait SourceTextExt {
     /// `first_unprinted_comment` is the span of the first not-yet-printed comment, or `None`.
     /// When that comment ends before `span.start`, its leading trivia is included in the count.
     fn get_lines_before(&self, span: Span, first_unprinted_comment: Option<Span>) -> usize;
+
+    /// Is there a line terminator immediately before `position` (skipping only horizontal whitespace, space / tab)?
+    ///
+    /// Recognizes the full ECMAScript line-terminator set, scanning by `char` so a multi-byte terminator is never split.
+    /// Matches Prettier's `skipSpaces` + `isLineTerminator`.
+    fn has_line_terminator_before(&self, position: u32) -> bool;
+
+    /// Is there a line terminator immediately after `position`? The forward counterpart of [`Self::has_line_terminator_before`].
+    fn has_line_terminator_after(&self, position: u32) -> bool;
+
+    /// Is there a line terminator after `position`,
+    /// treating an intervening comment as transparent (matches Prettier detecting the newline in `{ /* comment */\n`)?
+    fn has_line_terminator_after_skipping_comments(&self, position: u32) -> bool;
 }
 
 impl SourceTextExt for SourceText<'_> {
@@ -126,6 +139,64 @@ impl SourceTextExt for SourceText<'_> {
 
         0
     }
+
+    fn has_line_terminator_before(&self, position: u32) -> bool {
+        let text: &str = self;
+        for c in text[..position as usize].chars().rev() {
+            match c {
+                ' ' | '\t' => {}
+                _ if is_line_terminator(c) => return true,
+                _ => return false,
+            }
+        }
+        false
+    }
+
+    fn has_line_terminator_after(&self, position: u32) -> bool {
+        let text: &str = self;
+        for c in text[position as usize..].chars() {
+            match c {
+                ' ' | '\t' => {}
+                _ if is_line_terminator(c) => return true,
+                _ => return false,
+            }
+        }
+        false
+    }
+
+    fn has_line_terminator_after_skipping_comments(&self, position: u32) -> bool {
+        let text: &str = self;
+        let mut chars = text[position as usize..].chars().peekable();
+        while let Some(c) = chars.next() {
+            match c {
+                ' ' | '\t' => {}
+                _ if is_line_terminator(c) => return true,
+                '/' => match chars.peek() {
+                    Some(&'/') => {
+                        chars.next();
+                        // Line comment: scan until line terminator or EOF.
+                        return chars.any(is_line_terminator);
+                    }
+                    Some(&'*') => {
+                        chars.next();
+                        // Block comment: scan for `*/`, returning early on any inner terminator.
+                        while let Some(c) = chars.next() {
+                            if is_line_terminator(c) {
+                                return true;
+                            }
+                            if c == '*' && chars.peek() == Some(&'/') {
+                                chars.next();
+                                break;
+                            }
+                        }
+                    }
+                    _ => return false,
+                },
+                _ => return false,
+            }
+        }
+        false
+    }
 }
 
 // NOTE: Our test fixtures are managed under `.gitattributes` to enforce LF line endings.
@@ -199,5 +270,43 @@ const z = 3;
 
         assert_eq!(source_text.lines_after(span_x.end), 2);
         assert_eq!(source_text.lines_after(span_y.end), 2);
+    }
+
+    #[test]
+    fn has_line_terminator_recognizes_ls_ps_and_crlf() {
+        // Each case is `a` + gap + `b`. `has_*_after` scans from byte 1 (right after `a`);
+        // `has_*_before` scans back from the start of `b` (byte `1 + gap.len()`).
+        for gap in ["\n", "\r", "\r\n", "\u{2028}", "\u{2029}", "  \u{2028}"] {
+            let src = format!("a{gap}b");
+            let st = SourceText::new(&src);
+            let before_b = u32::try_from(1 + gap.len()).unwrap();
+            assert!(st.has_line_terminator_after(1), "after: {src:?}");
+            assert!(st.has_line_terminator_before(before_b), "before: {src:?}");
+        }
+
+        // No terminator (incl. other 0xE2-led chars: em dash U+2014, bullet U+2022).
+        for gap in [" ", "\u{2014}", " \u{2022} "] {
+            let src = format!("a{gap}b");
+            let st = SourceText::new(&src);
+            let before_b = u32::try_from(1 + gap.len()).unwrap();
+            assert!(!st.has_line_terminator_after(1), "after: {src:?}");
+            assert!(!st.has_line_terminator_before(before_b), "before: {src:?}");
+        }
+    }
+
+    #[test]
+    fn has_line_terminator_after_skipping_comments_is_ls_ps_aware() {
+        // Terminator hidden behind a comment is still detected.
+        let st = SourceText::new("{ /* c */\u{2028}x }");
+        assert!(st.has_line_terminator_after_skipping_comments(1));
+        // Terminator inside the block comment itself counts.
+        let st = SourceText::new("{ /* c\u{2029} */ x }");
+        assert!(st.has_line_terminator_after_skipping_comments(1));
+        // Line comment then terminator.
+        let st = SourceText::new("{ // c\u{2028}x }");
+        assert!(st.has_line_terminator_after_skipping_comments(1));
+        // No terminator before the next token.
+        let st = SourceText::new("{ /* c */ x }");
+        assert!(!st.has_line_terminator_after_skipping_comments(1));
     }
 }

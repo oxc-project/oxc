@@ -11,7 +11,7 @@ use oxc_syntax::number::ToJsString;
 use crate::{
     comments::{
         FormatLeadingComments, FormatSuppressedNode, FormatTrailingInsideComments,
-        is_suppressed_before, write_dangling_comments,
+        has_line_terminator_after_skipping_comments, is_suppressed_before, write_dangling_comments,
     },
     context::JsonFormatContext,
     options::Expand,
@@ -92,8 +92,10 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
         let expand = match options.expand {
             Expand::Auto => {
                 // `+ 1` skips the opening `{`.
+                // Scan only within the object so the slice ends at the closing `}` at the latest.
                 let after_brace = self.object.span.start + 1;
-                f.context().source_text().has_newline_after_skipping_comments(after_brace)
+                let rest = f.context().source_text().slice_range(after_brace, self.object.span.end);
+                has_line_terminator_after_skipping_comments(rest)
             }
             Expand::Never => false,
         };

@@ -25,6 +25,13 @@ Prettier compatible JSON/JSONC/JSON5 formatter (`oxfmt`'s Tier 1 backend), using
 All variants share lenient parsing (comments, trailing commas, single quotes, unquoted keys all parse regardless of variant).
 What differs is the output formatting.
 
+Parsing always uses `SourceType::default()` (JS); `variant` only gates comment validation (see `parse.rs`), never the lexis.
+
+- So JS lexer rules including line terminators U+2028 / U+2029 apply to every variant's input, not just JSON5
+- Consequence: downstream source scans (newline / blank-line detection) must be LS/PS-aware for all variants
+  - Strictly LS/PS are line terminators only in JSON5, but a `json` / `jsonc` input can still carry them in inter-token gaps
+  - Because the lenient JS parse accepts them (also matching Prettier, which routes every variant through its JS printer)
+
 See the doc comments on `JsonVariant` in `src/options.rs` for the per-variant rules.
 
 ## Verification
