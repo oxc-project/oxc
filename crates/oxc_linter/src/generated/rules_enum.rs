@@ -194,6 +194,7 @@ pub use crate::rules::eslint::vars_on_top::VarsOnTop as EslintVarsOnTop;
 pub use crate::rules::eslint::yoda::Yoda as EslintYoda;
 pub use crate::rules::import::consistent_type_specifier_style::ConsistentTypeSpecifierStyle as ImportConsistentTypeSpecifierStyle;
 pub use crate::rules::import::default::Default as ImportDefault;
+pub use crate::rules::import::enforce_node_protocol_usage::EnforceNodeProtocolUsage as ImportEnforceNodeProtocolUsage;
 pub use crate::rules::import::export::Export as ImportExport;
 pub use crate::rules::import::exports_last::ExportsLast as ImportExportsLast;
 pub use crate::rules::import::extensions::Extensions as ImportExtensions;
@@ -844,6 +845,7 @@ use oxc_semantic::AstTypesBitset;
 pub enum RuleEnum {
     ImportConsistentTypeSpecifierStyle(ImportConsistentTypeSpecifierStyle),
     ImportDefault(ImportDefault),
+    ImportEnforceNodeProtocolUsage(ImportEnforceNodeProtocolUsage),
     ImportExport(ImportExport),
     ImportExportsLast(ImportExportsLast),
     ImportExtensions(ImportExtensions),
@@ -1677,7 +1679,8 @@ pub enum RuleEnum {
 }
 const IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID: usize = 0usize;
 const IMPORT_DEFAULT_ID: usize = IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID + 1usize;
-const IMPORT_EXPORT_ID: usize = IMPORT_DEFAULT_ID + 1usize;
+const IMPORT_ENFORCE_NODE_PROTOCOL_USAGE_ID: usize = IMPORT_DEFAULT_ID + 1usize;
+const IMPORT_EXPORT_ID: usize = IMPORT_ENFORCE_NODE_PROTOCOL_USAGE_ID + 1usize;
 const IMPORT_EXPORTS_LAST_ID: usize = IMPORT_EXPORT_ID + 1usize;
 const IMPORT_EXTENSIONS_ID: usize = IMPORT_EXPORTS_LAST_ID + 1usize;
 const IMPORT_FIRST_ID: usize = IMPORT_EXTENSIONS_ID + 1usize;
@@ -2610,6 +2613,7 @@ impl RuleEnum {
                 IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID
             }
             Self::ImportDefault(_) => IMPORT_DEFAULT_ID,
+            Self::ImportEnforceNodeProtocolUsage(_) => IMPORT_ENFORCE_NODE_PROTOCOL_USAGE_ID,
             Self::ImportExport(_) => IMPORT_EXPORT_ID,
             Self::ImportExportsLast(_) => IMPORT_EXPORTS_LAST_ID,
             Self::ImportExtensions(_) => IMPORT_EXTENSIONS_ID,
@@ -3562,6 +3566,7 @@ impl RuleEnum {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(_) => ImportConsistentTypeSpecifierStyle::NAME,
             Self::ImportDefault(_) => ImportDefault::NAME,
+            Self::ImportEnforceNodeProtocolUsage(_) => ImportEnforceNodeProtocolUsage::NAME,
             Self::ImportExport(_) => ImportExport::NAME,
             Self::ImportExportsLast(_) => ImportExportsLast::NAME,
             Self::ImportExtensions(_) => ImportExtensions::NAME,
@@ -4502,6 +4507,7 @@ impl RuleEnum {
                 ImportConsistentTypeSpecifierStyle::CATEGORY
             }
             Self::ImportDefault(_) => ImportDefault::CATEGORY,
+            Self::ImportEnforceNodeProtocolUsage(_) => ImportEnforceNodeProtocolUsage::CATEGORY,
             Self::ImportExport(_) => ImportExport::CATEGORY,
             Self::ImportExportsLast(_) => ImportExportsLast::CATEGORY,
             Self::ImportExtensions(_) => ImportExtensions::CATEGORY,
@@ -5497,6 +5503,7 @@ impl RuleEnum {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(_) => ImportConsistentTypeSpecifierStyle::FIX,
             Self::ImportDefault(_) => ImportDefault::FIX,
+            Self::ImportEnforceNodeProtocolUsage(_) => ImportEnforceNodeProtocolUsage::FIX,
             Self::ImportExport(_) => ImportExport::FIX,
             Self::ImportExportsLast(_) => ImportExportsLast::FIX,
             Self::ImportExtensions(_) => ImportExtensions::FIX,
@@ -6438,6 +6445,9 @@ impl RuleEnum {
                 ImportConsistentTypeSpecifierStyle::documentation()
             }
             Self::ImportDefault(_) => ImportDefault::documentation(),
+            Self::ImportEnforceNodeProtocolUsage(_) => {
+                ImportEnforceNodeProtocolUsage::documentation()
+            }
             Self::ImportExport(_) => ImportExport::documentation(),
             Self::ImportExportsLast(_) => ImportExportsLast::documentation(),
             Self::ImportExtensions(_) => ImportExtensions::documentation(),
@@ -7644,6 +7654,10 @@ impl RuleEnum {
             }
             Self::ImportDefault(_) => {
                 ImportDefault::config_schema(generator).or_else(|| ImportDefault::schema(generator))
+            }
+            Self::ImportEnforceNodeProtocolUsage(_) => {
+                ImportEnforceNodeProtocolUsage::config_schema(generator)
+                    .or_else(|| ImportEnforceNodeProtocolUsage::schema(generator))
             }
             Self::ImportExport(_) => {
                 ImportExport::config_schema(generator).or_else(|| ImportExport::schema(generator))
@@ -10011,6 +10025,7 @@ impl RuleEnum {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(_) => "import",
             Self::ImportDefault(_) => "import",
+            Self::ImportEnforceNodeProtocolUsage(_) => "import",
             Self::ImportExport(_) => "import",
             Self::ImportExportsLast(_) => "import",
             Self::ImportExtensions(_) => "import",
@@ -10848,6 +10863,9 @@ impl RuleEnum {
             Self::ImportDefault(_) => {
                 Ok(Self::ImportDefault(ImportDefault::from_configuration(value)?))
             }
+            Self::ImportEnforceNodeProtocolUsage(_) => Ok(Self::ImportEnforceNodeProtocolUsage(
+                ImportEnforceNodeProtocolUsage::from_configuration(value)?,
+            )),
             Self::ImportExport(_) => {
                 Ok(Self::ImportExport(ImportExport::from_configuration(value)?))
             }
@@ -13500,6 +13518,7 @@ impl RuleEnum {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.to_configuration(),
             Self::ImportDefault(rule) => rule.to_configuration(),
+            Self::ImportEnforceNodeProtocolUsage(rule) => rule.to_configuration(),
             Self::ImportExport(rule) => rule.to_configuration(),
             Self::ImportExportsLast(rule) => rule.to_configuration(),
             Self::ImportExtensions(rule) => rule.to_configuration(),
@@ -14338,6 +14357,7 @@ impl RuleEnum {
             timing_stat.expect("missing rule timing stat").time(|| match self {
                 Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run(node, ctx),
                 Self::ImportDefault(rule) => rule.run(node, ctx),
+                Self::ImportEnforceNodeProtocolUsage(rule) => rule.run(node, ctx),
                 Self::ImportExport(rule) => rule.run(node, ctx),
                 Self::ImportExportsLast(rule) => rule.run(node, ctx),
                 Self::ImportExtensions(rule) => rule.run(node, ctx),
@@ -15169,6 +15189,7 @@ impl RuleEnum {
             match self {
                 Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run(node, ctx),
                 Self::ImportDefault(rule) => rule.run(node, ctx),
+                Self::ImportEnforceNodeProtocolUsage(rule) => rule.run(node, ctx),
                 Self::ImportExport(rule) => rule.run(node, ctx),
                 Self::ImportExportsLast(rule) => rule.run(node, ctx),
                 Self::ImportExtensions(rule) => rule.run(node, ctx),
@@ -16007,6 +16028,7 @@ impl RuleEnum {
             timing_stat.expect("missing rule timing stat").time(|| match self {
                 Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run_once(ctx),
                 Self::ImportDefault(rule) => rule.run_once(ctx),
+                Self::ImportEnforceNodeProtocolUsage(rule) => rule.run_once(ctx),
                 Self::ImportExport(rule) => rule.run_once(ctx),
                 Self::ImportExportsLast(rule) => rule.run_once(ctx),
                 Self::ImportExtensions(rule) => rule.run_once(ctx),
@@ -16838,6 +16860,7 @@ impl RuleEnum {
             match self {
                 Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run_once(ctx),
                 Self::ImportDefault(rule) => rule.run_once(ctx),
+                Self::ImportEnforceNodeProtocolUsage(rule) => rule.run_once(ctx),
                 Self::ImportExport(rule) => rule.run_once(ctx),
                 Self::ImportExportsLast(rule) => rule.run_once(ctx),
                 Self::ImportExtensions(rule) => rule.run_once(ctx),
@@ -17679,6 +17702,7 @@ impl RuleEnum {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::ImportDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ImportEnforceNodeProtocolUsage(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportExportsLast(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportExtensions(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18766,6 +18790,7 @@ impl RuleEnum {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
                 Self::ImportDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ImportEnforceNodeProtocolUsage(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportExportsLast(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ImportExtensions(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19853,6 +19878,7 @@ impl RuleEnum {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.should_run(ctx),
             Self::ImportDefault(rule) => rule.should_run(ctx),
+            Self::ImportEnforceNodeProtocolUsage(rule) => rule.should_run(ctx),
             Self::ImportExport(rule) => rule.should_run(ctx),
             Self::ImportExportsLast(rule) => rule.should_run(ctx),
             Self::ImportExtensions(rule) => rule.should_run(ctx),
@@ -20683,6 +20709,9 @@ impl RuleEnum {
                 ImportConsistentTypeSpecifierStyle::IS_TSGOLINT_RULE
             }
             Self::ImportDefault(_) => ImportDefault::IS_TSGOLINT_RULE,
+            Self::ImportEnforceNodeProtocolUsage(_) => {
+                ImportEnforceNodeProtocolUsage::IS_TSGOLINT_RULE
+            }
             Self::ImportExport(_) => ImportExport::IS_TSGOLINT_RULE,
             Self::ImportExportsLast(_) => ImportExportsLast::IS_TSGOLINT_RULE,
             Self::ImportExtensions(_) => ImportExtensions::IS_TSGOLINT_RULE,
@@ -21885,6 +21914,7 @@ impl RuleEnum {
                 ImportConsistentTypeSpecifierStyle::VERSION
             }
             Self::ImportDefault(_) => ImportDefault::VERSION,
+            Self::ImportEnforceNodeProtocolUsage(_) => ImportEnforceNodeProtocolUsage::VERSION,
             Self::ImportExport(_) => ImportExport::VERSION,
             Self::ImportExportsLast(_) => ImportExportsLast::VERSION,
             Self::ImportExtensions(_) => ImportExtensions::VERSION,
@@ -22882,6 +22912,7 @@ impl RuleEnum {
                 ImportConsistentTypeSpecifierStyle::HAS_CONFIG
             }
             Self::ImportDefault(_) => ImportDefault::HAS_CONFIG,
+            Self::ImportEnforceNodeProtocolUsage(_) => ImportEnforceNodeProtocolUsage::HAS_CONFIG,
             Self::ImportExport(_) => ImportExport::HAS_CONFIG,
             Self::ImportExportsLast(_) => ImportExportsLast::HAS_CONFIG,
             Self::ImportExtensions(_) => ImportExtensions::HAS_CONFIG,
@@ -23914,6 +23945,7 @@ impl RuleEnum {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.types_info(),
             Self::ImportDefault(rule) => rule.types_info(),
+            Self::ImportEnforceNodeProtocolUsage(rule) => rule.types_info(),
             Self::ImportExport(rule) => rule.types_info(),
             Self::ImportExportsLast(rule) => rule.types_info(),
             Self::ImportExtensions(rule) => rule.types_info(),
@@ -24742,6 +24774,7 @@ impl RuleEnum {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run_info(),
             Self::ImportDefault(rule) => rule.run_info(),
+            Self::ImportEnforceNodeProtocolUsage(rule) => rule.run_info(),
             Self::ImportExport(rule) => rule.run_info(),
             Self::ImportExportsLast(rule) => rule.run_info(),
             Self::ImportExtensions(rule) => rule.run_info(),
@@ -25592,6 +25625,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
     vec![
         RuleEnum::ImportConsistentTypeSpecifierStyle(ImportConsistentTypeSpecifierStyle::default()),
         RuleEnum::ImportDefault(ImportDefault::default()),
+        RuleEnum::ImportEnforceNodeProtocolUsage(ImportEnforceNodeProtocolUsage::default()),
         RuleEnum::ImportExport(ImportExport::default()),
         RuleEnum::ImportExportsLast(ImportExportsLast::default()),
         RuleEnum::ImportExtensions(ImportExtensions::default()),

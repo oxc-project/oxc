@@ -544,6 +544,7 @@ export interface DummyRuleMap {
   "id-match"?: DummyRule;
   "import/consistent-type-specifier-style"?: DummyRule;
   "import/default"?: DummyRule;
+  "import/enforce-node-protocol-usage"?: DummyRule;
   "import/export"?: DummyRule;
   "import/exports-last"?: DummyRule;
   "import/extensions"?: DummyRule;

@@ -7,6 +7,7 @@
 pub(crate) mod import {
     pub mod consistent_type_specifier_style;
     pub mod default;
+    pub mod enforce_node_protocol_usage;
     pub mod export;
     pub mod exports_last;
     pub mod extensions;

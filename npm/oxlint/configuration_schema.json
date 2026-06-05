@@ -313,6 +313,9 @@
         "import/default": {
           "$ref": "#/definitions/DummyRule"
         },
+        "import/enforce-node-protocol-usage": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "import/export": {
           "$ref": "#/definitions/DummyRule"
         },

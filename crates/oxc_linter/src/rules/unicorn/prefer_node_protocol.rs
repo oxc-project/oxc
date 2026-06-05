@@ -45,6 +45,30 @@ declare_oxc_lint!(
     version = "0.0.19",
 );
 
+pub(crate) fn check_node_protocol_path(
+    string_lit_value: oxc_str::Str<'_>,
+    span: Span,
+    ctx: &LintContext,
+) {
+    let module_name = if let Some((prefix, postfix)) = string_lit_value.split_once('/') {
+        // `e.g. ignore "assert/"`
+        if postfix.is_empty() { string_lit_value.as_str() } else { prefix }
+    } else {
+        string_lit_value.as_str()
+    };
+    if module_name.starts_with("node:") || !is_nodejs_builtin_module(module_name) {
+        return;
+    }
+
+    ctx.diagnostic_with_fix(prefer_node_protocol_diagnostic(span, &string_lit_value), |fixer| {
+        // Smallest module name is 2 chars, plus 2 for quotes = 4.
+        debug_assert!(span.size() >= 4, "node stdlib module name should be at least 4 chars long");
+        // We're replacing inside the string literal, shift to account for quotes.
+        let span = span.shrink_left(1).shrink_right(1);
+        fixer.replace(span, format!("node:{string_lit_value}"))
+    });
+}
+
 impl Rule for PreferNodeProtocol {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let string_lit_value_with_span = match node.kind() {
@@ -70,29 +94,7 @@ impl Rule for PreferNodeProtocol {
         let Some((string_lit_value, span)) = string_lit_value_with_span else {
             return;
         };
-        let module_name = if let Some((prefix, postfix)) = string_lit_value.split_once('/') {
-            // `e.g. ignore "assert/"`
-            if postfix.is_empty() { string_lit_value.as_str() } else { prefix }
-        } else {
-            string_lit_value.as_str()
-        };
-        if module_name.starts_with("node:") || !is_nodejs_builtin_module(module_name) {
-            return;
-        }
-
-        ctx.diagnostic_with_fix(
-            prefer_node_protocol_diagnostic(span, &string_lit_value),
-            |fixer| {
-                // Smallest module name is 2 chars, plus 2 for quotes = 4.
-                debug_assert!(
-                    span.size() >= 4,
-                    "node stdlib module name should be at least 4 chars long"
-                );
-                // We're replacing inside the string literal, shift to account for quotes.
-                let span = span.shrink_left(1).shrink_right(1);
-                fixer.replace(span, format!("node:{string_lit_value}"))
-            },
-        );
+        check_node_protocol_path(string_lit_value, span, ctx);
     }
 }
 
