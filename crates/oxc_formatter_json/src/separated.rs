@@ -221,16 +221,8 @@ fn gap_slice<'a>(start: u32, curr_start: u32, f: &JsonFormatter<'_, 'a>) -> Opti
 /// Newlines before the comma (e.g. `1\n,2`) don't count,
 /// they represent the user spacing the comma off from the value, not grouping entries.
 pub fn blank_line_after_comma(between: &[u8]) -> bool {
-    let mut after_comma = false;
-    let mut newlines = 0;
-    for &b in between {
-        if !after_comma {
-            if b == b',' {
-                after_comma = true;
-            }
-        } else if b == b'\n' {
-            newlines += 1;
-        }
-    }
-    newlines >= 2
+    // Count only the line terminators following the first (separator) comma.
+    // `count_newlines` is CR/CRLF-aware, keeping this consistent with core newline detection.
+    let Some(comma) = between.iter().position(|&b| b == b',') else { return false };
+    count_newlines(&between[comma + 1..]) >= 2
 }

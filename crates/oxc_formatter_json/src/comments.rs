@@ -9,7 +9,9 @@ use oxc_formatter_core::{
     write,
 };
 use oxc_span::Span;
-use oxc_syntax::line_terminator::LineTerminatorSplitter;
+use oxc_syntax::line_terminator::{
+    LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, LineTerminatorSplitter, PS_LAST_2_BYTES,
+};
 
 use crate::{
     context::JsonFormatContext,
@@ -127,10 +129,44 @@ pub fn write_leading_comments(
     }
 }
 
-/// Counts `\n` bytes in `slice`.
-#[expect(clippy::naive_bytecount, reason = "tiny slice, not worth a bytecount dep")]
+/// Counts ECMAScript line terminators in `slice`, treating `\r\n` as a single break.
+///
+/// Recognizes `\n`, lone `\r`, `\r\n`, and U+2028 / U+2029 — the full ECMAScript line-terminator
+/// set. CR/LF cover every JSON variant; U+2028 / U+2029 are line terminators only in JSON5 (ES5 lexis).
+///
+/// Recognizing U+2028 / U+2029 unconditionally is observably a no-op for `json` / `jsonc`: in valid
+/// input they can only appear inside string literals, never in the inter-entry gaps this scans, so
+/// they reach this function only for JSON5 (or already-invalid input, where Prettier — which routes
+/// every variant through its JS printer — also treats them as breaks). This keeps `count_newlines`
+/// a pure `&[u8]` helper with no variant threading, and aligns with core's raw-byte newline checks.
 pub fn count_newlines(slice: &[u8]) -> usize {
-    slice.iter().filter(|&&b| b == b'\n').count()
+    let mut count = 0;
+    let mut i = 0;
+    while i < slice.len() {
+        match slice[i] {
+            b'\r' => {
+                count += 1;
+                // Collapse `\r\n` into one break so a single CRLF isn't read as a blank line.
+                if slice.get(i + 1) == Some(&b'\n') {
+                    i += 1;
+                }
+            }
+            b'\n' => count += 1,
+            // U+2028 / U+2029 are 3-byte sequences (`E2 80 A8` / `E2 80 A9`). `0xE2` also leads many
+            // other characters, so the trailing two bytes must match before counting a break.
+            LS_OR_PS_FIRST_BYTE => {
+                if let Some(rest) = slice.get(i + 1..i + 3)
+                    && (rest == LS_LAST_2_BYTES || rest == PS_LAST_2_BYTES)
+                {
+                    count += 1;
+                    i += 2; // skip the trailing two bytes; the `i += 1` below clears the lead byte
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    count
 }
 
 /// Emits the formatter element that reproduces the vertical spacing implied by `gap`:
@@ -243,5 +279,43 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FormatSuppressedNode {
         // The verbatim text already includes inside-span comments;
         // advance the cursor so they aren't re-emitted as leading comments of a later node.
         let _ = f.context().comments().take_before(self.0.end);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::count_newlines;
+
+    // NOTE: source fixtures are LF-only (enforced via `.gitattributes`),
+    // so CR / CRLF / mixed / Unicode endings are exercised here instead.
+    #[test]
+    fn count_newlines_is_crlf_aware() {
+        // Lone LF
+        assert_eq!(count_newlines(b"a\nb"), 1);
+        assert_eq!(count_newlines(b"a\n\nb"), 2);
+        // CRLF must collapse to one break, never two (otherwise blank lines are invented).
+        assert_eq!(count_newlines(b"a\r\nb"), 1);
+        assert_eq!(count_newlines(b"a\r\n\r\nb"), 2);
+        // Lone CR (previously uncounted, now consistent with core newline checks).
+        assert_eq!(count_newlines(b"a\rb"), 1);
+        assert_eq!(count_newlines(b"a\r\rb"), 2);
+        // Mixed endings.
+        assert_eq!(count_newlines(b"a\n\r\nb"), 2);
+        assert_eq!(count_newlines(b"a\r\n\nb"), 2);
+        // No terminators.
+        assert_eq!(count_newlines(b"abc"), 0);
+    }
+
+    #[test]
+    fn count_newlines_recognizes_u2028_u2029() {
+        // U+2028 LINE SEPARATOR / U+2029 PARAGRAPH SEPARATOR (3 bytes each).
+        assert_eq!(count_newlines("a\u{2028}b".as_bytes()), 1);
+        assert_eq!(count_newlines("a\u{2029}b".as_bytes()), 1);
+        assert_eq!(count_newlines("a\u{2028}\u{2029}b".as_bytes()), 2);
+        // Mixed with ASCII terminators.
+        assert_eq!(count_newlines("a\n\u{2028}b".as_bytes()), 2);
+        assert_eq!(count_newlines("a\r\n\u{2029}b".as_bytes()), 2);
+        // Other `0xE2`-led characters must NOT be counted (em dash U+2014, bullet U+2022).
+        assert_eq!(count_newlines("a\u{2014}b\u{2022}c".as_bytes()), 0);
     }
 }
