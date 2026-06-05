@@ -2,7 +2,7 @@
 
 import { format as napiFormat, jsTextToDoc as napiJsTextToDoc } from "./bindings";
 import {
-  formatFile,
+  formatFileSafe,
   formatEmbeddedCode,
   formatEmbeddedDoc,
   sortTailwindClasses,
@@ -73,7 +73,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     fileName,
     sourceText,
     options ?? {},
-    (options, code) => formatFile({ options, code }),
+    (options, code) => formatFileSafe({ options, code }),
     (options, code) => formatEmbeddedCode({ options, code }),
     (options, texts) => formatEmbeddedDoc({ options, texts }),
     (options, classes) => sortTailwindClasses({ options, classes }),
@@ -94,7 +94,7 @@ export async function jsTextToDoc(
     sourceText,
     oxfmtPluginOptionsJson,
     parentContext,
-    (_options, _code) => Promise.reject(/* Unreachable */),
+    () => Promise.resolve({ ok: false, error: "formatFile is unavailable for jsTextToDoc" }),
     (options, code) => formatEmbeddedCode({ options, code }),
     (options, texts) => formatEmbeddedDoc({ options, texts }),
     (options, classes) => sortTailwindClasses({ options, classes }),

@@ -76,6 +76,10 @@ export type FormatFileParam = {
   options: Options;
 };
 
+export type FormatFileResult =
+  | { ok: true; code: string }
+  | { ok: false; error: string };
+
 /**
  * Format non-js file
  *
@@ -93,6 +97,21 @@ export async function formatFile({ code, options }: FormatFileParam): Promise<st
   if ("_oxfmtPluginOptionsJson" in options) await setupOxfmtPlugin(options);
 
   return prettier.format(code, options);
+}
+
+/**
+ * `formatFile()` wrapper that never rejects.
+ * Rust receives recoverable formatter errors as data to avoid rejected Promise cleanup on the NAPI path.
+ */
+export async function formatFileSafe(
+  args: FormatFileParam,
+): Promise<FormatFileResult> {
+  try {
+    const code = await formatFile(args);
+    return { ok: true, code };
+  } catch (err) {
+    return { ok: false, error: errorToMessage(err) };
+  }
 }
 
 // ---
@@ -281,4 +300,13 @@ async function setupOxfmtPlugin(options: Options): Promise<void> {
   );
   options.plugins ??= [];
   options.plugins.push(CACHES.oxfmtPlugin);
+}
+
+function errorToMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err !== null && typeof err === "object") {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return String(err);
 }

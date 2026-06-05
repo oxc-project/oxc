@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
+import { formatFileSafe } from "../../src-js/libs/apis";
 
 describe("Format non-js", () => {
   it("should format json with options", async () => {
@@ -37,6 +38,17 @@ describe("Format non-js", () => {
 `.trimStart(),
     );
     expect(result.errors).toStrictEqual([]);
+  });
+  it("should return Prettier formatFile errors as data", async () => {
+    const result = await formatFileSafe({
+      code: `{`,
+      options: { parser: "jsonc", filepath: "broken.jsonc" },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).not.toBe("File formatting failed");
+      expect(result.error).toMatch(/Unexpected|JSON|end/i);
+    }
   });
 });
 

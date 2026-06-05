@@ -32,13 +32,13 @@ pub type JsInitExternalFormatterCb = ThreadsafeFunction<
 >;
 
 /// Type alias for the callback function signature.
-/// Takes (options, code) as arguments and returns formatted code.
+/// Takes (options, code) as arguments and returns a wrapped formatter result.
 /// The `options` object includes `parser` and `filepath` fields set by Rust side.
 pub type JsFormatFileCb = ThreadsafeFunction<
     // Input arguments
     FnArgs<(Value, String)>, // (options, code)
     // Return type (what JS function returns)
-    Promise<String>,
+    Promise<Value>,
     // Arguments (repeated)
     FnArgs<(Value, String)>,
     // Error status
@@ -442,7 +442,7 @@ fn wrap_format_file(
             let status = cb.call_async(FnArgs::from((options, code.to_string()))).await;
             match status {
                 Ok(promise) => match promise.await {
-                    Ok(formatted_code) => Ok(formatted_code),
+                    Ok(result) => parse_format_file_result(result),
                     Err(err) => Err(err.reason.clone()),
                 },
                 Err(err) => Err(err.reason.clone()),
@@ -451,6 +451,33 @@ fn wrap_format_file(
         drop(guard);
         result
     })
+}
+
+fn parse_format_file_result(result: Value) -> Result<String, String> {
+    if let Some(code) = result.as_str() {
+        return Ok(code.to_string());
+    }
+
+    let Some(obj) = result.as_object() else {
+        return Err("File formatting failed".to_string());
+    };
+
+    match obj.get("ok").and_then(Value::as_bool) {
+        Some(true) => obj
+            .get("code")
+            .and_then(Value::as_str)
+            .map(ToString::to_string)
+            .ok_or_else(|| "File formatting result missing `code`".to_string()),
+        Some(false) => {
+            let error = obj
+                .get("error")
+                .and_then(Value::as_str)
+                .filter(|error| !error.is_empty())
+                .unwrap_or("File formatting failed");
+            Err(error.to_string())
+        }
+        None => Err("File formatting result missing `ok`".to_string()),
+    }
 }
 
 /// Wrap JS `formatEmbeddedCode` callback as a normal Rust function.
@@ -535,4 +562,35 @@ fn wrap_sort_tailwind_classes(
         drop(guard);
         result
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::parse_format_file_result;
+
+    #[test]
+    fn parse_format_file_result_accepts_success_object() {
+        let result = parse_format_file_result(json!({ "ok": true, "code": "formatted" }));
+        assert_eq!(result, Ok("formatted".to_string()));
+    }
+
+    #[test]
+    fn parse_format_file_result_preserves_error_message() {
+        let result = parse_format_file_result(json!({ "ok": false, "error": "Unexpected token" }));
+        assert_eq!(result, Err("Unexpected token".to_string()));
+    }
+
+    #[test]
+    fn parse_format_file_result_falls_back_for_empty_error() {
+        let result = parse_format_file_result(json!({ "ok": false, "error": "" }));
+        assert_eq!(result, Err("File formatting failed".to_string()));
+    }
+
+    #[test]
+    fn parse_format_file_result_accepts_legacy_string() {
+        let result = parse_format_file_result(json!("formatted"));
+        assert_eq!(result, Ok("formatted".to_string()));
+    }
 }
