@@ -416,6 +416,15 @@ fn test() {
         (
             r#"try {
 			        doSomething();
+			    } catch (err) {
+			        const e = err;
+			        throw new Error("Something failed", { cause: e });
+			    }"#,
+            None,
+        ),
+        (
+            r#"try {
+			        doSomething();
 			    } catch (error) {
 			        switch (error.code) {
 			            case "A":
