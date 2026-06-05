@@ -605,6 +605,7 @@ export interface DummyRuleMap {
   "jest/no-unneeded-async-expect-function"?: DummyRule;
   "jest/no-untyped-mock-factory"?: DummyRule;
   "jest/padding-around-after-all-blocks"?: DummyRule;
+  "jest/padding-around-after-each-blocks"?: DummyRule;
   "jest/padding-around-test-blocks"?: DummyRule;
   "jest/prefer-called-with"?: DummyRule;
   "jest/prefer-comparison-matcher"?: DummyRule;

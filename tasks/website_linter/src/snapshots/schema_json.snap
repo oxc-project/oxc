@@ -500,6 +500,9 @@ expression: json
         "jest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/DummyRule"
         },
+        "jest/padding-around-after-each-blocks": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "jest/padding-around-test-blocks": {
           "$ref": "#/definitions/DummyRule"
         },
