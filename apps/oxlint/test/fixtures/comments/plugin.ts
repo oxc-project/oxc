@@ -27,7 +27,12 @@ const testCommentsRule: Rule = {
       // Check getting `range` / `loc` properties twice results in same objects
       const { range, loc } = comment;
       assert(range === comment.range);
-      assert(loc === comment.loc);
+      assert(comment.loc === loc);
+
+      // Cloning comment with spread should include `loc` and it should be the same object
+      const clone = { ...comment };
+      assert(Object.hasOwn(clone, "loc"));
+      assert(comment.loc === clone.loc);
 
       // Check `getRange` and `getLoc` return the same objects too
       assert(sourceCode.getRange(comment) === range);
@@ -43,20 +48,26 @@ const testCommentsRule: Rule = {
       node: ast,
     });
 
-    // Check `JSON.stringify` on comments includes `loc`
     const firstComment = comments[0];
     if (firstComment) {
+      // Check `JSON.stringify` on comments includes `loc`
       context.report({
         message: `Comment JSON.stringify:\n${JSON.stringify(firstComment, null, 2)}`,
         node: firstComment,
       });
 
       // Check `{...comment}` spread includes `loc`
-      const spread = { ...firstComment };
-      assert("loc" in spread, "spread should include loc");
-      assert.deepEqual(spread.loc, firstComment.loc, "spread loc should equal comment.loc");
+      const clone = { ...firstComment };
+      const cloneHasLoc = Object.hasOwn(clone, "loc") && clone.loc === firstComment.loc;
       context.report({
-        message: `Comment spread includes loc: ${"loc" in spread}`,
+        message: `Comment spread includes loc: ${cloneHasLoc}`,
+        node: firstComment,
+      });
+
+      // Check `JSON.stringify` on comment includes `loc`
+      const jsonHasLoc = Object.hasOwn(JSON.parse(JSON.stringify(firstComment)), "loc");
+      context.report({
+        message: `Comment JSON.stringify includes loc: ${jsonHasLoc}`,
         node: firstComment,
       });
     }
