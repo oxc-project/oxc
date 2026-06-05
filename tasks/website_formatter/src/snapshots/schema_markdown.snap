@@ -23,6 +23,21 @@ Include parentheses around a sole arrow function parameter.
 - Default: `"always"`
 
 
+## assignmentExpressionParens
+
+type: `"always" | "avoid"`
+
+
+Whether to wrap assignment expressions used as non-statement expressions in parentheses.
+
+- `"always"` — Always wrap, e.g. `fn((x = 1))`. Prettier-compatible default.
+- `"avoid"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens
+that are syntactically required (object destructuring at statement start, arrow-function body, etc.).
+
+- Languages: JS, JSX, TS, TSX
+- Default: `"always"`
+
+
 ## bracketSameLine
 
 type: `boolean`
@@ -319,6 +334,21 @@ type: `"always" | "avoid"`
 
 
 Include parentheses around a sole arrow function parameter.
+
+- Languages: JS, JSX, TS, TSX
+- Default: `"always"`
+
+
+##### overrides[n].options.assignmentExpressionParens
+
+type: `"always" | "avoid"`
+
+
+Whether to wrap assignment expressions used as non-statement expressions in parentheses.
+
+- `"always"` — Always wrap, e.g. `fn((x = 1))`. Prettier-compatible default.
+- `"avoid"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens
+that are syntactically required (object destructuring at statement start, arrow-function body, etc.).
 
 - Languages: JS, JSX, TS, TSX
 - Default: `"always"`

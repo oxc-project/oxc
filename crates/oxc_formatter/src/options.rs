@@ -89,6 +89,10 @@ pub struct JsFormatOptions {
     /// When enabled, JSDoc comments will be normalized and reformatted.
     /// Defaults to None (disabled).
     pub jsdoc: Option<JsdocOptions>,
+
+    /// Whether to wrap assignment expressions used as non-statement expressions in parentheses.
+    /// Defaults to "always" (Prettier-compatible behavior).
+    pub assignment_expression_parentheses: AssignmentExpressionParentheses,
 }
 
 /// How to format JSDoc comment blocks: single-line, multi-line, or preserve original.
@@ -242,6 +246,7 @@ impl JsFormatOptions {
             sort_imports: None,
             sort_tailwindcss: None,
             jsdoc: None,
+            assignment_expression_parentheses: AssignmentExpressionParentheses::default(),
         }
     }
 }
@@ -292,7 +297,12 @@ impl fmt::Display for JsFormatOptions {
         writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
         writeln!(f, "Sort imports: {:?}", self.sort_imports)?;
         writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)?;
-        writeln!(f, "JSDoc: {:?}", self.jsdoc)
+        writeln!(f, "JSDoc: {:?}", self.jsdoc)?;
+        writeln!(
+            f,
+            "Assignment expression parentheses: {:?}",
+            self.assignment_expression_parentheses
+        )
     }
 }
 
@@ -554,6 +564,29 @@ impl fmt::Display for ArrowParentheses {
             ArrowParentheses::Always => "Always",
         };
         f.write_str(s)
+    }
+}
+
+/// Whether to wrap assignment expressions used as non-statement expressions in parentheses.
+/// Mirrors the `assignmentExpressionParens` Oxfmt option.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum AssignmentExpressionParentheses {
+    /// Always wrap assignment expressions in parentheses when used in a non-statement context
+    /// (e.g. as a function argument). This is the Prettier-compatible default.
+    #[default]
+    Always,
+    /// Omit the extra parentheses added purely for style; only keep those that are
+    /// syntactically required (e.g. object-destructuring at statement start, arrow-function body).
+    AsNeeded,
+}
+
+impl AssignmentExpressionParentheses {
+    pub const fn is_always(self) -> bool {
+        matches!(self, Self::Always)
+    }
+
+    pub const fn is_as_needed(self) -> bool {
+        matches!(self, Self::AsNeeded)
     }
 }
 

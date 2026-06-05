@@ -13,6 +13,15 @@
       ],
       "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`"
     },
+    "assignmentExpressionParens": {
+      "description": "Whether to wrap assignment expressions used as non-statement expressions in parentheses.\n\n- `\"always\"` — Always wrap, e.g. `fn((x = 1))`. Prettier-compatible default.\n- `\"avoid\"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens\nthat are syntactically required (object destructuring at statement start, arrow-function body, etc.).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`",
+      "allOf": [
+        {
+          "$ref": "#/definitions/AssignmentExpressionParensConfig"
+        }
+      ],
+      "markdownDescription": "Whether to wrap assignment expressions used as non-statement expressions in parentheses.\n\n- `\"always\"` — Always wrap, e.g. `fn((x = 1))`. Prettier-compatible default.\n- `\"avoid\"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens\nthat are syntactically required (object destructuring at statement start, arrow-function body, etc.).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`"
+    },
     "bracketSameLine": {
       "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`",
       "type": "boolean",
@@ -207,6 +216,13 @@
         "avoid"
       ]
     },
+    "AssignmentExpressionParensConfig": {
+      "type": "string",
+      "enum": [
+        "always",
+        "avoid"
+      ]
+    },
     "CustomGroupItemConfig": {
       "type": "object",
       "properties": {
@@ -266,6 +282,15 @@
             }
           ],
           "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`"
+        },
+        "assignmentExpressionParens": {
+          "description": "Whether to wrap assignment expressions used as non-statement expressions in parentheses.\n\n- `\"always\"` — Always wrap, e.g. `fn((x = 1))`. Prettier-compatible default.\n- `\"avoid\"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens\nthat are syntactically required (object destructuring at statement start, arrow-function body, etc.).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AssignmentExpressionParensConfig"
+            }
+          ],
+          "markdownDescription": "Whether to wrap assignment expressions used as non-statement expressions in parentheses.\n\n- `\"always\"` — Always wrap, e.g. `fn((x = 1))`. Prettier-compatible default.\n- `\"avoid\"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens\nthat are syntactically required (object destructuring at statement start, arrow-function body, etc.).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"always\"`"
         },
         "bracketSameLine": {
           "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte\n- Default: `false`",

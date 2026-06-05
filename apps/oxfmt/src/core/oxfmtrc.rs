@@ -271,6 +271,17 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub jsdoc: Option<JsdocUserConfig>,
 
+    /// Whether to wrap assignment expressions used as non-statement expressions in parentheses.
+    ///
+    /// - `"always"` — Always wrap, e.g. `fn((x = 1))`. Prettier-compatible default.
+    /// - `"avoid"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens
+    ///   that are syntactically required (object destructuring at statement start, arrow-function body, etc.).
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: `"always"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub assignment_expression_parens: Option<AssignmentExpressionParensConfig>,
+
     /// Options for `prettier-plugin-svelte`.
     ///
     /// Pass `true` or an object to enable `.svelte` file formatting,
@@ -400,6 +411,13 @@ pub enum ObjectWrapConfig {
 pub enum EmbeddedLanguageFormattingConfig {
     Auto,
     Off,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum AssignmentExpressionParensConfig {
+    Always,
+    Avoid,
 }
 
 // ---

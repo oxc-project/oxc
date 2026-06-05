@@ -663,7 +663,8 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
             // - `await (a = b)`
             // - `class { [a = 1]; }`
             // - etc.
-            _ => true,
+            // When `assignmentExpressionParens: "avoid"` is set, skip the extra stylistic parens.
+            _ => f.options().assignment_expression_parentheses.is_always(),
         }
     }
 }

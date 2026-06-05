@@ -4,6 +4,7 @@
  */
 
 export type ArrowParensConfig = "always" | "avoid";
+export type AssignmentExpressionParensConfig = "always" | "avoid";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
@@ -38,6 +39,17 @@ export interface Oxfmtrc {
    * - Default: `"always"`
    */
   arrowParens?: ArrowParensConfig;
+  /**
+   * Whether to wrap assignment expressions used as non-statement expressions in parentheses.
+   *
+   * - `"always"` — Always wrap, e.g. `fn((x = 1))`. Prettier-compatible default.
+   * - `"avoid"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens
+   * that are syntactically required (object destructuring at statement start, arrow-function body, etc.).
+   *
+   * - Languages: JS, JSX, TS, TSX
+   * - Default: `"always"`
+   */
+  assignmentExpressionParens?: AssignmentExpressionParensConfig;
   /**
    * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
@@ -365,6 +377,17 @@ export interface FormatConfig {
    * - Default: `"always"`
    */
   arrowParens?: ArrowParensConfig;
+  /**
+   * Whether to wrap assignment expressions used as non-statement expressions in parentheses.
+   *
+   * - `"always"` — Always wrap, e.g. `fn((x = 1))`. Prettier-compatible default.
+   * - `"avoid"` — Omit the extra parentheses, e.g. `fn(x = 1)`. Only keeps parens
+   * that are syntactically required (object destructuring at statement start, arrow-function body, etc.).
+   *
+   * - Languages: JS, JSX, TS, TSX
+   * - Default: `"always"`
+   */
+  assignmentExpressionParens?: AssignmentExpressionParensConfig;
   /**
    * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).

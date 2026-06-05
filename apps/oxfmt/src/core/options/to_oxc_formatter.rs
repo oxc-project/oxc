@@ -1,18 +1,18 @@
 use rustc_hash::FxHashSet;
 
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier, ImportSelector,
-    JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    SortTailwindcssOptions, TrailingCommas,
+    ArrowParentheses, AssignmentExpressionParentheses, AttributePosition, BracketSameLine,
+    BracketSpacing, CustomGroupDefinition, EmbeddedLanguageFormatting, Expand, GroupEntry,
+    ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons,
+    SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 
 use super::{
     super::oxfmtrc::{
-        ArrowParensConfig, CustomGroupItemConfig, EmbeddedLanguageFormattingConfig, FormatConfig,
-        HtmlWhitespaceSensitivityConfig, JsdocUserConfig, ObjectWrapConfig, QuotePropsConfig,
-        SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig,
-        TrailingCommaConfig,
+        ArrowParensConfig, AssignmentExpressionParensConfig, CustomGroupItemConfig,
+        EmbeddedLanguageFormattingConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
+        JsdocUserConfig, ObjectWrapConfig, QuotePropsConfig, SortGroupItemConfig,
+        SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig, TrailingCommaConfig,
     },
     to_core_options::to_core_options,
 };
@@ -118,6 +118,14 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
         format_options.embedded_language_formatting = match embedded_language_formatting {
             EmbeddedLanguageFormattingConfig::Auto => EmbeddedLanguageFormatting::Auto,
             EmbeddedLanguageFormattingConfig::Off => EmbeddedLanguageFormatting::Off,
+        };
+    }
+
+    // [Oxfmt] assignmentExpressionParens: "always" | "avoid"
+    if let Some(parens) = config.assignment_expression_parens {
+        format_options.assignment_expression_parentheses = match parens {
+            AssignmentExpressionParensConfig::Always => AssignmentExpressionParentheses::Always,
+            AssignmentExpressionParensConfig::Avoid => AssignmentExpressionParentheses::AsNeeded,
         };
     }
 
