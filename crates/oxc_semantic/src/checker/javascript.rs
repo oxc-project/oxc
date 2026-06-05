@@ -764,10 +764,25 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
         // `function a() { var b; function b() { } }` valid in any mode.
         return;
     } else if !(current_scope_flags.is_strict_mode() || func.r#async || func.generator) {
-        // `class a {}; function a() {}` and `async function a() {} function a () {}` are
-        // invalid in both strict and non-strict mode.
-        let prev_function = ctx.nodes.kind(prev.declaration).as_function();
-        if prev_function.is_some_and(|func| !(func.r#async || func.generator)) {
+        // Current declaration is a plain function in a sloppy-mode block. Annex B.3.3 permits
+        // duplicate *plain* function declarations here, but the relaxation does not extend to
+        // `async`/generator functions, nor to non-function declarations like `class a {}`.
+        if prev.flags.contains(SymbolFlags::Function) {
+            // `prev` is a function, so the function-duplicate rule (Annex B.3.3) is violated
+            // only if an earlier declaration is an `async`/generator function.
+            // Search for a declaration that makes it illegal, so the error can point at it.
+            // (A clash with a `var`/`let`/`class` of the same name is a separate rule, reported elsewhere.)
+            // This branch is only reached for function redeclarations in a sloppy-mode block,
+            // which are extremely rare, so the linear scan's high cost does not really matter.
+            let previous_declarations = &redeclarations[..redeclarations.len() - 1];
+            let Some(culprit) = previous_declarations
+                .iter()
+                .find(|decl| ctx.async_or_generator_function_node_ids.contains(&decl.declaration))
+            else {
+                // No `async`/generator function among the previous declarations - allowed by B.3.3.
+                return;
+            };
+            ctx.error(diagnostics::redeclaration(&id.name, culprit.span, id.span));
             return;
         }
     }
