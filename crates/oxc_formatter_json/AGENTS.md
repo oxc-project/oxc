@@ -14,6 +14,10 @@ Prettier compatible JSON/JSONC/JSON5 formatter (`oxfmt`'s Tier 1 backend), using
   - As a result, although Prettier's JSON (especially JSON5) behaves like JS, as a formatter implementation, they should be distinguished and kept from interfering with each other
   - So, just use `oxc_formatter` (`crates/oxc_formatter/`) as the canonical reference
     - For layout / comment / blank-line decisions when the simplified version is unclear or diverges from Prettier
+  - The narrow JSON grammar pays off in speed as well
+    - It is ~1.4–2.3x faster than routing the same input through `oxc_formatter` (wrapped in `(...)`)
+    - Since the JS path carries expression-kind dispatch, parens, and trivia overhead
+    - The gap widens for structure-heavy input and narrows for string-heavy input
 
 ### `JsonVariant`
 
