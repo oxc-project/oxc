@@ -91,6 +91,8 @@ export type Mode3 = "always" | "never";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type LogicalAssignmentOperatorsMode = "always" | "never";
 export type CountThis = "always" | "never" | "except-void";
+export type CheckLoopsConfig = boolean | CheckLoops;
+export type CheckLoops = "all" | "allExceptWhileTrue" | "none";
 /**
  * Kinds of functions that can be allowed to be empty.
  */
@@ -948,7 +950,7 @@ export interface DummyRuleMap {
   "no-console"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoConsoleConfig];
   "no-const-assign"?: RuleNoConfig;
   "no-constant-binary-expression"?: RuleNoConfig;
-  "no-constant-condition"?: DummyRule;
+  "no-constant-condition"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoConstantCondition];
   "no-constructor-return"?: RuleNoConfig;
   "no-continue"?: RuleNoConfig;
   "no-control-regex"?: RuleNoConfig;
@@ -2409,6 +2411,16 @@ export interface NoConsoleConfig {
    * ```
    */
   allow?: string[];
+}
+export interface NoConstantCondition {
+  /**
+   * Configuration option to specify whether to check for constant conditions in loops.
+   *
+   * - `"all"` or `true` disallows constant expressions in loops
+   * - `"allExceptWhileTrue"` disallows constant expressions in loops except while loops with expression `true`
+   * - `"none"` or `false` allows constant expressions in loops
+   */
+  checkLoops?: CheckLoopsConfig;
 }
 export interface NoDuplicateImports {
   /**

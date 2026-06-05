@@ -722,6 +722,24 @@
         "snake_case"
       ]
     },
+    "CheckLoops": {
+      "type": "string",
+      "enum": [
+        "all",
+        "allExceptWhileTrue",
+        "none"
+      ]
+    },
+    "CheckLoopsConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/CheckLoops"
+        }
+      ]
+    },
     "CheckTagNamesConfig": {
       "type": "object",
       "properties": {
@@ -3041,7 +3059,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-constant-condition": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoConstantCondition"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "no-constructor-return": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9826,6 +9861,22 @@
             "type": "string"
           },
           "markdownDescription": "The `allow` option permits the given list of console methods to be used as exceptions to\nthis rule.\n\nSay the option was configured as `{ \"allow\": [\"info\"] }` then the rule would behave as\nfollows:\n\nExample of **incorrect** code for this option:\n```javascript\nconsole.log('foo');\n```\n\nExample of **correct** code for this option:\n```javascript\nconsole.info('foo');\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoConstantCondition": {
+      "type": "object",
+      "properties": {
+        "checkLoops": {
+          "description": "Configuration option to specify whether to check for constant conditions in loops.\n\n- `\"all\"` or `true` disallows constant expressions in loops\n- `\"allExceptWhileTrue\"` disallows constant expressions in loops except while loops with expression `true`\n- `\"none\"` or `false` allows constant expressions in loops",
+          "default": "allExceptWhileTrue",
+          "allOf": [
+            {
+              "$ref": "#/definitions/CheckLoopsConfig"
+            }
+          ],
+          "markdownDescription": "Configuration option to specify whether to check for constant conditions in loops.\n\n- `\"all\"` or `true` disallows constant expressions in loops\n- `\"allExceptWhileTrue\"` disallows constant expressions in loops except while loops with expression `true`\n- `\"none\"` or `false` allows constant expressions in loops"
         }
       },
       "additionalProperties": false
