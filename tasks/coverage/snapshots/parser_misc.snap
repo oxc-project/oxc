@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 67/67 (100.00%)
-Positive Passed: 67/67 (100.00%)
-Negative Passed: 141/141 (100.00%)
+AST Parsed     : 68/68 (100.00%)
+Positive Passed: 68/68 (100.00%)
+Negative Passed: 144/144 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3866,3 +3866,27 @@ Negative Passed: 141/141 (100.00%)
  3 │ }
    ╰────
   help: If this is intended to be the condition for the switch statement, add `case` before it.
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]
+ 3 │ // so the trailing `*` still makes the assertion impossible to erase. Syntax error.
+ 4 │ const x = 1 + 1 as any as number * 2;
+   ·                                 ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-unerasable-as.ts:4:26]
+ 3 │ // trailing `*` binds tighter than the leading `+`. This is a syntax error.
+ 4 │ const x = 1 + 1 as number * 2;
+   ·                          ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-unerasable-satisfies.ts:4:33]
+ 3 │ // is a syntax error.
+ 4 │ const x = 1 + 1 satisfies number * 2;
+   ·                                 ▲
+   ╰────
+  help: Try inserting a semicolon here
