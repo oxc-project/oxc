@@ -57,6 +57,11 @@ fn export_type() {
 #[test]
 fn expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
+    test_same("const foo = () => (args) => class A {};\nnew (foo()`bar`)();\n");
+    test_minify(
+        "const foo = () => (args) => class A {};\nnew (foo()`bar`)();",
+        "const foo=()=>args=>class A{};new(foo()`bar`);",
+    );
     test_minify("x in new Error()", "x in new Error;");
     test(
         "new function() { let a = foo?.bar().baz; return a; }();",

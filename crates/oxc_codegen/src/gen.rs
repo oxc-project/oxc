@@ -2300,6 +2300,18 @@ impl GenExpr for ChainExpression<'_> {
     }
 }
 
+fn should_wrap_new_callee_tagged_template(callee: &Expression) -> bool {
+    let Expression::ParenthesizedExpression(expr) = callee else {
+        return false;
+    };
+    let Expression::TaggedTemplateExpression(tagged) = expr.expression.without_parentheses() else {
+        return false;
+    };
+    // Keep `new (foo()`bar`)()` distinct from `new foo()`bar`()`, while preserving
+    // existing `new tag`bar`` output.
+    matches!(tagged.tag.without_parentheses(), Expression::CallExpression(_))
+}
+
 impl GenExpr for NewExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
@@ -2315,7 +2327,9 @@ impl GenExpr for NewExpression<'_> {
             p.add_source_mapping(self.span);
             p.print_str("new");
             p.print_soft_space();
-            self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
+            p.wrap(should_wrap_new_callee_tagged_template(&self.callee), |p| {
+                self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
+            });
             if let Some(type_parameters) = &self.type_arguments {
                 type_parameters.print(p, ctx);
             }
