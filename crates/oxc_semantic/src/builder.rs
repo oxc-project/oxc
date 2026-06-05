@@ -91,6 +91,13 @@ pub struct SemanticBuilder<'a> {
     /// in that scope can still detect redeclarations via `check_redeclaration`.
     pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
 
+    /// `NodeId`s of `async`/generator function declarations in sloppy-mode block scopes in JS files.
+    /// Read by `check_function_redeclaration` (Annex B.3.3) to identify an offending previous declaration
+    /// without reading its AST node, which may not be retained.
+    /// These conditions are extremely rarely met, so this `Vec` is practically always empty.
+    /// Build-only scratch (discarded after the build).
+    pub(crate) async_or_generator_function_node_ids: Vec<NodeId>,
+
     // builders
     pub(crate) nodes: AstNodes<'a>,
     pub(crate) scoping: Scoping,
@@ -158,6 +165,7 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
+            async_or_generator_function_node_ids: Vec::new(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unresolved_references_checkpoint: 0,
