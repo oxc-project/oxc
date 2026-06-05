@@ -403,6 +403,7 @@ pub(crate) mod jest {
     pub mod valid_describe_callback;
     pub mod valid_expect;
     pub mod valid_expect_in_promise;
+    pub mod valid_mock_module_path;
     pub mod valid_title;
 }
 

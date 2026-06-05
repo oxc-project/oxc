@@ -284,6 +284,7 @@ pub use crate::rules::jest::require_top_level_describe::RequireTopLevelDescribe 
 pub use crate::rules::jest::valid_describe_callback::ValidDescribeCallback as JestValidDescribeCallback;
 pub use crate::rules::jest::valid_expect::ValidExpect as JestValidExpect;
 pub use crate::rules::jest::valid_expect_in_promise::ValidExpectInPromise as JestValidExpectInPromise;
+pub use crate::rules::jest::valid_mock_module_path::ValidMockModulePath as JestValidMockModulePath;
 pub use crate::rules::jest::valid_title::ValidTitle as JestValidTitle;
 pub use crate::rules::jsdoc::check_access::CheckAccess as JsdocCheckAccess;
 pub use crate::rules::jsdoc::check_property_names::CheckPropertyNames as JsdocCheckPropertyNames;
@@ -1230,6 +1231,7 @@ pub enum RuleEnum {
     JestValidDescribeCallback(JestValidDescribeCallback),
     JestValidExpect(JestValidExpect),
     JestValidExpectInPromise(JestValidExpectInPromise),
+    JestValidMockModulePath(JestValidMockModulePath),
     JestValidTitle(JestValidTitle),
     ReactButtonHasType(ReactButtonHasType),
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
@@ -2109,7 +2111,8 @@ const JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = JEST_REQUIRE_TO_THROW_MESSAGE_
 const JEST_VALID_DESCRIBE_CALLBACK_ID: usize = JEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID + 1usize;
 const JEST_VALID_EXPECT_ID: usize = JEST_VALID_DESCRIBE_CALLBACK_ID + 1usize;
 const JEST_VALID_EXPECT_IN_PROMISE_ID: usize = JEST_VALID_EXPECT_ID + 1usize;
-const JEST_VALID_TITLE_ID: usize = JEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
+const JEST_VALID_MOCK_MODULE_PATH_ID: usize = JEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
+const JEST_VALID_TITLE_ID: usize = JEST_VALID_MOCK_MODULE_PATH_ID + 1usize;
 const REACT_BUTTON_HAS_TYPE_ID: usize = JEST_VALID_TITLE_ID + 1usize;
 const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
 const REACT_DISPLAY_NAME_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
@@ -3062,6 +3065,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JEST_VALID_DESCRIBE_CALLBACK_ID,
             Self::JestValidExpect(_) => JEST_VALID_EXPECT_ID,
             Self::JestValidExpectInPromise(_) => JEST_VALID_EXPECT_IN_PROMISE_ID,
+            Self::JestValidMockModulePath(_) => JEST_VALID_MOCK_MODULE_PATH_ID,
             Self::JestValidTitle(_) => JEST_VALID_TITLE_ID,
             Self::ReactButtonHasType(_) => REACT_BUTTON_HAS_TYPE_ID,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -4012,6 +4016,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::NAME,
             Self::JestValidExpect(_) => JestValidExpect::NAME,
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::NAME,
+            Self::JestValidMockModulePath(_) => JestValidMockModulePath::NAME,
             Self::JestValidTitle(_) => JestValidTitle::NAME,
             Self::ReactButtonHasType(_) => ReactButtonHasType::NAME,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -4974,6 +4979,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::CATEGORY,
             Self::JestValidExpect(_) => JestValidExpect::CATEGORY,
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::CATEGORY,
+            Self::JestValidMockModulePath(_) => JestValidMockModulePath::CATEGORY,
             Self::JestValidTitle(_) => JestValidTitle::CATEGORY,
             Self::ReactButtonHasType(_) => ReactButtonHasType::CATEGORY,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -5947,6 +5953,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::FIX,
             Self::JestValidExpect(_) => JestValidExpect::FIX,
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::FIX,
+            Self::JestValidMockModulePath(_) => JestValidMockModulePath::FIX,
             Self::JestValidTitle(_) => JestValidTitle::FIX,
             Self::ReactButtonHasType(_) => ReactButtonHasType::FIX,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -6992,6 +6999,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::documentation(),
             Self::JestValidExpect(_) => JestValidExpect::documentation(),
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::documentation(),
+            Self::JestValidMockModulePath(_) => JestValidMockModulePath::documentation(),
             Self::JestValidTitle(_) => JestValidTitle::documentation(),
             Self::ReactButtonHasType(_) => ReactButtonHasType::documentation(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -8739,6 +8747,8 @@ impl RuleEnum {
                 .or_else(|| JestValidExpect::schema(generator)),
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::config_schema(generator)
                 .or_else(|| JestValidExpectInPromise::schema(generator)),
+            Self::JestValidMockModulePath(_) => JestValidMockModulePath::config_schema(generator)
+                .or_else(|| JestValidMockModulePath::schema(generator)),
             Self::JestValidTitle(_) => JestValidTitle::config_schema(generator)
                 .or_else(|| JestValidTitle::schema(generator)),
             Self::ReactButtonHasType(_) => ReactButtonHasType::config_schema(generator)
@@ -10395,6 +10405,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => "jest",
             Self::JestValidExpect(_) => "jest",
             Self::JestValidExpectInPromise(_) => "jest",
+            Self::JestValidMockModulePath(_) => "jest",
             Self::JestValidTitle(_) => "jest",
             Self::ReactButtonHasType(_) => "react",
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
@@ -12085,6 +12096,9 @@ impl RuleEnum {
             }
             Self::JestValidExpectInPromise(_) => Ok(Self::JestValidExpectInPromise(
                 JestValidExpectInPromise::from_configuration(value)?,
+            )),
+            Self::JestValidMockModulePath(_) => Ok(Self::JestValidMockModulePath(
+                JestValidMockModulePath::from_configuration(value)?,
             )),
             Self::JestValidTitle(_) => {
                 Ok(Self::JestValidTitle(JestValidTitle::from_configuration(value)?))
@@ -13886,6 +13900,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.to_configuration(),
             Self::JestValidExpect(rule) => rule.to_configuration(),
             Self::JestValidExpectInPromise(rule) => rule.to_configuration(),
+            Self::JestValidMockModulePath(rule) => rule.to_configuration(),
             Self::JestValidTitle(rule) => rule.to_configuration(),
             Self::ReactButtonHasType(rule) => rule.to_configuration(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
@@ -14724,6 +14739,7 @@ impl RuleEnum {
                 Self::JestValidDescribeCallback(rule) => rule.run(node, ctx),
                 Self::JestValidExpect(rule) => rule.run(node, ctx),
                 Self::JestValidExpectInPromise(rule) => rule.run(node, ctx),
+                Self::JestValidMockModulePath(rule) => rule.run(node, ctx),
                 Self::JestValidTitle(rule) => rule.run(node, ctx),
                 Self::ReactButtonHasType(rule) => rule.run(node, ctx),
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
@@ -15555,6 +15571,7 @@ impl RuleEnum {
                 Self::JestValidDescribeCallback(rule) => rule.run(node, ctx),
                 Self::JestValidExpect(rule) => rule.run(node, ctx),
                 Self::JestValidExpectInPromise(rule) => rule.run(node, ctx),
+                Self::JestValidMockModulePath(rule) => rule.run(node, ctx),
                 Self::JestValidTitle(rule) => rule.run(node, ctx),
                 Self::ReactButtonHasType(rule) => rule.run(node, ctx),
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
@@ -16393,6 +16410,7 @@ impl RuleEnum {
                 Self::JestValidDescribeCallback(rule) => rule.run_once(ctx),
                 Self::JestValidExpect(rule) => rule.run_once(ctx),
                 Self::JestValidExpectInPromise(rule) => rule.run_once(ctx),
+                Self::JestValidMockModulePath(rule) => rule.run_once(ctx),
                 Self::JestValidTitle(rule) => rule.run_once(ctx),
                 Self::ReactButtonHasType(rule) => rule.run_once(ctx),
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
@@ -17224,6 +17242,7 @@ impl RuleEnum {
                 Self::JestValidDescribeCallback(rule) => rule.run_once(ctx),
                 Self::JestValidExpect(rule) => rule.run_once(ctx),
                 Self::JestValidExpectInPromise(rule) => rule.run_once(ctx),
+                Self::JestValidMockModulePath(rule) => rule.run_once(ctx),
                 Self::JestValidTitle(rule) => rule.run_once(ctx),
                 Self::ReactButtonHasType(rule) => rule.run_once(ctx),
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
@@ -18185,6 +18204,7 @@ impl RuleEnum {
                 Self::JestValidDescribeCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JestValidExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::JestValidMockModulePath(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactButtonHasType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
@@ -19272,6 +19292,7 @@ impl RuleEnum {
                 Self::JestValidDescribeCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JestValidExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::JestValidMockModulePath(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::JestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactButtonHasType(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
@@ -20237,6 +20258,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.should_run(ctx),
             Self::JestValidExpect(rule) => rule.should_run(ctx),
             Self::JestValidExpectInPromise(rule) => rule.should_run(ctx),
+            Self::JestValidMockModulePath(rule) => rule.should_run(ctx),
             Self::JestValidTitle(rule) => rule.should_run(ctx),
             Self::ReactButtonHasType(rule) => rule.should_run(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
@@ -21237,6 +21259,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::IS_TSGOLINT_RULE,
             Self::JestValidExpect(_) => JestValidExpect::IS_TSGOLINT_RULE,
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::IS_TSGOLINT_RULE,
+            Self::JestValidMockModulePath(_) => JestValidMockModulePath::IS_TSGOLINT_RULE,
             Self::JestValidTitle(_) => JestValidTitle::IS_TSGOLINT_RULE,
             Self::ReactButtonHasType(_) => ReactButtonHasType::IS_TSGOLINT_RULE,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -22357,6 +22380,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::VERSION,
             Self::JestValidExpect(_) => JestValidExpect::VERSION,
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::VERSION,
+            Self::JestValidMockModulePath(_) => JestValidMockModulePath::VERSION,
             Self::JestValidTitle(_) => JestValidTitle::VERSION,
             Self::ReactButtonHasType(_) => ReactButtonHasType::VERSION,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -23370,6 +23394,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::HAS_CONFIG,
             Self::JestValidExpect(_) => JestValidExpect::HAS_CONFIG,
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::HAS_CONFIG,
+            Self::JestValidMockModulePath(_) => JestValidMockModulePath::HAS_CONFIG,
             Self::JestValidTitle(_) => JestValidTitle::HAS_CONFIG,
             Self::ReactButtonHasType(_) => ReactButtonHasType::HAS_CONFIG,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -24298,6 +24323,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.types_info(),
             Self::JestValidExpect(rule) => rule.types_info(),
             Self::JestValidExpectInPromise(rule) => rule.types_info(),
+            Self::JestValidMockModulePath(rule) => rule.types_info(),
             Self::JestValidTitle(rule) => rule.types_info(),
             Self::ReactButtonHasType(rule) => rule.types_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
@@ -25126,6 +25152,7 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.run_info(),
             Self::JestValidExpect(rule) => rule.run_info(),
             Self::JestValidExpectInPromise(rule) => rule.run_info(),
+            Self::JestValidMockModulePath(rule) => rule.run_info(),
             Self::JestValidTitle(rule) => rule.run_info(),
             Self::ReactButtonHasType(rule) => rule.run_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
@@ -26042,6 +26069,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestValidDescribeCallback(JestValidDescribeCallback::default()),
         RuleEnum::JestValidExpect(JestValidExpect::default()),
         RuleEnum::JestValidExpectInPromise(JestValidExpectInPromise::default()),
+        RuleEnum::JestValidMockModulePath(JestValidMockModulePath::default()),
         RuleEnum::JestValidTitle(JestValidTitle::default()),
         RuleEnum::ReactButtonHasType(ReactButtonHasType::default()),
         RuleEnum::ReactCheckedRequiresOnchangeOrReadonly(
