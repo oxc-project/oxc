@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.52.0"
+version = "0.53.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,7 +28,6 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["pool"] }
-oxc_ast = { workspace = true }
 oxc_config = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
@@ -37,7 +36,6 @@ oxc_formatter_core = { workspace = true }
 oxc_formatter_json = { workspace = true }
 oxc_language_server = { workspace = true }
 oxc_napi = { workspace = true }
-oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }

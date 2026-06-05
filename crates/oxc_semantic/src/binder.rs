@@ -158,10 +158,25 @@ impl<'a> Binder<'a> for Function<'a> {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
 
+            let scope_flags = builder.current_scope_flags();
+
+            // Record `async`/generator function declarations in sloppy-mode block scopes,
+            // so the redeclaration check `check_function_redeclaration` (Annex B.3.3) can later identify
+            // an offending previous declaration without reading its AST node (which may not be retained).
+            // The check only consults this for function declarations in a sloppy-mode JS block,
+            // so record nothing in any other case.
+            if is_declaration
+                && (self.r#async || self.generator)
+                && !builder.source_type.is_typescript()
+                && !scope_flags.is_strict_mode()
+                && !scope_flags.is_var()
+            {
+                builder.async_or_generator_function_node_ids.push(builder.current_node_id);
+            }
+
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
             // scopes also create an implicit var-like binding in the enclosing function
             // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
-            let scope_flags = builder.current_scope_flags();
             if is_declaration // function expressions are bound in their own (var) scope
                 && !self.r#async // Annex B only applies to plain functions
                 && !self.generator // not generators or async generators

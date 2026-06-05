@@ -12,24 +12,38 @@ use super::oxfmtrc::FormatConfig;
 ///
 /// Returns `None` when the file type is not a formatting target.
 pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
-    if let Some(source_type) = get_oxc_formatter_source_type(&path) {
+    // PERF: Standard JS/TS extensions are by far the most common case,
+    // so resolve them straight from the path before extracting `file_name`/`extension` for anything else.
+    // NOTE:
+    // - Use `path` directly for `.d.ts` detection
+    // - This relies on `EXCLUDE_FILENAMES` containing no file with a standard JS/TS extension
+    //   - guarded by the `exclude_filenames_are_not_js_or_ts` test
+    if let Ok(source_type) = SourceType::from_path(&path) {
         return Some(FileKind::OxcFormatter { path, source_type });
     }
 
     let file_name = path.file_name().and_then(|f| f.to_str())?;
 
-    // Excluded files like lock files
+    // Excluded files like lock files are rejected up front, before any kind check.
+    // NOTE: These are machine-generated and must NEVER be reformatted,
+    // regardless of how they reach us. (CLI, API, LSP, etc)
     if EXCLUDE_FILENAMES.contains(file_name) {
         return None;
     }
 
+    let extension = path.extension().and_then(|ext| ext.to_str());
+
+    if is_extra_js_file(file_name, extension) {
+        return Some(FileKind::OxcFormatter { path, source_type: SourceType::default() });
+    }
     if is_toml_file(file_name) {
         return Some(FileKind::OxfmtToml { path });
     }
-
-    let extension = path.extension().and_then(|ext| ext.to_str());
     if is_json_file(file_name, extension) {
         return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::Json });
+    }
+    if is_jsonc_file(extension) {
+        return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::Jsonc });
     }
 
     // External formatter files are only supported with the `napi` feature
@@ -158,6 +172,8 @@ static SVELTE_PARSERS: phf::Set<&'static str> = phf_set! {
     "mdx",
 };
 
+// ---
+
 static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
     // JSON, YAML lock files
     "package-lock.json",
@@ -203,8 +219,6 @@ static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
 // ---
 
 /// Returns `true` if this is a plain JSON file (handled by `oxc_formatter_json`).
-///
-/// NOTE: `jsonc`, `json5` and `json-stringify` variants are still handled by Prettier.
 fn is_json_file(file_name: &str, extension: Option<&str>) -> bool {
     if matches!(file_name, "package.json" | "composer.json") {
         return false;
@@ -261,6 +275,31 @@ static JSON_FILENAMES: phf::Set<&'static str> = phf_set! {
     ".swcrc",
 };
 
+/// Returns `true` if this is a JSONC file (handled by `oxc_formatter_json` with the `jsonc` variant).
+fn is_jsonc_file(extension: Option<&str>) -> bool {
+    extension.is_some_and(|ext| JSONC_EXTENSIONS.contains(ext))
+}
+
+static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "jsonc",
+    "code-snippets",
+    "code-workspace",
+    "sublime-build",
+    "sublime-color-scheme",
+    "sublime-commands",
+    "sublime-completions",
+    "sublime-keymap",
+    "sublime-macro",
+    "sublime-menu",
+    "sublime-mousemap",
+    "sublime-project",
+    "sublime-settings",
+    "sublime-theme",
+    "sublime-workspace",
+    "sublime_metrics",
+    "sublime_session",
+};
+
 // ---
 
 /// Returns parser name for external formatter, if supported.
@@ -268,15 +307,11 @@ static JSON_FILENAMES: phf::Set<&'static str> = phf_set! {
 #[cfg(feature = "napi")]
 fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
     // JSON and variants
-    // NOTE: `parser: json` is already supported by `oxc_formatter_json`,
-    // others are routed to Prettier here.
+    // NOTE: `parser: json` and `parser: jsonc` are already supported by
+    // `oxc_formatter_json` (handled in `classify_file_kind`);
+    // `json5` and `json-stringify` are routed to Prettier here.
     if file_name == "composer.json" || extension == Some("importmap") {
         return Some("json-stringify");
-    }
-    if let Some(ext) = extension
-        && JSONC_EXTENSIONS.contains(ext)
-    {
-        return Some("jsonc");
     }
     if extension == Some("json5") {
         return Some("json5");
@@ -357,27 +392,6 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
 
     None
 }
-
-#[cfg(feature = "napi")]
-static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "jsonc",
-    "code-snippets",
-    "code-workspace",
-    "sublime-build",
-    "sublime-color-scheme",
-    "sublime-commands",
-    "sublime-completions",
-    "sublime-keymap",
-    "sublime-macro",
-    "sublime-menu",
-    "sublime-mousemap",
-    "sublime-project",
-    "sublime-settings",
-    "sublime-theme",
-    "sublime-workspace",
-    "sublime_metrics",
-    "sublime_session",
-};
 
 #[cfg(feature = "napi")]
 static HTML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
@@ -496,34 +510,29 @@ static SPECIAL_JS_FILENAMES: phf::Set<&'static str> = phf_set! {
     "end.frag",
 };
 
-fn get_oxc_formatter_source_type(path: &Path) -> Option<SourceType> {
-    // Standard extensions, also supported by `oxc_span::VALID_EXTENSIONS`
-    // NOTE: Use `path` directly for `.d.ts` detection
-    if let Ok(source_type) = SourceType::from_path(path) {
-        return Some(source_type);
+/// Detects non-standard JS files that `SourceType::from_path` does not recognize,
+/// but Prettier supports as JS.
+///
+/// Standard extensions are handled earlier in [`classify_file_kind`] via `SourceType::from_path`.
+fn is_extra_js_file(file_name: &str, extension: Option<&str>) -> bool {
+    if SPECIAL_JS_FILENAMES.contains(file_name) {
+        return true;
     }
-
-    // Check special filenames first
-    if let Some(file_name) = path.file_name()
-        && SPECIAL_JS_FILENAMES.contains(file_name.to_str()?)
-    {
-        return Some(SourceType::default());
-    }
-
-    let extension = path.extension()?.to_string_lossy();
-    // Additional extensions Prettier also supports
-    if ADDITIONAL_JS_EXTENSIONS.contains(extension.as_ref()) {
-        return Some(SourceType::default());
+    let Some(extension) = extension else {
+        return false;
+    };
+    if ADDITIONAL_JS_EXTENSIONS.contains(extension) {
+        return true;
     }
     // Special handling for `.frag` files: only allow `*.start.frag` and `*.end.frag`
     if extension == "frag" {
-        let stem = path.file_stem()?.to_str()?;
+        let Some(stem) = file_name.strip_suffix(".frag") else {
+            return false;
+        };
         #[expect(clippy::case_sensitive_file_extension_comparisons)]
-        return (stem.ends_with(".start") || stem.ends_with(".end"))
-            .then_some(SourceType::default());
+        return stem.ends_with(".start") || stem.ends_with(".end");
     }
-
-    None
+    false
 }
 
 // ---
@@ -532,23 +541,75 @@ fn get_oxc_formatter_source_type(path: &Path) -> Option<SourceType> {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "napi")]
-    fn get_parser_name(file_name: &str) -> Option<&'static str> {
-        let path = Path::new(file_name);
-        let extension = path.extension().and_then(|ext| ext.to_str());
-        get_external_parser_name(file_name, extension)
+    #[test]
+    fn exclude_filenames_are_not_js_or_ts() {
+        // `classify_file_kind` resolves standard JS/TS extensions (via `SourceType::from_path`)
+        // before checking `EXCLUDE_FILENAMES` for perf,
+        // so an excluded file with a JS/TS extension would bypass the exclusion entirely.
+        for name in &EXCLUDE_FILENAMES {
+            assert!(
+                SourceType::from_path(Path::new(name)).is_err(),
+                "`{name}` in EXCLUDE_FILENAMES must not be a standard JS/TS file, \
+                 otherwise it bypasses the exclusion check in `classify_file_kind`"
+            );
+        }
+    }
+
+    #[test]
+    fn test_js_or_ts_files() {
+        // Standard extensions, special filenames, and Prettier's additional extensions.
+        let js_or_ts_files = vec![
+            // Standard (via `SourceType::from_path`)
+            "index.js",
+            "app.tsx",
+            "types.d.ts",
+            "module.mjs",
+            // Special filenames
+            "Jakefile",
+            "start.frag",
+            "end.frag",
+            // Additional extensions
+            "legacy.es6",
+            "script._js",
+            // `.frag` is only valid as `*.start.frag` / `*.end.frag`
+            "shader.start.frag",
+            "shader.end.frag",
+        ];
+        for file_name in js_or_ts_files {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatter { .. })),
+                "`{file_name}` should be routed to oxc_formatter"
+            );
+        }
+
+        // Plain `.frag` files (not `*.start.frag` / `*.end.frag`) are not JS.
+        for file_name in ["shader.frag", "random.frag", "xstart.frag"] {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                !matches!(result, Some(FileKind::OxcFormatter { .. })),
+                "`{file_name}` should NOT be routed to oxc_formatter"
+            );
+        }
     }
 
     #[test]
     #[cfg(feature = "napi")]
     fn test_get_external_parser_name() {
+        fn get_parser_name(file_name: &str) -> Option<&'static str> {
+            let path = Path::new(file_name);
+            let extension = path.extension().and_then(|ext| ext.to_str());
+            get_external_parser_name(file_name, extension)
+        }
+
         let test_cases = vec![
             // JSON variants
             // NOTE: `package.json` is handled in classify_file_kind, not here.
             // Plain JSON (e.g. `data.json`, `schema.avsc`) is routed to
             // `oxc_formatter_json` and excluded from this map.
             ("config.importmap", Some("json-stringify")),
-            ("config.code-workspace", Some("jsonc")),
+            // NOTE: jsonc (e.g. `config.code-workspace`) is handled in
+            // classify_file_kind by `oxc_formatter_json`, not here.
             ("settings.json5", Some("json5")),
             // HTML
             ("index.html", Some("html")),
@@ -630,8 +691,32 @@ mod tests {
         for file_name in json_files {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(result, Some(FileKind::OxcFormatterJson { .. })),
-                "`{file_name}` should be routed to oxc_formatter_json"
+                matches!(
+                    result,
+                    Some(FileKind::OxcFormatterJson { variant: JsonVariant::Json, .. })
+                ),
+                "`{file_name}` should be routed to oxc_formatter_json (json)"
+            );
+        }
+    }
+
+    #[test]
+    fn test_jsonc_files_route_to_oxc_formatter_json() {
+        let jsonc_files = vec![
+            "settings.jsonc",
+            "project.code-workspace",
+            "keymap.sublime-keymap",
+            "theme.sublime-theme",
+        ];
+
+        for file_name in jsonc_files {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(
+                    result,
+                    Some(FileKind::OxcFormatterJson { variant: JsonVariant::Jsonc, .. })
+                ),
+                "`{file_name}` should be routed to oxc_formatter_json (jsonc)"
             );
         }
     }

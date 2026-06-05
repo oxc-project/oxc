@@ -208,8 +208,11 @@ pub(super) fn format_html_doc<'a>(
                                 // preserving hard line breaks (from comments).
                                 // Otherwise let it break naturally based on line width.
                                 let has_newline = has_trailing
-                                    && (f.source_text().has_newline_before(expr.span().start)
-                                        || f.source_text().has_newline_after(expr.span().end));
+                                    && (f
+                                        .source_text()
+                                        .has_line_terminator_before(expr.span().start)
+                                        || f.source_text()
+                                            .has_line_terminator_after(expr.span().end));
 
                                 let format_expr = format_with(|f| {
                                     let Some(element) = &interned else { return };

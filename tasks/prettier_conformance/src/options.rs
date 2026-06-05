@@ -13,6 +13,7 @@ pub enum TestLanguage {
     Js,
     Ts,
     Json,
+    Jsonc,
 }
 
 impl TestLanguage {
@@ -21,6 +22,7 @@ impl TestLanguage {
             Self::Js => "js",
             Self::Ts => "ts",
             Self::Json => "json",
+            Self::Jsonc => "jsonc",
         }
     }
 
@@ -31,15 +33,20 @@ impl TestLanguage {
             // There is no `tsx` directory, just check it works with TS
             // `SourceType`.`variant` is handled by spec file extension
             Self::Ts => ["typescript", "jsx"].iter().map(|dir| base.join(dir)).collect::<Vec<_>>(),
-            // Phase 1 of the JSON formatter targets the `json` parser only.
-            // Out-of-scope siblings:
-            // - `jsonc/*` / `json5-as-json-with-trailing-commas/` — jsonc/json5 parsers
-            // - `json-superset/` — inline `snippets` shape, not parseable by spec.rs
-            // - `range/` — range-formatting tests, not a whole-file format
-            // `with-comment/` is included because each of its `format.test.js`
-            // entries lists a parser explicitly; spec.rs filters out non-`json` ones.
+            // The JSON formatter targets the `json` parser.
+            // `with-comment/` is shared with `Jsonc`: each call lists its own parser,
+            // so `spec.rs` keeps only the `json` ones here.
+            // Out-of-scope (TODO) siblings:
+            // - `json5-as-json-with-trailing-commas/`: `json5` parser
+            // - `json-superset/`: inline `snippets` shape, not parseable by `spec.rs`
+            // - `range/`: range-formatting tests, not a whole-file format
             Self::Json => {
                 vec![base.join("json").join("json"), base.join("json").join("with-comment")]
+            }
+            // The `jsonc` parser. `with-comment/` is shared with `Json` (see above);
+            // `spec.rs` keeps only the `jsonc` calls here.
+            Self::Jsonc => {
+                vec![base.join("json").join("jsonc"), base.join("json").join("with-comment")]
             }
         }
     }

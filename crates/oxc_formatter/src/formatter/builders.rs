@@ -156,6 +156,6 @@ where
 
     /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
     pub fn has_lines_before(&self, span: Span) -> bool {
-        self.fmt.source_text().get_lines_before(span, self.fmt.comments()) > 1
+        self.fmt.lines_before(span) > 1
     }
 }

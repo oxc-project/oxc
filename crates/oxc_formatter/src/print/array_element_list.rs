@@ -49,7 +49,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
                 {
                     filler.entry(
                         &format_with(|f| {
-                            if f.source_text().get_lines_before(element.span(), f.comments()) > 1 {
+                            if f.lines_before(element.span()) > 1 {
                                 write!(f, empty_line());
                             } else if f
                                 .comments()

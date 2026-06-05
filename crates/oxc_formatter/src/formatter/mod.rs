@@ -24,7 +24,6 @@ pub mod formatter_js;
 pub mod jsdoc;
 pub mod prelude;
 pub mod separated;
-mod source_text;
 pub mod token;
 pub mod trivia;
 
@@ -48,8 +47,8 @@ pub mod buffer {
 
 pub use oxc_formatter_core::{
     Argument, Arguments, Buffer, BufferExtensions, Format, FormatElement, FormatOptions,
-    FormatState, Formatted, Formatter, GroupId, MemoizeFormat, Memoized, UniqueGroupIdBuilder,
-    VecBuffer,
+    FormatState, Formatted, Formatter, GroupId, MemoizeFormat, Memoized, SourceText,
+    UniqueGroupIdBuilder, VecBuffer,
 };
 
 pub use self::builders::JoinBuilderJsExt;
@@ -57,7 +56,6 @@ pub use self::comments::Comments;
 pub use self::{
     context::{JsFormatContext, TailwindContextEntry},
     formatter_js::{JsFormatter, JsFormatterExt},
-    source_text::SourceText,
 };
 use oxc_formatter_core::Document;
 

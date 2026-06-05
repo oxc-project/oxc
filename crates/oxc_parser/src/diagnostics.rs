@@ -282,6 +282,51 @@ pub fn lexical_declaration_single_statement(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn export_assignment_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1063", "An export assignment cannot be used in a namespace.").with_label(span)
+}
+
+#[cold]
+pub fn import_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1147", "Import declarations in a namespace cannot reference a module.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1194", "Export declarations are not permitted in a namespace.").with_label(span)
+}
+
+#[cold]
+pub fn default_export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1319", "A default export can only be used in an ECMAScript-style module.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn global_export_in_namespace(span: Span) -> OxcDiagnostic {
+    ts_error("1316", "Global module exports may only appear at top level.").with_label(span)
+}
+
+#[cold]
+pub fn statement_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1036", "Statements are not allowed in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn declare_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1038", "A 'declare' modifier cannot be used in an already ambient context.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn declaration_single_statement(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Declaration cannot appear in a single-statement context")
+        .with_help("Wrap this declaration in a block statement")
+        .with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)
@@ -535,6 +580,12 @@ pub fn optional_definite_property(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn definite_assignment_assertion_not_permitted(span: Span) -> OxcDiagnostic {
+    ts_error("1255", "A definite assignment assertion '!' is not permitted in this context.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn identifier_async(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in an async context"))
         .with_label(span1)
@@ -703,6 +754,11 @@ pub fn v8_intrinsic_spread_elem(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn a_set_accessor_cannot_have_a_return_type_annotation(span: Span) -> OxcDiagnostic {
     ts_error("1095", "A 'set' accessor cannot have a return type annotation.").with_label(span)
+}
+
+#[cold]
+pub fn accessor_cannot_have_type_parameters(span: Span) -> OxcDiagnostic {
+    ts_error("1094", "An accessor cannot have type parameters.").with_label(span)
 }
 
 #[cold]
@@ -892,6 +948,28 @@ pub fn modifier_must_precede_other_modifier(
 }
 
 #[cold]
+pub fn modifier_cannot_be_used_with_other_modifier(
+    span: Span,
+    modifier: ModifierKind,
+    other_modifier: ModifierKind,
+) -> OxcDiagnostic {
+    ts_error(
+        "1243",
+        format!("'{modifier}' modifier cannot be used with '{other_modifier}' modifier."),
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn modifier_cannot_be_used_in_ambient_context(
+    span: Span,
+    modifier: ModifierKind,
+) -> OxcDiagnostic {
+    ts_error("1040", format!("'{modifier}' modifier cannot be used in an ambient context."))
+        .with_label(span)
+}
+
+#[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1030", format!("'{}' modifier already seen.", modifier.kind))
         .with_label(modifier.span())
@@ -1022,6 +1100,26 @@ pub fn index_signature_one_parameter(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn index_signature_parameter_type(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1268",
+        "An index signature parameter type must be 'string', 'number', 'symbol', or a template \
+         literal type.",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn index_signature_parameter_literal_type(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1337",
+        "An index signature parameter type cannot be a literal type or generic type. Consider \
+         using a mapped object type instead.",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn mixed_coalesce(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Logical expressions and coalesce expressions cannot be mixed")
         .with_help("Wrap either expression by parentheses")
@@ -1146,6 +1244,16 @@ pub fn implements_clause_in_ts(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn implementation_in_ambient(span: Span) -> OxcDiagnostic {
     ts_error("1183", "An implementation cannot be declared in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn generator_in_ambient_context(span: Span) -> OxcDiagnostic {
+    ts_error("1221", "Generators are not allowed in an ambient context.").with_label(span)
+}
+
+#[cold]
+pub fn overload_signature_generator(span: Span) -> OxcDiagnostic {
+    ts_error("1222", "An overload signature cannot be declared as a generator.").with_label(span)
 }
 
 #[cold]

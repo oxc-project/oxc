@@ -50,7 +50,7 @@ declare_oxc_lint!(
     RequireYieldsDescription,
     jsdoc,
     style,
-    version = "next",
+    version = "1.68.0",
 );
 
 impl Rule for RequireYieldsDescription {

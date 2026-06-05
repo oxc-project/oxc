@@ -1,12 +1,34 @@
 use oxc_allocator::Allocator;
 use oxc_formatter_core::LineWidth;
-use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use crate::options::TrailingCommas;
-use crate::{Formatter, JsFormatOptions, get_parse_options};
+use crate::{JsFormatOptions, format_program, parse_for_format};
 
-use super::serialize::truncate_trim_end;
+/// Helper for:
+/// - Parse a snippet
+/// - and format it to a string with trailing whitespace trimmed
+/// - (no external callbacks)
+///
+/// Returns `None` if parsing fails (panic or any error), the gate every embedded site uses.
+///
+/// # Panics
+/// Panics if the formatted IR is invalid or unbalanced, indicating a formatter bug.
+fn parse_and_build<'a>(
+    allocator: &'a Allocator,
+    source_text: &'a str,
+    source_type: SourceType,
+    options: JsFormatOptions,
+) -> Option<String> {
+    let ret = parse_for_format(allocator, source_text, source_type);
+    if ret.panicked || !ret.errors.is_empty() {
+        return None;
+    }
+    let mut code =
+        format_program(allocator, &ret.program, options, None).print().unwrap().into_code();
+    code.truncate(code.trim_end().len());
+    Some(code)
+}
 
 /// Returns `true` if the fenced code block language is JS/TS/JSX/TSX.
 pub(super) fn is_js_ts_lang(lang: &str) -> bool {
@@ -94,15 +116,8 @@ pub(super) fn format_embedded_js(
     };
 
     // Try to parse and format with the given source type
-    let try_format = |code: &str, source_type: SourceType| -> Option<String> {
-        let ret =
-            Parser::new(allocator, code, source_type).with_options(get_parse_options()).parse();
-        if ret.panicked || !ret.errors.is_empty() {
-            return None;
-        }
-        let mut formatted = Formatter::new(allocator, base_options.clone()).build(&ret.program);
-        truncate_trim_end(&mut formatted);
-        Some(formatted)
+    let try_format = |code: &str, source_type: SourceType| {
+        parse_and_build(allocator, code, source_type, base_options.clone())
     };
 
     // If code starts with `{`, try expression wrapping FIRST to handle object
@@ -117,13 +132,7 @@ pub(super) fn format_embedded_js(
             JsFormatOptions { trailing_commas: TrailingCommas::None, ..base_options.clone() };
 
         let try_format_obj = |code: &str, source_type: SourceType| -> Option<String> {
-            let ret =
-                Parser::new(allocator, code, source_type).with_options(get_parse_options()).parse();
-            if ret.panicked || !ret.errors.is_empty() {
-                return None;
-            }
-            let formatted = Formatter::new(allocator, obj_options.clone()).build(&ret.program);
-            let formatted = formatted.trim_end();
+            let formatted = parse_and_build(allocator, code, source_type, obj_options.clone())?;
             // Remove the wrapping parens and trailing semicolon
             if let Some(inner) = formatted.strip_prefix('(')
                 && let Some(inner) = inner.strip_suffix(");")
@@ -139,7 +148,7 @@ pub(super) fn format_embedded_js(
                 }
                 return Some(String::from(inner));
             }
-            Some(String::from(formatted))
+            Some(formatted)
         };
 
         // If the original has quoted keys (JSON-like), reject formatting since
@@ -225,14 +234,7 @@ pub(super) fn format_type_via_formatter(
     // No string literal protection needed — the formatter should convert quotes.
     let input = allocator.alloc_concat_strs_array(["type __t = ", type_str, ";"]);
 
-    let ret =
-        Parser::new(allocator, input, SourceType::tsx()).with_options(get_parse_options()).parse();
-    if ret.panicked || !ret.errors.is_empty() {
-        return None;
-    }
-
-    let formatted = Formatter::new(allocator, type_options.clone()).build(&ret.program);
-    let formatted = formatted.trim_end();
+    let formatted = parse_and_build(allocator, input, SourceType::tsx(), type_options.clone())?;
 
     // Strip the `type __t = ` prefix (11 chars) using slice, matching upstream's
     // `pretty.slice(TYPE_START.length)` approach. This handles both same-line and

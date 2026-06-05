@@ -3,14 +3,21 @@ use std::cell::Cell;
 use oxc_allocator::StringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
-    Buffer, Format,
-    builders::{empty_line, hard_line_break, space, text},
+    Buffer, Format, SourceText,
+    builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
+    spec::is_suppression_marker,
     write,
 };
 use oxc_span::Span;
-use oxc_syntax::line_terminator::LineTerminatorSplitter;
+use oxc_syntax::line_terminator::{
+    LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, LineTerminatorSplitter, PS_LAST_2_BYTES,
+    is_line_terminator,
+};
 
-use crate::{context::JsonFormatContext, print::JsonFormatter};
+use crate::{
+    context::JsonFormatContext,
+    print::{JsonFormatter, format_with},
+};
 
 /// Cursor over a sorted comment list that hands out unprinted slices in span order.
 ///
@@ -71,7 +78,7 @@ impl<'a> Comments<'a> {
 /// - Other multi-line block comments normalize `\r\n` → `\n` but otherwise stay
 ///   verbatim; their first line still gets its trailing whitespace trimmed.
 pub fn write_single_comment(comment: &Comment, f: &mut JsonFormatter<'_, '_>) {
-    let content = comment.span.source_text(f.context().source_text());
+    let content = f.context().source_text().text_for(&comment.span);
 
     if !comment.is_multiline_block() {
         write!(f, text(content.trim_end()));
@@ -119,14 +126,82 @@ pub fn write_leading_comments(
     for (i, comment) in comments.iter().enumerate() {
         write_single_comment(comment, f);
         let next_pos = comments.get(i + 1).map_or(value_start, |c| c.span.start);
-        write_gap(&source.as_bytes()[comment.span.end as usize..next_pos as usize], f);
+        write_gap(source.bytes_range(comment.span.end, next_pos), f);
     }
 }
 
-/// Counts `\n` bytes in `slice`.
-#[expect(clippy::naive_bytecount, reason = "tiny slice, not worth a bytecount dep")]
+/// Recognizes `\n`, lone `\r`, `\r\n`, and LS(U+2028) / PS(U+2029), the full ECMAScript line-terminator set.
+///
+/// LS/PS recognition is unconditional (no `JsonVariant` threading), keeping this a pure `&[u8]` helper.
+/// It is required for JSON5 (ES5 lexis), and is not a no-op for `json` / `jsonc` either:
+/// this crate parses every variant leniently as JS, so the lexer accepts a bare LS/PS in an inter-entry gap regardless of variant.
+/// A spec-strict JSON document keeps them inside string literals, so the branch rarely fires for `json` / `jsonc`.
+/// But when it does, treating it as a break matches Prettier (every variant goes through its JS printer).
 pub fn count_newlines(slice: &[u8]) -> usize {
-    slice.iter().filter(|&&b| b == b'\n').count()
+    let mut count = 0;
+    let mut i = 0;
+    while i < slice.len() {
+        match slice[i] {
+            b'\r' => {
+                count += 1;
+                // Collapse `\r\n` into one break so a single CRLF isn't read as a blank line.
+                if slice.get(i + 1) == Some(&b'\n') {
+                    i += 1;
+                }
+            }
+            b'\n' => count += 1,
+            // U+2028 / U+2029 are 3-byte sequences (`E2 80 A8` / `E2 80 A9`). `0xE2` also leads many
+            // other characters, so the trailing two bytes must match before counting a break.
+            LS_OR_PS_FIRST_BYTE => {
+                if let Some(rest) = slice.get(i + 1..i + 3)
+                    && (rest == LS_LAST_2_BYTES || rest == PS_LAST_2_BYTES)
+                {
+                    count += 1;
+                    i += 2; // skip the trailing two bytes; the `i += 1` below clears the lead byte
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    count
+}
+
+/// Does a line terminator precede the first property / `}`, treating a comment as transparent?
+///
+/// `text` is the source slice starting just after the opening `{` (up to the container's end).
+/// Recognizes the full ECMAScript line-terminator set unconditionally, for the same reason as [`count_newlines`].
+pub fn has_line_terminator_after_skipping_comments(text: &str) -> bool {
+    let mut chars = text.chars().peekable();
+    while let Some(c) = chars.next() {
+        match c {
+            ' ' | '\t' => {}
+            _ if is_line_terminator(c) => return true,
+            '/' => match chars.peek() {
+                Some(&'/') => {
+                    chars.next();
+                    // Line comment: a terminator anywhere up to its end counts.
+                    return chars.any(is_line_terminator);
+                }
+                Some(&'*') => {
+                    chars.next();
+                    // Block comment: scan for `*/`, returning early on any inner terminator.
+                    while let Some(c) = chars.next() {
+                        if is_line_terminator(c) {
+                            return true;
+                        }
+                        if c == '*' && chars.peek() == Some(&'/') {
+                            chars.next();
+                            break;
+                        }
+                    }
+                }
+                _ => return false,
+            },
+            _ => return false,
+        }
+    }
+    false
 }
 
 /// Emits the formatter element that reproduces the vertical spacing implied by `gap`:
@@ -165,8 +240,22 @@ pub fn write_trailing_inside_comments(
     let source = f.context().source_text();
     let mut prev_end = lower_bound;
     for comment in comments {
-        write_gap(&source.as_bytes()[prev_end as usize..comment.span.start as usize], f);
-        write_single_comment(comment, f);
+        let gap = source.bytes_range(prev_end, comment.span.start);
+        if comment.is_line() {
+            // Defer a trailing line comment to the `line_suffix()`,
+            // so its width is not counted toward the `fits` measurement of the preceding group
+            // (mirrors `oxc_formatter`'s `FormatTrailingComments`).
+            // `expand_parent()` keeps the enclosing container multi-line,
+            // so `[a, // comment -> ]` doesn't collapse.
+            let content = format_with(move |f: &mut JsonFormatter<'_, '_>| {
+                write_gap(gap, f);
+                write_single_comment(comment, f);
+            });
+            write!(f, [line_suffix(&content), expand_parent()]);
+        } else {
+            write_gap(gap, f);
+            write_single_comment(comment, f);
+        }
         prev_end = comment.span.end;
     }
 }
@@ -202,9 +291,8 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FormatTrailingInsideComments {
 
 /// Returns `true` if `comment` is an ignore marker (`oxfmt-ignore` / `prettier-ignore`).
 /// Mirrors `oxc_formatter`'s suppression rule so JSON honors the same authoring convention as JS/TS.
-pub fn is_suppression_comment(source: &str, comment: &Comment) -> bool {
-    let body = comment.content_span().source_text(source);
-    oxc_formatter_core::util::is_suppression_marker(body)
+pub fn is_suppression_comment(source: SourceText<'_>, comment: &Comment) -> bool {
+    is_suppression_marker(source.text_for(&comment.content_span()))
 }
 
 /// Returns `true` if any pending comment up to `before` is a suppression marker.
@@ -222,9 +310,63 @@ pub struct FormatSuppressedNode(pub Span);
 impl<'a> Format<'a, JsonFormatContext<'a>> for FormatSuppressedNode {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
         write!(f, FormatLeadingComments(self.0));
-        write!(f, text(self.0.source_text(f.context().source_text())));
+        write!(f, text(f.context().source_text().text_for(&self.0)));
         // The verbatim text already includes inside-span comments;
         // advance the cursor so they aren't re-emitted as leading comments of a later node.
         let _ = f.context().comments().take_before(self.0.end);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{count_newlines, has_line_terminator_after_skipping_comments};
+
+    // NOTE: source fixtures are LF-only (enforced via `.gitattributes`),
+    // so CR / CRLF / mixed / Unicode endings are exercised here instead.
+    #[test]
+    fn count_newlines_is_crlf_aware() {
+        // Lone LF
+        assert_eq!(count_newlines(b"a\nb"), 1);
+        assert_eq!(count_newlines(b"a\n\nb"), 2);
+        // CRLF must collapse to one break, never two (otherwise blank lines are invented).
+        assert_eq!(count_newlines(b"a\r\nb"), 1);
+        assert_eq!(count_newlines(b"a\r\n\r\nb"), 2);
+        // Lone CR (previously uncounted, now consistent with core newline checks).
+        assert_eq!(count_newlines(b"a\rb"), 1);
+        assert_eq!(count_newlines(b"a\r\rb"), 2);
+        // Mixed endings.
+        assert_eq!(count_newlines(b"a\n\r\nb"), 2);
+        assert_eq!(count_newlines(b"a\r\n\nb"), 2);
+        // No terminators.
+        assert_eq!(count_newlines(b"abc"), 0);
+    }
+
+    #[test]
+    fn count_newlines_recognizes_u2028_u2029() {
+        // U+2028 LINE SEPARATOR / U+2029 PARAGRAPH SEPARATOR (3 bytes each).
+        assert_eq!(count_newlines("a\u{2028}b".as_bytes()), 1);
+        assert_eq!(count_newlines("a\u{2029}b".as_bytes()), 1);
+        assert_eq!(count_newlines("a\u{2028}\u{2029}b".as_bytes()), 2);
+        // Mixed with ASCII terminators.
+        assert_eq!(count_newlines("a\n\u{2028}b".as_bytes()), 2);
+        assert_eq!(count_newlines("a\r\n\u{2029}b".as_bytes()), 2);
+        // Other `0xE2`-led characters must NOT be counted (em dash U+2014, bullet U+2022).
+        assert_eq!(count_newlines("a\u{2014}b\u{2022}c".as_bytes()), 0);
+    }
+
+    #[test]
+    fn has_line_terminator_after_skipping_comments_is_ls_ps_aware() {
+        // `text` is the slice just after `{`. A bare terminator before the first token → true.
+        for src in ["\nx", "\rx", "\r\nx", "\u{2028}x", "\u{2029}x", "  \u{2028}x"] {
+            assert!(has_line_terminator_after_skipping_comments(src), "{src:?}");
+        }
+        // Terminator hidden behind a comment is still detected.
+        assert!(has_line_terminator_after_skipping_comments(" /* c */\u{2028}x"));
+        assert!(has_line_terminator_after_skipping_comments(" /* c\u{2029} */ x"));
+        assert!(has_line_terminator_after_skipping_comments(" // c\u{2028}x"));
+        // No terminator before the next token (incl. other 0xE2-led chars).
+        for src in [" x", " /* c */ x", "\u{2014}x"] {
+            assert!(!has_line_terminator_after_skipping_comments(src), "{src:?}");
+        }
     }
 }

@@ -191,18 +191,13 @@ fn parse_test_config(json: &str) -> JsFormatOptions {
 
 fn format_code(code: &str, options: &JsFormatOptions) -> String {
     use oxc_allocator::Allocator;
-    use oxc_formatter::{Formatter, get_parse_options};
-    use oxc_parser::Parser;
     use oxc_span::SourceType;
 
     let allocator = Allocator::new();
     let source_type = SourceType::from_path("dummy.tsx").unwrap();
 
-    let ret = Parser::new(&allocator, code, source_type).with_options(get_parse_options()).parse();
-
-    if let Some(error) = ret.errors.first() {
-        panic!("💥 Parser error: {}", error.message);
+    match oxc_formatter::format(&allocator, code, source_type, options.clone(), None) {
+        Ok(formatted) => formatted.print().unwrap().into_code(),
+        Err(error) => panic!("💥 Parser error: {}", error.message),
     }
-
-    Formatter::new(&allocator, options.clone()).build(&ret.program)
 }

@@ -2,16 +2,19 @@
 //! consumer's options shape.
 //!
 //! - [`to_oxc_formatter()`]: `oxc_formatter::JsFormatOptions` for JS/TS formatting
-//! - [`to_toml_formatter()`]: `oxc_toml::Options` for TOML formatting
+//! - [`to_oxc_toml()`]: `oxc_toml::Options` for TOML formatting
 //! - `to_prettier`: Prettier-compatible JSON, plus `inject_*` helpers for
 //!   layering in `parser` / `filepath` / plugin payloads at the format step
 //!   (NAPI-only)
 //! - `to_package_json`: `sort_package_json::SortOptions` for `package.json`
 //!   (NAPI-only)
+//! - [`validate()`]: validate a config without building any formatter's options
 
+mod to_core_options;
 mod to_oxc_formatter;
 mod to_oxc_formatter_json;
-mod to_toml_formatter;
+mod to_oxc_toml;
+mod validate;
 
 #[cfg(feature = "napi")]
 mod to_package_json;
@@ -20,7 +23,8 @@ mod to_prettier;
 
 pub use to_oxc_formatter::to_oxc_formatter;
 pub use to_oxc_formatter_json::to_oxc_formatter_json;
-pub use to_toml_formatter::to_toml_formatter;
+pub use to_oxc_toml::to_oxc_toml;
+pub use validate::validate;
 
 #[cfg(feature = "napi")]
 pub use to_package_json::to_package_json;

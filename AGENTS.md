@@ -288,15 +288,15 @@ These test suites are pre-cloned and ready to search:
 NAPI packages use **Vitest** for testing Node.js bindings:
 
 ```bash
-pnpm build-dev    # Build all NAPI packages
-pnpm test         # Run all NAPI tests
+pnpm run build-test   # Build all NAPI packages
+pnpm test             # Run all NAPI tests
 ```
 
 **Package-specific commands:**
 
-- `oxc-parser`: `cd napi/parser && pnpm test` (also has `pnpm test-browser`)
-- `oxc-minify`: `cd napi/minify && pnpm test`
-- `oxc-transform`: `cd napi/transform && pnpm test`
+- `oxc-parser`: `cd napi/parser && pnpm run build-test && pnpm test` (also has `pnpm test-browser`)
+- `oxc-minify`: `cd napi/minify && pnpm run build-test && pnpm test`
+- `oxc-transform`: `cd napi/transform && pnpm run build-test && pnpm test`
 
 Tests are TypeScript files in each package's `test/` directory.
 

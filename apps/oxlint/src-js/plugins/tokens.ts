@@ -157,8 +157,9 @@ let deserializedTokensLen = 0;
 // not *total* number of tokens.
 const DESERIALIZED_TOKEN_INDEXES_MIN_CAPACITY = 16;
 
-// Reset `#loc` field on a `Token` class instance
-let resetLoc: (token: Token) => void;
+// Reset `#loc` field on a `Token` class instance.
+// Copied into a `const` below after being defined in class static block.
+let resetLocTemp: (token: Token) => void;
 
 // Get `#loc` field on a `Token` class instance.
 // Only used in debug build (tests).
@@ -209,13 +210,17 @@ class Token {
 
   static {
     // Defined in static block to avoid exposing this as a public method
-    resetLoc = (token: Token) => {
+    resetLocTemp = (token: Token) => {
       token.#loc = null;
     };
 
     if (DEBUG) getTokenPrivateLoc = (token: Token) => token.#loc;
   }
 }
+
+// Reset `#loc` field on a `Token` class instance.
+// Copied into a const here to avoid checks at call site (`let` binding could be re-assigned).
+const resetLoc = resetLocTemp;
 
 // Make `loc` property enumerable so that `for (const key in token) ...` includes `loc` in the keys it iterates over
 Object.defineProperty(Token.prototype, "loc", { enumerable: true });

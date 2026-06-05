@@ -4,7 +4,7 @@ use std::path::Path;
 use serde::Serialize;
 use serde_json::Value;
 
-use oxc_formatter::JsFormatOptions;
+use oxc_formatter_core::LineWidth;
 
 use super::super::oxfmtrc::{
     ArrowParensConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
@@ -15,26 +15,23 @@ use super::super::oxfmtrc::{
 /// Build base Prettier-compatible options from a typed `FormatConfig`.
 ///
 /// Emits only Prettier-known keys.
-/// - `printWidth` is always present because Prettier's default (80) differs from oxfmt's (100)
-///   - We must send oxfmt's default explicitly
+/// - `printWidth` is always present because Prettier's default (80) differs from Oxfmt's (100)
+///   - We must send our default explicitly
 /// - Every other key is emitted only when the user (or `.editorconfig` via `apply_editorconfig`) set it
-/// - oxfmt-specific keys are never emitted
+/// - Oxfmt-specific keys are never emitted
 ///   - To reduce confusion and JSON size
 ///
 /// `parser`, `filepath`, and plugin payloads are layered in via the dedicated `inject_*` helpers below.
 pub fn to_prettier(config: &FormatConfig) -> Value {
     let mut obj = serde_json::Map::new();
 
-    // `printWidth` is the one core option whose default genuinely differs
-    // (Prettier 80 vs oxfmt 100), so we send oxfmt's default when unset.
-    // TODO: Read the default from a neutral source (e.g. a shared `oxc_formatter_core`
-    // / `ResolvedFormatConfig`) instead of the JS formatter's typed enum once available.
+    // `printWidth` is the one core option whose default differs
     obj.insert(
         "printWidth".to_string(),
-        Value::from(config.print_width.unwrap_or(JsFormatOptions::default().line_width.value())),
+        Value::from(config.print_width.unwrap_or(LineWidth::default().value())),
     );
 
-    // Other Prettier core options share defaults with oxfmt,
+    // Other Prettier core options share defaults with Oxfmt,
     // so we only emit when the user (or `.editorconfig` via `apply_editorconfig`) set them.
     if let Some(v) = config.use_tabs {
         obj.insert("useTabs".to_string(), Value::from(v));

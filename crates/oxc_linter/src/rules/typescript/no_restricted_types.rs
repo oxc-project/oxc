@@ -48,7 +48,7 @@ struct NoRestrictedTypesConfig {
 /// - A string - ban with custom message
 /// - An object with `message` and optional `fixWith` and `suggest`
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(untagged)]
+#[serde(untagged, deny_unknown_fields)]
 enum BanConfigValue {
     /// `"TypeName": true` - ban with default message
     /// Note: Only `true` is valid; `false` would fail to deserialize and be ignored.

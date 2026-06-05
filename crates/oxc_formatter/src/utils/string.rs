@@ -1,6 +1,6 @@
 use std::{borrow::Cow, ops::Deref};
 
-use oxc_formatter_core::util::normalize_string;
+use oxc_formatter_core::spec::normalize_string;
 use oxc_span::SourceType;
 use oxc_syntax::identifier::is_identifier_name_patched;
 use unicode_width::UnicodeWidthStr;
@@ -323,7 +323,7 @@ impl<'a> LiteralStringNormalizer<'a> {
         let preferred_quote = string_information.preferred_quote;
         let polished_raw_content = normalize_string(
             self.raw_content(),
-            string_information.preferred_quote,
+            string_information.preferred_quote.as_byte(),
             string_information.current_quote != string_information.preferred_quote,
         );
 
@@ -493,41 +493,41 @@ mod tests {
     #[test]
     fn normalize_newline() {
         // \n unchanged
-        assert_eq!(normalize_string("a\nb", QuoteStyle::Double, true), "a\nb");
+        assert_eq!(normalize_string("a\nb", b'"', true), "a\nb");
         // \r\n -> \n
-        assert_eq!(normalize_string("a\r\nb", QuoteStyle::Double, true), "a\nb");
+        assert_eq!(normalize_string("a\r\nb", b'"', true), "a\nb");
         // \r -> \n (single CR)
-        assert_eq!(normalize_string("a\rb", QuoteStyle::Double, true), "a\nb");
-        assert_eq!(normalize_string("a\r", QuoteStyle::Double, true), "a\n");
-        assert_eq!(normalize_string("\rb", QuoteStyle::Double, true), "\nb");
+        assert_eq!(normalize_string("a\rb", b'"', true), "a\nb");
+        assert_eq!(normalize_string("a\r", b'"', true), "a\n");
+        assert_eq!(normalize_string("\rb", b'"', true), "\nb");
         // escaped \r\n -> escaped \n
-        assert_eq!(normalize_string("a\\\r\nb", QuoteStyle::Double, true), "a\\\nb");
+        assert_eq!(normalize_string("a\\\r\nb", b'"', true), "a\\\nb");
         // escaped \r -> escaped \n (single CR)
-        assert_eq!(normalize_string("a\\\rb", QuoteStyle::Double, true), "a\\\nb");
+        assert_eq!(normalize_string("a\\\rb", b'"', true), "a\\\nb");
     }
 
     #[test]
     fn normalize_escapes() {
-        assert_eq!(normalize_string("\\", QuoteStyle::Double, true), "\\");
-        assert_eq!(normalize_string("\\t", QuoteStyle::Double, true), "\\t");
-        assert_eq!(normalize_string("\\\u{2028}", QuoteStyle::Double, true), "\\\u{2028}");
-        assert_eq!(normalize_string("\\\u{2029}", QuoteStyle::Double, true), "\\\u{2029}");
+        assert_eq!(normalize_string("\\", b'"', true), "\\");
+        assert_eq!(normalize_string("\\t", b'"', true), "\\t");
+        assert_eq!(normalize_string("\\\u{2028}", b'"', true), "\\\u{2028}");
+        assert_eq!(normalize_string("\\\u{2029}", b'"', true), "\\\u{2029}");
 
-        assert_eq!(normalize_string(r"a\a", QuoteStyle::Double, true), r"a\a");
-        assert_eq!(normalize_string(r"👍\👍", QuoteStyle::Single, true), r"👍\👍");
-        assert_eq!(normalize_string("\\\u{2027}", QuoteStyle::Double, true), "\\\u{2027}");
-        assert_eq!(normalize_string("\\\u{2030}", QuoteStyle::Double, true), "\\\u{2030}");
+        assert_eq!(normalize_string(r"a\a", b'"', true), r"a\a");
+        assert_eq!(normalize_string(r"👍\👍", b'\'', true), r"👍\👍");
+        assert_eq!(normalize_string("\\\u{2027}", b'"', true), "\\\u{2027}");
+        assert_eq!(normalize_string("\\\u{2030}", b'"', true), "\\\u{2030}");
     }
 
     #[test]
     fn normalize_quotes() {
-        assert_eq!(normalize_string("\"", QuoteStyle::Double, true), "\\\"");
-        assert_eq!(normalize_string(r"\'", QuoteStyle::Double, true), r"'");
+        assert_eq!(normalize_string("\"", b'"', true), "\\\"");
+        assert_eq!(normalize_string(r"\'", b'"', true), r"'");
 
-        assert_eq!(normalize_string(r"\'", QuoteStyle::Double, false), r"\'");
-        assert_eq!(normalize_string("\"", QuoteStyle::Single, false), "\"");
-        assert_eq!(normalize_string("\\'", QuoteStyle::Single, false), "\\'");
-        assert_eq!(normalize_string("\\\"", QuoteStyle::Single, false), "\\\"");
+        assert_eq!(normalize_string(r"\'", b'"', false), r"\'");
+        assert_eq!(normalize_string("\"", b'\'', false), "\"");
+        assert_eq!(normalize_string("\\'", b'\'', false), "\\'");
+        assert_eq!(normalize_string("\\\"", b'\'', false), "\\\"");
     }
 
     #[test]

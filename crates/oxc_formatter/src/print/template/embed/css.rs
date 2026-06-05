@@ -114,8 +114,9 @@ pub(super) fn format_css_doc<'a>(
                             // - the original source has newlines in the interpolation
                             // - AND the expression is a comment-bearing node or Identifier/etc
                             // For CSS embed, the relevant case is comments inside `${...}`.
-                            let has_newline = f.source_text().has_newline_before(expr.span().start)
-                                || f.source_text().has_newline_after(expr.span().end);
+                            let has_newline =
+                                f.source_text().has_line_terminator_before(expr.span().start)
+                                    || f.source_text().has_line_terminator_after(expr.span().end);
                             let has_comment = has_newline && {
                                 let comments = f.context().comments();
                                 let leading = comments.comments_before(expr.span().start);

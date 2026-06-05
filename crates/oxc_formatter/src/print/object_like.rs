@@ -1,6 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
+use crate::source_text::SourceTextExt as _;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{

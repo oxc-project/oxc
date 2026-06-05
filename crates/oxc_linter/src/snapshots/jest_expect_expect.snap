@@ -74,6 +74,20 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jest(expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail with implicit defaults', () => request.post().send().expect(457));
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ it("should fail with implicit defaults",() => expectSaga(mySaga).returns());
+   · ──
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
  1 │ test('should fail', () => tester.request(123));
    · ────
    ╰────

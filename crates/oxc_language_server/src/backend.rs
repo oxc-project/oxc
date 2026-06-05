@@ -80,7 +80,7 @@ impl LanguageServer for Backend {
     #[expect(deprecated)] // `params.root_uri` is deprecated, we are only falling back to it if no workspace folder is provided
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         // initialization_options can be anything, so we are requesting `workspace/configuration` when no initialize options are provided
-        let options = params.initialization_options.and_then(|value| {
+        let options = params.initialization_options.and_then(|mut value| {
             // the client supports the new settings object
             if let Ok(new_settings) = serde_json::from_value::<Vec<WorkspaceOption>>(value.clone())
             {
@@ -90,12 +90,13 @@ impl LanguageServer for Backend {
 
             // the client has deprecated settings and has a deprecated root uri.
             // handle all things like the old way
-            if let (Some(deprecated_settings), Some(root_uri)) =
-                (value.get("settings"), params.root_uri.as_ref())
+            if value.get("settings").is_some()
+                && let (Some(deprecated_settings), Some(root_uri)) =
+                    (value.get_mut("settings"), params.root_uri.as_ref())
             {
                 return Some(vec![WorkspaceOption {
                     workspace_uri: root_uri.clone(),
-                    options: deprecated_settings.clone(),
+                    options: deprecated_settings.take(),
                 }]);
             }
 
@@ -119,9 +120,8 @@ impl LanguageServer for Backend {
 
         // client sent workspace folders
         let workers = if let Some(workspace_folders) = params.workspace_folders {
-            let uris: Vec<Uri> =
-                workspace_folders.iter().map(|folder| folder.uri.clone()).collect();
-            WorkerManager::assert_workspaces_are_valid_paths(&uris)?;
+            let uris: Vec<&Uri> = workspace_folders.iter().map(|folder| &folder.uri).collect();
+            WorkerManager::assert_workspaces_are_valid_paths(uris)?;
 
             workspace_folders
                 .into_iter()
@@ -132,7 +132,7 @@ impl LanguageServer for Backend {
                 .collect()
         // client sent deprecated root uri
         } else if let Some(root_uri) = params.root_uri {
-            WorkerManager::assert_workspaces_are_valid_paths(std::slice::from_ref(&root_uri))?;
+            WorkerManager::assert_workspaces_are_valid_paths(vec![&root_uri])?;
 
             vec![self.worker_manager.create_worker(root_uri, capabilities.diagnostic_mode.clone())]
         // client is in single file mode, create no workers initially.
@@ -454,19 +454,19 @@ impl LanguageServer for Backend {
         for file_event in &params.changes {
             // We do not expect multiple changes from the same workspace folder.
             // If we should consider it, we need to map the events to the workers first,
-            // to only restart the internal linter / diagnostics for once
-            let Some(worker) = self.worker_manager.get_worker_for_uri(&file_event.uri).await else {
-                continue;
-            };
-            let (diagnostics, registrations, unregistrations) = worker
-                .did_change_watched_files(file_event, &mut needs_diagnostics_refresh, fs)
-                .await;
+            // to only restart the internal linter / diagnostics for once.
+            // A change can affect multiple workspaces if the file is in a shared location, for example a config file in the home directory.
+            for worker in self.worker_manager.read_workspace_workers().await.iter() {
+                let (diagnostics, registrations, unregistrations) = worker
+                    .did_change_watched_files(file_event, &mut needs_diagnostics_refresh, fs)
+                    .await;
 
-            if let Some(diagnostics) = diagnostics {
-                new_diagnostics.extend(diagnostics);
+                if let Some(diagnostics) = diagnostics {
+                    new_diagnostics.extend(diagnostics);
+                }
+                removing_registrations.extend(unregistrations);
+                adding_registrations.extend(registrations);
             }
-            removing_registrations.extend(unregistrations);
-            adding_registrations.extend(registrations);
         }
 
         if diagnostic_mode == DiagnosticMode::Push && !new_diagnostics.is_empty() {
@@ -699,7 +699,7 @@ impl LanguageServer for Backend {
                 Ok(diagnostics) => {
                     if !diagnostics.is_empty() {
                         let version_map = ConcurrentHashMap::default();
-                        version_map.pin().insert(uri.clone(), params.text_document.version);
+                        version_map.pin().insert(uri, params.text_document.version);
                         self.publish_all_diagnostics(diagnostics, version_map).await;
                     }
                 }

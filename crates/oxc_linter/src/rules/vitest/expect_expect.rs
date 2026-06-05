@@ -302,6 +302,16 @@ fn test() {
             Some(serde_json::json!([{ "assertFunctionNames": ["request.foo**.expect"] }])),
         ),
         (
+            "test('should fail with implicit defaults', () => request.post().send().expect(457));",
+            None,
+        ),
+        (
+            "test('should fail with explicit defaults', () => request.put().send().expect(458));",
+            Some(serde_json::json!([{
+                "assertFunctionNames": ["expect", "expectTypeOf", "assert", "assertType"],
+            }])),
+        ),
+        (
             "test('should fail', () => tester.request(123));",
             Some(serde_json::json!([{ "assertFunctionNames": ["request.*"] }])),
         ),

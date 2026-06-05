@@ -1,9 +1,9 @@
 commit: e5509e21
 
 parser_typescript Summary:
-AST Parsed     : 9781/9781 (100.00%)
-Positive Passed: 9781/9781 (100.00%)
-Negative Passed: 1582/2638 (59.97%)
+AST Parsed     : 9779/9779 (100.00%)
+Positive Passed: 9779/9779 (100.00%)
+Negative Passed: 1635/2640 (61.93%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -51,8 +51,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitCallExp
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/baseCheck.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/baseExpressionTypeParameters.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/bigintIndex.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/binaryArithmatic1.ts
 
@@ -181,10 +179,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/continueNotI
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashDeclareGlobalTypeofExport.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashRegressionTest.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCommonJsModuleReferencedType.ts
 
@@ -320,8 +314,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorSupress
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5-oldStyleOctalLiteralInEnums.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6DeclOrdering.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportEqualsInterop.ts
@@ -348,17 +340,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAsName
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentImportMergeNoCrash.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces2.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultAlias_excludesEverything.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultClassAndValue.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultClassInNamespace.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultDuplicateCrash.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultFunctionInNamespace.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultInterfaceAndTwoFunctions.ts
 
@@ -734,8 +720,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalPara
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalParamReferencingOtherParams3.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalSetterParam.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/orderMattersForSignatureGroupIdentity.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadAssignmentCompat.ts
@@ -767,8 +751,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidat
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidation5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/primitiveMembers.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privacyGloImportParseErrors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privacyTopLevelAmbientExternalModuleImportWithExport.ts
 
@@ -846,8 +828,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/scopeCheckIn
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/selfReferencesInFunctionParameters.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/semicolonsInModuleDeclarations.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/setterWithReturn.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/shorthandPropertyUndefined.ts
@@ -918,15 +898,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/this_inside-
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/topLevelLambda.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeCheckingInsideFunctionExpressionInArray.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeGuardConstructorClassAndNumber.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeGuardConstructorDerivedClass.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeInterfaceDeclarationsInBlockStatements1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeOfEnumAndVarRedeclarations.ts
 
@@ -1011,8 +987,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/await_unaryExpression_es6_2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration3_es6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.2.ts
 
@@ -1321,20 +1295,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yield
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression8_es6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldStarExpression1_es6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext3.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext4.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck9.ts
 
@@ -1738,8 +1698,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/lega
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesCJSEmit1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitWithPackageExports.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksSpecifierResolution.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksTypesVersions.ts
@@ -1764,23 +1722,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors3.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserGetAccessorWithTypeParameters1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeAnnotation1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeParameters1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClass2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration12.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration3.d.ts
 
@@ -1791,14 +1739,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment9.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration2.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration3.ts
 
@@ -1814,8 +1754,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration3.ts
@@ -1828,12 +1766,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration2.d.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration4.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration5.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList14.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList15.ts
@@ -1842,47 +1774,17 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList17.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509618.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBlockStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDebuggerStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDoStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement1.d.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement20.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserEmptyStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserExpressionStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement1.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement8.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement1.d.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement5.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserIfStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserLabeledStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserSwitchStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserThrowStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserTryStatement1.d.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserVariableStatement2.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserWhileStatement1.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode1.ts
 
@@ -1902,8 +1804,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty5.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/VariableDeclarations/parserVariableDeclaration4.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserNoASIOnCallAfterFunctionExpression1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserRealSource13.ts
@@ -1919,8 +1819,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName41.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement1.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement20.ts
 
@@ -2606,12 +2504,28 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  7 │ 
    ╰────
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/ambientStatement1.ts:2:6]
+ 1 │     declare namespace M1 {
+ 2 │         while(true);
+   ·         ────────────
+ 3 │     
+   ╰────
+
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/compiler/ambientStatement1.ts:4:22]
  3 │     
  4 │         export var v1 = () => false;
    ·                         ───────────
  5 │     }
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:3:5]
+ 2 │ declare namespace M {
+ 3 │     break;
+   ·     ──────
+ 4 │     continue;
    ╰────
 
   × TS(1108): A 'return' statement can only be used within a function body.
@@ -3352,6 +3266,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/compiler/bigintArbirtraryIdentifier.ts:1:10]
  1 │ import { 0n as foo } from "./foo";
    ·          ──
+   ╰────
+
+  × TS(1268): An index signature parameter type must be 'string', 'number', 'symbol', or a template literal type.
+   ╭─[typescript/tests/cases/compiler/bigintIndex.ts:2:6]
+ 1 │ interface BigIntIndex<E> {
+ 2 │     [index: bigint]: E; // should error
+   ·      ─────────────
+ 3 │ }
    ╰────
 
   × Invalid characters after number
@@ -5671,6 +5593,70 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ 
    ╰────
 
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts:2:5]
+ 1 │ declare namespace M {
+ 2 │     declare var x;
+   ·     ───────
+ 3 │     declare function f();
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts:3:5]
+ 2 │     declare var x;
+ 3 │     declare function f();
+   ·     ───────
+ 4 │ 
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts:5:5]
+ 4 │ 
+ 5 │     declare namespace N { }
+   ·     ───────
+ 6 │ 
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFile.ts:7:5]
+ 6 │ 
+ 7 │     declare class C { }
+   ·     ───────
+ 8 │ }
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:2:5]
+ 1 │ declare namespace M {
+ 2 │     declare var x;
+   ·     ───────
+ 3 │     declare function f();
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:3:5]
+ 2 │     declare var x;
+ 3 │     declare function f();
+   ·     ───────
+ 4 │ 
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:5:5]
+ 4 │ 
+ 5 │     declare namespace N { }
+   ·     ───────
+ 6 │ 
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:7:5]
+ 6 │ 
+ 7 │     declare class C { }
+   ·     ───────
+ 8 │ }
+   ╰────
+
   × Identifier `a` has already been declared
    ╭─[typescript/tests/cases/compiler/declarationEmitDestructuring2.ts:3:13]
  2 │ function g([a, b, c, d] = [1, 2, 3, 4]) { }
@@ -6770,6 +6756,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts:30:5]
+ 29 │     export {M_A as a};
+ 30 │     import * as M2 from "M2";
+    ·     ─────────────────────────
+ 31 │     import M4 from "M4";
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts:31:5]
+ 30 │     import * as M2 from "M2";
+ 31 │     import M4 from "M4";
+    ·     ────────────────────
+ 32 │     export import M5 = require("M5");
+    ╰────
+
   × TS(1015): A parameter cannot have a question mark and an initializer.
     ╭─[typescript/tests/cases/compiler/es6ClassTest.ts:25:44]
  24 │     constructor();
@@ -7130,6 +7132,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  14 │ }
     ╰────
 
+  × TS(1194): Export declarations are not permitted in a namespace.
+   ╭─[typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces2.ts:6:5]
+ 5 │ declare namespace N {
+ 6 │     export { x } from "mod"; // Error
+   ·     ────────────────────────
+ 7 │ }
+   ╰────
+
   × TS(1183): An implementation cannot be declared in ambient contexts.
    ╭─[typescript/tests/cases/compiler/exportDeclareClass1.ts:2:21]
  1 │     export declare class eaC {
@@ -7158,6 +7168,38 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  1 │ export function async<T>(...args: any[]): any { }
  2 │ export function await(...args: any[]): any { }
    ·                 ─────
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/compiler/exportDefaultClassInNamespace.ts:2:5]
+ 1 │ namespace ns_class {
+ 2 │     export default class {}
+   ·     ───────────────────────
+ 3 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/compiler/exportDefaultClassInNamespace.ts:6:5]
+ 5 │ namespace ns_abstract_class {
+ 6 │     export default abstract class {}
+   ·     ────────────────────────────────
+ 7 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/compiler/exportDefaultFunctionInNamespace.ts:2:5]
+ 1 │ namespace ns_function {
+ 2 │     export default function () {}
+   ·     ─────────────────────────────
+ 3 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/compiler/exportDefaultFunctionInNamespace.ts:6:5]
+ 5 │ namespace ns_async_function {
+ 6 │     export default async function () {}
+   ·     ───────────────────────────────────
+ 7 │ }
    ╰────
 
   × Identifier `someProp` has already been declared
@@ -7617,6 +7659,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Remove these parameters here
 
+  × TS(1095): A 'set' accessor cannot have a return type annotation.
+   ╭─[typescript/tests/cases/compiler/gettersAndSettersErrors.ts:7:29]
+ 6 │     public get Goo(v:string):string {return null;} // error - getters must not have a parameter
+ 7 │     public set Goo(v:string):string {} // error - setters must not specify a return type
+   ·                             ───────
+ 8 │ }
+   ╰────
+
   × Identifier `Foo` has already been declared
    ╭─[typescript/tests/cases/compiler/gettersAndSettersErrors.ts:3:16]
  2 │     public get Foo() { return "foo";} // ok
@@ -7739,6 +7789,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  7 │     var b: a;
    ╰────
 
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifierInAmbientContext.ts:6:5]
+ 5 │     }
+ 6 │     declare export import a = x.c;
+   ·     ───────
+ 7 │     var b: a;
+   ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
    ╭─[typescript/tests/cases/compiler/importDeclWithExportModifierAndExportAssignment.ts:6:1]
  5 │ export import a = x.c;
@@ -7756,12 +7814,28 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[typescript/tests/cases/compiler/importDeclarationInModuleDeclaration1.ts:2:5]
+ 1 │ namespace m2 {
+ 2 │     import m3 = require("use_glo_M1_public");
+   ·     ─────────────────────────────────────────
+ 3 │ }
+   ╰────
+
   × Cannot use import statement outside a module
    ╭─[typescript/tests/cases/compiler/importDeclarationInModuleDeclaration2.ts:2:5]
  1 │ function container() {
  2 │     import "fs";
    ·     ──────
  3 │ }
+   ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+   ╭─[typescript/tests/cases/compiler/importInsideModule.ts:2:5]
+ 1 │ export namespace myModule {
+ 2 │     import foo = require("importInsideModule_file1");
+   ·     ─────────────────────────────────────────────────
+ 3 │     var a = foo.x;
    ╰────
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
@@ -10132,6 +10206,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  12 │     ?(): any; //err
     ╰────
 
+  × TS(1051): A 'set' accessor cannot have an optional parameter.
+   ╭─[typescript/tests/cases/compiler/optionalSetterParam.ts:3:20]
+ 2 │ 
+ 3 │     public set bar(param?:any) { }
+   ·                    ──────────
+ 4 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/overloadConsecutiveness.ts:3:14]
  2 │ 
@@ -10803,12 +10885,148 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────
    ╰────
 
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:59:5]
+ 58 │ 
+ 59 │     import m1_im3_private = require("m1_M3_public");
+    ·     ────────────────────────────────────────────────
+ 60 │     export var m1_im3_private_v1_public = m1_im3_private.c1;
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:69:5]
+ 68 │ 
+ 69 │     import m1_im4_private = require("m1_M4_private");
+    ·     ─────────────────────────────────────────────────
+ 70 │     export var m1_im4_private_v1_public = m1_im4_private.c1;
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:121:9]
+ 120 │     namespace m2 {
+ 121 │         import errorImport = require("glo_M2_public");
+     ·         ──────────────────────────────────────────────
+ 122 │         import nonerrorImport = glo_M1_public;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:125:13]
+ 124 │         namespace m5 {
+ 125 │             import m5_errorImport = require("glo_M2_public");
+     ·             ─────────────────────────────────────────────────
+ 126 │             import m5_nonerrorImport = glo_M1_public;
+     ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:133:9]
+ 132 │     namespace m2 {
+ 133 │         declare module "abc" {
+     ·         ───────
+ 134 │         }
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:146:5]
+ 145 │ namespace m2 {
+ 146 │     import m3 = require("use_glo_M1_public");
+     ·     ─────────────────────────────────────────
+ 147 │     namespace m4 {
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:149:9]
+ 148 │         var a = 10;
+ 149 │         import m2 = require("use_glo_M1_public");
+     ·         ─────────────────────────────────────────
+ 150 │     }
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:59:5]
+ 58 │ 
+ 59 │     import m1_im3_private = require("m1_M3_public");
+    ·     ────────────────────────────────────────────────
+ 60 │     export var m1_im3_private_v1_public = m1_im3_private.c1;
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:69:5]
+ 68 │ 
+ 69 │     import m1_im4_private = require("m1_M4_private");
+    ·     ─────────────────────────────────────────────────
+ 70 │     export var m1_im4_private_v1_public = m1_im4_private.c1;
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:143:5]
+ 142 │ 
+ 143 │     import m1_im3_private = require("m2_M3_public");
+     ·     ────────────────────────────────────────────────
+ 144 │     export var m1_im3_private_v1_public = m1_im3_private.c1;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:153:5]
+ 152 │ 
+ 153 │     import m1_im4_private = require("m2_M4_private");
+     ·     ─────────────────────────────────────────────────
+ 154 │     export var m1_im4_private_v1_public = m1_im4_private.c1;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:273:9]
+ 272 │     namespace m2 {
+ 273 │         import errorImport = require("glo_M2_public");
+     ·         ──────────────────────────────────────────────
+ 274 │         import nonerrorImport = glo_M1_public;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:277:13]
+ 276 │         namespace m5 {
+ 277 │             import m5_errorImport = require("glo_M2_public");
+     ·             ─────────────────────────────────────────────────
+ 278 │             import m5_nonerrorImport = glo_M1_public;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:302:9]
+ 301 │     namespace m2 {
+ 302 │         import errorImport = require("glo_M4_private");
+     ·         ───────────────────────────────────────────────
+ 303 │         import nonerrorImport = glo_M3_private;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:306:13]
+ 305 │         namespace m5 {
+ 306 │             import m5_errorImport = require("glo_M4_private");
+     ·             ──────────────────────────────────────────────────
+ 307 │             import m5_nonerrorImport = glo_M3_private;
+     ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:314:9]
+ 313 │     namespace m2 {
+ 314 │         declare module "abc" {
+     ·         ───────
+ 315 │         }
+     ╰────
+
   × TS(1029): 'export' modifier must precede 'declare' modifier.
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
  326 │ declare export module "anotherParseError2" {
      ·         ──────
  327 │     namespace m2 {
+     ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:328:9]
+ 327 │     namespace m2 {
+ 328 │         declare module "abc" {
+     ·         ───────
+ 329 │         }
      ╰────
 
   × 'export' modifier cannot be used here.
@@ -10819,6 +11037,38 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  327 │     namespace m2 {
      ╰────
   help: Only 'declare' modifier is allowed here.
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:341:5]
+ 340 │ namespace m2 {
+ 341 │     import m3 = require("use_glo_M1_public");
+     ·     ─────────────────────────────────────────
+ 342 │     namespace m4 {
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:344:9]
+ 343 │         var a = 10;
+ 344 │         import m2 = require("use_glo_M1_public");
+     ·         ─────────────────────────────────────────
+ 345 │     }
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:350:5]
+ 349 │ export namespace m3 {
+ 350 │     import m3 = require("use_glo_M1_public");
+     ·     ─────────────────────────────────────────
+ 351 │     namespace m4 {
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:353:9]
+ 352 │         var a = 10;
+ 353 │         import m2 = require("use_glo_M1_public");
+     ·         ─────────────────────────────────────────
+ 354 │     }
+     ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/privateNameJsx.tsx:4:22]
@@ -11421,6 +11671,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  8 │ 
  9 │ function e(...{0: a = 1, 1: b = true, ...rest: rest}: [boolean, string, number]) { }
    ·                                              ──────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/semicolonsInModuleDeclarations.ts:2:27]
+ 1 │ declare namespace ambiModule {
+ 2 │    export interface i1 { };
+   ·                           ─
+ 3 │    export interface i2 { }
    ╰────
 
   × Identifier `v` has already been declared
@@ -13140,6 +13398,33 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ╰── A newline is not expected here
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts:3:9]
+ 2 │     for (let i = 0; i < 1; i++)
+ 3 │         type foo = [];
+   ·         ──────────────
+ 4 │         console.log('f1');
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts:9:9]
+  8 │     while (true)
+  9 │         type foo = [];
+    ·         ──────────────
+ 10 │         console.log('f2');
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts:15:9]
+ 14 │     if (true)
+ 15 │         type foo = [];
+    ·         ──────────────
+ 16 │         console.log('f3');
+    ╰────
+  help: Wrap this declaration in a block statement
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/typeAliasDeclareKeywordNewlines.ts:5:8]
  4 │ // The following is invalid but should declare a type alias named 'T1':
@@ -13148,6 +13433,25 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ T1 = null;
    ╰────
   help: Try inserting a semicolon here
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/typeInterfaceDeclarationsInBlockStatements1.ts:4:13]
+ 3 │ function f1() {
+ 4 │   if (true) type s = string;
+   ·             ────────────────
+ 5 │   console.log("" as s);
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/typeInterfaceDeclarationsInBlockStatements1.ts:17:5]
+ 16 │       if (true)
+ 17 │ ╭─▶     interface s {
+ 18 │ │         length: number;
+ 19 │ ╰─▶     }
+ 20 │       console.log("" as s);
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × TS(2457): Type alias name cannot be 'undefined'
    ╭─[typescript/tests/cases/compiler/typeNamedUndefined1.ts:3:17]
@@ -13644,6 +13948,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  34 │     var x = 3;
     ·             ─
  35 │     function fn() { }
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:35:19]
+ 34 │     var x = 3;
+ 35 │     function fn() { }
+    ·                   ▲
+ 36 │     class C {
     ╰────
 
   × TS(1039): Initializers are not allowed in ambient contexts.
@@ -14356,6 +14668,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ }
    ╰────
 
+  × TS(1243): 'private' modifier cannot be used with 'abstract' modifier.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:6:13]
+ 5 │     protected abstract foo_c();
+ 6 │     private abstract foo_d();
+   ·             ────────
+ 7 │ 
+   ╰────
+
   × TS(1029): 'public' modifier must precede 'abstract' modifier.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:8:14]
  7 │ 
@@ -14372,12 +14692,28 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  10 │     abstract private foo_dd();
     ╰────
 
-  × TS(1029): 'private' modifier must precede 'abstract' modifier.
+  × TS(1243): 'private' modifier cannot be used with 'abstract' modifier.
     ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:10:14]
   9 │     abstract protected foo_cc();
  10 │     abstract private foo_dd();
     ·              ───────
  11 │ 
+    ╰────
+
+  × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:12:14]
+ 11 │ 
+ 12 │     abstract static foo_d();
+    ·              ──────
+ 13 │     static abstract foo_e();
+    ╰────
+
+  × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:13:12]
+ 12 │     abstract static foo_d();
+ 13 │     static abstract foo_e();
+    ·            ────────
+ 14 │ 
     ╰────
 
   × TS(2391): Function implementation is missing or not immediately following the declaration.
@@ -14386,6 +14722,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  15 │     qux();
     ·     ───
  16 │ }
+    ╰────
+
+  × TS(1243): 'private' modifier cannot be used with 'abstract' modifier.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts:5:13]
+ 4 │     protected abstract z : number;
+ 5 │     private abstract w : number;
+   ·             ────────
+ 6 │     
+   ╰────
+
+  × TS(1243): 'private' modifier cannot be used with 'abstract' modifier.
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts:12:13]
+ 11 │     protected abstract foo_z() : number;
+ 12 │     private abstract foo_w() : number;
+    ·             ────────
+ 13 │ }
     ╰────
 
   × TS(1244): Abstract methods can only appear within an abstract class.
@@ -17118,6 +17470,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  12 │ };
     ╰────
 
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:12:5]
+ 11 │ class BDBang extends A {
+ 12 │     declare property!: any; // ! is not allowed, this is an ambient declaration
+    ·     ───────────────────────
+ 13 │ }
+    ╰────
+
   × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:15:5]
  14 │ class BOther extends A {
@@ -17283,6 +17643,26 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  172 │     prototype() {} // ok
      ╰────
 
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:252:5]
+ 251 │     namespace TestOnDefaultExportedClass_3 {
+ 252 │ ╭─▶     export default class StaticLength {
+ 253 │ │           static length: number; // error without useDefineForClassFields
+ 254 │ │           length: string; // ok
+ 255 │ ╰─▶     }
+ 256 │     }
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:264:5]
+ 263 │     namespace TestOnDefaultExportedClass_4 {
+ 264 │ ╭─▶     export default class StaticLengthFn {
+ 265 │ │           static length() {} // error without useDefineForClassFields
+ 266 │ │           length() {} // ok
+ 267 │ ╰─▶     }
+ 268 │     }
+     ╰────
+
   × Classes may not have a static property named 'prototype'
      ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:278:16]
  277 │     export default class StaticPrototype {
@@ -17291,12 +17671,72 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  279 │         prototype: string; // ok
      ╰────
 
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:277:5]
+ 276 │     namespace TestOnDefaultExportedClass_5 {
+ 277 │ ╭─▶     export default class StaticPrototype {
+ 278 │ │           static prototype: number; // always an error
+ 279 │ │           prototype: string; // ok
+ 280 │ ╰─▶     }
+ 281 │     }
+     ╰────
+
   × Classes may not have a static property named 'prototype'
      ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:290:16]
  289 │     export default class StaticPrototypeFn {
  290 │         static prototype() {} // always an error
      ·                ─────────
  291 │         prototype() {} // ok
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:289:5]
+ 288 │     namespace TestOnDefaultExportedClass_6 {
+ 289 │ ╭─▶     export default class StaticPrototypeFn {
+ 290 │ │           static prototype() {} // always an error
+ 291 │ │           prototype() {} // ok
+ 292 │ ╰─▶     }
+ 293 │     }
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:302:5]
+ 301 │     namespace TestOnDefaultExportedClass_7 {
+ 302 │ ╭─▶     export default class StaticCaller {
+ 303 │ │           static caller: number; // error without useDefineForClassFields
+ 304 │ │           caller: string; // ok
+ 305 │ ╰─▶     }
+ 306 │     }
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:314:5]
+ 313 │     namespace TestOnDefaultExportedClass_8 {
+ 314 │ ╭─▶     export default class StaticCallerFn {
+ 315 │ │           static caller() {} // error without useDefineForClassFields
+ 316 │ │           caller() {} // ok
+ 317 │ ╰─▶     }
+ 318 │     }
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:327:5]
+ 326 │     namespace TestOnDefaultExportedClass_9 {
+ 327 │ ╭─▶     export default class StaticArguments {
+ 328 │ │           static arguments: number; // error without useDefineForClassFields
+ 329 │ │           arguments: string; // ok
+ 330 │ ╰─▶     }
+ 331 │     }
+     ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:339:5]
+ 338 │     namespace TestOnDefaultExportedClass_10 {
+ 339 │ ╭─▶     export default class StaticArgumentsFn {
+ 340 │ │           static arguments() {} // error without useDefineForClassFields
+ 341 │ │           arguments() {} // ok
+ 342 │ ╰─▶     }
+ 343 │     }
      ╰────
 
   × Identifier `x` has already been declared
@@ -17382,6 +17822,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  9 │ }
    ╰────
   help: Only 'readonly' modifier is allowed here.
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:29:5]
+ 28 │ declare class C4 {
+ 29 │     a!: number;
+    ·     ───────────
+ 30 │ }
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:35:5]
+ 34 │ abstract class C5 {
+ 35 │     abstract a!: number;
+    ·     ────────────────────
+ 36 │ }
+    ╰────
 
   × TS(1264): Declarations with definite assignment assertions must also have type annotations.
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:69:10]
@@ -19588,6 +20044,94 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │     yield *;
    ·            ─
  3 │ }
+   ╰────
+
+  × TS(1221): Generators are not allowed in an ambient context.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext1.ts:2:15]
+ 1 │ declare class C {
+ 2 │     *generator(): any;
+   ·               ────────
+ 3 │ }
+   ╰────
+
+  × TS(1221): Generators are not allowed in an ambient context.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext2.ts:2:5]
+ 1 │ declare namespace M {
+ 2 │     function *generator(): any;
+   ·     ───────────────────────────
+ 3 │ }
+   ╰────
+
+  × TS(1221): Generators are not allowed in an ambient context.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext3.d.ts:2:15]
+ 1 │ declare class C {
+ 2 │     *generator(): any;
+   ·               ────────
+ 3 │ }
+   ╰────
+
+  × TS(1221): Generators are not allowed in an ambient context.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext4.d.ts:2:5]
+ 1 │ declare namespace M {
+ 2 │     function *generator(): any;
+   ·     ───────────────────────────
+ 3 │ }
+   ╰────
+
+  × TS(1222): An overload signature cannot be declared as a generator.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads1.ts:2:5]
+ 1 │ namespace M {
+ 2 │     function* f(s: string): Iterable<any>;
+   ·     ──────────────────────────────────────
+ 3 │     function* f(s: number): Iterable<any>;
+   ╰────
+
+  × TS(1222): An overload signature cannot be declared as a generator.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads1.ts:3:5]
+ 2 │     function* f(s: string): Iterable<any>;
+ 3 │     function* f(s: number): Iterable<any>;
+   ·     ──────────────────────────────────────
+ 4 │     function* f(s: any): Iterable<any> { }
+   ╰────
+
+  × TS(1221): Generators are not allowed in an ambient context.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts:2:5]
+ 1 │ declare namespace M {
+ 2 │     function* f(s: string): Iterable<any>;
+   ·     ──────────────────────────────────────
+ 3 │     function* f(s: number): Iterable<any>;
+   ╰────
+
+  × TS(1221): Generators are not allowed in an ambient context.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts:3:5]
+ 2 │     function* f(s: string): Iterable<any>;
+ 3 │     function* f(s: number): Iterable<any>;
+   ·     ──────────────────────────────────────
+ 4 │     function* f(s: any): Iterable<any>;
+   ╰────
+
+  × TS(1221): Generators are not allowed in an ambient context.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads2.ts:4:5]
+ 3 │     function* f(s: number): Iterable<any>;
+ 4 │     function* f(s: any): Iterable<any>;
+   ·     ───────────────────────────────────
+ 5 │ }
+   ╰────
+
+  × TS(1222): An overload signature cannot be declared as a generator.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts:2:7]
+ 1 │ class C {
+ 2 │     *f(s: string): Iterable<any>;
+   ·       ───────────────────────────
+ 3 │     *f(s: number): Iterable<any>;
+   ╰────
+
+  × TS(1222): An overload signature cannot be declared as a generator.
+   ╭─[typescript/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts:3:7]
+ 2 │     *f(s: string): Iterable<any>;
+ 3 │     *f(s: number): Iterable<any>;
+   ·       ───────────────────────────
+ 4 │     *f(s: any): Iterable<any> { }
    ╰────
 
   × A 'yield' expression is only allowed in a generator body.
@@ -22169,6 +22713,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  13 │ 
     ╰────
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/externalModules/initializersInDeclarations.ts:15:2]
+ 14 │ declare namespace M1 {
+ 15 │     while(true);
+    ·     ────────────
+ 16 │ 
+    ╰────
+
   × TS(1039): Initializers are not allowed in ambient contexts.
     ╭─[typescript/tests/cases/conformance/externalModules/initializersInDeclarations.ts:17:18]
  16 │ 
@@ -23463,6 +24015,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: TypeScript transforms 'import ... =' to 'const ... ='
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitWithPackageExports.ts:5:1]
+ 4 │ import * as type from "inner";
+ 5 │ cjs;
+   · ────
+ 6 │ mjs;
+   ╰────
+
   × TS(7060): This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint.
    ╭─[typescript/tests/cases/conformance/node/nodeModulesForbidenSyntax.ts:2:12]
  1 │ // cjs format file
@@ -23557,6 +24117,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  7 │         super();
    ╰────
 
+  × TS(1040): 'override' modifier cannot be used in an ambient context.
+    ╭─[typescript/tests/cases/conformance/override/override5.ts:14:14]
+ 13 │ 
+ 14 │     override declare p2: number;
+    ·              ───────
+ 15 │ 
+    ╰────
+
   × TS(1029): 'override' modifier must precede 'readonly' modifier.
     ╭─[typescript/tests/cases/conformance/override/override5.ts:16:14]
  15 │ 
@@ -23596,6 +24164,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  44 │     override abstract f(): void;
     ·              ────────
  45 │     abstract override b(): void;
+    ╰────
+
+  × TS(1040): 'override' modifier cannot be used in an ambient context.
+    ╭─[typescript/tests/cases/conformance/override/override7.ts:11:14]
+ 10 │ 
+ 11 │     override declare p2: number;
+    ·              ───────
+ 12 │ 
     ╰────
 
   × TS(1029): 'override' modifier must precede 'readonly' modifier.
@@ -23834,6 +24410,30 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Remove parameters except the first one here
 
+  × TS(1094): An accessor cannot have type parameters.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserGetAccessorWithTypeParameters1.ts:2:10]
+ 1 │ class C {
+ 2 │   get foo<T>() { }
+   ·          ───
+ 3 │ }
+   ╰────
+
+  × TS(1095): A 'set' accessor cannot have a return type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeAnnotation1.ts:2:14]
+ 1 │ class C {
+ 2 │    set foo(v): number {
+   ·              ────────
+ 3 │    }
+   ╰────
+
+  × TS(1094): An accessor cannot have type parameters.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeParameters1.ts:2:11]
+ 1 │ class C {
+ 2 │    set foo<T>(v) { }
+   ·           ───
+ 3 │ }
+   ╰────
+
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression1.ts:1:10]
  1 │ var v = (public x: string) => { };
@@ -24049,6 +24649,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Remove the extra base class or use interfaces for multiple inheritance
 
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts:2:3]
+ 1 │ declare namespace M {
+ 2 │   declare class C {
+   ·   ───────
+ 3 │   }
+   ╰────
+
   × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration8.ts:2:3]
  1 │ class C {
@@ -24174,6 +24782,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │   1, 2, 3
    ·   ─
  3 │ }
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts:2:3]
+ 1 │ declare namespace M {
+ 2 │   declare enum E {
+   ·   ───────
+ 3 │   }
    ╰────
 
   × Identifier expected. 'void' is a reserved word that cannot be used here.
@@ -24809,6 +25425,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·          ─
    ╰────
 
+  × TS(1063): An export assignment cannot be used in a namespace.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment5.ts:2:5]
+ 1 │ namespace M {
+ 2 │     export = A;
+   ·     ───────────
+ 3 │ }
+   ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment7.ts:4:1]
  3 │ 
@@ -24824,6 +25448,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ 
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment9.ts:2:3]
+ 1 │ namespace Foo {
+ 2 │   export default foo;
+   ·   ───────────────────
+ 3 │ }
+   ╰────
+
+  × TS(1319): A default export can only be used in an ECMAScript-style module.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment9.ts:6:3]
+ 5 │ namespace Bar {
+ 6 │   export default bar;
+   ·   ───────────────────
+ 7 │ }
+   ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Expressions/parseIncompleteBinaryExpression1.ts:1:9]
@@ -24898,6 +25538,21 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Expressions/parserUnaryExpression7.ts:1:4]
  1 │ ++ new Foo();
    ·    ─────────
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration1.ts:2:3]
+ 1 │ declare namespace M {
+ 2 │   declare function F();
+   ·   ───────
+ 3 │ }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration2.d.ts:1:14]
+ 1 │ function F() {
+   ·              ▲
+ 2 │ }
    ╰────
 
   × TS(1183): An implementation cannot be declared in ambient contexts.
@@ -25130,6 +25785,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ }
    ╰────
 
+  × TS(1268): An index signature parameter type must be 'string', 'number', 'symbol', or a template literal type.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature6.ts:2:4]
+ 1 │ interface I {
+ 2 │   [a:boolean]
+   ·    ─────────
+ 3 │ }
+   ╰────
+
   × TS(1021): An index signature must have a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature6.ts:2:3]
  1 │ interface I {
@@ -25263,6 +25926,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  1 │ class C {
  2 │    set Foo(a = 1) { }
    ·           ───────
+ 3 │ }
+   ╰────
+
+  × TS(1051): A 'set' accessor cannot have an optional parameter.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts:2:12]
+ 1 │ class C {
+ 2 │    set Foo(a?: number) { }
+   ·            ──────────
  3 │ }
    ╰────
 
@@ -25459,6 +26130,30 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ────
    ╰────
 
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration3.ts:2:3]
+ 1 │ declare namespace M {
+ 2 │   declare namespace M2 {
+   ·   ───────
+ 3 │   }
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration4.d.ts:2:3]
+ 1 │ namespace M {
+ 2 │   declare namespace M1 {
+   ·   ───────
+ 3 │   }
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration5.ts:3:5]
+ 2 │   declare namespace M2 {
+ 3 │     declare namespace M3 {
+   ·     ───────
+ 4 │     }
+   ╰────
+
   × Expected `(` but found `;`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ObjectTypes/parserObjectType5.ts:3:7]
  2 │    A: B
@@ -25648,6 +26343,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  1431 │ 
       ╰────
   help: Try inserting a semicolon here
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509618.ts:2:20]
+ 1 │ declare namespace ambiModule {
+ 2 │    interface i1 { };
+   ·                    ─
+ 3 │ }
+   ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509630.ts:3:1]
@@ -26124,6 +26827,18 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ }
    ╰────
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBlockStatement1.d.ts:1:1]
+ 1 │ {}
+   · ──
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBreakStatement1.d.ts:1:1]
+ 1 │ break;
+   · ──────
+   ╰────
+
   × Illegal break statement
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBreakStatement1.d.ts:1:1]
  1 │ break;
@@ -26131,12 +26846,37 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserContinueStatement1.d.ts:1:1]
+ 1 │ continue;
+   · ─────────
+   ╰────
+
   × Illegal continue statement: no surrounding iteration statement
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserContinueStatement1.d.ts:1:1]
  1 │ continue;
    · ─────────
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDebuggerStatement1.d.ts:1:1]
+ 1 │ debugger;
+   · ─────────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDoStatement1.d.ts:1:1]
+ 1 │ ╭─▶ do {
+ 2 │ │   }
+ 3 │ ╰─▶ while (e);
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement1.d.ts:1:1]
+ 1 │ ╭─▶ for (var i of e) {
+ 2 │ ╰─▶ }
+   ╰────
 
   × Expected `;` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement2.ts:1:13]
@@ -26204,6 +26944,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserEmptyStatement1.d.ts:1:1]
+ 1 │ ;
+   · ─
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserExpressionStatement1.d.ts:1:1]
+ 1 │ Foo();
+   · ──────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement1.d.ts:1:1]
+ 1 │ ╭─▶ for (var i in e) {
+ 2 │ ╰─▶ }
+   ╰────
+
   × Identifier expected. 'in' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement2.ts:1:10]
  1 │ for (var in X) {
@@ -26256,6 +27014,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement1.d.ts:1:1]
+ 1 │ ╭─▶ for (;;) {
+ 2 │ ╰─▶ }
+   ╰────
+
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement4.ts:1:6]
  1 │ for (a = 1 in b) {
@@ -26284,16 +27048,66 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ }
    ╰────
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserIfStatement1.d.ts:1:1]
+ 1 │ ╭─▶ if (foo) {
+ 2 │ ╰─▶ }
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserLabeledStatement1.d.ts:1:1]
+ 1 │ ╭─▶ foo:
+ 2 │ ╰─▶   bar();
+   ╰────
+
   × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserReturnStatement1.d.ts:1:1]
  1 │ return;
    · ──────
    ╰────
 
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserReturnStatement1.d.ts:1:1]
+ 1 │ return;
+   · ───────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserSwitchStatement1.d.ts:1:1]
+ 1 │ ╭─▶ switch (foo) {
+ 2 │ ╰─▶ }
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserThrowStatement1.d.ts:1:1]
+ 1 │ throw e;
+   · ────────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserTryStatement1.d.ts:1:1]
+ 1 │ ╭─▶ try {
+ 2 │ │   }
+ 3 │ │   catch (e) {
+ 4 │ ╰─▶ }
+   ╰────
+
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserVariableStatement1.d.ts:1:9]
  1 │ var v = 1;
    ·         ─
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserWhileStatement1.d.ts:1:1]
+ 1 │ ╭─▶ while (e) {
+ 2 │ ╰─▶ }
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserWithStatement1.d.ts:1:1]
+ 1 │ ╭─▶ with (foo) {
+ 2 │ ╰─▶ }
    ╰────
 
   × 'with' statements are not allowed
@@ -26472,6 +27286,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/VariableDeclarations/parserVariableDeclaration10.ts:1:7]
  1 │ var a,;
    ·       ─
+   ╰────
+
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/VariableDeclarations/parserVariableDeclaration4.ts:2:4]
+ 1 │ declare namespace M {
+ 2 │    declare var v;
+   ·    ───────
+ 3 │ }
    ╰────
 
   × Unexpected token
@@ -26683,6 +27505,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·           ──────
    ╰────
   help: No modifiers are allowed here.
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement1.d.ts:1:1]
+ 1 │ ╭─▶ for (var i of e) {
+ 2 │ ╰─▶ }
+   ╰────
 
   × Expected `;` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement2.ts:1:13]
@@ -27973,6 +28801,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ label: enum E {}
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:4:8]
+ 3 │ label: async function gen1() { }
+ 4 │ label: enum E {}
+   ·        ─────────
+ 5 │ label: interface I {}
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:5:8]
+ 4 │ label: enum E {}
+ 5 │ label: interface I {}
+   ·        ──────────────
+ 6 │ label: class C { }
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × Invalid class declaration
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:6:8]
  5 │ label: interface I {}
@@ -28007,6 +28853,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ label: enum E {}
    ╰────
 
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:4:8]
+ 3 │ label: async function gen1() { }
+ 4 │ label: enum E {}
+   ·        ─────────
+ 5 │ label: interface I {}
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:5:8]
+ 4 │ label: enum E {}
+ 5 │ label: interface I {}
+   ·        ──────────────
+ 6 │ label: class C { }
+   ╰────
+  help: Wrap this declaration in a block statement
+
   × Invalid class declaration
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:6:8]
  5 │ label: interface I {}
@@ -28040,6 +28904,24 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·        ─────────────────────
  5 │ label: enum E {}
    ╰────
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:5:8]
+ 4 │ label: async function gen1() { }
+ 5 │ label: enum E {}
+   ·        ─────────
+ 6 │ label: interface I {}
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:6:8]
+ 5 │ label: enum E {}
+ 6 │ label: interface I {}
+   ·        ──────────────
+ 7 │ label: class C { }
+   ╰────
+  help: Wrap this declaration in a block statement
 
   × Invalid class declaration
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:7:8]

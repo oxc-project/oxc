@@ -1,6 +1,9 @@
-//! Language-agnostic format options shared by all formatter implementations.
-
 use std::{fmt, num::ParseIntError, str::FromStr};
+
+// Language-agnostic format options shared by all formatter implementations.
+//
+// Part of [`crate::FormatOptions`] because the printing phase consumes these options.
+// NOTE: Do NOT define language-specific options here, even if they look like they could be shared.
 
 #[derive(Debug, Default, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum IndentStyle {

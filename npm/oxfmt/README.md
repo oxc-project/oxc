@@ -56,3 +56,5 @@ Run
 
 - `npx --yes oxfmt@latest` in your JavaScript / TypeScript codebase and see it complete in milliseconds. No configurations are required.
 - `npx oxfmt@latest --help` for quick usage instructions.
+- `npx skills add https://github.com/oxc-project/oxc --skill migrate-oxfmt` to install the [`migrate-oxfmt`](https://skills.sh/oxc-project/oxc/migrate-oxfmt) skill, then run `/migrate-oxfmt` to migrate from Prettier or Biome.
+- See also [migrate from Prettier](https://oxc.rs/docs/guide/usage/formatter/migrate-from-prettier.html).

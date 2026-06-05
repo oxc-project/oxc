@@ -1,0 +1,43 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[
+  1,
+  2 // last element trailing comment
+]
+
+==================== Output ====================
+------------------------------------
+{ printWidth: 80, variant: "jsonc" }
+------------------------------------
+[
+  1,
+  2, // last element trailing comment
+]
+
+-------------------------------------
+{ printWidth: 100, variant: "jsonc" }
+-------------------------------------
+[
+  1,
+  2, // last element trailing comment
+]
+
+-----------------------------------------------------------
+{ printWidth: 80, trailingComma: "none", variant: "jsonc" }
+-----------------------------------------------------------
+[
+  1,
+  2 // last element trailing comment
+]
+
+------------------------------------------------------------
+{ printWidth: 100, trailingComma: "none", variant: "jsonc" }
+------------------------------------------------------------
+[
+  1,
+  2 // last element trailing comment
+]
+
+===================== End =====================

@@ -83,7 +83,8 @@ const COMMENT_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Comment` in Ru
 debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);
 
 // Reset `#loc` field on a `Comment` class instance.
-let resetCommentLoc: (comment: Comment) => void;
+// Copied into a `const` below after being defined in class static block.
+let resetCommentLocTemp: (comment: Comment) => void;
 
 // Get `#loc` field on a `Comment` class instance.
 // Only used in debug build (tests).
@@ -134,13 +135,17 @@ class Comment implements Span {
 
   static {
     // Defined in static block to avoid exposing this as a public method
-    resetCommentLoc = (comment: Comment) => {
+    resetCommentLocTemp = (comment: Comment) => {
       comment.#loc = null;
     };
 
     if (DEBUG) getCommentPrivateLoc = (comment: Comment) => comment.#loc;
   }
 }
+
+// Reset `#loc` field on a `Comment` class instance.
+// Copied into a const here to avoid checks at call site (`let` binding could be re-assigned).
+const resetCommentLoc = resetCommentLocTemp;
 
 // Make `loc` property enumerable so `for (const key in comment) ...` includes `loc`
 Object.defineProperty(Comment.prototype, "loc", { enumerable: true });

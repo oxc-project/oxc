@@ -260,7 +260,7 @@ fn format_all_args_broken_out<'a, 'b>(
             soft_block_indent(&format_with(move |f| {
                 for (index, argument) in node.iter().enumerate() {
                     if index > 0 {
-                        match f.source_text().get_lines_before(argument.span(), f.comments()) {
+                        match f.lines_before(argument.span()) {
                             0 | 1 => write!(f, [soft_line_break_or_space()]),
                             _ => write!(f, [empty_line()]),
                         }
@@ -669,7 +669,7 @@ fn write_grouped_arguments<'a>(
             // We have to get the lines before the argument has been formatted, because it relies on
             // the comments before the argument. After formatting, the comments might marked as printed,
             // which would lead to a wrong line count.
-            let lines_before = f.source_text().get_lines_before(argument.span(), f.comments());
+            let lines_before = f.lines_before(argument.span());
             let comma = (last_index != index).then_some(",");
 
             let interned = f.intern(&format_once(|f| {

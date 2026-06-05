@@ -11,10 +11,6 @@ pub struct SimpleFormatContext<'src> {
 }
 
 impl<'src> SimpleFormatContext<'src> {
-    pub fn new(options: SimpleFormatOptions) -> Self {
-        Self { options, source_code: "", tailwind_classes: Vec::new() }
-    }
-
     #[must_use]
     pub fn with_source_code(mut self, code: &'src str) -> Self {
         self.source_code = code;

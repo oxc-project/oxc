@@ -248,6 +248,7 @@ pub(crate) mod typescript {
     pub mod explicit_function_return_type;
     pub mod explicit_member_accessibility;
     pub mod explicit_module_boundary_types;
+    pub mod method_signature_style;
     pub mod no_array_delete;
     pub mod no_base_to_string;
     pub mod no_confusing_non_null_assertion;
@@ -844,6 +845,7 @@ pub(crate) mod node {
 
 /// <https://github.com/vuejs/eslint-plugin-vue>
 pub(crate) mod vue {
+    pub mod component_definition_name_casing;
     pub mod define_emits_declaration;
     pub mod define_props_declaration;
     pub mod define_props_destructuring;
@@ -863,11 +865,18 @@ pub(crate) mod vue {
     pub mod no_lifecycle_after_await;
     pub mod no_multiple_slot_args;
     pub mod no_required_prop_with_default;
+    pub mod no_reserved_component_names;
+    pub mod no_reserved_keys;
+    pub mod no_reserved_props;
     pub mod no_shared_component_data;
     pub mod no_this_in_before_route_enter;
     pub mod no_watch_after_await;
     pub mod prefer_import_from_vue;
+    pub mod prop_name_casing;
     pub mod require_default_export;
+    pub mod require_direct_export;
+    pub mod require_prop_type_constructor;
+    pub mod require_prop_types;
     pub mod require_render_return;
     pub mod require_slots_as_functions;
     pub mod require_typed_ref;

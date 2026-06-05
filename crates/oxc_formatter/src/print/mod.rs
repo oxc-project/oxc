@@ -38,7 +38,7 @@ pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
-pub use fragment::{FormatVueBindingParams, FormatVueScriptGeneric};
+pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use function::FormatFunctionOptions;
 
 use cow_utils::CowUtils;
@@ -54,9 +54,7 @@ use crate::{
         Format, JsFormatter,
         prelude::*,
         separated::FormatSeparatedIter,
-        token::number::{
-            NumberFormatOptions, format_number_token, format_trimmed_number, is_simple_number,
-        },
+        token::number::{format_number_token, format_trimmed_number, is_simple_number},
         trivia::{
             DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
             FormatTrailingComments,
@@ -821,7 +819,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             }
 
             if has_dangling_comments && let Some(first_comment) = comments.first() {
-                if f.source_text().get_lines_before(first_comment.span, f.comments()) > 1 {
+                if f.lines_before(first_comment.span) > 1 {
                     write!(f, empty_line());
                 }
                 write!(
@@ -1002,7 +1000,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NullLiteral> {
 impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let source_text = f.source_text().text_for(self);
-        let options = NumberFormatOptions::keep_one_trailing_decimal_zero();
+        // JS keeps one trailing decimal zero (`x.00000` -> `x.0`); see `format_trimmed_number`.
+        let keep_one_trailing_decimal_zero = true;
 
         // Check if this numeric literal is a property key (not a value) that should be quoted
         // when quoteProps is "consistent" and another property requires quotes.
@@ -1019,7 +1018,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
 
         if is_property_key && f.context().is_quote_needed() {
             // Get the formatted number text
-            let formatted = format_trimmed_number(source_text, options);
+            let formatted = format_trimmed_number(source_text, keep_one_trailing_decimal_zero);
 
             // Check if the number is "simple" (only digits, or digits.digits)
             // and the value matches the formatted representation.
@@ -1049,7 +1048,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
             }
         }
 
-        format_number_token(source_text, options).fmt(f);
+        format_number_token(source_text, keep_one_trailing_decimal_zero).fmt(f);
     }
 }
 

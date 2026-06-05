@@ -5,7 +5,9 @@
 //! the JS-specific operations are exposed via the [`JsFormatter`] type alias and an
 //! extension trait that is blanket-implemented for the alias.
 
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
+
+use crate::source_text::SourceTextExt as _;
 
 use crate::formatter::{
     Buffer, Comments, Format, Formatter, GroupId, JsFormatContext, SourceText,
@@ -26,6 +28,7 @@ pub type JsFormatter<'buf, 'ast> = Formatter<'buf, 'ast, JsFormatContext<'ast>>;
 pub trait JsFormatterExt<'buf, 'ast> {
     fn source_text(&self) -> SourceText<'ast>;
     fn comments(&self) -> &Comments<'_>;
+    fn lines_before(&self, span: Span) -> usize;
     fn group_id(&self, debug_name: &'static str) -> GroupId;
     fn group_id_builder(&self) -> &UniqueGroupIdBuilder;
     fn join_nodes_with_soft_line<'fmt>(&'fmt mut self) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line>;
@@ -48,6 +51,13 @@ impl<'buf, 'ast> JsFormatterExt<'buf, 'ast> for Formatter<'buf, 'ast, JsFormatCo
     #[inline]
     fn comments(&self) -> &Comments<'_> {
         self.context().comments()
+    }
+
+    /// Returns the number of line breaks before `span`, counting the leading trivia
+    /// of the first not-yet-printed comment. See [`SourceText::get_lines_before`].
+    #[inline]
+    fn lines_before(&self, span: Span) -> usize {
+        self.source_text().get_lines_before(span, self.comments().first_unprinted_span())
     }
 
     /// Creates a new group id that is unique to this document.

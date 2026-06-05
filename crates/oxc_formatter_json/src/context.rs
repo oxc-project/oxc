@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 use oxc_ast::Comment;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter_core::FormatContext;
+use oxc_formatter_core::{FormatContext, SourceText};
 use oxc_span::Span;
 
 use crate::{comments::Comments, options::JsonFormatOptions};
@@ -10,9 +10,9 @@ use crate::{comments::Comments, options::JsonFormatOptions};
 /// Formatting context for JSON.
 pub struct JsonFormatContext<'a> {
     options: JsonFormatOptions,
-    source_code: &'a str,
+    source_text: SourceText<'a>,
     comments: Comments<'a>,
-    /// Byte offset within `source_code` where the user's original source begins.
+    /// Byte offset within `source_text` where the user's original source begins.
     /// `1` on the wrapped parse path (skip the leading `(`), `0` on the bare fallback.
     /// Used by [`Self::report_invalid_json`] to report user-visible line/column.
     source_offset: u32,
@@ -31,7 +31,7 @@ impl<'a> JsonFormatContext<'a> {
     ) -> Self {
         Self {
             options,
-            source_code,
+            source_text: SourceText::new(source_code),
             comments: Comments::new(comments),
             source_offset,
             error: Cell::new(None),
@@ -39,9 +39,10 @@ impl<'a> JsonFormatContext<'a> {
     }
 
     /// Returns the source text with the arena lifetime (vs the trait's borrow-elided `&str`).
-    /// Slices taken via this method don't have to be re-allocated for `text(...)`.
-    pub fn source_text(&self) -> &'a str {
-        self.source_code
+    /// Slices taken via this method (e.g. `slice_range`, `bytes_range`) carry the `'a` lifetime,
+    /// so they don't have to be re-allocated for `text(...)`.
+    pub fn source_text(&self) -> SourceText<'a> {
+        self.source_text
     }
 
     /// Returns the comment cursor.
@@ -79,6 +80,6 @@ impl FormatContext for JsonFormatContext<'_> {
     }
 
     fn source_code(&self) -> &str {
-        self.source_code
+        &self.source_text
     }
 }

@@ -27,10 +27,11 @@ mod macros;
 mod options;
 pub mod printer;
 mod simple_context;
+mod source_text;
+pub mod spec;
 mod state;
 mod text_range;
 mod traits;
-pub mod util;
 
 #[cfg(feature = "test_harness")]
 pub mod test_support;
@@ -60,7 +61,8 @@ pub use options::{
     LineWidthFromIntError, ParseFormatNumberError,
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
-pub use simple_context::{SimpleFormatContext, SimpleFormatOptions};
+pub(crate) use simple_context::SimpleFormatContext;
+pub use source_text::SourceText;
 pub use state::FormatState;
 pub use text_range::TextRange;
 pub use traits::{FormatContext, FormatOptions};
