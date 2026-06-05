@@ -657,14 +657,33 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
                     stmt.update.as_ref().is_some_and(|update| update.span() == self.span());
                 !(is_initializer || is_update)
             }
-            // Default: need parentheses in most other contexts
-            // - `new (a = b)`
-            // - `(a = b).prop`
-            // - `await (a = b)`
-            // - `class { [a = 1]; }`
-            // - etc.
-            // When `assignmentExpressionParens: "avoid"` is set, skip the extra stylistic parens.
-            _ => f.options().assignment_expression_parentheses.is_always(),
+            // Operator-precedence contexts always require parens regardless of the option —
+            // omitting them changes semantics or produces invalid syntax:
+            // - `await (a = b)` → `(await a) = b` → ReferenceError
+            // - `!(a = b)` → `(!a) = b` → invalid LHS
+            // - `(a = b) + c` / `c + (a = b)` → changes semantics or gives invalid LHS
+            // - `(a = b) as T` → `a = b as T` = `a = (b as T)` → changes what gets typed
+            AstNodes::AwaitExpression(_)
+            | AstNodes::UnaryExpression(_)
+            | AstNodes::BinaryExpression(_)
+            | AstNodes::LogicalExpression(_)
+            | AstNodes::PrivateInExpression(_)
+            | AstNodes::TSAsExpression(_)
+            | AstNodes::TSSatisfiesExpression(_)
+            | AstNodes::TSTypeAssertion(_)
+            | AstNodes::TSInstantiationExpression(_) => true,
+            // `(a = b) ? c : d` test → `a = b ? c : d` = `a = (b?c:d)` changes semantics;
+            // consequent/alternate accept AssignmentExpression directly, so parens are optional there
+            AstNodes::ConditionalExpression(expr) if expr.test.span() == self.span() => true,
+            // Structural contexts (member access, call/new callees, tagged templates, etc.)
+            // always require parens; everything else is purely stylistic — option controls it.
+            // - `class { [a = 1]; }` → brackets already delimit the expression
+            // - `foo((a = b))` / `new Foo((a = b))` → argument position
+            // - `return (a = b)` / `yield (a = b)` / `...(a = b)` → take AssignmentExpression directly
+            _ => {
+                update_or_lower_expression_needs_parens(self.span(), self.parent())
+                    || f.options().assignment_expression_parentheses.is_always()
+            }
         }
     }
 }
