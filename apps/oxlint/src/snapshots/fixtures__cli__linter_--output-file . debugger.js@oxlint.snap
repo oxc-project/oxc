@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --output-file . debugger.js
+working directory: fixtures/cli/linter
+----------
+Cannot write to output file path, it is a directory: .
+----------
+CLI result: InvalidOutputFile
+----------

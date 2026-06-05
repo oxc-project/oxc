@@ -2,7 +2,7 @@ use std::{
     env,
     ffi::OsStr,
     fmt::Debug,
-    io::{ErrorKind, Write},
+    io::{BufWriter, ErrorKind, Write},
     path::{Path, PathBuf, absolute},
     sync::Arc,
     time::Instant,
@@ -72,6 +72,7 @@ impl CliRunner {
 
     /// # Panics
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+        let output_file_path = self.options.output_options.output_file;
         let format_str = self.options.output_options.format;
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
@@ -159,6 +160,49 @@ impl CliRunner {
 
             override_builder = Some(builder);
         }
+
+        // Open the output file early so invalid paths are caught before any lint/fix side effects.
+        let mut file_bw: BufWriter<std::fs::File>;
+        let output: &mut dyn Write = match output_file_path {
+            Some(path) => {
+                if path.is_dir() {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Cannot write to output file path, it is a directory: {}\n",
+                            path.display()
+                        ),
+                    );
+                    return CliRunResult::InvalidOutputFile;
+                }
+                if let Some(parent) = path.parent() {
+                    if let Err(err) = std::fs::create_dir_all(parent) {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "Failed to create output directory {}: {err}\n",
+                                parent.display()
+                            ),
+                        );
+                        return CliRunResult::InvalidOutputFile;
+                    }
+                }
+                match std::fs::File::create(&path) {
+                    Ok(f) => {
+                        file_bw = BufWriter::new(f);
+                        &mut file_bw
+                    }
+                    Err(err) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!("Failed to open output file {}: {err}\n", path.display()),
+                        );
+                        return CliRunResult::InvalidOutputFile;
+                    }
+                }
+            }
+            None => stdout,
+        };
 
         if paths.is_empty() {
             // If explicit paths were provided, but all have been
@@ -517,7 +561,7 @@ impl CliRunner {
 
         drop(tx_error);
 
-        let diagnostic_result = diagnostic_service.run(stdout);
+        let diagnostic_result = diagnostic_service.run(output);
 
         let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
             OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
@@ -538,7 +582,7 @@ impl CliRunner {
             oxlint_suppression_file_action,
             rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
         }) {
-            print_and_flush_stdout(stdout, &end);
+            print_and_flush_stdout(output, &end);
         }
 
         // When --suppress-all is used and the file was written successfully,
@@ -1886,6 +1930,49 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_tuple_rules".into())
             .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_output_file_default_format() {
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        let path = tmp.path().to_str().unwrap();
+        let args = &["--output-file", path, "debugger.js"];
+
+        let stdout = Tester::new().with_cwd("fixtures/cli/linter".into()).test_output_verbose(args);
+        assert!(stdout.is_empty(), "stdout should be empty when --output-file is set");
+
+        let content = std::fs::read_to_string(tmp.path()).unwrap();
+        assert!(content.contains("no-debugger"), "output file should contain lint results");
+    }
+
+    #[test]
+    fn test_output_file_json_format() {
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        let path = tmp.path().to_str().unwrap();
+        let args = &["--format", "json", "--output-file", path, "debugger.js"];
+        Tester::new().with_cwd("fixtures/cli/linter".into()).test_output_verbose(args);
+
+        let content = std::fs::read_to_string(tmp.path()).unwrap();
+        // Parse output file as JSON. If parsing fails, the test will fail.
+        serde_json::from_str::<serde_json::Value>(&content).expect("Failed to parse JSON");
+    }
+
+    #[test]
+    fn test_output_file_rejects_directory() {
+        let args = &["--output-file", ".", "debugger.js"];
+        Tester::new().with_cwd("fixtures/cli/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_output_file_creates_parent_dirs() {
+        let tmp_dir = tempfile::TempDir::new().unwrap();
+        let path = tmp_dir.path().join("nested/dir/output.txt");
+        let path_str = path.to_str().unwrap();
+        let args = &["--output-file", path_str, "debugger.js"];
+
+        assert!(!path.exists(), "path should not exist");
+        Tester::new().with_cwd("fixtures/cli/linter".into()).test_output(args);
+        assert!(path.exists(), "path should exist");
     }
 }
 

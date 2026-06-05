@@ -281,6 +281,10 @@ pub struct OutputOptions {
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
 
+    /// Write the output of linting results to a specified file.
+    #[bpaf(long, short, argument("PATH"), hide_usage)]
+    pub output_file: Option<PathBuf>,
+
     #[bpaf(
         long("debug"),
         argument::<DebugOptions>("OPTIONS"),
