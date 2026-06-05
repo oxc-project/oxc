@@ -264,7 +264,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportAttribute
         write!(
             f,
             group(&format_inner)
-                .should_expand(f.source_text().has_newline_before(first.span.start))
+                .should_expand(f.source_text().has_line_terminator_before(first.span.start))
         );
     }
 }

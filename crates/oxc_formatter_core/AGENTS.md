@@ -60,8 +60,9 @@ Parameterizing language differences (sharpened gate 2), when a shared helper nee
   - e.g. `normalize_string` takes a raw quote byte, `SourceText` takes byte offsets
 - a parameter that would have to encode the language's grammar / logic structure is the language smuggled in disguise → it belongs in the consumer
 
-`SourceText` follows this line. Core owns mechanical, offset-keyed access only (slicing, raw-byte newline checks).
+`SourceText` follows this line. Core owns mechanical, offset-keyed access only (slicing, raw-byte lookups).
 Lexical-semantic scanning whose answer is language-defined, what counts as a newline (U+2028/U+2029), a comment, or ASI/parens trivia lives in the consumer (`oxc_formatter`'s `SourceTextExt`), not here.
+Even raw newline detection proved to be consumer-owned (every consumer needs the LS/PS-aware variant in addition to `\r|\n`), so core keeps no newline helpers.
 Quote-style options, comment rules, and the like are likewise consumer-owned.
 
 ## Cargo features

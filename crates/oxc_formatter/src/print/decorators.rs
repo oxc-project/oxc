@@ -101,5 +101,7 @@ fn should_expand_decorators<'a>(
     decorators: &AstNode<'a, Vec<'a, Decorator<'a>>>,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
-    decorators.iter().any(|decorator| f.source_text().has_newline_after(decorator.span().end))
+    decorators
+        .iter()
+        .any(|decorator| f.source_text().has_line_terminator_after(decorator.span().end))
 }
