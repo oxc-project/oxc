@@ -24,6 +24,7 @@ impl RuleRunner for crate::rules::import::default::Default {
 impl RuleRunner for crate::rules::import::enforce_node_protocol_usage::EnforceNodeProtocolUsage {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::CallExpression,
+        AstType::ExportAllDeclaration,
         AstType::ExportNamedDeclaration,
         AstType::ImportDeclaration,
         AstType::ImportExpression,

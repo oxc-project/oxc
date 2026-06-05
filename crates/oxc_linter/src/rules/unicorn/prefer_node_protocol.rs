@@ -15,6 +15,20 @@ fn prefer_node_protocol_diagnostic(span: Span, module_name: &str) -> OxcDiagnost
         .with_label(span)
 }
 
+fn disallow_node_protocol_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Disallow using the `node:` protocol when importing Node.js builtin modules.",
+    )
+    .with_help(format!("Prefer `{module_name}` over `node:{module_name}`."))
+    .with_label(span)
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum NodeProtocolMode {
+    Always,
+    Never,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct PreferNodeProtocol;
 
@@ -49,24 +63,67 @@ pub(crate) fn check_node_protocol_path(
     string_lit_value: oxc_str::Str<'_>,
     span: Span,
     ctx: &LintContext,
+    mode: NodeProtocolMode,
 ) {
-    let module_name = if let Some((prefix, postfix)) = string_lit_value.split_once('/') {
-        // `e.g. ignore "assert/"`
-        if postfix.is_empty() { string_lit_value.as_str() } else { prefix }
-    } else {
-        string_lit_value.as_str()
+    let value = string_lit_value.as_str();
+    let Some(value_without_protocol) = value.strip_prefix("node:") else {
+        if !matches!(mode, NodeProtocolMode::Always) {
+            return;
+        }
+
+        let module_name = if let Some((prefix, postfix)) = string_lit_value.split_once('/') {
+            // `e.g. ignore "assert/"`
+            if postfix.is_empty() { string_lit_value.as_str() } else { prefix }
+        } else {
+            string_lit_value.as_str()
+        };
+        if !is_nodejs_builtin_module(module_name) {
+            return;
+        }
+
+        ctx.diagnostic_with_fix(
+            prefer_node_protocol_diagnostic(span, &string_lit_value),
+            |fixer| {
+                // Smallest module name is 2 chars, plus 2 for quotes = 4.
+                debug_assert!(
+                    span.size() >= 4,
+                    "node stdlib module name should be at least 4 chars long"
+                );
+                // We're replacing inside the string literal, shift to account for quotes.
+                let span = span.shrink_left(1).shrink_right(1);
+                fixer.replace(span, format!("node:{string_lit_value}"))
+            },
+        );
+        return;
     };
-    if module_name.starts_with("node:") || !is_nodejs_builtin_module(module_name) {
+
+    if !matches!(mode, NodeProtocolMode::Never) {
         return;
     }
 
-    ctx.diagnostic_with_fix(prefer_node_protocol_diagnostic(span, &string_lit_value), |fixer| {
-        // Smallest module name is 2 chars, plus 2 for quotes = 4.
-        debug_assert!(span.size() >= 4, "node stdlib module name should be at least 4 chars long");
-        // We're replacing inside the string literal, shift to account for quotes.
-        let span = span.shrink_left(1).shrink_right(1);
-        fixer.replace(span, format!("node:{string_lit_value}"))
-    });
+    let module_name = if let Some((prefix, postfix)) = value_without_protocol.split_once('/') {
+        // `e.g. ignore "assert/"`
+        if postfix.is_empty() { value_without_protocol } else { prefix }
+    } else {
+        value_without_protocol
+    };
+    if !is_nodejs_builtin_module(module_name) {
+        return;
+    }
+
+    ctx.diagnostic_with_fix(
+        disallow_node_protocol_diagnostic(span, value_without_protocol),
+        |fixer| {
+            // Smallest module name is 2 chars, plus 2 for quotes = 4.
+            debug_assert!(
+                span.size() >= 4,
+                "node stdlib module name should be at least 4 chars long"
+            );
+            // We're replacing inside the string literal, shift to account for quotes.
+            let span = span.shrink_left(1).shrink_right(1);
+            fixer.replace(span, value_without_protocol.to_string())
+        },
+    );
 }
 
 impl Rule for PreferNodeProtocol {
@@ -94,7 +151,7 @@ impl Rule for PreferNodeProtocol {
         let Some((string_lit_value, span)) = string_lit_value_with_span else {
             return;
         };
-        check_node_protocol_path(string_lit_value, span, ctx);
+        check_node_protocol_path(string_lit_value, span, ctx, NodeProtocolMode::Always);
     }
 }
 

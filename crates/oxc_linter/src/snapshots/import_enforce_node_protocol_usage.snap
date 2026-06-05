@@ -18,6 +18,13 @@ assertion_line: 490
   help: Prefer `node:fs` over `fs`.
 
   ⚠ import(enforce-node-protocol-usage): Prefer using the `node:` protocol when importing Node.js builtin modules.
+   ╭─[enforce_node_protocol_usage.tsx:1:15]
+ 1 │ export * from "fs";
+   ·               ────
+   ╰────
+  help: Prefer `node:fs` over `fs`.
+
+  ⚠ import(enforce-node-protocol-usage): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[enforce_node_protocol_usage.tsx:1:20]
  1 │ const fs = require("fs/promises");
    ·                    ─────────────
@@ -30,3 +37,31 @@ assertion_line: 490
    ·                                                ───────────────
    ╰────
   help: Prefer `node:assert/strict` over `assert/strict`.
+
+  ⚠ import(enforce-node-protocol-usage): Prefer using the `node:` protocol when importing Node.js builtin modules.
+   ╭─[enforce_node_protocol_usage.tsx:1:16]
+ 1 │ import fs from "fs";
+   ·                ────
+   ╰────
+  help: Prefer `node:fs` over `fs`.
+
+  ⚠ import(enforce-node-protocol-usage): Prefer using the `node:` protocol when importing Node.js builtin modules.
+   ╭─[enforce_node_protocol_usage.tsx:1:21]
+ 1 │ export * as fs from "fs";
+   ·                     ────
+   ╰────
+  help: Prefer `node:fs` over `fs`.
+
+  ⚠ import(enforce-node-protocol-usage): Disallow using the `node:` protocol when importing Node.js builtin modules.
+   ╭─[enforce_node_protocol_usage.tsx:1:16]
+ 1 │ import fs from "node:fs";
+   ·                ─────────
+   ╰────
+  help: Prefer `fs` over `node:fs`.
+
+  ⚠ import(enforce-node-protocol-usage): Disallow using the `node:` protocol when importing Node.js builtin modules.
+   ╭─[enforce_node_protocol_usage.tsx:1:15]
+ 1 │ export * from "node:fs";
+   ·               ─────────
+   ╰────
+  help: Prefer `fs` over `node:fs`.
