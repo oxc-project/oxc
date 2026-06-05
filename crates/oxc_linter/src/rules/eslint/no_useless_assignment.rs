@@ -19,6 +19,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, Reference, ScopeId, SymbolId};
 use oxc_span::GetSpan;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -116,6 +117,7 @@ pub struct OpAtNode {
     pub op: Operation,
     pub node: NodeId,
     pub compact_idx: u32,
+    pub for_update: Option<ForUpdateWriteMetadata>,
 }
 
 pub type BlockOps = Vec<OpAtNode>;
@@ -124,12 +126,26 @@ pub type CfgOps = IndexVec<BasicBlockId, BlockOps>;
 
 pub type CfgTraverseState<'a> = IndexVec<BasicBlockId, BitSet<'a>>;
 
+type ForUpdateInfo = (Option<Span>, Span, NodeId, NodeId);
+type ForUpdateInfoWithUpdateSpan = (Option<Span>, Span, NodeId, NodeId, Span);
+
 struct TrackedSymbol {
     symbol_id: SymbolId,
     scope_id: ScopeId,
     is_used: bool,
     is_exported: bool,
     has_captured_read: bool,
+}
+
+struct AbruptCompletionMetadata {
+    abrupt_node_ids: Vec<NodeId>,
+    has_following_sibling: FxHashMap<NodeId, bool>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ForUpdateWriteMetadata {
+    pub observed_by_loop: bool,
+    pub has_break: bool,
 }
 
 impl Rule for NoUselessAssignment {
@@ -290,6 +306,7 @@ impl Rule for NoUselessAssignment {
         let mut scratch_find_loop = BitSet::new_in(graph.node_count(), &allocator);
         let mut cached_loop_liveness: Vec<Option<BitSet<'_>>> =
             std::iter::repeat_with(|| None).take(graph.node_count()).collect();
+        Self::precompute_for_update_write_metadata(ctx, &mut cfg_ops);
 
         depth_first_search(
             graph,
@@ -390,17 +407,12 @@ impl Rule for NoUselessAssignment {
                         match op.op {
                             Operation::Write => {
                                 let for_update_observed =
-                                    Self::is_for_update_write_observed_by_loop(
-                                        ctx,
-                                        op.node,
-                                        compact_idx,
-                                        &cfg_ops,
-                                    );
+                                    op.for_update.is_some_and(|metadata| metadata.observed_by_loop);
                                 let for_update_has_break =
-                                    Self::is_for_update_write_in_breaking_loop(ctx, op.node);
+                                    op.for_update.is_some_and(|metadata| metadata.has_break);
                                 let is_live = scratch_live.has_bit(compact_idx)
                                     && (!for_update_has_break
-                                        || !Self::is_for_update_write(ctx, op.node)
+                                        || op.for_update.is_none()
                                         || for_update_observed);
 
                                 if !is_live
@@ -460,7 +472,96 @@ impl NoUselessAssignment {
         compact_idx: u32,
     ) {
         let block_id = Self::block_id_for_node(ctx, graph, node);
-        cfg_ops[block_id].push(OpAtNode { op, node, compact_idx });
+        cfg_ops[block_id].push(OpAtNode { op, node, compact_idx, for_update: None });
+    }
+
+    fn precompute_for_update_write_metadata(ctx: &LintContext, cfg_ops: &mut CfgOps) {
+        let for_update_infos = Self::collect_for_update_infos(ctx);
+        if for_update_infos.is_empty() {
+            return;
+        }
+
+        let write_locations = cfg_ops
+            .iter()
+            .enumerate()
+            .flat_map(|(block_idx, ops)| {
+                ops.iter().enumerate().filter_map(move |(op_idx, op)| {
+                    if op.op == Operation::Write {
+                        Some((
+                            block_idx,
+                            op_idx,
+                            ctx.nodes().get_node(op.node).span(),
+                            op.compact_idx as usize,
+                        ))
+                    } else {
+                        None
+                    }
+                })
+            })
+            .filter_map(|(block_idx, op_idx, node_span, compact_idx)| {
+                for_update_infos
+                    .iter()
+                    .copied()
+                    .find(|for_update_info| for_update_info.4.contains_inclusive(node_span))
+                    .map(|for_update_info| {
+                        let (test_span, body_span, body_node_id, for_node_id, _) = for_update_info;
+                        (
+                            block_idx,
+                            op_idx,
+                            compact_idx,
+                            (test_span, body_span, body_node_id, for_node_id),
+                        )
+                    })
+            })
+            .collect::<Vec<_>>();
+
+        if write_locations.is_empty() {
+            return;
+        }
+
+        let abrupt_completion_metadata = Self::collect_abrupt_completion_metadata(ctx);
+
+        for (block_idx, op_idx, compact_idx, for_update_info) in write_locations {
+            let (_, body_span, body_node_id, for_node_id) = for_update_info;
+            let metadata = ForUpdateWriteMetadata {
+                observed_by_loop: Self::is_for_update_write_observed_by_loop(
+                    ctx,
+                    compact_idx,
+                    cfg_ops,
+                    for_update_info,
+                    &abrupt_completion_metadata,
+                ),
+                has_break: Self::has_update_skipping_abrupt_completion(
+                    ctx,
+                    body_span,
+                    body_node_id,
+                    for_node_id,
+                    &abrupt_completion_metadata,
+                ),
+            };
+            cfg_ops[BasicBlockId::new(block_idx)][op_idx].for_update = Some(metadata);
+        }
+    }
+
+    fn collect_for_update_infos(ctx: &LintContext) -> Vec<ForUpdateInfoWithUpdateSpan> {
+        ctx.nodes()
+            .iter()
+            .filter_map(|node| {
+                if let AstKind::ForStatement(for_stmt) = node.kind() {
+                    for_stmt.update.as_ref().map(|update| {
+                        (
+                            for_stmt.test.as_ref().map(GetSpan::span),
+                            for_stmt.body.span(),
+                            for_stmt.body.node_id(),
+                            node.id(),
+                            update.span(),
+                        )
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 
     fn is_exported(
@@ -580,15 +681,12 @@ impl NoUselessAssignment {
 
     fn is_for_update_write_observed_by_loop(
         ctx: &LintContext,
-        node_id: NodeId,
         compact_idx: usize,
         cfg_ops: &CfgOps,
+        for_update_info: ForUpdateInfo,
+        abrupt_completion_metadata: &AbruptCompletionMetadata,
     ) -> bool {
-        let Some((test_span, body_span, body_node_id, for_node_id)) =
-            Self::enclosing_for_update_read_spans(ctx, node_id)
-        else {
-            return false;
-        };
+        let (test_span, body_span, body_node_id, for_node_id) = for_update_info;
 
         cfg_ops.iter().flatten().any(|op| {
             op.compact_idx as usize == compact_idx && op.op == Operation::Read && {
@@ -599,25 +697,11 @@ impl NoUselessAssignment {
                             ctx,
                             body_node_id,
                             for_node_id,
-                            body_span,
                             span,
+                            abrupt_completion_metadata,
                         ))
             }
         })
-    }
-
-    fn is_for_update_write(ctx: &LintContext, node_id: NodeId) -> bool {
-        Self::enclosing_for_update_read_spans(ctx, node_id).is_some()
-    }
-
-    fn is_for_update_write_in_breaking_loop(ctx: &LintContext, node_id: NodeId) -> bool {
-        let Some((_, body_span, body_node_id, for_node_id)) =
-            Self::enclosing_for_update_read_spans(ctx, node_id)
-        else {
-            return false;
-        };
-
-        Self::has_update_skipping_abrupt_completion(ctx, body_span, body_node_id, for_node_id)
     }
 
     fn has_update_skipping_abrupt_completion(
@@ -625,10 +709,12 @@ impl NoUselessAssignment {
         body_span: Span,
         body_node_id: NodeId,
         for_node_id: NodeId,
+        abrupt_completion_metadata: &AbruptCompletionMetadata,
     ) -> bool {
-        ctx.nodes().iter().any(|node| {
+        abrupt_completion_metadata.abrupt_node_ids.iter().any(|&node_id| {
+            let node = ctx.nodes().get_node(node_id);
             body_span.contains_inclusive(node.span())
-                && Self::is_update_skipping_abrupt(ctx, node.id(), body_node_id, for_node_id)
+                && Self::is_update_skipping_abrupt(ctx, node_id, body_node_id, for_node_id)
         })
     }
 
@@ -636,13 +722,19 @@ impl NoUselessAssignment {
         ctx: &LintContext,
         body_node_id: NodeId,
         for_node_id: NodeId,
-        body_span: Span,
         read_span: Span,
+        abrupt_completion_metadata: &AbruptCompletionMetadata,
     ) -> bool {
-        ctx.nodes().iter().any(|node| {
-            Self::is_update_skipping_abrupt(ctx, node.id(), body_node_id, for_node_id)
+        abrupt_completion_metadata.abrupt_node_ids.iter().any(|&node_id| {
+            let node = ctx.nodes().get_node(node_id);
+            Self::is_update_skipping_abrupt(ctx, node_id, body_node_id, for_node_id)
                 && node.span().start > read_span.end
-                && Self::is_in_terminal_body_statement(ctx, node.id(), body_node_id, body_span)
+                && Self::is_in_terminal_body_statement(
+                    ctx,
+                    node_id,
+                    body_node_id,
+                    abrupt_completion_metadata,
+                )
         })
     }
 
@@ -650,17 +742,25 @@ impl NoUselessAssignment {
         ctx: &LintContext,
         node_id: NodeId,
         body_node_id: NodeId,
-        body_span: Span,
+        abrupt_completion_metadata: &AbruptCompletionMetadata,
     ) -> bool {
         let mut current_id = node_id;
 
         while current_id != NodeId::ROOT {
             let parent = ctx.nodes().parent_node(current_id);
             if parent.id() == body_node_id {
-                return !Self::has_following_sibling(ctx, parent.id(), current_id, body_span);
+                return !abrupt_completion_metadata
+                    .has_following_sibling
+                    .get(&current_id)
+                    .copied()
+                    .unwrap_or(false);
             }
             if matches!(parent.kind(), AstKind::BlockStatement(_))
-                && Self::has_following_sibling(ctx, parent.id(), current_id, parent.span())
+                && abrupt_completion_metadata
+                    .has_following_sibling
+                    .get(&current_id)
+                    .copied()
+                    .unwrap_or(false)
             {
                 return false;
             }
@@ -674,20 +774,6 @@ impl NoUselessAssignment {
         }
 
         false
-    }
-
-    fn has_following_sibling(
-        ctx: &LintContext,
-        parent_id: NodeId,
-        child_id: NodeId,
-        parent_span: Span,
-    ) -> bool {
-        let child_span = ctx.nodes().get_node(child_id).span();
-        ctx.nodes().iter().any(|node| {
-            ctx.nodes().parent_node(node.id()).id() == parent_id
-                && node.span().start > child_span.end
-                && parent_span.contains_inclusive(node.span())
-        })
     }
 
     fn is_update_skipping_abrupt(
@@ -816,31 +902,33 @@ impl NoUselessAssignment {
         false
     }
 
-    fn enclosing_for_update_read_spans(
-        ctx: &LintContext,
-        node_id: NodeId,
-    ) -> Option<(Option<Span>, Span, NodeId, NodeId)> {
-        let node_span = ctx.nodes().get_node(node_id).span();
-        let mut current = ctx.nodes().get_node(node_id);
+    fn collect_abrupt_completion_metadata(ctx: &LintContext) -> AbruptCompletionMetadata {
+        let mut abrupt_node_ids = Vec::new();
+        let mut last_child_by_parent = FxHashMap::default();
+        let mut has_following_sibling = FxHashMap::default();
 
-        while current.id() != NodeId::ROOT {
-            current = ctx.nodes().parent_node(current.id());
-            if let AstKind::ForStatement(for_stmt) = current.kind()
-                && for_stmt
-                    .update
-                    .as_ref()
-                    .is_some_and(|update| update.span().contains_inclusive(node_span))
-            {
-                return Some((
-                    for_stmt.test.as_ref().map(GetSpan::span),
-                    for_stmt.body.span(),
-                    for_stmt.body.node_id(),
-                    current.id(),
-                ));
+        for node in ctx.nodes().iter() {
+            if matches!(
+                node.kind(),
+                AstKind::BreakStatement(_)
+                    | AstKind::ReturnStatement(_)
+                    | AstKind::ThrowStatement(_)
+            ) {
+                abrupt_node_ids.push(node.id());
             }
+
+            if node.id() == NodeId::ROOT {
+                continue;
+            }
+
+            let parent_id = ctx.nodes().parent_node(node.id()).id();
+            if let Some(previous_child_id) = last_child_by_parent.insert(parent_id, node.id()) {
+                has_following_sibling.insert(previous_child_id, true);
+            }
+            has_following_sibling.entry(node.id()).or_insert(false);
         }
 
-        None
+        AbruptCompletionMetadata { abrupt_node_ids, has_following_sibling }
     }
 
     fn enclosing_finally_try_node(ctx: &LintContext, node_id: NodeId) -> Option<NodeId> {
