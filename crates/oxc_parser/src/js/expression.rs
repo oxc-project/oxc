@@ -1227,6 +1227,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Pratt Parsing Algorithm
         // <https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html>
         let mut lhs = lhs;
+        // Precedence of the operator that produced the running left-hand operand, used to detect
+        // `as`/`satisfies` assertions that cannot be erased. `None` until a binary/logical operator
+        // has been consumed in this loop, matching TypeScript where the initial operand (from unary
+        // parsing) is never a binary expression.
+        let mut last_operand_precedence: Option<Precedence> = None;
         loop {
             // re-lex for `>=` `>>` `>>>`
             // This is needed for jsx `<div>=</div>` case
@@ -1269,6 +1274,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     self.ast.expression_ts_satisfies(span, lhs, type_annotation)
                 };
+                // When we have `a ## b as T` or `a ## b satisfies T`, where `##` is some binary
+                // operator, stop parsing on any following operator with higher precedence than `##`
+                // because continuing would make it impossible to erase the `as` or `satisfies`
+                // without changing the meaning of the expression.
+                // See <https://github.com/microsoft/TypeScript/issues/63527>.
+                if let Some(last_precedence) = last_operand_precedence
+                    && let Some(next_precedence) = kind_to_precedence(self.re_lex_right_angle())
+                    && next_precedence > last_precedence
+                {
+                    break;
+                }
                 continue;
             }
 
@@ -1315,6 +1331,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 break;
             };
+            last_operand_precedence = Some(left_precedence);
         }
 
         lhs
