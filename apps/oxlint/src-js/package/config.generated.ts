@@ -711,7 +711,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, PairOrder, GroupedAccessorPairsConfig];
   "guard-for-in"?: RuleNoConfig;
   "id-length"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, IdLengthConfig];
-  "id-match"?: DummyRule;
+  "id-match"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, string] | [AllowWarnDeny, string, IdMatchOptions];
   "import/consistent-type-specifier-style"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
@@ -1854,6 +1854,31 @@ export interface IdLengthConfig {
    * Whether to check property names for length.
    */
   properties?: PropertyKind;
+}
+export interface IdMatchOptions {
+  /**
+   * Whether class field names are checked, including public fields,
+   * accessor properties, and private field names.
+   */
+  classFields?: boolean;
+  /**
+   * Whether to ignore shorthand and aliased bindings introduced by object
+   * destructuring, such as `foo` in `const { foo } = obj` and `alias` in
+   * `const { foo: alias } = obj`. This does not suppress computed key
+   * references such as `const { [key]: value } = obj`.
+   */
+  ignoreDestructuring?: boolean;
+  /**
+   * Whether to check only variable and function declaration names.
+   * References, member names, labels, class names, TypeScript declarations,
+   * and function or arrow parameters are skipped.
+   */
+  onlyDeclarations?: boolean;
+  /**
+   * Whether object literal property names, class method names, and assigned
+   * member names such as `obj.prop = value` are checked.
+   */
+  properties?: boolean;
 }
 export interface Namespace {
   /**

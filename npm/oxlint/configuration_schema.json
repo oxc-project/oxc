@@ -1512,7 +1512,27 @@
           ]
         },
         "id-match": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/IdMatchOptions"
+                }
+              ],
+              "maxItems": 3,
+              "minItems": 1
+            }
+          ]
         },
         "import/consistent-type-specifier-style": {
           "anyOf": [
@@ -8425,6 +8445,49 @@
             }
           ],
           "markdownDescription": "Whether to check property names for length."
+        }
+      },
+      "additionalProperties": false
+    },
+    "IdMatchConfig": {
+      "type": "array",
+      "items": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/IdMatchOptions"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2
+    },
+    "IdMatchOptions": {
+      "type": "object",
+      "properties": {
+        "classFields": {
+          "description": "Whether class field names are checked, including public fields,\naccessor properties, and private field names.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether class field names are checked, including public fields,\naccessor properties, and private field names."
+        },
+        "ignoreDestructuring": {
+          "description": "Whether to ignore shorthand and aliased bindings introduced by object\ndestructuring, such as `foo` in `const { foo } = obj` and `alias` in\n`const { foo: alias } = obj`. This does not suppress computed key\nreferences such as `const { [key]: value } = obj`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore shorthand and aliased bindings introduced by object\ndestructuring, such as `foo` in `const { foo } = obj` and `alias` in\n`const { foo: alias } = obj`. This does not suppress computed key\nreferences such as `const { [key]: value } = obj`."
+        },
+        "onlyDeclarations": {
+          "description": "Whether to check only variable and function declaration names.\nReferences, member names, labels, class names, TypeScript declarations,\nand function or arrow parameters are skipped.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check only variable and function declaration names.\nReferences, member names, labels, class names, TypeScript declarations,\nand function or arrow parameters are skipped."
+        },
+        "properties": {
+          "description": "Whether object literal property names, class method names, and assigned\nmember names such as `obj.prop = value` are checked.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether object literal property names, class method names, and assigned\nmember names such as `obj.prop = value` are checked."
         }
       },
       "additionalProperties": false
