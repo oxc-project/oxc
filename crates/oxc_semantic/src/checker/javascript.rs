@@ -14,7 +14,10 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::{IsGlobalReference, builder::SemanticBuilder, class::Element, diagnostics};
+use crate::{
+    IsGlobalReference, builder::SemanticBuilder, class::Element, diagnostics,
+    scoping::Redeclaration,
+};
 
 /// Threshold for edit distance when suggesting similar names
 const SUGGESTION_THRESHOLD: usize = 2;
@@ -733,17 +736,36 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     // Skip that case.
     let Some(id) = &func.id else { return };
 
+    // Redeclarations are rare, so put the expensive logic for handling them in a separate `#[cold]` function,
+    // so that this function can be inlined.
+    // The redeclarations list is only ever empty or has 2+ entries (it is created with its first two
+    // declarations at once), so `is_empty` is a sufficient test.
+    let redeclarations = ctx.scoping.symbol_redeclarations(id.symbol_id());
+    if !redeclarations.is_empty() {
+        check_redeclared_function(func, id, redeclarations, ctx);
+    }
+}
+
+/// Check whether a redeclared function declaration is illegal (Annex B.3.3 and related rules),
+/// and report it if so.
+///
+/// Split out of `check_function_redeclaration` and marked `#[cold]` as it only runs when `func`'s name
+/// already has an earlier declaration in the same scope, which is very rare in practice.
+#[cold]
+fn check_redeclared_function(
+    func: &Function,
+    id: &BindingIdentifier,
+    redeclarations: &[Redeclaration],
+    ctx: &SemanticBuilder<'_>,
+) {
     if is_function_decl_part_of_if_statement(func, ctx) {
         return;
     }
 
-    let symbol_id = id.symbol_id();
-
-    let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
-    let Some(prev) = redeclarations.iter().nth_back(1) else {
-        // No redeclarations
-        return;
-    };
+    // The current declaration is the last entry; `prev` is the one before it.
+    // The list always has 2+ entries here (see `check_function_redeclaration`), so a previous declaration exists.
+    debug_assert!(redeclarations.len() >= 2);
+    let prev = &redeclarations[redeclarations.len() - 2];
 
     // Already checked in `check_redeclaration`, because it is also not allowed in TypeScript.
     // `let a; function a() {}` is invalid in both strict and non-strict mode.
