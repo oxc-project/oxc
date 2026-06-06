@@ -564,6 +564,14 @@ expression: json
       },
       "additionalProperties": false
     },
+    "CallbackReturn": {
+      "description": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`."
+    },
     "CaseType": {
       "type": "string",
       "enum": [
@@ -3642,7 +3650,27 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "node/callback-return": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "node/global-require": {
           "$ref": "#/definitions/RuleNoConfig"

@@ -380,6 +380,88 @@ impl JsonSchema for OxlintRules {
                 #[expect(clippy::cast_possible_truncation)]
                 #[cfg(feature = "ruledocs")]
                 fn rule_config_schema(r: &RuleEnum, r#gen: &mut SchemaGenerator) -> Schema {
+                    fn wrap_with_severity_and_single_option(
+                        config_schema: Schema,
+                        r#gen: &mut SchemaGenerator,
+                    ) -> Schema {
+                        Schema::Object(SchemaObject {
+                            instance_type: Some(InstanceType::Array.into()),
+                            array: Some(Box::new(ArrayValidation {
+                                items: Some(SingleOrVec::Vec(vec![
+                                    r#gen.subschema_for::<AllowWarnDeny>(),
+                                    config_schema,
+                                ])),
+                                min_items: Some(1),
+                                max_items: Some(2),
+                                ..Default::default()
+                            })),
+                            ..Default::default()
+                        })
+                    }
+
+                    fn prepend_severity_to_array_schema(
+                        array: ArrayValidation,
+                        r#gen: &mut SchemaGenerator,
+                    ) -> Schema {
+                        let (items, additional_items, max_items) = match array.items {
+                            // `items` omitted means options can have arbitrary items.
+                            // After prepending severity, keep the tail arbitrary too.
+                            None => (
+                                vec![r#gen.subschema_for::<AllowWarnDeny>()],
+                                Some(Box::new(Schema::Bool(true))),
+                                array.max_items.map(|n| n.saturating_add(1)),
+                            ),
+                            // A single schema in `items` means a variadic tail of that schema.
+                            Some(SingleOrVec::Single(config)) => (
+                                vec![r#gen.subschema_for::<AllowWarnDeny>()],
+                                Some(config),
+                                array.max_items.map(|n| n.saturating_add(1)),
+                            ),
+                            // A tuple schema keeps its fixed items; preserve any configured
+                            // `additionalItems` behavior after prepending severity.
+                            // Keep historical tuple-generation behavior (`minItems = 1`,
+                            // `maxItems = items.len()`) so optional tuple variants are retained.
+                            Some(SingleOrVec::Vec(configs)) => {
+                                let mut items = Vec::with_capacity(configs.len().saturating_add(1));
+                                items.push(r#gen.subschema_for::<AllowWarnDeny>());
+                                items.extend(configs);
+                                let max_items = Some(items.len() as u32);
+                                (items, array.additional_items, max_items)
+                            }
+                        };
+
+                        SchemaObject {
+                            instance_type: Some(InstanceType::Array.into()),
+                            array: Some(Box::new(ArrayValidation {
+                                items: Some(SingleOrVec::Vec(items)),
+                                min_items: Some(1),
+                                max_items,
+                                additional_items,
+                                ..Default::default()
+                            })),
+                            ..Default::default()
+                        }
+                        .into()
+                    }
+
+                    fn prepend_severity_to_schema(
+                        config_schema: Schema,
+                        r#gen: &mut SchemaGenerator,
+                    ) -> Schema {
+                        match config_schema {
+                            Schema::Object(obj) => {
+                                if let Some(array) = obj.array {
+                                    prepend_severity_to_array_schema(*array, r#gen)
+                                } else {
+                                    wrap_with_severity_and_single_option(Schema::Object(obj), r#gen)
+                                }
+                            }
+                            Schema::Bool(_) => {
+                                wrap_with_severity_and_single_option(config_schema, r#gen)
+                            }
+                        }
+                    }
+
                     fn with_toggle_schema(
                         config_schema: Schema,
                         r#gen: &mut SchemaGenerator,
@@ -450,33 +532,61 @@ impl JsonSchema for OxlintRules {
                         return with_toggle_schema(array_schema, r#gen);
                     }
 
-                    if let Some(array) = obj.array {
-                        let items = match array.items {
-                            None => vec![r#gen.subschema_for::<AllowWarnDeny>()],
-                            Some(SingleOrVec::Single(config)) => {
-                                vec![r#gen.subschema_for::<AllowWarnDeny>(), *config]
-                            }
-                            Some(SingleOrVec::Vec(configs)) => {
-                                let mut items = Vec::with_capacity(configs.len().saturating_add(1));
-                                items.push(r#gen.subschema_for::<AllowWarnDeny>());
-                                items.extend(configs);
-                                items
-                            }
-                        };
+                    if let Some(subschemas) = obj.subschemas.clone() {
+                        let variants = subschemas.any_of.or(subschemas.one_of);
+                        if let Some(variants) = variants {
+                            let has_variadic_array_branch = variants.iter().any(|schema| {
+                                let Schema::Object(obj) = schema else {
+                                    return false;
+                                };
 
-                        let config_length = items.len() as u32;
+                                let Some(array) = &obj.array else {
+                                    return false;
+                                };
 
-                        let array_schema = SchemaObject {
-                            instance_type: Some(InstanceType::Array.into()),
-                            array: Some(Box::new(ArrayValidation {
-                                items: Some(SingleOrVec::Vec(items)),
-                                min_items: Some(1),
-                                max_items: Some(config_length),
-                                ..Default::default()
-                            })),
-                            ..Default::default()
+                                matches!(array.items, Some(SingleOrVec::Single(_)))
+                            });
+
+                            if has_variadic_array_branch {
+                                let prefixed_branches = variants
+                                    .into_iter()
+                                    .map(|schema| prepend_severity_to_schema(schema, r#gen))
+                                    .collect();
+
+                                let schema = SchemaObject {
+                                    subschemas: Some(Box::new(
+                                        schemars::schema::SubschemaValidation {
+                                            any_of: Some(prefixed_branches),
+                                            ..Default::default()
+                                        },
+                                    )),
+                                    ..Default::default()
+                                }
+                                .into();
+
+                                return with_toggle_schema(schema, r#gen);
+                            }
                         }
-                        .into();
+                    }
+
+                    if let Some(array) = obj.array {
+                        let array_schema = match array.items.as_ref() {
+                            // Tuple-style config (e.g. [Mode3, InitDeclarationsConfig])
+                            // should become [AllowWarnDeny, Mode3, InitDeclarationsConfig].
+                            Some(SingleOrVec::Vec(_)) => {
+                                prepend_severity_to_array_schema(*array, r#gen)
+                            }
+                            // List-style config (e.g. string[]) should stay as a single option
+                            // after severity: [AllowWarnDeny, string[]].
+                            _ => wrap_with_severity_and_single_option(
+                                Schema::Object(SchemaObject {
+                                    instance_type: Some(InstanceType::Array.into()),
+                                    array: Some(array),
+                                    ..Default::default()
+                                }),
+                                r#gen,
+                            ),
+                        };
                         return with_toggle_schema(array_schema, r#gen);
                     }
 

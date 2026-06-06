@@ -1026,7 +1026,7 @@ export interface DummyRuleMap {
   "no-void"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoVoid];
   "no-warning-comments"?: DummyRule;
   "no-with"?: RuleNoConfig;
-  "node/callback-return"?: DummyRule;
+  "node/callback-return"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, string[]];
   "node/global-require"?: RuleNoConfig;
   "node/handle-callback-err"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, string];
   "node/no-exports-assign"?: RuleNoConfig;
