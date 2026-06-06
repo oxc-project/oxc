@@ -142,6 +142,10 @@ impl Rule for NextTickStyle {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.file_extension().is_some_and(|ext| ext == "vue")
+    }
 }
 
 fn is_awaited_promise(call_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
