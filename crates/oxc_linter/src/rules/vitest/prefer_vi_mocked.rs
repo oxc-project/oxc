@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```js
+    /// ```ts
     /// ;(foo as Mock).mockReturnValue(1)
     /// const mock = (foo as Mock).mockReturnValue(1)
     /// ;(foo as unknown as Mock).mockReturnValue(1)
@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```js
+    /// ```ts
     /// vi.mocked(foo).mockReturnValue(1)
     /// const mock = vi.mocked(foo).mockReturnValue(1)
     /// vi.mocked(Obj.foo).mockReturnValue(1)
