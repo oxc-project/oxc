@@ -26,6 +26,9 @@ fn cases() {
     test_same("type T = (keyof A)[K];\n");
     test_same("type T = (A extends B ? C : D)[K];\n");
     test_same("type T = A extends (B extends C ? D : E) ? F : G;\n");
+    test_same("type T = { [K in U]: V };\n");
+    test_same("type T = { [K in U]?: V };\n");
+    test_same("type T = { -readonly [K in U]-?: V };\n");
     test_same("type T = (A extends B ? C : D) extends E ? F : G;\n");
     test_same("type T = A & (B extends C ? D : E);\n");
     test_same("type T = (A | B) & C;\n");
@@ -269,7 +272,7 @@ fn type_codegen_with_preserve_parens_off() {
     );
     test_with_parse_options(
         "type T = ({ [K in keyof Obj]: Obj[K] } & { a: 1 }) & { b: 2 };",
-        "type T = ({ [K in keyof Obj] : Obj[K] } & {\n\ta: 1;\n}) & {\n\tb: 2;\n};\n",
+        "type T = ({ [K in keyof Obj]: Obj[K] } & {\n\ta: 1;\n}) & {\n\tb: 2;\n};\n",
         parse_options,
     );
 }

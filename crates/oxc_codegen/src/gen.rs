@@ -3345,7 +3345,6 @@ impl Gen for TSMappedType<'_> {
             Some(TSMappedTypeModifierOperator::Minus) => p.print_str("-?"),
             None => {}
         }
-        p.print_soft_space();
         if let Some(type_annotation) = &self.type_annotation {
             p.print_colon();
             p.print_soft_space();
