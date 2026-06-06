@@ -163,6 +163,26 @@ fn for_stmt() {
         "for (var a = 1 || (2 in {}) in { x: 1 }) count++;",
         "for (var a = 1 || (2 in {}) in { x: 1 }) count++;\n",
     );
+
+    // A `for...of` head may not start with `let` or `async`; `for...in` may.
+    test("for ((let) of x);", "for ((let) of x);\n");
+    test("for ((async) of x);", "for ((async) of x);\n");
+    test("for (let in x);", "for (let in x);\n");
+    test("for (async in x);", "for (async in x);\n");
+    // A for-of head whose leading token is `let` is wrapped wherever it appears,
+    // not only as a bare identifier; a bare `async` is wrapped but `async.x` is fine.
+    test("for ((let.x) of x);", "for ((let.x) of x);\n");
+    test("for ((let.x[0]) of x);", "for ((let.x[0]) of x);\n");
+    test("for ((let[0]) of x);", "for ((let)[0] of x);\n");
+    test("for ((async.x) of x);", "for (async.x of x);\n");
+    test("for (((let).x) of x);", "for ((let.x) of x);\n");
+    // A leading `let` outside a for-of head is untouched.
+    test("let.x;", "let.x;\n");
+    // A nested for-of inside a `for` init is still wrapped correctly.
+    test(
+        "for (function f(){ for ((async) of xs); };;);",
+        "for (function f() {\n\tfor ((async) of xs);\n};;);\n",
+    );
 }
 
 #[test]

@@ -362,6 +362,43 @@ impl Gen for ForInStatement<'_> {
     }
 }
 
+/// Whether the leading token a `for...of` head would emit is `let`, which is
+/// forbidden unparenthesized (`for ((let.x) of y)`).
+fn for_of_head_starts_with_let(left: &ForStatementLeft) -> bool {
+    match left {
+        ForStatementLeft::AssignmentTargetIdentifier(id) => id.name == "let",
+        ForStatementLeft::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
+        ForStatementLeft::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
+        ForStatementLeft::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
+        ForStatementLeft::TSAsExpression(e) => expr_starts_with_let(&e.expression),
+        ForStatementLeft::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
+        ForStatementLeft::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
+        _ => false,
+    }
+}
+
+fn expr_starts_with_let(expr: &Expression) -> bool {
+    match expr {
+        Expression::Identifier(id) => id.name == "let",
+        Expression::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
+        Expression::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
+        Expression::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
+        Expression::TSAsExpression(e) => expr_starts_with_let(&e.expression),
+        Expression::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
+        Expression::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
+        // Codegen drops redundant parens around a `let` object (`(let).x` -> `let.x`).
+        Expression::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression),
+        _ => false,
+    }
+}
+
+/// `let[...]` is emitted as `(let)[...]` (the computed member wraps a bare `let`
+/// object), so it no longer starts with `let`.
+fn computed_object_starts_with_let(m: &ComputedMemberExpression) -> bool {
+    !m.object.get_identifier_reference().is_some_and(|r| r.name == "let")
+        && expr_starts_with_let(&m.object)
+}
+
 impl Gen for ForOfStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
@@ -374,7 +411,12 @@ impl Gen for ForOfStatement<'_> {
         }
         p.print_soft_space();
         p.print_ascii_byte(b'(');
-        self.left.print(p, ctx);
+        // A `for...of` head may not start with the `let` token (`for ((let.x) of y)`),
+        // nor be the bare identifier `async` (`for ((async) of y)`, unless `await`).
+        let wrap = for_of_head_starts_with_let(&self.left)
+            || (!self.r#await
+                && matches!(&self.left, ForStatementLeft::AssignmentTargetIdentifier(id) if id.name == "async"));
+        p.wrap(wrap, |p| self.left.print(p, ctx));
         p.print_soft_space();
         p.print_space_before_identifier();
         p.print_str("of");
@@ -398,12 +440,8 @@ impl Gen for ForStatementLeft<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             ForStatementLeft::VariableDeclaration(var) => var.print(p, ctx),
-            ForStatementLeft::AssignmentTargetIdentifier(identifier) => {
-                let wrap = identifier.name == "async";
-                p.wrap(wrap, |p| self.to_assignment_target().print(p, ctx));
-            }
             match_assignment_target!(ForStatementLeft) => {
-                p.wrap(false, |p| self.to_assignment_target().print(p, ctx));
+                self.to_assignment_target().print(p, ctx);
             }
         }
     }
