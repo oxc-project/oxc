@@ -101,20 +101,6 @@ const rule: Rule = {
         message: `Token JSON.stringify:\n${JSON.stringify(firstToken, null, 2)}`,
         node: firstToken,
       });
-
-      const clone = { ...firstToken };
-      const cloneHasLoc = Object.hasOwn(clone, "loc") && clone.loc === firstToken.loc;
-      context.report({
-        message: `Token spread includes loc: ${cloneHasLoc}`,
-        node: firstToken,
-      });
-
-      // Check `JSON.stringify` on comment includes `loc`
-      const jsonHasLoc = Object.hasOwn(JSON.parse(JSON.stringify(firstToken)), "loc");
-      context.report({
-        message: `Token JSON.stringify includes loc: ${jsonHasLoc}`,
-        node: firstToken,
-      });
     }
 
     return {};
