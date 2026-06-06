@@ -267,6 +267,14 @@ impl JsonSchema for OxlintRules {
             ToggleAndConfig(ToggleAndConfig),
         }
 
+        #[expect(unused)]
+        #[derive(Debug, Clone, JsonSchema)]
+        #[serde(untagged)]
+        enum RuleNoConfig {
+            Toggle(AllowWarnDeny),
+            ToggleOnly(ToggleOnly),
+        }
+
         #[derive(Debug, Clone)]
         struct ToggleAndConfig;
 
@@ -290,6 +298,38 @@ impl JsonSchema for OxlintRules {
                         items: Some(vec![r#gen.subschema_for::<AllowWarnDeny>()].into()),
                         min_items: Some(1),
                         additional_items: Some(Box::new(Schema::Bool(true))),
+                        ..Default::default()
+                    })),
+                    ..Default::default()
+                }
+                .into()
+            }
+        }
+
+        #[derive(Debug, Clone)]
+        struct ToggleOnly;
+
+        impl JsonSchema for ToggleOnly {
+            fn is_referenceable() -> bool {
+                false
+            }
+
+            fn schema_name() -> String {
+                "ToggleOnly".to_string()
+            }
+
+            fn schema_id() -> Cow<'static, str> {
+                "ToggleOnly".into()
+            }
+
+            fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+                SchemaObject {
+                    instance_type: Some(InstanceType::Array.into()),
+                    array: Some(Box::new(ArrayValidation {
+                        items: Some(vec![r#gen.subschema_for::<AllowWarnDeny>()].into()),
+                        min_items: Some(1),
+                        max_items: Some(1),
+                        additional_items: Some(Box::new(Schema::Bool(false))),
                         ..Default::default()
                     })),
                     ..Default::default()
@@ -358,7 +398,7 @@ impl JsonSchema for OxlintRules {
                     }
 
                     let Some(schema) = r.schema(r#gen) else {
-                        return r#gen.subschema_for::<DummyRule>();
+                        return r#gen.subschema_for::<RuleNoConfig>();
                     };
 
                     let schema = resolve_references_in_schema(&schema, r#gen).clone();
