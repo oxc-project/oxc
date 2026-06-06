@@ -428,13 +428,6 @@ pub fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic
 }
 
 #[cold]
-pub fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
-    ts_error("18007", "JSX expressions may not use the comma operator")
-        .with_help("Did you mean to write an array?")
-        .with_label(span)
-}
-
-#[cold]
 pub fn ts_export_assignment_cannot_be_used_with_other_exports(span: Span) -> OxcDiagnostic {
     ts_error("2309", "An export assignment cannot be used in a module with other exported elements")
         .with_label(span)

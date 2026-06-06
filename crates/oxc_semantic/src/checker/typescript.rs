@@ -332,17 +332,6 @@ pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &
     }
 }
 
-pub fn check_jsx_expression_container(
-    container: &JSXExpressionContainer,
-    ctx: &SemanticBuilder<'_>,
-) {
-    if matches!(container.expression, JSXExpression::SequenceExpression(_)) {
-        ctx.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
-            container.expression.span(),
-        ));
-    }
-}
-
 pub fn check_ts_export_assignment_in_program<'a>(program: &Program<'a>, ctx: &SemanticBuilder<'a>) {
     if !ctx.source_type.is_typescript() {
         return;

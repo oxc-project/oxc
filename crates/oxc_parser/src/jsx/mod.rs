@@ -352,6 +352,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.ast.jsx_expression_empty_expression(Span::new(span.start + 1, span.end - 1))
         } else {
             let expr = JSXExpression::from(self.parse_expr());
+            // JSX expressions may not use the comma operator.
+            if matches!(expr, JSXExpression::SequenceExpression(_)) {
+                self.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
+                    expr.span(),
+                ));
+            }
             if in_jsx_child {
                 self.expect_jsx_child(Kind::RCurly);
             } else {

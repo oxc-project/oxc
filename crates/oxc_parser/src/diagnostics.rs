@@ -1210,6 +1210,13 @@ pub fn abstract_with_private_identifier(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
+    ts_error("18007", "JSX expressions may not use the comma operator")
+        .with_help("Did you mean to write an array?")
+        .with_label(span)
+}
+
+#[cold]
 pub fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
     ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
 }
