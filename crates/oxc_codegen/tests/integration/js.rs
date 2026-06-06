@@ -219,6 +219,12 @@ fn if_stmt() {
         "function f() { if (foo) return foo; else if (bar) return foo; }",
         "function f(){if(foo)return foo;else if(bar)return foo}",
     );
+    // `else` only needs a space before an identifier-like body.
+    test_minify("if(x)a();else b()", "if(x)a();else b();");
+    test_minify("if(x)a();else++b", "if(x)a();else++b;");
+    test_minify("if(x)a();else[b]", "if(x)a();else[b];");
+    test_minify("if(x)a();else`b`", "if(x)a();else`b`;");
+    test_minify("if(x)a();else debugger", "if(x)a();else debugger;");
 }
 
 #[test]

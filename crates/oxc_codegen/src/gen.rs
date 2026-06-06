@@ -253,7 +253,7 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
             }
         }
         stmt => {
-            p.print_body(stmt, false, ctx);
+            p.print_body(stmt, ctx);
             if if_stmt.alternate.is_some() {
                 p.print_indent();
             }
@@ -273,7 +273,7 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
                 p.print_hard_space();
                 print_if(if_stmt, p, ctx);
             }
-            stmt => p.print_body(stmt, true, ctx),
+            stmt => p.print_body(stmt, ctx),
         }
     }
 }
@@ -338,7 +338,7 @@ impl Gen for ForStatement<'_> {
         }
 
         p.print_ascii_byte(b')');
-        p.print_body(&self.body, false, ctx);
+        p.print_body(&self.body, ctx);
     }
 }
 
@@ -358,7 +358,7 @@ impl Gen for ForInStatement<'_> {
         p.print_soft_space();
         p.print_expression(&self.right);
         p.print_ascii_byte(b')');
-        p.print_body(&self.body, false, ctx);
+        p.print_body(&self.body, ctx);
     }
 }
 
@@ -423,7 +423,7 @@ impl Gen for ForOfStatement<'_> {
         p.print_soft_space();
         self.right.print_expr(p, Precedence::Comma, Context::empty());
         p.print_ascii_byte(b')');
-        p.print_body(&self.body, false, ctx);
+        p.print_body(&self.body, ctx);
     }
 }
 
@@ -458,7 +458,7 @@ impl Gen for WhileStatement<'_> {
         p.print_ascii_byte(b'(');
         p.print_expression(&self.test);
         p.print_ascii_byte(b')');
-        p.print_body(&self.body, false, ctx);
+        p.print_body(&self.body, ctx);
     }
 }
 
@@ -576,7 +576,7 @@ impl Gen for SwitchCase<'_> {
         let single_line = self.consequent.len() == 1
             && !p.has_legal_orphans_before(self.consequent[0].span().start);
         if single_line {
-            p.print_body(&self.consequent[0], false, ctx);
+            p.print_body(&self.consequent[0], ctx);
             return;
         }
 
@@ -612,7 +612,7 @@ impl Gen for LabeledStatement<'_> {
         p.add_source_mapping(self.span);
         self.label.print(p, ctx);
         p.print_colon();
-        p.print_body(&self.body, false, ctx);
+        p.print_body(&self.body, ctx);
     }
 }
 
@@ -688,7 +688,7 @@ impl Gen for WithStatement<'_> {
         p.print_ascii_byte(b'(');
         p.print_expression(&self.object);
         p.print_ascii_byte(b')');
-        p.print_body(&self.body, false, ctx);
+        p.print_body(&self.body, ctx);
     }
 }
 
