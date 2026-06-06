@@ -41,7 +41,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             let mod_decl_kind = kind.as_module_declaration_kind().unwrap();
             js::check_module_declaration(&mod_decl_kind, ctx);
         }
-        AstKind::MetaProperty(prop) => js::check_meta_property(prop, ctx),
 
         AstKind::WithStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);

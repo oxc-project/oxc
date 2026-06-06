@@ -142,22 +142,6 @@ pub fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn new_target(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected new.target expression")
-        .with_help(
-            "new.target is only allowed in constructors, functions, and class field initializers",
-        )
-        .with_label(span)
-}
-
-#[cold]
-pub fn import_meta(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected import.meta expression")
-        .with_help("import.meta is only allowed in module code")
-        .with_label(span)
-}
-
-#[cold]
 pub fn using_declaration_not_allowed_in_script(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'using' declarations are not allowed at the top level of a script")
         .with_help("Wrap this code in a block or use a module")

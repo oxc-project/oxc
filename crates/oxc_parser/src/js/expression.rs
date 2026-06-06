@@ -667,6 +667,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let property = self.parse_keyword_identifier(Kind::Meta);
                         let span = self.end_span(span);
                         self.module_record_builder.visit_import_meta(span);
+                        // `import.meta` is only allowed in module code.
+                        if !self.source_type.is_module() {
+                            self.error_on_script(diagnostics::import_meta(span));
+                        }
                         self.ast.expression_meta_property(span, meta, property)
                     }
                     // `import.source(expr)`
@@ -945,7 +949,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.eat(Kind::Dot) {
             return if self.at(Kind::Target) {
                 let property = self.parse_keyword_identifier(Kind::Target);
-                self.ast.expression_meta_property(self.end_span(span), identifier, property)
+                let span = self.end_span(span);
+                if !self.ctx.has_new_target() {
+                    self.error(diagnostics::new_target_outside_function(span));
+                }
+                self.ast.expression_meta_property(span, identifier, property)
             } else {
                 self.bump_any();
                 self.fatal_error(diagnostics::new_target(self.end_span(span)))

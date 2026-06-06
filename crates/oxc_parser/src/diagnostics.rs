@@ -873,6 +873,22 @@ pub fn new_target(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn new_target_outside_function(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected new.target expression")
+        .with_help(
+            "new.target is only allowed in constructors, functions, and class field initializers",
+        )
+        .with_label(span)
+}
+
+#[cold]
+pub fn import_meta(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected import.meta expression")
+        .with_help("import.meta is only allowed in module code")
+        .with_label(span)
+}
+
+#[cold]
 pub fn private_in_private(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
 }
