@@ -1699,6 +1699,7 @@ export interface DummyRuleMap {
   "vitest/prefer-to-have-been-called-times"?: RuleNoConfig;
   "vitest/prefer-to-have-length"?: RuleNoConfig;
   "vitest/prefer-todo"?: RuleNoConfig;
+  "vitest/prefer-vi-mocked"?: RuleNoConfig;
   "vitest/require-awaited-expect-poll"?: RuleNoConfig;
   "vitest/require-hook"?: RuleNoConfig | [AllowWarnDeny, RequireHookConfig];
   "vitest/require-local-test-context-for-concurrent-snapshots"?: RuleNoConfig;

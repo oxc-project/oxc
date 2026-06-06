@@ -9841,6 +9841,9 @@
         "vitest/prefer-todo": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vitest/prefer-vi-mocked": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vitest/require-awaited-expect-poll": {
           "$ref": "#/definitions/RuleNoConfig"
         },
