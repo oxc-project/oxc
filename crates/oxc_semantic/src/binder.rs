@@ -66,6 +66,14 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     if let Some(symbol_id) =
                         builder.check_redeclaration(scope_id, span, name, excludes)
                     {
+                        // `var` is value-space only. Never reuse a type-only binding from an
+                        // intermediate scope. Otherwise we lose the actual value binding and
+                        // later value references may remain unresolved.
+                        let symbol_flags = builder.scoping.symbol_flags(symbol_id);
+                        if !symbol_flags.is_value() {
+                            continue;
+                        }
+
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
 
@@ -81,6 +89,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                         break;
                     }
                 }
+
 
                 // If a variable is already declared in the hoisted scopes,
                 // we don't need to create another symbol with the same name
