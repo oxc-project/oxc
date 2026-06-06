@@ -651,6 +651,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.is_ts {
             self.error(diagnostics::import_equals_can_only_be_used_in_typescript_files(span));
         }
+        // `import type Foo = Bar.Baz` is not allowed; `import type Foo = require('./foo')` is.
+        if import_kind.is_type() && !module_reference.is_external() {
+            self.error(diagnostics::import_alias_cannot_use_import_type(span));
+        }
 
         self.ast.declaration_ts_import_equals(span, identifier, module_reference, import_kind)
     }

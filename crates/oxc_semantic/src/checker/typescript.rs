@@ -173,17 +173,6 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
     check_type_name_is_reserved(&decl.id, ctx, "Enum");
 }
 
-pub fn check_ts_import_equals_declaration<'a>(
-    decl: &TSImportEqualsDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    // `import type Foo = require('./foo')` is allowed
-    // `import { Foo } from './foo'; import type Bar = Foo.Bar` is not allowed
-    if decl.import_kind.is_type() && !decl.module_reference.is_external() {
-        ctx.error(diagnostics::import_alias_cannot_use_import_type(decl.span));
-    }
-}
-
 pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     if !class.r#abstract {
         for elem in &class.body.body {

@@ -1210,6 +1210,11 @@ pub fn abstract_with_private_identifier(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
+    ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
+}
+
+#[cold]
 pub fn abstract_accessor_cannot_have_implementation(name: &str, span: Span) -> OxcDiagnostic {
     ts_error(
         "1318",

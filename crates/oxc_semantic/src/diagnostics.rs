@@ -334,12 +334,6 @@ pub fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Enum member must have initializer.").with_label(span)
 }
 
-/// TS(1392)
-#[cold]
-pub fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
-    ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
-}
-
 /// 'infer' declarations are only permitted in the 'extends' clause of a conditional type. (1338)
 #[cold]
 pub fn infer_declaration_only_permitted_in_extends_clause(span: Span) -> OxcDiagnostic {

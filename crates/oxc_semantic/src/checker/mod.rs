@@ -114,9 +114,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
         AstKind::TSTypeAliasDeclaration(decl) => ts::check_ts_type_alias_declaration(decl, ctx),
         AstKind::TSInferType(infer_type) => ts::check_ts_infer_type(infer_type, ctx),
-        AstKind::TSImportEqualsDeclaration(decl) => {
-            ts::check_ts_import_equals_declaration(decl, ctx);
-        }
         AstKind::JSXExpressionContainer(container) => {
             ts::check_jsx_expression_container(container, ctx);
         }
