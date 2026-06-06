@@ -2381,6 +2381,11 @@ impl GenExpr for TSInstantiationExpression<'_> {
 impl GenExpr for TSTypeAssertion<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
+            // Avoid merging into `<<` when this assertion follows a `<` operator,
+            // e.g. minified `a < <T>x` must not become `a<<T>x` (a shift token).
+            if p.last_byte() == Some(b'<') {
+                p.print_hard_space();
+            }
             p.print_ascii_byte(b'<');
             // var r = < <T>(x: T) => T > ((x) => { return null; });
             //          ^ make sure space is printed here.

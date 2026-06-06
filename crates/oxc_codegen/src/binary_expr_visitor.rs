@@ -206,6 +206,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
                     e.left(),
                     Expression::UnaryExpression(_)
                         | Expression::AwaitExpression(_)
+                        | Expression::TSTypeAssertion(_)
                         | Expression::NumericLiteral(_)
                 ) {
                     self.left_precedence = Precedence::Call;
