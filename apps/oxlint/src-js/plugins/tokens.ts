@@ -157,10 +157,11 @@ let deserializedTokensLen = 0;
 // not *total* number of tokens.
 const DESERIALIZED_TOKEN_INDEXES_MIN_CAPACITY = 16;
 
-// `__defineGetter__` bound to `Function.prototype.call` so it can be called without a
-// `Object.prototype` lookup at each call site.
+// `defineGetter(obj, prop, getter)` is equivalent to `obj.__defineGetter__(prop, getter)`,
+// but without `Object.prototype` lookup at each call site
 const defineGetter = Function.prototype.call.bind(
-  // @ts-expect-error - `__defineGetter__` is not in `Object.prototype`'s type definition, but it does exist at runtime and is widely supported in JS engines, including V8.
+  // @ts-expect-error - `__defineGetter__` is not in `Object.prototype`'s type definition,
+  // but it does exist at runtime and is widely supported in JS engines, including V8
   Object.prototype.__defineGetter__,
 ) as (obj: object, prop: string, getter: () => unknown) => void;
 
@@ -180,9 +181,8 @@ let getTokenPrivateLoc: (token: Token) => Location | null;
  * Token implementation with lazy `loc` caching via private field.
  *
  * `loc` is defined as an own accessor property via `__defineGetter__` in the constructor,
- * using a shared getter function (`getTokenLoc`). This makes `loc` an own enumerable property,
- * so `{...token}` spreads it and `JSON.stringify(token)` serializes it, without needing
- * a `toJSON()` method.
+ * using a shared getter function (`getCommentLoc`). This makes `loc` an own enumerable property,
+ * so `{...comment}` spreads it and `JSON.stringify(comment)` serializes it.
  *
  * The computed `Location` value is cached in the private `#loc` field on first access.
  * All instances share the same getter function, keeping the V8 hidden class transition
@@ -195,16 +195,20 @@ class Token {
   start: number = 0;
   end: number = 0;
   range: [number, number] = [0, 0];
-  declare loc: Location; // Overwritten by __defineGetter__ at construction time
+
+  declare loc: Location; // Defined with `__defineGetter__` in constructor
 
   #loc: Location | null = null;
 
   constructor() {
     // Define `loc` as an own getter property (enumerable + configurable by default).
     // This makes `{...token}` spread `loc` and `JSON.stringify(token)` serialize it.
+    // Note: `new Token()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
+    // See https://github.com/oxc-project/oxc/pull/22238.
     defineGetter(this, "loc", getTokenLoc);
   }
 
+  // Functions requiring access to `#loc` defined in static block to avoid exposing them as public methods
   static {
     getTokenLocTemp = function (this: Token): Location {
       const loc = this.#loc;
@@ -224,7 +228,6 @@ class Token {
       return (this.#loc = computeLoc(this.start, this.end));
     };
 
-    // Defined in static block to avoid exposing this as a public method
     resetLocTemp = (token: Token) => {
       token.#loc = null;
     };
@@ -233,7 +236,7 @@ class Token {
   }
 }
 
-// Copied into consts here to avoid checks at call site (`let` binding could be re-assigned).
+// Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
 const getTokenLoc = getTokenLocTemp!;
 const resetLoc = resetLocTemp!;
 
