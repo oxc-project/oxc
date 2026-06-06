@@ -1257,7 +1257,7 @@ impl GenExpr for Expression<'_> {
             Self::NewExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Template literals
             Self::TemplateLiteral(literal) => literal.print(p, ctx),
-            Self::TaggedTemplateExpression(expr) => expr.print(p, ctx),
+            Self::TaggedTemplateExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Other literals
             Self::RegExpLiteral(lit) => lit.print(p, ctx),
             Self::BigIntLiteral(lit) => lit.print_expr(p, precedence, ctx),
@@ -1757,7 +1757,12 @@ impl Gen for PropertyKey<'_> {
 
 impl GenExpr for ArrowFunctionExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= Precedence::Assign || self.pife, |p| {
+        let wrap = precedence >= Precedence::Assign || self.pife;
+        // Clear FORBID_IN: always for param defaults (always parenthesized), and for
+        // the concise body only when the arrow is wrapped (which resets the `for` init).
+        let params_ctx = ctx & Context::FORBID_IN.not();
+        let body_ctx = if wrap { params_ctx } else { ctx };
+        p.wrap(wrap, |p| {
             // `pife` wrap: emit leading comments inside the `(`, so the
             // source position `(/* c */ arrow)` is preserved.
             if self.pife {
@@ -1787,7 +1792,7 @@ impl GenExpr for ArrowFunctionExpression<'_> {
                         && !param.optional
                 };
             p.wrap(!remove_params_wrap, |p| {
-                self.params.print(p, ctx);
+                self.params.print(p, params_ctx);
             });
             if let Some(return_type) = &self.return_type {
                 p.print_colon();
@@ -1800,10 +1805,10 @@ impl GenExpr for ArrowFunctionExpression<'_> {
             if self.expression {
                 if let Some(Statement::ExpressionStatement(stmt)) = &self.body.statements.first() {
                     p.start_of_arrow_expr = p.code_len();
-                    stmt.expression.print_expr(p, Precedence::Comma, ctx);
+                    stmt.expression.print_expr(p, Precedence::Comma, body_ctx);
                 }
             } else {
-                self.body.print(p, ctx);
+                self.body.print(p, body_ctx);
             }
         });
     }
@@ -2257,10 +2262,11 @@ impl Gen for TemplateLiteral<'_> {
     }
 }
 
-impl Gen for TaggedTemplateExpression<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+impl GenExpr for TaggedTemplateExpression<'_> {
+    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
         p.add_source_mapping(self.span);
-        self.tag.print_expr(p, Precedence::Postfix, Context::empty());
+        // Propagate `FORBID_CALL` to the tag so a `new` callee like `f()` wraps.
+        self.tag.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
@@ -2290,7 +2296,11 @@ impl GenExpr for AwaitExpression<'_> {
 
 impl GenExpr for ChainExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= Precedence::Postfix, |p| match &self.expression {
+        let wrap = precedence >= Precedence::Postfix || ctx.intersects(Context::FORBID_CALL);
+        // Once wrapped, the inner element is in a fresh grouping; don't wrap again.
+        let (precedence, ctx) =
+            if wrap { (Precedence::Lowest, Context::empty()) } else { (precedence, ctx) };
+        p.wrap(wrap, |p| match &self.expression {
             ChainElement::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
             ChainElement::TSNonNullExpression(expr) => expr.print_expr(p, precedence, ctx),
             ChainElement::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
@@ -2364,8 +2374,9 @@ impl GenExpr for TSNonNullExpression<'_> {
 }
 
 impl GenExpr for TSInstantiationExpression<'_> {
-    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        self.expression.print_expr(p, precedence, ctx);
+    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
+        // Wrap a lower-precedence operand so `(a ?? b)<T>` isn't emitted as `a ?? b<T>`.
+        self.expression.print_expr(p, Precedence::Prefix, ctx);
         self.type_arguments.print(p, ctx);
         if p.options.minify {
             p.print_hard_space();
@@ -2376,6 +2387,11 @@ impl GenExpr for TSInstantiationExpression<'_> {
 impl GenExpr for TSTypeAssertion<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
+            // Avoid merging into `<<` when this assertion follows a `<` operator,
+            // e.g. minified `a < <T>x` must not become `a<<T>x` (a shift token).
+            if p.last_byte() == Some(b'<') {
+                p.print_hard_space();
+            }
             p.print_ascii_byte(b'<');
             // var r = < <T>(x: T) => T > ((x) => { return null; });
             //          ^ make sure space is printed here.
@@ -2384,7 +2400,9 @@ impl GenExpr for TSTypeAssertion<'_> {
             }
             self.type_annotation.print(p, ctx);
             p.print_ascii_byte(b'>');
-            self.expression.print_expr(p, Precedence::Member, ctx);
+            // The operand is a `UnaryExpression`, so print it like a unary argument
+            // (`<T>-x`, not `<T>(-x)`) while still wrapping looser operands.
+            self.expression.print_expr(p, Precedence::Exponentiation, ctx);
         });
     }
 }
@@ -2549,6 +2567,8 @@ impl Gen for JSXAttribute<'_> {
 impl Gen for JSXEmptyExpression {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.end);
+        // Clear the flag so the comment doesn't leak a space onto the next indent.
+        p.print_next_indent_as_space = false;
     }
 }
 

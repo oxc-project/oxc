@@ -87,6 +87,31 @@ fn expr() {
 
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
     test_minify_same("new(import(``),function(){});");
+
+    // A `new` callee containing a call must keep parentheses.
+    test_same("new (f())();\n");
+    test_same("new (g?.())();\n");
+    test_same("new (f.g?.h)();\n");
+    test_same("new (f?.g.h)();\n");
+    test("new (f().g)();", "new (f()).g();\n");
+    test_same("new (f?.().g)();\n");
+    test_same("new (f()?.g)();\n");
+    test_same("new (f?.()?.g)();\n");
+    test("new (f()`g`)();", "new (f())`g`();\n"); // #22961
+    test_same("new (import(\"foo\"))();\n");
+    test("new (import(\"foo\").bar)();", "new (import(\"foo\")).bar();\n");
+    test("new (import(\"foo\")`bar`)();", "new (import(\"foo\"))`bar`();\n");
+    test("new (a`b`)();", "new a`b`();\n");
+    test("new (f().g.h)();", "new (f()).g.h();\n");
+    test("new (f[g()])();", "new f[g()]();\n");
+    test("new (new f())();", "new new f()();\n");
+
+    // The base of `**` must be an UpdateExpression, so a unary/await base keeps parens.
+    test_same("(-a) ** b;\n");
+    test_same("(typeof a) ** b;\n");
+    test_same("(await a) ** b;\n");
+    // Only the base needs wrapping; the `**` right operand may be a UnaryExpression.
+    test("(await a) ** (await b);", "(await a) ** await b;\n");
 }
 
 #[test]
@@ -504,6 +529,11 @@ fn in_expr_in_arrow_function_expression() {
     test("() => ('foo' in bar)", "() => \"foo\" in bar;\n");
     test("() => 'foo' in bar", "() => \"foo\" in bar;\n");
     test("() => { ('foo' in bar) }", "() => {\n\t\"foo\" in bar;\n};\n");
+
+    // A parenthesized arrow resets FORBID_IN, so its concise body / param default
+    // does not need extra parentheses around `in` (was `(() => (a in b))`).
+    test("for (x = (() => a in b);;);", "for (x = (() => a in b);;);\n");
+    test("for (x = ((a = b in c) => 1);;);", "for (x = ((a = b in c) => 1);;);\n");
 }
 
 #[test]

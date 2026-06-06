@@ -1,9 +1,13 @@
 use oxc_codegen::CodegenOptions;
 use oxc_parser::ParseOptions;
+use oxc_span::SourceType;
 
 use crate::{
     snapshot, snapshot_options,
-    tester::{test_idempotency, test_same, test_tsx, test_with_parse_options},
+    tester::{
+        default_options, test_idempotency, test_options_with_source_type, test_same, test_tsx,
+        test_with_parse_options,
+    },
 };
 
 #[test]
@@ -183,6 +187,51 @@ fn ts_as_expression_in_binary_expr() {
     test_idempotency(
         "!(typeof that === 'object' && 'keys' in that && typeof (that as object & { keys: unknown }).keys === 'function')",
     );
+}
+
+#[test]
+fn ts_type_assertion() {
+    // `<T>x` (TS angle-bracket assertion) is only valid in non-tsx source.
+    let test_ts =
+        |src: &str| test_options_with_source_type(src, src, SourceType::ts(), default_options());
+    // `<T>x` is a unary expression; it should not be over-parenthesized.
+    test_ts("y = <T>x;\n");
+    test_ts("z = <T>x + 1;\n");
+    test_ts("foo(<T>x);\n");
+    test_ts("c = -<T>x;\n");
+    // Parentheses are required where a unary expression would re-associate.
+    test_ts("m = (<T>x).foo;\n");
+    test_ts("o = (<T>x)();\n");
+    // The base of `**` must be an UpdateExpression, so a type assertion is wrapped.
+    test_ts("n = (<T>x) ** 2;\n");
+    // Minified `a < <T>x` must keep a space so `<` + `<` isn't tokenized as `<<`.
+    test_options_with_source_type(
+        "a < <T>x;",
+        "a< <T>x;",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+    // The assertion operand is a UnaryExpression and must not be over-parenthesized.
+    test_ts("a = <T>-x;\n");
+    test_ts("b = <T>typeof x;\n");
+    test_ts("c = <T><U>x;\n");
+    test_ts("d = <T>x();\n");
+    // Looser operands still need parentheses.
+    test_ts("e = <T>(b + c);\n");
+    test_ts("f = <T>(d ** e);\n");
+    test_ts("g = <T>(h ? i : j);\n");
+}
+
+#[test]
+fn ts_instantiation_expression() {
+    test_same("v = (a ?? b)<T>;\n");
+    test_same("w = (a + b)<T>;\n");
+    test_same("x = (a, b)<T>;\n");
+    test_same("q = (a as B)<T>;\n");
+    test_same("r = (-a)<T>;\n");
+    test_same("y = a.b<T>;\n");
+    test_same("z = f<T>;\n");
+    test_same("p = a()<T>;\n");
 }
 
 #[test]

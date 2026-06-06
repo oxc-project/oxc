@@ -5015,6 +5015,14 @@ Negative Passed: 4588/4588 (100.00%)
     · ────
     ╰────
 
+  × Unexpected import.meta expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/direct-import.meta.js:21:1]
+ 20 │ 
+ 21 │ import.meta = 1;
+    · ───────────
+    ╰────
+  help: import.meta is only allowed in module code
+
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignmenttargettype/direct-import.meta.js:21:1]
  20 │ 
@@ -6139,6 +6147,14 @@ Negative Passed: 4588/4588 (100.00%)
  20 │ (eval) = 1;
     ·  ────
     ╰────
+
+  × Unexpected import.meta expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-import.meta.js:24:2]
+ 23 │ 
+ 24 │ (import.meta) = 1;
+    ·  ───────────
+    ╰────
+  help: import.meta is only allowed in module code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-import.meta.js:24:2]
