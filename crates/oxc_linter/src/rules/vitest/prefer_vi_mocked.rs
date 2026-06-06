@@ -8,8 +8,9 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn prefer_vi_mocked_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `vi.mocked()` over `fn as Mock`").with_label(span)
+fn prefer_vi_mocked_diagnostic(span: Span, mock_type: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `vi.mocked()` over type assertions using `{mock_type}`"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -18,7 +19,7 @@ pub struct PreferViMocked;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Require `vi.mocked()` over `fn as Mock`.
+    /// Require `vi.mocked()` over Vitest mock type assertions.
     ///
     /// ### Why is this bad?
     ///
@@ -91,11 +92,12 @@ fn check(ts_reference: &TSTypeReference, arg_span: Span, span: Span, ctx: &LintC
         return;
     };
 
-    if !MOCK_TYPES.contains(&ident_ref.name.as_str()) {
+    let mock_type = ident_ref.name.as_str();
+    if !MOCK_TYPES.contains(&mock_type) {
         return;
     }
 
-    ctx.diagnostic_with_fix(prefer_vi_mocked_diagnostic(span), |fixer| {
+    ctx.diagnostic_with_fix(prefer_vi_mocked_diagnostic(span, mock_type), |fixer| {
         let span_source_code = fixer.source_range(arg_span);
         fixer.replace(span, format!("vi.mocked({span_source_code})"))
     });
