@@ -788,7 +788,8 @@ impl Gen for Function<'_> {
             self.params.print(p, ctx);
             p.print_ascii_byte(b')');
             if let Some(return_type) = &self.return_type {
-                p.print_str(": ");
+                p.print_colon();
+                p.print_soft_space();
                 return_type.print(p, ctx);
             }
             if let Some(body) = &self.body {
@@ -3588,7 +3589,8 @@ impl Gen for TSThisParameter<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("this");
         if let Some(type_annotation) = &self.type_annotation {
-            p.print_str(": ");
+            p.print_colon();
+            p.print_soft_space();
             type_annotation.print(p, ctx);
         }
     }

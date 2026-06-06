@@ -193,6 +193,21 @@ fn minify_export_default() {
 }
 
 #[test]
+fn minify_return_type_colon() {
+    let min = |src: &str, expected: &str| {
+        test_options_with_source_type(src, expected, SourceType::ts(), CodegenOptions::minify());
+    };
+    // No space after `:` in a function return type / `this` param annotation,
+    // matching method/arrow return types.
+    min("function f(): Promise<void> {}", "function f():Promise<void>{}");
+    min(
+        "function g(a: string): boolean { return true; }",
+        "function g(a:string):boolean{return true}",
+    );
+    min("function h(this: Foo): void {}", "function h(this:Foo):void{}");
+}
+
+#[test]
 fn ts_as_expression_in_binary_expr() {
     test_idempotency("key in (that as object)");
     test_idempotency("'foo' in (x as Record<string, unknown>)");

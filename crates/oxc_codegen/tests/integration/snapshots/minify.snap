@@ -10,7 +10,7 @@ function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): 
 	return x;
 }
 ----------
-function foo<T extends string>(x:T,y:string,...restOfParams:Omit<T,`x`>): T{return x}
+function foo<T extends string>(x:T,y:string,...restOfParams:Omit<T,`x`>):T{return x}
 ########## 2
 let x: string[] = ['abc', 'def', 'ghi'];
 ----------
@@ -54,7 +54,7 @@ function isString(value: unknown): asserts value is string {
             }
         }
 ----------
-function isString(value:unknown): asserts value is string{if(typeof value!==`string`){throw new Error(`Not a string`)}}
+function isString(value:unknown):asserts value is string{if(typeof value!==`string`){throw new Error(`Not a string`)}}
 ########## 12
 import type { Foo } from 'foo';
 ----------
