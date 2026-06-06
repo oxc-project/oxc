@@ -6,7 +6,6 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -152,10 +151,7 @@ impl Rule for NoPromiseExecutorReturn {
                 if let Some(expr) = arrow.get_expression() {
                     // Arrow function with expression body: `new Promise(r => r(1))`
                     // This is an implicit return, report it unless allowVoid and it's a void expression
-                    if self.allow_void
-                        && let Expression::UnaryExpression(unary) = expr.get_inner_expression()
-                        && unary.operator == UnaryOperator::Void
-                    {
+                    if self.allow_void && expr.get_inner_expression().is_void() {
                         return;
                     }
                     ctx.diagnostic(no_promise_executor_return_diagnostic(arrow.body.span));
@@ -204,10 +200,7 @@ impl Visit<'_> for ReturnStatementFinder {
         };
 
         // Check for void expression if allowVoid is true
-        if self.allow_void
-            && let Expression::UnaryExpression(unary) = argument.get_inner_expression()
-            && unary.operator == UnaryOperator::Void
-        {
+        if self.allow_void && argument.get_inner_expression().is_void() {
             return;
         }
 
