@@ -2394,7 +2394,9 @@ impl GenExpr for TSTypeAssertion<'_> {
             }
             self.type_annotation.print(p, ctx);
             p.print_ascii_byte(b'>');
-            self.expression.print_expr(p, Precedence::Member, ctx);
+            // The operand is a `UnaryExpression`, so print it like a unary argument
+            // (`<T>-x`, not `<T>(-x)`) while still wrapping looser operands.
+            self.expression.print_expr(p, Precedence::Exponentiation, ctx);
         });
     }
 }

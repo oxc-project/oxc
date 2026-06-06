@@ -211,6 +211,15 @@ fn ts_type_assertion() {
         SourceType::ts(),
         CodegenOptions::minify(),
     );
+    // The assertion operand is a UnaryExpression and must not be over-parenthesized.
+    test_ts("a = <T>-x;\n");
+    test_ts("b = <T>typeof x;\n");
+    test_ts("c = <T><U>x;\n");
+    test_ts("d = <T>x();\n");
+    // Looser operands still need parentheses.
+    test_ts("e = <T>(b + c);\n");
+    test_ts("f = <T>(d ** e);\n");
+    test_ts("g = <T>(h ? i : j);\n");
 }
 
 #[test]
