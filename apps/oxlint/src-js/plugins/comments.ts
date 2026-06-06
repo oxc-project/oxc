@@ -114,15 +114,15 @@ let getCommentPrivateLoc: (comment: Comment) => Location | null;
  * identical across instances. Reset only clears the `#loc` field.
  */
 class Comment implements Span {
+  type: CommentType["type"] = null!; // Overwritten later
+  value: string = null!; // Overwritten later
   start: number = 0;
   end: number = 0;
+  range: [number, number] = [0, 0];
+
   declare loc: Location; // Overwritten by __defineGetter__ at construction time
 
   #loc: Location | null = null;
-
-  type: CommentType["type"] = null!; // Overwritten later
-  value: string = null!; // Overwritten later
-  range: [number, number] = [0, 0];
 
   constructor() {
     // Define `loc` as an own getter property (enumerable + configurable by default).
