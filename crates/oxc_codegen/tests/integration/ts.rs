@@ -182,6 +182,17 @@ export import b = require("b");
 }
 
 #[test]
+fn minify_export_default() {
+    let min = |src: &str, expected: &str| {
+        test_options_with_source_type(src, expected, SourceType::ts(), CodegenOptions::minify());
+    };
+    // A leading `interface`/`abstract`/keyword needs the space; `{`/`<` does not.
+    min("export default interface I { x: number }", "export default interface I{x:number;}");
+    min("export default abstract class {}", "export default abstract class{}");
+    min("export default <const>x;", "export default<const>x;");
+}
+
+#[test]
 fn ts_as_expression_in_binary_expr() {
     test_idempotency("key in (that as object)");
     test_idempotency("'foo' in (x as Record<string, unknown>)");

@@ -45,6 +45,13 @@ fn module_decl() {
         "export { default } from './foo.js' with { type: 'json' }",
         "export{default}from\"./foo.js\"with{type:\"json\"};",
     );
+
+    test_minify("export default {a:1}", "export default{a:1};");
+    test_minify("export default [1]", "export default[1];");
+    test_minify("export default (a,b)", "export default(a,b);");
+    test_minify("export default 5", "export default 5;");
+    test_minify("export default foo", "export default foo;");
+    test_minify("export default function(){}", "export default function(){}");
 }
 
 #[test]

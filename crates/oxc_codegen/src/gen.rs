@@ -1216,7 +1216,8 @@ impl Gen for ExportDefaultDeclaration<'_> {
         }
         p.print_indent();
         p.add_source_mapping(self.span);
-        p.print_str("export default ");
+        p.print_str("export default");
+        p.print_soft_space();
         self.declaration.print(p, ctx);
     }
 }
@@ -3930,6 +3931,7 @@ impl Gen for TSTypeAliasDeclaration<'_> {
 
 impl Gen for TSInterfaceDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_space_before_identifier();
         if self.declare {
             p.print_str("declare ");
         }
