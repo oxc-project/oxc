@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, IdentifierReference},
+    ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,9 +9,8 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     AstNode,
     context::LintContext,
-    module_record::ImportImportName,
     rule::Rule,
-    utils::{is_in_vue_component_instance_method, is_this_object},
+    utils::{is_in_vue_component_instance_method, is_this_object, is_vue_next_tick_import},
 };
 
 fn should_be_function_diagnostic(span: Span) -> OxcDiagnostic {
@@ -199,26 +198,6 @@ fn is_awaited_promise(call_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
         }
         _ => false,
     }
-}
-
-fn is_vue_next_tick_import(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    let scoping = ctx.scoping();
-    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
-        return false;
-    };
-    for entry in &ctx.module_record().import_entries {
-        if entry.module_request.name() != "vue" {
-            continue;
-        }
-        let ImportImportName::Name(name_span) = &entry.import_name else { continue };
-        if name_span.name() != "nextTick" {
-            continue;
-        }
-        if scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id) {
-            return true;
-        }
-    }
-    false
 }
 
 #[test]
