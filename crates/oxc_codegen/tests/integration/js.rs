@@ -87,6 +87,24 @@ fn expr() {
 
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
     test_minify_same("new(import(``),function(){});");
+
+    // A `new` callee containing a call must keep parentheses.
+    test_same("new (f())();\n");
+    test_same("new (g?.())();\n");
+    test_same("new (f.g?.h)();\n");
+    test_same("new (f?.g.h)();\n");
+    test("new (f().g)();", "new (f()).g();\n");
+    test_same("new (f?.().g)();\n");
+    test_same("new (f()?.g)();\n");
+    test_same("new (f?.()?.g)();\n");
+    test("new (f()`g`)();", "new (f())`g`();\n"); // #22961
+    test_same("new (import(\"foo\"))();\n");
+    test("new (import(\"foo\").bar)();", "new (import(\"foo\")).bar();\n");
+    test("new (import(\"foo\")`bar`)();", "new (import(\"foo\"))`bar`();\n");
+    test("new (a`b`)();", "new a`b`();\n");
+    test("new (f().g.h)();", "new (f()).g.h();\n");
+    test("new (f[g()])();", "new f[g()]();\n");
+    test("new (new f())();", "new new f()();\n");
 }
 
 #[test]

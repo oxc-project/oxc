@@ -1257,7 +1257,7 @@ impl GenExpr for Expression<'_> {
             Self::NewExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Template literals
             Self::TemplateLiteral(literal) => literal.print(p, ctx),
-            Self::TaggedTemplateExpression(expr) => expr.print(p, ctx),
+            Self::TaggedTemplateExpression(expr) => expr.print_expr(p, precedence, ctx),
             // Other literals
             Self::RegExpLiteral(lit) => lit.print(p, ctx),
             Self::BigIntLiteral(lit) => lit.print_expr(p, precedence, ctx),
@@ -2257,10 +2257,11 @@ impl Gen for TemplateLiteral<'_> {
     }
 }
 
-impl Gen for TaggedTemplateExpression<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+impl GenExpr for TaggedTemplateExpression<'_> {
+    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
         p.add_source_mapping(self.span);
-        self.tag.print_expr(p, Precedence::Postfix, Context::empty());
+        // Propagate `FORBID_CALL` to the tag so a `new` callee like `f()` wraps.
+        self.tag.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
@@ -2290,7 +2291,11 @@ impl GenExpr for AwaitExpression<'_> {
 
 impl GenExpr for ChainExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= Precedence::Postfix, |p| match &self.expression {
+        let wrap = precedence >= Precedence::Postfix || ctx.intersects(Context::FORBID_CALL);
+        // Once wrapped, the inner element is in a fresh grouping; don't wrap again.
+        let (precedence, ctx) =
+            if wrap { (Precedence::Lowest, Context::empty()) } else { (precedence, ctx) };
+        p.wrap(wrap, |p| match &self.expression {
             ChainElement::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
             ChainElement::TSNonNullExpression(expr) => expr.print_expr(p, precedence, ctx),
             ChainElement::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
