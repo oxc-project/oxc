@@ -82,10 +82,11 @@ const EMPTY_COMMENTS: CommentType[] = Object.freeze([]) as unknown as CommentTyp
 const COMMENT_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Comment` in Rust
 debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);
 
-// `__defineGetter__` bound to `Function.prototype.call` so it can be called without a
-// `Object.prototype` lookup at each call site.
+// `defineGetter(obj, prop, getter)` is equivalent to `obj.defineGetter(prop, getter)`,
+// but without `Object.prototype` lookup at each call site
 const defineGetter = Function.prototype.call.bind(
-  // @ts-expect-error - `__defineGetter__` is not in `Object.prototype`'s type definition, but it does exist at runtime and is widely supported in JS engines, including V8.
+  // @ts-expect-error - `__defineGetter__` is not in `Object.prototype`'s type definition,
+  // but it does exist at runtime and is widely supported in JS engines, including V8
   Object.prototype.__defineGetter__,
 ) as (obj: object, prop: string, getter: () => unknown) => void;
 
@@ -106,8 +107,7 @@ let getCommentPrivateLoc: (comment: Comment) => Location | null;
  *
  * `loc` is defined as an own accessor property via `__defineGetter__` in the constructor,
  * using a shared getter function (`getCommentLoc`). This makes `loc` an own enumerable property,
- * so `{...comment}` spreads it and `JSON.stringify(comment)` serializes it, without needing
- * a Proxy or `toJSON()`.
+ * so `{...comment}` spreads it and `JSON.stringify(comment)` serializes it.
  *
  * The computed `Location` value is cached in the private `#loc` field on first access.
  * All instances share the same getter function, keeping the V8 hidden class transition
@@ -120,16 +120,19 @@ class Comment implements Span {
   end: number = 0;
   range: [number, number] = [0, 0];
 
-  declare loc: Location; // Overwritten by __defineGetter__ at construction time
+  declare loc: Location; // Defined with `__defineGetter__` in constructor
 
   #loc: Location | null = null;
 
   constructor() {
     // Define `loc` as an own getter property (enumerable + configurable by default).
     // This makes `{...comment}` spread `loc` and `JSON.stringify(comment)` serialize it.
+    // Note: `new Comment()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
+    // See https://github.com/oxc-project/oxc/pull/22238.
     defineGetter(this, "loc", getCommentLoc);
   }
 
+  // Functions requiring access to `#loc` defined in static block to avoid exposing them as a public methods
   static {
     getCommentLocTemp = function (this: Comment): Location {
       const loc = this.#loc;
@@ -149,7 +152,6 @@ class Comment implements Span {
       return (this.#loc = computeLoc(this.start, this.end));
     };
 
-    // Defined in static block to avoid exposing this as a public method
     resetCommentLocTemp = (comment: Comment) => {
       comment.#loc = null;
     };
@@ -158,7 +160,7 @@ class Comment implements Span {
   }
 }
 
-// Copied into consts here to avoid checks at call site (`let` binding could be re-assigned).
+// Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
 const getCommentLoc = getCommentLocTemp!;
 const resetCommentLoc = resetCommentLocTemp!;
 
