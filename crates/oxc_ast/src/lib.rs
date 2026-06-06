@@ -42,11 +42,13 @@
 //! [`VisitMut`]: <http://docs.rs/oxc_ast_visit>
 
 pub mod ast;
-mod ast_builder_impl;
 mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
 mod trivia;
+
+#[cfg(feature = "ast_builder")]
+mod ast_builder_impl;
 
 #[cfg(feature = "serialize")]
 mod serialize;
@@ -56,6 +58,7 @@ mod generated {
 
     #[cfg(debug_assertions)]
     mod assert_layouts;
+    #[cfg(feature = "ast_builder")]
     mod ast_builder;
     mod derive_clone_in;
     mod derive_content_eq;
@@ -72,6 +75,7 @@ mod generated {
 pub use generated::ast_kind;
 
 pub use ast::comment::{Comment, CommentContent, CommentKind, CommentPosition};
+#[cfg(feature = "ast_builder")]
 pub use ast_builder_impl::{AstBuilder, NONE};
 pub use ast_kind::{AstKind, AstType};
 pub use ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind};
