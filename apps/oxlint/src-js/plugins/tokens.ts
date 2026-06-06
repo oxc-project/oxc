@@ -181,8 +181,8 @@ let getTokenPrivateLoc: (token: Token) => Location | null;
  * Token implementation with lazy `loc` caching via private field.
  *
  * `loc` is defined as an own accessor property via `__defineGetter__` in the constructor,
- * using a shared getter function (`getCommentLoc`). This makes `loc` an own enumerable property,
- * so `{...comment}` spreads it and `JSON.stringify(comment)` serializes it.
+ * using a shared getter function (`getTokenLoc`). This makes `loc` an own enumerable property,
+ * so `{...token}` spreads it and `JSON.stringify(token)` serializes it.
  *
  * The computed `Location` value is cached in the private `#loc` field on first access.
  * All instances share the same getter function, keeping the V8 hidden class transition
