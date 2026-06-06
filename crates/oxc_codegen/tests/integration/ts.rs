@@ -223,6 +223,18 @@ fn ts_type_assertion() {
 }
 
 #[test]
+fn ts_instantiation_expression() {
+    test_same("v = (a ?? b)<T>;\n");
+    test_same("w = (a + b)<T>;\n");
+    test_same("x = (a, b)<T>;\n");
+    test_same("q = (a as B)<T>;\n");
+    test_same("r = (-a)<T>;\n");
+    test_same("y = a.b<T>;\n");
+    test_same("z = f<T>;\n");
+    test_same("p = a()<T>;\n");
+}
+
+#[test]
 fn ts_satisfies_expression() {
     test_idempotency("d = x satisfies y");
     test_idempotency("const Foo = (() => {})() satisfies X");
