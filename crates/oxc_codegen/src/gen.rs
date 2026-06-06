@@ -3967,13 +3967,13 @@ impl Gen for TSInterfaceHeritage<'_> {
 
 impl Gen for TSEnumDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_space_before_identifier();
         if self.declare {
             p.print_str("declare ");
         }
         if self.r#const {
             p.print_str("const ");
         }
-        p.print_space_before_identifier();
         p.print_str("enum ");
         self.id.print(p, ctx);
         p.print_space_before_identifier();
