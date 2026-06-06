@@ -60,6 +60,7 @@ export type LintPluginOptionsSchema =
 export type LintPlugins = LintPluginOptionsSchema[];
 export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type RuleNoConfig = AllowWarnDeny | [AllowWarnDeny];
+export type CountThis = "always" | "never" | "except-void";
 export type CaseType = "camelCase" | "snake_case";
 export type OxlintOverrides = OxlintOverride[];
 export type JestVersionSchema = number | string;
@@ -697,13 +698,13 @@ export interface DummyRuleMap {
   "jsx-a11y/scope"?: RuleNoConfig;
   "jsx-a11y/tabindex-no-positive"?: RuleNoConfig;
   "logical-assignment-operators"?: DummyRule;
-  "max-classes-per-file"?: DummyRule;
-  "max-depth"?: DummyRule;
-  "max-lines"?: DummyRule;
-  "max-lines-per-function"?: DummyRule;
-  "max-nested-callbacks"?: DummyRule;
-  "max-params"?: DummyRule;
-  "max-statements"?: DummyRule;
+  "max-classes-per-file"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxClassesPerFileConfig];
+  "max-depth"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxDepth];
+  "max-lines"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxLinesConfig];
+  "max-lines-per-function"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxLinesPerFunctionConfig];
+  "max-nested-callbacks"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxNestedCallbacks];
+  "max-params"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxParamsConfig];
+  "max-statements"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxStatementsConfig];
   "new-cap"?: DummyRule;
   "nextjs/google-font-display"?: RuleNoConfig;
   "nextjs/google-font-preconnect"?: RuleNoConfig;
@@ -1351,6 +1352,93 @@ export interface DummyRuleMap {
   "vue/valid-next-tick"?: RuleNoConfig;
   yoda?: DummyRule;
   [k: string]: DummyRule | undefined;
+}
+export interface MaxClassesPerFileConfig {
+  /**
+   * Whether to ignore class expressions when counting classes.
+   */
+  ignoreExpressions?: boolean;
+  /**
+   * The maximum number of classes allowed per file.
+   */
+  max?: number;
+}
+export interface MaxDepth {
+  /**
+   * The `max` enforces a maximum depth that blocks can be nested
+   */
+  max?: number;
+}
+export interface MaxLinesConfig {
+  /**
+   * Maximum number of lines allowed per file.
+   */
+  max?: number;
+  /**
+   * Whether to ignore blank lines when counting.
+   */
+  skipBlankLines?: boolean;
+  /**
+   * Whether to ignore comments when counting.
+   */
+  skipComments?: boolean;
+}
+export interface MaxLinesPerFunctionConfig {
+  /**
+   * The `IIFEs` option controls whether IIFEs are included in the line count.
+   * By default, IIFEs are not considered, but when set to `true`, they will
+   * be included in the line count for the function.
+   */
+  IIFEs?: boolean;
+  /**
+   * Maximum number of lines allowed in a function.
+   */
+  max?: number;
+  /**
+   * Skip lines made up purely of whitespace.
+   */
+  skipBlankLines?: boolean;
+  /**
+   * Skip lines containing just comments.
+   */
+  skipComments?: boolean;
+}
+export interface MaxNestedCallbacks {
+  /**
+   * The `max` enforces a maximum depth that callbacks can be nested.
+   */
+  max?: number;
+}
+export interface MaxParamsConfig {
+  /**
+   * This option controls when to count a `this` parameter.
+   *
+   * - "always": always count `this`
+   * - "never": never count `this`
+   * - "except-void": count `this` only when it is not type `void`
+   */
+  countThis?: CountThis;
+  /**
+   * Deprecated alias for `countThis`.
+   *
+   * For example `{ "countVoidThis": true }` would mean that having a function
+   * take a `this` parameter of type `void` is counted towards the maximum number of parameters.
+   */
+  countVoidThis?: boolean;
+  /**
+   * Maximum number of parameters allowed in function definitions.
+   */
+  max?: number;
+}
+export interface MaxStatementsConfig {
+  /**
+   * Whether to ignore top-level functions.
+   */
+  ignoreTopLevelFunctions?: boolean;
+  /**
+   * Maximum number of statements allowed per function.
+   */
+  max?: number;
 }
 export interface NoReservedKeysConfig {
   /**

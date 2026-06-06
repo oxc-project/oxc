@@ -200,6 +200,34 @@
       "maxItems": 2,
       "minItems": 2
     },
+    "CountThis": {
+      "oneOf": [
+        {
+          "description": "Always count `this` as a parameter.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always count `this` as a parameter."
+        },
+        {
+          "description": "Never count `this` as a parameter.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Never count `this` as a parameter."
+        },
+        {
+          "description": "Count `this` unless it is explicitly typed as `void`.",
+          "type": "string",
+          "enum": [
+            "except-void"
+          ],
+          "markdownDescription": "Count `this` unless it is explicitly typed as `void`."
+        }
+      ]
+    },
     "CustomComponent": {
       "anyOf": [
         {
@@ -787,25 +815,193 @@
           "$ref": "#/definitions/DummyRule"
         },
         "max-classes-per-file": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "$ref": "#/definitions/MaxClassesPerFileConfig"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "max-depth": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "$ref": "#/definitions/MaxDepth"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "max-lines": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "$ref": "#/definitions/MaxLinesConfig"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "max-lines-per-function": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "$ref": "#/definitions/MaxLinesPerFunctionConfig"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "max-nested-callbacks": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "$ref": "#/definitions/MaxNestedCallbacks"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "max-params": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "$ref": "#/definitions/MaxParamsConfig"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "max-statements": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "$ref": "#/definitions/MaxStatementsConfig"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "new-cap": {
           "$ref": "#/definitions/DummyRule"
@@ -3002,6 +3198,161 @@
           }
         ]
       }
+    },
+    "MaxClassesPerFileConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreExpressions": {
+          "description": "Whether to ignore class expressions when counting classes.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore class expressions when counting classes."
+        },
+        "max": {
+          "description": "The maximum number of classes allowed per file.",
+          "default": 1,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "The maximum number of classes allowed per file."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxDepth": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "The `max` enforces a maximum depth that blocks can be nested",
+          "default": 4,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "The `max` enforces a maximum depth that blocks can be nested"
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxLinesConfig": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "Maximum number of lines allowed per file.",
+          "default": 300,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of lines allowed per file."
+        },
+        "skipBlankLines": {
+          "description": "Whether to ignore blank lines when counting.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore blank lines when counting."
+        },
+        "skipComments": {
+          "description": "Whether to ignore comments when counting.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore comments when counting."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxLinesPerFunctionConfig": {
+      "type": "object",
+      "properties": {
+        "IIFEs": {
+          "description": "The `IIFEs` option controls whether IIFEs are included in the line count.\nBy default, IIFEs are not considered, but when set to `true`, they will\nbe included in the line count for the function.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "The `IIFEs` option controls whether IIFEs are included in the line count.\nBy default, IIFEs are not considered, but when set to `true`, they will\nbe included in the line count for the function."
+        },
+        "max": {
+          "description": "Maximum number of lines allowed in a function.",
+          "default": 50,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of lines allowed in a function."
+        },
+        "skipBlankLines": {
+          "description": "Skip lines made up purely of whitespace.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Skip lines made up purely of whitespace."
+        },
+        "skipComments": {
+          "description": "Skip lines containing just comments.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Skip lines containing just comments."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxNestedCallbacks": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "The `max` enforces a maximum depth that callbacks can be nested.",
+          "default": 10,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "The `max` enforces a maximum depth that callbacks can be nested."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxParamsConfig": {
+      "type": "object",
+      "properties": {
+        "countThis": {
+          "description": "This option controls when to count a `this` parameter.\n\n- \"always\": always count `this`\n- \"never\": never count `this`\n- \"except-void\": count `this` only when it is not type `void`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/CountThis"
+            }
+          ],
+          "markdownDescription": "This option controls when to count a `this` parameter.\n\n- \"always\": always count `this`\n- \"never\": never count `this`\n- \"except-void\": count `this` only when it is not type `void`"
+        },
+        "countVoidThis": {
+          "description": "Deprecated alias for `countThis`.\n\nFor example `{ \"countVoidThis\": true }` would mean that having a function\ntake a `this` parameter of type `void` is counted towards the maximum number of parameters.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Deprecated alias for `countThis`.\n\nFor example `{ \"countVoidThis\": true }` would mean that having a function\ntake a `this` parameter of type `void` is counted towards the maximum number of parameters."
+        },
+        "max": {
+          "description": "Maximum number of parameters allowed in function definitions.",
+          "default": 3,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of parameters allowed in function definitions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxStatementsConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreTopLevelFunctions": {
+          "description": "Whether to ignore top-level functions.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore top-level functions."
+        },
+        "max": {
+          "description": "Maximum number of statements allowed per function.",
+          "default": 10,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of statements allowed per function."
+        }
+      },
+      "additionalProperties": false
     },
     "NextPluginSettings": {
       "description": "Configure Next.js plugin rules.",
