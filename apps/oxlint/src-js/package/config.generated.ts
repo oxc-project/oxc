@@ -1562,6 +1562,7 @@ export interface DummyRuleMap {
   "vue/define-props-declaration"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "type-based" | "runtime"];
   "vue/define-props-destructuring"?: DummyRule;
   "vue/max-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxProps];
+  "vue/next-tick-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "promise" | "callback"];
   "vue/no-arrow-functions-in-watch"?: RuleNoConfig;
   "vue/no-computed-properties-in-data"?: RuleNoConfig;
   "vue/no-deprecated-data-object-declaration"?: RuleNoConfig;
