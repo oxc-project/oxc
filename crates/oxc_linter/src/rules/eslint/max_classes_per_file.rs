@@ -21,12 +21,24 @@ fn max_classes_per_file_diagnostic(total: usize, max: usize, span: Span) -> OxcD
 pub struct MaxClassesPerFile(Box<MaxClassesPerFileConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxClassesPerFileConfig {
     /// The maximum number of classes allowed per file.
     pub max: usize,
     /// Whether to ignore class expressions when counting classes.
     pub ignore_expressions: bool,
+}
+
+#[cfg(feature = "ruledocs")]
+impl MaxClassesPerFile {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<MaxClassesPerFileConfig>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
+    }
 }
 
 impl std::ops::Deref for MaxClassesPerFile {

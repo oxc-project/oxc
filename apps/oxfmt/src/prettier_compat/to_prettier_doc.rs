@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
 use serde_json::{Value, json};
 
-use oxc_formatter::{
+use oxc_formatter_core::{
     BestFittingElement, DedentMode, FormatElement, GroupId, LineMode, PrintMode, Tag,
 };
 

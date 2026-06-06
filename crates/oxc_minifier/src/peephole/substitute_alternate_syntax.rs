@@ -1798,7 +1798,12 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_iife_call(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::CallExpression(call_expr) = e else { return };
 
-        if !call_expr.arguments.is_empty() || !call_expr.callee.is_function() {
+        if !call_expr.callee.is_function() {
+            return;
+        }
+
+        if !call_expr.arguments.is_empty() {
+            Self::substitute_empty_body_iife_call_with_args(e, ctx);
             return;
         }
 
@@ -1887,18 +1892,63 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Take the IIFE body out for inlining, propagating the outer `pure`
-    /// annotation onto a call/new body. Propagation runs in both DCE and
-    /// full-minify modes; only the bail-out (via
-    /// [`Self::iife_inline_would_lose_pure`]) is gated to DCE mode, where
-    /// preserving the IIFE wrapper matters for downstream tools.
+    /// `(() => {})(a, b)` → `(a, b, void 0)` — drop the wrapper when the body
+    /// is empty and every param is a bare identifier; spread args become
+    /// `[...a]` to keep the iterator-protocol invocation.
+    fn substitute_empty_body_iife_call_with_args(
+        e: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::CallExpression(call_expr) = e else { return };
+
+        // Looser than the spec's `IsSimpleParameterList` (which forbids rest):
+        // a rest binding to an identifier is safe here — the empty body never
+        // observes the collected array.
+        let params_simple = |p: &FormalParameters<'a>| {
+            p.items
+                .iter()
+                .all(|item| item.pattern.is_binding_identifier() && item.initializer.is_none())
+                && p.rest.as_ref().is_none_or(|r| r.rest.argument.is_binding_identifier())
+        };
+
+        let is_drop_candidate = match &call_expr.callee {
+            Expression::FunctionExpression(f) => {
+                !f.r#async
+                    && !f.generator
+                    && f.body.as_ref().is_some_and(|b| b.is_empty())
+                    && params_simple(&f.params)
+            }
+            Expression::ArrowFunctionExpression(f) => {
+                !f.r#async && f.body.is_empty() && params_simple(&f.params)
+            }
+            _ => false,
+        };
+
+        if !is_drop_candidate {
+            return;
+        }
+
+        let span = call_expr.span;
+        let mut exprs = Self::fold_arguments_into_needed_expressions(&mut call_expr.arguments, ctx);
+        *e = if exprs.is_empty() {
+            ctx.ast.void_0(span)
+        } else {
+            exprs.push(ctx.ast.void_0(span));
+            ctx.ast.expression_sequence(span, exprs)
+        };
+        ctx.state.changed = true;
+    }
+
+    /// Take the IIFE body out for inlining and propagate `pure` onto a
+    /// call/new body. Bails in DCE-only mode — see the
+    /// `preserve_iife_in_dce_mode` test.
     /// Returns `None` to signal the caller should leave the IIFE intact.
     fn try_take_iife_body(
         body: &mut Expression<'a>,
         is_pure: bool,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if Self::iife_inline_would_lose_pure(is_pure, body, ctx) {
+        if ctx.state.dce {
             return None;
         }
         let mut taken = body.take_in(ctx.ast);
@@ -1910,23 +1960,6 @@ impl<'a> PeepholeOptimizations {
             }
         }
         Some(taken)
-    }
-
-    /// Whether inlining the IIFE body would weaken the outer pure assertion.
-    /// Fires only in DCE-only mode (rolldown's per-module preprocess): the
-    /// outer call has no arguments, so its `pure` flag covers the entire
-    /// body. Inlining any side-effectful body surfaces sub-effects at the
-    /// outer call site, where rolldown's side-effect detector treats them
-    /// as real side effects regardless of the inlined node's `pure` flag.
-    fn iife_inline_would_lose_pure(
-        is_pure: bool,
-        body: &Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> bool {
-        if !is_pure || !ctx.state.dce {
-            return false;
-        }
-        body.may_have_side_effects(ctx)
     }
 }
 

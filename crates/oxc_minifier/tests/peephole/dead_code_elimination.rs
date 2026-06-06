@@ -206,6 +206,22 @@ fn dce_var_hoisting() {
     );
 }
 
+// Dropping a dead-after-throw statement (`module.exports = x`) removes the
+// only reference to `x`. Without flagging that as a change, the peephole loop
+// terminates before `LiveUsageCollector` refreshes scoping, leaving the
+// unused-declarator pass to see a stale reference and keep `var x = {}`.
+#[test]
+fn dead_after_throw_drop_triggers_unused_declarator_removal() {
+    test(
+        "export function f() {
+            var x = {};
+            throw new Error('boom');
+            module.exports = x;
+         }",
+        "export function f() { throw new Error('boom'); }",
+    );
+}
+
 #[test]
 fn pure_comment_for_pure_global_constructors() {
     test("var x = new WeakSet; foo(x)", "var x = /* @__PURE__ */ new WeakSet();\nfoo(x)");
@@ -215,6 +231,24 @@ fn pure_comment_for_pure_global_constructors() {
         "var x = /* @__PURE__ */ new WeakSet(void 0);\nfoo(x)",
     );
     test("var x = new WeakSet([]); foo(x)", "var x = /* @__PURE__ */ new WeakSet([]);\nfoo(x)");
+}
+
+// `Normalize` sets pure flags before the peephole loop runs, so it misses
+// args that the loop later folds/inlines into pure-eligible shapes.
+#[test]
+fn pure_comment_re_evaluated_after_string_concat_fold() {
+    test(
+        "var r = new RegExp('foo' + 'bar'); foo(r)",
+        "var r = /* @__PURE__ */ new RegExp(\"foobar\");\nfoo(r)",
+    );
+}
+
+#[test]
+fn pure_comment_re_evaluated_after_variable_inline() {
+    test(
+        "export function f() { var ab = new ArrayBuffer(1); var dv = new DataView(ab); foo(dv); }",
+        "export function f() {\n\tvar dv = /* @__PURE__ */ new DataView(/* @__PURE__ */ new ArrayBuffer(1));\n\tfoo(dv);\n}",
+    );
 }
 
 #[test]
@@ -548,32 +582,41 @@ fn remove_pure_function_calls() {
 }
 
 #[test]
-fn preserve_pure_iife_in_used_position_for_downstream_treeshake() {
+fn preserve_iife_in_dce_mode() {
     // https://github.com/oxc-project/oxc/issues/17480
+    // https://github.com/rolldown/rolldown/issues/9437
     //
-    // In DCE-only mode the IIFE inliner refuses to inline a
-    // `@__PURE__`-annotated IIFE when the body can't carry a `pure` flag,
-    // so the outer call's annotation stays visible to rolldown's
-    // side-effect detector.
+    // IIFE body extraction is a peephole / strength-reduction rewrite, not
+    // DCE. In DCE-only mode (rolldown's per-module preprocess) the IIFE
+    // structure is preserved entirely — matching Rollup, esbuild
+    // `--tree-shaking=true`, Terser (no compress), and SWC (no minify).
+    //
+    // The only DCE-relevant IIFE rewrites that still run: dropping
+    // pure-annotated IIFEs whose result is unused (handled separately via
+    // `is_expression_result_unused` → `void 0`), and replacing fully-empty
+    // IIFEs with `void 0`.
 
+    // Pure-annotated IIFEs preserved across all body shapes.
     test_same("export const exec = /* @__PURE__ */ (() => _M.exec)();");
     test_same("export const x = /* @__PURE__ */ (() => foo()?.bar())();");
     test_same("export const x = /* @__PURE__ */ (() => foo`tpl`)();");
     test_same("export const x = /* @__PURE__ */ (() => (a(), b()))();");
     test_same("export const x = /* @__PURE__ */ (() => c ? a() : b())();");
-    // Bare-identifier conditional — unknown global reads count as side
-    // effects in DCE mode, so the IIFE wrapper stays.
     test_same("export const x = /* @__PURE__ */ (() => a ? b : c)();");
-
     test_same("export const x = /* @__PURE__ */ (() => foo())();");
     test_same("export const x = /* @__PURE__ */ (() => new Foo())();");
-    // Effectful arg inside the body call — the original IIFE could be dropped
-    // wholesale; the inlined form would expose `bar()` as a surviving side
-    // effect of the outer call.
     test_same("export const x = /* @__PURE__ */ (() => foo(bar()))();");
     test_same("export const x = /* @__PURE__ */ (() => new Foo(bar()))();");
+    test_same("export const x = /* @__PURE__ */ (() => 42)();");
+    test_same("export const x = /* @__PURE__ */ (() => [1, 2, 3])();");
+    test_same("export const x = /* @__PURE__ */ (() => ({ a: 1 }))();");
 
-    test("export const x = /* @__PURE__ */ (() => 42)();", "export const x = 42;");
+    // Non-pure IIFEs are also preserved — inlining is not DCE.
+    test_same("export const x = (() => foo())();");
+    test_same("export const x = (() => [1, 2, 3])();");
+    test_same("export const x = (() => 42)();");
+    test_same("export const x = (() => { foo(); })();");
+    test_same("export const x = (() => { return foo(); })();");
 }
 
 #[test]

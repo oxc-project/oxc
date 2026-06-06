@@ -293,11 +293,16 @@ pub struct OutputOptions {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DebugOption {
+    /// Print the list of files that will be linted
+    Files,
+
     /// Enable per-rule timing information
     Timings,
 }
 
 impl DebugOption {
+    const FILES_NAME: &str = "files";
+    const FILES_HELP: &str = "Print the list of files that will be linted, then exit";
     const TIMINGS_NAME: &str = "timings";
     const TIMINGS_HELP: &str = "Enable per-rule timing information";
 }
@@ -307,6 +312,7 @@ impl FromStr for DebugOption {
 
     fn from_str(option: &str) -> Result<Self, Self::Err> {
         match option {
+            Self::FILES_NAME => Ok(Self::Files),
             Self::TIMINGS_NAME => Ok(Self::Timings),
             _ => Err(format!("'{option}' is not a known debug option")),
         }
@@ -325,6 +331,11 @@ impl DebugOptions {
             Style::Text,
         ),
         ("  * `", Style::Text),
+        (DebugOption::FILES_NAME, Style::Text),
+        ("` - ", Style::Text),
+        (DebugOption::FILES_HELP, Style::Text),
+        (".\n", Style::Text),
+        ("  * `", Style::Text),
         (DebugOption::TIMINGS_NAME, Style::Text),
         ("` - ", Style::Text),
         (DebugOption::TIMINGS_HELP, Style::Text),
@@ -340,12 +351,19 @@ impl FromStr for DebugOptions {
     type Err = String;
 
     fn from_str(options: &str) -> Result<Self, Self::Err> {
-        options
+        let options = options
             .split(',')
             .filter(|option| !option.is_empty())
             .map(DebugOption::from_str)
-            .collect::<Result<Vec<_>, _>>()
-            .map(|options| Self { options })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        if options.contains(&DebugOption::Files)
+            && options.iter().any(|option| *option != DebugOption::Files)
+        {
+            return Err("debug option 'files' cannot be combined with other debug options".into());
+        }
+
+        Ok(Self { options })
     }
 }
 
@@ -704,6 +722,21 @@ mod lint_options {
         let options = get_lint_options("--debug timings src");
         assert!(options.output_options.debug.contains(DebugOption::Timings));
         assert_eq!(options.paths, vec![PathBuf::from("src")]);
+
+        let options = get_lint_options("--debug files src");
+        assert!(options.output_options.debug.contains(DebugOption::Files));
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
+    }
+
+    #[test]
+    fn debug_files_is_exclusive() {
+        let args = "--debug files,timings"
+            .split(' ')
+            .map(std::string::ToString::to_string)
+            .collect::<Vec<_>>();
+        let result = lint_command().run_inner(args.as_slice());
+        assert!(result.is_err_and(|err| err.unwrap_stderr()
+            == "couldn't parse `files,timings`: debug option 'files' cannot be combined with other debug options"));
     }
 
     #[test]

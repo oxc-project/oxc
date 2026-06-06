@@ -10,7 +10,7 @@ function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): 
 	return x;
 }
 ----------
-function foo<T extends string>(x:T,y:string,...restOfParams:Omit<T,`x`>): T{return x}
+function foo<T extends string>(x:T,y:string,...restOfParams:Omit<T,`x`>):T{return x}
 ########## 2
 let x: string[] = ['abc', 'def', 'ghi'];
 ----------
@@ -54,7 +54,7 @@ function isString(value: unknown): asserts value is string {
             }
         }
 ----------
-function isString(value:unknown): asserts value is string{if(typeof value!==`string`){throw new Error(`Not a string`)}}
+function isString(value:unknown):asserts value is string{if(typeof value!==`string`){throw new Error(`Not a string`)}}
 ########## 12
 import type { Foo } from 'foo';
 ----------
@@ -70,7 +70,7 @@ export{Foo,type Bar}from"foo";
 ########## 15
 type A<T> = { [K in keyof T as K extends string ? B<K> : K ]: T[K] }
 ----------
-type A<T>={[K in keyof T as K extends string ? B<K> : K]:T[K]};
+type A<T>={[K in keyof T as K extends string?B<K>:K]:T[K]};
 ########## 16
 class A {readonly type = 'frame'}
 ----------
@@ -96,13 +96,13 @@ class A {constructor(public readonly a: number) {}}
 ----------
 class A{constructor(public readonly a:number){}}
 ########## 22
-abstract class A {private abstract static m()}
+abstract class A {protected abstract m()}
 ----------
-abstract class A{private abstract static m();}
+abstract class A{protected abstract m();}
 ########## 23
-abstract class A {private abstract static readonly prop: string}
+class A {private static readonly prop: string}
 ----------
-abstract class A{private abstract static readonly prop:string}
+class A{private static readonly prop:string}
 ########## 24
 interface A { a: string, 'b': number, 'c'(): void }
 ----------

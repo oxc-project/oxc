@@ -20,7 +20,7 @@ fn max_depth_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
 const DEFAULT_MAX_DEPTH: usize = 4;
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxDepth {
     /// The `max` enforces a maximum depth that blocks can be nested
     max: usize,
@@ -29,6 +29,18 @@ pub struct MaxDepth {
 impl Default for MaxDepth {
     fn default() -> Self {
         Self { max: DEFAULT_MAX_DEPTH }
+    }
+}
+
+#[cfg(feature = "ruledocs")]
+impl MaxDepth {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<Self>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
     }
 }
 

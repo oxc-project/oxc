@@ -1,10 +1,13 @@
 //! Declare symbol for `BindingIdentifier`s
 
+use smallvec::SmallVec;
+
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
+use oxc_span::GetSpan;
 use oxc_str::Ident;
-use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
+use oxc_syntax::{node::NodeId, scope::ScopeFlags, scope::ScopeId, symbol::SymbolFlags};
 
 use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};
 
@@ -45,7 +48,10 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
         } else {
             // ------------------ var hosting ------------------
             let mut target_scope_id = builder.current_scope_id;
-            let mut var_scope_ids = vec![];
+            // Stack-allocated: nesting depth from a `var`/`let`/`const` to the
+            // enclosing function (or program) scope is small in practice — 8
+            // covers almost all real-world cases without heap allocation.
+            let mut var_scope_ids: SmallVec<[ScopeId; 8]> = SmallVec::new();
 
             // Collect all scopes where variable hoisting can occur
             for scope_id in builder.scoping.scope_ancestors(target_scope_id) {
@@ -152,10 +158,25 @@ impl<'a> Binder<'a> for Function<'a> {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
 
+            let scope_flags = builder.current_scope_flags();
+
+            // Record `async`/generator function declarations in sloppy-mode block scopes,
+            // so the redeclaration check `check_function_redeclaration` (Annex B.3.3) can later identify
+            // an offending previous declaration without reading its AST node (which may not be retained).
+            // The check only consults this for function declarations in a sloppy-mode JS block,
+            // so record nothing in any other case.
+            if is_declaration
+                && (self.r#async || self.generator)
+                && !builder.source_type.is_typescript()
+                && !scope_flags.is_strict_mode()
+                && !scope_flags.is_var()
+            {
+                builder.async_or_generator_function_node_ids.push(builder.current_node_id);
+            }
+
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
             // scopes also create an implicit var-like binding in the enclosing function
             // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
-            let scope_flags = builder.current_scope_flags();
             if is_declaration // function expressions are bound in their own (var) scope
                 && !self.r#async // Annex B only applies to plain functions
                 && !self.generator // not generators or async generators
@@ -429,7 +450,7 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
             _ => Ident::from(self.id.static_name()),
         };
         builder.declare_symbol(
-            self.span,
+            self.id.span(),
             name,
             SymbolFlags::EnumMember,
             SymbolFlags::EnumMemberExcludes,

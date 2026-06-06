@@ -7,7 +7,8 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Comments, FormatElement, Formatter, SourceText, VecBuffer,
+        Comments, FormatElement, JoinBuilderJsExt as _, JsFormatContext, JsFormatter,
+        JsFormatterExt as _, SourceText, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         format_element,
         prelude::{
@@ -34,8 +35,8 @@ use crate::{
     write,
 };
 
-impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let l_paren_token = "(";
         let r_paren_token = ")";
 
@@ -214,7 +215,7 @@ fn format_all_elements_broken_out<'a, 'b>(
     node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     elements: impl Iterator<Item = (Option<FormatElement<'a>>, usize)>,
     expand: bool,
-    mut buffer: impl Buffer<'a>,
+    mut buffer: impl Buffer<'a, JsFormatContext<'a>>,
 ) {
     write!(
         buffer,
@@ -249,7 +250,7 @@ fn format_all_elements_broken_out<'a, 'b>(
 fn format_all_args_broken_out<'a, 'b>(
     node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     expand: bool,
-    mut buffer: impl Buffer<'a>,
+    mut buffer: impl Buffer<'a, JsFormatContext<'a>>,
 ) {
     let last_index = node.len() - 1;
     write!(
@@ -259,7 +260,7 @@ fn format_all_args_broken_out<'a, 'b>(
             soft_block_indent(&format_with(move |f| {
                 for (index, argument) in node.iter().enumerate() {
                     if index > 0 {
-                        match f.source_text().get_lines_before(argument.span(), f.comments()) {
+                        match f.lines_before(argument.span()) {
                             0 | 1 => write!(f, [soft_line_break_or_space()]),
                             _ => write!(f, [empty_line()]),
                         }
@@ -282,7 +283,7 @@ fn format_all_args_broken_out<'a, 'b>(
 
 pub fn arguments_grouped_layout(
     args: &[Argument],
-    f: &Formatter<'_, '_>,
+    f: &JsFormatter<'_, '_>,
 ) -> Option<GroupedCallArgumentLayout> {
     // For exactly 2 arguments, we need to check both grouping strategies.
     // To avoid redundant `can_group_expression_argument` calls, we handle this case specially.
@@ -314,7 +315,7 @@ pub fn arguments_grouped_layout(
 fn should_group_first_argument(
     first: &Expression,
     second: &Expression,
-    f: &Formatter<'_, '_>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
     match first {
         Expression::FunctionExpression(_) => {}
@@ -365,7 +366,7 @@ fn should_group_last_argument_impl(
     args_len: usize,
     penultimate: Option<&Expression>,
     last: &Expression,
-    f: &Formatter<'_, '_>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
     // Check if penultimate and last are the same type (both Object or both Array)
     if let Some(penultimate) = penultimate
@@ -422,7 +423,7 @@ fn should_group_last_argument_impl(
 }
 
 /// Checks if the last argument should be grouped.
-fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool {
+fn should_group_last_argument(args: &[Argument], f: &JsFormatter<'_, '_>) -> bool {
     let mut iter = args.iter();
     let Some(last) = iter.next_back().unwrap().as_expression() else {
         return false;
@@ -540,7 +541,7 @@ fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
 }
 
 /// Checks if `argument` benefits from grouping in call arguments.
-fn can_group_expression_argument(argument: &Expression<'_>, f: &Formatter<'_, '_>) -> bool {
+fn can_group_expression_argument(argument: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
     match argument {
         Expression::ObjectExpression(object_expression) => {
             !object_expression.properties.is_empty()
@@ -570,7 +571,7 @@ fn can_group_expression_argument(argument: &Expression<'_>, f: &Formatter<'_, '_
 fn can_group_arrow_function_expression_argument(
     arrow_function: &ArrowFunctionExpression,
     is_arrow_recursion: bool,
-    f: &Formatter<'_, '_>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
     let body = &arrow_function.body;
     let return_type_annotation = &arrow_function.return_type;
@@ -649,7 +650,7 @@ fn can_group_arrow_function_expression_argument(
 fn write_grouped_arguments<'a>(
     node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     group_layout: GroupedCallArgumentLayout,
-    f: &mut Formatter<'_, 'a>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     let last_index = node.len() - 1;
     let only_one_argument = last_index == 0;
@@ -668,7 +669,7 @@ fn write_grouped_arguments<'a>(
             // We have to get the lines before the argument has been formatted, because it relies on
             // the comments before the argument. After formatting, the comments might marked as printed,
             // which would lead to a wrong line count.
-            let lines_before = f.source_text().get_lines_before(argument.span(), f.comments());
+            let lines_before = f.lines_before(argument.span());
             let comma = (last_index != index).then_some(",");
 
             let interned = f.intern(&format_once(|f| {
@@ -866,7 +867,7 @@ fn write_grouped_arguments<'a>(
     // since we already know that it won't be fitting on a single line.
     let variants = if grouped_breaks {
         write!(f, [expand_parent()]);
-        ArenaVec::from_array_in([middle_variant, most_expanded], f.context().allocator())
+        ArenaVec::from_array_in([middle_variant, most_expanded], f.allocator())
     } else {
         // Write the most flat variant with the first or last argument grouped.
         let most_flat = {
@@ -897,7 +898,7 @@ fn write_grouped_arguments<'a>(
             buffer.into_vec().into_arena_slice()
         };
 
-        ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f.context().allocator())
+        ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f.allocator())
     };
 
     // SAFETY: Safe because variants is guaranteed to contain exactly 3 entries:
@@ -917,8 +918,8 @@ struct FormatGroupedFirstArgument<'a, 'b> {
     argument: &'b AstNode<'a, Argument<'a>>,
 }
 
-impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedFirstArgument<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self.argument.as_ast_nodes() {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
@@ -948,8 +949,8 @@ struct FormatGroupedLastArgument<'a, 'b> {
     is_only: bool,
 }
 
-impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedLastArgument<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
         // to remove any soft line breaks.
@@ -1038,7 +1039,7 @@ pub fn is_simple_module_import(
 fn is_commonjs_or_amd_call(
     arguments: &[Argument<'_>],
     call: &AstNode<'_, CallExpression<'_>>,
-    f: &Formatter<'_, '_>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
     let Expression::Identifier(ident) = &call.callee else {
         return false;
@@ -1122,7 +1123,7 @@ fn is_graphql_call_with_single_template_arg<'a>(
 }
 
 /// Returns `true` if the single argument is an HTML embed template that should be hugged.
-fn is_huggable_html_embed_single_arg(arguments: &[Argument], f: &Formatter<'_, '_>) -> bool {
+fn is_huggable_html_embed_single_arg(arguments: &[Argument], f: &JsFormatter<'_, '_>) -> bool {
     if arguments.len() != 1 {
         return false;
     }

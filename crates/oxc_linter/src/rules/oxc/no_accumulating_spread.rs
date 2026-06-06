@@ -58,7 +58,7 @@ fn loop_spread_likely_object_diagnostic(
         .with_labels([
             accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
-            loop_span.label("For this loop"),
+            loop_span.primary_label("For this loop"),
         ])
 }
 fn loop_spread_likely_array_diagnostic(
@@ -72,7 +72,7 @@ fn loop_spread_likely_array_diagnostic(
         .with_labels([
             accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
-            loop_span.label("For this loop"),
+            loop_span.primary_label("For this loop"),
         ])
 }
 

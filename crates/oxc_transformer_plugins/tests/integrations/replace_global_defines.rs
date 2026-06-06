@@ -196,12 +196,14 @@ fn this_expr() {
 
     test(
         r"
-        // This code should be the same as above
+        // The IIFE wrapper is preserved under DCE-only mode — inlining IIFE
+        // bodies is a peephole rewrite, not DCE. See oxc_minifier PR #22547.
         (() => { ok( this, this.foo, this.foo.bar, this.foo.baz, this.bar,) })();
     ",
         "
-        // This code should be the same as above
-        ok(1, 2, 3, 2 .baz, 1 .bar);",
+        // The IIFE wrapper is preserved under DCE-only mode — inlining IIFE
+        // bodies is a peephole rewrite, not DCE. See oxc_minifier PR #22547.
+        (() => { ok(1, 2, 3, 2 .baz, 1 .bar); })();",
         &config,
     );
 

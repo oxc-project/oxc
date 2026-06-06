@@ -1,0 +1,38 @@
+[package]
+name = "oxc_formatter_core"
+version = "0.53.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+description.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["code_buffer"] }
+oxc_span = { workspace = true }
+
+cow-utils = { workspace = true }
+rustc-hash = { workspace = true }
+unicode-width = { workspace = true }
+
+serde_json = { workspace = true, optional = true }
+
+[features]
+# Enables `test_support` (used from build.rs and tests/) in downstream formatter
+# crates. Consumer crates still need a direct `insta` dev-dep — the snapshot macro
+# is invoked from each consumer's `tests/fixtures/mod.rs` so the recorded `source:`
+# header points to the consumer, not the shared harness.
+test_harness = ["dep:serde_json"]
+
+[lib]
+doctest = false

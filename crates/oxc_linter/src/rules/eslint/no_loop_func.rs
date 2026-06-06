@@ -10,11 +10,11 @@ use oxc_ast::{
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, NodeId, SymbolId};
+use oxc_semantic::{AstNode, NodeId, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn no_loop_func_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Function declared in a loop contains unsafe references to variable(s)")
@@ -138,10 +138,9 @@ impl NoLoopFunc {
     fn is_safe_iife<'a>(func_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         let nodes = ctx.nodes();
 
-        let mut current = nodes.parent_node(func_node.id());
-        while matches!(current.kind(), AstKind::ParenthesizedExpression(_)) {
-            current = nodes.parent_node(current.id());
-        }
+        let Some(current) = outermost_paren_parent(func_node, ctx) else {
+            return false;
+        };
 
         let AstKind::CallExpression(call_expr) = current.kind() else {
             return false;
@@ -327,11 +326,11 @@ impl NoLoopFunc {
     }
 
     /// Check if a let-declared variable is unsafe in a loop
-    fn is_let_unsafe_in_loop(
+    fn is_let_unsafe_in_loop<'a>(
         symbol_id: SymbolId,
-        symbol_decl_node: &AstNode,
-        loop_node: &AstNode,
-        ctx: &LintContext,
+        symbol_decl_node: &AstNode<'a>,
+        loop_node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
     ) -> bool {
         let loop_body_span = Self::get_loop_body_span(loop_node);
         let decl_span = symbol_decl_node.span();
@@ -341,21 +340,134 @@ impl NoLoopFunc {
             return false;
         }
 
-        // For `for` loops, check if let is declared in the loop header (init expression)
-        // `for (let i = 0; ...)` creates fresh bindings per iteration - safe
-        if Self::is_in_for_loop_header(symbol_decl_node, loop_node) {
+        // For `for` loops, check if let is declared in this loop header or in a containing
+        // loop header. `for (let i = 0; ...)` creates fresh bindings per iteration, and that
+        // binding remains safe for functions in nested loop bodies within the same iteration.
+        if Self::is_in_containing_for_loop_header(symbol_decl_node, loop_node, ctx) {
             return false;
         }
 
-        // If declared outside the loop body, check for modifications
         let scoping = ctx.scoping();
+        let border = Self::get_top_loop_node(loop_node, Some(symbol_decl_node), ctx).span().start;
+        let symbol_variable_scope_id =
+            Self::get_enclosing_variable_scope_id(scoping.symbol_scope_id(symbol_id), ctx);
+
+        // If declared outside the loop body, writes are safe only when they happen before the
+        // relevant loop and in the same variable scope as the declaration.
         for reference in scoping.get_resolved_references(symbol_id) {
             if reference.is_write() {
-                return true;
+                let ref_span = ctx.semantic().reference_span(reference);
+                let ref_variable_scope_id =
+                    Self::get_enclosing_variable_scope_id(reference.scope_id(), ctx);
+                if ref_span.start >= border || ref_variable_scope_id != symbol_variable_scope_id {
+                    return true;
+                }
             }
         }
 
         false
+    }
+
+    /// Get the outermost loop that starts after an excluded node.
+    fn get_top_loop_node<'a, 'ctx>(
+        loop_node: &'ctx AstNode<'a>,
+        excluded_node: Option<&AstNode>,
+        ctx: &'ctx LintContext<'a>,
+    ) -> &'ctx AstNode<'a> {
+        let border = excluded_node.map_or(0, |node| node.span().end);
+        let mut top_loop_node = loop_node;
+        let mut containing_loop_node = Some(loop_node);
+
+        while let Some(current_loop_node) = containing_loop_node {
+            if current_loop_node.span().start < border {
+                break;
+            }
+            top_loop_node = current_loop_node;
+            containing_loop_node = Self::get_containing_loop_node(current_loop_node, ctx);
+        }
+
+        top_loop_node
+    }
+
+    /// Gets the containing loop node of a node without crossing function boundaries.
+    fn get_containing_loop_node<'a, 'ctx>(
+        node: &'ctx AstNode<'a>,
+        ctx: &'ctx LintContext<'a>,
+    ) -> Option<&'ctx AstNode<'a>> {
+        let nodes = ctx.nodes();
+        let mut current = node;
+
+        loop {
+            let parent = nodes.parent_node(current.id());
+            match parent.kind() {
+                AstKind::WhileStatement(_) | AstKind::DoWhileStatement(_) => return Some(parent),
+                AstKind::ForStatement(stmt) => {
+                    if stmt
+                        .init
+                        .as_ref()
+                        .is_none_or(|init| !init.span().contains_inclusive(current.span()))
+                    {
+                        return Some(parent);
+                    }
+                }
+                AstKind::ForInStatement(stmt) => {
+                    if !stmt.right.span().contains_inclusive(current.span()) {
+                        return Some(parent);
+                    }
+                }
+                AstKind::ForOfStatement(stmt) => {
+                    if !stmt.right.span().contains_inclusive(current.span()) {
+                        return Some(parent);
+                    }
+                }
+                AstKind::Function(_)
+                | AstKind::ArrowFunctionExpression(_)
+                | AstKind::Program(_) => {
+                    return None;
+                }
+                _ => {}
+            }
+            current = parent;
+        }
+    }
+
+    fn get_enclosing_variable_scope_id(scope_id: ScopeId, ctx: &LintContext) -> ScopeId {
+        let scoping = ctx.scoping();
+        let mut current_scope_id = scope_id;
+        loop {
+            if scoping.scope_flags(current_scope_id).is_var() {
+                return current_scope_id;
+            }
+            let Some(parent_scope_id) = scoping.scope_parent_id(current_scope_id) else {
+                return current_scope_id;
+            };
+            current_scope_id = parent_scope_id;
+        }
+    }
+
+    fn is_in_containing_for_loop_header<'a>(
+        symbol_decl_node: &AstNode<'a>,
+        loop_node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) -> bool {
+        let nodes = ctx.nodes();
+        let mut current = loop_node;
+
+        loop {
+            if Self::is_in_for_loop_header(symbol_decl_node, current) {
+                return true;
+            }
+
+            let parent = nodes.parent_node(current.id());
+            match parent.kind() {
+                AstKind::Function(_)
+                | AstKind::ArrowFunctionExpression(_)
+                | AstKind::Program(_) => {
+                    return false;
+                }
+                _ => current = parent,
+            }
+        }
     }
 
     /// Check if a variable declaration is in a for loop's header (init expression)
@@ -699,6 +811,34 @@ fn test() {
                   ",
         // Function in the for-update slot is not in the loop body.
         "for (var i = 0; i < l; i++, (function () { i; })()) { }",
+        r"
+            const callbacks = [];
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < 5; col++) {
+                    callbacks.push(function () {
+                        return row + col;
+                    });
+                }
+            }
+
+            let factor = 0;
+            if (factor < 5) {
+                factor++;
+            } else {
+                for (let index = 0; index < 5; index++) {
+                    const compute = (value, index) => factor * value + index;
+                }
+            }
+
+            let isOn = false;
+            if (isOn) {
+                isOn = true;
+            }
+
+            for (let imageId = 0; imageId < 5; imageId++) {
+                image.onload = () => (isOn ? 'enabled' : 'disabled');
+            }
+        ",
     ];
 
     let fail = vec![

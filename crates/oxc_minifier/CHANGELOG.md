@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.133.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- 4ac0fca minifier: Preserve `0 && (module.exports = { ... })` cjs-module-lexer hint (#22729) (Dunqing)
+- 40ff611 minifier: Mark peephole loop changed when dropping dead-after-throw statement (#22722) (Dunqing)
+- 9ea4d64 minifier: Re-evaluate pure/no-side-effects flags after peephole inlining (#22595) (Dunqing)
+- 07afbb6 minifier: Drop empty-body IIFE wrapper when called with arguments (#22589) (Dunqing)
+- 702b14e minifier: Preserve IIFE structure in DCE-only mode (#22547) (Dunqing)
+
+### ⚡ Performance
+
+- 04d3065 minifier: Drop per-call buffers in try_fold_concat (#22596) (Dunqing)
+
 ## [0.132.0] - 2026-05-18
 
 ### 🐛 Bug Fixes

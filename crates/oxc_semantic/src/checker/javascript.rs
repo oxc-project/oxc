@@ -1,5 +1,5 @@
 use memchr::memchr_iter;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
@@ -9,12 +9,15 @@ use oxc_str::Ident;
 use oxc_syntax::{
     class::ClassId,
     number::NumberBase,
-    operator::{AssignmentOperator, UnaryOperator},
+    operator::UnaryOperator,
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::{IsGlobalReference, builder::SemanticBuilder, class::Element, diagnostics};
+use crate::{
+    IsGlobalReference, builder::SemanticBuilder, class::Element, diagnostics,
+    scoping::Redeclaration,
+};
 
 /// Threshold for edit distance when suggesting similar names
 const SUGGESTION_THRESHOLD: usize = 2;
@@ -28,7 +31,9 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
 
     let mut available_names: Option<Vec<&str>> = None;
     for stmt in &program.body {
-        if let Statement::ExportNamedDeclaration(decl) = stmt {
+        if let Statement::ExportNamedDeclaration(decl) = stmt
+            && decl.source.is_none()
+        {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
@@ -81,8 +86,9 @@ pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
     classes.iter_enumerated().for_each(|(class_id, _)| {
-        let mut defined_elements = FxHashMap::default();
         let elements = &classes.elements[class_id];
+        let mut defined_elements =
+            FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher);
         for (element_id, element) in elements.iter_enumerated() {
             if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
                 let prev_element = &elements[prev_element_id];
@@ -152,13 +158,17 @@ pub fn check_identifier(
     ctx: &SemanticBuilder<'_>,
 ) {
     // reserved keywords are allowed in ambient contexts
-    if ctx.source_type.is_typescript_definition() || is_current_node_ambient_binding(symbol_id, ctx)
-    {
-        return;
+    fn is_allowed_context(symbol_id: Option<SymbolId>, ctx: &SemanticBuilder<'_>) -> bool {
+        ctx.source_type.is_typescript_definition()
+            || is_current_node_ambient_binding(symbol_id, ctx)
     }
 
     match name {
         "await" => {
+            if is_allowed_context(symbol_id, ctx) {
+                return;
+            }
+
             // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
             if ctx.source_type.is_module() {
                 ctx.error(diagnostics::reserved_keyword(name, span));
@@ -171,9 +181,10 @@ pub fn check_identifier(
         // TODO: Revisit this match arm when we add `Ident` and pre-hash the identifier names and see if a HashSet
         // becomes better for performance again.
         "implements" | "interface" | "let" | "package" | "private" | "protected" | "public"
-        | "static" | "yield"
-            if ctx.strict_mode() =>
-        {
+        | "static" | "yield" => {
+            if !ctx.strict_mode() || is_allowed_context(symbol_id, ctx) {
+                return;
+            }
             // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
             ctx.error(diagnostics::reserved_keyword(name, span));
         }
@@ -205,9 +216,9 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
         return;
     }
 
-    if ctx.strict_mode() {
+    match ident.name.as_str() {
         // In strict mode, `eval` and `arguments` are banned as identifiers.
-        if matches!(ident.name.as_str(), "eval" | "arguments") {
+        "eval" | "arguments" if ctx.strict_mode() => {
             // `eval` and `arguments` are allowed as the names of declare functions as well as their arguments.
             //
             // declare function eval(): void; // OK
@@ -243,10 +254,9 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                 ctx.error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
             }
         }
-    } else {
-        // LexicalDeclaration : LetOrConst BindingList ;
-        // * It is a Syntax Error if the BoundNames of BindingList contains "let".
-        if ident.name == "let" {
+        "let" if !ctx.strict_mode() => {
+            // LexicalDeclaration : LetOrConst BindingList ;
+            // * It is a Syntax Error if the BoundNames of BindingList contains "let".
             for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
                 match node_kind {
                     AstKind::VariableDeclarator(decl) => {
@@ -263,6 +273,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                 }
             }
         }
+        _ => {}
     }
 }
 
@@ -274,7 +285,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
 
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
-    if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
+    if matches!(ident.name.as_str(), "arguments" | "eval") && ctx.strict_mode() {
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
             match node_kind {
                 // Only check for actual assignment contexts, not member expression access
@@ -385,26 +396,20 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
     fn leading_zero(s: Option<Str>) -> bool {
         if let Some(s) = s {
-            let mut chars = s.bytes();
-            if let Some(first) = chars.next()
-                && let Some(second) = chars.next()
-            {
-                return first == b'0' && second.is_ascii_digit();
-            }
+            let bytes = s.as_bytes();
+            return bytes.len() >= 2 && bytes[0] == b'0' && bytes[1].is_ascii_digit();
         }
         false
     }
 
-    if ctx.strict_mode() {
-        match lit.base {
-            NumberBase::Octal if leading_zero(lit.raw) => {
-                ctx.error(diagnostics::legacy_octal(lit.span));
-            }
-            NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) => {
-                ctx.error(diagnostics::leading_zero_decimal(lit.span));
-            }
-            _ => {}
+    match lit.base {
+        NumberBase::Octal if leading_zero(lit.raw) && ctx.strict_mode() => {
+            ctx.error(diagnostics::legacy_octal(lit.span));
         }
+        NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) && ctx.strict_mode() => {
+            ctx.error(diagnostics::leading_zero_decimal(lit.span));
+        }
+        _ => {}
     }
 }
 
@@ -560,68 +565,6 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     }
 }
 
-pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
-    match prop.meta.name.as_str() {
-        // import.meta is only allowed in ES modules, not in scripts or CommonJS
-        "import" if prop.property.name == "meta" && !ctx.source_type.is_module() => {
-            ctx.error(diagnostics::import_meta(prop.span));
-        }
-        "new" if prop.property.name == "target" => {
-            // In CommonJS, the file is wrapped in a function, so new.target is always valid
-            if ctx.source_type.is_commonjs() {
-                return;
-            }
-
-            // Check if we're in a valid context for new.target:
-            // 1. Inside a function (including constructor)
-            // 2. Inside a class static block
-            // 3. Inside a class field initializer (new.target evaluates to undefined)
-            //
-            // Arrow functions inherit new.target from their surrounding scope,
-            // so we skip them and continue checking the enclosing context.
-
-            let mut in_valid_context = false;
-
-            // First, check AST ancestors for class field initializers.
-            // We need to do this because class fields don't have their own scope.
-            for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-                match node_kind {
-                    // Regular functions have their own new.target binding.
-                    // Use scope-based check from here.
-                    AstKind::Function(_) => break,
-                    // Class field initializers allow new.target (evaluates to undefined).
-                    // This includes arrow functions nested inside the initializer.
-                    AstKind::PropertyDefinition(_) | AstKind::AccessorProperty(_) => {
-                        in_valid_context = true;
-                        break;
-                    }
-                    _ => {}
-                }
-            }
-
-            // If not in a class field, fall back to scope-based check
-            if !in_valid_context {
-                for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
-                    let flags = ctx.scoping.scope_flags(scope_id);
-                    // In arrow functions, new.target is inherited from the surrounding scope.
-                    if flags.contains(ScopeFlags::Arrow) {
-                        continue;
-                    }
-                    if flags.intersects(ScopeFlags::Function | ScopeFlags::ClassStaticBlock) {
-                        in_valid_context = true;
-                        break;
-                    }
-                }
-            }
-
-            if !in_valid_context {
-                ctx.error(diagnostics::new_target(prop.span));
-            }
-        }
-        _ => {}
-    }
-}
-
 pub fn check_function_declaration<'a>(
     stmt: &Statement<'a>,
     is_if_stmt_or_labeled_stmt: bool,
@@ -731,17 +674,36 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     // Skip that case.
     let Some(id) = &func.id else { return };
 
+    // Redeclarations are rare, so put the expensive logic for handling them in a separate `#[cold]` function,
+    // so that this function can be inlined.
+    // The redeclarations list is only ever empty or has 2+ entries (it is created with its first two
+    // declarations at once), so `is_empty` is a sufficient test.
+    let redeclarations = ctx.scoping.symbol_redeclarations(id.symbol_id());
+    if !redeclarations.is_empty() {
+        check_redeclared_function(func, id, redeclarations, ctx);
+    }
+}
+
+/// Check whether a redeclared function declaration is illegal (Annex B.3.3 and related rules),
+/// and report it if so.
+///
+/// Split out of `check_function_redeclaration` and marked `#[cold]` as it only runs when `func`'s name
+/// already has an earlier declaration in the same scope, which is very rare in practice.
+#[cold]
+fn check_redeclared_function(
+    func: &Function,
+    id: &BindingIdentifier,
+    redeclarations: &[Redeclaration],
+    ctx: &SemanticBuilder<'_>,
+) {
     if is_function_decl_part_of_if_statement(func, ctx) {
         return;
     }
 
-    let symbol_id = id.symbol_id();
-
-    let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
-    let Some(prev) = redeclarations.iter().nth_back(1) else {
-        // No redeclarations
-        return;
-    };
+    // The current declaration is the last entry; `prev` is the one before it.
+    // The list always has 2+ entries here (see `check_function_redeclaration`), so a previous declaration exists.
+    debug_assert!(redeclarations.len() >= 2);
+    let prev = &redeclarations[redeclarations.len() - 2];
 
     // Already checked in `check_redeclaration`, because it is also not allowed in TypeScript.
     // `let a; function a() {}` is invalid in both strict and non-strict mode.
@@ -762,10 +724,25 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
         // `function a() { var b; function b() { } }` valid in any mode.
         return;
     } else if !(current_scope_flags.is_strict_mode() || func.r#async || func.generator) {
-        // `class a {}; function a() {}` and `async function a() {} function a () {}` are
-        // invalid in both strict and non-strict mode.
-        let prev_function = ctx.nodes.kind(prev.declaration).as_function();
-        if prev_function.is_some_and(|func| !(func.r#async || func.generator)) {
+        // Current declaration is a plain function in a sloppy-mode block. Annex B.3.3 permits
+        // duplicate *plain* function declarations here, but the relaxation does not extend to
+        // `async`/generator functions, nor to non-function declarations like `class a {}`.
+        if prev.flags.contains(SymbolFlags::Function) {
+            // `prev` is a function, so the function-duplicate rule (Annex B.3.3) is violated
+            // only if an earlier declaration is an `async`/generator function.
+            // Search for a declaration that makes it illegal, so the error can point at it.
+            // (A clash with a `var`/`let`/`class` of the same name is a separate rule, reported elsewhere.)
+            // This branch is only reached for function redeclarations in a sloppy-mode block,
+            // which are extremely rare, so the linear scan's high cost does not really matter.
+            let previous_declarations = &redeclarations[..redeclarations.len() - 1];
+            let Some(culprit) = previous_declarations
+                .iter()
+                .find(|decl| ctx.async_or_generator_function_node_ids.contains(&decl.declaration))
+            else {
+                // No `async`/generator function among the previous declarations - allowed by B.3.3.
+                return;
+            };
+            ctx.error(diagnostics::redeclaration(&id.name, culprit.span, id.span));
             return;
         }
     }
@@ -791,22 +768,6 @@ pub fn check_class_redeclaration(class: &Class, ctx: &SemanticBuilder<'_>) {
 pub fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
     if ctx.strict_mode() || ctx.source_type.is_typescript() {
         ctx.error(diagnostics::with_statement(Span::sized(stmt.span.start, 4)));
-    }
-}
-
-pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuilder<'a>) {
-    let mut previous_default: Option<Span> = None;
-    for case in &stmt.cases {
-        if case.test.is_none() {
-            if let Some(previous_span) = previous_default {
-                ctx.error(diagnostics::switch_stmt_cannot_have_multiple_default_case(
-                    previous_span,
-                    case.span,
-                ));
-                break;
-            }
-            previous_default.replace(case.span);
-        }
     }
 }
 
@@ -1275,24 +1236,19 @@ fn get_class_details(
     (Some(scope_id), class_id)
 }
 
-pub fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &SemanticBuilder<'_>) {
-    // AssignmentExpression :
-    //     LeftHandSideExpression AssignmentOperator AssignmentExpression
-    //     LeftHandSideExpression &&= AssignmentExpression
-    //     LeftHandSideExpression ||= AssignmentExpression
-    //     LeftHandSideExpression ??= AssignmentExpression
-    // It is a Syntax Error if AssignmentTargetType of LeftHandSideExpression is not SIMPLE.
-    if assign_expr.operator != AssignmentOperator::Assign
-        && !assign_expr.left.is_simple_assignment_target()
-    {
-        ctx.error(diagnostics::assignment_is_not_simple(assign_expr.left.span()));
-    }
-}
-
 pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilder<'_>) {
     // ObjectLiteral : { PropertyDefinitionList }
     // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
     // and at least two of those entries were obtained from productions of the form PropertyDefinition : PropertyName : AssignmentExpression
+
+    // A duplicate requires ≥2 entries. JSX/TSX call sites emit huge numbers
+    // of single-property object literals (`<Foo prop={x}>` → `{prop: x}`), so
+    // the early-exit skips the loop setup and `prop_name()` call for those
+    // very common cases.
+    if obj_expr.properties.len() < 2 {
+        return;
+    }
+
     let mut prev_proto: Option<Span> = None;
     for prop in &obj_expr.properties {
         if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
@@ -1310,16 +1266,6 @@ pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilde
                 prev_proto = Some(span);
             }
         }
-    }
-}
-
-pub fn check_private_field_expression(
-    private_expr: &PrivateFieldExpression,
-    ctx: &SemanticBuilder<'_>,
-) {
-    // `super.#m`
-    if private_expr.object.is_super() {
-        ctx.error(diagnostics::super_private(private_expr.span));
     }
 }
 

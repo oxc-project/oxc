@@ -73,7 +73,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             start_span = d.span.start;
         }
 
-        let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
+        let id = if self.cur_kind().is_binding_identifier()
+            && !(self.at(Kind::Implements)
+                && self.lexer.peek_token().kind().is_identifier_or_keyword())
+        {
             Some(self.parse_binding_identifier())
         } else {
             None
@@ -368,8 +371,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///    `StatementList`[~Yield, +Await, ~Return]
     fn parse_class_static_block(&mut self, span: u32) -> ClassElement<'a> {
         self.bump_any(); // bump `static`
-        let block =
-            self.context(Context::Await, Context::Yield | Context::Return, Self::parse_block);
+        let block = self.context(
+            Context::Await | Context::NewTarget,
+            Context::Yield | Context::Return,
+            Self::parse_block,
+        );
         self.ast.class_element_static_block(self.end_span(span), block.unbox().body)
     }
 
@@ -384,7 +390,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
-        let value = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
+        // `new.target` is allowed in a class accessor field initializer.
+        let value = self.eat(Kind::Eq).then(|| {
+            self.context_add(Context::NewTarget, Self::parse_assignment_expression_or_higher)
+        });
         self.asi();
         let r#type = if modifiers.contains(ModifierKind::Abstract) {
             AccessorPropertyType::TSAbstractAccessorProperty
@@ -405,6 +414,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::accessor_modifier,
         );
+        if definite
+            && ((self.ctx.has_ambient() && !modifiers.contains(ModifierKind::Declare))
+                || r#type.is_abstract())
+        {
+            self.error(diagnostics::definite_assignment_assertion_not_permitted(
+                self.end_span(span),
+            ));
+        }
         self.ast.class_element_accessor_property(
             self.end_span(span),
             r#type,
@@ -634,9 +651,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         // Initializer[+In, ?Yield, ?Await]opt
-        let initializer = self
-            .eat(Kind::Eq)
-            .then(|| self.context(Context::In, Context::Yield | Context::Await, Self::parse_expr));
+        // `new.target` is allowed in a class field initializer.
+        let initializer = self.eat(Kind::Eq).then(|| {
+            self.context(
+                Context::In | Context::NewTarget,
+                Context::Yield | Context::Await,
+                Self::parse_expr,
+            )
+        });
 
         // Handle trailing `;` or newline
         let cur_token = self.cur_token();
@@ -662,6 +684,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::static_prototype(span));
             }
         }
+        if r#abstract && name.is_private_identifier() {
+            self.error(diagnostics::abstract_with_private_identifier(name.span()));
+        }
         if r#abstract && initializer.is_some() {
             let (name, span) = name.prop_name().unwrap_or_else(|| {
                 let span = name.span();
@@ -675,6 +700,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(
                 initializer.span(),
+            ));
+        }
+        if definite && (self.ctx.has_ambient() || r#abstract) {
+            self.error(diagnostics::definite_assignment_assertion_not_permitted(
+                self.end_span(span),
             ));
         }
         self.ast.class_element_property_definition(
@@ -697,22 +727,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[cold]
     pub(crate) fn check_getter(&mut self, function: &Function<'a>) {
-        if !function.params.items.is_empty() {
+        if let Some(type_parameters) = &function.type_parameters {
+            self.error(diagnostics::accessor_cannot_have_type_parameters(type_parameters.span));
+        } else if !function.params.items.is_empty() {
             self.error(diagnostics::getter_parameters(function.params.span));
         }
     }
 
     #[cold]
     pub(crate) fn check_setter(&mut self, function: &Function<'a>) {
-        if let Some(rest) = &function.params.rest {
-            self.error(diagnostics::setter_with_rest_parameter(rest.span));
+        if let Some(type_parameters) = &function.type_parameters {
+            self.error(diagnostics::accessor_cannot_have_type_parameters(type_parameters.span));
         } else if function.params.parameters_count() != 1 {
             self.error(diagnostics::setter_with_parameters(
                 function.params.span,
                 function.params.parameters_count(),
             ));
-        } else if self.is_ts && function.params.items.first().unwrap().initializer.is_some() {
-            self.error(diagnostics::setter_with_initializer(function.params.span));
+        } else if let Some(rest) = &function.params.rest {
+            self.error(diagnostics::setter_with_rest_parameter(rest.span));
+        } else if self.is_ts {
+            let param = function.params.items.first().unwrap();
+            if let Some(return_type) = &function.return_type {
+                self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
+                    return_type.span(),
+                ));
+            } else if param.optional {
+                self.error(diagnostics::setter_with_optional_parameter(param.span));
+            } else if param.initializer.is_some() {
+                self.error(diagnostics::setter_with_initializer(function.params.span));
+            }
         }
     }
 

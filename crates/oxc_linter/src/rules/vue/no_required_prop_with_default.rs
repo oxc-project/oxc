@@ -19,6 +19,7 @@ use crate::{
     fixer::{RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
     rule::Rule,
+    utils::find_property,
 };
 
 fn no_required_prop_with_default_diagnostic(span: Span, prop_name: &str) -> OxcDiagnostic {
@@ -367,18 +368,7 @@ fn handle_type_argument(ctx: &LintContext, ts_type: &TSType, key_hash: &FxHashSe
 }
 
 fn handle_object_expression(ctx: &LintContext, obj: &ObjectExpression) {
-    let Some(prop) = obj.properties.iter().find(|item| {
-        if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
-            && let Some(key) = obj_prop.key.static_name()
-        {
-            key == "props"
-        } else {
-            false
-        }
-    }) else {
-        return;
-    };
-    let ObjectPropertyKind::ObjectProperty(prop_obj) = prop else {
+    let Some(prop_obj) = find_property(obj, "props") else {
         return;
     };
     let Expression::ObjectExpression(prop_obj_expr) = prop_obj.value.get_inner_expression() else {

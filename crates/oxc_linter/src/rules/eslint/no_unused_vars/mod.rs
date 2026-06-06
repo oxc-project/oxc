@@ -11,6 +11,7 @@ mod usage;
 
 use std::ops::Deref;
 
+use allowed::FunctionParameterKind;
 use ignored::IgnoreReason;
 use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
 use oxc_ast::{AstKind, ast::CatchParameter};
@@ -304,7 +305,12 @@ impl NoUnusedVars {
                 });
             }
             AstKind::FormalParameter(param) => {
-                if self.is_allowed_argument(ctx.semantic(), ctx.module_record(), symbol, param) {
+                if self.is_allowed_argument(
+                    ctx.semantic(),
+                    ctx.module_record(),
+                    symbol,
+                    &FunctionParameterKind::Normal(param),
+                ) {
                     return;
                 }
                 Self::report_with_fix_mode(
@@ -319,8 +325,13 @@ impl NoUnusedVars {
                     |fixer| self.rename_unused_function_parameter(fixer, symbol, param),
                 );
             }
-            AstKind::FormalParameterRest(_) => {
-                if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
+            AstKind::FormalParameterRest(param) => {
+                if self.is_allowed_argument(
+                    ctx.semantic(),
+                    ctx.module_record(),
+                    symbol,
+                    &FunctionParameterKind::Rest(param),
+                ) {
                     return;
                 }
                 ctx.diagnostic(diagnostic::param(

@@ -2,66 +2,106 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
    ╭─[prefer_expect_type_of.tsx:1:1]
  1 │ expect(typeof 12).toBe("number")
    · ────────────────────────────────
    ╰────
-  help: Substitute the assertion with `expectTypeOf(12).toBeNumber()`.
-  note: https://vitest.dev/api/expect-typeof
+  help: Substitute the assertion with `expect(12).toBeTypeOf("number")`.
+  note: https://vitest.dev/api/expect#tobetypeof
 
-  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
    ╭─[prefer_expect_type_of.tsx:1:1]
  1 │ expect(typeof "name").toBe("string")
    · ────────────────────────────────────
    ╰────
-  help: Substitute the assertion with `expectTypeOf("name").toBeString()`.
-  note: https://vitest.dev/api/expect-typeof
+  help: Substitute the assertion with `expect("name").toBeTypeOf("string")`.
+  note: https://vitest.dev/api/expect#tobetypeof
 
-  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
    ╭─[prefer_expect_type_of.tsx:1:1]
  1 │ expect(typeof true).toBe("boolean")
    · ───────────────────────────────────
    ╰────
-  help: Substitute the assertion with `expectTypeOf(true).toBeBoolean()`.
-  note: https://vitest.dev/api/expect-typeof
+  help: Substitute the assertion with `expect(true).toBeTypeOf("boolean")`.
+  note: https://vitest.dev/api/expect#tobetypeof
 
-  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
    ╭─[prefer_expect_type_of.tsx:1:1]
  1 │ expect(typeof variable).toBe("object")
    · ──────────────────────────────────────
    ╰────
-  help: Substitute the assertion with `expectTypeOf(variable).toBeObject()`.
-  note: https://vitest.dev/api/expect-typeof
+  help: Substitute the assertion with `expect(variable).toBeTypeOf("object")`.
+  note: https://vitest.dev/api/expect#tobetypeof
 
-  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
    ╭─[prefer_expect_type_of.tsx:1:1]
  1 │ expect(typeof fn).toBe("function")
    · ──────────────────────────────────
    ╰────
-  help: Substitute the assertion with `expectTypeOf(fn).toBeFunction()`.
-  note: https://vitest.dev/api/expect-typeof
+  help: Substitute the assertion with `expect(fn).toBeTypeOf("function")`.
+  note: https://vitest.dev/api/expect#tobetypeof
 
-  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof sym).toBe("symbol")
+   · ─────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expect(sym).toBeTypeOf("symbol")`.
+  note: https://vitest.dev/api/expect#tobetypeof
+
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof big).toBe("bigint")
+   · ─────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expect(big).toBeTypeOf("bigint")`.
+  note: https://vitest.dev/api/expect#tobetypeof
+
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof value).toBe("undefined")
+   · ──────────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expect(value).toBeTypeOf("undefined")`.
+  note: https://vitest.dev/api/expect#tobetypeof
+
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
    ╭─[prefer_expect_type_of.tsx:1:1]
  1 │ expect(typeof value).toEqual("string")
    · ──────────────────────────────────────
    ╰────
-  help: Substitute the assertion with `expectTypeOf(value).toBeString()`.
-  note: https://vitest.dev/api/expect-typeof
+  help: Substitute the assertion with `expect(value).toBeTypeOf("string")`.
+  note: https://vitest.dev/api/expect#tobetypeof
 
-  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
    ╭─[prefer_expect_type_of.tsx:1:1]
  1 │ expect(typeof value).not.toBe("string")
    · ───────────────────────────────────────
    ╰────
-  help: Substitute the assertion with `expectTypeOf(value).not.toBeString()`.
-  note: https://vitest.dev/api/expect-typeof
+  help: Substitute the assertion with `expect(value).not.toBeTypeOf("string")`.
+  note: https://vitest.dev/api/expect#tobetypeof
 
-  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
    ╭─[prefer_expect_type_of.tsx:1:1]
  1 │ expect(typeof value)["not"].toBe("string")
    · ──────────────────────────────────────────
    ╰────
-  help: Substitute the assertion with `expectTypeOf(value)["not"].toBeString()`.
-  note: https://vitest.dev/api/expect-typeof
+  help: Substitute the assertion with `expect(value)["not"].toBeTypeOf("string")`.
+  note: https://vitest.dev/api/expect#tobetypeof
+
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof value).toBe("unknown")
+   · ────────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expect(value).toBeTypeOf("unknown")`.
+  note: https://vitest.dev/api/expect#tobetypeof
+
+  ⚠ vitest(prefer-expect-type-of): Type assertions should be done using `toBeTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof value).toBe(typeName)
+   · ───────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expect(value).toBeTypeOf(typeName)`.
+  note: https://vitest.dev/api/expect#tobetypeof
