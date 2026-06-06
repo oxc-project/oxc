@@ -82,7 +82,7 @@ const EMPTY_COMMENTS: CommentType[] = Object.freeze([]) as unknown as CommentTyp
 const COMMENT_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Comment` in Rust
 debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);
 
-// `defineGetter(obj, prop, getter)` is equivalent to `obj.defineGetter(prop, getter)`,
+// `defineGetter(obj, prop, getter)` is equivalent to `obj.__defineGetter__(prop, getter)`,
 // but without `Object.prototype` lookup at each call site
 const defineGetter = Function.prototype.call.bind(
   // @ts-expect-error - `__defineGetter__` is not in `Object.prototype`'s type definition,
@@ -132,7 +132,7 @@ class Comment implements Span {
     defineGetter(this, "loc", getCommentLoc);
   }
 
-  // Functions requiring access to `#loc` defined in static block to avoid exposing them as a public methods
+  // Functions requiring access to `#loc` defined in static block to avoid exposing them as public methods
   static {
     getCommentLocTemp = function (this: Comment): Location {
       const loc = this.#loc;
