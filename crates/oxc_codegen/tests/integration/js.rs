@@ -529,6 +529,11 @@ fn in_expr_in_arrow_function_expression() {
     test("() => ('foo' in bar)", "() => \"foo\" in bar;\n");
     test("() => 'foo' in bar", "() => \"foo\" in bar;\n");
     test("() => { ('foo' in bar) }", "() => {\n\t\"foo\" in bar;\n};\n");
+
+    // A parenthesized arrow resets FORBID_IN, so its concise body / param default
+    // does not need extra parentheses around `in` (was `(() => (a in b))`).
+    test("for (x = (() => a in b);;);", "for (x = (() => a in b);;);\n");
+    test("for (x = ((a = b in c) => 1);;);", "for (x = ((a = b in c) => 1);;);\n");
 }
 
 #[test]

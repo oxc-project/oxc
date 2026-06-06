@@ -498,7 +498,8 @@ fn test_for() {
     test("for (x(a in b);;);", "for (x(a in b);;);\n");
     test("for (x[a in b];;);", "for (x[a in b];;);\n");
     test("for (x?.[a in b];;);", "for (x?.[a in b];;);\n");
-    test("for ((x => a in b);;);", "for (((x) => (a in b));;);\n");
+    // `in` is allowed in an arrow body, so no inner parens are needed (matches esbuild).
+    test("for ((x => a in b);;);", "for (((x) => a in b);;);\n");
 
     // Make sure for-of loops with commas are wrapped in parentheses
     test("for (let a in b, c);", "for (let a in b, c);\n");

@@ -1757,7 +1757,12 @@ impl Gen for PropertyKey<'_> {
 
 impl GenExpr for ArrowFunctionExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= Precedence::Assign || self.pife, |p| {
+        let wrap = precedence >= Precedence::Assign || self.pife;
+        // Clear FORBID_IN: always for param defaults (always parenthesized), and for
+        // the concise body only when the arrow is wrapped (which resets the `for` init).
+        let params_ctx = ctx & Context::FORBID_IN.not();
+        let body_ctx = if wrap { params_ctx } else { ctx };
+        p.wrap(wrap, |p| {
             // `pife` wrap: emit leading comments inside the `(`, so the
             // source position `(/* c */ arrow)` is preserved.
             if self.pife {
@@ -1787,7 +1792,7 @@ impl GenExpr for ArrowFunctionExpression<'_> {
                         && !param.optional
                 };
             p.wrap(!remove_params_wrap, |p| {
-                self.params.print(p, ctx);
+                self.params.print(p, params_ctx);
             });
             if let Some(return_type) = &self.return_type {
                 p.print_colon();
@@ -1800,10 +1805,10 @@ impl GenExpr for ArrowFunctionExpression<'_> {
             if self.expression {
                 if let Some(Statement::ExpressionStatement(stmt)) = &self.body.statements.first() {
                     p.start_of_arrow_expr = p.code_len();
-                    stmt.expression.print_expr(p, Precedence::Comma, ctx);
+                    stmt.expression.print_expr(p, Precedence::Comma, body_ctx);
                 }
             } else {
-                self.body.print(p, ctx);
+                self.body.print(p, body_ctx);
             }
         });
     }
