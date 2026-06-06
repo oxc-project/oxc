@@ -180,6 +180,26 @@
         }
       ]
     },
+    "CaseType": {
+      "type": "string",
+      "enum": [
+        "camelCase",
+        "snake_case"
+      ]
+    },
+    "Config": {
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/CaseType"
+        },
+        {
+          "$ref": "#/definitions/Options"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2
+    },
     "CustomComponent": {
       "anyOf": [
         {
@@ -2651,10 +2671,44 @@
           "$ref": "#/definitions/DummyRule"
         },
         "vue/no-reserved-keys": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoReservedKeys"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vue/no-reserved-props": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoReservedProps"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vue/no-shared-component-data": {
           "$ref": "#/definitions/DummyRule"
@@ -2669,13 +2723,50 @@
           "$ref": "#/definitions/DummyRule"
         },
         "vue/prop-name-casing": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CaseType"
+                },
+                {
+                  "$ref": "#/definitions/Options"
+                }
+              ],
+              "maxItems": 3,
+              "minItems": 1
+            }
+          ]
         },
         "vue/require-default-export": {
           "$ref": "#/definitions/DummyRule"
         },
         "vue/require-direct-export": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireDirectExport"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vue/require-prop-type-constructor": {
           "$ref": "#/definitions/DummyRule"
@@ -2929,6 +3020,50 @@
       },
       "markdownDescription": "Configure Next.js plugin rules."
     },
+    "NoReservedKeys": {
+      "$ref": "#/definitions/NoReservedKeysConfig"
+    },
+    "NoReservedKeysConfig": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "description": "Extra component option groups to inspect, on top of the built-in\n`props` / `computed` / `data` / `asyncData` / `methods` / `setup`.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Extra component option groups to inspect, on top of the built-in\n`props` / `computed` / `data` / `asyncData` / `methods` / `setup`."
+        },
+        "reserved": {
+          "description": "Extra reserved key names to disallow, on top of the built-in list.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Extra reserved key names to disallow, on top of the built-in list."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoReservedProps": {
+      "$ref": "#/definitions/NoReservedPropsConfig"
+    },
+    "NoReservedPropsConfig": {
+      "type": "object",
+      "properties": {
+        "vueVersion": {
+          "description": "Vue major version whose reserved attribute set is applied. Vue 2 reserves\nmore names (`is`, `slot`, `class`, `style`, ...) than Vue 3.",
+          "default": 3,
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0,
+          "markdownDescription": "Vue major version whose reserved attribute set is applied. Vue 2 reserves\nmore names (`is`, `slot`, `class`, `style`, ...) than Vue 3."
+        }
+      },
+      "additionalProperties": false
+    },
     "OneOrMany_for_String": {
       "anyOf": [
         {
@@ -2941,6 +3076,19 @@
           }
         }
       ]
+    },
+    "Options": {
+      "type": "object",
+      "properties": {
+        "ignoreProps": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
     },
     "OxlintCategories": {
       "title": "Rule Categories",
@@ -3245,6 +3393,18 @@
         }
       },
       "markdownDescription": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)"
+    },
+    "RequireDirectExport": {
+      "type": "object",
+      "properties": {
+        "disallowFunctionalComponentFunction": {
+          "description": "When set `true`, disallow functional component functions.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set `true`, disallow functional component functions."
+        }
+      },
+      "additionalProperties": false
     },
     "TagNamePreference": {
       "anyOf": [

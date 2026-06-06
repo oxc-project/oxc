@@ -59,6 +59,7 @@ export type LintPluginOptionsSchema =
   | "vue";
 export type LintPlugins = LintPluginOptionsSchema[];
 export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+export type CaseType = "camelCase" | "snake_case";
 export type OxlintOverrides = OxlintOverride[];
 export type JestVersionSchema = number | string;
 export type TagNamePreference =
@@ -1323,15 +1324,19 @@ export interface DummyRuleMap {
   "vue/no-multiple-slot-args"?: DummyRule;
   "vue/no-required-prop-with-default"?: DummyRule;
   "vue/no-reserved-component-names"?: DummyRule;
-  "vue/no-reserved-keys"?: DummyRule;
-  "vue/no-reserved-props"?: DummyRule;
+  "vue/no-reserved-keys"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoReservedKeysConfig];
+  "vue/no-reserved-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoReservedPropsConfig];
   "vue/no-shared-component-data"?: DummyRule;
   "vue/no-this-in-before-route-enter"?: DummyRule;
   "vue/no-watch-after-await"?: DummyRule;
   "vue/prefer-import-from-vue"?: DummyRule;
-  "vue/prop-name-casing"?: DummyRule;
+  "vue/prop-name-casing"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, CaseType]
+    | [AllowWarnDeny, CaseType, Options];
   "vue/require-default-export"?: DummyRule;
-  "vue/require-direct-export"?: DummyRule;
+  "vue/require-direct-export"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireDirectExport];
   "vue/require-prop-type-constructor"?: DummyRule;
   "vue/require-prop-types"?: DummyRule;
   "vue/require-render-return"?: DummyRule;
@@ -1345,6 +1350,33 @@ export interface DummyRuleMap {
   "vue/valid-next-tick"?: DummyRule;
   yoda?: DummyRule;
   [k: string]: DummyRule | undefined;
+}
+export interface NoReservedKeysConfig {
+  /**
+   * Extra component option groups to inspect, on top of the built-in
+   * `props` / `computed` / `data` / `asyncData` / `methods` / `setup`.
+   */
+  groups?: string[];
+  /**
+   * Extra reserved key names to disallow, on top of the built-in list.
+   */
+  reserved?: string[];
+}
+export interface NoReservedPropsConfig {
+  /**
+   * Vue major version whose reserved attribute set is applied. Vue 2 reserves
+   * more names (`is`, `slot`, `class`, `style`, ...) than Vue 3.
+   */
+  vueVersion?: number;
+}
+export interface Options {
+  ignoreProps?: string[];
+}
+export interface RequireDirectExport {
+  /**
+   * When set `true`, disallow functional component functions.
+   */
+  disallowFunctionalComponentFunction?: boolean;
 }
 /**
  * Configure the behavior of linter plugins.
