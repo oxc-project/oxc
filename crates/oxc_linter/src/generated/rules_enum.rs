@@ -837,6 +837,7 @@ pub use crate::rules::vitest::prefer_to_contain::PreferToContain as VitestPrefer
 pub use crate::rules::vitest::prefer_to_have_been_called_times::PreferToHaveBeenCalledTimes as VitestPreferToHaveBeenCalledTimes;
 pub use crate::rules::vitest::prefer_to_have_length::PreferToHaveLength as VitestPreferToHaveLength;
 pub use crate::rules::vitest::prefer_todo::PreferTodo as VitestPreferTodo;
+pub use crate::rules::vitest::prefer_vi_mocked::PreferViMocked as VitestPreferViMocked;
 pub use crate::rules::vitest::require_awaited_expect_poll::RequireAwaitedExpectPoll as VitestRequireAwaitedExpectPoll;
 pub use crate::rules::vitest::require_hook::RequireHook as VitestRequireHook;
 pub use crate::rules::vitest::require_local_test_context_for_concurrent_snapshots::RequireLocalTestContextForConcurrentSnapshots as VitestRequireLocalTestContextForConcurrentSnapshots;
@@ -1730,6 +1731,7 @@ pub enum RuleEnum {
     VitestPreferToHaveBeenCalledTimes(VitestPreferToHaveBeenCalledTimes),
     VitestPreferToHaveLength(VitestPreferToHaveLength),
     VitestPreferTodo(VitestPreferTodo),
+    VitestPreferViMocked(VitestPreferViMocked),
     VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll),
     VitestRequireHook(VitestRequireHook),
     VitestRequireLocalTestContextForConcurrentSnapshots(
@@ -2619,76 +2621,77 @@ const VITEST_PREFER_TO_CONTAIN_ID: usize = 813usize;
 const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 814usize;
 const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 815usize;
 const VITEST_PREFER_TODO_ID: usize = 816usize;
-const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 817usize;
-const VITEST_REQUIRE_HOOK_ID: usize = 818usize;
-const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 819usize;
-const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 820usize;
-const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 821usize;
-const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 822usize;
-const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 823usize;
-const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 824usize;
-const VITEST_VALID_EXPECT_ID: usize = 825usize;
-const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 826usize;
-const VITEST_VALID_TITLE_ID: usize = 827usize;
-const VITEST_WARN_TODO_ID: usize = 828usize;
-const NODE_CALLBACK_RETURN_ID: usize = 829usize;
-const NODE_EXPORTS_STYLE_ID: usize = 830usize;
-const NODE_GLOBAL_REQUIRE_ID: usize = 831usize;
-const NODE_HANDLE_CALLBACK_ERR_ID: usize = 832usize;
-const NODE_NO_EXPORTS_ASSIGN_ID: usize = 833usize;
-const NODE_NO_MIXED_REQUIRES_ID: usize = 834usize;
-const NODE_NO_NEW_REQUIRE_ID: usize = 835usize;
-const NODE_NO_PATH_CONCAT_ID: usize = 836usize;
-const NODE_NO_PROCESS_ENV_ID: usize = 837usize;
-const NODE_NO_SYNC_ID: usize = 838usize;
-const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 839usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 840usize;
-const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 841usize;
-const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 842usize;
-const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 843usize;
-const VUE_MAX_PROPS_ID: usize = 844usize;
-const VUE_NEXT_TICK_STYLE_ID: usize = 845usize;
-const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 846usize;
-const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 847usize;
-const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 848usize;
-const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 849usize;
-const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 850usize;
-const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 851usize;
-const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 852usize;
-const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 853usize;
-const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 854usize;
-const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 855usize;
-const VUE_NO_DUPE_KEYS_ID: usize = 856usize;
-const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 857usize;
-const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 858usize;
-const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 859usize;
-const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 860usize;
-const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 861usize;
-const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 862usize;
-const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 863usize;
-const VUE_NO_RESERVED_KEYS_ID: usize = 864usize;
-const VUE_NO_RESERVED_PROPS_ID: usize = 865usize;
-const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 866usize;
-const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 867usize;
-const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 868usize;
-const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 869usize;
-const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 870usize;
-const VUE_PROP_NAME_CASING_ID: usize = 871usize;
-const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 872usize;
-const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 873usize;
-const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 874usize;
-const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 875usize;
-const VUE_REQUIRE_PROP_TYPES_ID: usize = 876usize;
-const VUE_REQUIRE_RENDER_RETURN_ID: usize = 877usize;
-const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 878usize;
-const VUE_REQUIRE_TYPED_REF_ID: usize = 879usize;
-const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 880usize;
-const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 881usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = 882usize;
-const VUE_VALID_DEFINE_OPTIONS_ID: usize = 883usize;
-const VUE_VALID_DEFINE_PROPS_ID: usize = 884usize;
-const VUE_VALID_NEXT_TICK_ID: usize = 885usize;
-static RULE_NAMES: [&str; 886usize] = [
+const VITEST_PREFER_VI_MOCKED_ID: usize = 817usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 818usize;
+const VITEST_REQUIRE_HOOK_ID: usize = 819usize;
+const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 820usize;
+const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 821usize;
+const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 822usize;
+const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 823usize;
+const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 824usize;
+const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 825usize;
+const VITEST_VALID_EXPECT_ID: usize = 826usize;
+const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 827usize;
+const VITEST_VALID_TITLE_ID: usize = 828usize;
+const VITEST_WARN_TODO_ID: usize = 829usize;
+const NODE_CALLBACK_RETURN_ID: usize = 830usize;
+const NODE_EXPORTS_STYLE_ID: usize = 831usize;
+const NODE_GLOBAL_REQUIRE_ID: usize = 832usize;
+const NODE_HANDLE_CALLBACK_ERR_ID: usize = 833usize;
+const NODE_NO_EXPORTS_ASSIGN_ID: usize = 834usize;
+const NODE_NO_MIXED_REQUIRES_ID: usize = 835usize;
+const NODE_NO_NEW_REQUIRE_ID: usize = 836usize;
+const NODE_NO_PATH_CONCAT_ID: usize = 837usize;
+const NODE_NO_PROCESS_ENV_ID: usize = 838usize;
+const NODE_NO_SYNC_ID: usize = 839usize;
+const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 840usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 841usize;
+const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 842usize;
+const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 843usize;
+const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 844usize;
+const VUE_MAX_PROPS_ID: usize = 845usize;
+const VUE_NEXT_TICK_STYLE_ID: usize = 846usize;
+const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 847usize;
+const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 848usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 849usize;
+const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 850usize;
+const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 851usize;
+const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 852usize;
+const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 853usize;
+const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 854usize;
+const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 855usize;
+const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 856usize;
+const VUE_NO_DUPE_KEYS_ID: usize = 857usize;
+const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 858usize;
+const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 859usize;
+const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 860usize;
+const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 861usize;
+const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 862usize;
+const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 863usize;
+const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 864usize;
+const VUE_NO_RESERVED_KEYS_ID: usize = 865usize;
+const VUE_NO_RESERVED_PROPS_ID: usize = 866usize;
+const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 867usize;
+const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 868usize;
+const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 869usize;
+const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 870usize;
+const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 871usize;
+const VUE_PROP_NAME_CASING_ID: usize = 872usize;
+const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 873usize;
+const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 874usize;
+const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 875usize;
+const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 876usize;
+const VUE_REQUIRE_PROP_TYPES_ID: usize = 877usize;
+const VUE_REQUIRE_RENDER_RETURN_ID: usize = 878usize;
+const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 879usize;
+const VUE_REQUIRE_TYPED_REF_ID: usize = 880usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 881usize;
+const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 882usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = 883usize;
+const VUE_VALID_DEFINE_OPTIONS_ID: usize = 884usize;
+const VUE_VALID_DEFINE_PROPS_ID: usize = 885usize;
+const VUE_VALID_NEXT_TICK_ID: usize = 886usize;
+static RULE_NAMES: [&str; 887usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3506,6 +3509,7 @@ static RULE_NAMES: [&str; 886usize] = [
     VitestPreferToHaveBeenCalledTimes::NAME,
     VitestPreferToHaveLength::NAME,
     VitestPreferTodo::NAME,
+    VitestPreferViMocked::NAME,
     VitestRequireAwaitedExpectPoll::NAME,
     VitestRequireHook::NAME,
     VitestRequireLocalTestContextForConcurrentSnapshots::NAME,
@@ -4530,6 +4534,7 @@ impl RuleEnum {
             }
             Self::VitestPreferToHaveLength(_) => VITEST_PREFER_TO_HAVE_LENGTH_ID,
             Self::VitestPreferTodo(_) => VITEST_PREFER_TODO_ID,
+            Self::VitestPreferViMocked(_) => VITEST_PREFER_VI_MOCKED_ID,
             Self::VitestRequireAwaitedExpectPoll(_) => VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID,
             Self::VitestRequireHook(_) => VITEST_REQUIRE_HOOK_ID,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -5609,6 +5614,7 @@ impl RuleEnum {
             }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::CATEGORY,
             Self::VitestPreferTodo(_) => VitestPreferTodo::CATEGORY,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::CATEGORY,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::CATEGORY,
             Self::VitestRequireHook(_) => VitestRequireHook::CATEGORY,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -6622,6 +6628,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::FIX,
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::FIX,
             Self::VitestPreferTodo(_) => VitestPreferTodo::FIX,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::FIX,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::FIX,
             Self::VitestRequireHook(_) => VitestRequireHook::FIX,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -7907,6 +7914,7 @@ impl RuleEnum {
             }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::documentation(),
             Self::VitestPreferTodo(_) => VitestPreferTodo::documentation(),
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::documentation(),
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::documentation()
             }
@@ -10364,6 +10372,8 @@ impl RuleEnum {
                 .or_else(|| VitestPreferToHaveLength::schema(generator)),
             Self::VitestPreferTodo(_) => VitestPreferTodo::config_schema(generator)
                 .or_else(|| VitestPreferTodo::schema(generator)),
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::config_schema(generator)
+                .or_else(|| VitestPreferViMocked::schema(generator)),
             Self::VitestRequireAwaitedExpectPoll(_) => {
                 VitestRequireAwaitedExpectPoll::config_schema(generator)
                     .or_else(|| VitestRequireAwaitedExpectPoll::schema(generator))
@@ -11384,6 +11394,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(_) => "vitest",
             Self::VitestPreferToHaveLength(_) => "vitest",
             Self::VitestPreferTodo(_) => "vitest",
+            Self::VitestPreferViMocked(_) => "vitest",
             Self::VitestRequireAwaitedExpectPoll(_) => "vitest",
             Self::VitestRequireHook(_) => "vitest",
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => "vitest",
@@ -13418,6 +13429,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run(node, ctx),
             Self::VitestPreferTodo(rule) => rule.run(node, ctx),
+            Self::VitestPreferViMocked(rule) => rule.run(node, ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run(node, ctx),
             Self::VitestRequireHook(rule) => rule.run(node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run(node, ctx),
@@ -14321,6 +14333,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferToHaveLength(rule) => rule.run_once(ctx),
             Self::VitestPreferTodo(rule) => rule.run_once(ctx),
+            Self::VitestPreferViMocked(rule) => rule.run_once(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_once(ctx),
             Self::VitestRequireHook(rule) => rule.run_once(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_once(ctx),
@@ -15222,6 +15235,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferToHaveLength(rule) => rule.should_run(ctx),
             Self::VitestPreferTodo(rule) => rule.should_run(ctx),
+            Self::VitestPreferViMocked(rule) => rule.should_run(ctx),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.should_run(ctx),
             Self::VitestRequireHook(rule) => rule.should_run(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.should_run(ctx),
@@ -16251,6 +16265,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::FLAGS,
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::FLAGS,
             Self::VitestPreferTodo(_) => VitestPreferTodo::FLAGS,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::FLAGS,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::FLAGS,
             Self::VitestRequireHook(_) => VitestRequireHook::FLAGS,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -17336,6 +17351,7 @@ impl RuleEnum {
             }
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::VERSION,
             Self::VitestPreferTodo(_) => VitestPreferTodo::VERSION,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::VERSION,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::VERSION,
             Self::VitestRequireHook(_) => VitestRequireHook::VERSION,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -18354,6 +18370,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::INFO,
             Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::INFO,
             Self::VitestPreferTodo(_) => VitestPreferTodo::INFO,
+            Self::VitestPreferViMocked(_) => VitestPreferViMocked::INFO,
             Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::INFO,
             Self::VitestRequireHook(_) => VitestRequireHook::INFO,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
@@ -19255,6 +19272,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferToHaveLength(rule) => rule.types_info(),
             Self::VitestPreferTodo(rule) => rule.types_info(),
+            Self::VitestPreferViMocked(rule) => rule.types_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.types_info(),
             Self::VitestRequireHook(rule) => rule.types_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.types_info(),
@@ -20145,6 +20163,7 @@ impl RuleEnum {
             Self::VitestPreferToHaveBeenCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferToHaveLength(rule) => rule.run_info(),
             Self::VitestPreferTodo(rule) => rule.run_info(),
+            Self::VitestPreferViMocked(rule) => rule.run_info(),
             Self::VitestRequireAwaitedExpectPoll(rule) => rule.run_info(),
             Self::VitestRequireHook(rule) => rule.run_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_info(),
@@ -21171,6 +21190,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestPreferToHaveBeenCalledTimes(VitestPreferToHaveBeenCalledTimes::default()),
         RuleEnum::VitestPreferToHaveLength(VitestPreferToHaveLength::default()),
         RuleEnum::VitestPreferTodo(VitestPreferTodo::default()),
+        RuleEnum::VitestPreferViMocked(VitestPreferViMocked::default()),
         RuleEnum::VitestRequireAwaitedExpectPoll(VitestRequireAwaitedExpectPoll::default()),
         RuleEnum::VitestRequireHook(VitestRequireHook::default()),
         RuleEnum::VitestRequireLocalTestContextForConcurrentSnapshots(
