@@ -2,126 +2,126 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `Mock`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (foo as Mock).mockReturnValue(1);
    ·  ───────────
    ╰────
   help: Replace `foo as Mock` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `Mock`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (foo as unknown as string as unknown as Mock).mockReturnValue(1);
    ·  ───────────────────────────────────────────
    ╰────
   help: Replace `foo as unknown as string as unknown as Mock` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `Mock`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (foo as unknown as Mock as unknown as Mock).mockReturnValue(1);
    ·  ─────────────────────────────────────────
    ╰────
   help: Replace `foo as unknown as Mock as unknown as Mock` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `Mock`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (<Mock>foo).mockReturnValue(1);
    ·  ─────────
    ╰────
   help: Replace `<Mock>foo` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `Mock`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (foo as Mock).mockImplementation(1);
    ·  ───────────
    ╰────
   help: Replace `foo as Mock` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `Mock`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (foo as unknown as Mock).mockReturnValue(1);
    ·  ──────────────────────
    ╰────
   help: Replace `foo as unknown as Mock` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `Mock`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (<Mock>foo as unknown).mockReturnValue(1);
    ·  ─────────
    ╰────
   help: Replace `<Mock>foo` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `Mock`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (Obj.foo as Mock).mockReturnValue(1);
    ·  ───────────────
    ╰────
   help: Replace `Obj.foo as Mock` with `vi.mocked(Obj.foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `Mock`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ ([].foo as Mock).mockReturnValue(1);
    ·  ──────────────
    ╰────
   help: Replace `[].foo as Mock` with `vi.mocked([].foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedFunction`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (foo as MockedFunction).mockReturnValue(1);
    ·  ─────────────────────
    ╰────
   help: Replace `foo as MockedFunction` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedFunction`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (foo as MockedFunction).mockImplementation(1);
    ·  ─────────────────────
    ╰────
   help: Replace `foo as MockedFunction` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedFunction`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (foo as unknown as MockedFunction).mockReturnValue(1);
    ·  ────────────────────────────────
    ╰────
   help: Replace `foo as unknown as MockedFunction` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedFunction`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (Obj.foo as MockedFunction).mockReturnValue(1);
    ·  ─────────────────────────
    ╰────
   help: Replace `Obj.foo as MockedFunction` with `vi.mocked(Obj.foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedFunction`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (new Array(0).fill(null).foo as MockedFunction).mockReturnValue(1);
    ·  ─────────────────────────────────────────────
    ╰────
   help: Replace `new Array(0).fill(null).foo as MockedFunction` with `vi.mocked(new Array(0).fill(null).foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedFunction`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (vi.fn(() => foo) as MockedFunction).mockReturnValue(1);
    ·  ──────────────────────────────────
    ╰────
   help: Replace `vi.fn(() => foo) as MockedFunction` with `vi.mocked(vi.fn(() => foo))`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedFunction`
    ╭─[prefer_vi_mocked.ts:1:26]
  1 │ const mockedUseFocused = useFocused as MockedFunction<typeof useFocused>;
    ·                          ───────────────────────────────────────────────
    ╰────
   help: Replace `useFocused as MockedFunction<typeof useFocused>` with `vi.mocked(useFocused)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `Mock`
    ╭─[prefer_vi_mocked.ts:1:17]
  1 │ const filter = (MessageService.getMessage as Mock).mock.calls[0][0];
    ·                 ─────────────────────────────────
    ╰────
   help: Replace `MessageService.getMessage as Mock` with `vi.mocked(MessageService.getMessage)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedClass`
    ╭─[prefer_vi_mocked.ts:2:14]
  1 │ class A {}
  2 │             (foo as MockedClass<A>)
@@ -129,21 +129,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `foo as MockedClass<A>` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedObject`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (foo as MockedObject<{method: () => void}>)
    ·  ─────────────────────────────────────────
    ╰────
   help: Replace `foo as MockedObject<{method: () => void}>` with `vi.mocked(foo)`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedFunction`
    ╭─[prefer_vi_mocked.ts:1:2]
  1 │ (Obj["foo"] as MockedFunction).mockReturnValue(1);
    ·  ────────────────────────────
    ╰────
   help: Replace `Obj["foo"] as MockedFunction` with `vi.mocked(Obj["foo"])`.
 
-  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over `fn as Mock`
+  ⚠ vitest(prefer-vi-mocked): Prefer `vi.mocked()` over type assertions using `MockedFunction`
    ╭─[prefer_vi_mocked.ts:2:13]
  1 │     (
  2 │ ╭─▶             new Array(100)
