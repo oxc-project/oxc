@@ -351,6 +351,12 @@ pub mod legal {
     }
 
     #[test]
+    fn minify_preset_keeps_legal_comment() {
+        // The `minify()` preset drops normal comments but keeps legal ones (at eof).
+        snapshot_options("minify_preset_legal_comments", &cases(), &CodegenOptions::minify());
+    }
+
+    #[test]
     fn legal_linked_comment() {
         let options = CodegenOptions {
             comments: CommentOptions {

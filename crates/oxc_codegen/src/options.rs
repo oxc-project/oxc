@@ -60,12 +60,12 @@ impl Default for CodegenOptions {
 }
 
 impl CodegenOptions {
-    /// Minify whitespace and remove comments.
+    /// Minify whitespace and remove comments, but keep legal comments.
     pub fn minify() -> Self {
         Self {
             single_quote: false,
             minify: true,
-            comments: CommentOptions::disabled(),
+            comments: CommentOptions::minify(),
             source_map_path: None,
             indent_char: IndentChar::default(),
             indent_width: DEFAULT_INDENT_WIDTH,
@@ -140,6 +140,13 @@ impl CommentOptions {
     /// Disable Comments.
     pub fn disabled() -> Self {
         Self { normal: false, jsdoc: false, annotation: false, legal: LegalComment::None }
+    }
+
+    /// Comments to keep when minifying: drop normal/jsdoc/annotation comments but
+    /// move legal comments (`/*! */`, `@license`, `@preserve`) to the end of the
+    /// file, matching other minifiers.
+    pub fn minify() -> Self {
+        Self { normal: false, jsdoc: false, annotation: false, legal: LegalComment::Eof }
     }
 }
 
