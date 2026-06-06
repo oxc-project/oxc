@@ -171,8 +171,11 @@ pub trait CompilerInterface {
 
         // Symbols and scopes are out of sync.
         if inject_options.is_some() || define_options.is_some() {
-            scoping =
-                SemanticBuilder::new().with_stats(stats).build(&program).semantic.into_scoping();
+            scoping = SemanticBuilder::new_without_errors()
+                .with_stats(stats)
+                .build(&program)
+                .semantic
+                .into_scoping();
         }
 
         if let Some(options) = inject_options {

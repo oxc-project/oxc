@@ -24,7 +24,10 @@ const SUGGESTION_THRESHOLD: usize = 2;
 
 /// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
 /// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
-pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>) {
+pub fn check_unresolved_exports<const BUILD_ERRORS: bool>(
+    program: &Program<'_>,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     if ctx.source_type.is_typescript() || !ctx.source_type.is_module() {
         return;
     }
@@ -58,7 +61,9 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
 /// It is a Syntax Error if any element of the BoundNames of ImportDeclaration
 /// also occurs in the VarDeclaredNames or LexicallyDeclaredNames of ModuleItemList.
 /// <https://tc39.es/ecma262/#sec-imports-static-semantics-early-errors>
-pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
+pub fn check_import_value_redeclarations<const BUILD_ERRORS: bool>(
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     if !ctx.source_type.is_module() || ctx.source_type.is_typescript() {
         return;
     }
@@ -83,7 +88,9 @@ pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
     }
 }
 
-pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
+pub fn check_duplicate_class_elements<const BUILD_ERRORS: bool>(
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     let classes = &ctx.class_table_builder.classes;
     classes.iter_enumerated().for_each(|(class_id, _)| {
         let elements = &classes.elements[class_id];
@@ -119,10 +126,10 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
 
                 if is_duplicate {
                     #[cold]
-                    fn report_duplicate_class_element(
+                    fn report_duplicate_class_element<const BUILD_ERRORS: bool>(
                         element: &Element,
                         prev_element: &Element,
-                        ctx: &SemanticBuilder<'_>,
+                        ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
                     ) {
                         if element.is_private
                             && element.r#static != prev_element.r#static
@@ -151,14 +158,17 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     });
 }
 
-pub fn check_identifier(
+pub fn check_identifier<const BUILD_ERRORS: bool>(
     name: &str,
     span: Span,
     symbol_id: Option<SymbolId>,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
 ) {
     // reserved keywords are allowed in ambient contexts
-    fn is_allowed_context(symbol_id: Option<SymbolId>, ctx: &SemanticBuilder<'_>) -> bool {
+    fn is_allowed_context<const BUILD_ERRORS: bool>(
+        symbol_id: Option<SymbolId>,
+        ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+    ) -> bool {
         ctx.source_type.is_typescript_definition()
             || is_current_node_ambient_binding(symbol_id, ctx)
     }
@@ -192,7 +202,10 @@ pub fn check_identifier(
     }
 }
 
-fn is_current_node_ambient_binding(symbol_id: Option<SymbolId>, ctx: &SemanticBuilder<'_>) -> bool {
+fn is_current_node_ambient_binding<const BUILD_ERRORS: bool>(
+    symbol_id: Option<SymbolId>,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) -> bool {
     if ctx.current_scope_flags().is_ts_module_block() {
         return true;
     }
@@ -210,7 +223,10 @@ fn is_current_node_ambient_binding(symbol_id: Option<SymbolId>, ctx: &SemanticBu
     }
 }
 
-pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {
+pub fn check_binding_identifier<const BUILD_ERRORS: bool>(
+    ident: &BindingIdentifier,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // `.d.ts` files are allowed to use `eval` and `arguments` as binding identifiers
     if ctx.source_type.is_typescript_definition() {
         return;
@@ -277,7 +293,10 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
     }
 }
 
-pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBuilder<'_>) {
+pub fn check_identifier_reference<const BUILD_ERRORS: bool>(
+    ident: &IdentifierReference,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // `.d.ts` files are allowed to use `eval` and `arguments` as identifier references
     if ctx.source_type.is_typescript_definition() {
         return;
@@ -350,16 +369,16 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     }
 }
 
-pub fn check_private_identifier_outside_class(
+pub fn check_private_identifier_outside_class<const BUILD_ERRORS: bool>(
     ident: &PrivateIdentifier,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
 ) {
     if ctx.class_table_builder.current_class_id.is_none() {
         ctx.error(diagnostics::private_not_in_class(&ident.name, ident.span));
     }
 }
 
-fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
+fn check_private_identifier<const BUILD_ERRORS: bool>(ctx: &SemanticBuilder<'_, BUILD_ERRORS>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
         let mut available_names: Option<Vec<&str>> = None;
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
@@ -390,7 +409,10 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     }
 }
 
-pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
+pub fn check_number_literal<const BUILD_ERRORS: bool>(
+    lit: &NumericLiteral,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // NumericLiteral :: legacy_octalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
@@ -415,7 +437,10 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
 
 const MIN_STRING_SIZE_FOR_BATCH_CHECK: usize = 16;
 
-pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
+pub fn check_string_literal<const BUILD_ERRORS: bool>(
+    lit: &StringLiteral,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // 12.9.4.1 Static Semantics: Early Errors
     // EscapeSequence ::
     //   legacy_octalEscapeSequence
@@ -492,7 +517,10 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
 
 // It is a Syntax Error if FunctionBodyContainsUseStrict of AsyncFunctionBody is true and IsSimpleParameterList of FormalParameters is false.
 // background: https://humanwhocodes.com/blog/2016/10/the-ecmascript-2016-change-you-probably-dont-know/
-pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
+pub fn check_directive<const BUILD_ERRORS: bool>(
+    directive: &Directive,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     if directive.directive != "use strict" {
         return;
     }
@@ -510,7 +538,10 @@ pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuilder<'_>) {
+pub fn check_module_declaration<const BUILD_ERRORS: bool>(
+    decl: &ModuleDeclarationKind,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // It is ambiguous between script and module for `TypeScript`, skipping this check for now.
     // Basically we need to "upgrade" from script to module if we see any module syntax inside the
     // semantic builder
@@ -553,7 +584,10 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
 /// - Inside any block scope in scripts
 ///
 /// But NOT at the top level of scripts.
-pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuilder<'_>) {
+pub fn check_variable_declaration<const BUILD_ERRORS: bool>(
+    decl: &VariableDeclaration,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     if decl.kind.is_using()
         && ctx.source_type.is_script()
         && ctx.current_scope_flags().contains(ScopeFlags::Top)
@@ -565,10 +599,10 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     }
 }
 
-pub fn check_function_declaration<'a>(
+pub fn check_function_declaration<'a, const BUILD_ERRORS: bool>(
     stmt: &Statement<'a>,
     is_if_stmt_or_labeled_stmt: bool,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
 ) {
     // Function declaration not allowed in statement position
     if let Statement::FunctionDeclaration(decl) = stmt {
@@ -581,9 +615,9 @@ pub fn check_function_declaration<'a>(
 }
 
 // It is a Syntax Error if IsLabelledFunction(Statement) is true.
-pub fn check_function_declaration_in_labeled_statement<'a>(
+pub fn check_function_declaration_in_labeled_statement<'a, const BUILD_ERRORS: bool>(
     body: &Statement<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
 ) {
     if let Statement::FunctionDeclaration(decl) = body {
         if ctx.strict_mode() {
@@ -611,9 +645,9 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
 
 // It is a Syntax Error if any element of the LexicallyDeclaredNames of
 // StatementList also occurs in the VarDeclaredNames of StatementList.
-pub fn check_variable_declarator_redeclaration(
+pub fn check_variable_declarator_redeclaration<const BUILD_ERRORS: bool>(
     decl: &VariableDeclarator,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
 ) {
     if decl.kind != VariableDeclarationKind::Var {
         return;
@@ -642,9 +676,9 @@ pub fn check_variable_declarator_redeclaration(
 }
 
 /// Check for Annex B `if (foo) function a() {} else function b() {}`
-pub fn is_function_decl_part_of_if_statement(
+pub fn is_function_decl_part_of_if_statement<const BUILD_ERRORS: bool>(
     function: &Function,
-    builder: &SemanticBuilder,
+    builder: &SemanticBuilder<'_, BUILD_ERRORS>,
 ) -> bool {
     debug_assert!(function.is_declaration());
 
@@ -665,7 +699,10 @@ pub fn is_function_decl_part_of_if_statement(
 // unless the source text matched by this production is not strict mode code
 // and the duplicate entries are only bound by FunctionDeclarations.
 // https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
-pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) {
+pub fn check_function_redeclaration<const BUILD_ERRORS: bool>(
+    func: &Function,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     if !func.is_declaration() {
         return;
     }
@@ -690,11 +727,11 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
 /// Split out of `check_function_redeclaration` and marked `#[cold]` as it only runs when `func`'s name
 /// already has an earlier declaration in the same scope, which is very rare in practice.
 #[cold]
-fn check_redeclared_function(
+fn check_redeclared_function<const BUILD_ERRORS: bool>(
     func: &Function,
     id: &BindingIdentifier,
     redeclarations: &[Redeclaration],
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
 ) {
     if is_function_decl_part_of_if_statement(func, ctx) {
         return;
@@ -750,7 +787,10 @@ fn check_redeclared_function(
     ctx.error(diagnostics::redeclaration(&id.name, prev.span, id.span));
 }
 
-pub fn check_class_redeclaration(class: &Class, ctx: &SemanticBuilder<'_>) {
+pub fn check_class_redeclaration<const BUILD_ERRORS: bool>(
+    class: &Class,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     let Some(id) = &class.id else { return };
     let symbol_id = id.symbol_id();
 
@@ -765,13 +805,19 @@ pub fn check_class_redeclaration(class: &Class, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-pub fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
+pub fn check_with_statement<const BUILD_ERRORS: bool>(
+    stmt: &WithStatement,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     if ctx.strict_mode() || ctx.source_type.is_typescript() {
         ctx.error(diagnostics::with_statement(Span::sized(stmt.span.start, 4)));
     }
 }
 
-pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
+pub fn check_break_statement<const BUILD_ERRORS: bool>(
+    stmt: &BreakStatement,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
 
     let mut available_labels: Option<Vec<&str>> = None;
@@ -814,7 +860,10 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<'_>) {
+pub fn check_continue_statement<const BUILD_ERRORS: bool>(
+    stmt: &ContinueStatement,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
 
     let mut available_labels: Option<Vec<&str>> = None;
@@ -865,7 +914,9 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
     }
 }
 
-fn collect_label_names<'a>(ctx: &'_ SemanticBuilder<'a>) -> Vec<&'a str> {
+fn collect_label_names<'a, const BUILD_ERRORS: bool>(
+    ctx: &'_ SemanticBuilder<'a, BUILD_ERRORS>,
+) -> Vec<&'a str> {
     let mut labels = Vec::new();
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         if let AstKind::LabeledStatement(labeled_statement) = node_kind {
@@ -877,7 +928,10 @@ fn collect_label_names<'a>(ctx: &'_ SemanticBuilder<'a>) -> Vec<&'a str> {
     labels
 }
 
-pub fn check_labeled_statement(stmt: &LabeledStatement, ctx: &SemanticBuilder<'_>) {
+pub fn check_labeled_statement<const BUILD_ERRORS: bool>(
+    stmt: &LabeledStatement,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             // label cannot cross boundary on function or static block
@@ -897,10 +951,10 @@ pub fn check_labeled_statement(stmt: &LabeledStatement, ctx: &SemanticBuilder<'_
     }
 }
 
-pub fn check_for_statement_left(
+pub fn check_for_statement_left<const BUILD_ERRORS: bool>(
     left: &ForStatementLeft,
     is_for_in: bool,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
 ) {
     let ForStatementLeft::VariableDeclaration(decl) = left else { return };
 
@@ -928,7 +982,10 @@ pub fn check_for_statement_left(
     }
 }
 
-pub fn check_for_of_statement(stmt: &ForOfStatement, ctx: &SemanticBuilder<'_>) {
+pub fn check_for_of_statement<const BUILD_ERRORS: bool>(
+    stmt: &ForOfStatement,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // ClassStaticBlockBody : ClassStaticBlockStatementList
     //   It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
     if stmt.r#await && is_in_class_static_block(ctx) {
@@ -936,7 +993,10 @@ pub fn check_for_of_statement(stmt: &ForOfStatement, ctx: &SemanticBuilder<'_>) 
     }
 }
 
-pub fn check_class(class: &Class, ctx: &SemanticBuilder<'_>) {
+pub fn check_class<const BUILD_ERRORS: bool>(
+    class: &Class,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     check_private_identifier(ctx);
 
     if class.is_declaration()
@@ -971,7 +1031,7 @@ pub fn check_class(class: &Class, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
+pub fn check_super<const BUILD_ERRORS: bool>(sup: &Super, ctx: &SemanticBuilder<'_, BUILD_ERRORS>) {
     // `Some` for `super()`, `None` for `super.foo` / `super.bar()` etc
     let super_call_span = match ctx.nodes.parent_kind(ctx.current_node_id) {
         AstKind::CallExpression(expr) => Some(expr.span),
@@ -1223,9 +1283,9 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-fn get_class_details(
+fn get_class_details<const BUILD_ERRORS: bool>(
     maybe_class_id: Option<ClassId>,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
 ) -> (Option<ScopeId>, ClassId) {
     let Some(class_id) = maybe_class_id else {
         return (None, ClassId::new(0)); // Dummy class ID
@@ -1236,7 +1296,10 @@ fn get_class_details(
     (Some(scope_id), class_id)
 }
 
-pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_object_expression<const BUILD_ERRORS: bool>(
+    obj_expr: &ObjectExpression,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // ObjectLiteral : { PropertyDefinitionList }
     // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
     // and at least two of those entries were obtained from productions of the form PropertyDefinition : PropertyName : AssignmentExpression
@@ -1269,7 +1332,10 @@ pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilde
     }
 }
 
-pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_unary_expression<const BUILD_ERRORS: bool>(
+    unary_expr: &UnaryExpression,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
     if unary_expr.operator == UnaryOperator::Delete {
         match unary_expr.argument.get_inner_expression() {
@@ -1289,7 +1355,9 @@ pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilde
     }
 }
 
-fn is_in_formal_parameters(ctx: &SemanticBuilder<'_>) -> bool {
+fn is_in_formal_parameters<const BUILD_ERRORS: bool>(
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) -> bool {
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::FormalParameter(_) => return true,
@@ -1302,7 +1370,9 @@ fn is_in_formal_parameters(ctx: &SemanticBuilder<'_>) -> bool {
     false
 }
 
-fn is_in_class_static_block(ctx: &SemanticBuilder<'_>) -> bool {
+fn is_in_class_static_block<const BUILD_ERRORS: bool>(
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) -> bool {
     ctx.scoping
         .scope_ancestors(ctx.current_scope_id)
         .map(|scope_id| ctx.scoping.scope_flags(scope_id))
@@ -1318,7 +1388,10 @@ fn is_in_class_static_block(ctx: &SemanticBuilder<'_>) -> bool {
         .unwrap_or(false)
 }
 
-pub fn check_await_expression(expr: &AwaitExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_await_expression<const BUILD_ERRORS: bool>(
+    expr: &AwaitExpression,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     if is_in_formal_parameters(ctx) {
         ctx.error(diagnostics::await_or_yield_in_parameter("await", expr.span));
     }
@@ -1329,7 +1402,10 @@ pub fn check_await_expression(expr: &AwaitExpression, ctx: &SemanticBuilder<'_>)
     }
 }
 
-pub fn check_yield_expression(expr: &YieldExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_yield_expression<const BUILD_ERRORS: bool>(
+    expr: &YieldExpression,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     if is_in_formal_parameters(ctx) {
         ctx.error(diagnostics::await_or_yield_in_parameter("yield", expr.span));
     }

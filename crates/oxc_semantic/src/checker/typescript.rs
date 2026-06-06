@@ -10,7 +10,10 @@ use oxc_str::Str;
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
-pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_type_parameter<'a, const BUILD_ERRORS: bool>(
+    param: &TSTypeParameter<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
+) {
     check_type_name_is_reserved(&param.name, ctx, "Type parameter");
     if param.r#in || param.out {
         let is_allowed_node = matches!(
@@ -35,7 +38,10 @@ pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBu
     }
 }
 
-pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
+pub fn check_ts_type_annotation<const BUILD_ERRORS: bool>(
+    annotation: &TSTypeAnnotation<'_>,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
         TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
         TSType::JSDocNullableType(ty) => ('?', !ty.postfix, ty.span()),
@@ -65,14 +71,17 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
     ));
 }
 
-pub fn check_ts_type_alias_declaration<'a>(
+pub fn check_ts_type_alias_declaration<'a, const BUILD_ERRORS: bool>(
     decl: &TSTypeAliasDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
 ) {
     check_type_name_is_reserved(&decl.id, ctx, "Type alias");
 }
 
-pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_infer_type<'a, const BUILD_ERRORS: bool>(
+    infer_type: &TSInferType<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
+) {
     let is_in_conditional_extends_clause =
         ctx.nodes.ancestor_kinds(ctx.current_node_id).any(|kind| {
             kind.as_ts_conditional_type().is_some_and(|conditional| {
@@ -85,7 +94,10 @@ pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuild
     }
 }
 
-pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
+pub fn check_formal_parameters<const BUILD_ERRORS: bool>(
+    params: &FormalParameters,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
         check_duplicate_bound_names(params, ctx);
     }
@@ -102,7 +114,10 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
     }
 }
 
-fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
+fn check_duplicate_bound_names<'a, T: BoundNames<'a>, const BUILD_ERRORS: bool>(
+    bound_names: &T,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     let mut idents: FxHashMap<Str<'a>, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
         if let Some(old_span) = idents.insert(ident.name.into(), ident.span) {
@@ -111,12 +126,18 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
     });
 }
 
-pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_module_declaration<'a, const BUILD_ERRORS: bool>(
+    decl: &TSModuleDeclaration<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
+) {
     check_ts_module_or_global_declaration(decl.span, ctx);
     check_ts_export_assignment_in_module_decl(decl, ctx);
 }
 
-pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_global_declaration<'a, const BUILD_ERRORS: bool>(
+    decl: &TSGlobalDeclaration<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
+) {
     check_ts_module_or_global_declaration(decl.span, ctx);
 
     if !decl.declare && !ctx.in_declare_scope() {
@@ -126,7 +147,10 @@ pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &Sem
     }
 }
 
-fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
+fn check_ts_module_or_global_declaration<const BUILD_ERRORS: bool>(
+    span: Span,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // skip current node
     for node in ctx.nodes.ancestors(ctx.current_node_id) {
         match node.kind() {
@@ -146,7 +170,10 @@ fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) 
     }
 }
 
-pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_enum_declaration<'a, const BUILD_ERRORS: bool>(
+    decl: &TSEnumDeclaration<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
+) {
     let mut need_initializer = false;
 
     decl.body.members.iter().for_each(|member| {
@@ -173,9 +200,9 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
     check_type_name_is_reserved(&decl.id, ctx, "Enum");
 }
 
-pub fn check_ts_import_equals_declaration<'a>(
+pub fn check_ts_import_equals_declaration<'a, const BUILD_ERRORS: bool>(
     decl: &TSImportEqualsDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
 ) {
     // `import type Foo = require('./foo')` is allowed
     // `import { Foo } from './foo'; import type Bar = Foo.Bar` is not allowed
@@ -184,7 +211,10 @@ pub fn check_ts_import_equals_declaration<'a>(
     }
 }
 
-pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_class<'a, const BUILD_ERRORS: bool>(
+    class: &Class<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
+) {
     if !class.r#abstract {
         for elem in &class.body.body {
             if elem.is_abstract() {
@@ -233,9 +263,9 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     }
 }
 
-pub fn check_ts_interface_declaration<'a>(
+pub fn check_ts_interface_declaration<'a, const BUILD_ERRORS: bool>(
     decl: &TSInterfaceDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
 ) {
     check_type_name_is_reserved(&decl.id, ctx, "Interface");
 }
@@ -260,9 +290,9 @@ pub fn check_ts_interface_declaration<'a>(
 ///     }
 /// }
 /// ```
-fn check_type_name_is_reserved<'a>(
+fn check_type_name_is_reserved<'a, const BUILD_ERRORS: bool>(
     id: &BindingIdentifier<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
     syntax_name: &str,
 ) {
     match id.name.as_str() {
@@ -274,7 +304,10 @@ fn check_type_name_is_reserved<'a>(
     }
 }
 
-pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_method_definition<'a, const BUILD_ERRORS: bool>(
+    method: &MethodDefinition<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
+) {
     let is_abstract = method.r#type.is_abstract();
 
     if is_abstract {
@@ -321,14 +354,20 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     }
 }
 
-pub fn check_property_definition(prop: &PropertyDefinition, ctx: &SemanticBuilder<'_>) {
+pub fn check_property_definition<const BUILD_ERRORS: bool>(
+    prop: &PropertyDefinition,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     // abstract cannot be used with private identifiers
     if prop.r#type.is_abstract() && prop.key.is_private_identifier() {
         ctx.error(diagnostics::abstract_cannot_be_used_with_private_identifier(prop.key.span()));
     }
 }
 
-pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
+pub fn check_object_property<const BUILD_ERRORS: bool>(
+    prop: &ObjectProperty,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     if let Expression::FunctionExpression(func) = &prop.value
         && prop.kind.is_accessor()
         && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
@@ -337,7 +376,11 @@ pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &SemanticBuilder) {
+pub fn check_for_statement_left<const BUILD_ERRORS: bool>(
+    left: &ForStatementLeft,
+    is_for_in: bool,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
+) {
     let ForStatementLeft::VariableDeclaration(decls) = left else {
         return;
     };
@@ -350,9 +393,9 @@ pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &
     }
 }
 
-pub fn check_jsx_expression_container(
+pub fn check_jsx_expression_container<const BUILD_ERRORS: bool>(
     container: &JSXExpressionContainer,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, BUILD_ERRORS>,
 ) {
     if matches!(container.expression, JSXExpression::SequenceExpression(_)) {
         ctx.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
@@ -361,16 +404,19 @@ pub fn check_jsx_expression_container(
     }
 }
 
-pub fn check_ts_export_assignment_in_program<'a>(program: &Program<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_export_assignment_in_program<'a, const BUILD_ERRORS: bool>(
+    program: &Program<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
+) {
     if !ctx.source_type.is_typescript() {
         return;
     }
     check_ts_export_assignment_in_statements(&program.body, ctx);
 }
 
-fn check_ts_export_assignment_in_module_decl<'a>(
+fn check_ts_export_assignment_in_module_decl<'a, const BUILD_ERRORS: bool>(
     module_decl: &TSModuleDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
 ) {
     let Some(body) = &module_decl.body else {
         return;
@@ -385,9 +431,9 @@ fn check_ts_export_assignment_in_module_decl<'a>(
     }
 }
 
-fn check_ts_export_assignment_in_statements<'a>(
+fn check_ts_export_assignment_in_statements<'a, const BUILD_ERRORS: bool>(
     statements: &[Statement<'a>],
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
 ) {
     let mut export_assignment_spans = vec![];
     let mut has_other_exports = false;

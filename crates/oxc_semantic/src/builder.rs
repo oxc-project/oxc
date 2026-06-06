@@ -66,7 +66,7 @@ macro_rules! control_flow {
 /// The main API is the [`build`] method.
 ///
 /// [`build`]: SemanticBuilder::build
-pub struct SemanticBuilder<'a> {
+pub struct SemanticBuilder<'a, const BUILD_ERRORS: bool = true> {
     /// source code of the parsed program
     pub(crate) source_text: &'a str,
 
@@ -141,15 +141,59 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
-impl Default for SemanticBuilder<'_> {
+impl<const BUILD_ERRORS: bool> Default for SemanticBuilder<'_, BUILD_ERRORS> {
     fn default() -> Self {
-        Self::new()
+        Self::new_inner()
     }
 }
 
-impl<'a> SemanticBuilder<'a> {
+impl<'a> SemanticBuilder<'a, true> {
     /// Create a new semantic builder with default settings.
+    #[must_use]
     pub fn new() -> Self {
+        Self::new_inner()
+    }
+
+    /// Create a builder configured for the **compiler pipeline** (the
+    /// [`Compiler`], transformer, codegen, minifier, napi bindings, ...).
+    ///
+    /// Enables syntax error checking. Leaves linter-only analyses (control flow
+    /// graph, class table) off. This is the single place to tune
+    /// compiler-pipeline defaults; individual options can still be overridden
+    /// with the `with_*` methods.
+    ///
+    /// [`Compiler`]: https://docs.rs/oxc/latest/oxc/struct.Compiler.html
+    #[must_use]
+    pub fn new_compiler() -> Self {
+        Self::new().with_check_syntax_error(true)
+    }
+
+    /// Create a builder configured for the **linter**.
+    ///
+    /// Enables everything the linter relies on: syntax error checking, the
+    /// control flow graph, and the class table. This is the single place to tune
+    /// linter defaults; individual options can still be overridden with the
+    /// `with_*` methods.
+    #[must_use]
+    pub fn new_linter() -> Self {
+        Self::new().with_check_syntax_error(true).with_cfg(true).with_class_table(true)
+    }
+}
+
+impl<'a> SemanticBuilder<'a, false> {
+    /// Create a new semantic builder that does not build semantic diagnostics.
+    ///
+    /// The returned [`SemanticBuilderReturn::errors`] is always empty. Syntax-checking flags are
+    /// ignored for diagnostic collection, but other requested semantic data such as scoping,
+    /// control-flow graph, class table, and enum values are still built.
+    #[must_use]
+    pub fn new_without_errors() -> Self {
+        Self::new_inner()
+    }
+}
+
+impl<'a, const BUILD_ERRORS: bool> SemanticBuilder<'a, BUILD_ERRORS> {
+    fn new_inner() -> Self {
         let scoping = Scoping::default();
         let current_scope_id = scoping.root_scope_id();
 
@@ -184,31 +228,6 @@ impl<'a> SemanticBuilder<'a> {
             #[cfg(feature = "cfg")]
             ast_node_records: Vec::new(),
         }
-    }
-
-    /// Create a builder configured for the **compiler pipeline** (the
-    /// [`Compiler`], transformer, codegen, minifier, napi bindings, ...).
-    ///
-    /// Enables syntax error checking. Leaves linter-only analyses (control flow
-    /// graph, class table) off. This is the single place to tune
-    /// compiler-pipeline defaults; individual options can still be overridden
-    /// with the `with_*` methods.
-    ///
-    /// [`Compiler`]: https://docs.rs/oxc/latest/oxc/struct.Compiler.html
-    #[must_use]
-    pub fn new_compiler() -> Self {
-        Self::new().with_check_syntax_error(true)
-    }
-
-    /// Create a builder configured for the **linter**.
-    ///
-    /// Enables everything the linter relies on: syntax error checking, the
-    /// control flow graph, and the class table. This is the single place to tune
-    /// linter defaults; individual options can still be overridden with the
-    /// `with_*` methods.
-    #[must_use]
-    pub fn new_linter() -> Self {
-        Self::new().with_check_syntax_error(true).with_cfg(true).with_class_table(true)
     }
 
     /// Enable/disable additional syntax checks.
@@ -330,7 +349,7 @@ impl<'a> SemanticBuilder<'a> {
         );
         self.unresolved_references.reserve_exact(stats.references as usize);
 
-        self.class_table_builder.enabled |= self.check_syntax_error;
+        self.class_table_builder.enabled |= BUILD_ERRORS && self.check_syntax_error;
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
@@ -381,7 +400,9 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Push a Syntax Error
     pub(crate) fn error(&self, error: OxcDiagnostic) {
-        self.errors.borrow_mut().push(error);
+        if BUILD_ERRORS {
+            self.errors.borrow_mut().push(error);
+        }
     }
 
     pub(crate) fn in_declare_scope(&self) -> bool {
@@ -537,7 +558,7 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         let flags = self.scoping.symbol_flags(symbol_id);
-        if flags.intersects(excludes) {
+        if BUILD_ERRORS && flags.intersects(excludes) {
             let symbol_span = self.scoping.symbol_span(symbol_id);
             self.error(redeclaration(&name, symbol_span, span));
         }
@@ -736,7 +757,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 }
 
-impl<'a> Visit<'a> for SemanticBuilder<'a> {
+impl<'a, const BUILD_ERRORS: bool> Visit<'a> for SemanticBuilder<'a, BUILD_ERRORS> {
     // NB: Not called for `Program`
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let parent_scope_id = self.current_scope_id;
@@ -776,7 +797,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     )]
     #[inline(always)]
     fn leave_node(&mut self, kind: AstKind<'a>) {
-        if self.check_syntax_error {
+        if BUILD_ERRORS && self.check_syntax_error {
             checker::check(kind, self);
         }
         self.pop_ast_node();
@@ -2715,7 +2736,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 }
 
-impl<'a> SemanticBuilder<'a> {
+impl<'a, const BUILD_ERRORS: bool> SemanticBuilder<'a, BUILD_ERRORS> {
     #[inline]
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();

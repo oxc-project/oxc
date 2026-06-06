@@ -15,7 +15,10 @@ pub use javascript::is_function_decl_part_of_if_statement;
 /// concrete `AstKind` variant at each call site and eliminate non-matching arms.
 #[expect(clippy::inline_always, reason = "enables compile-time match elimination, see doc comment")]
 #[inline(always)]
-pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check<'a, const BUILD_ERRORS: bool>(
+    kind: AstKind<'a>,
+    ctx: &SemanticBuilder<'a, BUILD_ERRORS>,
+) {
     match kind {
         AstKind::Program(program) => {
             js::check_duplicate_class_elements(ctx);

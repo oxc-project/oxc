@@ -121,7 +121,7 @@ impl<'a> Minifier {
             .options
             .compress
             .map(|options| {
-                let semantic = SemanticBuilder::new().build(program).semantic;
+                let semantic = SemanticBuilder::new_without_errors().build(program).semantic;
                 let stats = semantic.stats();
                 let scoping = semantic.into_scoping();
                 let compressor = Compressor::new(allocator);
@@ -142,7 +142,7 @@ impl<'a> Minifier {
             .options
             .mangle
             .map(|options| {
-                let mut semantic = SemanticBuilder::new()
+                let mut semantic = SemanticBuilder::new_without_errors()
                     .with_stats(stats)
                     .with_class_table(true)
                     .build(program)
