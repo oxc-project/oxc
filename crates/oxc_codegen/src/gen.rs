@@ -2561,6 +2561,8 @@ impl Gen for JSXAttribute<'_> {
 impl Gen for JSXEmptyExpression {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.end);
+        // Clear the flag so the comment doesn't leak a space onto the next indent.
+        p.print_next_indent_as_space = false;
     }
 }
 
