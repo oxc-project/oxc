@@ -33,7 +33,8 @@ oxc_syntax = { workspace = true }
 bitflags = { workspace = true }
 
 [features]
-default = []
+default = ["builder"]
+builder = []
 serialize = [
   "oxc_allocator/serialize",
   "oxc_span/serialize",
