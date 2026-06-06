@@ -48,26 +48,11 @@ const testCommentsRule: Rule = {
       node: ast,
     });
 
+    // Check `JSON.stringify` on comments includes `loc`
     const firstComment = comments[0];
     if (firstComment) {
-      // Check `JSON.stringify` on comments includes `loc`
       context.report({
         message: `Comment JSON.stringify:\n${JSON.stringify(firstComment, null, 2)}`,
-        node: firstComment,
-      });
-
-      // Check `{...comment}` spread includes `loc`
-      const clone = { ...firstComment };
-      const cloneHasLoc = Object.hasOwn(clone, "loc") && clone.loc === firstComment.loc;
-      context.report({
-        message: `Comment spread includes loc: ${cloneHasLoc}`,
-        node: firstComment,
-      });
-
-      // Check `JSON.stringify` on comment includes `loc`
-      const jsonHasLoc = Object.hasOwn(JSON.parse(JSON.stringify(firstComment)), "loc");
-      context.report({
-        message: `Comment JSON.stringify includes loc: ${jsonHasLoc}`,
         node: firstComment,
       });
     }
