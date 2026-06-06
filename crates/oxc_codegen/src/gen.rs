@@ -1882,9 +1882,9 @@ impl GenExpr for UpdateExpression<'_> {
                 p.prev_op_end = p.code().len();
                 self.argument.print_expr(p, Precedence::Prefix, ctx);
             } else {
-                p.print_space_before_operator(self.operator.into());
                 p.add_source_mapping(self.span);
                 self.argument.print_expr(p, Precedence::Postfix, ctx);
+                p.print_space_before_operator(self.operator.into());
                 p.print_str(operator);
                 p.prev_op = Some(self.operator.into());
                 p.prev_op_end = p.code().len();

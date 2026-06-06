@@ -794,6 +794,11 @@ fn test_whitespace() {
     test_minify("x - ++y", "x-++y;");
     test_minify("x + ++y", "x+ ++y;");
 
+    // Postfix update operand: no space, the trailing `++`/`--` doesn't follow the `+`.
+    test_minify("x + y++", "x+y++;");
+    test_minify("x + y--", "x+y--;");
+    test_minify("x - y--", "x-y--;");
+
     test_minify("x-- > y", "x-- >y;");
     test_minify("x < !--y", "x<! --y;");
     test_minify("x > !--y", "x>!--y;");
