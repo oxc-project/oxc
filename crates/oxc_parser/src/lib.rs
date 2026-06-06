@@ -874,6 +874,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         for expr in self.state.cover_initialized_name.values() {
             self.errors.push(diagnostics::cover_initialized_name(expr.span()));
         }
+        // It is a Syntax Error if an object literal (not a destructuring pattern) has
+        // more than one `__proto__` data property.
+        for &(prev_span, span) in self.state.duplicate_proto.values() {
+            self.errors.push(diagnostics::redeclaration("__proto__", prev_span, span));
+        }
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.

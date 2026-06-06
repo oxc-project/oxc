@@ -12,6 +12,13 @@ pub struct ParserState<'a> {
     /// Keyed by `ObjectProperty`'s span.start.
     pub cover_initialized_name: FxHashMap<u32, AssignmentExpression<'a>>,
 
+    /// A duplicate `__proto__` data property in an object literal, e.g.
+    /// `({ __proto__: 1, __proto__: 2 })`. This is only an error when the object
+    /// is a value; it is removed when the object is covered into a destructuring
+    /// assignment target. Keyed by `ObjectExpression`'s span.start, valued by the
+    /// spans of the first and the duplicate `__proto__` key.
+    pub duplicate_proto: FxHashMap<u32, (Span, Span)>,
+
     /// Trailing comma spans for `ArrayExpression` and `ObjectExpression`.
     /// Used for error reporting.
     /// Keyed by start span of `ArrayExpression` / `ObjectExpression`.
@@ -38,6 +45,7 @@ impl ParserState<'_> {
         Self {
             not_parenthesized_arrow: FxHashSet::default(),
             cover_initialized_name: FxHashMap::default(),
+            duplicate_proto: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
             potential_await_reparse: Vec::new(),
             encountered_await_identifier: false,

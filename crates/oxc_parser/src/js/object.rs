@@ -1,5 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
+use oxc_ecmascript::PropName;
+use oxc_span::Span;
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
@@ -32,7 +34,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.state.trailing_commas.insert(span, self.end_span(comma_span));
         }
         self.expect(Kind::RCurly);
+        self.record_duplicate_proto(span, &object_expression_properties);
         self.ast.alloc_object_expression(self.end_span(span), object_expression_properties)
+    }
+
+    /// Record a duplicate `__proto__` data property keyed by the object's `span` start.
+    /// The error is emitted later (in `check_unfinished_errors`) unless the object is
+    /// covered into a destructuring assignment target, in which case it is removed.
+    /// Computed keys, shorthands, methods and accessors don't count (`prop_name` returns
+    /// `None` for computed/shorthand; the `kind`/`method` checks skip methods and accessors).
+    fn record_duplicate_proto(&mut self, span: u32, properties: &[ObjectPropertyKind<'a>]) {
+        // A duplicate requires ≥2 entries. JSX/TSX call sites emit huge numbers of
+        // single-property object literals, so the early-exit skips the loop for those.
+        if properties.len() < 2 {
+            return;
+        }
+        let mut prev_proto: Option<Span> = None;
+        for prop in properties {
+            let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else { continue };
+            if obj_prop.kind != PropertyKind::Init || obj_prop.method {
+                continue;
+            }
+            if let Some(("__proto__", proto_span)) = prop.prop_name() {
+                if let Some(prev_span) = prev_proto {
+                    self.state.duplicate_proto.insert(span, (prev_span, proto_span));
+                    break;
+                }
+                prev_proto = Some(proto_span);
+            }
+        }
     }
 
     fn parse_object_expression_property(&mut self) -> ObjectPropertyKind<'a> {

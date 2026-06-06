@@ -100,7 +100,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         }
 
         AstKind::AwaitExpression(expr) => js::check_await_expression(expr, ctx),
-        AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, ctx),
         AstKind::VariableDeclaration(decl) => {

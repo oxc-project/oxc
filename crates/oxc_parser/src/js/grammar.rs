@@ -166,6 +166,9 @@ impl<'a, C: Config> CoverGrammar<'a, AssignmentExpression<'a>, C>
 
 impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignmentTarget<'a> {
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        // A duplicate `__proto__` is allowed in a destructuring pattern.
+        p.state.duplicate_proto.remove(&expr.span.start);
+
         let mut properties = p.ast.vec();
         let mut rest = None;
 

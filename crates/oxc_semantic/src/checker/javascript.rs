@@ -1236,39 +1236,6 @@ fn get_class_details(
     (Some(scope_id), class_id)
 }
 
-pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilder<'_>) {
-    // ObjectLiteral : { PropertyDefinitionList }
-    // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
-    // and at least two of those entries were obtained from productions of the form PropertyDefinition : PropertyName : AssignmentExpression
-
-    // A duplicate requires ≥2 entries. JSX/TSX call sites emit huge numbers
-    // of single-property object literals (`<Foo prop={x}>` → `{prop: x}`), so
-    // the early-exit skips the loop setup and `prop_name()` call for those
-    // very common cases.
-    if obj_expr.properties.len() < 2 {
-        return;
-    }
-
-    let mut prev_proto: Option<Span> = None;
-    for prop in &obj_expr.properties {
-        if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
-            // Skip if not a property definition production:
-            // PropertyDefinition : PropertyName : AssignmentExpression
-            if obj_prop.kind != PropertyKind::Init || obj_prop.method {
-                continue;
-            }
-            if let Some((prop_name, span)) = prop.prop_name()
-                && prop_name == "__proto__"
-            {
-                if let Some(prev_span) = prev_proto {
-                    ctx.error(diagnostics::redeclaration("__proto__", prev_span, span));
-                }
-                prev_proto = Some(span);
-            }
-        }
-    }
-}
-
 pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilder<'_>) {
     // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
     if unary_expr.operator == UnaryOperator::Delete {
