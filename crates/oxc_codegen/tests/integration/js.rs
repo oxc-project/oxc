@@ -105,6 +105,13 @@ fn expr() {
     test("new (f().g.h)();", "new (f()).g.h();\n");
     test("new (f[g()])();", "new f[g()]();\n");
     test("new (new f())();", "new new f()();\n");
+
+    // The base of `**` must be an UpdateExpression, so a unary/await base keeps parens.
+    test_same("(-a) ** b;\n");
+    test_same("(typeof a) ** b;\n");
+    test_same("(await a) ** b;\n");
+    // Only the base needs wrapping; the `**` right operand may be a UnaryExpression.
+    test("(await a) ** (await b);", "(await a) ** await b;\n");
 }
 
 #[test]
