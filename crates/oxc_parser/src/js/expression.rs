@@ -1534,6 +1534,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::invalid_assignment(span));
             }
         }
+        // A destructuring pattern target is only valid with `=`, not a compound operator.
+        if operator != AssignmentOperator::Assign
+            && matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_))
+        {
+            self.error(diagnostics::assignment_is_not_simple(lhs.span()));
+        }
         let left = AssignmentTarget::cover(lhs, self);
         self.bump_any();
         let right =

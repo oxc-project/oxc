@@ -483,6 +483,11 @@ pub fn invalid_assignment(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Invalid left-hand side in assignment").with_label(span)
+}
+
+#[cold]
 pub fn invalid_lhs_assignment(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
         "The left-hand side of an assignment expression must be a variable or a property access.",

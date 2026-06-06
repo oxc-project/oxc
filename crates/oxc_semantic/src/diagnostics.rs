@@ -261,11 +261,6 @@ pub fn unexpected_super_reference(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid left-hand side in assignment").with_label(span)
-}
-
-#[cold]
 pub fn delete_of_unqualified(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Delete of an unqualified identifier in strict mode.").with_label(span)
 }
