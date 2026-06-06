@@ -3,7 +3,8 @@ use std::borrow::Cow;
 use cow_utils::CowUtils as _;
 use lazy_regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
-use serde::{Deserialize, Deserializer, de::Error};
+use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use oxc_ast::{
@@ -20,6 +21,7 @@ use crate::{
     context::LintContext,
     module_record::{ExportEntry, ExportImportName, ImportEntry, ImportImportName, NameSpan},
     rule::Rule,
+    utils::deserialize_required_regex_option,
 };
 
 fn diagnostic_with_maybe_help(span: Span, msg: String, help: Option<CompactStr>) -> OxcDiagnostic {
@@ -70,7 +72,7 @@ fn diagnostic_pattern_and_everything(
 fn diagnostic_pattern_and_everything_with_regex_import_name(
     span: Span,
     help: Option<CompactStr>,
-    name: &SerdeRegexWrapper<Regex>,
+    name: &Regex,
     source: &str,
 ) -> OxcDiagnostic {
     let regex = name.as_str();
@@ -167,14 +169,42 @@ impl std::ops::Deref for NoRestrictedImports {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct NoRestrictedImportsConfig {
+    #[schemars(with = "Vec<PossiblePaths>", default)]
     paths: Vec<RestrictedPath>,
+    #[schemars(with = "Vec<PossiblePatterns>", default)]
     patterns: Vec<RestrictedPattern>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)] // only for schemars
+enum NoRestrictedImportsConfigValue {
+    String(Vec<String>),
+    Simple(Vec<RestrictedPath>),
+    Complex(NoRestrictedImportsConfig),
+}
+
+#[derive(Debug, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)] // only for schemars
+enum PossiblePaths {
+    String(String),
+    Object(RestrictedPath),
+}
+
+#[derive(Debug, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)] // only for schemars
+enum PossiblePatterns {
+    String(String),
+    Object(RestrictedPattern),
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct RestrictedPath {
     name: CompactStr,
     import_names: Option<Vec<CompactStr>>,
@@ -183,45 +213,21 @@ struct RestrictedPath {
     message: Option<CompactStr>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct RestrictedPattern {
     group: Option<Vec<CompactStr>>,
-    regex: Option<SerdeRegexWrapper<Regex>>,
+    #[serde(default, deserialize_with = "deserialize_required_regex_option")]
+    regex: Option<Regex>,
     import_names: Option<Vec<CompactStr>>,
-    import_name_pattern: Option<SerdeRegexWrapper<Regex>>,
+    #[serde(default, deserialize_with = "deserialize_required_regex_option")]
+    import_name_pattern: Option<Regex>,
     allow_import_names: Option<Vec<CompactStr>>,
-    allow_import_name_pattern: Option<SerdeRegexWrapper<Regex>>,
+    #[serde(default, deserialize_with = "deserialize_required_regex_option")]
+    allow_import_name_pattern: Option<Regex>,
     allow_type_imports: Option<bool>,
     case_sensitive: Option<bool>,
     message: Option<CompactStr>,
-}
-
-/// A wrapper type which implements `Serialize` and `Deserialize` for
-/// types involving `Regex`
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub struct SerdeRegexWrapper<T>(pub T);
-
-impl std::ops::Deref for SerdeRegexWrapper<Regex> {
-    type Target = Regex;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<'de> Deserialize<'de> for SerdeRegexWrapper<Regex> {
-    fn deserialize<D>(d: D) -> Result<SerdeRegexWrapper<Regex>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = <Cow<str>>::deserialize(d)?;
-
-        match s.parse() {
-            Ok(regex) => Ok(SerdeRegexWrapper(regex)),
-            Err(err) => Err(D::Error::custom(err)),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -550,9 +556,7 @@ declare_oxc_lint!(
     NoRestrictedImports,
     eslint,
     restriction,
-    // TODO: Replace this with an actual config struct. This is a dummy value to
-    // indicate that this rule has configuration and avoid errors.
-    config = Value,
+    config = NoRestrictedImportsConfigValue,
     version = "0.15.0",
 );
 

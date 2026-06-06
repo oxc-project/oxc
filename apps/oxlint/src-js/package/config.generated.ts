@@ -117,6 +117,8 @@ export type AllowKind =
 export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
+export type PossiblePaths = string | RestrictedPath;
+export type PossiblePatterns = string | RestrictedPattern;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
@@ -1025,7 +1027,14 @@ export interface DummyRuleMap {
   "no-regex-spaces"?: RuleNoConfig;
   "no-restricted-exports"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedExportsConfig];
   "no-restricted-globals"?: DummyRule;
-  "no-restricted-imports"?: DummyRule;
+  "no-restricted-imports"?:
+    | AllowWarnDeny
+    | (
+        | [AllowWarnDeny, ...string[]]
+        | [AllowWarnDeny, ...RestrictedPath[]]
+        | [AllowWarnDeny]
+        | [AllowWarnDeny, NoRestrictedImportsConfig]
+      );
   "no-restricted-properties"?: DummyRule;
   "no-return-assign"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "except-parens"];
   "no-script-url"?: RuleNoConfig;
@@ -2937,6 +2946,28 @@ export interface RestrictDefaultExports {
    * ```
    */
   namespaceFrom?: boolean;
+}
+export interface RestrictedPath {
+  allowImportNames?: string[];
+  allowTypeImports?: boolean;
+  importNames?: string[];
+  message?: string;
+  name: string;
+}
+export interface NoRestrictedImportsConfig {
+  paths?: PossiblePaths[];
+  patterns?: PossiblePatterns[];
+}
+export interface RestrictedPattern {
+  allowImportNamePattern?: string;
+  allowImportNames?: string[];
+  allowTypeImports?: boolean;
+  caseSensitive?: boolean;
+  group?: string[];
+  importNamePattern?: string;
+  importNames?: string[];
+  message?: string;
+  regex?: string;
 }
 export interface NoSelfAssign {
   /**

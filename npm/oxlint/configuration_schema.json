@@ -3719,7 +3719,52 @@
           "$ref": "#/definitions/DummyRule"
         },
         "no-restricted-imports": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    }
+                  ],
+                  "additionalItems": {
+                    "type": "string"
+                  },
+                  "minItems": 1
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    }
+                  ],
+                  "additionalItems": {
+                    "$ref": "#/definitions/RestrictedPath"
+                  },
+                  "minItems": 1
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/NoRestrictedImportsConfig"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 1
+                }
+              ]
+            }
+          ]
         },
         "no-restricted-properties": {
           "$ref": "#/definitions/DummyRule"
@@ -11018,6 +11063,43 @@
       },
       "additionalProperties": false
     },
+    "NoRestrictedImportsConfig": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PossiblePaths"
+          }
+        },
+        "patterns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PossiblePatterns"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoRestrictedImportsConfigValue": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RestrictedPath"
+          }
+        },
+        {
+          "$ref": "#/definitions/NoRestrictedImportsConfig"
+        }
+      ]
+    },
     "NoReturnAssignMode": {
       "oneOf": [
         {
@@ -12070,6 +12152,26 @@
         }
       ]
     },
+    "PossiblePaths": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPath"
+        }
+      ]
+    },
+    "PossiblePatterns": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedPattern"
+        }
+      ]
+    },
     "PreferArrowCallback": {
       "$ref": "#/definitions/PreferArrowCallbackConfig"
     },
@@ -12840,6 +12942,78 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to allow RegExp values in template expressions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RestrictedPath": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "allowImportNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowTypeImports": {
+          "type": "boolean"
+        },
+        "importNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RestrictedPattern": {
+      "type": "object",
+      "properties": {
+        "allowImportNamePattern": {
+          "type": "string"
+        },
+        "allowImportNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowTypeImports": {
+          "type": "boolean"
+        },
+        "caseSensitive": {
+          "type": "boolean"
+        },
+        "group": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "importNamePattern": {
+          "type": "string"
+        },
+        "importNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string"
         }
       },
       "additionalProperties": false
