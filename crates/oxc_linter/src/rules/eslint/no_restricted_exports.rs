@@ -104,7 +104,7 @@ pub struct NoRestrictedExportsConfig {
     /// declarations. This option works only if the `restrictedNamedExports`
     /// option does not contain the `"default"` value.
     restrict_default_exports: RestrictDefaultExports,
-    #[serde(skip_serializing)]
+    #[serde(skip)]
     has_default_restricted_named_export: bool,
 }
 

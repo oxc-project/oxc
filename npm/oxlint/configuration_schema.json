@@ -3696,7 +3696,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-restricted-exports": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedExportsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "no-restricted-globals": {
           "$ref": "#/definitions/DummyRule"
@@ -10971,6 +10988,36 @@
       },
       "additionalProperties": false
     },
+    "NoRestrictedExportsConfig": {
+      "type": "object",
+      "properties": {
+        "restrictDefaultExports": {
+          "description": "An object with boolean properties to restrict certain default export\ndeclarations. This option works only if the `restrictedNamedExports`\noption does not contain the `\"default\"` value.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/RestrictDefaultExports"
+            }
+          ],
+          "markdownDescription": "An object with boolean properties to restrict certain default export\ndeclarations. This option works only if the `restrictedNamedExports`\noption does not contain the `\"default\"` value."
+        },
+        "restrictedNamedExports": {
+          "description": "An array of strings, where each string is a name to be restricted.\n\nExample of **incorrect** code for `\"restrictedNamedExports\": [\"foo\"]`:\n\n```ts\nexport const foo = 1;\n```\n\nExample of **correct** code for `\"restrictedNamedExports\": [\"foo\"]`:\n\n```ts\nexport const bar = 1;\n```\n\nBy design, this option doesn't disallow export default declarations. If\nyou configure `default` as a restricted name, that restriction will apply\nonly to named export declarations.\n\nExample of **incorrect** code for `\"restrictedNamedExports\": [\"default\"]`:\n\n```ts\nfunction foo() {}\nexport { foo as default };\n\nexport { default } from \"some_module\";\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "markdownDescription": "An array of strings, where each string is a name to be restricted.\n\nExample of **incorrect** code for `\"restrictedNamedExports\": [\"foo\"]`:\n\n```ts\nexport const foo = 1;\n```\n\nExample of **correct** code for `\"restrictedNamedExports\": [\"foo\"]`:\n\n```ts\nexport const bar = 1;\n```\n\nBy design, this option doesn't disallow export default declarations. If\nyou configure `default` as a restricted name, that restriction will apply\nonly to named export declarations.\n\nExample of **incorrect** code for `\"restrictedNamedExports\": [\"default\"]`:\n\n```ts\nfunction foo() {}\nexport { foo as default };\n\nexport { default } from \"some_module\";\n```"
+        },
+        "restrictedNamedExportsPattern": {
+          "description": "A string representing a regular expression pattern. Named exports\nmatching this pattern will be restricted. This option does not apply to\ndefault named exports.\n\nExample of **incorrect** code for `\"restrictedNamedExportsPattern\": \"bar$\":\n\n```ts\nexport const foobar = 1;\n```\n\nExample of **correct** code for `\"restrictedNamedExportsPattern\": \"bar$\":\n\n```ts\nexport const foo = 1;\n```",
+          "type": "string",
+          "markdownDescription": "A string representing a regular expression pattern. Named exports\nmatching this pattern will be restricted. This option does not apply to\ndefault named exports.\n\nExample of **incorrect** code for `\"restrictedNamedExportsPattern\": \"bar$\":\n\n```ts\nexport const foobar = 1;\n```\n\nExample of **correct** code for `\"restrictedNamedExportsPattern\": \"bar$\":\n\n```ts\nexport const foo = 1;\n```"
+        }
+      },
+      "additionalProperties": false
+    },
     "NoReturnAssignMode": {
       "oneOf": [
         {
@@ -12649,6 +12696,42 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When `true`, require `@yields` when a `@generator` tag is present."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RestrictDefaultExports": {
+      "type": "object",
+      "properties": {
+        "defaultFrom": {
+          "description": "Whether to restrict `export { default } from` declarations.\n\nExample of **incorrect** code for `\"restrictDefaultExports\": { \"defaultFrom\": true }`:\n\n```js\nexport { default } from 'foo';\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to restrict `export { default } from` declarations.\n\nExample of **incorrect** code for `\"restrictDefaultExports\": { \"defaultFrom\": true }`:\n\n```js\nexport { default } from 'foo';\n```"
+        },
+        "direct": {
+          "description": "Whether to restrict `export default` declarations.\n\nExample of **incorrect** code for `\"restrictDefaultExports\": { \"direct\": true }`:\n\n```js\nconst foo = 123;\nexport default foo;\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to restrict `export default` declarations.\n\nExample of **incorrect** code for `\"restrictDefaultExports\": { \"direct\": true }`:\n\n```js\nconst foo = 123;\nexport default foo;\n```"
+        },
+        "named": {
+          "description": "Whether to restrict `export { foo as default }` declarations.\n\nExample of **incorrect** code for `\"restrictDefaultExports\": { \"named\": true }`:\n\n```js\nconst foo = 123;\nexport { foo as default };\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to restrict `export { foo as default }` declarations.\n\nExample of **incorrect** code for `\"restrictDefaultExports\": { \"named\": true }`:\n\n```js\nconst foo = 123;\nexport { foo as default };\n```"
+        },
+        "namedFrom": {
+          "description": "Whether to restrict `export { foo as default } from` declarations.\n\nExample of **incorrect** code for `\"restrictDefaultExports\": { \"namedFrom\": true }`:\n\n```js\nexport { foo as default } from 'foo';\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to restrict `export { foo as default } from` declarations.\n\nExample of **incorrect** code for `\"restrictDefaultExports\": { \"namedFrom\": true }`:\n\n```js\nexport { foo as default } from 'foo';\n```"
+        },
+        "namespaceFrom": {
+          "description": "Whether to restrict `export * as default from` declarations.\n\nExample of **incorrect** code for `\"restrictDefaultExports\": { \"namespaceFrom\": true }`:\n\n```js\nexport * as default from 'foo';\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to restrict `export * as default from` declarations.\n\nExample of **incorrect** code for `\"restrictDefaultExports\": { \"namespaceFrom\": true }`:\n\n```js\nexport * as default from 'foo';\n```"
         }
       },
       "additionalProperties": false
