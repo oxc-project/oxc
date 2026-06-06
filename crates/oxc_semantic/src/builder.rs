@@ -203,9 +203,10 @@ impl<'a> SemanticBuilder<'a> {
     /// Create a builder configured for the **linter**.
     ///
     /// Enables everything the linter relies on: syntax error checking, the
-    /// control flow graph, and the class table. This is the single place to tune
-    /// linter defaults; individual options can still be overridden with the
-    /// `with_*` methods.
+    /// control flow graph, and the class table. JSDoc is built whenever the
+    /// `jsdoc` feature is enabled, which the `linter` feature turns on. This is
+    /// the single place to tune linter defaults; individual options can still be
+    /// overridden with the `with_*` methods.
     #[must_use]
     pub fn new_linter() -> Self {
         Self::new().with_check_syntax_error(true).with_cfg(true).with_class_table(true)

@@ -236,7 +236,7 @@ impl Oxc {
         parser_options: &OxcParserOptions,
         control_flow_options: &OxcControlFlowOptions,
     ) -> oxc::semantic::Semantic<'a> {
-        let mut semantic_builder = SemanticBuilder::new();
+        let mut semantic_builder = SemanticBuilder::new_compiler();
         if run_options.transform {
             // Estimate transformer will triple scopes, symbols, references
             semantic_builder = semantic_builder.with_excess_capacity(2.0).with_enum_eval(true);
