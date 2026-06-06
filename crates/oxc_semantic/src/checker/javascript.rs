@@ -1283,16 +1283,6 @@ pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilde
     }
 }
 
-pub fn check_private_field_expression(
-    private_expr: &PrivateFieldExpression,
-    ctx: &SemanticBuilder<'_>,
-) {
-    // `super.#m`
-    if private_expr.object.is_super() {
-        ctx.error(diagnostics::super_private(private_expr.span));
-    }
-}
-
 pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilder<'_>) {
     // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
     if unary_expr.operator == UnaryOperator::Delete {

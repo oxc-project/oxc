@@ -266,11 +266,6 @@ pub fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn super_private(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Private fields cannot be accessed on super").with_label(span)
-}
-
-#[cold]
 pub fn delete_of_unqualified(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Delete of an unqualified identifier in strict mode.").with_label(span)
 }

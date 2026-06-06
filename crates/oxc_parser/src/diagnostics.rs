@@ -732,6 +732,11 @@ pub fn unexpected_super(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn super_private(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Private fields cannot be accessed on super").with_label(span)
+}
+
+#[cold]
 pub fn expect_function_name(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Expected function name")
         .with_help("Function name is required in function declaration or named export")

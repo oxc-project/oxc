@@ -914,12 +914,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         Expression::from(if self.cur_kind() == Kind::PrivateIdentifier {
             let private_ident = self.parse_private_identifier();
-            self.ast.member_expression_private_field_expression(
-                self.end_span(lhs_span),
-                lhs,
-                private_ident,
-                optional,
-            )
+            let span = self.end_span(lhs_span);
+            // `super.#field` is not allowed.
+            if lhs.is_super() {
+                self.error(diagnostics::super_private(span));
+            }
+            self.ast.member_expression_private_field_expression(span, lhs, private_ident, optional)
         } else {
             let ident = self.parse_identifier_name();
             self.ast.member_expression_static(self.end_span(lhs_span), lhs, ident, optional)
