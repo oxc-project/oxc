@@ -17020,6 +17020,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  29 │ }
     ╰────
 
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+ 31 │ abstract class B {
+ 32 │     abstract #quux = 3;      // Error
+    ·              ─────
+ 33 │ }
+    ╰────
+
   × TS(1267): Property '#quux' cannot have an initializer because it is marked abstract.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
  31 │ abstract class B {
@@ -17042,14 +17050,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  26 │     declare set #whatProp(value: number)         // Error
     ·                 ─────────
  27 │     async get #asyncProp() { return 1; }         // Error
-    ╰────
-
-  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
-    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
- 31 │ abstract class B {
- 32 │     abstract #quux = 3;      // Error
-    ·              ─────
- 33 │ }
     ╰────
 
   × Private identifier '#prop' is not allowed outside class bodies

@@ -321,13 +321,6 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     }
 }
 
-pub fn check_property_definition(prop: &PropertyDefinition, ctx: &SemanticBuilder<'_>) {
-    // abstract cannot be used with private identifiers
-    if prop.r#type.is_abstract() && prop.key.is_private_identifier() {
-        ctx.error(diagnostics::abstract_cannot_be_used_with_private_identifier(prop.key.span()));
-    }
-}
-
 pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
     if let Expression::FunctionExpression(func) = &prop.value
         && prop.kind.is_accessor()

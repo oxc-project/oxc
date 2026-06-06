@@ -1204,6 +1204,12 @@ pub fn abstract_property_cannot_have_initializer(name: &str, span: Span) -> OxcD
 }
 
 #[cold]
+pub fn abstract_with_private_identifier(span: Span) -> OxcDiagnostic {
+    ts_error("18019", "'abstract' modifier cannot be used with a private identifier.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn abstract_accessor_cannot_have_implementation(name: &str, span: Span) -> OxcDiagnostic {
     ts_error(
         "1318",

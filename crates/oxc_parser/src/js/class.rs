@@ -684,6 +684,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::static_prototype(span));
             }
         }
+        if r#abstract && name.is_private_identifier() {
+            self.error(diagnostics::abstract_with_private_identifier(name.span()));
+        }
         if r#abstract && initializer.is_some() {
             let (name, span) = name.prop_name().unwrap_or_else(|| {
                 let span = name.span();
