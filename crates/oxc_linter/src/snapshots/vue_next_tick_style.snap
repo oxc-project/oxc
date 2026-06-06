@@ -1,0 +1,159 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+   ╭─[next_tick_style.tsx:5:26]
+ 4 │                 mounted() {
+ 5 │                     this.$nextTick(() => callback());
+   ·                          ─────────
+ 6 │                     Vue.nextTick(() => callback());
+   ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+   ╭─[next_tick_style.tsx:6:25]
+ 5 │                     this.$nextTick(() => callback());
+ 6 │                     Vue.nextTick(() => callback());
+   ·                         ────────
+ 7 │                     nt(() => callback());
+   ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+   ╭─[next_tick_style.tsx:7:21]
+ 6 │                     Vue.nextTick(() => callback());
+ 7 │                     nt(() => callback());
+   ·                     ──
+ 8 │ 
+   ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+    ╭─[next_tick_style.tsx:9:26]
+  8 │ 
+  9 │                     this.$nextTick(callback);
+    ·                          ─────────
+ 10 │                     Vue.nextTick(callback);
+    ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+    ╭─[next_tick_style.tsx:10:25]
+  9 │                     this.$nextTick(callback);
+ 10 │                     Vue.nextTick(callback);
+    ·                         ────────
+ 11 │                     nt(callback);
+    ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+    ╭─[next_tick_style.tsx:11:21]
+ 10 │                     Vue.nextTick(callback);
+ 11 │                     nt(callback);
+    ·                     ──
+ 12 │                 }
+    ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+   ╭─[next_tick_style.tsx:5:26]
+ 4 │                 mounted() {
+ 5 │                     this.$nextTick(() => callback());
+   ·                          ─────────
+ 6 │                     Vue.nextTick(() => callback());
+   ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+   ╭─[next_tick_style.tsx:6:25]
+ 5 │                     this.$nextTick(() => callback());
+ 6 │                     Vue.nextTick(() => callback());
+   ·                         ────────
+ 7 │                     nt(() => callback());
+   ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+   ╭─[next_tick_style.tsx:7:21]
+ 6 │                     Vue.nextTick(() => callback());
+ 7 │                     nt(() => callback());
+   ·                     ──
+ 8 │ 
+   ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+    ╭─[next_tick_style.tsx:9:26]
+  8 │ 
+  9 │                     this.$nextTick(callback);
+    ·                          ─────────
+ 10 │                     Vue.nextTick(callback);
+    ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+    ╭─[next_tick_style.tsx:10:25]
+  9 │                     this.$nextTick(callback);
+ 10 │                     Vue.nextTick(callback);
+    ·                         ────────
+ 11 │                     nt(callback);
+    ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Use the Promise returned by `nextTick` instead of passing a callback function.
+    ╭─[next_tick_style.tsx:11:21]
+ 10 │                     Vue.nextTick(callback);
+ 11 │                     nt(callback);
+    ·                     ──
+ 12 │                 }
+    ╰────
+  help: Insert `().then`
+
+  ⚠ vue(next-tick-style): Pass a callback function to `nextTick` instead of using the returned Promise.
+   ╭─[next_tick_style.tsx:5:26]
+ 4 │                 async mounted() {
+ 5 │                     this.$nextTick().then(() => callback());
+   ·                          ─────────
+ 6 │                     Vue.nextTick().then(() => callback());
+   ╰────
+
+  ⚠ vue(next-tick-style): Pass a callback function to `nextTick` instead of using the returned Promise.
+   ╭─[next_tick_style.tsx:6:25]
+ 5 │                     this.$nextTick().then(() => callback());
+ 6 │                     Vue.nextTick().then(() => callback());
+   ·                         ────────
+ 7 │                     nt().then(() => callback());
+   ╰────
+
+  ⚠ vue(next-tick-style): Pass a callback function to `nextTick` instead of using the returned Promise.
+   ╭─[next_tick_style.tsx:7:21]
+ 6 │                     Vue.nextTick().then(() => callback());
+ 7 │                     nt().then(() => callback());
+   ·                     ──
+ 8 │ 
+   ╰────
+
+  ⚠ vue(next-tick-style): Pass a callback function to `nextTick` instead of using the returned Promise.
+    ╭─[next_tick_style.tsx:9:32]
+  8 │ 
+  9 │                     await this.$nextTick(); callback();
+    ·                                ─────────
+ 10 │                     await Vue.nextTick(); callback();
+    ╰────
+
+  ⚠ vue(next-tick-style): Pass a callback function to `nextTick` instead of using the returned Promise.
+    ╭─[next_tick_style.tsx:10:31]
+  9 │                     await this.$nextTick(); callback();
+ 10 │                     await Vue.nextTick(); callback();
+    ·                               ────────
+ 11 │                     await nt(); callback();
+    ╰────
+
+  ⚠ vue(next-tick-style): Pass a callback function to `nextTick` instead of using the returned Promise.
+    ╭─[next_tick_style.tsx:11:27]
+ 10 │                     await Vue.nextTick(); callback();
+ 11 │                     await nt(); callback();
+    ·                           ──
+ 12 │                 }
+    ╰────
