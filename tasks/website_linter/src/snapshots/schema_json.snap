@@ -3611,7 +3611,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-param-reassign": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoParamReassignConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "no-plusplus": {
           "anyOf": [
@@ -10750,6 +10767,36 @@ expression: json
           "default": "",
           "type": "string",
           "markdownDescription": "A custom help message to display when optional chaining is found.\nFor example, \"Our output target is ES2016, and optional chaining results in verbose\nhelpers and should be avoided.\""
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoParamReassignConfig": {
+      "type": "object",
+      "properties": {
+        "ignorePropertyModificationsFor": {
+          "description": "An array of parameter names whose property modifications should be ignored.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "markdownDescription": "An array of parameter names whose property modifications should be ignored."
+        },
+        "ignorePropertyModificationsForRegex": {
+          "description": "An array of regex patterns (as strings) for parameter names whose property modifications should be ignored.\nNote that this uses [Rust regex syntax](https://docs.rs/regex/latest/regex/) and so may not have all features\navailable to JavaScript regexes.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of regex patterns (as strings) for parameter names whose property modifications should be ignored.\nNote that this uses [Rust regex syntax](https://docs.rs/regex/latest/regex/) and so may not have all features\navailable to JavaScript regexes."
+        },
+        "props": {
+          "description": "When true, also check for modifications to properties of parameters.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true, also check for modifications to properties of parameters."
         }
       },
       "additionalProperties": false
