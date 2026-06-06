@@ -826,6 +826,7 @@ pub(crate) mod vitest {
     pub mod prefer_to_have_been_called_times;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
+    pub mod prefer_vi_mocked;
     pub mod require_awaited_expect_poll;
     pub mod require_hook;
     pub mod require_local_test_context_for_concurrent_snapshots;
