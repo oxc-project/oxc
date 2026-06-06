@@ -693,7 +693,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         self.bump_any(); // advance `switch`
         let discriminant = self.parse_paren_expression();
-        let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_switch_case);
+        // A `switch` may contain at most one `default` clause. Track the first one
+        // and report only the first duplicate, all in the single parsing pass.
+        let mut first_default: Option<Span> = None;
+        let mut reported_duplicate = false;
+        let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
+            let case = p.parse_switch_case();
+            if case.test.is_none() {
+                match first_default {
+                    None => first_default = Some(case.span),
+                    Some(first_span) if !reported_duplicate => {
+                        p.error(diagnostics::switch_multiple_default_clause(first_span, case.span));
+                        reported_duplicate = true;
+                    }
+                    Some(_) => {}
+                }
+            }
+            case
+        });
         self.ast.statement_switch(self.end_span(span), discriminant, cases)
     }
 

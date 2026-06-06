@@ -46,7 +46,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             js::check_function_declaration(&stmt.body, false, ctx);
             js::check_with_statement(stmt, ctx);
         }
-        AstKind::SwitchStatement(stmt) => js::check_switch_statement(stmt, ctx),
         AstKind::BreakStatement(stmt) => js::check_break_statement(stmt, ctx),
         AstKind::ContinueStatement(stmt) => js::check_continue_statement(stmt, ctx),
         AstKind::LabeledStatement(stmt) => {

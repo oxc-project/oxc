@@ -771,22 +771,6 @@ pub fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuilder<'a>) {
-    let mut previous_default: Option<Span> = None;
-    for case in &stmt.cases {
-        if case.test.is_none() {
-            if let Some(previous_span) = previous_default {
-                ctx.error(diagnostics::switch_stmt_cannot_have_multiple_default_case(
-                    previous_span,
-                    case.span,
-                ));
-                break;
-            }
-            previous_default.replace(case.span);
-        }
-    }
-}
-
 pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
 

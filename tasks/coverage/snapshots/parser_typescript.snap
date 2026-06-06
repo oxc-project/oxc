@@ -12973,22 +12973,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  12 │         }
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:25:13]
- 24 │             default:    // Error, third 'default' clause
- 25 │             def\u0061ult: // Error, fourth 'default' clause.
-    ·             ────────────
- 26 │             // Errors on fifth-seventh
-    ╰────
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:27:22]
- 26 │             // Errors on fifth-seventh
- 27 │             default: return;
-    ·                      ──────
- 28 │             default: default:
-    ╰────
-
   × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:6:5]
  5 │         case 2:
@@ -13011,6 +12995,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  21 │ ├─▶                 break;
     · ╰──── Another 'default' clause cannot appear here.
  22 │                 case 10000:
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:25:13]
+ 24 │             default:    // Error, third 'default' clause
+ 25 │             def\u0061ult: // Error, fourth 'default' clause.
+    ·             ────────────
+ 26 │             // Errors on fifth-seventh
+    ╰────
+
+  × TS(1108): A 'return' statement can only be used within a function body.
+    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:27:22]
+ 26 │             // Errors on fifth-seventh
+ 27 │             default: return;
+    ·                      ──────
+ 28 │             default: default:
     ╰────
 
   × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.

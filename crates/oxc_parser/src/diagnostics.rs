@@ -882,6 +882,15 @@ pub fn new_target_outside_function(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn switch_multiple_default_clause(first_default: Span, other_default: Span) -> OxcDiagnostic {
+    ts_error("1113", "A 'default' clause cannot appear more than once in a 'switch' statement.")
+        .with_labels(vec![
+            first_default.label("First 'default' clause is here."),
+            other_default.label("Another 'default' clause cannot appear here."),
+        ])
+}
+
+#[cold]
 pub fn import_meta(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected import.meta expression")
         .with_help("import.meta is only allowed in module code")
