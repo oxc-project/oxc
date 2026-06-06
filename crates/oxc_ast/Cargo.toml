@@ -35,6 +35,7 @@ bitflags = { workspace = true }
 [features]
 default = ["builder"]
 builder = []
+builder_new = []
 serialize = [
   "oxc_allocator/serialize",
   "oxc_span/serialize",

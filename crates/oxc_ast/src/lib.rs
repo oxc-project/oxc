@@ -47,8 +47,27 @@ mod ast_kind_impl;
 pub mod precedence;
 mod trivia;
 
+// AST builder.
+//
+// We intend to migrate from the old `AstBuilder` struct which has methods defined on it directly,
+// to new methods defined on AST types themselves, which take a param that implements `GetAstBuilder` trait.
+//
+// During transition period, we support both, gated behind `builder` and `builder_new` Cargo features.
+// After all Oxc crates and all major downstream consumers have migrated, we will remove the old `AstBuilder`.
+//
+// * Old AST builder is exposed as crate-level item, to avoid breaking changes.
+// * New AST builder is exposed via `builder` module.
+//
+// See https://github.com/oxc-project/oxc/issues/23043 for more details.
+
+#[cfg(any(feature = "builder", feature = "builder_new"))]
+mod ast_builder_common;
+
 #[cfg(feature = "builder")]
 mod ast_builder_impl;
+
+#[cfg(feature = "builder_new")]
+pub mod builder;
 
 #[cfg(feature = "serialize")]
 mod serialize;
@@ -60,6 +79,8 @@ mod generated {
     mod assert_layouts;
     #[cfg(feature = "builder")]
     mod ast_builder;
+    #[cfg(feature = "builder_new")]
+    mod builder_methods;
     mod derive_clone_in;
     mod derive_content_eq;
     mod derive_dummy;
@@ -75,8 +96,10 @@ mod generated {
 pub use generated::ast_kind;
 
 pub use ast::comment::{Comment, CommentContent, CommentKind, CommentPosition};
+#[cfg(any(feature = "builder", feature = "builder_new"))]
+pub use ast_builder_common::NONE;
 #[cfg(feature = "builder")]
-pub use ast_builder_impl::{AstBuilder, NONE};
+pub use ast_builder_impl::AstBuilder;
 pub use ast_kind::{AstKind, AstType};
 pub use ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind};
 pub use trivia::{

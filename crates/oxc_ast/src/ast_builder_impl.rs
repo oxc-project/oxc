@@ -5,18 +5,7 @@ use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
-use crate::ast::*;
-
-/// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
-/// Pass `NONE` instead of `None::<Anything<'a>>`.
-#[expect(clippy::upper_case_acronyms)]
-pub struct NONE;
-
-impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
-    fn from_in(_: NONE, _: &'a Allocator) -> Self {
-        None
-    }
-}
+use crate::{NONE, ast::*};
 
 /// AST builder for creating AST nodes.
 #[derive(Clone, Copy)]
