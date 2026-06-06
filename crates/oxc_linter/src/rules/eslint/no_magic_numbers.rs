@@ -41,13 +41,14 @@ impl std::ops::Deref for NoMagicNumbers {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
 pub enum NoMagicNumbersNumber {
     Float(f64),
     BigInt(String),
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMagicNumbersConfig {
     /// An array of numbers to ignore if used as magic numbers. Can include floats or BigInt strings.
     ignore: Vec<NoMagicNumbersNumber>,
