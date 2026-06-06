@@ -3331,13 +3331,24 @@ impl Gen for TSConditionalType<'_> {
                 self.check_type.print(p, ctx);
             },
         );
-        p.print_str(" extends ");
+        p.print_soft_space();
+        p.print_space_before_identifier();
+        p.print_str("extends ");
         p.wrap(matches!(self.extends_type, TSType::TSConditionalType(_)), |p| {
             self.extends_type.print(p, ctx);
         });
-        p.print_str(" ? ");
+        p.print_soft_space();
+        // Avoid merging into `??` when the extends type ends with `?` (postfix
+        // JSDoc nullable, e.g. `A extends C? ? D : E`).
+        if p.last_byte() == Some(b'?') {
+            p.print_hard_space();
+        }
+        p.print_str("?");
+        p.print_soft_space();
         self.true_type.print(p, ctx);
-        p.print_str(" : ");
+        p.print_soft_space();
+        p.print_str(":");
+        p.print_soft_space();
         self.false_type.print(p, ctx);
     }
 }
@@ -3458,6 +3469,11 @@ impl Gen for JSDocNullableType<'_> {
             self.type_annotation.print(p, ctx);
             p.print_ascii_byte(b'?');
         } else {
+            // Avoid merging into `??` after a preceding `?` (e.g. a conditional type
+            // `A extends B ? ?C : D` minified).
+            if p.last_byte() == Some(b'?') {
+                p.print_hard_space();
+            }
             p.print_ascii_byte(b'?');
             self.type_annotation.print(p, ctx);
         }
@@ -4035,7 +4051,8 @@ impl Gen for TSConstructorType<'_> {
         if self.r#abstract {
             p.print_str("abstract ");
         }
-        p.print_str("new ");
+        p.print_str("new");
+        p.print_soft_space();
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
         }

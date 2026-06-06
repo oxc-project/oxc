@@ -208,6 +208,22 @@ fn minify_return_type_colon() {
 }
 
 #[test]
+fn minify_ts_type_space() {
+    let min = |src: &str, expected: &str| {
+        test_options_with_source_type(src, expected, SourceType::ts(), CodegenOptions::minify());
+    };
+    // Conditional type: `?`/`:` are tight like a JS conditional expression.
+    min("type T = A extends B ? C : D;", "type T=A extends B?C:D;");
+    min("type T = A extends {} ? B : C;", "type T=A extends {}?B:C;");
+    // Constructor type: no space after `new` before `(`/`<`.
+    min("type N = new () => Foo;", "type N=new()=>Foo;");
+    min("type N = abstract new (x: number) => Foo;", "type N=abstract new(x:number)=>Foo;");
+    // A JSDoc-nullable branch must not merge into `??`.
+    min("type T = A extends B ? ?C : D;", "type T=A extends B? ?C:D;");
+    min("type T = A extends C? ? D : E;", "type T=A extends C? ?D:E;");
+}
+
+#[test]
 fn ts_as_expression_in_binary_expr() {
     test_idempotency("key in (that as object)");
     test_idempotency("'foo' in (x as Record<string, unknown>)");
