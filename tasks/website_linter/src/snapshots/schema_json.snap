@@ -7628,6 +7628,9 @@ expression: json
             }
           ]
         },
+        "vue/next-tick-style": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "vue/no-arrow-functions-in-watch": {
           "$ref": "#/definitions/RuleNoConfig"
         },

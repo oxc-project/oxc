@@ -131,7 +131,7 @@ impl Rule for NextTickStyle {
                 }
             }
             NextTickOption::Promise => {
-                if call.arguments.len() > 0 || !is_awaited_promise(parent, ctx) {
+                if !call.arguments.is_empty() || !is_awaited_promise(parent, ctx) {
                     ctx.diagnostic_with_fix(use_promise_diagnostic(report_span), |fixer| {
                         fixer.insert_text_after_range(
                             Span::new(report_span.end, report_span.end),
