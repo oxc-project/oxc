@@ -972,6 +972,32 @@ expression: json
       },
       "additionalProperties": false
     },
+    "ConsistentTestItConfig": {
+      "type": "object",
+      "properties": {
+        "fn": {
+          "description": "Decides whether to use `test` or `it`.\n\nExamples of **incorrect** code for `{ \"fn\": \"test\" }`:\n```javascript\nit('foo');\nit.only('foo');\n```\n\nExamples of **correct** code for `{ \"fn\": \"test\" }`:\n```javascript\ntest('foo');\ntest.only('foo');\n```\n\nExamples of **incorrect** code for `{ \"fn\": \"it\" }`:\n```javascript\ntest('foo');\ntest.only('foo');\n```\n\nExamples of **correct** code for `{ \"fn\": \"it\" }`:\n```javascript\nit('foo');\nit.only('foo');\n```",
+          "default": "test",
+          "allOf": [
+            {
+              "$ref": "#/definitions/TestCaseName"
+            }
+          ],
+          "markdownDescription": "Decides whether to use `test` or `it`.\n\nExamples of **incorrect** code for `{ \"fn\": \"test\" }`:\n```javascript\nit('foo');\nit.only('foo');\n```\n\nExamples of **correct** code for `{ \"fn\": \"test\" }`:\n```javascript\ntest('foo');\ntest.only('foo');\n```\n\nExamples of **incorrect** code for `{ \"fn\": \"it\" }`:\n```javascript\ntest('foo');\ntest.only('foo');\n```\n\nExamples of **correct** code for `{ \"fn\": \"it\" }`:\n```javascript\nit('foo');\nit.only('foo');\n```"
+        },
+        "withinDescribe": {
+          "description": "Decides whether to use `test` or `it` within a `describe` scope.\nIf only `fn` is provided, this will default to the value of `fn`.\n\nExamples of **incorrect** code for `{ \"withinDescribe\": \"test\" }`:\n```javascript\ndescribe('foo', function () {\nit('bar');\n});\n```\n\nExamples of **correct** code for `{ \"withinDescribe\": \"test\" }`:\n```javascript\ndescribe('foo', function () {\ntest('bar');\n});\n```",
+          "default": "it",
+          "allOf": [
+            {
+              "$ref": "#/definitions/TestCaseName"
+            }
+          ],
+          "markdownDescription": "Decides whether to use `test` or `it` within a `describe` scope.\nIf only `fn` is provided, this will default to the value of `fn`.\n\nExamples of **incorrect** code for `{ \"withinDescribe\": \"test\" }`:\n```javascript\ndescribe('foo', function () {\nit('bar');\n});\n```\n\nExamples of **correct** code for `{ \"withinDescribe\": \"test\" }`:\n```javascript\ndescribe('foo', function () {\ntest('bar');\n});\n```"
+        }
+      },
+      "additionalProperties": false
+    },
     "ConsistentTypeDefinitionsConfig": {
       "oneOf": [
         {
@@ -2023,7 +2049,24 @@ expression: json
           ]
         },
         "jest/consistent-test-it": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentTestItConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/expect-expect": {
           "$ref": "#/definitions/DummyRule"
@@ -7064,7 +7107,24 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/consistent-test-it": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentTestItConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/consistent-vitest-vi": {
           "$ref": "#/definitions/DummyRule"
@@ -13179,6 +13239,13 @@ expression: json
           ],
           "markdownDescription": "Prefer default export in any module that has exports."
         }
+      ]
+    },
+    "TestCaseName": {
+      "type": "string",
+      "enum": [
+        "it",
+        "test"
       ]
     },
     "TextEncodingIdentifierCase": {

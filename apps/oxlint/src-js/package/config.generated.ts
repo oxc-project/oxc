@@ -89,6 +89,7 @@ export type Mode = "prefer-top-level" | "prefer-inline";
 export type AbsoluteFirst = "absolute-first" | "disable-absolute-first";
 export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
+export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type CountThis = "always" | "never" | "except-void";
 export type NoCondAssignConfig = "except-parens" | "always";
@@ -768,7 +769,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, AlwaysNever]
     | [AllowWarnDeny, AlwaysNever, InitDeclarationsConfig];
-  "jest/consistent-test-it"?: DummyRule;
+  "jest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
   "jest/expect-expect"?: DummyRule;
   "jest/max-expects"?: DummyRule;
   "jest/max-nested-describe"?: DummyRule;
@@ -1513,7 +1514,7 @@ export interface DummyRuleMap {
   "vars-on-top"?: RuleNoConfig;
   "vitest/consistent-each-for"?: DummyRule;
   "vitest/consistent-test-filename"?: DummyRule;
-  "vitest/consistent-test-it"?: DummyRule;
+  "vitest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
   "vitest/consistent-vitest-vi"?: DummyRule;
   "vitest/expect-expect"?: DummyRule;
   "vitest/hoisted-apis-on-top"?: RuleNoConfig;
@@ -2091,6 +2092,55 @@ export interface InitDeclarationsConfig {
    * Only applies when mode is set to `"never"`.
    */
   ignoreForLoopInit?: boolean;
+}
+export interface ConsistentTestItConfig {
+  /**
+   * Decides whether to use `test` or `it`.
+   *
+   * Examples of **incorrect** code for `{ "fn": "test" }`:
+   * ```javascript
+   * it('foo');
+   * it.only('foo');
+   * ```
+   *
+   * Examples of **correct** code for `{ "fn": "test" }`:
+   * ```javascript
+   * test('foo');
+   * test.only('foo');
+   * ```
+   *
+   * Examples of **incorrect** code for `{ "fn": "it" }`:
+   * ```javascript
+   * test('foo');
+   * test.only('foo');
+   * ```
+   *
+   * Examples of **correct** code for `{ "fn": "it" }`:
+   * ```javascript
+   * it('foo');
+   * it.only('foo');
+   * ```
+   */
+  fn?: TestCaseName;
+  /**
+   * Decides whether to use `test` or `it` within a `describe` scope.
+   * If only `fn` is provided, this will default to the value of `fn`.
+   *
+   * Examples of **incorrect** code for `{ "withinDescribe": "test" }`:
+   * ```javascript
+   * describe('foo', function () {
+   * it('bar');
+   * });
+   * ```
+   *
+   * Examples of **correct** code for `{ "withinDescribe": "test" }`:
+   * ```javascript
+   * describe('foo', function () {
+   * test('bar');
+   * });
+   * ```
+   */
+  withinDescribe?: TestCaseName;
 }
 export interface PreferImportingJestGlobalsConfig {
   /**
