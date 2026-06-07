@@ -125,6 +125,7 @@ export type ArgsOption = "after-used" | "all" | "none";
 export type IgnorePatternFor_String = null | string;
 export type CaughtErrorsJson = "all" | "none";
 export type NoUnusedVarsFixMode = "off" | "suggestion" | "fix" | "safe-fix";
+export type Location = "start" | "anywhere";
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
@@ -1025,7 +1026,7 @@ export interface DummyRuleMap {
   "no-useless-return"?: RuleNoConfig;
   "no-var"?: RuleNoConfig;
   "no-void"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoVoid];
-  "no-warning-comments"?: DummyRule;
+  "no-warning-comments"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoWarningCommentsConfigJson];
   "no-with"?: RuleNoConfig;
   "node/callback-return"?: DummyRule;
   "node/global-require"?: RuleNoConfig;
@@ -3336,6 +3337,11 @@ export interface NoVoid {
    * If set to `true`, using `void` as a standalone statement is allowed.
    */
   allowAsStatement?: boolean;
+}
+export interface NoWarningCommentsConfigJson {
+  decoration?: string[];
+  location?: Location;
+  terms?: string[];
 }
 export interface NoProcessEnvConfig {
   /**

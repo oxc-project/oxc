@@ -4075,7 +4075,24 @@
           ]
         },
         "no-warning-comments": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoWarningCommentsConfigJson"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "no-with": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9088,6 +9105,13 @@
         ]
       }
     },
+    "Location": {
+      "type": "string",
+      "enum": [
+        "start",
+        "anywhere"
+      ]
+    },
     "LogicalAssignmentOperators": {
       "type": "array",
       "items": [
@@ -11583,6 +11607,27 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "If set to `true`, using `void` as a standalone statement is allowed."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoWarningCommentsConfigJson": {
+      "type": "object",
+      "properties": {
+        "decoration": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "location": {
+          "$ref": "#/definitions/Location"
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false
