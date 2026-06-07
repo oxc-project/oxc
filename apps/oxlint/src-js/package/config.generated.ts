@@ -964,7 +964,7 @@ export interface DummyRuleMap {
   "no-nonoctal-decimal-escape"?: RuleNoConfig;
   "no-obj-calls"?: RuleNoConfig;
   "no-object-constructor"?: RuleNoConfig;
-  "no-param-reassign"?: DummyRule;
+  "no-param-reassign"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoParamReassignConfig];
   "no-plusplus"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoPlusplus];
   "no-promise-executor-return"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoPromiseExecutorReturnConfig];
   "no-proto"?: RuleNoConfig;
@@ -2729,6 +2729,22 @@ export interface NoMultiAssign {
    * ```
    */
   ignoreNonDeclaration?: boolean;
+}
+export interface NoParamReassignConfig {
+  /**
+   * An array of parameter names whose property modifications should be ignored.
+   */
+  ignorePropertyModificationsFor?: string[];
+  /**
+   * An array of regex patterns (as strings) for parameter names whose property modifications should be ignored.
+   * Note that this uses [Rust regex syntax](https://docs.rs/regex/latest/regex/) and so may not have all features
+   * available to JavaScript regexes.
+   */
+  ignorePropertyModificationsForRegex?: string[];
+  /**
+   * When true, also check for modifications to properties of parameters.
+   */
+  props?: boolean;
 }
 export interface NoPlusplus {
   /**
