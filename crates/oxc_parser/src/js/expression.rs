@@ -344,13 +344,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    #[inline(always)]
     pub fn parse_literal_boolean(&mut self) -> BooleanLiteral {
         let span = self.start_span();
         let value = match self.cur_kind() {
             Kind::True => true,
             Kind::False => false,
-            _ => return self.unexpected(),
+            _ => unsafe { std::hint::unreachable_unchecked() },
         };
         self.bump_any();
         self.ast.boolean_literal(self.end_span(span), value)
