@@ -2089,7 +2089,24 @@ expression: json
           ]
         },
         "jest/max-expects": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MaxExpectsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/max-nested-describe": {
           "$ref": "#/definitions/DummyRule"
@@ -7170,7 +7187,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/max-expects": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MaxExpectsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/max-nested-describe": {
           "$ref": "#/definitions/DummyRule"
@@ -9088,6 +9122,20 @@ expression: json
           "format": "uint",
           "minimum": 0.0,
           "markdownDescription": "The `max` enforces a maximum depth that blocks can be nested"
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxExpectsConfig": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "Maximum number of `expect()` assertion calls allowed within a single test.",
+          "default": 5,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of `expect()` assertion calls allowed within a single test."
         }
       },
       "additionalProperties": false

@@ -771,7 +771,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, AlwaysNever, InitDeclarationsConfig];
   "jest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
   "jest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
-  "jest/max-expects"?: DummyRule;
+  "jest/max-expects"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxExpectsConfig];
   "jest/max-nested-describe"?: DummyRule;
   "jest/no-alias-methods"?: RuleNoConfig;
   "jest/no-commented-out-tests"?: RuleNoConfig;
@@ -1518,7 +1518,7 @@ export interface DummyRuleMap {
   "vitest/consistent-vitest-vi"?: DummyRule;
   "vitest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
   "vitest/hoisted-apis-on-top"?: RuleNoConfig;
-  "vitest/max-expects"?: DummyRule;
+  "vitest/max-expects"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxExpectsConfig];
   "vitest/max-nested-describe"?: DummyRule;
   "vitest/no-alias-methods"?: RuleNoConfig;
   "vitest/no-commented-out-tests"?: RuleNoConfig;
@@ -2154,6 +2154,12 @@ export interface ExpectExpectConfig {
    * `["expect", "expectTypeOf", "assert", "assertType"]` for Vitest.
    */
   assertFunctionNames?: string[];
+}
+export interface MaxExpectsConfig {
+  /**
+   * Maximum number of `expect()` assertion calls allowed within a single test.
+   */
+  max?: number;
 }
 export interface PreferImportingJestGlobalsConfig {
   /**
