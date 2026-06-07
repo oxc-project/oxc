@@ -103,6 +103,12 @@ pub struct Lexer<'a, C: Config> {
     /// Collected tokens in source order.
     tokens: ArenaVec<'a, Token>,
 
+    /// One-token lookahead cache for [`Self::peek_token`], keyed by the source offset the peek was
+    /// taken at. The default-goal next token is a pure function of the source offset, so the cache
+    /// is self-validating: a peek at a different offset misses and re-lexes, and returning to a
+    /// previously-peeked offset (e.g. after a rewind) yields the same token.
+    peeked_token: Option<(u32, Token)>,
+
     /// Config
     pub(crate) config: C,
 }
@@ -152,6 +158,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
             tokens,
+            peeked_token: None,
             config,
         }
     }
@@ -232,9 +239,20 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     pub fn peek_token(&mut self) -> Token {
+        // The default-goal next token is a pure function of the current source offset, so a repeated
+        // peek at the same offset returns the cached token without re-lexing. On any offset change
+        // the cache misses and we re-lex (always correct). The checkpoint/rewind below leaves lexer
+        // state exactly as it was, so this is side-effect-neutral.
+        let offset = self.offset();
+        if let Some((cached_offset, token)) = self.peeked_token
+            && cached_offset == offset
+        {
+            return token;
+        }
         let checkpoint = self.checkpoint();
         let token = self.next_token();
         self.rewind(checkpoint);
+        self.peeked_token = Some((offset, token));
         token
     }
 
