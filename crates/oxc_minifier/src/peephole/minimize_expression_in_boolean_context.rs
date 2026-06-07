@@ -29,7 +29,7 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::BinaryExpression(e)
                 if e.operator.is_equality()
-                    && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
+                    && e.right.is_number_0()
                     && e.left.is_int32_or_uint32(ctx) =>
             {
                 let argument = e.left.take_in(ctx.ast);
