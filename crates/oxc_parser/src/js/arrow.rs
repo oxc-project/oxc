@@ -67,15 +67,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
                 }
             }
-            Kind::LAngle => {
-                self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
-            }
+            Kind::LAngle => self.lookahead(Self::is_parenthesized_arrow_function_expression_worker),
             Kind::Async => {
                 // `async` only begins a parenthesized/angle arrow when the next token (same line) is
                 // `(` or `<`; the worker's leading `eat(Async)` block returns `Tristate::False`
                 // otherwise. Peek that one token before paying for the speculative lookahead.
                 let peeked = self.lexer.peek_token();
-                if peeked.is_on_new_line() || !matches!(peeked.kind(), Kind::LParen | Kind::LAngle) {
+                if peeked.is_on_new_line() || !matches!(peeked.kind(), Kind::LParen | Kind::LAngle)
+                {
                     Tristate::False
                 } else {
                     self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
