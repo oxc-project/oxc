@@ -578,6 +578,26 @@
       },
       "additionalProperties": false
     },
+    "BlockScopedFunctions": {
+      "oneOf": [
+        {
+          "description": "Allow function declarations in nested blocks in strict mode (ES6+ behavior).",
+          "type": "string",
+          "enum": [
+            "allow"
+          ],
+          "markdownDescription": "Allow function declarations in nested blocks in strict mode (ES6+ behavior)."
+        },
+        {
+          "description": "Disallow function declarations in nested blocks regardless of strict mode.",
+          "type": "string",
+          "enum": [
+            "disallow"
+          ],
+          "markdownDescription": "Disallow function declarations in nested blocks regardless of strict mode."
+        }
+      ]
+    },
     "BomOptionType": {
       "oneOf": [
         {
@@ -3279,7 +3299,27 @@
           ]
         },
         "no-inner-declarations": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoInnerDeclarationsConfig"
+                },
+                {
+                  "$ref": "#/definitions/NoInnerDeclarationsOptions"
+                }
+              ],
+              "maxItems": 3,
+              "minItems": 1
+            }
+          ]
         },
         "no-invalid-regexp": {
           "anyOf": [
@@ -10031,6 +10071,57 @@
           "description": "A regex pattern to ignore certain inline comments.\n\nComments matching this pattern will not be reported.\n\nExample configuration:\n```json\n{\n\"no-inline-comments\": [\"error\", { \"ignorePattern\": \"webpackChunkName\" }]\n}\n```",
           "type": "string",
           "markdownDescription": "A regex pattern to ignore certain inline comments.\n\nComments matching this pattern will not be reported.\n\nExample configuration:\n```json\n{\n\"no-inline-comments\": [\"error\", { \"ignorePattern\": \"webpackChunkName\" }]\n}\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoInnerDeclarations": {
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/NoInnerDeclarationsConfig"
+        },
+        {
+          "$ref": "#/definitions/NoInnerDeclarationsOptions"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2
+    },
+    "NoInnerDeclarationsConfig": {
+      "description": "Determines what type of declarations to check.",
+      "oneOf": [
+        {
+          "description": "Disallows function declarations in nested blocks.",
+          "type": "string",
+          "enum": [
+            "functions"
+          ],
+          "markdownDescription": "Disallows function declarations in nested blocks."
+        },
+        {
+          "description": "Disallows function and var declarations in nested blocks.",
+          "type": "string",
+          "enum": [
+            "both"
+          ],
+          "markdownDescription": "Disallows function and var declarations in nested blocks."
+        }
+      ],
+      "markdownDescription": "Determines what type of declarations to check."
+    },
+    "NoInnerDeclarationsOptions": {
+      "type": "object",
+      "properties": {
+        "blockScopedFunctions": {
+          "description": "Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/BlockScopedFunctions"
+            }
+          ],
+          "markdownDescription": "Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior)."
         }
       },
       "additionalProperties": false

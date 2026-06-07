@@ -110,6 +110,11 @@ export type AllowKind =
   | "protectedConstructors"
   | "decoratedFunctions"
   | "overrideMethods";
+/**
+ * Determines what type of declarations to check.
+ */
+export type NoInnerDeclarationsConfig = "functions" | "both";
+export type BlockScopedFunctions = "allow" | "disallow";
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
@@ -931,7 +936,11 @@ export interface DummyRuleMap {
   "no-implied-eval"?: RuleNoConfig;
   "no-import-assign"?: RuleNoConfig;
   "no-inline-comments"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoInlineCommentsConfig];
-  "no-inner-declarations"?: DummyRule;
+  "no-inner-declarations"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoInnerDeclarationsConfig]
+    | [AllowWarnDeny, NoInnerDeclarationsConfig, NoInnerDeclarationsOptions];
   "no-invalid-regexp"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoInvalidRegexpConfig];
   "no-irregular-whitespace"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoIrregularWhitespaceConfig];
   "no-iterator"?: RuleNoConfig;
@@ -2567,6 +2576,12 @@ export interface NoInlineCommentsConfig {
    * ```
    */
   ignorePattern?: string;
+}
+export interface NoInnerDeclarationsOptions {
+  /**
+   * Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
+   */
+  blockScopedFunctions?: BlockScopedFunctions;
 }
 export interface NoInvalidRegexpConfig {
   /**
