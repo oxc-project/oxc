@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -97,10 +97,7 @@ impl Rule for NextTickStyle {
             AstKind::StaticMemberExpression(m) => {
                 let valid = match m.property.name.as_str() {
                     "$nextTick" => is_this_object(&m.object, ctx),
-                    "nextTick" => matches!(
-                        m.object.get_inner_expression(),
-                        Expression::Identifier(id) if id.name == "Vue"
-                    ),
+                    "nextTick" => m.object.is_specific_id("Vue"),
                     _ => false,
                 };
                 if !valid {
