@@ -351,7 +351,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let checkpoint = self.checkpoint_with_error_recovery();
 
-        let head = self.parse_parenthesized_arrow_function_head();
+        // The head parse is speculative: a fatal error here means this isn't an arrow head, so it is
+        // rewound below. Suppress diagnostic allocation for that discarded fatal error. (The body
+        // parse afterwards is committed, so it keeps real diagnostics.)
+        let head = self.speculate(Self::parse_parenthesized_arrow_function_head);
         if self.has_fatal_error() {
             self.state.not_parenthesized_arrow.insert(pos);
             self.rewind(checkpoint);

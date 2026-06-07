@@ -608,6 +608,13 @@ struct ParserImpl<'a, C: ParserConfig> {
 
     fatal_error: Option<FatalError>,
 
+    /// When `true`, the parser is inside a speculative parse (e.g. `lookahead`, or the
+    /// type-argument / arrow cover-grammar disambiguation) whose result — including any fatal
+    /// error — will be discarded on rewind. While set, the `expect`/`unexpected` family skips
+    /// building the (allocating) diagnostic and stores a cheap sentinel instead. See
+    /// [`ParserImpl::set_fatal_error_or_suppress`] and [`ParserImpl::speculate`].
+    suppress_speculative_errors: bool,
+
     /// The current parsing token
     token: Token,
 
@@ -653,6 +660,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             errors: vec![],
             deferred_script_errors: vec![],
             fatal_error: None,
+            suppress_speculative_errors: false,
             token: Token::default(),
             prev_token_end: 0,
             state: ParserState::new(),

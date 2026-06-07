@@ -879,32 +879,42 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        let checkpoint = self.checkpoint();
-        let span = self.start_span();
-        if !self.re_lex_ts_l_angle() {
-            self.rewind(checkpoint);
-            return None;
-        }
-        let opening_span = self.cur_token().span();
-        self.expect(Kind::LAngle);
-        let (params, _) =
-            self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
-        // `a < b> = c` is valid but `a < b >= c` is BinaryExpression
-        if matches!(self.re_lex_right_angle(), Kind::GtEq) {
-            self.rewind(checkpoint);
-            return None;
-        }
-        self.re_lex_ts_r_angle();
-        self.expect(Kind::RAngle);
-        if self.fatal_error.is_some() || !self.can_follow_type_arguments_in_expr() {
-            self.rewind(checkpoint);
-            return None;
-        }
-        let span = self.end_span(span);
-        if params.is_empty() {
-            self.error(diagnostics::ts_empty_type_argument_list(span));
-        }
-        Some(self.ast.alloc_ts_type_parameter_instantiation(span, params))
+        // This parse is speculative: on any failure it rewinds and returns `None` so the caller can
+        // reparse `<` as a relational operator. Every fatal error raised here is therefore discarded,
+        // so run in speculative-error mode to skip building those diagnostics. (The non-fatal
+        // `ts_empty_type_argument_list`, emitted only on the success path, is unaffected.)
+        self.speculate(|p| {
+            let checkpoint = p.checkpoint();
+            let span = p.start_span();
+            if !p.re_lex_ts_l_angle() {
+                p.rewind(checkpoint);
+                return None;
+            }
+            let opening_span = p.cur_token().span();
+            p.expect(Kind::LAngle);
+            let (params, _) = p.parse_delimited_list(
+                Kind::RAngle,
+                Kind::Comma,
+                opening_span,
+                Self::parse_ts_type,
+            );
+            // `a < b> = c` is valid but `a < b >= c` is BinaryExpression
+            if matches!(p.re_lex_right_angle(), Kind::GtEq) {
+                p.rewind(checkpoint);
+                return None;
+            }
+            p.re_lex_ts_r_angle();
+            p.expect(Kind::RAngle);
+            if p.fatal_error.is_some() || !p.can_follow_type_arguments_in_expr() {
+                p.rewind(checkpoint);
+                return None;
+            }
+            let span = p.end_span(span);
+            if params.is_empty() {
+                p.error(diagnostics::ts_empty_type_argument_list(span));
+            }
+            Some(p.ast.alloc_ts_type_parameter_instantiation(span, params))
+        })
     }
 
     fn can_follow_type_arguments_in_expr(&mut self) -> bool {

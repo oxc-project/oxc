@@ -144,8 +144,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             /* no op */
         } else {
             let span = Span::empty(self.prev_token_end);
-            let error = diagnostics::auto_semicolon_insertion(span);
-            self.set_fatal_error(error);
+            self.set_fatal_error_or_suppress(|| diagnostics::auto_semicolon_insertion(span));
         }
     }
 
@@ -160,9 +159,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline(never)]
     fn handle_expect_failure(&mut self, expected_kind: Kind) {
         let range = self.cur_token().span();
-        let error =
-            diagnostics::expect_token(expected_kind.to_str(), self.cur_kind().to_str(), range);
-        self.set_fatal_error(error);
+        let found = self.cur_kind();
+        self.set_fatal_error_or_suppress(|| {
+            diagnostics::expect_token(expected_kind.to_str(), found.to_str(), range)
+        });
     }
 
     /// # Errors
@@ -187,13 +187,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn expect_closing(&mut self, kind: Kind, opening_span: Span) {
         if !self.at(kind) {
             let range = self.cur_token().span();
-            let error = diagnostics::expect_closing(
-                kind.to_str(),
-                self.cur_kind().to_str(),
-                range,
-                opening_span,
-            );
-            self.set_fatal_error(error);
+            let found = self.cur_kind();
+            self.set_fatal_error_or_suppress(|| {
+                diagnostics::expect_closing(kind.to_str(), found.to_str(), range, opening_span)
+            });
         }
         self.advance(kind);
     }
@@ -202,12 +199,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn expect_conditional_alternative(&mut self, question_span: Span) {
         if !self.at(Kind::Colon) {
             let range = self.cur_token().span();
-            let error = diagnostics::expect_conditional_alternative(
-                self.cur_kind().to_str(),
-                range,
-                question_span,
-            );
-            self.set_fatal_error(error);
+            let found = self.cur_kind();
+            self.set_fatal_error_or_suppress(|| {
+                diagnostics::expect_conditional_alternative(found.to_str(), range, question_span)
+            });
         }
         self.bump_any(); // bump `:`
     }
@@ -325,9 +320,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {
         let checkpoint = self.checkpoint();
-        let answer = predicate(self);
+        // A `lookahead` always rewinds, so any fatal error raised inside is discarded — run the
+        // predicate in speculative-error mode so `expect`/`unexpected` don't allocate diagnostics.
+        let answer = self.speculate(predicate);
         self.rewind(checkpoint);
         answer
+    }
+
+    /// Run `f` in speculative-error mode and restore the previous mode afterwards.
+    ///
+    /// While speculating, the `expect` / `unexpected` family stores a cheap sentinel instead of
+    /// building a real (allocating) diagnostic, because the caller will discard any fatal error
+    /// raised here (by rewinding). Only use this for parses whose fatal errors are always rewound.
+    #[inline]
+    pub(crate) fn speculate<U>(&mut self, f: impl FnOnce(&mut ParserImpl<'a, C>) -> U) -> U {
+        let prev = self.suppress_speculative_errors;
+        self.suppress_speculative_errors = true;
+        let result = f(self);
+        self.suppress_speculative_errors = prev;
+        result
     }
 
     #[expect(clippy::inline_always)]
@@ -450,13 +461,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return (list, None);
             }
             if kind != separator {
-                self.set_fatal_error(diagnostics::expect_closing_or_separator(
-                    close.to_str(),
-                    separator.to_str(),
-                    kind.to_str(),
-                    self.cur_token().span(),
-                    opening_span,
-                ));
+                let span = self.cur_token().span();
+                self.set_fatal_error_or_suppress(|| {
+                    diagnostics::expect_closing_or_separator(
+                        close.to_str(),
+                        separator.to_str(),
+                        kind.to_str(),
+                        span,
+                        opening_span,
+                    )
+                });
                 return (list, None);
             }
             self.advance(separator);
@@ -497,13 +511,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return None;
             }
             if kind != separator {
-                self.set_fatal_error(diagnostics::expect_closing_or_separator(
-                    close.to_str(),
-                    separator.to_str(),
-                    kind.to_str(),
-                    self.cur_token().span(),
-                    opening_span,
-                ));
+                let span = self.cur_token().span();
+                self.set_fatal_error_or_suppress(|| {
+                    diagnostics::expect_closing_or_separator(
+                        close.to_str(),
+                        separator.to_str(),
+                        kind.to_str(),
+                        span,
+                        opening_span,
+                    )
+                });
                 return None;
             }
             self.advance(separator);
@@ -545,14 +562,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 let comma_span = self.cur_token().span();
                 if kind != Kind::Comma {
-                    let error = diagnostics::expect_closing_or_separator(
-                        close.to_str(),
-                        Kind::Comma.to_str(),
-                        kind.to_str(),
-                        comma_span,
-                        opening_span,
-                    );
-                    self.set_fatal_error(error);
+                    self.set_fatal_error_or_suppress(|| {
+                        diagnostics::expect_closing_or_separator(
+                            close.to_str(),
+                            Kind::Comma.to_str(),
+                            kind.to_str(),
+                            comma_span,
+                            opening_span,
+                        )
+                    });
                     break;
                 }
                 self.bump_any();
@@ -566,7 +584,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             if let Some(r) = &rest {
-                self.set_fatal_error(rest_last_diagnostic(r.span()));
+                let span = r.span();
+                self.set_fatal_error_or_suppress(|| rest_last_diagnostic(span));
                 break;
             }
 

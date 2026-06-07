@@ -18,6 +18,12 @@ pub struct FatalError {
 impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     pub(crate) fn set_unexpected(&mut self) {
+        // Inside a speculative parse the fatal error is discarded on rewind, so skip building the
+        // real diagnostic (and the merge-conflict scan) and store a cheap sentinel instead.
+        if self.suppress_speculative_errors {
+            self.set_fatal_error(OxcDiagnostic::error(""));
+            return;
+        }
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if matches!(self.cur_kind(), Kind::Eof | Kind::Undetermined)
@@ -89,6 +95,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn fatal_error<T: Dummy<'a>>(&mut self, error: OxcDiagnostic) -> T {
         self.set_fatal_error(error);
         Dummy::dummy(self.ast.allocator)
+    }
+
+    /// Set a fatal error, building the diagnostic lazily.
+    ///
+    /// Inside a speculative parse (`suppress_speculative_errors`) the fatal error is discarded on
+    /// rewind, so the `make` closure (which allocates the message/labels) is skipped and a cheap
+    /// sentinel is stored instead. Also skips building when a fatal error is already set (the
+    /// diagnostic would be dropped anyway, since only the first fatal error is kept).
+    #[inline]
+    pub(crate) fn set_fatal_error_or_suppress(&mut self, make: impl FnOnce() -> OxcDiagnostic) {
+        if self.fatal_error.is_some() {
+            return;
+        }
+        let error =
+            if self.suppress_speculative_errors { OxcDiagnostic::error("") } else { make() };
+        self.set_fatal_error(error);
     }
 
     pub(crate) fn has_fatal_error(&self) -> bool {
