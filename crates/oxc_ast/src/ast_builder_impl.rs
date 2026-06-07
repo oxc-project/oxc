@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{alloc::Layout, borrow::Cow, mem::MaybeUninit, slice, str};
 
 use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
 use oxc_span::{SPAN, Span};
@@ -332,44 +332,60 @@ fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Str<'a> {
         return ast.str(raw);
     }
 
-    // Allocate directly in arena
+    // Allocate directly in arena.
+    // It's impossible for this addition to overflow, because max length of a `&str` is `isize::MAX`
+    // and we've at most doubled the length, which cannot overflow `usize::MAX`.
     let len = bytes.len() + extra_bytes;
-    let layout = std::alloc::Layout::array::<u8>(len).unwrap();
+    let layout = Layout::array::<u8>(len).unwrap();
     let ptr = ast.allocator.alloc_layout(layout);
 
-    // SAFETY: `ptr` points to `len` bytes of valid memory allocated by the arena.
-    // Input is valid UTF-8, we only escape ASCII bytes, so output is also valid UTF-8.
-    unsafe {
-        let escaped = std::slice::from_raw_parts_mut(ptr.as_ptr(), len);
-        let mut j = 0;
-        for i in 0..bytes.len() {
+    // SAFETY: `ptr` points to `len` bytes of memory allocated by the arena.
+    // `MaybeUninit<u8>` has the same layout as `u8` and does not require its contents to be initialized,
+    // so it's sound to form a `&mut [MaybeUninit<u8>]` over this uninitialized memory.
+    let dest = unsafe { slice::from_raw_parts_mut(ptr.as_ptr().cast::<MaybeUninit<u8>>(), len) };
+
+    let mut j = 0;
+    for i in 0..bytes.len() {
+        // SAFETY: For each input byte we write either 1 or 2 bytes, and `len` was sized to fit
+        // exactly that many bytes, so `j` and `j + 1` are always in bounds.
+        // Note: Compiler merges each pair of writes into a single 2-byte write.
+        unsafe {
             match bytes[i] {
                 b'\\' => {
-                    *escaped.get_unchecked_mut(j) = b'\\';
-                    *escaped.get_unchecked_mut(j + 1) = b'\\';
+                    dest.get_unchecked_mut(j).write(b'\\');
+                    dest.get_unchecked_mut(j + 1).write(b'\\');
                     j += 2;
                 }
                 b'`' => {
-                    *escaped.get_unchecked_mut(j) = b'\\';
-                    *escaped.get_unchecked_mut(j + 1) = b'`';
+                    dest.get_unchecked_mut(j).write(b'\\');
+                    dest.get_unchecked_mut(j + 1).write(b'`');
                     j += 2;
                 }
                 b'$' if bytes.get(i + 1) == Some(&b'{') => {
-                    *escaped.get_unchecked_mut(j) = b'\\';
-                    *escaped.get_unchecked_mut(j + 1) = b'$';
+                    dest.get_unchecked_mut(j).write(b'\\');
+                    dest.get_unchecked_mut(j + 1).write(b'$');
                     j += 2;
                 }
                 b'\r' => {
-                    *escaped.get_unchecked_mut(j) = b'\\';
-                    *escaped.get_unchecked_mut(j + 1) = b'r';
+                    dest.get_unchecked_mut(j).write(b'\\');
+                    dest.get_unchecked_mut(j + 1).write(b'r');
                     j += 2;
                 }
                 b => {
-                    *escaped.get_unchecked_mut(j) = b;
+                    dest.get_unchecked_mut(j).write(b);
                     j += 1;
                 }
             }
         }
-        Str::from(std::str::from_utf8_unchecked(escaped))
     }
+
+    debug_assert_eq!(j, len);
+
+    // SAFETY: The loop above initialized all `len` bytes of `dest`.
+    // `MaybeUninit<u8>` has the same layout as `u8`, so it's sound to read those bytes back as `&[u8]`
+    // via a pointer cast. `MaybeUninit::slice_assume_init_ref` would express this directly, but it is unstable.
+    let bytes = unsafe { slice::from_raw_parts(dest.as_ptr().cast::<u8>(), len) };
+    // SAFETY: Input is valid UTF-8 and we only insert ASCII bytes replacing existing ASCII, so output is valid UTF-8
+    let escaped = unsafe { str::from_utf8_unchecked(bytes) };
+    Str::from(escaped)
 }
