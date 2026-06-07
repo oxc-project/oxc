@@ -214,13 +214,136 @@ fn minify_ts_type_space() {
     };
     // Conditional type: `?`/`:` are tight like a JS conditional expression.
     min("type T = A extends B ? C : D;", "type T=A extends B?C:D;");
-    min("type T = A extends {} ? B : C;", "type T=A extends {}?B:C;");
+    min("type T = A extends {} ? B : C;", "type T=A extends{}?B:C;");
     // Constructor type: no space after `new` before `(`/`<`.
     min("type N = new () => Foo;", "type N=new()=>Foo;");
     min("type N = abstract new (x: number) => Foo;", "type N=abstract new(x:number)=>Foo;");
     // A JSDoc-nullable branch must not merge into `??`.
     min("type T = A extends B ? ?C : D;", "type T=A extends B? ?C:D;");
     min("type T = A extends C? ? D : E;", "type T=A extends C? ?D:E;");
+}
+
+#[test]
+fn minify_decorator_space() {
+    let min = |src: &str, expected: &str| {
+        test_options_with_source_type(src, expected, SourceType::ts(), CodegenOptions::minify());
+    };
+    // `@dec class` keeps a space (decorator ends in an identifier char), but
+    // `@dec() class` does not (`)` is not an identifier char).
+    min("@dec class C {}", "@dec class C{}");
+    min("@dec() class C {}", "@dec()class C{}");
+    min("@a.b @c class C {}", "@a.b @c class C{}");
+    // `export` before a decorated class needs no space (`@` is not an identifier char).
+    min("export @dec class C {}", "export@dec class C{}");
+    min("export @dec() class C {}", "export@dec()class C{}");
+    // `accessor` before a private name needs no space.
+    min("class C { accessor #x = 1 }", "class C{accessor#x=1}");
+    min("class C { accessor x = 1 }", "class C{accessor x=1}");
+}
+
+#[test]
+fn minify_ts_operator_space() {
+    let min = |src: &str, expected: &str| {
+        test_options_with_source_type(src, expected, SourceType::ts(), CodegenOptions::minify());
+    };
+    // `as`/`satisfies` need no leading space after a non-identifier char.
+    min("x = foo() as Bar;", "x=foo()as Bar;");
+    min("x = arr[0] as Bar;", "x=arr[0]as Bar;");
+    min("x = `s` as const;", "x=`s`as const;");
+    min("x = foo() satisfies Bar;", "x=foo()satisfies Bar;");
+    // ...but a space is required after an identifier.
+    min("x = y as Bar;", "x=y as Bar;");
+    min("x = y satisfies Bar;", "x=y satisfies Bar;");
+    // No trailing space when the target type starts with punctuation.
+    min("x = y as { a: 1 };", "x=y as{a:1;};");
+    min("x = y as (a: number) => void;", "x=y as(a:number)=>void;");
+    min("x = y satisfies [number];", "x=y satisfies[number];");
+    // A non-null `!` needs no trailing space before a member, statement end, or call.
+    min("x = a!.b;", "x=a!.b;");
+    min("a!;", "a!;");
+    min("x = a!();", "x=a!();");
+    // ...but must keep one before `=`/`==`/`===` so it does not become `!=`/`!==`.
+    min("a! = b;", "a! =b;");
+    min("x = a! == b;", "x=a! ==b;");
+    min("x = a! === b;", "x=a! ===b;");
+    // `!=`/`!==` do not retokenize, so no space is needed.
+    min("x = a! != b;", "x=a!!=b;");
+    // `enum` body brace needs no leading space.
+    min("enum E { A, B }", "enum E{A,B}");
+    min("const enum F { X = 1 }", "const enum F{X=1}");
+}
+
+#[test]
+fn minify_conditional_type_space() {
+    let min = |src: &str, expected: &str| {
+        test_options_with_source_type(src, expected, SourceType::ts(), CodegenOptions::minify());
+    };
+    // `extends`/`?`/`:` need no surrounding space next to non-identifier tokens.
+    min("type A<T> = T extends string ? 1 : 2;", "type A<T>=T extends string?1:2;");
+    min("type B<T> = Foo<T> extends string ? X : Y;", "type B<T>=Foo<T>extends string?X:Y;");
+    min("type C<T> = T[K] extends string ? X : Y;", "type C<T>=T[K]extends string?X:Y;");
+    // A prefix JSDoc nullable true branch must keep the `? ` separator (no `??`).
+    min("type D<T> = T extends B ? ?C : D;", "type D<T>=T extends B? ?C:D;");
+    // `extends`/`keyof` need no trailing space before a punctuation-starting type.
+    min("type E<T> = T extends [infer U] ? U : never;", "type E<T>=T extends[infer U]?U:never;");
+    min("type F<T> = T extends { a: 1 } ? 1 : 2;", "type F<T>=T extends{a:1;}?1:2;");
+    min("type G = keyof [a, b];", "type G=keyof[a,b];");
+    // ...but keep it before an identifier-starting type.
+    min("type H<T> = T extends Base ? 1 : 2;", "type H<T>=T extends Base?1:2;");
+    // `readonly`/`extends` before a parenthesized array element need no trailing space.
+    min("type I<T> = readonly (keyof T)[];", "type I<T>=readonly(keyof T)[];");
+    min(
+        "type J<T> = T extends (infer A)[] ? A : never;",
+        "type J<T>=T extends(infer A)[]?A:never;",
+    );
+    min("type K = readonly string[];", "type K=readonly string[];");
+    // `new` constructor type needs no space before `(`/`<`.
+    min("type L = new () => Foo;", "type L=new()=>Foo;");
+    min("type M = abstract new (x: number) => Bar;", "type M=abstract new(x:number)=>Bar;");
+    // A type-parameter constraint needs no trailing space before a punctuation-starting type.
+    min("type N<T extends (...a: any) => any> = T;", "type N<T extends(...a:any)=>any>=T;");
+    min("type O<T extends [a, b]> = T;", "type O<T extends[a,b]>=T;");
+    min("type P<T extends Base> = T;", "type P<T extends Base>=T;");
+    // `as`/`satisfies` before a union/intersection whose first member starts with punctuation.
+    min("x = res as { a: 1 } | undefined;", "x=res as{a:1;}|undefined;");
+    min("x = res as Foo | Bar;", "x=res as Foo|Bar;");
+}
+
+#[test]
+fn minify_export_type_star() {
+    let min = |src: &str, expected: &str| {
+        test_options_with_source_type(src, expected, SourceType::ts(), CodegenOptions::minify());
+    };
+    min("export type * from \"m\";", "export type*from\"m\";");
+    min("export * from \"m\";", "export*from\"m\";");
+    min("export type * as ns from \"m\";", "export type*as ns from\"m\";");
+}
+
+#[test]
+fn minify_heritage_and_mapped_space() {
+    let min = |src: &str, expected: &str| {
+        test_options_with_source_type(src, expected, SourceType::ts(), CodegenOptions::minify());
+    };
+    // Heritage `extends`/`implements` need no leading space after type-argument `>`.
+    min(
+        "class A<T> extends Base<T> implements I, J {}",
+        "class A<T>extends Base<T>implements I,J{}",
+    );
+    min("class B extends Base implements I {}", "class B extends Base implements I{}");
+    min(
+        "interface I<T = string> extends Omit<A, B>, C {}",
+        "interface I<T=string>extends Omit<A,B>,C{}",
+    );
+    min("interface J extends K {}", "interface J extends K{}");
+    // Mapped-type `readonly` needs no trailing space before `[`.
+    min(
+        "type M<T> = { readonly [P in keyof T]: T[P] };",
+        "type M<T>={readonly[P in keyof T]:T[P]};",
+    );
+    min(
+        "type N<T> = { -readonly [P in keyof T]-?: T[P] };",
+        "type N<T>={-readonly[P in keyof T]-?:T[P]};",
+    );
 }
 
 #[test]

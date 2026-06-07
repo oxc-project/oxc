@@ -52,6 +52,12 @@ fn module_decl() {
     test_minify("export default 5", "export default 5;");
     test_minify("export default foo", "export default foo;");
     test_minify("export default function(){}", "export default function(){}");
+
+    // `as` next to a string export/import name needs no space.
+    test_minify("export { foo as \"name\" }", "export{foo as\"name\"};");
+    test_minify("import { \"y\" as z } from \"m\"", "import{\"y\"as z}from\"m\";");
+    test_minify("export * as \"ns\" from \"m\"", "export*as\"ns\" from\"m\";");
+    test_minify("export { foo as bar }", "export{foo as bar};");
 }
 
 #[test]

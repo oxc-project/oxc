@@ -847,6 +847,12 @@ impl<'a> Codegen<'a> {
                 // `prev == UnaryOperator::LogicalNot` which means last byte is ASCII,
                 // and therefore previous character is 1 byte from end of buffer
                 && self.code.peek_nth_byte_back(1) == Some(b'<'))
+            // `a! == b`: keep the non-null `!` from gluing to `=` as `!=`/`!==`.
+            || (prev == un_op_not
+                && matches!(
+                    next,
+                    Operator::Binary(BinaryOperator::Equality | BinaryOperator::StrictEquality)
+                ))
         {
             self.print_hard_space();
         }
@@ -866,7 +872,10 @@ impl<'a> Codegen<'a> {
     fn print_decorators(&mut self, decorators: &[Decorator<'_>], ctx: Context) {
         for decorator in decorators {
             decorator.print(self, ctx);
-            self.print_hard_space();
+            // Only separate from the following token when the decorator ends in an
+            // identifier char (`@dec class`); `@dec() class` can be `@dec()class`.
+            self.print_soft_space();
+            self.print_space_before_identifier();
         }
     }
 
