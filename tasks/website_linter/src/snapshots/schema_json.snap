@@ -7679,6 +7679,43 @@ expression: json
             }
           ]
         },
+        "vue/next-tick-style": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "oneOf": [
+                    {
+                      "description": "Require using the Promise returned by `nextTick`.",
+                      "type": "string",
+                      "enum": [
+                        "promise"
+                      ],
+                      "markdownDescription": "Require using the Promise returned by `nextTick`."
+                    },
+                    {
+                      "description": "Require passing a callback function to `nextTick`.",
+                      "type": "string",
+                      "enum": [
+                        "callback"
+                      ],
+                      "markdownDescription": "Require passing a callback function to `nextTick`."
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
+        },
         "vue/no-arrow-functions-in-watch": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -9619,6 +9656,26 @@ expression: json
         }
       },
       "markdownDescription": "Configure Next.js plugin rules."
+    },
+    "NextTickOption": {
+      "oneOf": [
+        {
+          "description": "Require using the Promise returned by `nextTick`.",
+          "type": "string",
+          "enum": [
+            "promise"
+          ],
+          "markdownDescription": "Require using the Promise returned by `nextTick`."
+        },
+        {
+          "description": "Require passing a callback function to `nextTick`.",
+          "type": "string",
+          "enum": [
+            "callback"
+          ],
+          "markdownDescription": "Require passing a callback function to `nextTick`."
+        }
+      ]
     },
     "NoAbsolutePath": {
       "type": "object",
