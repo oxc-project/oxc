@@ -39,8 +39,9 @@ A-linter:
 
 A-linter-plugins:
   - changed-files:
-      - any-glob-to-any-file:
-          ["apps/oxlint/src-js/**", "apps/oxlint/test/**", "apps/oxlint/conformance/**"]
+      - all-globs-to-any-file:
+          ["apps/oxlint/src-js/**", "!apps/oxlint/src-js/package/config.generated.ts"]
+      - any-glob-to-any-file: ["apps/oxlint/test/**", "apps/oxlint/conformance/**"]
 
 A-minifier:
   - changed-files:
