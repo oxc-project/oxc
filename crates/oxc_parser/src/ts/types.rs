@@ -210,6 +210,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         );
 
         let name = self.parse_binding_identifier();
+        self.check_reserved_type_name(&name, "Type parameter");
         let constraint = self.parse_ts_type_constraint();
         let default = self.parse_ts_default_type();
 
@@ -302,6 +303,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_type_parameter_of_infer_type(&mut self) -> Box<'a, TSTypeParameter<'a>> {
         let span = self.start_span();
         let name = self.parse_binding_identifier();
+        self.check_reserved_type_name(&name, "Type parameter");
         let constraint = self.parse_constraint_of_infer_type();
         let span = self.end_span(span);
 

@@ -11,7 +11,6 @@ use oxc_str::Str;
 use crate::{builder::SemanticBuilder, diagnostics};
 
 pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
-    check_type_name_is_reserved(&param.name, ctx, "Type parameter");
     if param.r#in || param.out {
         let is_allowed_node = matches!(
             // skip parent TSTypeParameterDeclaration
@@ -63,13 +62,6 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
         span_with_illegal_modifier,
         &suggestion,
     ));
-}
-
-pub fn check_ts_type_alias_declaration<'a>(
-    decl: &TSTypeAliasDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    check_type_name_is_reserved(&decl.id, ctx, "Type alias");
 }
 
 pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuilder<'a>) {
@@ -169,8 +161,6 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
             ctx.error(diagnostics::enum_member_must_have_initializer(member.span));
         }
     });
-
-    check_type_name_is_reserved(&decl.id, ctx, "Enum");
 }
 
 pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
@@ -216,50 +206,6 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
                 is_in_overload_group = false;
             }
         }
-    }
-    if let Some(id) = &class.id {
-        check_type_name_is_reserved(id, ctx, "Class");
-    }
-}
-
-pub fn check_ts_interface_declaration<'a>(
-    decl: &TSInterfaceDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    check_type_name_is_reserved(&decl.id, ctx, "Interface");
-}
-
-/// ```ts
-/// function checkTypeNameIsReserved(name: Identifier, message: DiagnosticMessage): void {
-///     // TS 1.0 spec (April 2014): 3.6.1
-///     // The predefined type keywords are reserved and cannot be used as names of user defined types.
-///     switch (name.escapedText) {
-///         case "any":
-///         case "unknown":
-///         case "never":
-///         case "number":
-///         case "bigint":
-///         case "boolean":
-///         case "string":
-///         case "symbol":
-///         case "void":
-///         case "object":
-///         case "undefined":
-///             error(name, message, name.escapedText as string);
-///     }
-/// }
-/// ```
-fn check_type_name_is_reserved<'a>(
-    id: &BindingIdentifier<'a>,
-    ctx: &SemanticBuilder<'a>,
-    syntax_name: &str,
-) {
-    match id.name.as_str() {
-        "any" | "unknown" | "never" | "number" | "bigint" | "boolean" | "string" | "symbol"
-        | "void" | "object" | "undefined" => {
-            ctx.error(diagnostics::reserved_type_name(id.span, id.name.as_str(), syntax_name));
-        }
-        _ => {}
     }
 }
 

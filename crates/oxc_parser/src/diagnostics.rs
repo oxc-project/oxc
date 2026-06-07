@@ -1222,6 +1222,19 @@ pub fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
+    let code = match syntax_name {
+        "Type parameter" => "2368",
+        "Interface" => "2427",
+        "Enum" => "2431",
+        "Type alias" => "2457",
+        // "Class" and any other declaration form
+        _ => "2414",
+    };
+    ts_error(code, format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
+}
+
+#[cold]
 pub fn abstract_accessor_cannot_have_implementation(name: &str, span: Span) -> OxcDiagnostic {
     ts_error(
         "1318",
