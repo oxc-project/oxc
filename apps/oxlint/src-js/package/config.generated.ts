@@ -971,7 +971,7 @@ export interface DummyRuleMap {
   "no-prototype-builtins"?: RuleNoConfig;
   "no-redeclare"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRedeclare];
   "no-regex-spaces"?: RuleNoConfig;
-  "no-restricted-exports"?: DummyRule;
+  "no-restricted-exports"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedExportsConfig];
   "no-restricted-globals"?: DummyRule;
   "no-restricted-imports"?: DummyRule;
   "no-restricted-properties"?: DummyRule;
@@ -2763,6 +2763,115 @@ export interface NoRedeclare {
    * When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`).
    */
   builtinGlobals?: boolean;
+}
+export interface NoRestrictedExportsConfig {
+  /**
+   * An object with boolean properties to restrict certain default export
+   * declarations. This option works only if the `restrictedNamedExports`
+   * option does not contain the `"default"` value.
+   */
+  restrictDefaultExports?: RestrictDefaultExports;
+  /**
+   * An array of strings, where each string is a name to be restricted.
+   *
+   * Example of **incorrect** code for `"restrictedNamedExports": ["foo"]`:
+   *
+   * ```ts
+   * export const foo = 1;
+   * ```
+   *
+   * Example of **correct** code for `"restrictedNamedExports": ["foo"]`:
+   *
+   * ```ts
+   * export const bar = 1;
+   * ```
+   *
+   * By design, this option doesn't disallow export default declarations. If
+   * you configure `default` as a restricted name, that restriction will apply
+   * only to named export declarations.
+   *
+   * Example of **incorrect** code for `"restrictedNamedExports": ["default"]`:
+   *
+   * ```ts
+   * function foo() {}
+   * export { foo as default };
+   *
+   * export { default } from "some_module";
+   * ```
+   */
+  restrictedNamedExports?: string[];
+  /**
+   * A string representing a regular expression pattern. Named exports
+   * matching this pattern will be restricted. This option does not apply to
+   * default named exports.
+   *
+   * Example of **incorrect** code for `"restrictedNamedExportsPattern": "bar$":
+   *
+   * ```ts
+   * export const foobar = 1;
+   * ```
+   *
+   * Example of **correct** code for `"restrictedNamedExportsPattern": "bar$":
+   *
+   * ```ts
+   * export const foo = 1;
+   * ```
+   */
+  restrictedNamedExportsPattern?: string;
+}
+export interface RestrictDefaultExports {
+  /**
+   * Whether to restrict `export { default } from` declarations.
+   *
+   * Example of **incorrect** code for `"restrictDefaultExports": { "defaultFrom": true }`:
+   *
+   * ```js
+   * export { default } from 'foo';
+   * ```
+   */
+  defaultFrom?: boolean;
+  /**
+   * Whether to restrict `export default` declarations.
+   *
+   * Example of **incorrect** code for `"restrictDefaultExports": { "direct": true }`:
+   *
+   * ```js
+   * const foo = 123;
+   * export default foo;
+   * ```
+   */
+  direct?: boolean;
+  /**
+   * Whether to restrict `export { foo as default }` declarations.
+   *
+   * Example of **incorrect** code for `"restrictDefaultExports": { "named": true }`:
+   *
+   * ```js
+   * const foo = 123;
+   * export { foo as default };
+   * ```
+   */
+  named?: boolean;
+  /**
+   * Whether to restrict `export { foo as default } from` declarations.
+   *
+   * Example of **incorrect** code for `"restrictDefaultExports": { "namedFrom": true }`:
+   *
+   * ```js
+   * export { foo as default } from 'foo';
+   * ```
+   */
+  namedFrom?: boolean;
+  /**
+   * Whether to restrict `export * as default from` declarations.
+   *
+   * Example of **incorrect** code for `"restrictDefaultExports": { "namespaceFrom": true }`:
+   *
+   * ```js
+   * export * as default from 'foo';
+   * ```
+   */
+  namespaceFrom?: boolean;
 }
 export interface NoSelfAssign {
   /**
