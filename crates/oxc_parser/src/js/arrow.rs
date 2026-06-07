@@ -57,7 +57,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn is_parenthesized_arrow_function_expression(&mut self) -> Tristate {
         match self.cur_kind() {
-            Kind::LParen | Kind::LAngle | Kind::Async => {
+            Kind::LParen => {
+                // `( <literal>` can never be arrow parameters: a literal is not the start of a
+                // `BindingElement`, so the worker would bump past it and return `Tristate::False`
+                // (`!second.is_binding_identifier() && second != This`). Skip the lookahead.
+                if self.lexer.peek_token().kind().is_literal() {
+                    Tristate::False
+                } else {
+                    self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
+                }
+            }
+            Kind::LAngle | Kind::Async => {
                 self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
             }
             _ => Tristate::False,
