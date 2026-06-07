@@ -4783,6 +4783,10 @@ export interface NoArraySort {
 }
 export interface NoNull {
   /**
+   * When set to `true`, disallow the use of `null` as a direct function call or constructor argument.
+   */
+  checkArguments?: boolean;
+  /**
    * When set to `true`, the rule will also check strict equality/inequality comparisons (`===` and `!==`) against `null`.
    */
   checkStrictEquality?: boolean;

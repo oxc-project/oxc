@@ -10917,6 +10917,12 @@ expression: json
     "NoNull": {
       "type": "object",
       "properties": {
+        "checkArguments": {
+          "description": "When set to `true`, disallow the use of `null` as a direct function call or constructor argument.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, disallow the use of `null` as a direct function call or constructor argument."
+        },
         "checkStrictEquality": {
           "description": "When set to `true`, the rule will also check strict equality/inequality comparisons (`===` and `!==`) against `null`.",
           "default": false,
