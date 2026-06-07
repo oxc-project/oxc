@@ -504,6 +504,28 @@
       },
       "additionalProperties": false
     },
+    "CapitalizeOption": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never"
+      ]
+    },
+    "CapitalizedCommentsOptionsDocs": {
+      "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/CapitalizeOption"
+        },
+        {
+          "$ref": "#/definitions/OptionsJsonDoc"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2,
+      "markdownDescription": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options."
+    },
     "CaseType": {
       "type": "string",
       "enum": [
@@ -616,6 +638,27 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to ignore methods that are overridden."
+        }
+      },
+      "additionalProperties": false
+    },
+    "CommentConfigJson": {
+      "type": "object",
+      "properties": {
+        "ignoreConsecutiveComments": {
+          "description": "If true, consecutive comments will be ignored after the first comment.",
+          "type": "boolean",
+          "markdownDescription": "If true, consecutive comments will be ignored after the first comment."
+        },
+        "ignoreInlineComments": {
+          "description": "If true, inline comments (comments in the middle of code) will be ignored.",
+          "type": "boolean",
+          "markdownDescription": "If true, inline comments (comments in the middle of code) will be ignored."
+        },
+        "ignorePattern": {
+          "description": "A regex pattern. Comments that match the pattern will not cause violations.",
+          "type": "string",
+          "markdownDescription": "A regex pattern. Comments that match the pattern will not cause violations."
         }
       },
       "additionalProperties": false
@@ -1089,7 +1132,27 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "capitalized-comments": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CapitalizeOption"
+                },
+                {
+                  "$ref": "#/definitions/OptionsJsonDoc"
+                }
+              ],
+              "maxItems": 3,
+              "minItems": 1
+            }
+          ]
         },
         "class-methods-use-this": {
           "anyOf": [
@@ -10770,6 +10833,25 @@
         }
       },
       "additionalProperties": false
+    },
+    "OptionsJsonDoc": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/CommentConfigJson"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "block": {
+              "$ref": "#/definitions/CommentConfigJson"
+            },
+            "line": {
+              "$ref": "#/definitions/CommentConfigJson"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     },
     "Override": {
       "type": "object",

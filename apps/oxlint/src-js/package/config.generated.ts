@@ -60,7 +60,13 @@ export type LintPluginOptionsSchema =
 export type LintPlugins = LintPluginOptionsSchema[];
 export type Mode2 = "as-needed" | "always" | "never";
 export type RuleNoConfig = AllowWarnDeny | [AllowWarnDeny];
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+export type CapitalizeOption = "always" | "never";
+export type OptionsJsonDoc =
+  | CommentConfigJson
+  | {
+      block?: CommentConfigJson;
+      line?: CommentConfigJson;
+    };
 export type IgnoreClassWithImplements = "all" | "public-fields";
 export type Variant = "classic" | "modified";
 /**
@@ -74,6 +80,7 @@ export type CurlyType = "all" | "multi" | "multi-line" | "multi-or-nest";
 export type CurlyConsistent = "consistent";
 export type CompareType = "always" | "smart";
 export type NullType = "always" | "never" | "ignore";
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type FuncNamesConfigType = "always" | "as-needed" | "never";
 export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
@@ -623,7 +630,11 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, Mode2]
     | [AllowWarnDeny, Mode2, ArrowBodyStyleConfig];
   "block-scoped-var"?: RuleNoConfig;
-  "capitalized-comments"?: DummyRule;
+  "capitalized-comments"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, CapitalizeOption]
+    | [AllowWarnDeny, CapitalizeOption, OptionsJsonDoc];
   "class-methods-use-this"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ClassMethodsUseThisConfig];
   complexity?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | ComplexityConfig];
   "constructor-super"?: RuleNoConfig;
@@ -1594,6 +1605,20 @@ export interface ArrayCallbackReturn {
 }
 export interface ArrowBodyStyleConfig {
   requireReturnForObjectLiteral?: boolean;
+}
+export interface CommentConfigJson {
+  /**
+   * If true, consecutive comments will be ignored after the first comment.
+   */
+  ignoreConsecutiveComments?: boolean;
+  /**
+   * If true, inline comments (comments in the middle of code) will be ignored.
+   */
+  ignoreInlineComments?: boolean;
+  /**
+   * A regex pattern. Comments that match the pattern will not cause violations.
+   */
+  ignorePattern?: string;
 }
 export interface ClassMethodsUseThisConfig {
   /**
