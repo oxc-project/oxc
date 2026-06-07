@@ -10,6 +10,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_vi_mocked_diagnostic(span: Span, mock_type: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer `vi.mocked()` over type assertions using `{mock_type}`"))
+        .with_help("Use `vi.mocked()` instead.")
         .with_label(span)
 }
 
