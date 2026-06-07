@@ -466,11 +466,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => {
-                // Use lookahead to check if this is an asserts type predicate
-                if self.lookahead(|parser| {
-                    parser.bump(Kind::Asserts);
-                    parser.is_token_identifier_or_keyword_on_same_line()
-                }) {
+                // Peek the token after `asserts` to check if this is an asserts type predicate.
+                let next = self.lexer.peek_token();
+                if next.kind().is_identifier_name() && !next.is_on_new_line() {
                     let asserts_start_span = self.start_span();
                     self.bump_any(); // bump `asserts`
                     self.parse_asserts_type_predicate(asserts_start_span)
@@ -481,10 +479,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::TemplateHead => self.parse_template_type(false),
             _ => self.parse_type_reference(),
         }
-    }
-
-    fn is_token_identifier_or_keyword_on_same_line(&self) -> bool {
-        self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
     }
 
     fn parse_keyword_type(&mut self) -> TSType<'a> {
