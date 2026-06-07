@@ -77,7 +77,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
         ]
       },
       {
-        "flags": "SymbolFlags(Function)",
+        "flags": "SymbolFlags(Function | JSXTag)",
         "id": 4,
         "name": "Foo",
         "node": "Function(Foo)",

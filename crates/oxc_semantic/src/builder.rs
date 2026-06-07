@@ -9,7 +9,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::*};
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, walk};
 #[cfg(feature = "cfg")]
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -571,6 +571,10 @@ impl<'a> SemanticBuilder<'a> {
         let refs = self.unresolved_references.take();
         for (name, reference_id) in refs {
             if !self.walk_up_resolve_reference(name, reference_id) {
+                // Strip transient JSXTag flag from unresolved references — it was
+                // only needed to propagate SymbolFlags::JSXTag during resolution,
+                // which didn't happen for this reference.
+                *self.scoping.references[reference_id].flags_mut() -= ReferenceFlags::JSXTag;
                 self.scoping.add_root_unresolved_reference(name, reference_id);
             }
         }
@@ -620,6 +624,8 @@ impl<'a> SemanticBuilder<'a> {
             return false;
         }
 
+        let is_jsx_tag = flags.is_jsx_tag();
+
         if symbol_flags.is_value() && flags.is_value() {
             // The non type-only ExportSpecifier can reference both type/value symbols,
             // if the symbol is a value symbol and reference flag is not type-only,
@@ -637,8 +643,19 @@ impl<'a> SemanticBuilder<'a> {
             //                                            make sure the reference is a type only.
             *flags = ReferenceFlags::Type;
         }
+        // Propagate JSXTag to the symbol and strip it from the reference — the
+        // reference flag is a transient signal used only during resolution, not a
+        // permanent classification. Stripping it avoids the transformer needing to
+        // create replacement references when converting JSX to createElement calls.
+        if is_jsx_tag {
+            *flags -= ReferenceFlags::JSXTag;
+            // `reference` borrow must end before `symbol_flags_mut`
+        }
         reference.set_symbol_id(symbol_id);
         self.scoping.add_resolved_reference(symbol_id, reference_id);
+        if is_jsx_tag {
+            *self.scoping.symbol_flags_mut(symbol_id) |= SymbolFlags::JSXTag;
+        }
         true
     }
 
@@ -2558,6 +2575,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_scope();
         self.leave_node(kind);
+    }
+
+    fn visit_jsx_element_name(&mut self, name: &JSXElementName<'a>) {
+        if matches!(name, JSXElementName::IdentifierReference(_)) {
+            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::JSXTag;
+        }
+        walk::walk_jsx_element_name(self, name);
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {

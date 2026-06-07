@@ -788,7 +788,18 @@ impl<'a> JsxImpl<'a> {
             JSXElementName::Identifier(ident) => {
                 ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }
-            JSXElementName::IdentifierReference(ident) => Expression::Identifier(ident),
+            JSXElementName::IdentifierReference(ident) => {
+                // Clear the SymbolFlags::JSXTag set during semantic analysis — after
+                // transformation to createElement/jsx, the symbol is no longer used
+                // as a JSX tag. ReferenceFlags::JSXTag was already consumed during
+                // reference resolution (it's a transient signal, not stored permanently).
+                if let Some(symbol_id) =
+                    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                {
+                    *ctx.scoping_mut().symbol_flags_mut(symbol_id) -= SymbolFlags::JSXTag;
+                }
+                Expression::Identifier(ident)
+            }
             JSXElementName::MemberExpression(member_expr) => {
                 Self::transform_jsx_member_expression(member_expr, ctx)
             }

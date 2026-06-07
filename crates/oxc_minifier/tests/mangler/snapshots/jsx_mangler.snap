@@ -1,0 +1,45 @@
+---
+source: crates/oxc_minifier/tests/mangler/mod.rs
+---
+function Comp() { return null; } let x = <Comp />;
+function S() {
+	return null;
+}
+let t = <S />;
+
+function Comp() { return null; } let a = 1; let b = 2; let x = <Comp />;
+function S() {
+	return null;
+}
+let t = 1;
+let n = 2;
+let r = <S />;
+
+let ns = { Bar: function() { return null; } }; let x = <ns.Bar />;
+let e = { Bar: function() {
+	return null;
+} };
+let t = <e.Bar />;
+
+function A() { return null; } function B() { return null; } let x = <A />; let y = <B />;
+function S() {
+	return null;
+}
+function C() {
+	return null;
+}
+let n = <S />;
+let r = <C />;
+
+function Comp() { return null; } let x = <Comp />; let y = Comp;
+function S() {
+	return null;
+}
+let t = <S />;
+let n = S;
+
+function Comp() { return null; } let x = <Comp>child</Comp>;
+function S() {
+	return null;
+}
+let t = <S>child</S>;

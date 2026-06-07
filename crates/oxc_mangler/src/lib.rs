@@ -6,11 +6,11 @@ use oxc_index::IndexVec;
 use oxc_syntax::class::ClassId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use base54::base54;
+use base54::{base54, base54_upper_first};
 use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
-use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
+use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, SymbolId};
 use oxc_span::SourceType;
 use oxc_str::{CompactStr, Ident, Str};
 
@@ -296,9 +296,9 @@ impl<'t> Mangler<'t> {
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
         let class_private_mappings = Self::collect_private_members_from_semantic(semantic);
         if self.options.debug {
-            self.build_with_semantic_impl(semantic, program, debug_name);
+            self.build_with_semantic_impl(semantic, program, debug_name, debug_name_upper_first);
         } else {
-            self.build_with_semantic_impl(semantic, program, base54);
+            self.build_with_semantic_impl(semantic, program, base54, base54_upper_first);
         }
         class_private_mappings
     }
@@ -308,6 +308,7 @@ impl<'t> Mangler<'t> {
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
+        generate_name_jsx: fn(u32) -> InlineString<CAPACITY, u8>,
     ) {
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
         let symbols_len = scoping.symbols_len();
@@ -332,6 +333,8 @@ impl<'t> Mangler<'t> {
             iter::repeat_n(SLOT_UNASSIGNED, scoping.symbols_len()),
             temp_allocator,
         );
+
+        let is_jsx_source = program.source_type.is_jsx();
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
         // Pre-allocate capacity based on number of symbols (upper bound for slots).
@@ -429,8 +432,9 @@ impl<'t> Mangler<'t> {
                     .iter()
                     .map(|r| ast_nodes.get_node(r.declaration).scope_id());
 
-                let referenced_scope_ids =
-                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
+                let referenced_scope_ids = scoping
+                    .get_resolved_references(symbol_id)
+                    .map(oxc_semantic::Reference::scope_id);
 
                 // Calculate the scope ids that this symbol is alive in.
                 // For each used_scope_id, we walk up the ancestor chain and collect scopes
@@ -487,13 +491,14 @@ impl<'t> Mangler<'t> {
 
         let total_number_of_slots = slot_liveness.len();
 
-        let frequencies = self.tally_slot_frequencies(
+        let (frequencies, jsx_slots) = self.tally_slot_frequencies(
             scoping,
             exported_symbols.as_ref(),
             keep_name_symbols.as_ref(),
             total_number_of_slots,
             &slots,
             top_level,
+            is_jsx_source,
         );
 
         let root_unresolved_references = scoping.root_unresolved_references();
@@ -529,6 +534,25 @@ impl<'t> Mangler<'t> {
             reserved_names.push(name);
         }
 
+        // Release borrows on `scoping` held via `keep_name_names` and
+        // `eval_reserved_names` (their `&str` values point into scoping's
+        // name storage). These are only needed for name generation above;
+        // the assignment loop below needs `&mut scoping`.
+        //
+        // Save owned copies for the cold JSX fixup path which also generates names.
+        let keep_name_names_owned: Option<FxHashSet<CompactStr>> = if jsx_slots.is_some() {
+            Some(keep_name_names.iter().map(|&n| CompactStr::new(n)).collect())
+        } else {
+            None
+        };
+        let eval_reserved_owned: Option<FxHashSet<CompactStr>> = if jsx_slots.is_some() {
+            Some(eval_reserved_names.iter().map(|&n| CompactStr::new(n)).collect())
+        } else {
+            None
+        };
+        drop(keep_name_names);
+        drop(eval_reserved_names);
+
         // Group similar symbols for smaller gzipped file
         // <https://github.com/google/closure-compiler/blob/c383a3a1d2fce33b6c778ef76b5a626e07abca41/src/com/google/javascript/jscomp/RenameVars.java#L475-L483>
         // Original Comment:
@@ -545,11 +569,10 @@ impl<'t> Mangler<'t> {
 
         let mut freq_iter = frequencies.iter();
         let mut symbols_renamed_in_this_batch = Vec::with_capacity_in(100, temp_allocator);
-        let mut slice_of_same_len_strings = Vec::with_capacity_in(100, temp_allocator);
+        let mut slice_of_same_len_strings: Vec<&InlineString<CAPACITY, u8>> =
+            Vec::with_capacity_in(100, temp_allocator);
         // 2. "N number of vars are going to be assigned names of the same length"
-        for (_, slice_of_same_len_strings_group) in
-            &reserved_names.into_iter().chunk_by(InlineString::len)
-        {
+        for (_, slice_of_same_len_strings_group) in &reserved_names.iter().chunk_by(|n| n.len()) {
             // 1. "The most frequent vars get the shorter names"
             // (freq_iter is sorted by frequency from highest to lowest,
             //  so taking means take the N most frequent symbols remaining)
@@ -578,6 +601,27 @@ impl<'t> Mangler<'t> {
                 }
             }
         }
+
+        // Fixup JSX component slots: replace lowercase-starting names with uppercase
+        // alternatives. JSX treats `<e />` as an HTML element, so component tags must
+        // start with an uppercase letter. Outlined to avoid code-size effects on the
+        // hot assignment loop above.
+        if let Some(jsx_slots) = &jsx_slots {
+            let assigned_names: FxHashSet<CompactStr> =
+                reserved_names.iter().map(|n| CompactStr::new(n.as_str())).collect();
+            fixup_jsx_names(
+                &frequencies,
+                jsx_slots,
+                &assigned_names,
+                &keep_name_names_owned.unwrap(),
+                &eval_reserved_owned.unwrap(),
+                generate_name_jsx,
+                scoping,
+                top_level,
+                &exported_names,
+                temp_allocator,
+            );
+        }
     }
 
     fn tally_slot_frequencies<'a>(
@@ -588,13 +632,18 @@ impl<'t> Mangler<'t> {
         total_number_of_slots: usize,
         slots: &[Slot],
         top_level: bool,
-    ) -> Vec<'a, SlotFrequency<'a>> {
+        is_jsx_source: bool,
+    ) -> (Vec<'a, SlotFrequency<'a>>, Option<BitSet<'a>>) {
         let root_scope_id = scoping.root_scope_id();
         let temp_allocator = self.temp_allocator.as_ref();
         let mut frequencies = Vec::from_iter_in(
             repeat_with(|| SlotFrequency::new(temp_allocator)).take(total_number_of_slots),
             temp_allocator,
         );
+
+        // Track which slots contain JSX component symbols, using a separate BitSet
+        // keyed by slot index (not symbol ID) to avoid bloating SlotFrequency.
+        let mut jsx_slots: Option<BitSet> = None;
 
         for (symbol_id, &slot) in slots.iter().enumerate() {
             if slot == SLOT_UNASSIGNED {
@@ -623,14 +672,32 @@ impl<'t> Mangler<'t> {
             }
             let index = slot as usize;
             frequencies[index].slot = slot;
-            frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
+            let ref_ids = scoping.get_resolved_reference_ids(symbol_id);
+            frequencies[index].frequency += ref_ids.len();
             frequencies[index].symbol_ids.push(symbol_id);
+            // Detect JSX component symbols via the SymbolFlags::JSXTag flag set
+            // during semantic reference resolution — O(1) per symbol, no reference scan.
         }
 
         // Remove slots that have no symbols to rename before sorting.
         frequencies.retain(|x| !x.symbol_ids.is_empty());
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
-        frequencies
+
+        // Detect JSX component slots in a separate pass to keep the hot
+        // frequency-tallying loop above clean for the compiler optimizer.
+        if is_jsx_source {
+            for freq in &frequencies {
+                if freq.symbol_ids.iter().any(|&id| scoping.symbol_flags(id).is_jsx_tag()) {
+                    jsx_slots
+                        .get_or_insert_with(|| {
+                            BitSet::new_in(total_number_of_slots, temp_allocator)
+                        })
+                        .set_bit(freq.slot as usize);
+                }
+            }
+        }
+
+        (frequencies, jsx_slots)
     }
 
     fn collect_exported_symbols<'a>(
@@ -736,6 +803,66 @@ fn is_special_name(name: &str) -> bool {
     matches!(name, "arguments")
 }
 
+/// Replace lowercase-starting mangled names in JSX component slots with
+/// uppercase alternatives from `generate_name_jsx`.
+fn fixup_jsx_names<'a, const CAPACITY: usize>(
+    frequencies: &Vec<'a, SlotFrequency<'a>>,
+    jsx_slots: &BitSet<'a>,
+    assigned_names: &FxHashSet<CompactStr>,
+    keep_name_names: &FxHashSet<CompactStr>,
+    eval_reserved_names: &FxHashSet<CompactStr>,
+    generate_name_jsx: fn(u32) -> InlineString<CAPACITY, u8>,
+    scoping: &mut Scoping,
+    top_level: bool,
+    exported_names: &HashSet<'_, Str<'_>>,
+    temp_allocator: &'a Allocator,
+) {
+    // Generate replacement names on demand, only for slots that actually need
+    // fixup (i.e., whose assigned name starts lowercase). Names are generated
+    // in a first pass (immutable borrow of scoping) then applied in a second
+    // pass (mutable borrow), because scoping's name data and set_symbol_name
+    // cannot be borrowed simultaneously.
+    let root_unresolved_references = scoping.root_unresolved_references();
+    let root_bindings = scoping.get_bindings(scoping.root_scope_id());
+    let mut jsx_count: u32 = 0;
+    // Collect (frequency index, replacement name) pairs. Most JSX slots will
+    // need fixup (base54 starts with lowercase), so pre-allocate for all of them.
+    let jsx_slot_count = jsx_slots.ones().count();
+    let mut jsx_renamings: Vec<(usize, InlineString<CAPACITY, u8>)> =
+        Vec::with_capacity_in(jsx_slot_count, temp_allocator);
+    for (i, freq) in frequencies.iter().enumerate() {
+        if !jsx_slots.has_bit(freq.slot as usize) {
+            continue;
+        }
+        let current_name = scoping.symbol_name(freq.symbol_ids[0]);
+        if current_name.as_bytes().first().is_some_and(u8::is_ascii_uppercase) {
+            continue;
+        }
+        let new_name = loop {
+            let name = generate_name_jsx(jsx_count);
+            jsx_count += 1;
+            let n = name.as_str();
+            if !oxc_syntax::keyword::is_reserved_keyword(n)
+                && !is_special_name(n)
+                && !root_unresolved_references.contains_key(n)
+                && !(root_bindings.contains_key(n) && (!top_level || exported_names.contains(n)))
+                && !keep_name_names.contains(n)
+                && !eval_reserved_names.contains(n)
+                && !assigned_names.contains(n)
+            {
+                break name;
+            }
+        };
+        jsx_renamings.push((i, new_name));
+    }
+    // Apply the fixups.
+    for (i, new_name) in &jsx_renamings {
+        for &symbol_id in &frequencies[*i].symbol_ids {
+            scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
+        }
+    }
+}
+
 #[derive(Debug)]
 struct SlotFrequency<'a> {
     pub slot: Slot,
@@ -755,4 +882,9 @@ fn debug_name(n: u32) -> InlineString<15, u8> {
     // But this function is not for use in production, so let's not worry about it.
     // We shouldn't resort to unsafe code, when it's not critical for performance.
     InlineString::from_str(&format!("slot_{n}"))
+}
+
+// Like `debug_name`, but with a capital S to distinguish JSX component slots.
+fn debug_name_upper_first(n: u32) -> InlineString<15, u8> {
+    InlineString::from_str(&format!("Slot_{n}"))
 }

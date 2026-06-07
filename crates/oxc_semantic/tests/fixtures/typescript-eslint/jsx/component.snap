@@ -18,7 +18,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/component.t
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(Function)",
+        "flags": "SymbolFlags(Function | JSXTag)",
         "id": 0,
         "name": "Foo",
         "node": "Function(Foo)",
