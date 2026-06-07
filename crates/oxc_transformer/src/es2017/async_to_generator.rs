@@ -69,6 +69,7 @@ use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     state::TransformState,
+    utils::sync_function_symbol_flags,
 };
 
 pub struct AsyncToGenerator<'a> {
@@ -294,6 +295,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         func.generator = false;
         func.body = Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(statement)));
         func.scope_id.set(Some(wrapper_scope_id));
+        sync_function_symbol_flags(func, ctx);
     }
 
     /// Transforms [`Function`] whose type is [`FunctionType::FunctionExpression`] to a generator function
@@ -438,6 +440,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         {
             wrapper_function.r#async = false;
             wrapper_function.generator = false;
+            sync_function_symbol_flags(wrapper_function, ctx);
             let statements = ctx.ast.vec1(Self::create_apply_call_statement(&bound_ident, ctx));
             debug_assert!(wrapper_function.body.is_none());
             wrapper_function.body.replace(ctx.ast.alloc_function_body(
@@ -654,9 +657,9 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         params: ArenaBox<'a, FormalParameters<'a>>,
         body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> ArenaBox<'a, Function<'a>> {
-        ctx.ast.alloc_function_with_scope_id(
+        let function = ctx.ast.alloc_function_with_scope_id(
             SPAN,
             r#type,
             id,
@@ -669,7 +672,9 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             NONE,
             Some(body),
             scope_id,
-        )
+        );
+        sync_function_symbol_flags(&function, ctx);
+        function
     }
 
     /// Creates a [`Statement`] that calls the `apply` method on the bound identifier.
