@@ -86,6 +86,7 @@ export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
 export type PropertyKind = "always" | "never";
+export type Target = "single" | "any";
 export type Mode3 = "always" | "never";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type LogicalAssignmentOperatorsMode = "always" | "never";
@@ -731,7 +732,7 @@ export interface DummyRuleMap {
   "import/no-self-import"?: RuleNoConfig;
   "import/no-unassigned-import"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnassignedImportConfig];
   "import/no-webpack-loader-syntax"?: RuleNoConfig;
-  "import/prefer-default-export"?: DummyRule;
+  "import/prefer-default-export"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferDefaultExport];
   "import/unambiguous"?: RuleNoConfig;
   "init-declarations"?:
     | AllowWarnDeny
@@ -2035,6 +2036,12 @@ export interface NoUnassignedImportConfig {
    * `{ "allow": ["** /*.css"] }` will allow unassigned imports for any module ending with `.css`.
    */
   allow?: string[];
+}
+export interface PreferDefaultExport {
+  /**
+   * Configuration option to specify the target type for preferring default exports.
+   */
+  target?: Target;
 }
 export interface InitDeclarationsConfig {
   /**

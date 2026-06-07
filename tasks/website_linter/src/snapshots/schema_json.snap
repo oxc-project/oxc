@@ -1994,7 +1994,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "import/prefer-default-export": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferDefaultExport"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "import/unambiguous": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -12433,6 +12450,22 @@ expression: json
       },
       "additionalProperties": false
     },
+    "PreferDefaultExport": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "description": "Configuration option to specify the target type for preferring default exports.",
+          "default": "single",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Target"
+            }
+          ],
+          "markdownDescription": "Configuration option to specify the target type for preferring default exports."
+        }
+      },
+      "additionalProperties": false
+    },
     "PreferES6ClassOptionType": {
       "oneOf": [
         {
@@ -13612,6 +13645,26 @@ expression: json
         },
         {
           "type": "boolean"
+        }
+      ]
+    },
+    "Target": {
+      "oneOf": [
+        {
+          "description": "Prefer default export when there is only one export in the module.",
+          "type": "string",
+          "enum": [
+            "single"
+          ],
+          "markdownDescription": "Prefer default export when there is only one export in the module."
+        },
+        {
+          "description": "Prefer default export in any module that has exports.",
+          "type": "string",
+          "enum": [
+            "any"
+          ],
+          "markdownDescription": "Prefer default export in any module that has exports."
         }
       ]
     },
