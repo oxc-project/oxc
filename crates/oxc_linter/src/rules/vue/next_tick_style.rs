@@ -29,9 +29,11 @@ fn use_callback_diagnostic(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 enum NextTickOption {
+    /// Require using the Promise returned by `nextTick`.
     #[default]
     #[serde(rename = "promise")]
     Promise,
+    /// Require passing a callback function to `nextTick`.
     #[serde(rename = "callback")]
     Callback,
 }
@@ -171,7 +173,6 @@ fn test() {
                     this.$nextTick().then(() => callback());
                     Vue.nextTick().then(() => callback());
                     nt().then(() => callback());
-
                     await this.$nextTick(); callback();
                     await Vue.nextTick(); callback();
                     await nt(); callback();
@@ -192,7 +193,6 @@ fn test() {
                     this.$nextTick().then(() => callback());
                     Vue.nextTick().then(() => callback());
                     nt().then(() => callback());
-
                     await this.$nextTick(); callback();
                     await Vue.nextTick(); callback();
                     await nt(); callback();
@@ -212,7 +212,6 @@ fn test() {
                     this.$nextTick(() => callback());
                     Vue.nextTick(() => callback());
                     nt(() => callback());
-
                     this.$nextTick(callback);
                     Vue.nextTick(callback);
                     nt(callback);
@@ -232,7 +231,6 @@ fn test() {
                     foo.then(this.$nextTick);
                     foo.then(Vue.nextTick);
                     foo.then(nt);
-
                     foo.then(nt, catchHandler);
                     foo.then(Vue.nextTick, catchHandler);
                     foo.then(this.$nextTick, catchHandler);
@@ -252,7 +250,6 @@ fn test() {
                     foo.then(this.$nextTick);
                     foo.then(Vue.nextTick);
                     foo.then(nt);
-
                     foo.then(nt, catchHandler);
                     foo.then(Vue.nextTick, catchHandler);
                     foo.then(this.$nextTick, catchHandler);
@@ -275,7 +272,6 @@ fn test() {
                     this.$nextTick(() => callback());
                     Vue.nextTick(() => callback());
                     nt(() => callback());
-
                     this.$nextTick(callback);
                     Vue.nextTick(callback);
                     nt(callback);
@@ -295,7 +291,6 @@ fn test() {
                     this.$nextTick(() => callback());
                     Vue.nextTick(() => callback());
                     nt(() => callback());
-
                     this.$nextTick(callback);
                     Vue.nextTick(callback);
                     nt(callback);
@@ -315,7 +310,6 @@ fn test() {
                     this.$nextTick().then(() => callback());
                     Vue.nextTick().then(() => callback());
                     nt().then(() => callback());
-
                     await this.$nextTick(); callback();
                     await Vue.nextTick(); callback();
                     await nt(); callback();
@@ -337,7 +331,6 @@ fn test() {
                     this.$nextTick(() => callback());
                     Vue.nextTick(() => callback());
                     nt(() => callback());
-
                     this.$nextTick(callback);
                     Vue.nextTick(callback);
                     nt(callback);
@@ -352,7 +345,6 @@ fn test() {
                     this.$nextTick().then(() => callback());
                     Vue.nextTick().then(() => callback());
                     nt().then(() => callback());
-
                     this.$nextTick().then(callback);
                     Vue.nextTick().then(callback);
                     nt().then(callback);

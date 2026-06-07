@@ -7640,10 +7640,23 @@ expression: json
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "string",
-                  "enum": [
-                    "promise",
-                    "callback"
+                  "oneOf": [
+                    {
+                      "description": "Require using the Promise returned by `nextTick`.",
+                      "type": "string",
+                      "enum": [
+                        "promise"
+                      ],
+                      "markdownDescription": "Require using the Promise returned by `nextTick`."
+                    },
+                    {
+                      "description": "Require passing a callback function to `nextTick`.",
+                      "type": "string",
+                      "enum": [
+                        "callback"
+                      ],
+                      "markdownDescription": "Require passing a callback function to `nextTick`."
+                    }
                   ]
                 }
               ],
@@ -9567,10 +9580,23 @@ expression: json
       "markdownDescription": "Configure Next.js plugin rules."
     },
     "NextTickOption": {
-      "type": "string",
-      "enum": [
-        "promise",
-        "callback"
+      "oneOf": [
+        {
+          "description": "Require using the Promise returned by `nextTick`.",
+          "type": "string",
+          "enum": [
+            "promise"
+          ],
+          "markdownDescription": "Require using the Promise returned by `nextTick`."
+        },
+        {
+          "description": "Require passing a callback function to `nextTick`.",
+          "type": "string",
+          "enum": [
+            "callback"
+          ],
+          "markdownDescription": "Require passing a callback function to `nextTick`."
+        }
       ]
     },
     "NoAbsolutePath": {
