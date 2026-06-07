@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::AlwaysNever};
 
 /// Common directive prefixes that should be ignored (module-level to avoid items-after-statements)
 const DIRECTIVES: &[&str] = &[
@@ -47,18 +47,10 @@ struct CommentConfig {
     ignore_consecutive_comments: bool,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-enum CapitalizeOption {
-    #[default]
-    Always,
-    Never,
-}
-
 /// Internal configuration structure (boxed for size optimization)
 #[derive(Debug, Clone, Default)]
 pub struct CapitalizedCommentsConfig {
-    capitalize: CapitalizeOption,
+    capitalize: AlwaysNever,
     line_config: CommentConfig,
     block_config: CommentConfig,
 }
@@ -94,7 +86,7 @@ impl CapitalizedComments {
         /// begin with a capital letter. The second element is an optional object
         /// containing additional options.
         #[derive(JsonSchema, Deserialize)]
-        struct CapitalizedCommentsOptionsDocs(CapitalizeOption, Option<OptionsJsonDoc>);
+        struct CapitalizedCommentsOptionsDocs(AlwaysNever, Option<OptionsJsonDoc>);
 
         Some(r#gen.subschema_for::<CapitalizedCommentsOptionsDocs>())
     }
@@ -262,8 +254,8 @@ impl Rule for CapitalizedComments {
 
             let is_uppercase = first_letter.is_uppercase();
             let (wrong_case, correct_case, fixed_letter) = match self.capitalize {
-                CapitalizeOption::Always if !is_uppercase => ("lowercase", "uppercase", upper),
-                CapitalizeOption::Never if is_uppercase => ("uppercase", "lowercase", lower),
+                AlwaysNever::Always if !is_uppercase => ("lowercase", "uppercase", upper),
+                AlwaysNever::Never if is_uppercase => ("uppercase", "lowercase", lower),
                 _ => continue,
             };
 

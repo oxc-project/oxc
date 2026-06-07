@@ -447,6 +447,13 @@
         }
       ]
     },
+    "AlwaysNever": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never"
+      ]
+    },
     "AlwaysReturnConfig": {
       "type": "object",
       "properties": {
@@ -670,19 +677,12 @@
       },
       "additionalProperties": false
     },
-    "CapitalizeOption": {
-      "type": "string",
-      "enum": [
-        "always",
-        "never"
-      ]
-    },
     "CapitalizedCommentsOptionsDocs": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
       "type": "array",
       "items": [
         {
-          "$ref": "#/definitions/CapitalizeOption"
+          "$ref": "#/definitions/AlwaysNever"
         },
         {
           "$ref": "#/definitions/OptionsJsonDoc"
@@ -1367,7 +1367,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/CapitalizeOption"
+                  "$ref": "#/definitions/AlwaysNever"
                 },
                 {
                   "$ref": "#/definitions/OptionsJsonDoc"
@@ -2050,7 +2050,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/Mode3"
+                  "$ref": "#/definitions/AlwaysNever"
                 },
                 {
                   "$ref": "#/definitions/InitDeclarationsConfig"
@@ -2682,7 +2682,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/LogicalAssignmentOperatorsMode"
+                  "$ref": "#/definitions/AlwaysNever"
                 },
                 {
                   "$ref": "#/definitions/LogicalAssignmentOperatorsConfig"
@@ -4252,23 +4252,10 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Requires assignment operator shorthand where possible.",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Requires assignment operator shorthand where possible."
-                    },
-                    {
-                      "description": "Disallows assignment operator shorthand.",
-                      "type": "string",
-                      "enum": [
-                        "never"
-                      ],
-                      "markdownDescription": "Disallows assignment operator shorthand."
-                    }
+                  "type": "string",
+                  "enum": [
+                    "always",
+                    "never"
                   ]
                 }
               ],
@@ -5294,23 +5281,10 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Always prefer ES2015 class-style components.",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Always prefer ES2015 class-style components."
-                    },
-                    {
-                      "description": "Do not allow ES2015 class-style, prefer `createReactClass`.",
-                      "type": "string",
-                      "enum": [
-                        "never"
-                      ],
-                      "markdownDescription": "Do not allow ES2015 class-style, prefer `createReactClass`."
-                    }
+                  "type": "string",
+                  "enum": [
+                    "always",
+                    "never"
                   ]
                 }
               ],
@@ -5380,23 +5354,10 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Enforce state initialization in the constructor.\nThis is the default mode.",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Enforce state initialization in the constructor.\nThis is the default mode."
-                    },
-                    {
-                      "description": "Enforce state initialization with a class property.",
-                      "type": "string",
-                      "enum": [
-                        "never"
-                      ],
-                      "markdownDescription": "Enforce state initialization with a class property."
-                    }
+                  "type": "string",
+                  "enum": [
+                    "always",
+                    "never"
                   ]
                 }
               ],
@@ -8844,7 +8805,7 @@
           "default": "always",
           "allOf": [
             {
-              "$ref": "#/definitions/PropertyKind"
+              "$ref": "#/definitions/AlwaysNever"
             }
           ],
           "markdownDescription": "Whether to check property names for length."
@@ -8942,7 +8903,7 @@
       "type": "array",
       "items": [
         {
-          "$ref": "#/definitions/Mode3"
+          "$ref": "#/definitions/AlwaysNever"
         },
         {
           "$ref": "#/definitions/InitDeclarationsConfig"
@@ -9318,7 +9279,7 @@
       "type": "array",
       "items": [
         {
-          "$ref": "#/definitions/LogicalAssignmentOperatorsMode"
+          "$ref": "#/definitions/AlwaysNever"
         },
         {
           "$ref": "#/definitions/LogicalAssignmentOperatorsConfig"
@@ -9338,26 +9299,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "LogicalAssignmentOperatorsMode": {
-      "oneOf": [
-        {
-          "description": "This option checks for expressions that can be shortened using logical assignment operator.\nFor example, `a = a || b` can be shortened to `a ||= b`.\nExpressions with associativity such as `a = a || b || c` are reported as being able to be shortened to `a ||= b || c` unless the evaluation order is explicitly defined using parentheses, such as `a = (a || b) || c`.",
-          "type": "string",
-          "enum": [
-            "always"
-          ],
-          "markdownDescription": "This option checks for expressions that can be shortened using logical assignment operator.\nFor example, `a = a || b` can be shortened to `a ||= b`.\nExpressions with associativity such as `a = a || b || c` are reported as being able to be shortened to `a ||= b || c` unless the evaluation order is explicitly defined using parentheses, such as `a = (a || b) || c`."
-        },
-        {
-          "description": "This option disallows logical assignment operator shorthand.\nFor example, `a ||= b` should be written as `a = a || b`.",
-          "type": "string",
-          "enum": [
-            "never"
-          ],
-          "markdownDescription": "This option disallows logical assignment operator shorthand.\nFor example, `a ||= b` should be written as `a = a || b`."
-        }
-      ]
     },
     "MaxClassesPerFileConfig": {
       "type": "object",
@@ -9606,46 +9547,6 @@
         "as-needed",
         "always",
         "never"
-      ]
-    },
-    "Mode3": {
-      "oneOf": [
-        {
-          "description": "Requires that variables be initialized on declaration. This is the default behavior.",
-          "type": "string",
-          "enum": [
-            "always"
-          ],
-          "markdownDescription": "Requires that variables be initialized on declaration. This is the default behavior."
-        },
-        {
-          "description": "Disallows initialization during declaration.",
-          "type": "string",
-          "enum": [
-            "never"
-          ],
-          "markdownDescription": "Disallows initialization during declaration."
-        }
-      ]
-    },
-    "Mode4": {
-      "oneOf": [
-        {
-          "description": "Requires assignment operator shorthand where possible.",
-          "type": "string",
-          "enum": [
-            "always"
-          ],
-          "markdownDescription": "Requires assignment operator shorthand where possible."
-        },
-        {
-          "description": "Disallows assignment operator shorthand.",
-          "type": "string",
-          "enum": [
-            "never"
-          ],
-          "markdownDescription": "Disallows assignment operator shorthand."
-        }
       ]
     },
     "MouseEventsHaveKeyEventsConfig": {
@@ -12532,26 +12433,6 @@
       },
       "additionalProperties": false
     },
-    "PreferES6ClassOptionType": {
-      "oneOf": [
-        {
-          "description": "Always prefer ES2015 class-style components.",
-          "type": "string",
-          "enum": [
-            "always"
-          ],
-          "markdownDescription": "Always prefer ES2015 class-style components."
-        },
-        {
-          "description": "Do not allow ES2015 class-style, prefer `createReactClass`.",
-          "type": "string",
-          "enum": [
-            "never"
-          ],
-          "markdownDescription": "Do not allow ES2015 class-style, prefer `createReactClass`."
-        }
-      ]
-    },
     "PreferFunctionComponent": {
       "type": "object",
       "properties": {
@@ -12904,26 +12785,6 @@
       },
       "additionalProperties": false,
       "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
-    },
-    "PropertyKind": {
-      "oneOf": [
-        {
-          "description": "Property names are checked just like other identifiers",
-          "type": "string",
-          "enum": [
-            "always"
-          ],
-          "markdownDescription": "Property names are checked just like other identifiers"
-        },
-        {
-          "description": "Property names are not checked for length.",
-          "type": "string",
-          "enum": [
-            "never"
-          ],
-          "markdownDescription": "Property names are not checked for length."
-        }
-      ]
     },
     "RadixType": {
       "oneOf": [
@@ -13520,26 +13381,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "StateInConstructorConfig": {
-      "oneOf": [
-        {
-          "description": "Enforce state initialization in the constructor.\nThis is the default mode.",
-          "type": "string",
-          "enum": [
-            "always"
-          ],
-          "markdownDescription": "Enforce state initialization in the constructor.\nThis is the default mode."
-        },
-        {
-          "description": "Enforce state initialization with a class property.",
-          "type": "string",
-          "enum": [
-            "never"
-          ],
-          "markdownDescription": "Enforce state initialization with a class property."
-        }
-      ]
     },
     "StrictBooleanExpressionsConfig": {
       "type": "object",

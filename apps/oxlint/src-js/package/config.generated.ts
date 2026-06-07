@@ -60,7 +60,7 @@ export type LintPluginOptionsSchema =
 export type LintPlugins = LintPluginOptionsSchema[];
 export type Mode2 = "as-needed" | "always" | "never";
 export type RuleNoConfig = AllowWarnDeny | [AllowWarnDeny];
-export type CapitalizeOption = "always" | "never";
+export type AlwaysNever = "always" | "never";
 export type OptionsJsonDoc =
   | CommentConfigJson
   | {
@@ -85,11 +85,8 @@ export type FuncNamesConfigType = "always" | "as-needed" | "never";
 export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
-export type PropertyKind = "always" | "never";
 export type Target = "single" | "any";
-export type Mode3 = "always" | "never";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
-export type LogicalAssignmentOperatorsMode = "always" | "never";
 export type CountThis = "always" | "never" | "except-void";
 export type CheckLoopsConfig = boolean | CheckLoops;
 export type CheckLoops = "all" | "allExceptWhileTrue" | "none";
@@ -671,8 +668,8 @@ export interface DummyRuleMap {
   "capitalized-comments"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
-    | [AllowWarnDeny, CapitalizeOption]
-    | [AllowWarnDeny, CapitalizeOption, OptionsJsonDoc];
+    | [AllowWarnDeny, AlwaysNever]
+    | [AllowWarnDeny, AlwaysNever, OptionsJsonDoc];
   "class-methods-use-this"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ClassMethodsUseThisConfig];
   complexity?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | ComplexityConfig];
   "constructor-super"?: RuleNoConfig;
@@ -737,8 +734,8 @@ export interface DummyRuleMap {
   "init-declarations"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
-    | [AllowWarnDeny, Mode3]
-    | [AllowWarnDeny, Mode3, InitDeclarationsConfig];
+    | [AllowWarnDeny, AlwaysNever]
+    | [AllowWarnDeny, AlwaysNever, InitDeclarationsConfig];
   "jest/consistent-test-it"?: DummyRule;
   "jest/expect-expect"?: DummyRule;
   "jest/max-expects"?: DummyRule;
@@ -872,8 +869,8 @@ export interface DummyRuleMap {
   "logical-assignment-operators"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
-    | [AllowWarnDeny, LogicalAssignmentOperatorsMode]
-    | [AllowWarnDeny, LogicalAssignmentOperatorsMode, LogicalAssignmentOperatorsConfig];
+    | [AllowWarnDeny, AlwaysNever]
+    | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig];
   "max-classes-per-file"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxClassesPerFileConfig];
   "max-depth"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxDepth];
   "max-lines"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxLinesConfig];
@@ -1831,7 +1828,7 @@ export interface IdLengthConfig {
   /**
    * Whether to check property names for length.
    */
-  properties?: PropertyKind;
+  properties?: AlwaysNever;
 }
 export interface IdMatchOptions {
   /**
