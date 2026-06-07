@@ -1180,7 +1180,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, SortOrder]
     | [AllowWarnDeny, SortOrder, SortKeysOptions];
-  "sort-vars"?: DummyRule;
+  "sort-vars"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SortVars];
   "symbol-description"?: RuleNoConfig;
   "typescript/adjacent-overload-signatures"?: RuleNoConfig;
   "typescript/array-type"?: DummyRule;
@@ -3985,6 +3985,12 @@ export interface SortKeysOptions {
    * Use natural sort order so that, for example, "a2" comes before "a10".
    */
   natural?: boolean;
+}
+export interface SortVars {
+  /**
+   * When `true`, the rule ignores case-sensitivity when sorting variables.
+   */
+  ignoreCase?: boolean;
 }
 export interface ConsistentReturnConfig {
   /**

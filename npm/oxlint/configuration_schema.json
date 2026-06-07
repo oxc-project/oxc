@@ -5455,7 +5455,24 @@
           ]
         },
         "sort-vars": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/SortVars"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "symbol-description": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -13372,6 +13389,18 @@
         "asc"
       ],
       "markdownDescription": "Sorting order for keys. Accepts \"asc\" for ascending or \"desc\" for descending."
+    },
+    "SortVars": {
+      "type": "object",
+      "properties": {
+        "ignoreCase": {
+          "description": "When `true`, the rule ignores case-sensitivity when sorting variables.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When `true`, the rule ignores case-sensitivity when sorting variables."
+        }
+      },
+      "additionalProperties": false
     },
     "SpecOnlyConfig": {
       "type": "object",

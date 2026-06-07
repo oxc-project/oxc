@@ -19,7 +19,7 @@ fn sort_vars_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SortVars {
     /// When `true`, the rule ignores case-sensitivity when sorting variables.
     ignore_case: bool,
