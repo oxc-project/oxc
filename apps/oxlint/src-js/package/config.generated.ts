@@ -127,6 +127,7 @@ export type CaughtErrorsJson = "all" | "none";
 export type NoUnusedVarsFixMode = "off" | "suggestion" | "fix" | "safe-fix";
 export type Location = "start" | "anywhere";
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
+export type Destructuring = "any" | "all";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
  */
@@ -1068,7 +1069,7 @@ export interface DummyRuleMap {
   "oxc/only-used-in-recursion"?: RuleNoConfig;
   "oxc/uninvoked-array-callback"?: RuleNoConfig;
   "prefer-arrow-callback"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferArrowCallbackConfig];
-  "prefer-const"?: DummyRule;
+  "prefer-const"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferConstConfig];
   "prefer-destructuring"?: DummyRule;
   "prefer-exponentiation-operator"?: RuleNoConfig;
   "prefer-named-capture-group"?: RuleNoConfig;
@@ -3420,6 +3421,17 @@ export interface NoRestSpreadPropertiesOptions {
 export interface PreferArrowCallbackConfig {
   allowNamedFunctions?: boolean;
   allowUnboundThis?: boolean;
+}
+export interface PreferConstConfig {
+  /**
+   * Configures how destructuring assignments are handled.
+   */
+  destructuring?: Destructuring;
+  /**
+   * If `true`, the rule will not report variables that are read before their initial assignment.
+   * This is mainly useful for preventing conflicts with the `typescript/no-use-before-define` rule.
+   */
+  ignoreReadBeforeAssign?: boolean;
 }
 export interface PreferPromiseRejectErrors {
   /**

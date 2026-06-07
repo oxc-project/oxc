@@ -1194,6 +1194,26 @@
       },
       "additionalProperties": false
     },
+    "Destructuring": {
+      "oneOf": [
+        {
+          "description": "Warn if any of the variables in a destructuring assignment should be `const`.",
+          "type": "string",
+          "enum": [
+            "any"
+          ],
+          "markdownDescription": "Warn if any of the variables in a destructuring assignment should be `const`."
+        },
+        {
+          "description": "Only warn if all variables in a destructuring assignment should be `const`. Otherwise, ignore them.",
+          "type": "string",
+          "enum": [
+            "all"
+          ],
+          "markdownDescription": "Only warn if all variables in a destructuring assignment should be `const`. Otherwise, ignore them."
+        }
+      ]
+    },
     "DisplayNameConfig": {
       "type": "object",
       "properties": {
@@ -4381,7 +4401,24 @@
           ]
         },
         "prefer-const": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferConst"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "prefer-destructuring": {
           "$ref": "#/definitions/DummyRule"
@@ -12312,6 +12349,31 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "If true, enforces the rule even after an `await` or `yield` expression."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferConst": {
+      "$ref": "#/definitions/PreferConstConfig"
+    },
+    "PreferConstConfig": {
+      "type": "object",
+      "properties": {
+        "destructuring": {
+          "description": "Configures how destructuring assignments are handled.",
+          "default": "any",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Destructuring"
+            }
+          ],
+          "markdownDescription": "Configures how destructuring assignments are handled."
+        },
+        "ignoreReadBeforeAssign": {
+          "description": "If `true`, the rule will not report variables that are read before their initial assignment.\nThis is mainly useful for preventing conflicts with the `typescript/no-use-before-define` rule.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `true`, the rule will not report variables that are read before their initial assignment.\nThis is mainly useful for preventing conflicts with the `typescript/no-use-before-define` rule."
         }
       },
       "additionalProperties": false
