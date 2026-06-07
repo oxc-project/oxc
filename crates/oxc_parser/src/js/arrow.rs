@@ -200,6 +200,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> bool {
+        // An unparenthesized async arrow is `async <BindingIdentifier> =>`, so the token right after
+        // `async` (the caller guarantees `cur` is `async`) must be a same-line binding identifier.
+        // Peek it before the lookahead, which is still needed to look past the identifier for `=>`.
+        let peeked = self.lexer.peek_token();
+        if peeked.is_on_new_line() || !peeked.kind().is_binding_identifier() {
+            return false;
+        }
         // Use lookahead to avoid checkpoint/rewind
         self.lookahead(|parser| {
             parser.bump(Kind::Async);
