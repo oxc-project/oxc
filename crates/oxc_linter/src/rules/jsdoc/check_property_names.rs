@@ -104,7 +104,7 @@ impl Rule for CheckPropertyNames {
                     .iter()
                     .map(|span| {
                         LabeledSpan::at(
-                            (span.start as usize)..(span.end as usize),
+                            span.start..span.end,
                             "Duplicated property",
                         )
                     })

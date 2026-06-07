@@ -146,8 +146,7 @@ impl<'a> FromIn<'a, &LabeledSpan> for ErrorLabel<'a> {
     fn from_in(label: &LabeledSpan, allocator: &'a Allocator) -> Self {
         Self {
             message: label.label().map(|message| Str::from_in(message, allocator)),
-            #[expect(clippy::cast_possible_truncation)]
-            span: Span::sized(label.offset() as u32, label.len() as u32),
+            span: Span::sized(label.offset(), label.len()),
         }
     }
 }

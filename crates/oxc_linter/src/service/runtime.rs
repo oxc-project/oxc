@@ -1095,7 +1095,7 @@ impl Runtime {
                             if let Some(labels) = &mut diagnostic.labels {
                                 for label in labels.iter_mut() {
                                     label.set_span_offset(
-                                        label.offset() + section_source.start as usize,
+                                        label.offset() + section_source.start,
                                     );
                                 }
                             }

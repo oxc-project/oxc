@@ -310,3 +310,7 @@ overflow-checks = true # Catch arithmetic overflow errors
 [profile.dev-no-debug-assertions]
 inherits = "dev"
 debug-assertions = false
+
+# Pending oxc-miette release with u32 SourceSpan: https://github.com/oxc-project/oxc-miette/pull/180
+[patch.crates-io]
+oxc-miette = { git = "https://github.com/oxc-project/oxc-miette.git", branch = "perf/u32-source-span" }

@@ -68,7 +68,7 @@ impl Rule for NoSparseArrays {
                 })
                 .map(|elision| {
                     LabeledSpan::at(
-                        (elision.span.start as usize)..(elision.span.start as usize),
+                        elision.span.start..elision.span.start,
                         "unexpected comma",
                     )
                 })
@@ -86,7 +86,7 @@ impl Rule for NoSparseArrays {
                         LabeledSpan::at(array_expr.span, "the array here")
                     } else {
                         LabeledSpan::at(
-                            (array_expr.span.start as usize)..(array_expr.span.start as usize),
+                            array_expr.span.start..array_expr.span.start,
                             "the array starting here",
                         )
                     };

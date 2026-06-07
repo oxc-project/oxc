@@ -72,12 +72,11 @@ pub struct ErrorLabel {
 }
 
 impl From<&LabeledSpan> for ErrorLabel {
-    #[expect(clippy::cast_possible_truncation)]
     fn from(label: &LabeledSpan) -> Self {
         Self {
             message: label.label().map(ToString::to_string),
-            start: label.offset() as u32,
-            end: (label.offset() + label.len()) as u32,
+            start: label.offset(),
+            end: label.offset() + label.len(),
         }
     }
 }

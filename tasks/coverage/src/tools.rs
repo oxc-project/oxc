@@ -150,7 +150,7 @@ fn is_error_suppressed_by_ts_ignore(
     let Some(first_label) = labels.first() else {
         return false;
     };
-    let error_offset = first_label.offset();
+    let error_offset = first_label.offset() as usize;
 
     // Check if any ts-ignore span covers the line before this error
     for ts_ignore_span in ts_ignore_spans {
