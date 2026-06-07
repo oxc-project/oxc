@@ -278,4 +278,98 @@ impl<'a> AstBuilder<'a> {
             NONE,
         ))
     }
+
+    /* ---------- Template literals ---------- */
+
+    /// Build a [`TemplateElement`], escaping special characters in the raw value.
+    ///
+    /// Like [`AstBuilder::template_element`], but escapes backticks, `${`, backslashes, and carriage
+    /// returns in `value.raw` first.
+    #[inline]
+    pub fn template_element_escape_raw(
+        self,
+        span: Span,
+        mut value: TemplateElementValue<'a>,
+        tail: bool,
+    ) -> TemplateElement<'a> {
+        value.raw = escape_template_element_raw(value.raw.as_str(), self);
+        self.template_element(span, value, tail)
+    }
+
+    /// Build a [`TemplateElement`] with `lone_surrogates`, escaping special characters in the raw value.
+    ///
+    /// Like [`AstBuilder::template_element_with_lone_surrogates`], but escapes backticks, `${`,
+    /// backslashes, and carriage returns in `value.raw` first.
+    #[inline]
+    pub fn template_element_escape_raw_with_lone_surrogates(
+        self,
+        span: Span,
+        mut value: TemplateElementValue<'a>,
+        tail: bool,
+        lone_surrogates: bool,
+    ) -> TemplateElement<'a> {
+        value.raw = escape_template_element_raw(value.raw.as_str(), self);
+        self.template_element_with_lone_surrogates(span, value, tail, lone_surrogates)
+    }
+}
+
+/// Escape special characters for template element raw value.
+///
+/// Escapes: backticks, `${`, backslashes, and carriage returns.
+fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Str<'a> {
+    let bytes = raw.as_bytes();
+
+    // Calculate size needed for escaped string
+    let mut extra_bytes = 0usize;
+    for i in 0..bytes.len() {
+        extra_bytes += match bytes[i] {
+            b'\\' | b'`' | b'\r' => 1,
+            b'$' if bytes.get(i + 1) == Some(&b'{') => 1,
+            _ => 0,
+        };
+    }
+    if extra_bytes == 0 {
+        return ast.str(raw);
+    }
+
+    // Allocate directly in arena
+    let len = bytes.len() + extra_bytes;
+    let layout = std::alloc::Layout::array::<u8>(len).unwrap();
+    let ptr = ast.allocator.alloc_layout(layout);
+
+    // SAFETY: `ptr` points to `len` bytes of valid memory allocated by the arena.
+    // Input is valid UTF-8, we only escape ASCII bytes, so output is also valid UTF-8.
+    unsafe {
+        let escaped = std::slice::from_raw_parts_mut(ptr.as_ptr(), len);
+        let mut j = 0;
+        for i in 0..bytes.len() {
+            match bytes[i] {
+                b'\\' => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'\\';
+                    j += 2;
+                }
+                b'`' => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'`';
+                    j += 2;
+                }
+                b'$' if bytes.get(i + 1) == Some(&b'{') => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'$';
+                    j += 2;
+                }
+                b'\r' => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'r';
+                    j += 2;
+                }
+                b => {
+                    *escaped.get_unchecked_mut(j) = b;
+                    j += 1;
+                }
+            }
+        }
+        Str::from(std::str::from_utf8_unchecked(escaped))
+    }
 }

@@ -645,12 +645,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
+        // Parser provides already-escaped values from source, so no escaping needed here
         self.ast.template_element_with_lone_surrogates(
             span,
             TemplateElementValue { raw, cooked },
             tail,
             lone_surrogates,
-            false, // escape_raw: parser provides already-escaped values from source
         )
     }
 
