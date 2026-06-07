@@ -11,6 +11,7 @@ use oxc_syntax::{
 };
 
 use super::{
+    arrow::ArrowAttempt,
     grammar::CoverGrammar,
     operator::{
         kind_to_precedence, map_assignment_operator, map_binary_operator, map_logical_operator,
@@ -1425,16 +1426,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_yield_expression();
         }
         // `() => {}`, `(x) => {}`
-        if let Some(mut arrow_expr) = self
+        let cover_mode = match self
             .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
         {
-            if has_no_side_effects_comment
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-            {
-                func.pure = true;
+            ArrowAttempt::Parsed(mut arrow_expr) => {
+                if has_no_side_effects_comment
+                    && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                {
+                    func.pure = true;
+                }
+                return arrow_expr;
             }
-            return arrow_expr;
-        }
+            // `( a )`: parse once as an expression below, then refine to an arrow if `=>` follows.
+            ArrowAttempt::Cover => true,
+            ArrowAttempt::NotArrow => false,
+        };
         // `async x => {}`
         if let Some(mut arrow_expr) = self
             .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
@@ -1449,7 +1455,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let span = self.start_span();
         let lhs_parenthesized = self.at(Kind::LParen);
-        let lhs = self.parse_binary_expression_or_higher(Precedence::Comma);
+        let mut lhs = self.parse_binary_expression_or_higher(Precedence::Comma);
+        // `( a ) =>`: refine the parenthesized identifier into arrow params. Returns `lhs` unchanged
+        // (no token consumed) when `=>` does not follow, so parsing continues as a paren expression.
+        if cover_mode {
+            match self.try_refine_cover_arrow(span, lhs, allow_return_type_in_arrow_function) {
+                Ok(mut arrow_expr) => {
+                    if has_no_side_effects_comment
+                        && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                    {
+                        func.pure = true;
+                    }
+                    return arrow_expr;
+                }
+                Err(orig) => lhs = orig,
+            }
+        }
         let lhs_parenthesized_span = lhs_parenthesized.then(|| self.end_span(span));
         let kind = self.cur_kind();
 
