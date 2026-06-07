@@ -285,6 +285,124 @@
       },
       "additionalProperties": false
     },
+    "AllowKind": {
+      "description": "Kinds of functions that can be allowed to be empty.",
+      "oneOf": [
+        {
+          "description": "Allow empty regular functions.\n\n```js\nfunction foo() {}\n```",
+          "type": "string",
+          "enum": [
+            "functions"
+          ],
+          "markdownDescription": "Allow empty regular functions.\n\n```js\nfunction foo() {}\n```"
+        },
+        {
+          "description": "Allow empty arrow functions.\n\n```js\nconst foo = () => {};\n```",
+          "type": "string",
+          "enum": [
+            "arrowFunctions"
+          ],
+          "markdownDescription": "Allow empty arrow functions.\n\n```js\nconst foo = () => {};\n```"
+        },
+        {
+          "description": "Allow empty generator functions.\n\n```js\nfunction* foo() {}\n```",
+          "type": "string",
+          "enum": [
+            "generatorFunctions"
+          ],
+          "markdownDescription": "Allow empty generator functions.\n\n```js\nfunction* foo() {}\n```"
+        },
+        {
+          "description": "Allow empty methods.\n\n```js\nclass Foo {\nbar() {}\n}\n```",
+          "type": "string",
+          "enum": [
+            "methods"
+          ],
+          "markdownDescription": "Allow empty methods.\n\n```js\nclass Foo {\nbar() {}\n}\n```"
+        },
+        {
+          "description": "Allow empty generator methods.\n\n```js\nclass Foo {\n*bar() {}\n}\n```",
+          "type": "string",
+          "enum": [
+            "generatorMethods"
+          ],
+          "markdownDescription": "Allow empty generator methods.\n\n```js\nclass Foo {\n*bar() {}\n}\n```"
+        },
+        {
+          "description": "Allow empty getters.\n\n```js\nclass Foo {\nget bar() {}\n}\n```",
+          "type": "string",
+          "enum": [
+            "getters"
+          ],
+          "markdownDescription": "Allow empty getters.\n\n```js\nclass Foo {\nget bar() {}\n}\n```"
+        },
+        {
+          "description": "Allow empty setters.\n\n```js\nclass Foo {\nset bar(value) {}\n}\n```",
+          "type": "string",
+          "enum": [
+            "setters"
+          ],
+          "markdownDescription": "Allow empty setters.\n\n```js\nclass Foo {\nset bar(value) {}\n}\n```"
+        },
+        {
+          "description": "Allow empty constructors.\n\n```js\nclass Foo {\nconstructor() {}\n}\n```",
+          "type": "string",
+          "enum": [
+            "constructors"
+          ],
+          "markdownDescription": "Allow empty constructors.\n\n```js\nclass Foo {\nconstructor() {}\n}\n```"
+        },
+        {
+          "description": "Allow empty async functions.\n\n```js\nasync function foo() {}\n```",
+          "type": "string",
+          "enum": [
+            "asyncFunctions"
+          ],
+          "markdownDescription": "Allow empty async functions.\n\n```js\nasync function foo() {}\n```"
+        },
+        {
+          "description": "Allow empty async methods.\n\n```js\nclass Foo {\nasync bar() {}\n}\n```",
+          "type": "string",
+          "enum": [
+            "asyncMethods"
+          ],
+          "markdownDescription": "Allow empty async methods.\n\n```js\nclass Foo {\nasync bar() {}\n}\n```"
+        },
+        {
+          "description": "Allow empty private constructors.\n\n```ts\nclass Foo {\nprivate constructor() {}\n}\n```",
+          "type": "string",
+          "enum": [
+            "privateConstructors"
+          ],
+          "markdownDescription": "Allow empty private constructors.\n\n```ts\nclass Foo {\nprivate constructor() {}\n}\n```"
+        },
+        {
+          "description": "Allow empty protected constructors.\n\n```ts\nclass Foo {\nprotected constructor() {}\n}\n```",
+          "type": "string",
+          "enum": [
+            "protectedConstructors"
+          ],
+          "markdownDescription": "Allow empty protected constructors.\n\n```ts\nclass Foo {\nprotected constructor() {}\n}\n```"
+        },
+        {
+          "description": "Allow empty decorated functions.\n\n```js\nclass Foo {\n@decorator()\nbar() {}\n}\n```",
+          "type": "string",
+          "enum": [
+            "decoratedFunctions"
+          ],
+          "markdownDescription": "Allow empty decorated functions.\n\n```js\nclass Foo {\n@decorator()\nbar() {}\n}\n```"
+        },
+        {
+          "description": "Allow empty override methods.\n\n```ts\nclass Foo extends Base {\noverride bar() {}\n}\n```",
+          "type": "string",
+          "enum": [
+            "overrideMethods"
+          ],
+          "markdownDescription": "Allow empty override methods.\n\n```ts\nclass Foo extends Base {\noverride bar() {}\n}\n```"
+        }
+      ],
+      "markdownDescription": "Kinds of functions that can be allowed to be empty."
+    },
     "AllowWarnDeny": {
       "oneOf": [
         {
@@ -2902,7 +3020,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-empty-function": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoEmptyFunctionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "no-empty-pattern": {
           "anyOf": [
@@ -9560,6 +9695,20 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "If set to `true`, allows an empty `catch` block without triggering the linter."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoEmptyFunctionConfig": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "Types of functions that are allowed to be empty.\n\nBy default, no function kinds are allowed to be empty, but this option can be used to\npermit specific kinds of functions.\n\nExample:\n```json\n{\n\"no-empty-function\": [\"error\", { \"allow\": [\"constructors\"] }]\n}\n```",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AllowKind"
+          },
+          "markdownDescription": "Types of functions that are allowed to be empty.\n\nBy default, no function kinds are allowed to be empty, but this option can be used to\npermit specific kinds of functions.\n\nExample:\n```json\n{\n\"no-empty-function\": [\"error\", { \"allow\": [\"constructors\"] }]\n}\n```"
         }
       },
       "additionalProperties": false
