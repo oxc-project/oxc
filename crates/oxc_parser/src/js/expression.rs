@@ -1415,6 +1415,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let lhs_parenthesized = self.at(Kind::LParen);
         let lhs = self.parse_binary_expression_or_higher(Precedence::Comma);
         let lhs_parenthesized_span = lhs_parenthesized.then(|| self.end_span(span));
+        self.finish_assignment_expression_or_higher(
+            span,
+            lhs,
+            lhs_parenthesized_span,
+            allow_return_type_in_arrow_function,
+            pure_comment_index,
+            has_no_side_effects_comment,
+        )
+    }
+
+    /// Finish parsing an assignment-expression-or-higher once its binary-expression LHS has been
+    /// parsed: apply a trailing `=> {}` arrow, an assignment operator, or a conditional, and
+    /// propagate pure / no-side-effects annotations. Shared by
+    /// [`Self::parse_assignment_expression_or_higher_impl`] and the forward-parsing entry points
+    /// that build the LHS from an already-consumed primary.
+    fn finish_assignment_expression_or_higher(
+        &mut self,
+        span: u32,
+        lhs: Expression<'a>,
+        lhs_parenthesized_span: Option<Span>,
+        allow_return_type_in_arrow_function: bool,
+        pure_comment_index: Option<usize>,
+        has_no_side_effects_comment: bool,
+    ) -> Expression<'a> {
         let kind = self.cur_kind();
 
         // `x => {}`
