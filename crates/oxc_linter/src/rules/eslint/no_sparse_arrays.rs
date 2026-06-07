@@ -67,10 +67,7 @@ impl Rule for NoSparseArrays {
                     _ => None,
                 })
                 .map(|elision| {
-                    LabeledSpan::at(
-                        elision.span.start..elision.span.start,
-                        "unexpected comma",
-                    )
+                    LabeledSpan::at(elision.span.start..elision.span.start, "unexpected comma")
                 })
                 .collect::<Vec<_>>();
 

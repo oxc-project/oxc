@@ -100,8 +100,7 @@ pub fn message_to_lsp_diagnostic(
             .map(|span| {
                 let offset = span.offset();
                 let start_position = offset_to_position(rope, offset, source_text);
-                let end_position =
-                    offset_to_position(rope, offset + span.len(), source_text);
+                let end_position = offset_to_position(rope, offset + span.len(), source_text);
 
                 ls_types::DiagnosticRelatedInformation {
                     location: ls_types::Location {

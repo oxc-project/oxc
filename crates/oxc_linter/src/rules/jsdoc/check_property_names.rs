@@ -102,12 +102,7 @@ impl Rule for CheckPropertyNames {
             for (type_name, spans) in seen.iter().filter(|(_, spans)| 1 < spans.len()) {
                 let labels = spans
                     .iter()
-                    .map(|span| {
-                        LabeledSpan::at(
-                            span.start..span.end,
-                            "Duplicated property",
-                        )
-                    })
+                    .map(|span| LabeledSpan::at(span.start..span.end, "Duplicated property"))
                     .collect::<Vec<_>>();
                 ctx.diagnostic(
                     OxcDiagnostic::warn("Duplicate @property found.")
