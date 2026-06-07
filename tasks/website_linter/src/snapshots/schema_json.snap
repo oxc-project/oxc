@@ -2069,7 +2069,24 @@ expression: json
           ]
         },
         "jest/expect-expect": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExpectExpectConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/max-expects": {
           "$ref": "#/definitions/DummyRule"
@@ -7130,7 +7147,24 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/expect-expect": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExpectExpectConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/hoisted-apis-on-top": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7788,6 +7822,32 @@ expression: json
             }
           ],
           "markdownDescription": "Configuration for whether to allow/disallow comparisons against `null`,\ne.g. `foo == null` or `foo != null`"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExpectExpectConfig": {
+      "type": "object",
+      "properties": {
+        "additionalTestBlockFunctions": {
+          "description": "An array of function names that should also be treated as test blocks.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of function names that should also be treated as test blocks."
+        },
+        "assertFunctionNames": {
+          "description": "A list of function names that should be treated as assertion functions.\n\nNOTE: The default value is `[\"expect\"]` for Jest and\n`[\"expect\", \"expectTypeOf\", \"assert\", \"assertType\"]` for Vitest.",
+          "default": [
+            "expect"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of function names that should be treated as assertion functions.\n\nNOTE: The default value is `[\"expect\"]` for Jest and\n`[\"expect\", \"expectTypeOf\", \"assert\", \"assertType\"]` for Vitest."
         }
       },
       "additionalProperties": false

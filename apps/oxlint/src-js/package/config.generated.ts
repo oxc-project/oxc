@@ -770,7 +770,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, AlwaysNever]
     | [AllowWarnDeny, AlwaysNever, InitDeclarationsConfig];
   "jest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
-  "jest/expect-expect"?: DummyRule;
+  "jest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
   "jest/max-expects"?: DummyRule;
   "jest/max-nested-describe"?: DummyRule;
   "jest/no-alias-methods"?: RuleNoConfig;
@@ -1516,7 +1516,7 @@ export interface DummyRuleMap {
   "vitest/consistent-test-filename"?: DummyRule;
   "vitest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
   "vitest/consistent-vitest-vi"?: DummyRule;
-  "vitest/expect-expect"?: DummyRule;
+  "vitest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
   "vitest/hoisted-apis-on-top"?: RuleNoConfig;
   "vitest/max-expects"?: DummyRule;
   "vitest/max-nested-describe"?: DummyRule;
@@ -2141,6 +2141,19 @@ export interface ConsistentTestItConfig {
    * ```
    */
   withinDescribe?: TestCaseName;
+}
+export interface ExpectExpectConfig {
+  /**
+   * An array of function names that should also be treated as test blocks.
+   */
+  additionalTestBlockFunctions?: string[];
+  /**
+   * A list of function names that should be treated as assertion functions.
+   *
+   * NOTE: The default value is `["expect"]` for Jest and
+   * `["expect", "expectTypeOf", "assert", "assertType"]` for Vitest.
+   */
+  assertFunctionNames?: string[];
 }
 export interface PreferImportingJestGlobalsConfig {
   /**
