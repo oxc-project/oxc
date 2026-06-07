@@ -38,7 +38,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn is_using_statement(&mut self) -> bool {
-        self.lookahead(Self::is_next_token_using_keyword_then_binding_identifier)
+        // `await using` requires `using` immediately after `await` on the same line. Cheaply peek
+        // for it first, so the common `await <expr>` statement avoids the heavier `lookahead`
+        // (checkpoint + rewind) and only `await using` pays for the binding-identifier check.
+        let next = self.lexer.peek_token();
+        next.kind() == Kind::Using
+            && !next.is_on_new_line()
+            && self.lookahead(Self::is_next_token_using_keyword_then_binding_identifier)
     }
 
     fn is_next_token_using_keyword_then_binding_identifier(&mut self) -> bool {
