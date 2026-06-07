@@ -124,13 +124,13 @@
 
 ## svelte
 
-### Option 1: 77/77 (100.00%)
+### Option 1: 78/78 (100.00%)
 
 ```json
 {"printWidth":80,"svelte":{}}
 ```
 
-### Option 2: 77/77 (100.00%)
+### Option 2: 78/78 (100.00%)
 
 ```json
 {"printWidth":120,"singleQuote":true,"htmlWhitespaceSensitivity":"ignore","bracketSameLine":true,"svelteIndentScriptAndStyle":true,"svelteSortOrder":"options-scripts-styles-markup","svelte":{"indentScriptAndStyle":true,"sortOrder":"options-scripts-styles-markup"}}
