@@ -1653,24 +1653,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Prefer `import type { Foo } from 'foo'` for type imports.",
-                      "type": "string",
-                      "enum": [
-                        "prefer-top-level"
-                      ],
-                      "markdownDescription": "Prefer `import type { Foo } from 'foo'` for type imports."
-                    },
-                    {
-                      "description": "Prefer `import { type Foo } from 'foo'` for type imports.",
-                      "type": "string",
-                      "enum": [
-                        "prefer-inline"
-                      ],
-                      "markdownDescription": "Prefer `import { type Foo } from 'foo'` for type imports."
-                    }
-                  ]
+                  "$ref": "#/definitions/Mode"
                 }
               ],
               "maxItems": 2,
@@ -1702,24 +1685,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Forces absolute imports to be listed before relative imports.\n\nExamples of **incorrect** code for this rule with `\"absolute-first\"`:\n```js\nimport { x } from './foo';\nimport { y } from 'bar'\n```\n\nExamples of **correct** code for this rule with `\"absolute-first\"`:\n```js\nimport { y } from 'bar';\nimport { x } from './foo'\n```",
-                      "type": "string",
-                      "enum": [
-                        "absolute-first"
-                      ],
-                      "markdownDescription": "Forces absolute imports to be listed before relative imports.\n\nExamples of **incorrect** code for this rule with `\"absolute-first\"`:\n```js\nimport { x } from './foo';\nimport { y } from 'bar'\n```\n\nExamples of **correct** code for this rule with `\"absolute-first\"`:\n```js\nimport { y } from 'bar';\nimport { x } from './foo'\n```"
-                    },
-                    {
-                      "description": "Disables the absolute-first behavior.\nThis is the default behavior.",
-                      "type": "string",
-                      "enum": [
-                        "disable-absolute-first"
-                      ],
-                      "markdownDescription": "Disables the absolute-first behavior.\nThis is the default behavior."
-                    }
-                  ]
+                  "$ref": "#/definitions/AbsoluteFirst"
                 }
               ],
               "maxItems": 2,
@@ -1742,16 +1708,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "type": "integer",
-                      "format": "uint",
-                      "minimum": 0.0
-                    },
-                    {
-                      "$ref": "#/definitions/MaxDependenciesConfig"
-                    }
-                  ]
+                  "$ref": "#/definitions/MaxDependenciesConfigJson"
                 }
               ],
               "maxItems": 2,
@@ -3021,24 +2978,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Allow assignments in conditional expressions only if they are\nenclosed in parentheses.",
-                      "type": "string",
-                      "enum": [
-                        "except-parens"
-                      ],
-                      "markdownDescription": "Allow assignments in conditional expressions only if they are\nenclosed in parentheses."
-                    },
-                    {
-                      "description": "Disallow all assignments in conditional expressions.",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Disallow all assignments in conditional expressions."
-                    }
-                  ]
+                  "$ref": "#/definitions/NoCondAssignConfig"
                 }
               ],
               "maxItems": 2,
@@ -3730,24 +3670,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Disallow all assignments in return statements.",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Disallow all assignments in return statements."
-                    },
-                    {
-                      "description": "Allow assignments in return statements only if they are enclosed in parentheses.\nThis is the default mode.",
-                      "type": "string",
-                      "enum": [
-                        "except-parens"
-                      ],
-                      "markdownDescription": "Allow assignments in return statements only if they are enclosed in parentheses.\nThis is the default mode."
-                    }
-                  ]
+                  "$ref": "#/definitions/NoReturnAssignMode"
                 }
               ],
               "maxItems": 2,
@@ -4015,14 +3938,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/VarsOption"
-                    },
-                    {
-                      "$ref": "#/definitions/NoUnusedVarsOptions"
-                    }
-                  ]
+                  "$ref": "#/definitions/NoUnusedVarsConfig"
                 }
               ],
               "maxItems": 2,
@@ -4178,9 +4094,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "description": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\n\nDefault: `\"err\"`.",
-                  "type": "string",
-                  "markdownDescription": "The rule takes a single string option: the name of the error parameter.\n\nThis can be either:\n- an exact name (e.g. `\"err\"`, `\"error\"`)\n- a regexp pattern (e.g. `\"^(err|error)$\"`)\n\nIf the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.\n\nDefault: `\"err\"`."
+                  "$ref": "#/definitions/HandleCallbackErrConfig"
                 }
               ],
               "maxItems": 2,
@@ -4252,11 +4166,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "string",
-                  "enum": [
-                    "always",
-                    "never"
-                  ]
+                  "$ref": "#/definitions/AlwaysNever"
                 }
               ],
               "maxItems": 2,
@@ -4682,24 +4592,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Always require the radix parameter when using `parseInt()`.",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Always require the radix parameter when using `parseInt()`."
-                    },
-                    {
-                      "description": "Only require the radix parameter when necessary.",
-                      "type": "string",
-                      "enum": [
-                        "as-needed"
-                      ],
-                      "markdownDescription": "Only require the radix parameter when necessary."
-                    }
-                  ]
+                  "$ref": "#/definitions/RadixType"
                 }
               ],
               "maxItems": 2,
@@ -4909,24 +4802,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "This is the default mode. It will enforce the shorthand syntax for React fragments, with one exception.\nKeys or attributes are not supported by the shorthand syntax, so the rule will not warn on standard-form fragments that use those.\n\nExamples of **incorrect** code for this rule:\n```jsx\n<React.Fragment><Foo /></React.Fragment>\n```\n\nExamples of **correct** code for this rule:\n```jsx\n<><Foo /></>\n```\n\n```jsx\n<React.Fragment key=\"key\"><Foo /></React.Fragment>\n```",
-                      "type": "string",
-                      "enum": [
-                        "syntax"
-                      ],
-                      "markdownDescription": "This is the default mode. It will enforce the shorthand syntax for React fragments, with one exception.\nKeys or attributes are not supported by the shorthand syntax, so the rule will not warn on standard-form fragments that use those.\n\nExamples of **incorrect** code for this rule:\n```jsx\n<React.Fragment><Foo /></React.Fragment>\n```\n\nExamples of **correct** code for this rule:\n```jsx\n<><Foo /></>\n```\n\n```jsx\n<React.Fragment key=\"key\"><Foo /></React.Fragment>\n```"
-                    },
-                    {
-                      "description": "This mode enforces the standard form for React fragments.\n\nExamples of **incorrect** code for this rule:\n```jsx\n<><Foo /></>\n```\n\nExamples of **correct** code for this rule:\n```jsx\n<React.Fragment><Foo /></React.Fragment>\n```\n\n```jsx\n<React.Fragment key=\"key\"><Foo /></React.Fragment>\n```",
-                      "type": "string",
-                      "enum": [
-                        "element"
-                      ],
-                      "markdownDescription": "This mode enforces the standard form for React fragments.\n\nExamples of **incorrect** code for this rule:\n```jsx\n<><Foo /></>\n```\n\nExamples of **correct** code for this rule:\n```jsx\n<React.Fragment><Foo /></React.Fragment>\n```\n\n```jsx\n<React.Fragment key=\"key\"><Foo /></React.Fragment>\n```"
-                    }
-                  ]
+                  "$ref": "#/definitions/FragmentMode"
                 }
               ],
               "maxItems": 2,
@@ -5068,24 +4944,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Allow `setState` calls in nested functions within `componentDidMount`, the default behavior.",
-                      "type": "string",
-                      "enum": [
-                        "allowed"
-                      ],
-                      "markdownDescription": "Allow `setState` calls in nested functions within `componentDidMount`, the default behavior."
-                    },
-                    {
-                      "description": "When set, also disallows `setState` calls in nested functions within `componentDidMount`.",
-                      "type": "string",
-                      "enum": [
-                        "disallow-in-func"
-                      ],
-                      "markdownDescription": "When set, also disallows `setState` calls in nested functions within `componentDidMount`."
-                    }
-                  ]
+                  "$ref": "#/definitions/NoDidMountSetStateConfig"
                 }
               ],
               "maxItems": 2,
@@ -5224,24 +5083,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.",
-                      "type": "string",
-                      "enum": [
-                        "allowed"
-                      ],
-                      "markdownDescription": "Forbids any call to `this.setState` in `componentWillUpdate` outside of functions."
-                    },
-                    {
-                      "description": "Makes this rule more strict by disallowing calls to `this.setState`` even within functions.",
-                      "type": "string",
-                      "enum": [
-                        "disallow-in-func"
-                      ],
-                      "markdownDescription": "Makes this rule more strict by disallowing calls to `this.setState`` even within functions."
-                    }
-                  ]
+                  "$ref": "#/definitions/NoWillUpdateSetStateConfig"
                 }
               ],
               "maxItems": 2,
@@ -5281,11 +5123,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "string",
-                  "enum": [
-                    "always",
-                    "never"
-                  ]
+                  "$ref": "#/definitions/AlwaysNever"
                 }
               ],
               "maxItems": 2,
@@ -5354,11 +5192,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "string",
-                  "enum": [
-                    "always",
-                    "never"
-                  ]
+                  "$ref": "#/definitions/AlwaysNever"
                 }
               ],
               "maxItems": 2,
@@ -5511,24 +5345,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Enforce using readonly fields for literal values.\n\nExamples of **incorrect** code with this option:\n```ts\nclass C {\nget name() {\nreturn \"oxc\";\n}\n}\n```\n\nExamples of **correct** code with this option:\n```ts\nclass C {\nreadonly name = \"oxc\";\n}\n```",
-                      "type": "string",
-                      "enum": [
-                        "fields"
-                      ],
-                      "markdownDescription": "Enforce using readonly fields for literal values.\n\nExamples of **incorrect** code with this option:\n```ts\nclass C {\nget name() {\nreturn \"oxc\";\n}\n}\n```\n\nExamples of **correct** code with this option:\n```ts\nclass C {\nreadonly name = \"oxc\";\n}\n```"
-                    },
-                    {
-                      "description": "Enforce using getters for literal values.\n\nExamples of **incorrect** code with this option:\n```ts\nclass C {\nreadonly name = \"oxc\";\n}\n```\n\nExamples of **correct** code with this option:\n```ts\nclass C {\nget name() {\nreturn \"oxc\";\n}\n}\n```",
-                      "type": "string",
-                      "enum": [
-                        "getters"
-                      ],
-                      "markdownDescription": "Enforce using getters for literal values.\n\nExamples of **incorrect** code with this option:\n```ts\nclass C {\nreadonly name = \"oxc\";\n}\n```\n\nExamples of **correct** code with this option:\n```ts\nclass C {\nget name() {\nreturn \"oxc\";\n}\n}\n```"
-                    }
-                  ]
+                  "$ref": "#/definitions/ClassLiteralPropertyStyleOption"
                 }
               ],
               "maxItems": 2,
@@ -5551,24 +5368,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "When set to `record`, enforces the use of a `Record` for indexed object types, e.g. `Record<string, unknown>`.",
-                      "type": "string",
-                      "enum": [
-                        "record"
-                      ],
-                      "markdownDescription": "When set to `record`, enforces the use of a `Record` for indexed object types, e.g. `Record<string, unknown>`."
-                    },
-                    {
-                      "description": "When set to `index-signature`, enforces the use of indexed signature types, e.g. `{ [key: string]: unknown }`.",
-                      "type": "string",
-                      "enum": [
-                        "index-signature"
-                      ],
-                      "markdownDescription": "When set to `index-signature`, enforces the use of indexed signature types, e.g. `{ [key: string]: unknown }`."
-                    }
-                  ]
+                  "$ref": "#/definitions/ConsistentIndexedObjectStyleConfig"
                 }
               ],
               "maxItems": 2,
@@ -5611,24 +5411,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Prefer `interface` over `type` for object type definitions:\n\n```typescript\ninterface T {\nx: number;\n}\n```",
-                      "type": "string",
-                      "enum": [
-                        "interface"
-                      ],
-                      "markdownDescription": "Prefer `interface` over `type` for object type definitions:\n\n```typescript\ninterface T {\nx: number;\n}\n```"
-                    },
-                    {
-                      "description": "Prefer `type` over `interface` for object type definitions:\n\n```typescript\ntype T = { x: number };\n```",
-                      "type": "string",
-                      "enum": [
-                        "type"
-                      ],
-                      "markdownDescription": "Prefer `type` over `interface` for object type definitions:\n\n```typescript\ntype T = { x: number };\n```"
-                    }
-                  ]
+                  "$ref": "#/definitions/ConsistentTypeDefinitionsConfig"
                 }
               ],
               "maxItems": 2,
@@ -5751,24 +5534,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Enforce using property signature for functions. Use this to enforce maximum correctness together with TypeScript's strict mode.",
-                      "type": "string",
-                      "enum": [
-                        "property"
-                      ],
-                      "markdownDescription": "Enforce using property signature for functions. Use this to enforce maximum correctness together with TypeScript's strict mode."
-                    },
-                    {
-                      "description": "Enforce using method signature for functions. Use this if you aren't using TypeScript's strict mode and prefer this style.",
-                      "type": "string",
-                      "enum": [
-                        "method"
-                      ],
-                      "markdownDescription": "Enforce using method signature for functions. Use this if you aren't using TypeScript's strict mode and prefer this style."
-                    }
-                  ]
+                  "$ref": "#/definitions/MethodSignatureStyleConfig"
                 }
               ],
               "maxItems": 2,
@@ -6479,40 +6245,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Require `await` when returning Promises inside try/catch/finally blocks.\nThis ensures proper error handling and stack traces.",
-                      "type": "string",
-                      "enum": [
-                        "in-try-catch"
-                      ],
-                      "markdownDescription": "Require `await` when returning Promises inside try/catch/finally blocks.\nThis ensures proper error handling and stack traces."
-                    },
-                    {
-                      "description": "Require `await` before returning Promises in all cases.\nExample: `return await Promise.resolve()` is required.",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Require `await` before returning Promises in all cases.\nExample: `return await Promise.resolve()` is required."
-                    },
-                    {
-                      "description": "Require `await` only when it affects error handling correctness.\nOnly flags cases where omitting await would change error handling behavior.",
-                      "type": "string",
-                      "enum": [
-                        "error-handling-correctness-only"
-                      ],
-                      "markdownDescription": "Require `await` only when it affects error handling correctness.\nOnly flags cases where omitting await would change error handling behavior."
-                    },
-                    {
-                      "description": "Disallow `await` before returning Promises in all cases.\nExample: `return Promise.resolve()` is required (no await).",
-                      "type": "string",
-                      "enum": [
-                        "never"
-                      ],
-                      "markdownDescription": "Disallow `await` before returning Promises in all cases.\nExample: `return Promise.resolve()` is required (no await)."
-                    }
-                  ]
+                  "$ref": "#/definitions/ReturnAwaitOption"
                 }
               ],
               "maxItems": 2,
@@ -6638,24 +6371,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Always require a Unicode BOM (Byte Order Mark) at the beginning of the file.",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Always require a Unicode BOM (Byte Order Mark) at the beginning of the file."
-                    },
-                    {
-                      "description": "Never allow a Unicode BOM (Byte Order Mark) at the beginning of the file.\nThis is the default option.",
-                      "type": "string",
-                      "enum": [
-                        "never"
-                      ],
-                      "markdownDescription": "Never allow a Unicode BOM (Byte Order Mark) at the beginning of the file.\nThis is the default option."
-                    }
-                  ]
+                  "$ref": "#/definitions/BomOptionType"
                 }
               ],
               "maxItems": 2,
@@ -7199,24 +6915,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Always enforce ternary usage when the branches can be safely merged.",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Always enforce ternary usage when the branches can be safely merged."
-                    },
-                    {
-                      "description": "Only enforce ternary usage when the condition and both branches are single-line.",
-                      "type": "string",
-                      "enum": [
-                        "only-single-line"
-                      ],
-                      "markdownDescription": "Only enforce ternary usage when the condition and both branches are single-line."
-                    }
-                  ]
+                  "$ref": "#/definitions/PreferTernaryOption"
                 }
               ],
               "maxItems": 2,
@@ -7242,24 +6941,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Never use a `./` prefix.",
-                      "type": "string",
-                      "enum": [
-                        "never"
-                      ],
-                      "markdownDescription": "Never use a `./` prefix."
-                    },
-                    {
-                      "description": "Always add a `./` prefix to the relative URL when possible.",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Always add a `./` prefix to the relative URL when possible."
-                    }
-                  ]
+                  "$ref": "#/definitions/RelativeUrlStyleConfig"
                 }
               ],
               "maxItems": 2,
@@ -7294,24 +6976,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Always require braces in case clauses (except empty cases).",
-                      "type": "string",
-                      "enum": [
-                        "always"
-                      ],
-                      "markdownDescription": "Always require braces in case clauses (except empty cases)."
-                    },
-                    {
-                      "description": "Allow braces only when needed for scoping (e.g., variable or function declarations).",
-                      "type": "string",
-                      "enum": [
-                        "avoid"
-                      ],
-                      "markdownDescription": "Allow braces only when needed for scoping (e.g., variable or function declarations)."
-                    }
-                  ]
+                  "$ref": "#/definitions/SwitchCaseBracesConfig"
                 }
               ],
               "maxItems": 2,
@@ -7650,11 +7315,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "type": "string",
-                  "enum": [
-                    "PascalCase",
-                    "kebab-case"
-                  ]
+                  "$ref": "#/definitions/CaseType"
                 }
               ],
               "maxItems": 2,
@@ -7674,32 +7335,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Enforces the use of a named TypeScript type or interface as the\nargument to `defineEmits`, e.g. `defineEmits<MyEmits>()`.",
-                      "type": "string",
-                      "enum": [
-                        "type-based"
-                      ],
-                      "markdownDescription": "Enforces the use of a named TypeScript type or interface as the\nargument to `defineEmits`, e.g. `defineEmits<MyEmits>()`."
-                    },
-                    {
-                      "description": "Enforces the use of an inline type literal as the argument to\n`defineEmits`, e.g. `defineEmits<{ (event: string): void }>()`.",
-                      "type": "string",
-                      "enum": [
-                        "type-literal"
-                      ],
-                      "markdownDescription": "Enforces the use of an inline type literal as the argument to\n`defineEmits`, e.g. `defineEmits<{ (event: string): void }>()`."
-                    },
-                    {
-                      "description": "Enforces the use of runtime declaration, where emits are declared\nusing an array or object, e.g. `defineEmits(['event1', 'event2'])`.",
-                      "type": "string",
-                      "enum": [
-                        "runtime"
-                      ],
-                      "markdownDescription": "Enforces the use of runtime declaration, where emits are declared\nusing an array or object, e.g. `defineEmits(['event1', 'event2'])`."
-                    }
-                  ]
+                  "$ref": "#/definitions/DeclarationStyle"
                 }
               ],
               "maxItems": 2,
@@ -7719,24 +7355,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Enforce type-based declaration.",
-                      "type": "string",
-                      "enum": [
-                        "type-based"
-                      ],
-                      "markdownDescription": "Enforce type-based declaration."
-                    },
-                    {
-                      "description": "Enforce runtime declaration.",
-                      "type": "string",
-                      "enum": [
-                        "runtime"
-                      ],
-                      "markdownDescription": "Enforce runtime declaration."
-                    }
-                  ]
+                  "$ref": "#/definitions/DeclarationStyle2"
                 }
               ],
               "maxItems": 2,
@@ -7779,24 +7398,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "oneOf": [
-                    {
-                      "description": "Require using the Promise returned by `nextTick`.",
-                      "type": "string",
-                      "enum": [
-                        "promise"
-                      ],
-                      "markdownDescription": "Require using the Promise returned by `nextTick`."
-                    },
-                    {
-                      "description": "Require passing a callback function to `nextTick`.",
-                      "type": "string",
-                      "enum": [
-                        "callback"
-                      ],
-                      "markdownDescription": "Require passing a callback function to `nextTick`."
-                    }
-                  ]
+                  "$ref": "#/definitions/NextTickOption"
                 }
               ],
               "maxItems": 2,

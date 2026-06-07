@@ -85,9 +85,13 @@ export type FuncNamesConfigType = "always" | "as-needed" | "never";
 export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
+export type Mode = "prefer-top-level" | "prefer-inline";
+export type AbsoluteFirst = "absolute-first" | "disable-absolute-first";
+export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type CountThis = "always" | "never" | "except-void";
+export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
 export type CheckLoops = "all" | "allExceptWhileTrue" | "none";
 /**
@@ -114,18 +118,33 @@ export type AllowKind =
 export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
+export type NoReturnAssignMode = "always" | "except-parens";
 /**
  * Controls how hoisting is handled when checking for shadowing.
  */
 export type HoistOption = "all" | "functions" | "functions-and-types" | "never" | "types";
+export type NoUnusedVarsConfig = VarsOption | NoUnusedVarsOptions;
 export type VarsOption = "all" | "local";
 export type ArgsOption = "after-used" | "all" | "none";
 export type IgnorePatternFor_String = null | string;
 export type CaughtErrorsJson = "all" | "none";
 export type NoUnusedVarsFixMode = "off" | "suggestion" | "fix" | "safe-fix";
 export type Location = "start" | "anywhere";
+/**
+ * The rule takes a single string option: the name of the error parameter.
+ *
+ * This can be either:
+ * - an exact name (e.g. `"err"`, `"error"`)
+ * - a regexp pattern (e.g. `"^(err|error)$"`)
+ *
+ * If the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.
+ *
+ * Default: `"err"`.
+ */
+export type HandleCallbackErrConfig = string;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 export type Destructuring = "any" | "all";
+export type RadixType = "always" | "as-needed";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
  */
@@ -150,13 +169,20 @@ export type ForbidItem2 =
       message?: string;
     };
 export type EnforceBooleanAttribute = "always" | "never";
+export type FragmentMode = "syntax" | "element";
+export type NoDidMountSetStateConfig = "allowed" | "disallow-in-func";
+export type NoWillUpdateSetStateConfig = "allowed" | "disallow-in-func";
 export type RequireFlag = "u" | "v";
 export type ImportKind = "none" | "all" | "multiple" | "single";
 /**
  * Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
  */
 export type SortOrder = "desc" | "asc";
+export type ClassLiteralPropertyStyleOption = "fields" | "getters";
+export type ConsistentIndexedObjectStyleConfig = "record" | "index-signature";
+export type ConsistentTypeDefinitionsConfig = "interface" | "type";
 export type AccessibilityLevel = "explicit" | "no-public" | "off";
+export type MethodSignatureStyleConfig = "property" | "method";
 /**
  * Type or value specifier for matching specific declarations
  *
@@ -194,6 +220,15 @@ export type FileFrom = "file";
 export type NameSpecifier = string | string[];
 export type LibFrom = "lib";
 export type PackageFrom = "package";
+export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-correctness-only" | "never";
+export type BomOptionType = "always" | "never";
+export type PreferTernaryOption = "always" | "only-single-line";
+export type RelativeUrlStyleConfig = "never" | "always";
+export type SwitchCaseBracesConfig = "always" | "avoid";
+export type CaseType = "PascalCase" | "kebab-case";
+export type DeclarationStyle = "type-based" | "type-literal" | "runtime";
+export type DeclarationStyle2 = "type-based" | "runtime";
+export type NextTickOption = "promise" | "callback";
 export type CaseType2 = "camelCase" | "snake_case";
 export type AllowYoda = "never" | "always";
 export type OxlintOverrides = OxlintOverride[];
@@ -695,17 +730,14 @@ export interface DummyRuleMap {
   "guard-for-in"?: RuleNoConfig;
   "id-length"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, IdLengthConfig];
   "id-match"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, string] | [AllowWarnDeny, string, IdMatchOptions];
-  "import/consistent-type-specifier-style"?:
-    | AllowWarnDeny
-    | [AllowWarnDeny]
-    | [AllowWarnDeny, "prefer-top-level" | "prefer-inline"];
+  "import/consistent-type-specifier-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, Mode];
   "import/default"?: RuleNoConfig;
   "import/export"?: RuleNoConfig;
   "import/exports-last"?: RuleNoConfig;
   "import/extensions"?: DummyRule;
-  "import/first"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "absolute-first" | "disable-absolute-first"];
+  "import/first"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AbsoluteFirst];
   "import/group-exports"?: RuleNoConfig;
-  "import/max-dependencies"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxDependenciesConfig];
+  "import/max-dependencies"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxDependenciesConfigJson];
   "import/named"?: RuleNoConfig;
   "import/namespace"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, Namespace];
   "import/newline-after-import"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NewlineAfterImport];
@@ -909,7 +941,7 @@ export interface DummyRuleMap {
   "no-case-declarations"?: RuleNoConfig;
   "no-class-assign"?: RuleNoConfig;
   "no-compare-neg-zero"?: RuleNoConfig;
-  "no-cond-assign"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "except-parens" | "always"];
+  "no-cond-assign"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoCondAssignConfig];
   "no-console"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoConsoleConfig];
   "no-const-assign"?: RuleNoConfig;
   "no-constant-binary-expression"?: RuleNoConfig;
@@ -984,7 +1016,7 @@ export interface DummyRuleMap {
   "no-restricted-globals"?: DummyRule;
   "no-restricted-imports"?: DummyRule;
   "no-restricted-properties"?: DummyRule;
-  "no-return-assign"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "except-parens"];
+  "no-return-assign"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoReturnAssignMode];
   "no-script-url"?: RuleNoConfig;
   "no-self-assign"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoSelfAssign];
   "no-self-compare"?: RuleNoConfig;
@@ -1011,7 +1043,7 @@ export interface DummyRuleMap {
   "no-unused-expressions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnusedExpressionsConfig];
   "no-unused-labels"?: RuleNoConfig;
   "no-unused-private-class-members"?: RuleNoConfig;
-  "no-unused-vars"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, VarsOption | NoUnusedVarsOptions];
+  "no-unused-vars"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnusedVarsConfig];
   "no-use-before-define"?: DummyRule;
   "no-useless-assignment"?: RuleNoConfig;
   "no-useless-backreference"?: RuleNoConfig;
@@ -1029,7 +1061,7 @@ export interface DummyRuleMap {
   "no-with"?: RuleNoConfig;
   "node/callback-return"?: DummyRule;
   "node/global-require"?: RuleNoConfig;
-  "node/handle-callback-err"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, string];
+  "node/handle-callback-err"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, HandleCallbackErrConfig];
   "node/no-exports-assign"?: RuleNoConfig;
   "node/no-new-require"?: RuleNoConfig;
   "node/no-path-concat"?: RuleNoConfig;
@@ -1039,7 +1071,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, ShorthandType]
     | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
-  "operator-assignment"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "never"];
+  "operator-assignment"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AlwaysNever];
   "oxc/approx-constant"?: RuleNoConfig;
   "oxc/bad-array-method-on-arguments"?: RuleNoConfig;
   "oxc/bad-bitwise-operator"?: RuleNoConfig;
@@ -1096,7 +1128,7 @@ export interface DummyRuleMap {
   "promise/prefer-catch"?: RuleNoConfig;
   "promise/spec-only"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SpecOnlyConfig];
   "promise/valid-params"?: RuleNoConfig;
-  radix?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "as-needed"];
+  radix?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RadixType];
   "react-perf/jsx-no-jsx-as-prop"?: RuleNoConfig;
   "react-perf/jsx-no-new-array-as-prop"?: RuleNoConfig;
   "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig;
@@ -1121,7 +1153,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, EnforceBooleanAttribute, JsxBooleanValueOptions];
   "react/jsx-curly-brace-presence"?: DummyRule;
   "react/jsx-filename-extension"?: DummyRule;
-  "react/jsx-fragments"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "syntax" | "element"];
+  "react/jsx-fragments"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, FragmentMode];
   "react/jsx-handler-names"?: DummyRule;
   "react/jsx-key"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxKeyConfig];
   "react/jsx-max-depth"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxMaxDepthConfig];
@@ -1140,7 +1172,7 @@ export interface DummyRuleMap {
   "react/no-clone-element"?: RuleNoConfig;
   "react/no-danger"?: RuleNoConfig;
   "react/no-danger-with-children"?: RuleNoConfig;
-  "react/no-did-mount-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "allowed" | "disallow-in-func"];
+  "react/no-did-mount-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDidMountSetStateConfig];
   "react/no-did-update-set-state"?: DummyRule;
   "react/no-direct-mutation-state"?: RuleNoConfig;
   "react/no-find-dom-node"?: RuleNoConfig;
@@ -1158,15 +1190,15 @@ export interface DummyRuleMap {
   "react/no-unknown-property"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnknownPropertyConfig];
   "react/no-unsafe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnsafeConfig];
   "react/no-unstable-nested-components"?: DummyRule;
-  "react/no-will-update-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "allowed" | "disallow-in-func"];
+  "react/no-will-update-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoWillUpdateSetStateConfig];
   "react/only-export-components"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, OnlyExportComponentsConfig];
-  "react/prefer-es6-class"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "never"];
+  "react/prefer-es6-class"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AlwaysNever];
   "react/prefer-function-component"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferFunctionComponent];
   "react/react-in-jsx-scope"?: RuleNoConfig;
   "react/require-render-return"?: RuleNoConfig;
   "react/rules-of-hooks"?: RuleNoConfig;
   "react/self-closing-comp"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SelfClosingComp];
-  "react/state-in-constructor"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "never"];
+  "react/state-in-constructor"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AlwaysNever];
   "react/style-prop-object"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, StylePropObjectConfig];
   "react/void-dom-elements-no-children"?: RuleNoConfig;
   "require-await"?: RuleNoConfig;
@@ -1186,15 +1218,21 @@ export interface DummyRuleMap {
   "typescript/ban-ts-comment"?: DummyRule;
   "typescript/ban-tslint-comment"?: RuleNoConfig;
   "typescript/ban-types"?: RuleNoConfig;
-  "typescript/class-literal-property-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "fields" | "getters"];
+  "typescript/class-literal-property-style"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, ClassLiteralPropertyStyleOption];
   "typescript/consistent-generic-constructors"?: DummyRule;
   "typescript/consistent-indexed-object-style"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
-    | [AllowWarnDeny, "record" | "index-signature"];
+    | [AllowWarnDeny, ConsistentIndexedObjectStyleConfig];
   "typescript/consistent-return"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentReturnConfig];
   "typescript/consistent-type-assertions"?: DummyRule;
-  "typescript/consistent-type-definitions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "interface" | "type"];
+  "typescript/consistent-type-definitions"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, ConsistentTypeDefinitionsConfig];
   "typescript/consistent-type-exports"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTypeExportsConfig];
   "typescript/consistent-type-imports"?: DummyRule;
   "typescript/dot-notation"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DotNotationConfig];
@@ -1210,7 +1248,7 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, ExplicitModuleBoundaryTypesConfig];
-  "typescript/method-signature-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "property" | "method"];
+  "typescript/method-signature-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MethodSignatureStyleConfig];
   "typescript/no-array-delete"?: RuleNoConfig;
   "typescript/no-base-to-string"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoBaseToStringConfig];
   "typescript/no-confusing-non-null-assertion"?: RuleNoConfig;
@@ -1318,10 +1356,7 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, RestrictTemplateExpressionsConfig];
-  "typescript/return-await"?:
-    | AllowWarnDeny
-    | [AllowWarnDeny]
-    | [AllowWarnDeny, "in-try-catch" | "always" | "error-handling-correctness-only" | "never"];
+  "typescript/return-await"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReturnAwaitOption];
   "typescript/strict-boolean-expressions"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
@@ -1335,7 +1370,7 @@ export interface DummyRuleMap {
   "typescript/unbound-method"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, UnboundMethodConfig];
   "typescript/unified-signatures"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, UnifiedSignaturesOptions];
   "typescript/use-unknown-in-catch-callback-variable"?: RuleNoConfig;
-  "unicode-bom"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "never"];
+  "unicode-bom"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, BomOptionType];
   "unicorn/catch-error-name"?: DummyRule;
   "unicorn/consistent-assert"?: RuleNoConfig;
   "unicorn/consistent-date-clone"?: RuleNoConfig;
@@ -1457,16 +1492,16 @@ export interface DummyRuleMap {
   "unicorn/prefer-string-starts-ends-with"?: RuleNoConfig;
   "unicorn/prefer-string-trim-start-end"?: RuleNoConfig;
   "unicorn/prefer-structured-clone"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferStructuredCloneConfig];
-  "unicorn/prefer-ternary"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "only-single-line"];
+  "unicorn/prefer-ternary"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferTernaryOption];
   "unicorn/prefer-top-level-await"?: RuleNoConfig;
   "unicorn/prefer-type-error"?: RuleNoConfig;
-  "unicorn/relative-url-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "never" | "always"];
+  "unicorn/relative-url-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RelativeUrlStyleConfig];
   "unicorn/require-array-join-separator"?: RuleNoConfig;
   "unicorn/require-module-attributes"?: RuleNoConfig;
   "unicorn/require-module-specifiers"?: RuleNoConfig;
   "unicorn/require-number-to-fixed-digits-argument"?: RuleNoConfig;
   "unicorn/require-post-message-target-origin"?: RuleNoConfig;
-  "unicorn/switch-case-braces"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "avoid"];
+  "unicorn/switch-case-braces"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SwitchCaseBracesConfig];
   "unicorn/switch-case-break-position"?: RuleNoConfig;
   "unicorn/text-encoding-identifier-case"?:
     | AllowWarnDeny
@@ -1551,18 +1586,12 @@ export interface DummyRuleMap {
   "vitest/valid-expect-in-promise"?: RuleNoConfig;
   "vitest/valid-title"?: DummyRule;
   "vitest/warn-todo"?: RuleNoConfig;
-  "vue/component-definition-name-casing"?:
-    | AllowWarnDeny
-    | [AllowWarnDeny]
-    | [AllowWarnDeny, "PascalCase" | "kebab-case"];
-  "vue/define-emits-declaration"?:
-    | AllowWarnDeny
-    | [AllowWarnDeny]
-    | [AllowWarnDeny, "type-based" | "type-literal" | "runtime"];
-  "vue/define-props-declaration"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "type-based" | "runtime"];
+  "vue/component-definition-name-casing"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, CaseType];
+  "vue/define-emits-declaration"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DeclarationStyle];
+  "vue/define-props-declaration"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DeclarationStyle2];
   "vue/define-props-destructuring"?: DummyRule;
   "vue/max-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxProps];
-  "vue/next-tick-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "promise" | "callback"];
+  "vue/next-tick-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NextTickOption];
   "vue/no-arrow-functions-in-watch"?: RuleNoConfig;
   "vue/no-computed-properties-in-data"?: RuleNoConfig;
   "vue/no-deprecated-data-object-declaration"?: RuleNoConfig;
