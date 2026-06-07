@@ -128,7 +128,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@6ed6112eb9893c58dd600eebccdf6e77ab7bfa9c # v2.79.12
+      - uses: taiki-e/install-action@cde8c9e634f4a17bc06b61413ac0ef75450eac46 # v2.81.4
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -145,7 +145,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@6ed6112eb9893c58dd600eebccdf6e77ab7bfa9c # v2.79.12
+      - uses: taiki-e/install-action@cde8c9e634f4a17bc06b61413ac0ef75450eac46 # v2.81.4
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -544,7 +544,7 @@ jobs:
             rust
             pnpm
 
-      - uses: taiki-e/install-action@6ed6112eb9893c58dd600eebccdf6e77ab7bfa9c # v2.79.12
+      - uses: taiki-e/install-action@cde8c9e634f4a17bc06b61413ac0ef75450eac46 # v2.81.4
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just

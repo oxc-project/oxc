@@ -150,7 +150,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@6ed6112eb9893c58dd600eebccdf6e77ab7bfa9c # v2.79.12
+        uses: taiki-e/install-action@cde8c9e634f4a17bc06b61413ac0ef75450eac46 # v2.81.4
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -223,7 +223,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Build
         id: build
-        uses: cross-platform-actions/action@0c165ad7eb2d6a7e8552d6af5aad2bbedfc646b0 # v1.1.0
+        uses: cross-platform-actions/action@be3d7e9ff5c8770b9c51b1a8c8c5446e1cad7cf9 # v1.2.0
         env:
           DEBUG: napi:*
           RUSTUP_IO_THREADS: 1
@@ -458,7 +458,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@6ed6112eb9893c58dd600eebccdf6e77ab7bfa9c # v2.79.12
+        uses: taiki-e/install-action@cde8c9e634f4a17bc06b61413ac0ef75450eac46 # v2.81.4
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -531,7 +531,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
       - name: Build
         id: build
-        uses: cross-platform-actions/action@0c165ad7eb2d6a7e8552d6af5aad2bbedfc646b0 # v1.1.0
+        uses: cross-platform-actions/action@be3d7e9ff5c8770b9c51b1a8c8c5446e1cad7cf9 # v1.2.0
         env:
           DEBUG: napi:*
           RUSTUP_IO_THREADS: 1
@@ -658,7 +658,7 @@ jobs:
           client-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0 # for changelog
