@@ -3,7 +3,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_span::{FileExtension, GetSpan};
 use oxc_syntax::precedence::Precedence;
 
-use super::{FunctionKind, Tristate};
+use super::{ArrowKind, FunctionKind};
 use crate::{Context, ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 struct ArrowFunctionHead<'a> {
@@ -20,13 +20,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
         match self.is_parenthesized_arrow_function_expression() {
-            Tristate::False => None,
-            Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
+            ArrowKind::No => None,
+            ArrowKind::Yes => Some(self.parse_parenthesized_arrow_function_expression(
                 allow_return_type_in_arrow_function,
             )),
-            Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            ),
+            // Step 2: `Cover` behaves exactly like the old `Maybe` (speculate-and-rewind). It is
+            // rerouted to the single-parse+refine path in a later step.
+            ArrowKind::Cover | ArrowKind::Speculate => self
+                .parse_possible_parenthesized_arrow_function_expression(
+                    allow_return_type_in_arrow_function,
+                ),
         }
     }
 
@@ -55,7 +58,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         None
     }
 
-    fn is_parenthesized_arrow_function_expression(&mut self) -> Tristate {
+    fn is_parenthesized_arrow_function_expression(&mut self) -> ArrowKind {
         match self.cur_kind() {
             Kind::LParen => {
                 // `(1 + a)` can never be arrow parameters: the leading literal is not the start of
@@ -70,21 +73,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::LAngle | Kind::Async => {
                 self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
             }
-            _ => Tristate::False,
+            _ => ArrowKind::No,
         }
     }
 
-    fn is_parenthesized_arrow_function_expression_worker(&mut self) -> Tristate {
-        if self.eat(Kind::Async) {
+    fn is_parenthesized_arrow_function_expression_worker(&mut self) -> ArrowKind {
+        let saw_async = self.eat(Kind::Async);
+        if saw_async {
             if self.cur_token().is_on_new_line() {
-                return Tristate::False;
+                return ArrowKind::No;
             }
             let kind = self.cur_kind();
             if kind != Kind::LParen && kind != Kind::LAngle {
-                return Tristate::False;
+                return ArrowKind::No;
             }
         }
 
+        let kind = self.classify_paren_or_angle_arrow();
+        // `async (...)` never goes through the single-parse cover path: the head sets await context
+        // before parsing params, so `await` inside must not be parsed as an identifier. Keep it on
+        // the speculate-and-rewind path.
+        if saw_async && kind == ArrowKind::Cover { ArrowKind::Speculate } else { kind }
+    }
+
+    fn classify_paren_or_angle_arrow(&mut self) -> ArrowKind {
         let first = self.cur_kind();
         self.bump_any();
         let second = self.cur_kind();
@@ -100,29 +112,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         self.bump_any();
                         let third = self.cur_kind();
                         match third {
-                            Kind::Colon if self.is_ts => Tristate::Maybe,
-                            Kind::Arrow | Kind::LCurly => Tristate::True,
-                            _ => Tristate::False,
+                            // `(): T` — empty parens have no expression form, keep speculating.
+                            Kind::Colon if self.is_ts => ArrowKind::Speculate,
+                            Kind::Arrow | Kind::LCurly => ArrowKind::Yes,
+                            _ => ArrowKind::No,
                         }
                     }
-                    // If encounter "([" or "({", this could be the start of a binding pattern.
-                    // Examples:
-                    //      ([ x ]) => { }
-                    //      ({ x }) => { }
-                    //      ([ x ])
-                    //      ({ x })
-                    Kind::LBrack | Kind::LCurly => Tristate::Maybe,
-                    // Simple case: "(..."
-                    // This is an arrow function with a rest parameter.
+                    // "([" or "({": destructuring params or an array/object literal — both are valid
+                    // expressions, so parse once and refine.
+                    //      ([ x ]) => { }     ({ x }) => { }     ([ x ])     ({ x })
+                    Kind::LBrack | Kind::LCurly => ArrowKind::Cover,
+                    // Simple case: "(..." — an arrow with a rest parameter; leading rest has no
+                    // expression form, keep speculating.
                     Kind::Dot3 => {
                         self.bump_any();
                         let third = self.cur_kind();
                         match third {
                             // '(...ident' is a lambda
-                            Kind::Ident => Tristate::True,
+                            Kind::Ident => ArrowKind::Yes,
                             // '(...null' is not a lambda
-                            kind if kind.is_literal() => Tristate::False,
-                            _ => Tristate::Maybe,
+                            kind if kind.is_literal() => ArrowKind::No,
+                            _ => ArrowKind::Speculate,
                         }
                     }
                     _ => {
@@ -137,22 +147,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             && third.is_binding_identifier()
                         {
                             if third == Kind::As {
-                                return Tristate::False; // https://github.com/microsoft/TypeScript/issues/44466
+                                return ArrowKind::No; // https://github.com/microsoft/TypeScript/issues/44466
                             }
-                            return Tristate::True;
+                            return ArrowKind::Yes;
                         }
 
                         // If we had "(" followed by something that's not an identifier,
                         // then this definitely doesn't look like a lambda.  "this" is not
                         // valid, but we want to parse it and then give a semantic error.
                         if !second.is_binding_identifier() && second != Kind::This {
-                            return Tristate::False;
+                            return ArrowKind::No;
                         }
 
                         match third {
                             // If we have something like "(a:", then we must have a
                             // type-annotated parameter in an arrow function expression.
-                            Kind::Colon => Tristate::True,
+                            Kind::Colon => ArrowKind::Yes,
                             // If we have "(a?:" or "(a?," or "(a?=" or "(a?)" then it is definitely a lambda.
                             Kind::Question => {
                                 self.bump_any();
@@ -161,14 +171,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                     fourth,
                                     Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen
                                 ) {
-                                    return Tristate::True;
+                                    return ArrowKind::Yes;
                                 }
-                                Tristate::False
+                                ArrowKind::No
                             }
-                            // If we have "(a," or "(a=" or "(a)" this *could* be an arrow function
-                            Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
+                            // "(a)" / "(a =" are expression-shaped — parse once and refine.
+                            Kind::Eq | Kind::RParen => ArrowKind::Cover,
+                            // "(a," — a later `...rest` after the comma is invisible to this worker
+                            // and has no expression form, so keep speculating.
+                            Kind::Comma => ArrowKind::Speculate,
                             // It is definitely not an arrow function
-                            _ => Tristate::False,
+                            _ => ArrowKind::No,
                         }
                     }
                 }
@@ -177,7 +190,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // If we have "<" not followed by an identifier,
                 // then this definitely is not an arrow function.
                 if !second.is_binding_identifier() && second != Kind::Const {
-                    return Tristate::False;
+                    return ArrowKind::No;
                 }
 
                 // JSX overrides
@@ -192,18 +205,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             self.bump_any();
                             let fourth = self.cur_kind();
                             if matches!(fourth, Kind::Eq | Kind::RAngle | Kind::Slash) {
-                                Tristate::False
+                                ArrowKind::No
                             } else if fourth.is_binding_identifier() {
-                                Tristate::Maybe
+                                ArrowKind::Speculate
                             } else {
-                                Tristate::True
+                                ArrowKind::Yes
                             }
                         }
-                        Kind::Eq | Kind::Comma => Tristate::True,
-                        _ => Tristate::False,
+                        Kind::Eq | Kind::Comma => ArrowKind::Yes,
+                        _ => ArrowKind::No,
                     };
                 }
-                Tristate::Maybe
+                // generic arrow `<T>(...) =>` — resolved by the speculate path.
+                ArrowKind::Speculate
             }
             _ => unreachable!(),
         }
