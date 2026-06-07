@@ -150,8 +150,7 @@ impl Rule for NextTickStyle {
 }
 
 fn is_awaited_promise(call_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let parent = ctx.nodes().parent_node(call_node.id());
-    match parent.kind() {
+    match ctx.nodes().parent_kind(call_node.id()) {
         AstKind::AwaitExpression(_) => true,
         AstKind::StaticMemberExpression(m) => m.property.name == "then",
         _ => false,
