@@ -1731,7 +1731,33 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "import/max-dependencies": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "format": "uint",
+                      "minimum": 0.0
+                    },
+                    {
+                      "$ref": "#/definitions/MaxDependenciesConfig"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "import/named": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9352,6 +9378,38 @@
         }
       },
       "additionalProperties": false
+    },
+    "MaxDependenciesConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreTypeImports": {
+          "description": "Whether to ignore type imports when counting dependencies.\n\n```ts\n// Neither of these count as dependencies if `ignoreTypeImports` is true:\nimport type { Foo } from './foo';\nimport { type Foo } from './foo';\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore type imports when counting dependencies.\n\n```ts\n// Neither of these count as dependencies if `ignoreTypeImports` is true:\nimport type { Foo } from './foo';\nimport { type Foo } from './foo';\n```"
+        },
+        "max": {
+          "description": "Maximum number of dependencies allowed in a file.",
+          "default": 10,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of dependencies allowed in a file."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxDependenciesConfigJson": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        {
+          "$ref": "#/definitions/MaxDependenciesConfig"
+        }
+      ]
     },
     "MaxDepth": {
       "type": "object",

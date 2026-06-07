@@ -708,7 +708,7 @@ export interface DummyRuleMap {
   "import/extensions"?: DummyRule;
   "import/first"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "absolute-first" | "disable-absolute-first"];
   "import/group-exports"?: RuleNoConfig;
-  "import/max-dependencies"?: DummyRule;
+  "import/max-dependencies"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | MaxDependenciesConfig];
   "import/named"?: RuleNoConfig;
   "import/namespace"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, Namespace];
   "import/newline-after-import"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NewlineAfterImport];
@@ -1857,6 +1857,22 @@ export interface IdMatchOptions {
    * member names such as `obj.prop = value` are checked.
    */
   properties?: boolean;
+}
+export interface MaxDependenciesConfig {
+  /**
+   * Whether to ignore type imports when counting dependencies.
+   *
+   * ```ts
+   * // Neither of these count as dependencies if `ignoreTypeImports` is true:
+   * import type { Foo } from './foo';
+   * import { type Foo } from './foo';
+   * ```
+   */
+  ignoreTypeImports?: boolean;
+  /**
+   * Maximum number of dependencies allowed in a file.
+   */
+  max?: number;
 }
 export interface Namespace {
   /**
