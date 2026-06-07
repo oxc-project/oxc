@@ -115,6 +115,7 @@ export type AllowKind =
  */
 export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
+export type NoMagicNumbersNumber = number | string;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
@@ -950,7 +951,7 @@ export interface DummyRuleMap {
   "no-lonely-if"?: RuleNoConfig;
   "no-loop-func"?: RuleNoConfig;
   "no-loss-of-precision"?: RuleNoConfig;
-  "no-magic-numbers"?: DummyRule;
+  "no-magic-numbers"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoMagicNumbersConfig];
   "no-misleading-character-class"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoMisleadingCharacterClass];
   "no-multi-assign"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoMultiAssign];
   "no-multi-str"?: RuleNoConfig;
@@ -2635,6 +2636,48 @@ export interface NoLabels {
    * ```
    */
   allowSwitch?: boolean;
+}
+export interface NoMagicNumbersConfig {
+  /**
+   * When true, numeric literals used in object properties are considered magic numbers.
+   */
+  detectObjects?: boolean;
+  /**
+   * When true, enforces that number constants must be declared using `const` instead of `let` or `var`.
+   */
+  enforceConst?: boolean;
+  /**
+   * An array of numbers to ignore if used as magic numbers. Can include floats or BigInt strings.
+   */
+  ignore?: NoMagicNumbersNumber[];
+  /**
+   * When true, numeric literals used as array indexes are ignored.
+   */
+  ignoreArrayIndexes?: boolean;
+  /**
+   * When true, numeric literals used as initial values in class fields are ignored.
+   */
+  ignoreClassFieldInitialValues?: boolean;
+  /**
+   * When true, numeric literals used as default values in function parameters and destructuring are ignored.
+   */
+  ignoreDefaultValues?: boolean;
+  /**
+   * When true, numeric literals in TypeScript enums are ignored.
+   */
+  ignoreEnums?: boolean;
+  /**
+   * When true, numeric literals used as TypeScript numeric literal types are ignored.
+   */
+  ignoreNumericLiteralTypes?: boolean;
+  /**
+   * When true, numeric literals in readonly class properties are ignored.
+   */
+  ignoreReadonlyClassProperties?: boolean;
+  /**
+   * When true, numeric literals used to index TypeScript types are ignored.
+   */
+  ignoreTypeIndexes?: boolean;
 }
 export interface NoMisleadingCharacterClass {
   /**

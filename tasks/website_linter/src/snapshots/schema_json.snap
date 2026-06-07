@@ -3404,7 +3404,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-magic-numbers": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoMagicNumbersConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "no-misleading-character-class": {
           "anyOf": [
@@ -10200,6 +10217,86 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "NoMagicNumbersConfig": {
+      "type": "object",
+      "properties": {
+        "detectObjects": {
+          "description": "When true, numeric literals used in object properties are considered magic numbers.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true, numeric literals used in object properties are considered magic numbers."
+        },
+        "enforceConst": {
+          "description": "When true, enforces that number constants must be declared using `const` instead of `let` or `var`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true, enforces that number constants must be declared using `const` instead of `let` or `var`."
+        },
+        "ignore": {
+          "description": "An array of numbers to ignore if used as magic numbers. Can include floats or BigInt strings.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NoMagicNumbersNumber"
+          },
+          "markdownDescription": "An array of numbers to ignore if used as magic numbers. Can include floats or BigInt strings."
+        },
+        "ignoreArrayIndexes": {
+          "description": "When true, numeric literals used as array indexes are ignored.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true, numeric literals used as array indexes are ignored."
+        },
+        "ignoreClassFieldInitialValues": {
+          "description": "When true, numeric literals used as initial values in class fields are ignored.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true, numeric literals used as initial values in class fields are ignored."
+        },
+        "ignoreDefaultValues": {
+          "description": "When true, numeric literals used as default values in function parameters and destructuring are ignored.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true, numeric literals used as default values in function parameters and destructuring are ignored."
+        },
+        "ignoreEnums": {
+          "description": "When true, numeric literals in TypeScript enums are ignored.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true, numeric literals in TypeScript enums are ignored."
+        },
+        "ignoreNumericLiteralTypes": {
+          "description": "When true, numeric literals used as TypeScript numeric literal types are ignored.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true, numeric literals used as TypeScript numeric literal types are ignored."
+        },
+        "ignoreReadonlyClassProperties": {
+          "description": "When true, numeric literals in readonly class properties are ignored.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true, numeric literals in readonly class properties are ignored."
+        },
+        "ignoreTypeIndexes": {
+          "description": "When true, numeric literals used to index TypeScript types are ignored.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When true, numeric literals used to index TypeScript types are ignored."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoMagicNumbersNumber": {
+      "anyOf": [
+        {
+          "type": "number",
+          "format": "double"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "NoMapSpreadConfig": {
       "type": "object",
