@@ -344,7 +344,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn parse_literal_boolean(&mut self) -> BooleanLiteral {
+    #[inline(always)]
+    pub fn parse_literal_boolean(&mut self) -> BooleanLiteral {
         let span = self.start_span();
         let value = match self.cur_kind() {
             Kind::True => true,
