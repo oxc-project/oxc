@@ -7629,7 +7629,28 @@ expression: json
           ]
         },
         "vue/next-tick-style": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "promise",
+                    "callback"
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vue/no-arrow-functions-in-watch": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9544,6 +9565,13 @@ expression: json
         }
       },
       "markdownDescription": "Configure Next.js plugin rules."
+    },
+    "NextTickOption": {
+      "type": "string",
+      "enum": [
+        "promise",
+        "callback"
+      ]
     },
     "NoAbsolutePath": {
       "type": "object",
