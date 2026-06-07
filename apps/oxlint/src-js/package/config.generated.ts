@@ -1098,7 +1098,7 @@ export interface DummyRuleMap {
   "promise/prefer-catch"?: RuleNoConfig;
   "promise/spec-only"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SpecOnlyConfig];
   "promise/valid-params"?: RuleNoConfig;
-  radix?: DummyRule;
+  radix?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "as-needed"];
   "react-perf/jsx-no-jsx-as-prop"?: RuleNoConfig;
   "react-perf/jsx-no-new-array-as-prop"?: RuleNoConfig;
   "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig;

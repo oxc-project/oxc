@@ -4641,7 +4641,41 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "radix": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "oneOf": [
+                    {
+                      "description": "Always require the radix parameter when using `parseInt()`.",
+                      "type": "string",
+                      "enum": [
+                        "always"
+                      ],
+                      "markdownDescription": "Always require the radix parameter when using `parseInt()`."
+                    },
+                    {
+                      "description": "Only require the radix parameter when necessary.",
+                      "type": "string",
+                      "enum": [
+                        "as-needed"
+                      ],
+                      "markdownDescription": "Only require the radix parameter when necessary."
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react-perf/jsx-no-jsx-as-prop": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -12768,6 +12802,26 @@
             "never"
           ],
           "markdownDescription": "Property names are not checked for length."
+        }
+      ]
+    },
+    "RadixType": {
+      "oneOf": [
+        {
+          "description": "Always require the radix parameter when using `parseInt()`.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always require the radix parameter when using `parseInt()`."
+        },
+        {
+          "description": "Only require the radix parameter when necessary.",
+          "type": "string",
+          "enum": [
+            "as-needed"
+          ],
+          "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
     },
