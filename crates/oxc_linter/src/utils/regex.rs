@@ -263,7 +263,7 @@ mod test {
         assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
 
         let program = allocator.alloc(parser_ret.program);
-        let semantic = SemanticBuilder::new().with_cfg(true).build(program).semantic;
+        let semantic = SemanticBuilder::new_linter().build(program).semantic;
         let ctx = Rc::new(ContextHost::new(
             "test.js",
             vec![ContextSubHost::new(

@@ -393,8 +393,7 @@ impl Oxc {
         // Only lint if there are no syntax errors
         if run_options.lint && self.diagnostics.is_empty() {
             let mut external_plugin_store = ExternalPluginStore::default();
-            let semantic_ret =
-                SemanticBuilder::new().with_cfg(true).with_class_table(true).build(program);
+            let semantic_ret = SemanticBuilder::new_linter().build(program);
             let semantic = semantic_ret.semantic;
             let lint_config = if let Some(config) = &linter_options.config {
                 let oxlintrc = Oxlintrc::from_string(config).unwrap_or_default();
