@@ -492,6 +492,34 @@
       },
       "additionalProperties": false
     },
+    "ArgsOption": {
+      "oneOf": [
+        {
+          "description": "Unused positional arguments that occur before the last used argument\nwill not be checked, but all named arguments and all positional\narguments after the last used argument will be checked.",
+          "type": "string",
+          "enum": [
+            "after-used"
+          ],
+          "markdownDescription": "Unused positional arguments that occur before the last used argument\nwill not be checked, but all named arguments and all positional\narguments after the last used argument will be checked."
+        },
+        {
+          "description": "All named arguments must be used",
+          "type": "string",
+          "enum": [
+            "all"
+          ],
+          "markdownDescription": "All named arguments must be used"
+        },
+        {
+          "description": "Do not check arguments",
+          "type": "string",
+          "enum": [
+            "none"
+          ],
+          "markdownDescription": "Do not check arguments"
+        }
+      ]
+    },
     "AriaRoleConfig": {
       "type": "object",
       "properties": {
@@ -676,6 +704,26 @@
       "enum": [
         "camelCase",
         "snake_case"
+      ]
+    },
+    "CaughtErrorsJson": {
+      "oneOf": [
+        {
+          "description": "All named arguments must be used.",
+          "type": "string",
+          "enum": [
+            "all"
+          ],
+          "markdownDescription": "All named arguments must be used."
+        },
+        {
+          "description": "Do not check error objects.",
+          "type": "string",
+          "enum": [
+            "none"
+          ],
+          "markdownDescription": "Do not check error objects."
+        }
       ]
     },
     "CheckLoops": {
@@ -3893,7 +3941,31 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-unused-vars": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/VarsOption"
+                    },
+                    {
+                      "$ref": "#/definitions/NoUnusedVarsOptions"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "no-use-before-define": {
           "$ref": "#/definitions/DummyRule"
@@ -8624,6 +8696,20 @@
         }
       ]
     },
+    "IgnorePattern_for_String": {
+      "anyOf": [
+        {
+          "description": "The ignore pattern is explicitly none.",
+          "type": "null",
+          "markdownDescription": "The ignore pattern is explicitly none."
+        },
+        {
+          "description": "The ignore pattern is a regex.",
+          "type": "string",
+          "markdownDescription": "The ignore pattern is a regex."
+        }
+      ]
+    },
     "ImportKind": {
       "type": "string",
       "enum": [
@@ -11218,6 +11304,194 @@
       },
       "additionalProperties": false
     },
+    "NoUnusedVarsConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/VarsOption"
+        },
+        {
+          "$ref": "#/definitions/NoUnusedVarsOptions"
+        }
+      ]
+    },
+    "NoUnusedVarsFixMode": {
+      "oneOf": [
+        {
+          "description": "Disable auto-fixes for this symbol kind.",
+          "type": "string",
+          "enum": [
+            "off"
+          ],
+          "markdownDescription": "Disable auto-fixes for this symbol kind."
+        },
+        {
+          "description": "Emit suggestion-style fixes (current behavior).",
+          "type": "string",
+          "enum": [
+            "suggestion"
+          ],
+          "markdownDescription": "Emit suggestion-style fixes (current behavior)."
+        },
+        {
+          "description": "Emit fix-style fixes.",
+          "type": "string",
+          "enum": [
+            "fix"
+          ],
+          "markdownDescription": "Emit fix-style fixes."
+        },
+        {
+          "description": "Like `Fix`, but does not mark them as dangerous.\nOnly applicable for imports, unavailable for variables.",
+          "type": "string",
+          "enum": [
+            "safe-fix"
+          ],
+          "markdownDescription": "Like `Fix`, but does not mark them as dangerous.\nOnly applicable for imports, unavailable for variables."
+        }
+      ]
+    },
+    "NoUnusedVarsFixOptions": {
+      "description": "Fine-grained auto-fix controls for `no-unused-vars`.",
+      "type": "object",
+      "properties": {
+        "imports": {
+          "description": "Controls auto-fixes for unused imports.",
+          "default": "suggestion",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NoUnusedVarsFixMode"
+            }
+          ],
+          "markdownDescription": "Controls auto-fixes for unused imports."
+        },
+        "variables": {
+          "description": "Controls auto-fixes for unused variables (including catch bindings).",
+          "default": "suggestion",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NoUnusedVarsFixMode"
+            }
+          ],
+          "markdownDescription": "Controls auto-fixes for unused variables (including catch bindings)."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Fine-grained auto-fix controls for `no-unused-vars`."
+    },
+    "NoUnusedVarsOptions": {
+      "type": "object",
+      "properties": {
+        "args": {
+          "description": "Controls how unused arguments are checked.",
+          "default": "after-used",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArgsOption"
+            }
+          ],
+          "markdownDescription": "Controls how unused arguments are checked."
+        },
+        "argsIgnorePattern": {
+          "description": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, this pattern is `^_` unless options are configured with an\nobject. In this case it will default to [`None`]. Note that this\nbehavior deviates from both ESLint and TypeScript-ESLint, which never\nprovide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnorePattern_for_String"
+            }
+          ],
+          "markdownDescription": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, this pattern is `^_` unless options are configured with an\nobject. In this case it will default to [`None`]. Note that this\nbehavior deviates from both ESLint and TypeScript-ESLint, which never\nprovide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```"
+        },
+        "caughtErrors": {
+          "description": "Used for `catch` block validation.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/CaughtErrorsJson"
+            }
+          ],
+          "markdownDescription": "Used for `catch` block validation."
+        },
+        "caughtErrorsIgnorePattern": {
+          "description": "Specifies exceptions to this rule for errors caught within a `catch` block.\nVariables declared within a `catch` block whose names match this pattern\nwill be ignored.\n\n#### Example\n\nExamples of **correct** code when the pattern is `^ignore`:\n\n```javascript\ntry {\n// ...\n} catch (ignoreErr) {\nconsole.error(\"Error caught in catch block\");\n}\n```",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnorePattern_for_String"
+            }
+          ],
+          "markdownDescription": "Specifies exceptions to this rule for errors caught within a `catch` block.\nVariables declared within a `catch` block whose names match this pattern\nwill be ignored.\n\n#### Example\n\nExamples of **correct** code when the pattern is `^ignore`:\n\n```javascript\ntry {\n// ...\n} catch (ignoreErr) {\nconsole.error(\"Error caught in catch block\");\n}\n```"
+        },
+        "destructuredArrayIgnorePattern": {
+          "description": "This option specifies exceptions within destructuring patterns that will\nnot be checked for usage. Variables declared within array destructuring\nwhose names match this pattern will be ignored.\n\nBy default this pattern is unset.\n\n#### Example\n\nExamples of **correct** code for this option, when the pattern is `^_`:\n```javascript\nconst [a, _b, c] = [\"a\", \"b\", \"c\"];\nconsole.log(a + c);\n\nconst { x: [_a, foo] } = bar;\nconsole.log(foo);\n\nlet _m, n;\nfoo.forEach(item => {\n[_m, n] = item;\nconsole.log(n);\n});\n```",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnorePattern_for_String"
+            }
+          ],
+          "markdownDescription": "This option specifies exceptions within destructuring patterns that will\nnot be checked for usage. Variables declared within array destructuring\nwhose names match this pattern will be ignored.\n\nBy default this pattern is unset.\n\n#### Example\n\nExamples of **correct** code for this option, when the pattern is `^_`:\n```javascript\nconst [a, _b, c] = [\"a\", \"b\", \"c\"];\nconsole.log(a + c);\n\nconst { x: [_a, foo] } = bar;\nconsole.log(foo);\n\nlet _m, n;\nfoo.forEach(item => {\n[_m, n] = item;\nconsole.log(n);\n});\n```"
+        },
+        "fix": {
+          "description": "Controls which `no-unused-vars` auto-fixes are emitted.\n\nWhen omitted, both `imports` and `variables` default to `\"suggestion\"`,\npreserving the current behavior.\n\nNOTE: This option is experimental and may change based on feedback.",
+          "default": {
+            "imports": "suggestion",
+            "variables": "suggestion"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NoUnusedVarsFixOptions"
+            }
+          ],
+          "markdownDescription": "Controls which `no-unused-vars` auto-fixes are emitted.\n\nWhen omitted, both `imports` and `variables` default to `\"suggestion\"`,\npreserving the current behavior.\n\nNOTE: This option is experimental and may change based on feedback."
+        },
+        "ignoreClassWithStaticInitBlock": {
+          "description": "The `ignoreClassWithStaticInitBlock` option is a boolean. Static\ninitialization blocks allow you to initialize static variables and\nexecute code during the evaluation of a class definition, meaning\nthe static block code is executed without creating a new instance\nof the class. When set to `true`, this option ignores classes\ncontaining static initialization blocks.\n\n#### Example\n\nExamples of **incorrect** code for the `{ \"ignoreClassWithStaticInitBlock\": true }` option\n\n```javascript\n/* no-unused-vars: [\"error\", { \"ignoreClassWithStaticInitBlock\": true }]*/\n\nclass Foo {\nstatic myProperty = \"some string\";\nstatic mymethod() {\nreturn \"some string\";\n}\n}\n\nclass Bar {\nstatic {\nlet baz; // unused variable\n}\n}\n```\n\nExamples of **correct** code for the `{ \"ignoreClassWithStaticInitBlock\": true }` option\n\n```javascript\n/* no-unused-vars: [\"error\", { \"ignoreClassWithStaticInitBlock\": true }]*/\n\nclass Foo {\nstatic {\nlet bar = \"some string\";\n\nconsole.log(bar);\n}\n}\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "The `ignoreClassWithStaticInitBlock` option is a boolean. Static\ninitialization blocks allow you to initialize static variables and\nexecute code during the evaluation of a class definition, meaning\nthe static block code is executed without creating a new instance\nof the class. When set to `true`, this option ignores classes\ncontaining static initialization blocks.\n\n#### Example\n\nExamples of **incorrect** code for the `{ \"ignoreClassWithStaticInitBlock\": true }` option\n\n```javascript\n/* no-unused-vars: [\"error\", { \"ignoreClassWithStaticInitBlock\": true }]*/\n\nclass Foo {\nstatic myProperty = \"some string\";\nstatic mymethod() {\nreturn \"some string\";\n}\n}\n\nclass Bar {\nstatic {\nlet baz; // unused variable\n}\n}\n```\n\nExamples of **correct** code for the `{ \"ignoreClassWithStaticInitBlock\": true }` option\n\n```javascript\n/* no-unused-vars: [\"error\", { \"ignoreClassWithStaticInitBlock\": true }]*/\n\nclass Foo {\nstatic {\nlet bar = \"some string\";\n\nconsole.log(bar);\n}\n}\n```"
+        },
+        "ignoreRestSiblings": {
+          "description": "Using a Rest property it is possible to \"omit\" properties from an\nobject, but by default the sibling properties are marked as \"unused\".\nWith this option enabled the rest property's siblings are ignored.\n\n\n#### Example\nExamples of **correct** code when this option is set to `true`:\n```js\n// 'foo' and 'bar' were ignored because they have a rest property sibling.\nvar { foo, ...coords } = data;\n\nvar bar;\n({ bar, ...coords } = data);\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Using a Rest property it is possible to \"omit\" properties from an\nobject, but by default the sibling properties are marked as \"unused\".\nWith this option enabled the rest property's siblings are ignored.\n\n\n#### Example\nExamples of **correct** code when this option is set to `true`:\n```js\n// 'foo' and 'bar' were ignored because they have a rest property sibling.\nvar { foo, ...coords } = data;\n\nvar bar;\n({ bar, ...coords } = data);\n```"
+        },
+        "ignoreUsingDeclarations": {
+          "description": "When set to `true`, the rule will ignore variables declared with\n`using` or `await using` declarations, even if they are unused.\n\nThis is useful when working with resources that need to be disposed\nvia the explicit resource management proposal, where the primary\npurpose is the disposal side effect rather than using the resource.\n\n#### Example\n\nExamples of **correct** code for the `{ \"ignoreUsingDeclarations\": true }` option:\n\n```javascript\n/* no-unused-vars: [\"error\", { \"ignoreUsingDeclarations\": true }]*/\n\nusing resource = getResource();\nawait using anotherResource = getAnotherResource();\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, the rule will ignore variables declared with\n`using` or `await using` declarations, even if they are unused.\n\nThis is useful when working with resources that need to be disposed\nvia the explicit resource management proposal, where the primary\npurpose is the disposal side effect rather than using the resource.\n\n#### Example\n\nExamples of **correct** code for the `{ \"ignoreUsingDeclarations\": true }` option:\n\n```javascript\n/* no-unused-vars: [\"error\", { \"ignoreUsingDeclarations\": true }]*/\n\nusing resource = getResource();\nawait using anotherResource = getAnotherResource();\n```"
+        },
+        "reportUsedIgnorePattern": {
+          "description": "The `reportUsedIgnorePattern` option is a boolean.\nUsing this option will report variables that match any of the valid\nignore pattern options (`varsIgnorePattern`, `argsIgnorePattern`,\n`caughtErrorsIgnorePattern`, or `destructuredArrayIgnorePattern`) if\nthey have been used.\n\n#### Example\n\nExamples of **incorrect** code for the `{ \"reportUsedIgnorePattern\": true }` option:\n\n```javascript\n/* no-unused-vars: [\"error\", { \"reportUsedIgnorePattern\": true, \"varsIgnorePattern\": \"[iI]gnored\" }]*/\n\nvar firstVarIgnored = 1;\nvar secondVar = 2;\nconsole.log(firstVarIgnored, secondVar);\n```\n\nExamples of **correct** code for the `{ \"reportUsedIgnorePattern\": true }` option:\n\n```javascript\n/* no-unused-vars: [\"error\", { \"reportUsedIgnorePattern\": true, \"varsIgnorePattern\": \"[iI]gnored\" }]*/\n\nvar firstVar = 1;\nvar secondVar = 2;\nconsole.log(firstVar, secondVar);\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "The `reportUsedIgnorePattern` option is a boolean.\nUsing this option will report variables that match any of the valid\nignore pattern options (`varsIgnorePattern`, `argsIgnorePattern`,\n`caughtErrorsIgnorePattern`, or `destructuredArrayIgnorePattern`) if\nthey have been used.\n\n#### Example\n\nExamples of **incorrect** code for the `{ \"reportUsedIgnorePattern\": true }` option:\n\n```javascript\n/* no-unused-vars: [\"error\", { \"reportUsedIgnorePattern\": true, \"varsIgnorePattern\": \"[iI]gnored\" }]*/\n\nvar firstVarIgnored = 1;\nvar secondVar = 2;\nconsole.log(firstVarIgnored, secondVar);\n```\n\nExamples of **correct** code for the `{ \"reportUsedIgnorePattern\": true }` option:\n\n```javascript\n/* no-unused-vars: [\"error\", { \"reportUsedIgnorePattern\": true, \"varsIgnorePattern\": \"[iI]gnored\" }]*/\n\nvar firstVar = 1;\nvar secondVar = 2;\nconsole.log(firstVar, secondVar);\n```"
+        },
+        "reportVarsOnlyUsedAsTypes": {
+          "description": "The `reportVarsOnlyUsedAsTypes` option is a boolean.\n\nIf `true`, the rule will also report variables that are only used as types.\n\n#### Examples\n\nExamples of **incorrect** code for the `{ \"reportVarsOnlyUsedAsTypes\": true }` option:\n\n```javascript\n/*  no-unused-vars: [\"error\", { \"reportVarsOnlyUsedAsTypes\": true }] */\n\nconst myNumber: number = 4;\nexport type MyNumber = typeof myNumber\n```\n\nExamples of **correct** code for the `{ \"reportVarsOnlyUsedAsTypes\": true }` option:\n\n```javascript\nexport type MyNumber = number;\n```\n\nNote: even with `{ \"reportVarsOnlyUsedAsTypes\": false }`, cases where the value is\nonly used a type within itself will still be reported:\n```javascript\nfunction foo(): typeof foo {}\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "The `reportVarsOnlyUsedAsTypes` option is a boolean.\n\nIf `true`, the rule will also report variables that are only used as types.\n\n#### Examples\n\nExamples of **incorrect** code for the `{ \"reportVarsOnlyUsedAsTypes\": true }` option:\n\n```javascript\n/*  no-unused-vars: [\"error\", { \"reportVarsOnlyUsedAsTypes\": true }] */\n\nconst myNumber: number = 4;\nexport type MyNumber = typeof myNumber\n```\n\nExamples of **correct** code for the `{ \"reportVarsOnlyUsedAsTypes\": true }` option:\n\n```javascript\nexport type MyNumber = number;\n```\n\nNote: even with `{ \"reportVarsOnlyUsedAsTypes\": false }`, cases where the value is\nonly used a type within itself will still be reported:\n```javascript\nfunction foo(): typeof foo {}\n```"
+        },
+        "vars": {
+          "description": "Controls how usage of a variable in the global scope is checked.",
+          "default": "all",
+          "allOf": [
+            {
+              "$ref": "#/definitions/VarsOption"
+            }
+          ],
+          "markdownDescription": "Controls how usage of a variable in the global scope is checked."
+        },
+        "varsIgnorePattern": {
+          "description": "Specifies exceptions to this rule for unused variables. Variables whose\nnames match this pattern will be ignored.\n\nBy default, this pattern is `^_` unless options are configured with an\nobject. In this case it will default to [`None`]. Note that this\nbehavior deviates from both ESLint and TypeScript-ESLint, which never\nprovide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n```javascript\nvar _a = 10;\nvar b = 10;\nconsole.log(b);\n```",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnorePattern_for_String"
+            }
+          ],
+          "markdownDescription": "Specifies exceptions to this rule for unused variables. Variables whose\nnames match this pattern will be ignored.\n\nBy default, this pattern is `^_` unless options are configured with an\nobject. In this case it will default to [`None`]. Note that this\nbehavior deviates from both ESLint and TypeScript-ESLint, which never\nprovide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n```javascript\nvar _a = 10;\nvar b = 10;\nconsole.log(b);\n```"
+        }
+      },
+      "additionalProperties": false
+    },
     "NoUselessComputedKey": {
       "type": "object",
       "properties": {
@@ -13163,6 +13437,26 @@
             "modified"
           ],
           "markdownDescription": "Modified means classic cyclomatic complexity but a switch statement increases\ncomplexity by 1 irrespective of the number of `case` statements"
+        }
+      ]
+    },
+    "VarsOption": {
+      "oneOf": [
+        {
+          "description": "All variables are checked for usage, including those in the global scope.",
+          "type": "string",
+          "enum": [
+            "all"
+          ],
+          "markdownDescription": "All variables are checked for usage, including those in the global scope."
+        },
+        {
+          "description": "Checks only that locally-declared variables are used but will allow\nglobal variables to be unused.",
+          "type": "string",
+          "enum": [
+            "local"
+          ],
+          "markdownDescription": "Checks only that locally-declared variables are used but will allow\nglobal variables to be unused."
         }
       ]
     },

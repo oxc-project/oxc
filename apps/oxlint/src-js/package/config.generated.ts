@@ -120,6 +120,11 @@ export type NoMagicNumbersNumber = number | string;
  * Controls how hoisting is handled when checking for shadowing.
  */
 export type HoistOption = "all" | "functions" | "functions-and-types" | "never" | "types";
+export type VarsOption = "all" | "local";
+export type ArgsOption = "after-used" | "all" | "none";
+export type IgnorePatternFor_String = null | string;
+export type CaughtErrorsJson = "all" | "none";
+export type NoUnusedVarsFixMode = "off" | "suggestion" | "fix" | "safe-fix";
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
@@ -1006,7 +1011,7 @@ export interface DummyRuleMap {
   "no-unused-expressions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnusedExpressionsConfig];
   "no-unused-labels"?: RuleNoConfig;
   "no-unused-private-class-members"?: RuleNoConfig;
-  "no-unused-vars"?: DummyRule;
+  "no-unused-vars"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, VarsOption | NoUnusedVarsOptions];
   "no-use-before-define"?: DummyRule;
   "no-useless-assignment"?: RuleNoConfig;
   "no-useless-backreference"?: RuleNoConfig;
@@ -3025,6 +3030,265 @@ export interface NoUnusedExpressionsConfig {
    * When set to `true`, enforces the rule for unused JSX expressions also.
    */
   enforceForJSX?: boolean;
+}
+export interface NoUnusedVarsOptions {
+  /**
+   * Controls how unused arguments are checked.
+   */
+  args?: ArgsOption;
+  /**
+   * Specifies exceptions to this rule for unused arguments. Arguments whose
+   * names match this pattern will be ignored.
+   *
+   * By default, this pattern is `^_` unless options are configured with an
+   * object. In this case it will default to [`None`]. Note that this
+   * behavior deviates from both ESLint and TypeScript-ESLint, which never
+   * provide a default pattern.
+   *
+   * #### Example
+   *
+   * Examples of **correct** code for this option when the pattern is `^_`:
+   *
+   * ```javascript
+   * function foo(_a, b) {
+   * console.log(b);
+   * }
+   * foo(1, 2);
+   * ```
+   */
+  argsIgnorePattern?: IgnorePatternFor_String;
+  /**
+   * Used for `catch` block validation.
+   */
+  caughtErrors?: CaughtErrorsJson;
+  /**
+   * Specifies exceptions to this rule for errors caught within a `catch` block.
+   * Variables declared within a `catch` block whose names match this pattern
+   * will be ignored.
+   *
+   * #### Example
+   *
+   * Examples of **correct** code when the pattern is `^ignore`:
+   *
+   * ```javascript
+   * try {
+   * // ...
+   * } catch (ignoreErr) {
+   * console.error("Error caught in catch block");
+   * }
+   * ```
+   */
+  caughtErrorsIgnorePattern?: IgnorePatternFor_String;
+  /**
+   * This option specifies exceptions within destructuring patterns that will
+   * not be checked for usage. Variables declared within array destructuring
+   * whose names match this pattern will be ignored.
+   *
+   * By default this pattern is unset.
+   *
+   * #### Example
+   *
+   * Examples of **correct** code for this option, when the pattern is `^_`:
+   * ```javascript
+   * const [a, _b, c] = ["a", "b", "c"];
+   * console.log(a + c);
+   *
+   * const { x: [_a, foo] } = bar;
+   * console.log(foo);
+   *
+   * let _m, n;
+   * foo.forEach(item => {
+   * [_m, n] = item;
+   * console.log(n);
+   * });
+   * ```
+   */
+  destructuredArrayIgnorePattern?: IgnorePatternFor_String;
+  /**
+   * Controls which `no-unused-vars` auto-fixes are emitted.
+   *
+   * When omitted, both `imports` and `variables` default to `"suggestion"`,
+   * preserving the current behavior.
+   *
+   * NOTE: This option is experimental and may change based on feedback.
+   */
+  fix?: NoUnusedVarsFixOptions;
+  /**
+   * The `ignoreClassWithStaticInitBlock` option is a boolean. Static
+   * initialization blocks allow you to initialize static variables and
+   * execute code during the evaluation of a class definition, meaning
+   * the static block code is executed without creating a new instance
+   * of the class. When set to `true`, this option ignores classes
+   * containing static initialization blocks.
+   *
+   * #### Example
+   *
+   * Examples of **incorrect** code for the `{ "ignoreClassWithStaticInitBlock": true }` option
+   *
+   * ```javascript
+   * /* no-unused-vars: ["error", { "ignoreClassWithStaticInitBlock": true }]* /
+   *
+   * class Foo {
+   * static myProperty = "some string";
+   * static mymethod() {
+   * return "some string";
+   * }
+   * }
+   *
+   * class Bar {
+   * static {
+   * let baz; // unused variable
+   * }
+   * }
+   * ```
+   *
+   * Examples of **correct** code for the `{ "ignoreClassWithStaticInitBlock": true }` option
+   *
+   * ```javascript
+   * /* no-unused-vars: ["error", { "ignoreClassWithStaticInitBlock": true }]* /
+   *
+   * class Foo {
+   * static {
+   * let bar = "some string";
+   *
+   * console.log(bar);
+   * }
+   * }
+   * ```
+   */
+  ignoreClassWithStaticInitBlock?: boolean;
+  /**
+   * Using a Rest property it is possible to "omit" properties from an
+   * object, but by default the sibling properties are marked as "unused".
+   * With this option enabled the rest property's siblings are ignored.
+   *
+   *
+   * #### Example
+   * Examples of **correct** code when this option is set to `true`:
+   * ```js
+   * // 'foo' and 'bar' were ignored because they have a rest property sibling.
+   * var { foo, ...coords } = data;
+   *
+   * var bar;
+   * ({ bar, ...coords } = data);
+   * ```
+   */
+  ignoreRestSiblings?: boolean;
+  /**
+   * When set to `true`, the rule will ignore variables declared with
+   * `using` or `await using` declarations, even if they are unused.
+   *
+   * This is useful when working with resources that need to be disposed
+   * via the explicit resource management proposal, where the primary
+   * purpose is the disposal side effect rather than using the resource.
+   *
+   * #### Example
+   *
+   * Examples of **correct** code for the `{ "ignoreUsingDeclarations": true }` option:
+   *
+   * ```javascript
+   * /* no-unused-vars: ["error", { "ignoreUsingDeclarations": true }]* /
+   *
+   * using resource = getResource();
+   * await using anotherResource = getAnotherResource();
+   * ```
+   */
+  ignoreUsingDeclarations?: boolean;
+  /**
+   * The `reportUsedIgnorePattern` option is a boolean.
+   * Using this option will report variables that match any of the valid
+   * ignore pattern options (`varsIgnorePattern`, `argsIgnorePattern`,
+   * `caughtErrorsIgnorePattern`, or `destructuredArrayIgnorePattern`) if
+   * they have been used.
+   *
+   * #### Example
+   *
+   * Examples of **incorrect** code for the `{ "reportUsedIgnorePattern": true }` option:
+   *
+   * ```javascript
+   * /* no-unused-vars: ["error", { "reportUsedIgnorePattern": true, "varsIgnorePattern": "[iI]gnored" }]* /
+   *
+   * var firstVarIgnored = 1;
+   * var secondVar = 2;
+   * console.log(firstVarIgnored, secondVar);
+   * ```
+   *
+   * Examples of **correct** code for the `{ "reportUsedIgnorePattern": true }` option:
+   *
+   * ```javascript
+   * /* no-unused-vars: ["error", { "reportUsedIgnorePattern": true, "varsIgnorePattern": "[iI]gnored" }]* /
+   *
+   * var firstVar = 1;
+   * var secondVar = 2;
+   * console.log(firstVar, secondVar);
+   * ```
+   */
+  reportUsedIgnorePattern?: boolean;
+  /**
+   * The `reportVarsOnlyUsedAsTypes` option is a boolean.
+   *
+   * If `true`, the rule will also report variables that are only used as types.
+   *
+   * #### Examples
+   *
+   * Examples of **incorrect** code for the `{ "reportVarsOnlyUsedAsTypes": true }` option:
+   *
+   * ```javascript
+   * /*  no-unused-vars: ["error", { "reportVarsOnlyUsedAsTypes": true }] * /
+   *
+   * const myNumber: number = 4;
+   * export type MyNumber = typeof myNumber
+   * ```
+   *
+   * Examples of **correct** code for the `{ "reportVarsOnlyUsedAsTypes": true }` option:
+   *
+   * ```javascript
+   * export type MyNumber = number;
+   * ```
+   *
+   * Note: even with `{ "reportVarsOnlyUsedAsTypes": false }`, cases where the value is
+   * only used a type within itself will still be reported:
+   * ```javascript
+   * function foo(): typeof foo {}
+   * ```
+   */
+  reportVarsOnlyUsedAsTypes?: boolean;
+  /**
+   * Controls how usage of a variable in the global scope is checked.
+   */
+  vars?: VarsOption;
+  /**
+   * Specifies exceptions to this rule for unused variables. Variables whose
+   * names match this pattern will be ignored.
+   *
+   * By default, this pattern is `^_` unless options are configured with an
+   * object. In this case it will default to [`None`]. Note that this
+   * behavior deviates from both ESLint and TypeScript-ESLint, which never
+   * provide a default pattern.
+   *
+   * #### Example
+   *
+   * Examples of **correct** code for this option when the pattern is `^_`:
+   * ```javascript
+   * var _a = 10;
+   * var b = 10;
+   * console.log(b);
+   * ```
+   */
+  varsIgnorePattern?: IgnorePatternFor_String;
+}
+/**
+ * Fine-grained auto-fix controls for `no-unused-vars`.
+ */
+export interface NoUnusedVarsFixOptions {
+  /**
+   * Controls auto-fixes for unused imports.
+   */
+  imports?: NoUnusedVarsFixMode;
+  /**
+   * Controls auto-fixes for unused variables (including catch bindings).
+   */
+  variables?: NoUnusedVarsFixMode;
 }
 export interface NoUselessComputedKey {
   /**

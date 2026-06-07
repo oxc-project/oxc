@@ -186,13 +186,10 @@ var global_var = 42;
 
 ## Configuration
 
-This rule accepts a configuration object with the following properties:
-
 ### args
 
 type: `"after-used" | "all" | "none"`
 
-default: `"after-used"`
 
 Controls how unused arguments are checked.
 
@@ -222,6 +219,7 @@ Do not check arguments
 
 ### argsIgnorePattern
 
+type: `string`
 
 
 Specifies exceptions to this rule for unused arguments. Arguments whose
@@ -268,6 +266,7 @@ Do not check error objects.
 
 ### caughtErrorsIgnorePattern
 
+type: `string`
 
 
 Specifies exceptions to this rule for errors caught within a `catch` block.
@@ -289,6 +288,7 @@ console.error("Error caught in catch block");
 
 ### destructuredArrayIgnorePattern
 
+type: `string`
 
 
 This option specifies exceptions within destructuring patterns that will
@@ -319,7 +319,13 @@ console.log(n);
 
 type: `object`
 
-default: `{"imports":"suggestion", "variables":"suggestion"}`
+
+Controls which `no-unused-vars` auto-fixes are emitted.
+
+When omitted, both `imports` and `variables` default to `"suggestion"`,
+preserving the current behavior.
+
+NOTE: This option is experimental and may change based on feedback.
 
 Fine-grained auto-fix controls for `no-unused-vars`.
 
@@ -567,7 +573,6 @@ function foo(): typeof foo {}
 
 type: `"all" | "local"`
 
-default: `"all"`
 
 Controls how usage of a variable in the global scope is checked.
 
@@ -589,6 +594,7 @@ global variables to be unused.
 
 ### varsIgnorePattern
 
+type: `string`
 
 
 Specifies exceptions to this rule for unused variables. Variables whose
@@ -607,7 +613,6 @@ var _a = 10;
 var b = 10;
 console.log(b);
 ```
-
 
 
 
