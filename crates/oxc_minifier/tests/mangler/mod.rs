@@ -146,6 +146,11 @@ fn mangler() {
             var a = 1;
           }
         }", // a and b should have different names
+        "function _() { for (var i = 0; i < 9; i++) g(i); for (var j = 0; j < 9; j++) g(j); }", // disjoint `var` loop counters reuse one name
+        "function _() { if (c) for (var i = 0; i < 9; i++) g(i); else for (var j = 0; j < 9; j++) g(j); }", // if/else branches reuse
+        "function _() { for (var i = 0; i < 9; i++) for (var j = 0; j < 9; j++) g(i, j); }", // nested: must NOT reuse (i live during inner)
+        "function _() { for (var i = 0; i < 9; i++) h(() => i); for (var j = 0; j < 9; j++) g(j); }", // captured by closure: must NOT reuse
+        "function _() { for (var i = 0; i < 9; i++) {} g(i); for (var j = 0; j < 9; j++) {} }", // used after loop: must NOT reuse
     ];
     let top_level_cases = [
         "function foo(a) {a}",

@@ -239,6 +239,36 @@ function _() {
 	}
 }
 
+function _() { for (var i = 0; i < 9; i++) g(i); for (var j = 0; j < 9; j++) g(j); }
+function _() {
+	for (var e = 0; e < 9; e++) g(e);
+	for (var e = 0; e < 9; e++) g(e);
+}
+
+function _() { if (c) for (var i = 0; i < 9; i++) g(i); else for (var j = 0; j < 9; j++) g(j); }
+function _() {
+	if (c) for (var e = 0; e < 9; e++) g(e);
+	else for (var e = 0; e < 9; e++) g(e);
+}
+
+function _() { for (var i = 0; i < 9; i++) for (var j = 0; j < 9; j++) g(i, j); }
+function _() {
+	for (var e = 0; e < 9; e++) for (var t = 0; t < 9; t++) g(e, t);
+}
+
+function _() { for (var i = 0; i < 9; i++) h(() => i); for (var j = 0; j < 9; j++) g(j); }
+function _() {
+	for (var e = 0; e < 9; e++) h(() => e);
+	for (var t = 0; t < 9; t++) g(t);
+}
+
+function _() { for (var i = 0; i < 9; i++) {} g(i); for (var j = 0; j < 9; j++) {} }
+function _() {
+	for (var e = 0; e < 9; e++) {}
+	g(e);
+	for (var t = 0; t < 9; t++) {}
+}
+
 function foo(a) {a}
 function e(e) {
 	e;
