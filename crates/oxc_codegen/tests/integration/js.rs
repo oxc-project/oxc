@@ -52,6 +52,12 @@ fn module_decl() {
     test_minify("export default 5", "export default 5;");
     test_minify("export default foo", "export default foo;");
     test_minify("export default function(){}", "export default function(){}");
+
+    // `as` next to a string export/import name needs no space.
+    test_minify("export { foo as \"name\" }", "export{foo as\"name\"};");
+    test_minify("import { \"y\" as z } from \"m\"", "import{\"y\"as z}from\"m\";");
+    test_minify("export * as \"ns\" from \"m\"", "export*as\"ns\" from\"m\";");
+    test_minify("export { foo as bar }", "export{foo as bar};");
 }
 
 #[test]
@@ -831,10 +837,10 @@ fn template_literal_escape_when_building_ast() {
 
     // Create a template literal with special characters that need escaping:
     // backtick, ${, and backslash
-    // Pass escape_raw: true to automatically escape the raw field
+    // Use `template_element_escape_raw` to automatically escape the raw field
     let cooked = "hello`world${foo}\\bar";
     let value = TemplateElementValue { raw: ast.str(cooked), cooked: Some(ast.str(cooked)) };
-    let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
+    let element = ast.template_element_escape_raw(SPAN, value, true);
     let quasis = ast.vec1(element);
     let template_literal = ast.template_literal(SPAN, quasis, ast.vec());
 

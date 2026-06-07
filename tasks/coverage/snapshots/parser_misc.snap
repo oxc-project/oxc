@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 68/68 (100.00%)
 Positive Passed: 68/68 (100.00%)
-Negative Passed: 144/144 (100.00%)
+Negative Passed: 145/145 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -353,6 +353,12 @@ Negative Passed: 144/144 (100.00%)
  1 │ import unknown 'module';
    ·                ────┬───
    ·                    ╰── `from` expected
+   ╰────
+
+  × TS(2368): Type parameter name cannot be 'string'
+   ╭─[misc/fail/infer-reserved-type-name.ts:1:29]
+ 1 │ type T<X> = X extends infer string ? string : never;
+   ·                             ──────
    ╰────
 
   × Unexpected JSX expression

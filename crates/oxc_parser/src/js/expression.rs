@@ -645,12 +645,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
+        // Parser provides already-escaped values from source, so no escaping needed here
         self.ast.template_element_with_lone_surrogates(
             span,
             TemplateElementValue { raw, cooked },
             tail,
             lone_surrogates,
-            false, // escape_raw: parser provides already-escaped values from source
         )
     }
 
@@ -728,8 +728,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_lhs_expression_or_higher(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let mut in_optional_chain = false;
-        let lhs = self.parse_member_expression_or_higher(&mut in_optional_chain);
-        let lhs = self.parse_call_expression_rest(span, lhs, &mut in_optional_chain);
+        // `MemberExpression`
+        let primary = self.parse_primary_expression();
+        let member_expression = self.parse_member_expression_rest(
+            span,
+            primary,
+            &mut in_optional_chain,
+            /* allow_optional_chain */ true,
+        );
+        // A fully-parsed `MemberExpression` only extends into a `LeftHandSideExpression` via
+        // `Arguments` (`(`) or an `OptionalChain` (`?.`); see <https://tc39.es/ecma262/#sec-left-hand-side-expressions>.
+        // So skip `parse_call_expression_rest` (and its redundant member-rest re-scan) otherwise.
+        let lhs = if matches!(self.cur_kind(), Kind::LParen | Kind::QuestionDot) {
+            self.parse_call_expression_rest(span, member_expression, &mut in_optional_chain)
+        } else {
+            member_expression
+        };
         if !in_optional_chain {
             return lhs;
         }
@@ -761,21 +775,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             expr => expr,
         }
-    }
-
-    /// Section 13.3 Member Expression
-    fn parse_member_expression_or_higher(
-        &mut self,
-        in_optional_chain: &mut bool,
-    ) -> Expression<'a> {
-        let span = self.start_span();
-        let lhs = self.parse_primary_expression();
-        self.parse_member_expression_rest(
-            span,
-            lhs,
-            in_optional_chain,
-            /* allow_optional_chain */ true,
-        )
     }
 
     /// Section 13.3 Super Call

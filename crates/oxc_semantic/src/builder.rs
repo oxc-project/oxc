@@ -91,13 +91,6 @@ pub struct SemanticBuilder<'a> {
     /// in that scope can still detect redeclarations via `check_redeclaration`.
     pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
 
-    /// `NodeId`s of `async`/generator function declarations in sloppy-mode block scopes in JS files.
-    /// Read by `check_function_redeclaration` (Annex B.3.3) to identify an offending previous declaration
-    /// without reading its AST node, which may not be retained.
-    /// These conditions are extremely rarely met, so this `Vec` is practically always empty.
-    /// Build-only scratch (discarded after the build).
-    pub(crate) async_or_generator_function_node_ids: Vec<NodeId>,
-
     // builders
     pub(crate) nodes: AstNodes<'a>,
     pub(crate) scoping: Scoping,
@@ -165,7 +158,6 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
-            async_or_generator_function_node_ids: Vec::new(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unresolved_references_checkpoint: 0,
@@ -521,23 +513,14 @@ impl<'a> SemanticBuilder<'a> {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(&name).copied())
         })?;
 
-        // `(function n(n) {})()`
-        //              ^ is not a redeclaration
-        // Since we put the function expression binding 'n' Symbol into the function itself scope,
-        // then defining a variable with the same name as the function name will be considered
-        // a redeclaration, but it's actually not a redeclaration, so if the symbol declaration
-        // is a function expression, then return None to tell the caller that it's not a redeclaration.
-        if self.scoping.symbol_flags(symbol_id).is_function()
-            && self
-                .nodes
-                .kind(self.scoping.symbol_declaration(symbol_id))
-                .as_function()
-                .is_some_and(Function::is_expression)
-        {
+        let flags = self.scoping.symbol_flags(symbol_id);
+
+        // A named function expression binds its own name in the function's scope, so a same-named
+        // parameter is not a redeclaration: `(function n(n) {})` - param `n` is fine.
+        if flags.contains(SymbolFlags::FunctionExpression) {
             return None;
         }
 
-        let flags = self.scoping.symbol_flags(symbol_id);
         if flags.intersects(excludes) {
             let symbol_span = self.scoping.symbol_span(symbol_id);
             self.error(redeclaration(&name, symbol_span, span));

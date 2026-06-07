@@ -9,17 +9,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
 
-        let checkpoint = self.checkpoint();
-        self.bump_any(); // bump `let`
-        let token = self.cur_token();
-        let peeked = token.kind();
+        let peeked = self.lexer.peek_token().kind();
 
         // Fast path: avoid rewind.
         if !stmt_ctx.is_single_statement() && peeked.is_after_let() {
+            self.bump_any(); // bump `let`
             return self.parse_variable_statement(span, VariableDeclarationKind::Let, stmt_ctx);
         }
 
-        self.rewind(checkpoint);
         // let = foo, let instanceof x, let + 1
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
             let expr = self.parse_assignment_expression_or_higher();
@@ -41,7 +38,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn is_using_statement(&mut self) -> bool {
-        self.lookahead(Self::is_next_token_using_keyword_then_binding_identifier)
+        // `await using` requires `using` immediately after `await` on the same line. Cheaply peek
+        // for it first, so the common `await <expr>` statement avoids the heavier `lookahead`
+        // (checkpoint + rewind) and only `await using` pays for the binding-identifier check.
+        let next = self.lexer.peek_token();
+        next.kind() == Kind::Using
+            && !next.is_on_new_line()
+            && self.lookahead(Self::is_next_token_using_keyword_then_binding_identifier)
     }
 
     fn is_next_token_using_keyword_then_binding_identifier(&mut self) -> bool {

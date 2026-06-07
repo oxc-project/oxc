@@ -81,6 +81,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             None
         };
+        // A class name may not be a reserved type name, but only in TypeScript
+        // (`class string {}` is valid JavaScript).
+        if self.is_ts
+            && let Some(id) = &id
+        {
+            self.check_reserved_type_name(id, "Class");
+        }
 
         let type_parameters = if self.is_ts { self.parse_ts_type_parameters() } else { None };
         let (extends, implements) = self.parse_heritage_clause();

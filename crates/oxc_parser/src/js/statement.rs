@@ -391,10 +391,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Let => {
                 // `for (let`
                 let start_span = self.start_span();
-                let checkpoint = self.checkpoint();
-                self.bump_any(); // bump `let`
                 // disallow `for (let in ...`
-                if self.cur_kind().is_after_let() {
+                if self.lexer.peek_token().kind().is_after_let() {
+                    self.bump_any(); // bump `let`
                     return self.parse_variable_declaration_for_statement(
                         span,
                         start_span,
@@ -404,7 +403,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     );
                 }
                 // Should be a relatively cold branch, since most tokens after `let` will be allowed in most files
-                self.rewind(checkpoint);
             }
             _ => {}
         }
@@ -838,27 +836,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse import statement or import expression.
     fn parse_import_statement(&mut self) -> Statement<'a> {
-        let checkpoint = self.checkpoint();
         let span = self.start_span();
-        self.bump_any();
-        if matches!(self.cur_kind(), Kind::Dot | Kind::LParen) {
-            // Parse the whole expression `import.meta.url` so a rewind is required.
-            self.rewind(checkpoint);
+        if matches!(self.lexer.peek_token().kind(), Kind::Dot | Kind::LParen) {
+            // Parse the whole expression `import.meta.url`.
             self.parse_expression_or_labeled_statement()
         } else {
+            self.bump_any(); // bump `import`
             self.parse_import_declaration(span, self.ctx.has_top_level())
         }
     }
 
     /// Parse statements that start with `sync`.
     fn parse_async_statement(&mut self, span: u32, stmt_ctx: StatementContext) -> Statement<'a> {
-        let checkpoint = self.checkpoint();
-        self.bump_any(); // bump `async`
-        let token = self.cur_token();
+        let token = self.lexer.peek_token();
         if token.kind() == Kind::Function && !token.is_on_new_line() {
+            self.bump_any(); // bump `async`
             return self.parse_function_declaration(span, /* async */ true, stmt_ctx);
         }
-        self.rewind(checkpoint);
         if self.is_ts && self.at_start_of_ts_declaration() {
             return self.parse_ts_declaration_statement(span, stmt_ctx);
         }

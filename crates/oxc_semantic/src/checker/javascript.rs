@@ -734,10 +734,14 @@ fn check_redeclared_function(
             // (A clash with a `var`/`let`/`class` of the same name is a separate rule, reported elsewhere.)
             // This branch is only reached for function redeclarations in a sloppy-mode block,
             // which are extremely rare, so the linear scan's high cost does not really matter.
+            // Annex B.3.3 is JavaScript-only; TypeScript allows these (overloads/merging).
+            if ctx.source_type.is_typescript() {
+                return;
+            }
             let previous_declarations = &redeclarations[..redeclarations.len() - 1];
             let Some(culprit) = previous_declarations
                 .iter()
-                .find(|decl| ctx.async_or_generator_function_node_ids.contains(&decl.declaration))
+                .find(|decl| decl.flags.contains(SymbolFlags::AsyncOrGeneratorFunction))
             else {
                 // No `async`/generator function among the previous declarations - allowed by B.3.3.
                 return;
