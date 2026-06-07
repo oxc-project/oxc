@@ -645,12 +645,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
+        // Parser provides already-escaped values from source, so no escaping needed here
         self.ast.template_element_with_lone_surrogates(
             span,
             TemplateElementValue { raw, cooked },
             tail,
             lone_surrogates,
-            false, // escape_raw: parser provides already-escaped values from source
         )
     }
 
@@ -667,6 +667,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let property = self.parse_keyword_identifier(Kind::Meta);
                         let span = self.end_span(span);
                         self.module_record_builder.visit_import_meta(span);
+                        // `import.meta` is only allowed in module code.
+                        if !self.source_type.is_module() {
+                            self.error_on_script(diagnostics::import_meta(span));
+                        }
                         self.ast.expression_meta_property(span, meta, property)
                     }
                     // `import.source(expr)`
@@ -910,12 +914,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         Expression::from(if self.cur_kind() == Kind::PrivateIdentifier {
             let private_ident = self.parse_private_identifier();
-            self.ast.member_expression_private_field_expression(
-                self.end_span(lhs_span),
-                lhs,
-                private_ident,
-                optional,
-            )
+            let span = self.end_span(lhs_span);
+            // `super.#field` is not allowed.
+            if lhs.is_super() {
+                self.error(diagnostics::super_private(span));
+            }
+            self.ast.member_expression_private_field_expression(span, lhs, private_ident, optional)
         } else {
             let ident = self.parse_identifier_name();
             self.ast.member_expression_static(self.end_span(lhs_span), lhs, ident, optional)
@@ -945,7 +949,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.eat(Kind::Dot) {
             return if self.at(Kind::Target) {
                 let property = self.parse_keyword_identifier(Kind::Target);
-                self.ast.expression_meta_property(self.end_span(span), identifier, property)
+                let span = self.end_span(span);
+                if !self.ctx.has_new_target() {
+                    self.error(diagnostics::new_target_outside_function(span));
+                }
+                self.ast.expression_meta_property(span, identifier, property)
             } else {
                 self.bump_any();
                 self.fatal_error(diagnostics::new_target(self.end_span(span)))
@@ -1227,6 +1235,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Pratt Parsing Algorithm
         // <https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html>
         let mut lhs = lhs;
+        // Precedence of the operator that produced the running left-hand operand, used to detect
+        // `as`/`satisfies` assertions that cannot be erased. `None` until a binary/logical operator
+        // has been consumed in this loop, matching TypeScript where the initial operand (from unary
+        // parsing) is never a binary expression.
+        let mut last_operand_precedence: Option<Precedence> = None;
         loop {
             // re-lex for `>=` `>>` `>>>`
             // This is needed for jsx `<div>=</div>` case
@@ -1269,6 +1282,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     self.ast.expression_ts_satisfies(span, lhs, type_annotation)
                 };
+                // When we have `a ## b as T` or `a ## b satisfies T`, where `##` is some binary
+                // operator, stop parsing on any following operator with higher precedence than `##`
+                // because continuing would make it impossible to erase the `as` or `satisfies`
+                // without changing the meaning of the expression.
+                // See <https://github.com/microsoft/TypeScript/issues/63527>.
+                if let Some(last_precedence) = last_operand_precedence
+                    && let Some(next_precedence) = kind_to_precedence(self.re_lex_right_angle())
+                    && next_precedence > last_precedence
+                {
+                    break;
+                }
                 continue;
             }
 
@@ -1315,6 +1339,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 break;
             };
+            last_operand_precedence = Some(left_precedence);
         }
 
         lhs
@@ -1508,6 +1533,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) {
                 self.error(diagnostics::invalid_assignment(span));
             }
+        }
+        // A destructuring pattern target is only valid with `=`, not a compound operator.
+        if operator != AssignmentOperator::Assign
+            && matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_))
+        {
+            self.error(diagnostics::assignment_is_not_simple(lhs.span()));
         }
         let left = AssignmentTarget::cover(lhs, self);
         self.bump_any();

@@ -138,11 +138,20 @@ impl<'a> Binder<'a> for Function<'a> {
         let is_declaration = self.is_declaration();
 
         if let Some(ident) = &self.id {
-            let includes = if self.declare {
-                SymbolFlags::Function | SymbolFlags::Ambient
-            } else {
-                SymbolFlags::Function
-            };
+            let mut includes = SymbolFlags::Function;
+            if self.declare {
+                includes |= SymbolFlags::Ambient;
+            }
+            // A named function expression, so `check_redeclaration` can recognise its name binding
+            // (e.g. `(function n(n) {})` - the parameter `n` is not a redeclaration of the name).
+            if self.is_expression() {
+                includes |= SymbolFlags::FunctionExpression;
+            }
+            // An `async`/generator function, so the Annex B.3.3 redeclaration check can tell plain
+            // (relaxable) function declarations apart from these.
+            if self.r#async || self.generator {
+                includes |= SymbolFlags::AsyncOrGeneratorFunction;
+            }
 
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
@@ -159,20 +168,6 @@ impl<'a> Binder<'a> for Function<'a> {
             ident.symbol_id.set(Some(symbol_id));
 
             let scope_flags = builder.current_scope_flags();
-
-            // Record `async`/generator function declarations in sloppy-mode block scopes,
-            // so the redeclaration check `check_function_redeclaration` (Annex B.3.3) can later identify
-            // an offending previous declaration without reading its AST node (which may not be retained).
-            // The check only consults this for function declarations in a sloppy-mode JS block,
-            // so record nothing in any other case.
-            if is_declaration
-                && (self.r#async || self.generator)
-                && !builder.source_type.is_typescript()
-                && !scope_flags.is_strict_mode()
-                && !scope_flags.is_var()
-            {
-                builder.async_or_generator_function_node_ids.push(builder.current_node_id);
-            }
 
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
             // scopes also create an implicit var-like binding in the enclosing function

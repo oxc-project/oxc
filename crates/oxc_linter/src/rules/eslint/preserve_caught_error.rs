@@ -750,7 +750,6 @@ fn test() {
             None,
         ),
         // Throws a new Error, cause property is present but value is a different identifier
-        // Note: This should actually be a valid case since e === err, but still reporting as it's hard to track.
         (
             r#"try {
                         doSomething();

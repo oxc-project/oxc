@@ -369,9 +369,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         result
     }
 
-    pub(crate) fn parse_normal_list<F, T>(&mut self, open: Kind, close: Kind, f: F) -> Vec<'a, T>
+    pub(crate) fn parse_normal_list<F, T>(
+        &mut self,
+        open: Kind,
+        close: Kind,
+        mut f: F,
+    ) -> Vec<'a, T>
     where
-        F: Fn(&mut Self) -> T,
+        F: FnMut(&mut Self) -> T,
     {
         let opening_span = self.cur_token().span();
         self.expect(open);

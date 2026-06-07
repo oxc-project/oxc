@@ -142,22 +142,6 @@ pub fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn new_target(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected new.target expression")
-        .with_help(
-            "new.target is only allowed in constructors, functions, and class field initializers",
-        )
-        .with_label(span)
-}
-
-#[cold]
-pub fn import_meta(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected import.meta expression")
-        .with_help("import.meta is only allowed in module code")
-        .with_label(span)
-}
-
-#[cold]
 pub fn using_declaration_not_allowed_in_script(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'using' declarations are not allowed at the top level of a script")
         .with_help("Wrap this code in a block or use a module")
@@ -277,16 +261,6 @@ pub fn unexpected_super_reference(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid left-hand side in assignment").with_label(span)
-}
-
-#[cold]
-pub fn super_private(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Private fields cannot be accessed on super").with_label(span)
-}
-
-#[cold]
 pub fn delete_of_unqualified(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Delete of an unqualified identifier in strict mode.").with_label(span)
 }
@@ -360,12 +334,6 @@ pub fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Enum member must have initializer.").with_label(span)
 }
 
-/// TS(1392)
-#[cold]
-pub fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
-    ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
-}
-
 /// 'infer' declarations are only permitted in the 'extends' clause of a conditional type. (1338)
 #[cold]
 pub fn infer_declaration_only_permitted_in_extends_clause(span: Span) -> OxcDiagnostic {
@@ -397,22 +365,6 @@ pub fn function_implementation_missing(span: Span) -> OxcDiagnostic {
         "Function implementation is missing or not immediately following the declaration.",
     )
     .with_label(span)
-}
-
-#[cold]
-pub fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
-    let code = match syntax_name {
-        "Type parameter" => "2368",
-        "Class" => "2414",
-        "Interface" => "2427",
-        "Enum" => "2431",
-        "Type alias" => "2457",
-        _ => {
-            debug_assert!(false, "all syntax_name should have a corresponding match arm");
-            "2414"
-        }
-    };
-    ts_error(code, format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
 }
 
 /// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
@@ -460,27 +412,8 @@ pub fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic
 }
 
 #[cold]
-pub fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
-    ts_error("18007", "JSX expressions may not use the comma operator")
-        .with_help("Did you mean to write an array?")
-        .with_label(span)
-}
-
-#[cold]
 pub fn ts_export_assignment_cannot_be_used_with_other_exports(span: Span) -> OxcDiagnostic {
     ts_error("2309", "An export assignment cannot be used in a module with other exported elements")
         .with_label(span)
         .with_help("If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.")
-}
-
-#[cold]
-pub fn switch_stmt_cannot_have_multiple_default_case(
-    first_default: Span,
-    other_default: Span,
-) -> OxcDiagnostic {
-    ts_error("1113", "A 'default' clause cannot appear more than once in a 'switch' statement.")
-        .with_labels(vec![
-            first_default.label("First 'default' clause is here."),
-            other_default.label("Another 'default' clause cannot appear here."),
-        ])
 }

@@ -1298,8 +1298,10 @@ mod test {
             }
         });
 
+        // `import type foo = bar` builds the AST but is a semantic error (TS1392:
+        // an import alias cannot use `import type`), reported by the parser.
         let src = "import type foo = bar";
-        parse_and_assert_statements(src, |statements| {
+        parse_and_assert_statements_with_error(src, |statements| {
             if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
                 assert_eq!(decl.import_kind, ImportOrExportKind::Type);
                 assert_eq!(decl.id.name, "foo");
@@ -1357,6 +1359,19 @@ mod test {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, src, source_type).parse();
         assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
+        f(ret.program.body.iter().collect::<Vec<_>>());
+    }
+
+    /// Like [`parse_and_assert_statements`] but for a recoverable error: the parser
+    /// reports a diagnostic yet still builds the AST, which `f` asserts on.
+    fn parse_and_assert_statements_with_error(
+        src: &'static str,
+        f: fn(Vec<&oxc_ast::ast::Statement<'_>>) -> (),
+    ) {
+        let source_type = SourceType::default().with_typescript(true);
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, src, source_type).parse();
+        assert!(!ret.errors.is_empty(), "Expected a parse error for source: {src:?}");
         f(ret.program.body.iter().collect::<Vec<_>>());
     }
 
