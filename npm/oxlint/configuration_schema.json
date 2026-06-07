@@ -3694,7 +3694,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-shadow": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoShadowConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "no-shadow-restricted-names": {
           "anyOf": [
@@ -8428,6 +8445,52 @@
       },
       "additionalProperties": false
     },
+    "HoistOption": {
+      "description": "Controls how hoisting is handled when checking for shadowing.",
+      "oneOf": [
+        {
+          "description": "Report shadowing even before the outer variable is declared (due to hoisting).",
+          "type": "string",
+          "enum": [
+            "all"
+          ],
+          "markdownDescription": "Report shadowing even before the outer variable is declared (due to hoisting)."
+        },
+        {
+          "description": "Only report shadowing for function declarations that are hoisted.",
+          "type": "string",
+          "enum": [
+            "functions"
+          ],
+          "markdownDescription": "Only report shadowing for function declarations that are hoisted."
+        },
+        {
+          "description": "Report shadowing for both function and type declarations that are hoisted.",
+          "type": "string",
+          "enum": [
+            "functions-and-types"
+          ],
+          "markdownDescription": "Report shadowing for both function and type declarations that are hoisted."
+        },
+        {
+          "description": "Never report shadowing before the outer variable is declared.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Never report shadowing before the outer variable is declared."
+        },
+        {
+          "description": "Only report shadowing for type declarations that are hoisted.",
+          "type": "string",
+          "enum": [
+            "types"
+          ],
+          "markdownDescription": "Only report shadowing for type declarations that are hoisted."
+        }
+      ],
+      "markdownDescription": "Controls how hoisting is handled when checking for shadowing."
+    },
     "HookUseState": {
       "$ref": "#/definitions/HookUseStateConfig"
     },
@@ -10773,6 +10836,55 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoShadowConfig": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "List of variable names that are allowed to shadow.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of variable names that are allowed to shadow."
+        },
+        "builtinGlobals": {
+          "description": "Whether to report shadowing of built-in global variables.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to report shadowing of built-in global variables."
+        },
+        "hoist": {
+          "description": "Controls how hoisting is handled.",
+          "default": "functions-and-types",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HoistOption"
+            }
+          ],
+          "markdownDescription": "Controls how hoisting is handled."
+        },
+        "ignoreFunctionTypeParameterNameValueShadow": {
+          "description": "If `true`, ignore when a function type parameter shadows a value.\nExample: `const T = 1; function foo<T>() {}`",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "If `true`, ignore when a function type parameter shadows a value.\nExample: `const T = 1; function foo<T>() {}`"
+        },
+        "ignoreOnInitialization": {
+          "description": "Whether to ignore the variable initializers when the shadowed variable is presumably still uninitialized.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore the variable initializers when the shadowed variable is presumably still uninitialized."
+        },
+        "ignoreTypeValueShadow": {
+          "description": "If `true`, ignore when a type and a value have the same name.\nThis is common in TypeScript: `type Foo = ...; const Foo = ...;`",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "If `true`, ignore when a type and a value have the same name.\nThis is common in TypeScript: `type Foo = ...; const Foo = ...;`"
         }
       },
       "additionalProperties": false

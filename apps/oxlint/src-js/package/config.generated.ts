@@ -116,6 +116,10 @@ export type AllowKind =
 export type NoInnerDeclarationsConfig = "functions" | "both";
 export type BlockScopedFunctions = "allow" | "disallow";
 export type NoMagicNumbersNumber = number | string;
+/**
+ * Controls how hoisting is handled when checking for shadowing.
+ */
+export type HoistOption = "all" | "functions" | "functions-and-types" | "never" | "types";
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
@@ -981,7 +985,7 @@ export interface DummyRuleMap {
   "no-self-compare"?: RuleNoConfig;
   "no-sequences"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoSequences];
   "no-setter-return"?: RuleNoConfig;
-  "no-shadow"?: DummyRule;
+  "no-shadow"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoShadowConfig];
   "no-shadow-restricted-names"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoShadowRestrictedNamesConfig];
   "no-sparse-arrays"?: RuleNoConfig;
   "no-template-curly-in-string"?: RuleNoConfig;
@@ -2894,6 +2898,34 @@ export interface NoSequences {
    * Default is `true`.
    */
   allowInParentheses?: boolean;
+}
+export interface NoShadowConfig {
+  /**
+   * List of variable names that are allowed to shadow.
+   */
+  allow?: string[];
+  /**
+   * Whether to report shadowing of built-in global variables.
+   */
+  builtinGlobals?: boolean;
+  /**
+   * Controls how hoisting is handled.
+   */
+  hoist?: HoistOption;
+  /**
+   * If `true`, ignore when a function type parameter shadows a value.
+   * Example: `const T = 1; function foo<T>() {}`
+   */
+  ignoreFunctionTypeParameterNameValueShadow?: boolean;
+  /**
+   * Whether to ignore the variable initializers when the shadowed variable is presumably still uninitialized.
+   */
+  ignoreOnInitialization?: boolean;
+  /**
+   * If `true`, ignore when a type and a value have the same name.
+   * This is common in TypeScript: `type Foo = ...; const Foo = ...;`
+   */
+  ignoreTypeValueShadow?: boolean;
 }
 export interface NoShadowRestrictedNamesConfig {
   /**
