@@ -41,13 +41,11 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             let mod_decl_kind = kind.as_module_declaration_kind().unwrap();
             js::check_module_declaration(&mod_decl_kind, ctx);
         }
-        AstKind::MetaProperty(prop) => js::check_meta_property(prop, ctx),
 
         AstKind::WithStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
             js::check_with_statement(stmt, ctx);
         }
-        AstKind::SwitchStatement(stmt) => js::check_switch_statement(stmt, ctx),
         AstKind::BreakStatement(stmt) => js::check_break_statement(stmt, ctx),
         AstKind::ContinueStatement(stmt) => js::check_continue_statement(stmt, ctx),
         AstKind::LabeledStatement(stmt) => {
@@ -89,9 +87,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::MethodDefinition(method) => {
             ts::check_method_definition(method, ctx);
         }
-        AstKind::PropertyDefinition(prop) => {
-            ts::check_property_definition(prop, ctx);
-        }
         AstKind::ObjectProperty(prop) => {
             ts::check_object_property(prop, ctx);
         }
@@ -101,9 +96,7 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             ts::check_formal_parameters(params, ctx);
         }
 
-        AstKind::AssignmentExpression(expr) => js::check_assignment_expression(expr, ctx),
         AstKind::AwaitExpression(expr) => js::check_await_expression(expr, ctx),
-        AstKind::PrivateFieldExpression(expr) => js::check_private_field_expression(expr, ctx),
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, ctx),
@@ -114,19 +107,11 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             js::check_variable_declarator_redeclaration(decl, ctx);
         }
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
-        AstKind::TSInterfaceDeclaration(decl) => ts::check_ts_interface_declaration(decl, ctx),
         AstKind::TSTypeParameter(param) => ts::check_ts_type_parameter(param, ctx),
         AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, ctx),
         AstKind::TSGlobalDeclaration(decl) => ts::check_ts_global_declaration(decl, ctx),
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
-        AstKind::TSTypeAliasDeclaration(decl) => ts::check_ts_type_alias_declaration(decl, ctx),
         AstKind::TSInferType(infer_type) => ts::check_ts_infer_type(infer_type, ctx),
-        AstKind::TSImportEqualsDeclaration(decl) => {
-            ts::check_ts_import_equals_declaration(decl, ctx);
-        }
-        AstKind::JSXExpressionContainer(container) => {
-            ts::check_jsx_expression_container(container, ctx);
-        }
         _ => {}
     }
 }

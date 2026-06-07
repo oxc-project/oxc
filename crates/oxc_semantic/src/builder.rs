@@ -186,6 +186,32 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    /// Create a builder configured for the **compiler pipeline** (the
+    /// [`Compiler`], transformer, codegen, minifier, napi bindings, ...).
+    ///
+    /// Enables syntax error checking. Leaves linter-only analyses (control flow
+    /// graph, class table) off. This is the single place to tune
+    /// compiler-pipeline defaults; individual options can still be overridden
+    /// with the `with_*` methods.
+    ///
+    /// [`Compiler`]: https://docs.rs/oxc/latest/oxc/struct.Compiler.html
+    #[must_use]
+    pub fn new_compiler() -> Self {
+        Self::new().with_check_syntax_error(true)
+    }
+
+    /// Create a builder configured for the **linter**.
+    ///
+    /// Enables everything the linter relies on: syntax error checking, the
+    /// control flow graph, and the class table. JSDoc is built whenever the
+    /// `jsdoc` feature is enabled, which the `linter` feature turns on. This is
+    /// the single place to tune linter defaults; individual options can still be
+    /// overridden with the `with_*` methods.
+    #[must_use]
+    pub fn new_linter() -> Self {
+        Self::new().with_check_syntax_error(true).with_cfg(true).with_class_table(true)
+    }
+
     /// Enable/disable additional syntax checks.
     ///
     /// Set this to `true` to enable additional syntax checks. Without these,

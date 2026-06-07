@@ -344,10 +344,10 @@ mod tests {
 
         assert!(parse.errors.is_empty());
 
-        let first = SemanticBuilder::new().with_check_syntax_error(true).build(&parse.program);
+        let first = SemanticBuilder::new_compiler().build(&parse.program);
         assert!(first.errors.is_empty());
 
-        let second = SemanticBuilder::new().with_check_syntax_error(true).build(&parse.program);
+        let second = SemanticBuilder::new_compiler().build(&parse.program);
         assert!(second.errors.is_empty());
     }
 

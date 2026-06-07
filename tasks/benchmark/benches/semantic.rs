@@ -29,10 +29,7 @@ fn bench_semantic(criterion: &mut Criterion) {
                     // We return `errors` to be dropped outside of the measured section, as usually
                     // real-world code has no errors, so allocating and dropping them is atypical and
                     // we don't want to include it in benchmark time.
-                    let ret = SemanticBuilder::new()
-                        .with_check_syntax_error(true)
-                        .with_class_table(true)
-                        .build(&program);
+                    let ret = SemanticBuilder::new_compiler().build(&program);
                     let ret = black_box(ret);
                     ret.errors
                 });

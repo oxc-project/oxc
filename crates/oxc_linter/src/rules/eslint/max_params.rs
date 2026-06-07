@@ -71,6 +71,18 @@ impl Default for MaxParamsConfig {
     }
 }
 
+#[cfg(feature = "ruledocs")]
+impl MaxParams {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<MaxParamsConfig>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
+    }
+}
+
 impl MaxParamsConfig {
     fn count_this(&self) -> CountThis {
         self.count_this.unwrap_or(if self.count_void_this {

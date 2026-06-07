@@ -236,7 +236,7 @@ impl Oxc {
         parser_options: &OxcParserOptions,
         control_flow_options: &OxcControlFlowOptions,
     ) -> oxc::semantic::Semantic<'a> {
-        let mut semantic_builder = SemanticBuilder::new();
+        let mut semantic_builder = SemanticBuilder::new_compiler();
         if run_options.transform {
             // Estimate transformer will triple scopes, symbols, references
             semantic_builder = semantic_builder.with_excess_capacity(2.0).with_enum_eval(true);
@@ -393,8 +393,7 @@ impl Oxc {
         // Only lint if there are no syntax errors
         if run_options.lint && self.diagnostics.is_empty() {
             let mut external_plugin_store = ExternalPluginStore::default();
-            let semantic_ret =
-                SemanticBuilder::new().with_cfg(true).with_class_table(true).build(program);
+            let semantic_ret = SemanticBuilder::new_linter().build(program);
             let semantic = semantic_ret.semantic;
             let lint_config = if let Some(config) = &linter_options.config {
                 let oxlintrc = Oxlintrc::from_string(config).unwrap_or_default();

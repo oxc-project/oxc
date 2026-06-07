@@ -81,6 +81,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             None
         };
+        // A class name may not be a reserved type name, but only in TypeScript
+        // (`class string {}` is valid JavaScript).
+        if self.is_ts
+            && let Some(id) = &id
+        {
+            self.check_reserved_type_name(id, "Class");
+        }
 
         let type_parameters = if self.is_ts { self.parse_ts_type_parameters() } else { None };
         let (extends, implements) = self.parse_heritage_clause();
@@ -371,8 +378,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///    `StatementList`[~Yield, +Await, ~Return]
     fn parse_class_static_block(&mut self, span: u32) -> ClassElement<'a> {
         self.bump_any(); // bump `static`
-        let block =
-            self.context(Context::Await, Context::Yield | Context::Return, Self::parse_block);
+        let block = self.context(
+            Context::Await | Context::NewTarget,
+            Context::Yield | Context::Return,
+            Self::parse_block,
+        );
         self.ast.class_element_static_block(self.end_span(span), block.unbox().body)
     }
 
@@ -387,7 +397,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
-        let value = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
+        // `new.target` is allowed in a class accessor field initializer.
+        let value = self.eat(Kind::Eq).then(|| {
+            self.context_add(Context::NewTarget, Self::parse_assignment_expression_or_higher)
+        });
         self.asi();
         let r#type = if modifiers.contains(ModifierKind::Abstract) {
             AccessorPropertyType::TSAbstractAccessorProperty
@@ -645,9 +658,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         // Initializer[+In, ?Yield, ?Await]opt
-        let initializer = self
-            .eat(Kind::Eq)
-            .then(|| self.context(Context::In, Context::Yield | Context::Await, Self::parse_expr));
+        // `new.target` is allowed in a class field initializer.
+        let initializer = self.eat(Kind::Eq).then(|| {
+            self.context(
+                Context::In | Context::NewTarget,
+                Context::Yield | Context::Await,
+                Self::parse_expr,
+            )
+        });
 
         // Handle trailing `;` or newline
         let cur_token = self.cur_token();
@@ -672,6 +690,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if r#static && name == "prototype" && !self.ctx.has_ambient() {
                 self.error(diagnostics::static_prototype(span));
             }
+        }
+        if r#abstract && name.is_private_identifier() {
+            self.error(diagnostics::abstract_with_private_identifier(name.span()));
         }
         if r#abstract && initializer.is_some() {
             let (name, span) = name.prop_name().unwrap_or_else(|| {
