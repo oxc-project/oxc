@@ -36,7 +36,6 @@ pub struct ClassMethodsUseThisConfig {
     /// Whether to ignore methods that are overridden.
     ignore_override_methods: bool,
     /// Whether to ignore classes that implement interfaces.
-    #[schemars(with = "IgnoreClassWithImplements")]
     ignore_classes_with_implements: Option<IgnoreClassWithImplements>,
 }
 
