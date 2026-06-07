@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cell::Cell, ops::Deref};
+use std::{borrow::Cow, ops::Deref};
 
 use oxc_allocator::{Address, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
@@ -10,8 +10,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
-use oxc_str::{CompactStr, Ident};
-use oxc_syntax::node::NodeId;
+use oxc_str::CompactStr;
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -226,6 +225,7 @@ impl Rule for ExplicitModuleBoundaryTypes {
         ctx.source_type().is_typescript()
     }
 }
+
 impl ExplicitModuleBoundaryTypes {
     fn run_on_exported_expression<'a>(&self, ctx: &LintContext<'a>, expr: &Expression<'a>) {
         self.run_on_exported_expression_inner(ctx, expr, true);
@@ -311,10 +311,21 @@ impl Fn<'_> {
     }
 }
 
+/// Name and span of the symbol an anonymous function or arrow is assigned to - a variable binding,
+/// class property, or object property key.
+///
+/// Used so that diagnostics point at, and refer to, that name rather than the anonymous function
+/// expression itself, and so the name can be checked against the `allowedNames` option.
+#[derive(Clone, Copy)]
+struct TargetSymbol<'a> {
+    span: Span,
+    name: &'a str,
+}
+
 struct ExplicitTypesChecker<'a, 'c> {
     rule: &'c ExplicitModuleBoundaryTypes,
     ctx: &'c LintContext<'a>,
-    target_symbol: Option<IdentifierName<'a>>,
+    target_symbol: Option<TargetSymbol<'a>>,
     // note: we avoid allocations by reserving space on the stack. Yes this
     // struct is large, but reserving space for it is just a offset op from the
     // stack pointer.
@@ -341,37 +352,32 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             overloaded_methods: FxHashSet::default(),
         }
     }
+
     // fn target_span(&self) -> Option<Span> {
     //     self.target_symbol.as_ref().map(|id| id.span)
     // }
 
     fn with_target_binding(&mut self, binding: Option<&BindingIdentifier<'a>>) -> bool {
         if let Some(id) = binding {
-            self.target_symbol.replace(IdentifierName {
-                span: id.span,
-                node_id: Cell::new(NodeId::DUMMY),
-                name: id.name,
-            });
+            self.target_symbol = Some(TargetSymbol { span: id.span, name: id.name.as_str() });
             true
         } else {
             false
         }
     }
+
     fn with_target_property(&mut self, prop: Option<&PropertyKey<'a>>) -> bool {
         let Some(id) = prop else {
             return false;
         };
         if let Some(Cow::Borrowed(name)) = id.static_name() {
-            self.target_symbol.replace(IdentifierName {
-                span: id.span(),
-                node_id: Cell::new(NodeId::DUMMY),
-                name: Ident::from(name),
-            });
+            self.target_symbol = Some(TargetSymbol { span: id.span(), name });
             true
         } else {
             false
         }
     }
+
     #[inline]
     fn reset_target(&mut self, had_target: bool) {
         if had_target {
@@ -382,12 +388,13 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     fn check_function_without_return(&mut self, func: &Function<'a>) {
         debug_assert!(func.return_type.is_none());
 
-        let target_span = self.target_symbol.as_ref();
-        let target_name = target_span.map(|t| t.name);
+        let target = self.target_symbol.as_ref();
+        let target_name = target.map(|t| t.name);
         #[expect(clippy::cast_possible_truncation)]
-        let span =
-            target_span.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
-        let is_allowed = || self.rule.is_some_allowed_name(func.name().or(target_name));
+        let span = target.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
+        let is_allowed = || {
+            self.rule.is_some_allowed_name(func.name().map(|name| name.as_str()).or(target_name))
+        };
 
         if self.rule.allow_overload_functions && self.function_has_overload_signatures(func) {
             return;
@@ -489,9 +496,9 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
 
     fn check_arrow_without_return(&mut self, arrow: &ArrowFunctionExpression<'a>) {
         debug_assert!(arrow.return_type.is_none());
-        let target_span = self.target_symbol.as_ref();
-        let target_name = target_span.map(|t| t.name);
-        let span = target_span.map_or(arrow.params.span, |t| t.span);
+        let target = self.target_symbol.as_ref();
+        let target_name = target.map(|t| t.name);
+        let span = target.map_or(arrow.params.span, |t| t.span);
         let is_allowed = || self.rule.is_some_allowed_name(target_name);
 
         if !self.rule.allow_higher_order_functions {
@@ -703,6 +710,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         walk::walk_class_element(self, el);
         self.reset_target(is_target);
     }
+
     fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
         let is_set = it.kind == PropertyKind::Set;
         let prev_flags = self.scope_flags;
