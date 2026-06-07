@@ -292,7 +292,7 @@ impl<'a> AstBuilder<'a> {
         mut value: TemplateElementValue<'a>,
         tail: bool,
     ) -> TemplateElement<'a> {
-        value.raw = escape_template_element_raw(value.raw.as_str(), self);
+        value.raw = escape_template_element_raw(value.raw, self);
         self.template_element(span, value, tail)
     }
 
@@ -308,7 +308,7 @@ impl<'a> AstBuilder<'a> {
         tail: bool,
         lone_surrogates: bool,
     ) -> TemplateElement<'a> {
-        value.raw = escape_template_element_raw(value.raw.as_str(), self);
+        value.raw = escape_template_element_raw(value.raw, self);
         self.template_element_with_lone_surrogates(span, value, tail, lone_surrogates)
     }
 }
@@ -316,7 +316,7 @@ impl<'a> AstBuilder<'a> {
 /// Escape special characters for template element raw value.
 ///
 /// Escapes: backticks, `${`, backslashes, and carriage returns.
-fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Str<'a> {
+fn escape_template_element_raw<'a>(raw: Str<'a>, ast: AstBuilder<'a>) -> Str<'a> {
     let bytes = raw.as_bytes();
 
     // Calculate size needed for escaped string
@@ -328,8 +328,9 @@ fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Str<'a> {
             _ => 0,
         };
     }
+
     if extra_bytes == 0 {
-        return ast.str(raw);
+        return raw;
     }
 
     // Allocate directly in arena.
