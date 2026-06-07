@@ -4178,7 +4178,41 @@
           ]
         },
         "operator-assignment": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "oneOf": [
+                    {
+                      "description": "Requires assignment operator shorthand where possible.",
+                      "type": "string",
+                      "enum": [
+                        "always"
+                      ],
+                      "markdownDescription": "Requires assignment operator shorthand where possible."
+                    },
+                    {
+                      "description": "Disallows assignment operator shorthand.",
+                      "type": "string",
+                      "enum": [
+                        "never"
+                      ],
+                      "markdownDescription": "Disallows assignment operator shorthand."
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "oxc/approx-constant": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9391,6 +9425,26 @@
             "never"
           ],
           "markdownDescription": "Disallows initialization during declaration."
+        }
+      ]
+    },
+    "Mode4": {
+      "oneOf": [
+        {
+          "description": "Requires assignment operator shorthand where possible.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Requires assignment operator shorthand where possible."
+        },
+        {
+          "description": "Disallows assignment operator shorthand.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallows assignment operator shorthand."
         }
       ]
     },

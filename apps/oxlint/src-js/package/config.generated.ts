@@ -1040,7 +1040,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, ShorthandType]
     | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
-  "operator-assignment"?: DummyRule;
+  "operator-assignment"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, "always" | "never"];
   "oxc/approx-constant"?: RuleNoConfig;
   "oxc/bad-array-method-on-arguments"?: RuleNoConfig;
   "oxc/bad-bitwise-operator"?: RuleNoConfig;
