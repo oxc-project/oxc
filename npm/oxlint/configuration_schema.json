@@ -11540,6 +11540,12 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true`, enforces the rule for unused JSX expressions also."
+        },
+        "ignoreDirectives": {
+          "description": "When set to `true`, allows directive prologues.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows directive prologues."
         }
       },
       "additionalProperties": false

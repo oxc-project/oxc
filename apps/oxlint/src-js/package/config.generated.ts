@@ -3040,6 +3040,10 @@ export interface NoUnusedExpressionsConfig {
    * When set to `true`, enforces the rule for unused JSX expressions also.
    */
   enforceForJSX?: boolean;
+  /**
+   * When set to `true`, allows directive prologues.
+   */
+  ignoreDirectives?: boolean;
 }
 export interface NoUnusedVarsOptions {
   /**
