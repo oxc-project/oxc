@@ -164,9 +164,16 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx.state.symbol_values.reset();
         ctx.state.proto_write_symbols.clear();
         ctx.state.changed = false;
-        let prepass = direct_eval::collect_prepass_data(ctx.scoping(), program);
-        ctx.state.direct_eval_scopes = prepass.direct_eval_scopes;
-        ctx.state.unused_declaration_body_scopes = prepass.unused_declaration_body_scopes;
+        // `contains_direct_eval()` is only a cheap "any eval exists" signal
+        if ctx.scoping().root_scope_flags().contains_direct_eval() {
+            let prepass = direct_eval::collect_prepass_data(ctx.scoping(), program);
+            ctx.state.direct_eval_scopes = prepass.direct_eval_scopes;
+            ctx.state.unused_declaration_body_scopes = prepass.unused_declaration_body_scopes;
+        } else {
+            // Eval may have been removed last iteration; `refresh_direct_eval_flags` clears the root flag.
+            ctx.state.direct_eval_scopes.clear();
+            ctx.state.unused_declaration_body_scopes.clear();
+        }
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
