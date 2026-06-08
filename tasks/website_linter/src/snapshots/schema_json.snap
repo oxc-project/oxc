@@ -4028,7 +4028,24 @@ expression: json
           ]
         },
         "no-use-before-define": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUseBeforeDefineConfigJson"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "no-useless-assignment": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -11477,6 +11494,64 @@ expression: json
       },
       "additionalProperties": false
     },
+    "NoUseBeforeDefineConfig": {
+      "type": "object",
+      "properties": {
+        "allowNamedExports": {
+          "description": "Allow named exports that appear before declaration.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Allow named exports that appear before declaration."
+        },
+        "classes": {
+          "description": "Check class declarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Check class declarations."
+        },
+        "enums": {
+          "description": "Check enum declarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Check enum declarations."
+        },
+        "functions": {
+          "description": "Check function declarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Check function declarations."
+        },
+        "ignoreTypeReferences": {
+          "description": "Ignore usages that are type-only references.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Ignore usages that are type-only references."
+        },
+        "typedefs": {
+          "description": "Check type aliases, interfaces, and type parameters.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Check type aliases, interfaces, and type parameters."
+        },
+        "variables": {
+          "description": "Check variable declarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Check variable declarations."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoUseBeforeDefineConfigJson": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Nofunc"
+        },
+        {
+          "$ref": "#/definitions/NoUseBeforeDefineConfig"
+        }
+      ]
+    },
     "NoUselessComputedKey": {
       "type": "object",
       "properties": {
@@ -11611,6 +11686,12 @@ expression: json
           ],
           "markdownDescription": "Makes this rule more strict by disallowing calls to `this.setState`` even within functions."
         }
+      ]
+    },
+    "Nofunc": {
+      "type": "string",
+      "enum": [
+        "nofunc"
       ]
     },
     "NullType": {

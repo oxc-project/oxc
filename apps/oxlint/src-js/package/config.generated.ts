@@ -130,6 +130,8 @@ export type ArgsOption = "after-used" | "all" | "none";
 export type IgnorePatternFor_String = null | string;
 export type CaughtErrorsJson = "all" | "none";
 export type NoUnusedVarsFixMode = "off" | "suggestion" | "fix" | "safe-fix";
+export type NoUseBeforeDefineConfigJson = Nofunc | NoUseBeforeDefineConfig;
+export type Nofunc = "nofunc";
 export type Location = "start" | "anywhere";
 /**
  * The rule takes a single string option: the name of the error parameter.
@@ -1045,7 +1047,7 @@ export interface DummyRuleMap {
   "no-unused-labels"?: RuleNoConfig;
   "no-unused-private-class-members"?: RuleNoConfig;
   "no-unused-vars"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnusedVarsConfig];
-  "no-use-before-define"?: DummyRule;
+  "no-use-before-define"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUseBeforeDefineConfigJson];
   "no-useless-assignment"?: RuleNoConfig;
   "no-useless-backreference"?: RuleNoConfig;
   "no-useless-call"?: RuleNoConfig;
@@ -3414,6 +3416,36 @@ export interface NoUnusedVarsFixOptions {
    * Controls auto-fixes for unused variables (including catch bindings).
    */
   variables?: NoUnusedVarsFixMode;
+}
+export interface NoUseBeforeDefineConfig {
+  /**
+   * Allow named exports that appear before declaration.
+   */
+  allowNamedExports?: boolean;
+  /**
+   * Check class declarations.
+   */
+  classes?: boolean;
+  /**
+   * Check enum declarations.
+   */
+  enums?: boolean;
+  /**
+   * Check function declarations.
+   */
+  functions?: boolean;
+  /**
+   * Ignore usages that are type-only references.
+   */
+  ignoreTypeReferences?: boolean;
+  /**
+   * Check type aliases, interfaces, and type parameters.
+   */
+  typedefs?: boolean;
+  /**
+   * Check variable declarations.
+   */
+  variables?: boolean;
 }
 export interface NoUselessComputedKey {
   /**

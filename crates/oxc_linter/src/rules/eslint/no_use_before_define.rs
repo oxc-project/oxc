@@ -67,6 +67,20 @@ impl Default for NoUseBeforeDefineConfig {
     }
 }
 
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+enum Nofunc {
+    Nofunc,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)] // This is used in the rule configuration schema
+enum NoUseBeforeDefineConfigJson {
+    String(Nofunc),
+    Object(NoUseBeforeDefineConfig),
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NoUseBeforeDefine(NoUseBeforeDefineConfig);
 
@@ -96,7 +110,7 @@ declare_oxc_lint!(
     NoUseBeforeDefine,
     eslint,
     restriction,
-    config = NoUseBeforeDefineConfig,
+    config = NoUseBeforeDefineConfigJson,
     version = "1.49.0",
 );
 
