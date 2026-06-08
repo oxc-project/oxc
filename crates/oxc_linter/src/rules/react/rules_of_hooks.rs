@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Function},
+    ast::{ArrowFunctionExpression, Expression, Function},
 };
 use oxc_cfg::{
     ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -235,6 +235,16 @@ impl Rule for RulesOfHooks {
 
         if !is_react_hook(&call.callee) {
             return;
+        }
+
+        // Check if the callee is a local binding (e.g., function parameter named 'use')
+        // If it is, it's not a React hook, so we should skip this rule
+        if let Expression::Identifier(ident) = &call.callee {
+            let scope_id = node.scope_id();
+            if let Some(_) = ctx.scoping().find_binding(scope_id, &ident.name) {
+                // This identifier is a local binding, not a React hook
+                return;
+            }
         }
 
         let cfg = ctx.cfg();
@@ -551,9 +561,22 @@ fn has_conditional_path_accept_throw(
         .edges(to_graph_id)
         .any(|it| matches!(it.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
     {
+        // Check if the hook is inside a try statement
+        // If so, the hook call is not actually conditional - it's guaranteed to execute
+        // unless an exception is thrown before it, which is not a conditionality issue
+        let is_in_try_block = nodes.ancestors(to.id()).any(|ancestor| {
+            matches!(ancestor.kind(), AstKind::TryStatement(_))
+        });
+
+        if is_in_try_block {
+            // The hook is in a try block, so it's not conditional
+            // Continue with normal conditional path analysis below
+        } else {
+            // There's a potential throw that could bypass this hook
+            return true;
+        }
         // TODO: We are simplifying here, There is a real need for a trait like `MayThrow` that
         // would provide a method `may_throw`, since not everything may throw and break the control flow.
-        return true;
         // let paths = algo::all_simple_paths::<Vec<_>, _>(graph, from_graph_id, to_graph_id, 0, None);
         // if paths
         //     .flatten()
@@ -1304,7 +1327,24 @@ fn test() {
     r"const MyComponent = makeComponent(() => { useHook(); });",
     r"const MyComponent2 = makeComponent(function () { useHook(); });",
     r"const MyComponent4 = makeComponent(function InnerComponent() { useHook(); });",
-    r"const Foo = hoc((props) => { if (props.cond) { const [_a, _b] = useState(false); } });"
+    r"const Foo = hoc((props) => { if (props.cond) { const [_a, _b] = useState(false); } });",
+    // https://github.com/oxc-project/oxc/issues/23123
+    // Valid because 'use' is a function parameter, not a React hook
+    "
+        async (_, use) => {
+            await use();
+        }
+    ",
+    // Valid because hooks can be called inside a try/catch block
+    "
+        function Component() {
+            try {
+                useCustomHook();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    "
     ];
 
     let fail = vec![
