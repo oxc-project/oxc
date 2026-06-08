@@ -130,6 +130,8 @@ export type ArgsOption = "after-used" | "all" | "none";
 export type IgnorePatternFor_String = null | string;
 export type CaughtErrorsJson = "all" | "none";
 export type NoUnusedVarsFixMode = "off" | "suggestion" | "fix" | "safe-fix";
+export type NoUseBeforeDefineConfigJson = Nofunc | NoUseBeforeDefineConfig;
+export type Nofunc = "nofunc";
 export type Location = "start" | "anywhere";
 /**
  * The rule takes a single string option: the name of the error parameter.
@@ -772,7 +774,7 @@ export interface DummyRuleMap {
   "jest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
   "jest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
   "jest/max-expects"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxExpectsConfig];
-  "jest/max-nested-describe"?: DummyRule;
+  "jest/max-nested-describe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxNestedDescribeConfig];
   "jest/no-alias-methods"?: RuleNoConfig;
   "jest/no-commented-out-tests"?: RuleNoConfig;
   "jest/no-conditional-expect"?: RuleNoConfig;
@@ -1045,7 +1047,7 @@ export interface DummyRuleMap {
   "no-unused-labels"?: RuleNoConfig;
   "no-unused-private-class-members"?: RuleNoConfig;
   "no-unused-vars"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnusedVarsConfig];
-  "no-use-before-define"?: DummyRule;
+  "no-use-before-define"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUseBeforeDefineConfigJson];
   "no-useless-assignment"?: RuleNoConfig;
   "no-useless-backreference"?: RuleNoConfig;
   "no-useless-call"?: RuleNoConfig;
@@ -1519,7 +1521,7 @@ export interface DummyRuleMap {
   "vitest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
   "vitest/hoisted-apis-on-top"?: RuleNoConfig;
   "vitest/max-expects"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxExpectsConfig];
-  "vitest/max-nested-describe"?: DummyRule;
+  "vitest/max-nested-describe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxNestedDescribeConfig];
   "vitest/no-alias-methods"?: RuleNoConfig;
   "vitest/no-commented-out-tests"?: RuleNoConfig;
   "vitest/no-conditional-expect"?: RuleNoConfig;
@@ -2158,6 +2160,12 @@ export interface ExpectExpectConfig {
 export interface MaxExpectsConfig {
   /**
    * Maximum number of `expect()` assertion calls allowed within a single test.
+   */
+  max?: number;
+}
+export interface MaxNestedDescribeConfig {
+  /**
+   * Maximum allowed depth of nested describe calls.
    */
   max?: number;
 }
@@ -3414,6 +3422,36 @@ export interface NoUnusedVarsFixOptions {
    * Controls auto-fixes for unused variables (including catch bindings).
    */
   variables?: NoUnusedVarsFixMode;
+}
+export interface NoUseBeforeDefineConfig {
+  /**
+   * Allow named exports that appear before declaration.
+   */
+  allowNamedExports?: boolean;
+  /**
+   * Check class declarations.
+   */
+  classes?: boolean;
+  /**
+   * Check enum declarations.
+   */
+  enums?: boolean;
+  /**
+   * Check function declarations.
+   */
+  functions?: boolean;
+  /**
+   * Ignore usages that are type-only references.
+   */
+  ignoreTypeReferences?: boolean;
+  /**
+   * Check type aliases, interfaces, and type parameters.
+   */
+  typedefs?: boolean;
+  /**
+   * Check variable declarations.
+   */
+  variables?: boolean;
 }
 export interface NoUselessComputedKey {
   /**

@@ -323,14 +323,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.at(Kind::Extends) {
             return None;
         }
+        // When conditional types are already disallowed by the enclosing context — the normal case,
+        // since `infer` lives in a conditional's `extends` clause which is parsed with
+        // `DisallowConditionalTypes` — a trailing `?` cannot reinterpret `extends` as a conditional.
+        // The constraint is then unambiguous, so parse it without a checkpoint/rewind.
+        if self.ctx.has_disallow_conditional_types() {
+            self.bump_any();
+            return Some(self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type));
+        }
         let checkpoint = self.checkpoint();
         self.bump_any();
         let constraint = self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
-        if self.ctx.has_disallow_conditional_types() || !self.at(Kind::Question) {
-            Some(constraint)
-        } else {
+        if self.at(Kind::Question) {
             self.rewind(checkpoint);
             None
+        } else {
+            Some(constraint)
         }
     }
 

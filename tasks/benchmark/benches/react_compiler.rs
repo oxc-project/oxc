@@ -28,7 +28,11 @@ fn bench_react_compiler(criterion: &mut Criterion) {
                 // reads them and allocates the compiled program in the same arena.
                 let ParserReturn { program, .. } =
                     Parser::new(&allocator, source_text, source_type).parse();
-                let semantic = SemanticBuilder::new().build(&program).semantic;
+                let semantic = SemanticBuilder::new()
+                    .with_build_nodes(true)
+                    .with_enum_eval(true)
+                    .build(&program)
+                    .semantic;
 
                 runner.run(|| transform(&program, &semantic, &allocator, options.clone()));
             });
