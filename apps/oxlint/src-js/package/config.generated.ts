@@ -1374,7 +1374,7 @@ export interface DummyRuleMap {
   "typescript/unified-signatures"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, UnifiedSignaturesOptions];
   "typescript/use-unknown-in-catch-callback-variable"?: RuleNoConfig;
   "unicode-bom"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, BomOptionType];
-  "unicorn/catch-error-name"?: DummyRule;
+  "unicorn/catch-error-name"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, CatchErrorNameConfig];
   "unicorn/consistent-assert"?: RuleNoConfig;
   "unicorn/consistent-date-clone"?: RuleNoConfig;
   "unicorn/consistent-empty-array-spread"?: RuleNoConfig;
@@ -4877,6 +4877,18 @@ export interface UnifiedSignaturesOptions {
    * even if the signatures themselves are identical.
    */
   ignoreOverloadsWithDifferentJSDoc?: boolean;
+}
+export interface CatchErrorNameConfig {
+  /**
+   * A list of patterns to ignore when checking `catch` variable names. The pattern
+   * can be a string or regular expression.
+   */
+  ignore?: string[];
+  /**
+   * The name to use for error variables in `catch` blocks. You can customize it
+   * to something other than `'error'` (e.g., `'exception'`).
+   */
+  name?: string;
 }
 export interface ConsistentFunctionScoping {
   /**

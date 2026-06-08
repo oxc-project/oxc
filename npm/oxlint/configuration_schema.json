@@ -706,6 +706,26 @@
         "snake_case"
       ]
     },
+    "CatchErrorNameConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "description": "A list of patterns to ignore when checking `catch` variable names. The pattern\ncan be a string or regular expression.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of patterns to ignore when checking `catch` variable names. The pattern\ncan be a string or regular expression."
+        },
+        "name": {
+          "description": "The name to use for error variables in `catch` blocks. You can customize it\nto something other than `'error'` (e.g., `'exception'`).",
+          "default": "error",
+          "type": "string",
+          "markdownDescription": "The name to use for error variables in `catch` blocks. You can customize it\nto something other than `'error'` (e.g., `'exception'`)."
+        }
+      },
+      "additionalProperties": false
+    },
     "CaughtErrorsJson": {
       "oneOf": [
         {
@@ -6491,7 +6511,24 @@
           ]
         },
         "unicorn/catch-error-name": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CatchErrorNameConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/consistent-assert": {
           "$ref": "#/definitions/RuleNoConfig"
