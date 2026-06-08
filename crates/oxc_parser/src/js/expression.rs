@@ -1713,38 +1713,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.ctx.has_yield() {
                 return true;
             }
-            return self.lookahead(|p| {
-                Self::next_token_is_identifier_or_keyword_or_literal_on_same_line(p, false)
-            });
+            // Outside a generator, `yield` is an `IdentifierReference` unless the next token (on the
+            // same line) can start the operand of a `YieldExpression`. That is a single-token
+            // decision, so peek instead of running a full `lookahead` checkpoint/rewind. With
+            // `is_await = false` the worker reduces to exactly this (mirrors `is_unambiguous_await`).
+            let token = self.lexer.peek_token();
+            return !token.is_on_new_line() && token.kind().is_after_await_or_yield();
         }
         false
-    }
-
-    fn next_token_is_identifier_or_keyword_or_literal_on_same_line(
-        &mut self,
-        is_await: bool,
-    ) -> bool {
-        self.bump_any();
-
-        // NOTE: This check implementation is based on TypeScript parser.
-        // But TS does not have this exception.
-        // This is needed to pass parser_babel test to parse:
-        // `for (await of [])` with `sourceType: script`
-        if !self.is_ts && is_await && self.at(Kind::Of) {
-            return false;
-        }
-
-        let token = self.cur_token();
-        let kind = token.kind();
-
-        // For `await /regex/`, treat `/` as regex start (not division).
-        // In `await` context, `/` should always start a regex since `await` expects an expression.
-        // EXCEPTION: In unambiguous mode, don't do this. TypeScript initially parses `await` as
-        // identifier when `/` follows (treating `/` as division), then reparses if ESM is detected.
-        if is_await && kind == Kind::Slash && !self.source_type.is_unambiguous() {
-            return !token.is_on_new_line();
-        }
-
-        !token.is_on_new_line() && kind.is_after_await_or_yield()
     }
 }
