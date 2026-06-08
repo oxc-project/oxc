@@ -441,3 +441,19 @@ fn type_codegen_with_preserve_parens_off() {
         parse_options,
     );
 }
+
+#[test]
+fn ts_cast_assignment_target_is_parenthesized() {
+    test_same("(foo as Bar) = baz;\n");
+    test_same("(foo satisfies Bar) = baz;\n");
+    test_same("(foo.bar as Bar) = baz;\n");
+    test_same("(foo[key] as Bar) = baz;\n");
+    test_options_with_source_type(
+        "(<Bar>foo) = baz;\n",
+        "(<Bar>foo) = baz;\n",
+        SourceType::ts(),
+        default_options(),
+    );
+    test_idempotency("(foo as Bar) = baz");
+    test_idempotency("(foo satisfies Bar) = baz");
+}
