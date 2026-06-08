@@ -836,3 +836,34 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:1]
+ 1 │ a(); var a=function() {};
+   · ┬        ┬
+   · │        ╰── defined here
+   · ╰── used here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:2:13]
+ 1 │ 
+ 2 │             a();
+   ·             ┬
+   ·             ╰── used here
+ 3 │             var a = function () {};
+   ·                 ┬
+   ·                 ╰── defined here
+ 4 │                   
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
+
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
+   ╭─[no_use_before_define.tsx:1:10]
+ 1 │ export { a }; const a = 1;
+   ·          ┬          ┬
+   ·          │          ╰── defined here
+   ·          ╰── used here
+   ╰────
+  help: Move the declaration before any references to it, or remove the reference if it is not needed.
