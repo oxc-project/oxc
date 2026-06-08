@@ -1038,6 +1038,57 @@ mod test {
     }
 
     #[test]
+    fn parenthesized_instantiation_expression_member_access() {
+        // A parenthesized instantiation expression may be followed by a property access
+        // (`(Foo<Bar>).baz`), unlike a bare one (`Foo<Bar>.baz`, TS1477). This must hold even
+        // with `preserve_parens: false`, which drops the `ParenthesizedExpression` wrapper.
+        let allocator = Allocator::default();
+        let source_type = SourceType::default().with_typescript(true);
+        let opts = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
+
+        for source in [
+            "(Foo<Bar>).findOne()",
+            "(Foo<Bar>)[\"findOne\"]",
+            "(Foo<Bar>)?.findOne",
+            "(Foo<Bar>)?.[\"findOne\"]",
+            // Chained access: only the innermost expr is exempt, but after `.a` the lhs is no
+            // longer an instantiation expression, so `.b` is fine too.
+            "(Foo<Bar>).a.b",
+            // Redundant parens collapse to the same inner expr under `preserve_parens: false`.
+            "((Foo<Bar>)).findOne()",
+            // Call/`new` callees unwrap the instantiation expr instead of hitting the TS1477
+            // check, so these are valid with or without parens.
+            "(Foo<Bar>)()",
+            "new (Foo<Bar>)()",
+            // Tagged templates are intentionally not a TS1477 site.
+            "(Foo<Bar>)`tpl`",
+        ] {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.errors.is_empty(), "preserve_parens: true should accept `{source}`");
+            let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
+            assert!(ret.errors.is_empty(), "preserve_parens: false should accept `{source}`");
+        }
+
+        // The exemption is keyed by source position, not a single flag: a parenthesized
+        // instantiation expression must not mask a later unparenthesized one. Exactly one error.
+        for source in ["(Foo<Bar>).a; Foo<Bar>.b;", "Foo<Bar>.a; (Foo<Bar>).b;"] {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert_eq!(ret.errors.len(), 1, "only the unparenthesized form errors in `{source}`");
+            let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
+            assert_eq!(ret.errors.len(), 1, "only the unparenthesized form errors in `{source}`");
+        }
+
+        // Unparenthesized forms remain TS1477 errors. (Plain `Foo<Bar>[x]` is not an instantiation
+        // expression - the `[` makes `<` parse as less-than - but `Foo<Bar>?.[x]` is.)
+        for source in ["Foo<Bar>.findOne()", "Foo<Bar>?.findOne", "Foo<Bar>?.[\"findOne\"]"] {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert_eq!(ret.errors.len(), 1, "`{source}` should be TS1477");
+            let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
+            assert_eq!(ret.errors.len(), 1, "`{source}` should be TS1477 (no parens)");
+        }
+    }
+
+    #[test]
     fn hashbang() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();

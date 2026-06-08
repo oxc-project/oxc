@@ -304,6 +304,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.options.preserve_parens {
             self.ast.expression_parenthesized(self.end_span(span), expression)
         } else {
+            // `ParenthesizedExpression` wrapper is dropped here; record the parenthesization so
+            // the TS1477 check (`is_unparenthesized_instantiation_expression`) can still tell
+            // `(Foo<Bar>).baz` (valid) apart from `Foo<Bar>.baz` (invalid).
+            if let Expression::TSInstantiationExpression(expr) = &expression {
+                self.state.parenthesized_instantiation_expr.insert(expr.span.start);
+            }
             expression
         }
     }
@@ -796,6 +802,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.expression_super(span)
     }
 
+    /// Whether `lhs` is an instantiation expression not wrapped in parentheses, which cannot be
+    /// followed by a property access (TS1477). The parenthesized case `(Foo<Bar>)` is allowed;
+    /// with `preserve_parens: false` it has no wrapper node, so consult the record left by
+    /// `parse_paren_expression`.
+    fn is_unparenthesized_instantiation_expression(&self, lhs: &Expression<'a>) -> bool {
+        let Expression::TSInstantiationExpression(expr) = lhs else { return false };
+        !self.state.parenthesized_instantiation_expr.contains(&expr.span.start)
+    }
+
     /// parse rhs of a member expression, starting from lhs
     fn parse_member_expression_rest(
         &mut self,
@@ -840,7 +855,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
 
             if is_property_access {
-                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
+                if self.is_unparenthesized_instantiation_expression(&lhs) {
                     self.error(
                         diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
                             self.end_span(lhs_span),
@@ -852,7 +867,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             if (question_dot || !self.ctx.has_decorator()) && self.at(Kind::LBrack) {
-                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
+                if self.is_unparenthesized_instantiation_expression(&lhs) {
                     self.error(
                         diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
                             self.end_span(lhs_span),

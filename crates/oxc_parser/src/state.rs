@@ -8,6 +8,14 @@ use crate::cursor::ParserCheckpoint;
 pub struct ParserState<'a> {
     pub not_parenthesized_arrow: FxHashSet<u32>,
 
+    /// `span.start` of each `TSInstantiationExpression` that was parenthesized, e.g. the `Foo`
+    /// in `(Foo<Bar>)`. Used so the TS1477 check ("instantiation expression cannot be followed
+    /// by a property access") allows `(Foo<Bar>).baz` while still rejecting `Foo<Bar>.baz`.
+    /// Needed because `preserve_parens: false` drops the `ParenthesizedExpression` wrapper that
+    /// would otherwise distinguish the two. Keying on `span.start` is sound because at most one
+    /// `TSInstantiationExpression` can begin at any given offset.
+    pub parenthesized_instantiation_expr: FxHashSet<u32>,
+
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
     /// Keyed by `ObjectProperty`'s span.start.
     pub cover_initialized_name: FxHashMap<u32, AssignmentExpression<'a>>,
@@ -37,6 +45,7 @@ impl ParserState<'_> {
     pub fn new() -> Self {
         Self {
             not_parenthesized_arrow: FxHashSet::default(),
+            parenthesized_instantiation_expr: FxHashSet::default(),
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
             potential_await_reparse: Vec::new(),
