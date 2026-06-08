@@ -54,6 +54,8 @@ impl<C: Config> Lexer<'_, C> {
     }
 
     pub(crate) fn next_jsx_child(&mut self) -> Token {
+        // Different lexical goal symbol than `next_token`, so a cached peek must not be reused.
+        self.lookahead = None;
         self.token.set_start(self.offset());
         let kind = self.read_jsx_child();
         self.finish_next(kind)

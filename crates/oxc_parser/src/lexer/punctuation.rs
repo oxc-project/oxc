@@ -86,6 +86,8 @@ impl<C: Config> Lexer<'_, C> {
     }
 
     pub(crate) fn re_lex_right_angle(&mut self) -> Token {
+        // Re-lexing the current token under different rules; a cached peek must not be reused.
+        self.lookahead = None;
         self.token.set_start(self.offset() - 1);
         let kind = self.read_right_angle();
         self.finish_next_retokenized(kind)

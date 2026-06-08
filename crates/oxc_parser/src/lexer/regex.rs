@@ -12,6 +12,8 @@ impl<C: Config> Lexer<'_, C> {
     /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
     pub(crate) fn next_regex(&mut self, kind: Kind) -> (Token, u32, RegExpFlags, bool) {
+        // `/` lexes as a regex here, not as the division punctuator a cached peek would hold.
+        self.lookahead = None;
         self.token.set_start(
             self.offset()
                 - match kind {

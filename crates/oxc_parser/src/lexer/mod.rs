@@ -103,8 +103,35 @@ pub struct Lexer<'a, C: Config> {
     /// Collected tokens in source order.
     tokens: ArenaVec<'a, Token>,
 
+    /// Cached result of the last `peek_token`, reused by the next `next_token` call made from the
+    /// same source position. See [`Lookahead`].
+    lookahead: Option<Lookahead<'a>>,
+
     /// Config
     pub(crate) config: C,
+}
+
+/// A token speculatively lexed by [`Lexer::peek_token`], cached so that the immediately following
+/// [`Lexer::next_token`] can reuse it instead of re-lexing the same source.
+///
+/// This is sound because `next_token` always lexes under the same lexical goal symbol
+/// (`InputElementDiv` in spec terms): the cases where the same characters tokenize differently
+/// (`/` as regex, `}` as template tail, `<`/`>` splitting, JSX) are all reached through *other*
+/// lexer entry points (`next_regex`, `next_template_substitution_tail`, `re_lex_*`, `next_jsx_*`),
+/// each of which clears the cache. The token is therefore valid for any `next_token` performed from
+/// the exact `start` position it was lexed at; consumption is guarded by a position-equality check.
+#[derive(Debug, Clone, Copy)]
+struct Lookahead<'a> {
+    /// Source position the peek was taken from (the position `next_token` must be at to reuse it).
+    start: SourcePosition<'a>,
+    /// The speculatively-lexed token.
+    token: Token,
+    /// Source position immediately after `token` (where the source must be left after consuming it).
+    end: SourcePosition<'a>,
+    /// `trivia_builder.pure_comment` as computed while lexing `token`.
+    pure_comment: Option<usize>,
+    /// `trivia_builder.has_no_side_effects_comment` as computed while lexing `token`.
+    has_no_side_effects_comment: bool,
 }
 
 impl<'a, C: Config> Lexer<'a, C> {
@@ -152,6 +179,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
             tokens,
+            lookahead: None,
             config,
         }
     }
@@ -219,6 +247,9 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
+        // A rewind moves the source position, so any cached peek token (which is only valid at the
+        // exact position it was lexed from) must be dropped.
+        self.lookahead = None;
         match checkpoint.errors_snapshot {
             ErrorSnapshot::Empty => self.errors.clear(),
             ErrorSnapshot::Count(len) => self.errors.truncate(len),
@@ -231,10 +262,67 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.trivia_builder.has_no_side_effects_comment = checkpoint.has_no_side_effects_comment;
     }
 
+    /// Peek the next token without consuming it.
+    ///
+    /// The peeked token is cached (see [`Lookahead`]) so the immediately following `next_token`
+    /// call from the same position reuses it instead of re-lexing. Repeated `peek_token` calls from
+    /// the same position are also served from the cache.
     pub fn peek_token(&mut self) -> Token {
+        let start = self.source.position();
+
+        // Fast path: reuse an existing cached peek taken from this position.
+        if let Some(lookahead) = &self.lookahead
+            && lookahead.start == start
+        {
+            return lookahead.token;
+        }
+
         let checkpoint = self.checkpoint();
+        let errors_len = self.errors.len();
+        let deferred_errors_len = self.deferred_module_errors.len();
+
         let token = self.next_token();
+
+        // Capture the post-lex state needed to reproduce this token without re-lexing.
+        let end = self.source.position();
+        let pure_comment = self.trivia_builder.pure_comment;
+        let has_no_side_effects_comment = self.trivia_builder.has_no_side_effects_comment;
+        // Whether the speculative lex emitted new diagnostics. Must be computed *before* `rewind`,
+        // which truncates `errors` back to the checkpoint count.
+        let produced_errors = self.errors.len() != errors_len
+            || self.deferred_module_errors.len() != deferred_errors_len;
+
+        // `rewind` restores `errors` but not the rest of lexer state; comments, escaped-string data
+        // etc. lexed during the peek persist and are deduped on reuse. It also clears `self.lookahead`.
         self.rewind(checkpoint);
+
+        // Only cache when the speculative lex emitted no new diagnostics. If it did, the real
+        // `next_token` must run so those diagnostics are produced (rewind discarded the `errors`,
+        // and re-running keeps behaviour identical to before this cache existed).
+        if !produced_errors {
+            self.lookahead =
+                Some(Lookahead { start, token, end, pure_comment, has_no_side_effects_comment });
+        }
+
+        token
+    }
+
+    /// Consume a cached peek token, restoring the lexer to the state the equivalent `next_token`
+    /// would have left it in, without re-lexing.
+    fn consume_lookahead(&mut self, lookahead: Lookahead<'a>) -> Token {
+        let token = lookahead.token;
+        // Advance source past the token.
+        self.source.set_position(lookahead.end);
+        // Restore the annotation flags computed while peeking (`rewind` reset them to pre-peek).
+        self.trivia_builder.pure_comment = lookahead.pure_comment;
+        self.trivia_builder.has_no_side_effects_comment = lookahead.has_no_side_effects_comment;
+        // The token stream was truncated by the peek's `rewind`, so re-push.
+        if self.config.tokens() {
+            self.tokens.push_fast(token);
+        }
+        // All other trivia bookkeeping (`handle_token` effects, collected comments, escaped-string
+        // data) was performed during the peek and not undone by `rewind`, so it needs no replay.
+        self.token = Token::default();
         token
     }
 
@@ -256,18 +344,30 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Read next token in file.
     /// Use `first_token` for first token, and this method for all further tokens.
     pub fn next_token(&mut self) -> Token {
+        // Reuse a cached peek token if one was taken from the current position. `Lookahead` is
+        // `Copy`, so the common (no cache) path is a single read-only branch with no write.
+        if let Some(lookahead) = self.lookahead {
+            // Any cached peek is consumed or dropped here, so it can never go stale.
+            self.lookahead = None;
+            if lookahead.start == self.source.position() {
+                return self.consume_lookahead(lookahead);
+            }
+        }
         let kind = self.read_next_token();
         self.finish_next(kind)
     }
 
     /// Read the next token after `=` in a JSX attribute.
     pub(crate) fn next_jsx_attribute_value(&mut self) -> Token {
+        // Different lexical goal symbol than `next_token`, so a cached peek must not be reused.
+        self.lookahead = None;
         let kind = self.read_next_jsx_attribute_value();
         self.finish_next(kind)
     }
 
     // This is a workaround for a problem where `next_token` is not inlined in lexer benchmark.
-    // Must be kept in sync with `next_token` above, and contain exactly the same code.
+    // Must be kept in sync with the lexing in `next_token` above. The peek-cache fast path is
+    // intentionally omitted: the lexer benchmark never peeks, and excluding it measures pure lexing.
     #[cfg(feature = "benchmarking")]
     #[expect(clippy::inline_always)]
     #[inline(always)]
@@ -381,6 +481,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Advance source cursor to end of file.
     #[inline]
     pub fn advance_to_end(&mut self) {
+        self.lookahead = None;
         self.source.advance_to_end();
     }
 

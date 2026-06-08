@@ -388,6 +388,8 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
     /// See Section 12, the parser needs to re-tokenize on `TemplateSubstitutionTail`,
     pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
+        // `}` lexes as a template tail here, not the punctuator a cached peek would hold.
+        self.lookahead = None;
         self.token.set_start(self.offset() - 1);
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
         self.finish_next_retokenized(kind)

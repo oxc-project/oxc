@@ -21,6 +21,8 @@ impl<C: Config> Lexer<'_, C> {
     /// The remaining characters after the first `<` (e.g. the second `<` in `<<`)
     /// will be lexed as separate tokens on subsequent `next_token` calls.
     pub(crate) fn re_lex_as_typescript_l_angle(&mut self, offset: u32) -> Token {
+        // Re-lexing moves the source position back; a cached peek must not be reused.
+        self.lookahead = None;
         self.token.set_start(self.offset() - offset);
         self.source.back(offset as usize - 1);
         if self.config.tokens() {
@@ -45,6 +47,8 @@ impl<C: Config> Lexer<'_, C> {
     /// the parse. Since both the original push and the Replace are at a post-checkpoint
     /// position, `truncate(checkpoint.tokens_len)` on rewind removes it automatically.
     pub(crate) fn re_lex_as_typescript_r_angle(&mut self, offset: u32) -> Token {
+        // Re-lexing moves the source position back; a cached peek must not be reused.
+        self.lookahead = None;
         self.token.set_start(self.offset() - offset);
         self.source.back(offset as usize - 1);
         self.finish_re_lex(Kind::RAngle)
