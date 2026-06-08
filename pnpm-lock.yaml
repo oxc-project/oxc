@@ -109,7 +109,7 @@ importers:
         specifier: 'catalog:'
         version: 15.0.4
       svelte:
-        specifier: ^5.55.5
+        specifier: ^5.56.2
         version: 5.56.2(@typescript-eslint/types@8.60.1)
       tsdown:
         specifier: 'catalog:'
