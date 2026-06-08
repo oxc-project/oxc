@@ -1092,12 +1092,8 @@ impl Runtime {
                     let err: Vec<OxcDiagnostic> = err
                         .into_iter()
                         .map(|mut diagnostic| {
-                            if let Some(labels) = &mut diagnostic.labels {
-                                for label in labels.iter_mut() {
-                                    label.set_span_offset(
-                                        label.offset() + section_source.start as usize,
-                                    );
-                                }
+                            for label in &mut diagnostic.labels {
+                                label.set_span_offset(label.offset() + section_source.start);
                             }
                             diagnostic
                         })

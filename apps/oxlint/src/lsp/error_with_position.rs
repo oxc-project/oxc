@@ -76,9 +76,6 @@ fn miette_severity_to_lsp_severity(value: Severity) -> DiagnosticSeverity {
         Severity::Advice => DiagnosticSeverity::HINT,
     }
 }
-// clippy: the source field is checked and assumed to be less than 4GB, and
-// we assume that the fix offset will not exceed 2GB in either direction
-#[expect(clippy::cast_possible_truncation)]
 pub fn message_to_lsp_diagnostic(
     message: Message,
     uri: &Uri,
@@ -97,27 +94,32 @@ pub fn message_to_lsp_diagnostic(
         miette_severity_to_lsp_severity(message.error.severity)
     };
 
-    let related_information = message.error.labels.as_ref().map(|spans| {
-        spans
-            .iter()
-            .map(|span| {
-                let offset = span.offset() as u32;
-                let start_position = offset_to_position(rope, offset, source_text);
-                let end_position =
-                    offset_to_position(rope, offset + span.len() as u32, source_text);
+    let related_information = if message.error.labels.is_empty() {
+        None
+    } else {
+        Some(
+            message
+                .error
+                .labels
+                .iter()
+                .map(|span| {
+                    let offset = span.offset();
+                    let start_position = offset_to_position(rope, offset, source_text);
+                    let end_position = offset_to_position(rope, offset + span.len(), source_text);
 
-                ls_types::DiagnosticRelatedInformation {
-                    location: ls_types::Location {
-                        uri: uri.clone(),
-                        range: ls_types::Range::new(start_position, end_position),
-                    },
-                    message: span
-                        .label()
-                        .map_or_else(String::new, std::string::ToString::to_string),
-                }
-            })
-            .collect()
-    });
+                    ls_types::DiagnosticRelatedInformation {
+                        location: ls_types::Location {
+                            uri: uri.clone(),
+                            range: ls_types::Range::new(start_position, end_position),
+                        },
+                        message: span
+                            .label()
+                            .map_or_else(String::new, std::string::ToString::to_string),
+                    }
+                })
+                .collect(),
+        )
+    };
 
     let start_position = offset_to_position(rope, message.span.start, source_text);
     let end_position = offset_to_position(rope, message.span.end, source_text);
