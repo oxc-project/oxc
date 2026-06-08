@@ -45,34 +45,28 @@ pub struct StructDetails {
 /// and static assertions for `#[generate_derive]`.
 /// Re-order struct fields if instructed by `STRUCTS` data.
 fn modify_struct(item: &mut ItemStruct, args: TokenStream) -> TokenStream {
-    let assertions = assert_generated_derives(&item.attrs);
-
-    let reorder_result = reorder_struct_fields(item, args);
-    let error = reorder_result.err().map(|message| compile_error(&item.ident, message));
-
-    // `#[repr(transparent)]` for structs with only one field.
-    // `#[repr(C)]` otherwise.
-    let field_count = item.fields.len();
-    let repr = if field_count == 1 { quote!(#[repr(transparent)]) } else { quote!(#[repr(C)]) };
-
-    quote! {
-        #repr
-        #[derive(::oxc_ast_macros::Ast)]
-        #item
-        #error
-        #assertions
-    }
+    modify_struct_impl(item, args).unwrap_or_else(|message| {
+        let error = compile_error(&item.ident, message);
+        quote! {
+            #[derive(::oxc_ast_macros::Ast)]
+            #item
+            #error
+        }
+    })
 }
 
-/// Re-order struct fields, depending on instructions in `STRUCTS` (which is codegen-ed).
-///
-/// Mutates `item` in place, re-ordering its fields.
-fn reorder_struct_fields(item: &mut ItemStruct, args: TokenStream) -> Result<(), &'static str> {
+fn modify_struct_impl(
+    item: &mut ItemStruct,
+    args: TokenStream,
+) -> Result<TokenStream, &'static str> {
     // Skip foreign types
     if let Some(TokenTree::Ident(ident)) = args.into_iter().next()
         && ident == "foreign"
     {
-        return Ok(());
+        return Ok(quote! {
+            #[derive(::oxc_ast_macros::Ast)]
+            #item
+        });
     }
 
     // Get struct data
@@ -81,6 +75,30 @@ fn reorder_struct_fields(item: &mut ItemStruct, args: TokenStream) -> Result<(),
         return Err("Struct is unknown. Run `just ast` to re-run the codegen.");
     };
 
+    let assertions = assert_generated_derives(&item.attrs);
+
+    reorder_struct_fields(item, struct_details)?;
+
+    // `#[repr(transparent)]` for structs with only one field.
+    // `#[repr(C)]` otherwise.
+    let field_count = item.fields.len();
+    let repr = if field_count == 1 { quote!(#[repr(transparent)]) } else { quote!(#[repr(C)]) };
+
+    Ok(quote! {
+        #repr
+        #[derive(::oxc_ast_macros::Ast)]
+        #item
+        #assertions
+    })
+}
+
+/// Re-order struct fields, depending on instructions in `STRUCTS` (which is codegen-ed).
+///
+/// Mutates `item` in place, re-ordering its fields.
+fn reorder_struct_fields(
+    item: &mut ItemStruct,
+    struct_details: &StructDetails,
+) -> Result<(), &'static str> {
     // Exit if fields don't need re-ordering
     let Some(field_order) = struct_details.field_order else {
         return Ok(());
