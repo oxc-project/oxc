@@ -255,15 +255,6 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     }
 }
 
-pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
-    if let Expression::FunctionExpression(func) = &prop.value
-        && prop.kind.is_accessor()
-        && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
-    {
-        ctx.error(diagnostics::accessor_without_body(prop.key.span()));
-    }
-}
-
 pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &SemanticBuilder) {
     let ForStatementLeft::VariableDeclaration(decls) = left else {
         return;
