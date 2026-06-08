@@ -151,6 +151,7 @@ fn mangler() {
         "function _() { for (var i = 0; i < 9; i++) for (var j = 0; j < 9; j++) g(i, j); }", // nested: must NOT reuse (i live during inner)
         "function _() { for (var i = 0; i < 9; i++) h(() => i); for (var j = 0; j < 9; j++) g(j); }", // captured by closure: must NOT reuse
         "function _() { for (var i = 0; i < 9; i++) {} g(i); for (var j = 0; j < 9; j++) {} }", // used after loop: must NOT reuse
+        "function _() { for (var i = 0; i < 9; i++) { g(i) } for (var j; j === undefined; j++) { g(j) } }", // should NOT reuse (j is declared but used before init and must be undefined)
     ];
     let top_level_cases = [
         "function foo(a) {a}",
