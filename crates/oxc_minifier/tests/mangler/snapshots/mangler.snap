@@ -269,6 +269,16 @@ function _() {
 	for (var t = 0; t < 9; t++) {}
 }
 
+function _() { for (var i = 0; i < 9; i++) { g(i) } for (var j; j === undefined; j++) { g(j) } }
+function _() {
+	for (var e = 0; e < 9; e++) {
+		g(e);
+	}
+	for (var t; t === undefined; t++) {
+		g(t);
+	}
+}
+
 function foo(a) {a}
 function e(e) {
 	e;
