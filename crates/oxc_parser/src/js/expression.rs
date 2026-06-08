@@ -1029,13 +1029,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         in_optional_chain: &mut bool,
     ) -> Expression<'a> {
         let mut lhs = lhs;
+        // The caller only enters here with the current token being `(` or `?.`. For `(`,
+        // `parse_member_expression_rest` is a no-op (`(` ∉ its FIRST set: `?.`, `.`, `[`,
+        // template, TS `!`/`<`), so skip the redundant re-scan on entry; entering on `?.`, and
+        // every later iteration (after `Arguments`), still needs it.
+        debug_assert!(
+            matches!(self.cur_kind(), Kind::LParen | Kind::QuestionDot),
+            "parse_call_expression_rest is only entered on `(` or `?.`",
+        );
+        let mut rescan_members = !self.at(Kind::LParen);
         while self.fatal_error.is_none() {
-            lhs = self.parse_member_expression_rest(
-                lhs_span,
-                lhs,
-                in_optional_chain,
-                /* allow_optional_chain */ true,
-            );
+            if rescan_members {
+                lhs = self.parse_member_expression_rest(
+                    lhs_span,
+                    lhs,
+                    in_optional_chain,
+                    /* allow_optional_chain */ true,
+                );
+            }
+            rescan_members = true;
             let question_dot_span = self.at(Kind::QuestionDot).then(|| self.cur_token().span());
             let question_dot = question_dot_span.is_some();
             if question_dot {
