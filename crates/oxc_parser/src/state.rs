@@ -31,6 +31,12 @@ pub struct ParserState<'a> {
     /// Used to determine if a statement needs to be stored for potential reparsing
     /// in unambiguous mode.
     pub encountered_await_identifier: bool,
+
+    /// Set by the entry before parsing an `ArrowKind::Cover` `( a )`. Read-and-cleared by the next
+    /// `parse_parenthesized_expression` (the cover paren itself): when an arrow `=>` follows the
+    /// `)`, it skips the `ParenthesizedExpression` wrapper, which the arrow refinement would only
+    /// discard. Avoids one arena allocation per `( a ) =>` arrow.
+    pub cover_paren_arrow: bool,
 }
 
 impl ParserState<'_> {
@@ -41,6 +47,7 @@ impl ParserState<'_> {
             trailing_commas: FxHashMap::default(),
             potential_await_reparse: Vec::new(),
             encountered_await_identifier: false,
+            cover_paren_arrow: false,
         }
     }
 }

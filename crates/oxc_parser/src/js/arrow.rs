@@ -150,10 +150,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match self.cur_kind() {
             Kind::LParen => {
                 // `(1 + a)` can never be arrow parameters: the leading literal is not the start of
-                // a `BindingElement`, so the worker would bump past it and return `Tristate::False`
+                // a `BindingElement`, so the worker would bump past it and return `ArrowKind::No`
                 // (`!second.is_binding_identifier() && second != This`). Skip the lookahead.
                 if self.lexer.peek_token().kind().is_literal() {
-                    Tristate::False
+                    ArrowKind::No
                 } else {
                     self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
                 }
@@ -281,10 +281,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             // "(a)" — exactly a single parenthesized identifier. No comma, rest, or
                             // trailing comma is possible (the `)` is the third token), so this is
                             // always a valid expression: parse once and refine.
-                            // EXCEPT `(await)`/`(yield)`: in an await/yield context these parse as
-                            // `AwaitExpression`/`YieldExpression`, not a parameter name, so keep them
-                            // on the speculate path (which parses them as binding identifiers).
-                            Kind::RParen if matches!(second, Kind::Await | Kind::Yield) => {
+                            // EXCEPT:
+                            // - `(await)`/`(yield)`: in an await/yield context these parse as
+                            //   `AwaitExpression`/`YieldExpression`, not a parameter name.
+                            // - `(this)`: parses to a `ThisExpression`, but `(this) =>` is an arrow
+                            //   with a `this` parameter (illegal in JS, diagnosed in TS) that the
+                            //   cover refinement cannot reconstruct from an expression.
+                            // Keep these on the speculate path, which parses them as parameters.
+                            Kind::RParen
+                                if matches!(second, Kind::Await | Kind::Yield | Kind::This) =>
+                            {
                                 ArrowKind::Speculate
                             }
                             Kind::RParen => ArrowKind::Cover,

@@ -246,6 +246,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_parenthesized_expression(&mut self) -> Expression<'a> {
+        // Read-and-clear so only this (outermost) paren — the `ArrowKind::Cover` `( a )` — is
+        // affected, not any nested paren. When `=>` follows the `)` below, the
+        // `ParenthesizedExpression` wrapper is skipped (the arrow refinement would discard it).
+        let cover_paren = std::mem::take(&mut self.state.cover_paren_arrow);
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         // Capture annotation flags before bumping `(` since bump resets them
@@ -302,7 +306,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => {}
         }
 
-        if self.options.preserve_parens {
+        // Skip the wrapper for a cover `( a ) =>` head: the arrow refinement discards it anyway.
+        if self.options.preserve_parens && !(cover_paren && self.at(Kind::Arrow)) {
             self.ast.expression_parenthesized(self.end_span(span), expression)
         } else {
             expression
@@ -1457,6 +1462,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let span = self.start_span();
         let lhs_parenthesized = self.at(Kind::LParen);
+        // Let the cover paren skip its `ParenthesizedExpression` wrapper when `=>` follows (it would
+        // be discarded by the refinement below); harmless when this isn't actually an arrow.
+        self.state.cover_paren_arrow = cover_mode;
         let mut lhs = self.parse_binary_expression_or_higher(Precedence::Comma);
         // `( a ) =>`: refine the parenthesized identifier into arrow params. Returns `lhs` unchanged
         // (no token consumed) when `=>` does not follow, so parsing continues as a paren expression.
