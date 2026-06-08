@@ -86,7 +86,7 @@ declare_oxc_lint!(
     style,
     fix,
     config = NextTickOption,
-    version = "next",
+    version = "1.69.0",
 );
 
 impl Rule for NextTickStyle {

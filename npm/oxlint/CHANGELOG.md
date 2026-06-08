@@ -4,6 +4,53 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.69.0] - 2026-06-08
+
+### 🚀 Features
+
+- e805174 linter: Add schema for `jest/vitest/max-expects` (#23105) (Sysix)
+- 7850577 linter: Add schema for `jest/vitest/expect-expect` (#23104) (Sysix)
+- 75f641a linter: Add schema for `jest/vitest/consistent-test-it` (#23103) (Sysix)
+- 5125f89 linter/unicorn: Support no-null `checkArguments` option (#23098) (camc314)
+- b8b9797 linter: Add schema for `import-max-dependencies` (#23096) (Sysix)
+- 65cb47a linter/eslint: Support no-unused-expressions `ignoreDirectives` option (#23097) (camc314)
+- f6c36d5 linter: Add schema for `import/prefer-default-export` (#23091) (Sysix)
+- 0d4a5d1 linter: Add schema for `eslint/sort-vars` (#23090) (Sysix)
+- fdb5bf5 linter: Add schema for `eslint/radix` (#23082) (Sysix)
+- 05b4dcf linter: Add schema for `eslint/prefer-const` (#23081) (Sysix)
+- 5a06c4d linter/vue: Implement next-tick-style rule (#23041) (Alex Peshkov)
+- e38a36a linter: Add schema for `eslint/operator-assignment` (#23080) (Sysix)
+- 907cee7 linter: Add schema for `eslint/no-warning-comments` (#23075) (Sysix)
+- 9470bb2 linter: Add schema for `eslint/no-unused-vars` (#23073) (Sysix)
+- 234b5cf linter: Add schema for `eslint/no-shadow` (#23072) (Sysix)
+- de0dd8b linter: Add schema for `eslint/no-restricted-exports` (#23020) (Sysix)
+- faa3e0d linter: Add schema for `eslint/no-param-reassign` (#23018) (Sysix)
+- dbc9c27 linter: Add schema for `eslint/no-magic-numbers` (#23017) (Sysix)
+- 38d3569 linter: Add schema for `eslint/no-inner-declarations` (#23016) (Sysix)
+- 008fa41 linter: Add schema for `eslint/no-constant-condition` (#22991) (Sysix)
+- ca44623 linter: Add schema for `eslint/no-empty-function` (#22988) (Sysix)
+- 43eb04d linter: Add schema for `eslint/id-match` (#22987) (Sysix)
+- a800f27 linter: Add schema for `eslint/capitalized-comments` (#22984) (Sysix)
+- 96e2d32 linter: Add schema for `eslint/id-length` (#22963) (Sysix)
+- 545493f linter: Add schema for `eslint/complexity` (#22960) (Sysix)
+- 5f0b558 linter: Add schema for `eslint/class-methods-use-this` (#22959) (Sysix)
+- 719b720 linter: Add schema for simple rule configurations (#22948) (Sysix)
+- fd00966 linter: Add right schema for `eslint/max-*` rules (#22923) (Sysix)
+- 1226d78 linter: Fill schema with rule configurations (#22907) (Sysix)
+- 8f423c1 linter/vue: Implement `require-direct-export` rule (#17623) (yefan)
+- 78e915b linter/vue: Implement no-reserved-props rule (#22914) (bab)
+- 0f200a9 linter/vue: Implement require-prop-types rule (#22083) (Alex Peshkov)
+- 5da9da9 linter/vue: Implement no-reserved-keys rule (#21780) (bab)
+- 75e14a8 linter/vue: Implement prop-name-casing rule (#22892) (bab)
+
+### 🐛 Bug Fixes
+
+- 0383e61 linter: Fix schema for rules without a config (#22946) (Sysix)
+
+### 📚 Documentation
+
+- dadafe3 oxlint, oxfmt: Mention migrate skills in npm READMEs (#22965) (Boshen)
+
 ## [1.68.0] - 2026-06-01
 
 ### 🚀 Features
