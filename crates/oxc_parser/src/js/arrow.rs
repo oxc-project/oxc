@@ -14,7 +14,7 @@ struct ArrowFunctionHead<'a> {
     span: u32,
 }
 
-/// Outcome of classifying a `(`/`<`/`async (` head, i.e. an
+/// Outcome of classifying a `(…)`, `<…>`, or `async (…)` head, i.e. an
 /// `ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList`.
 pub enum ArrowAttempt<'a> {
     /// Parsed an arrow directly (`ArrowKind::Yes`) or speculatively (`ArrowKind::Speculate`).

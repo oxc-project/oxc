@@ -13,7 +13,7 @@ mod object;
 mod operator;
 mod statement;
 
-/// Classification of a `(`/`<`/`async (` head for parenthesized-arrow disambiguation.
+/// Classification of a `(…)`, `<…>`, or `async (…)` head for parenthesized-arrow disambiguation.
 ///
 /// A `( ... )` after which `=>` may follow is the ECMAScript *cover grammar*
 /// `CoverParenthesizedExpressionAndArrowParameterList`, which is refined to either
@@ -46,7 +46,7 @@ pub enum ArrowKind {
     Cover,
     /// A cover head with no `ParenthesizedExpression` interpretation or that is context-sensitive:
     /// `()`, `( ... BindingPattern )` (`(...[`), `( Expr , ... )` (any comma-shape `(a,` — a later
-    /// `...rest` is invisible to the worker), `( a : T )`, generic/JSX `<...>`, and all `async (`.
+    /// `...rest` is invisible to the worker), `( a : T )`, generic/JSX `<...>`, and all `async (…)`.
     /// Keep the speculate-and-rewind path.
     Speculate,
 }
