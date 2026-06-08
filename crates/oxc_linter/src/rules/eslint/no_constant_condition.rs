@@ -67,6 +67,13 @@ impl<'de> Deserialize<'de> for CheckLoops {
     }
 }
 
+#[derive(Deserialize, JsonSchema, Serialize)]
+#[serde(untagged)]
+enum CheckLoopsConfig {
+    Bool(bool),
+    String(CheckLoops),
+}
+
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoConstantCondition {
@@ -75,6 +82,7 @@ pub struct NoConstantCondition {
     /// - `"all"` or `true` disallows constant expressions in loops
     /// - `"allExceptWhileTrue"` disallows constant expressions in loops except while loops with expression `true`
     /// - `"none"` or `false` allows constant expressions in loops
+    #[schemars(with = "CheckLoopsConfig")]
     check_loops: CheckLoops,
 }
 

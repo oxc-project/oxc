@@ -29,7 +29,6 @@ fn follow_naming_convention(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct HookUseStateConfig {
-    /// ### allowDestructuredState
     /// When true the rule will ignore the name of the destructured value.
     allow_destructured_state: bool,
 }

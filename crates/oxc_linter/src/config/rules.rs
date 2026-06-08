@@ -366,13 +366,13 @@ impl JsonSchema for OxlintRules {
                         return current;
                     };
 
-                    // reuse the defined schema if it's already an object schema,
-                    // we really only need to dereference array schemas for rule config
-                    // TODO: for the array config, the reference should be removed from the generator.
-                    if obj.object.is_some() {
+                    // We only need to dereference array schemas for rule config.
+                    // Reuse the schema for other cases.
+                    if obj.array.is_none() {
                         return schema;
                     }
 
+                    // TODO: the reference should be removed from the generator.
                     current
                 }
 

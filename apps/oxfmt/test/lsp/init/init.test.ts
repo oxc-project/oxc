@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { createLspConnection } from "../utils";
-import { WatchKind } from "vscode-languageserver-protocol/lib/node/main";
+import { WatchKind } from "vscode-languageserver-protocol/node";
 
 describe("LSP initialization", () => {
   it("should start LSP server and respond to initialize request", async () => {

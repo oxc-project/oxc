@@ -9,6 +9,7 @@ import {
   DiagnosticSeverity,
   DidChangeConfigurationNotification,
   DidChangeTextDocumentNotification,
+  DidChangeWatchedFilesParams,
   DidChangeWatchedFilesNotification,
   DidOpenTextDocumentNotification,
   DocumentDiagnosticRequest,
@@ -16,6 +17,7 @@ import {
   FileChangeType,
   InitializedNotification,
   InitializeRequest,
+  MarkupContent,
   Position,
   RegistrationRequest,
   ShutdownRequest,
@@ -87,9 +89,10 @@ export function createLspConnection(env: Record<string, string> = {}) {
     },
 
     async didChangeWatchedFiles(uris: string[]) {
-      await connection.sendNotification(DidChangeWatchedFilesNotification.type, {
+      const params: DidChangeWatchedFilesParams = {
         changes: uris.map((uri) => ({ uri, type: FileChangeType.Changed })),
-      });
+      };
+      await connection.sendNotification(DidChangeWatchedFilesNotification.type, params);
     },
 
     async didOpen(uri: string, languageId: string, text: string) {
@@ -545,9 +548,13 @@ function snapshotDiagnostics(content: string, report: DocumentDiagnosticReport):
     const severity = getSeverityLabel(diagnostic.severity);
 
     return codeFrameColumns(content, babelLocation, {
-      message: `${severity}: ${diagnostic.message}`,
+      message: `${severity}: ${formatDiagnosticMessage(diagnostic.message)}`,
     });
   });
+}
+
+function formatDiagnosticMessage(message: string | MarkupContent): string {
+  return typeof message === "string" ? message : message.value;
 }
 
 function snapshotCodeAction(

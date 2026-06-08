@@ -10,19 +10,19 @@ packages:
 catalog:
   "@emnapi/core": 1.10.0
   "@emnapi/runtime": 1.10.0
-  "@arethetypeswrong/core": 0.18.2
+  "@arethetypeswrong/core": 0.18.3
   "@napi-rs/cli": 3.7.0
   "@napi-rs/wasm-runtime": 1.1.4
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  degit: 3.3.2
-  eslint: 10.4.0
+  degit: 3.4.2
+  eslint: 10.4.1
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.21
   rolldown: 1.1.0
   tsdown: 0.22.2
   vite-plus: 0.1.24
-  vitest: 4.1.7
+  vitest: 4.1.8
 
 overrides:
   rolldown: "catalog:"

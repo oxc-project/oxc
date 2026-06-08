@@ -3,7 +3,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
-use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
@@ -11,7 +10,7 @@ use crate::{
     ast_util::get_outer_member_expression,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{is_es6_component, is_state_member_expression},
+    utils::{AlwaysNever, is_es6_component, is_state_member_expression},
 };
 
 fn state_in_constructor_diagnostic(span: Span, is_state_init_constructor: bool) -> OxcDiagnostic {
@@ -23,37 +22,18 @@ fn state_in_constructor_diagnostic(span: Span, is_state_init_constructor: bool) 
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum StateInConstructorConfig {
-    /// Enforce state initialization in the constructor.
-    /// This is the default mode.
-    #[default]
-    Always,
-    /// Enforce state initialization with a class property.
-    Never,
-}
-
-impl StateInConstructorConfig {
+impl StateInConstructor {
     pub const fn is_always(&self) -> bool {
-        matches!(self, Self::Always)
+        matches!(*self.0, AlwaysNever::Always)
     }
 
     pub const fn is_never(&self) -> bool {
-        matches!(self, Self::Never)
+        matches!(*self.0, AlwaysNever::Never)
     }
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct StateInConstructor(Box<StateInConstructorConfig>);
-
-impl std::ops::Deref for StateInConstructor {
-    type Target = StateInConstructorConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+pub struct StateInConstructor(Box<AlwaysNever>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -123,7 +103,7 @@ declare_oxc_lint!(
     StateInConstructor,
     react,
     style,
-    config = StateInConstructorConfig,
+    config = AlwaysNever,
     version = "1.26.0",
 );
 
