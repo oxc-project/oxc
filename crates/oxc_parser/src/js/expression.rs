@@ -1437,7 +1437,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 return arrow_expr;
             }
-            // `( a )`: parse once as an expression below, then refine to an arrow if `=>` follows.
+            // `( a )` is the cover production `( Expression )`: parse it once as an expression below
+            // (the `ParenthesizedExpression` refinement), then refine that to `ArrowFormalParameters`
+            // if `=>` follows.
             ArrowAttempt::Cover => true,
             ArrowAttempt::NotArrow => false,
         };

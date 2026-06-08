@@ -235,12 +235,22 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for AssignmentTarget
     }
 }
 
-// Cover grammar for `CoverParenthesizedExpressionAndArrowParameterList`: refine a parsed
-// parenthesized expression into arrow `FormalParameters`. Currently only the single-identifier
-// `( a )` case (`ArrowKind::Cover`) is rerouted through here; the array/object/default refinements
-// (and an `is_convertible_to_binding` predicate) will be added when `Cover` is widened.
+// Refinement of the cover grammar `CoverParenthesizedExpressionAndArrowParameterList` into
+// `ArrowFormalParameters` — the arrow side of the same refinement that `CoverGrammar` above performs
+// for destructuring assignment (`AssignmentTarget`):
+// ```text
+// // refine `( Expression )` to params when `=>` follows:
+// ArrowFormalParameters[Yield, Await] : ( UniqueFormalParameters[?Yield, ?Await] )
+// UniqueFormalParameters : FormalParameters
+// ```
+// <https://tc39.es/ecma262/#sec-arrow-function-definitions>
+//
+// Currently only the single-identifier `( a )` case (`ArrowKind::Cover`) is rerouted here, so the
+// only `Expression` refined is an `Identifier` -> `BindingIdentifier`. The array/object/default
+// refinements (and an `is_convertible_to_binding` predicate) will be added when `Cover` is widened.
 impl<'a, C: Config> ParserImpl<'a, C> {
-    /// Refine `( a )` — parsed as a single `Identifier` — into one-parameter arrow `FormalParameters`.
+    /// Refine the cover production `( Expression )`, where `Expression` is a single `Identifier`
+    /// (`( a )`), into a one-parameter `ArrowFormalParameters : ( UniqueFormalParameters )`.
     /// `params_span` is the `( .. )` span (matching the direct param-parse path).
     pub(crate) fn refine_arrow_params(
         &mut self,

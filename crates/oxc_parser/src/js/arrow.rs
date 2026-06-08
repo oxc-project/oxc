@@ -14,12 +14,14 @@ struct ArrowFunctionHead<'a> {
     span: u32,
 }
 
-/// Outcome of classifying/parsing a `(`/`<`/`async (` arrow head.
+/// Outcome of classifying a `(`/`<`/`async (` head, i.e. an
+/// `ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList`.
 pub enum ArrowAttempt<'a> {
-    /// Parsed an arrow directly (`Yes`) or speculatively (`Speculate`).
+    /// Parsed an arrow directly (`ArrowKind::Yes`) or speculatively (`ArrowKind::Speculate`).
     Parsed(Expression<'a>),
-    /// `Cover`: the entry parses `(...)` once as an expression, then calls
-    /// [`ParserImpl::try_refine_cover_arrow`].
+    /// `ArrowKind::Cover`: the cover production's `( Expression )` alternative. The entry parses
+    /// `( a )` once as an expression, then refines it via [`ParserImpl::try_refine_cover_arrow`]
+    /// (-> `ArrowFormalParameters` if `=>` follows, else `ParenthesizedExpression`).
     Cover,
     /// Not an arrow.
     NotArrow,
@@ -48,9 +50,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    /// Refine a `Cover`-classified `( a )` (a single parenthesized identifier, already parsed as
-    /// `lhs`) into an arrow function when `=>` follows. Returns `Err(lhs)` unchanged otherwise (no
-    /// token consumed), so the caller continues parsing it as a parenthesized expression.
+    /// Refine the cover production for a `Cover`-classified `( a )` (a single parenthesized
+    /// identifier already parsed into `lhs`):
+    /// ```text
+    /// ArrowFunction : ArrowParameters [no LineTerminator here] => ConciseBody
+    /// // CoverParenthesizedExpressionAndArrowParameterList : ( Expression ) , with Expression == `a`,
+    /// // refined to ArrowFormalParameters : ( UniqueFormalParameters )
+    /// ```
+    /// when `=>` follows (in TS, an optional `: ReturnType` may sit between `)` and `=>`). Returns
+    /// `Err(lhs)` unchanged otherwise (no token consumed) — `lhs` is then the other refinement,
+    /// `ParenthesizedExpression : ( Expression )`, and parsing continues from it.
     ///
     /// `span` is the `(` start; the current `prev_token_end` is the `)` end, so `( .. )` is the
     /// `FormalParameters` span — matching the direct param-parse path.
@@ -175,6 +184,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if saw_async && kind == ArrowKind::Cover { ArrowKind::Speculate } else { kind }
     }
 
+    /// Classify a `(...)` / `<...>` head by its first few tokens against the cover production:
+    /// ```text
+    /// CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] :
+    ///     ( Expression )                          // `(a)` -> Cover ; `([`/`({`/`(a,`/`(a=` -> Speculate/No
+    ///     ( Expression , )                        // trailing comma -> Speculate
+    ///     ( )                                     // -> Yes/Speculate (no ParenthesizedExpression form)
+    ///     ( ... BindingIdentifier )               // `(...ident` -> Yes
+    ///     ( ... BindingPattern )                  // `(...[`/`(...{` -> Speculate
+    ///     ( Expression , ... BindingIdentifier )  // a later `...rest` is invisible here -> Speculate
+    ///     ( Expression , ... BindingPattern )     // ditto
+    /// ```
+    /// (plus TS `( a : T )` / generic `<...>` extensions). Only `( a )` — a single identifier with
+    /// `)` as the third token — is `Cover`: that alternative is provably a valid `Expression` with no
+    /// hidden comma/rest/trailing-comma, so it can be parsed once and refined.
     fn classify_paren_or_angle_arrow(&mut self) -> ArrowKind {
         let first = self.cur_kind();
         self.bump_any();
