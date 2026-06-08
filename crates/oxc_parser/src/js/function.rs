@@ -1,5 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
+use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 
 use super::FunctionKind;
@@ -62,7 +63,40 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let formal_parameters =
             self.ast.alloc_formal_parameters(self.end_span(span), params_kind, list, rest);
+        self.check_formal_parameters(&formal_parameters);
         (this_param, formal_parameters)
+    }
+
+    fn check_formal_parameters(&mut self, params: &FormalParameters<'a>) {
+        let mut has_optional = false;
+        for param in &params.items {
+            // function a(optional?: number, required: number) { }
+            if param.optional {
+                has_optional = true;
+            } else if has_optional && param.initializer.is_none() {
+                self.error(diagnostics::required_parameter_after_optional_parameter(param.span));
+            }
+        }
+
+        // Duplicate parameter names in a TS signature, e.g. `interface I { m(a, a): void }`.
+        // Signature parameter lists are short, so an allocation-free O(n²) scan beats a hash map.
+        if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
+            let mut index = 0;
+            params.bound_names(&mut |ident| {
+                let mut seen = 0;
+                let mut prev_span = None;
+                params.bound_names(&mut |earlier| {
+                    if seen < index && earlier.name == ident.name {
+                        prev_span = Some(earlier.span);
+                    }
+                    seen += 1;
+                });
+                if let Some(prev_span) = prev_span {
+                    self.error(diagnostics::redeclaration(&ident.name, prev_span, ident.span));
+                }
+                index += 1;
+            });
+        }
     }
 
     fn parse_formal_parameters_list(

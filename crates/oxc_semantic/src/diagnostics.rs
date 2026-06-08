@@ -307,11 +307,6 @@ pub fn jsdoc_type_in_annotation(
 }
 
 #[cold]
-pub fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1016", "A required parameter cannot follow an optional parameter.").with_label(span)
-}
-
-#[cold]
 pub fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
     ts_error(
         "1235",

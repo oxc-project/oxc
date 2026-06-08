@@ -34,6 +34,11 @@ where
 }
 
 #[cold]
+pub fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1016", "A required parameter cannot follow an optional parameter.").with_label(span)
+}
+
+#[cold]
 pub fn redeclaration(x0: &str, declare_span: Span, redeclare_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Identifier `{x0}` has already been declared")).with_labels([
         declare_span.label(format!("`{x0}` has already been declared here")),
