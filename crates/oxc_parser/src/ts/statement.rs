@@ -730,7 +730,38 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {
-        self.lookahead(Self::at_start_of_ts_declaration_worker)
+        // Fast path: the single-keyword declaration forms are decided by `cur_kind` plus at most one
+        // peeked token, so resolve them here instead of paying for the full `lookahead` (checkpoint +
+        // speculative sub-parse + rewind). Each arm mirrors the matching arm of
+        // `at_start_of_ts_declaration_worker` exactly.
+        match self.cur_kind() {
+            // `var x`  `let x`  `const x`  `function f`  `class C`  `enum E`
+            Kind::Var | Kind::Let | Kind::Const | Kind::Function | Kind::Class | Kind::Enum => true,
+            // `interface I`  `type T = …`  (keyword + binding ident on the same line)
+            Kind::Interface | Kind::Type => {
+                let next = self.lexer.peek_token();
+                next.kind().is_binding_identifier() && !next.is_on_new_line()
+            }
+            // `module M`  `module "m"`  `namespace N`  (keyword + binding ident or string)
+            Kind::Module | Kind::Namespace => {
+                let next = self.lexer.peek_token();
+                !next.is_on_new_line()
+                    && (next.kind().is_binding_identifier() || next.kind() == Kind::Str)
+            }
+            // `global { … }`  `global export …`  (`global` + `{` / `export` / ident)
+            Kind::Global => {
+                matches!(self.lexer.peek_token().kind(), Kind::Ident | Kind::LCurly | Kind::Export)
+            }
+            // `import x`  `import "m"`  `import *`  `import {`  (`import` + string / `*` / `{` / ident)
+            Kind::Import => {
+                let next = self.lexer.peek_token().kind();
+                matches!(next, Kind::Str | Kind::Star | Kind::LCurly) || next.is_identifier()
+            }
+            // Multi-token modifier chains (`declare const x`, `abstract class C`, `export type T`,
+            // `async function f`, `static …`) and `export = …` / `export default …` need real
+            // lookahead, as do non-declaration tokens.
+            _ => self.lookahead(Self::at_start_of_ts_declaration_worker),
+        }
     }
 
     /// Check if the parser is at a start of a ts declaration
