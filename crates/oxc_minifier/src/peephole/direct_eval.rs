@@ -174,8 +174,7 @@ pub fn direct_eval_blocks_unused_declaration_removal(
             return false;
         }
         !unused_declaration_body_scopes.iter().any(|&other_scope| {
-            other_scope != body_scope_id
-                && is_scope_descendant_of(scoping, eval_scope, other_scope)
+            other_scope != body_scope_id && is_scope_descendant_of(scoping, eval_scope, other_scope)
         })
     })
 }
