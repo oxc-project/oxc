@@ -35,7 +35,7 @@ pub struct NoDupeKeysConfig {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct NoDupeKeys(NoDupeKeysConfig);
+pub struct NoDupeKeys(Box<NoDupeKeysConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -93,7 +93,7 @@ impl Rule for NoDupeKeys {
         } else {
             serde_json::from_value(value)?
         };
-        Ok(Self(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
