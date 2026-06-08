@@ -9,7 +9,7 @@ use oxc_str::Ident;
 use oxc_syntax::{
     class::ClassId,
     number::NumberBase,
-    operator::{AssignmentOperator, UnaryOperator},
+    operator::UnaryOperator,
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -565,68 +565,6 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     }
 }
 
-pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
-    match prop.meta.name.as_str() {
-        // import.meta is only allowed in ES modules, not in scripts or CommonJS
-        "import" if prop.property.name == "meta" && !ctx.source_type.is_module() => {
-            ctx.error(diagnostics::import_meta(prop.span));
-        }
-        "new" if prop.property.name == "target" => {
-            // In CommonJS, the file is wrapped in a function, so new.target is always valid
-            if ctx.source_type.is_commonjs() {
-                return;
-            }
-
-            // Check if we're in a valid context for new.target:
-            // 1. Inside a function (including constructor)
-            // 2. Inside a class static block
-            // 3. Inside a class field initializer (new.target evaluates to undefined)
-            //
-            // Arrow functions inherit new.target from their surrounding scope,
-            // so we skip them and continue checking the enclosing context.
-
-            let mut in_valid_context = false;
-
-            // First, check AST ancestors for class field initializers.
-            // We need to do this because class fields don't have their own scope.
-            for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-                match node_kind {
-                    // Regular functions have their own new.target binding.
-                    // Use scope-based check from here.
-                    AstKind::Function(_) => break,
-                    // Class field initializers allow new.target (evaluates to undefined).
-                    // This includes arrow functions nested inside the initializer.
-                    AstKind::PropertyDefinition(_) | AstKind::AccessorProperty(_) => {
-                        in_valid_context = true;
-                        break;
-                    }
-                    _ => {}
-                }
-            }
-
-            // If not in a class field, fall back to scope-based check
-            if !in_valid_context {
-                for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
-                    let flags = ctx.scoping.scope_flags(scope_id);
-                    // In arrow functions, new.target is inherited from the surrounding scope.
-                    if flags.contains(ScopeFlags::Arrow) {
-                        continue;
-                    }
-                    if flags.intersects(ScopeFlags::Function | ScopeFlags::ClassStaticBlock) {
-                        in_valid_context = true;
-                        break;
-                    }
-                }
-            }
-
-            if !in_valid_context {
-                ctx.error(diagnostics::new_target(prop.span));
-            }
-        }
-        _ => {}
-    }
-}
-
 pub fn check_function_declaration<'a>(
     stmt: &Statement<'a>,
     is_if_stmt_or_labeled_stmt: bool,
@@ -796,10 +734,14 @@ fn check_redeclared_function(
             // (A clash with a `var`/`let`/`class` of the same name is a separate rule, reported elsewhere.)
             // This branch is only reached for function redeclarations in a sloppy-mode block,
             // which are extremely rare, so the linear scan's high cost does not really matter.
+            // Annex B.3.3 is JavaScript-only; TypeScript allows these (overloads/merging).
+            if ctx.source_type.is_typescript() {
+                return;
+            }
             let previous_declarations = &redeclarations[..redeclarations.len() - 1];
             let Some(culprit) = previous_declarations
                 .iter()
-                .find(|decl| ctx.async_or_generator_function_node_ids.contains(&decl.declaration))
+                .find(|decl| decl.flags.contains(SymbolFlags::AsyncOrGeneratorFunction))
             else {
                 // No `async`/generator function among the previous declarations - allowed by B.3.3.
                 return;
@@ -830,22 +772,6 @@ pub fn check_class_redeclaration(class: &Class, ctx: &SemanticBuilder<'_>) {
 pub fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
     if ctx.strict_mode() || ctx.source_type.is_typescript() {
         ctx.error(diagnostics::with_statement(Span::sized(stmt.span.start, 4)));
-    }
-}
-
-pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuilder<'a>) {
-    let mut previous_default: Option<Span> = None;
-    for case in &stmt.cases {
-        if case.test.is_none() {
-            if let Some(previous_span) = previous_default {
-                ctx.error(diagnostics::switch_stmt_cannot_have_multiple_default_case(
-                    previous_span,
-                    case.span,
-                ));
-                break;
-            }
-            previous_default.replace(case.span);
-        }
     }
 }
 
@@ -1314,20 +1240,6 @@ fn get_class_details(
     (Some(scope_id), class_id)
 }
 
-pub fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &SemanticBuilder<'_>) {
-    // AssignmentExpression :
-    //     LeftHandSideExpression AssignmentOperator AssignmentExpression
-    //     LeftHandSideExpression &&= AssignmentExpression
-    //     LeftHandSideExpression ||= AssignmentExpression
-    //     LeftHandSideExpression ??= AssignmentExpression
-    // It is a Syntax Error if AssignmentTargetType of LeftHandSideExpression is not SIMPLE.
-    if assign_expr.operator != AssignmentOperator::Assign
-        && !assign_expr.left.is_simple_assignment_target()
-    {
-        ctx.error(diagnostics::assignment_is_not_simple(assign_expr.left.span()));
-    }
-}
-
 pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilder<'_>) {
     // ObjectLiteral : { PropertyDefinitionList }
     // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
@@ -1358,16 +1270,6 @@ pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilde
                 prev_proto = Some(span);
             }
         }
-    }
-}
-
-pub fn check_private_field_expression(
-    private_expr: &PrivateFieldExpression,
-    ctx: &SemanticBuilder<'_>,
-) {
-    // `super.#m`
-    if private_expr.object.is_super() {
-        ctx.error(diagnostics::super_private(private_expr.span));
     }
 }
 

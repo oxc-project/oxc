@@ -25,6 +25,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Declaration<'a> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier();
+        self.check_reserved_type_name(&id, "Enum");
         let body = self.parse_ts_enum_body();
         let span = self.end_span(span);
         self.verify_modifiers(
@@ -129,6 +130,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::Type);
 
         let id = self.parse_binding_identifier();
+        self.check_reserved_type_name(&id, "Type alias");
         let params = self.parse_ts_type_parameters();
         self.expect(Kind::Eq);
 
@@ -173,12 +175,38 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /* ---------------------  Interface  ------------------------ */
 
+    /// A type declaration's name may not be one of the reserved built-in type names
+    /// (`any`, `string`, `number`, ...).
+    pub(crate) fn check_reserved_type_name(
+        &mut self,
+        id: &BindingIdentifier<'a>,
+        syntax_name: &'static str,
+    ) {
+        if matches!(
+            id.name.as_str(),
+            "any"
+                | "unknown"
+                | "never"
+                | "number"
+                | "bigint"
+                | "boolean"
+                | "string"
+                | "symbol"
+                | "void"
+                | "object"
+                | "undefined"
+        ) {
+            self.error(diagnostics::reserved_type_name(id.span, &id.name, syntax_name));
+        }
+    }
+
     pub(crate) fn parse_ts_interface_declaration(
         &mut self,
         span: u32,
         modifiers: &Modifiers,
     ) -> Declaration<'a> {
         let id = self.parse_binding_identifier();
+        self.check_reserved_type_name(&id, "Interface");
         let type_parameters = self.parse_ts_type_parameters();
         let (extends, implements) = self.parse_heritage_clause();
         let body = self.parse_ts_interface_body();
@@ -650,6 +678,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         if !self.is_ts {
             self.error(diagnostics::import_equals_can_only_be_used_in_typescript_files(span));
+        }
+        // `import type Foo = Bar.Baz` is not allowed; `import type Foo = require('./foo')` is.
+        if import_kind.is_type() && !module_reference.is_external() {
+            self.error(diagnostics::import_alias_cannot_use_import_type(span));
         }
 
         self.ast.declaration_ts_import_equals(span, identifier, module_reference, import_kind)

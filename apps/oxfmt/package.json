@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "prettier": "3.8.3",
-    "prettier-plugin-svelte": "4.0.1",
+    "prettier-plugin-svelte": "4.1.0",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.2b6f3c2",
     "tinypool": "2.1.0"
   },
@@ -34,7 +34,7 @@
     "diff": "^9.0.0",
     "execa": "^9.6.0",
     "json-schema-to-typescript": "catalog:",
-    "svelte": "^5.55.5",
+    "svelte": "^5.56.2",
     "tsdown": "catalog:",
     "vite-plus": "catalog:",
     "vitest": "catalog:",

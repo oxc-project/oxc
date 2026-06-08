@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::AlwaysNever};
 
 /// Common directive prefixes that should be ignored (module-level to avoid items-after-statements)
 const DIRECTIVES: &[&str] = &[
@@ -47,18 +47,10 @@ struct CommentConfig {
     ignore_consecutive_comments: bool,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-enum CapitalizeOption {
-    #[default]
-    Always,
-    Never,
-}
-
 /// Internal configuration structure (boxed for size optimization)
 #[derive(Debug, Clone, Default)]
 pub struct CapitalizedCommentsConfig {
-    capitalize: CapitalizeOption,
+    capitalize: AlwaysNever,
     line_config: CommentConfig,
     block_config: CommentConfig,
 }
@@ -75,8 +67,33 @@ impl std::ops::Deref for CapitalizedComments {
     }
 }
 
+#[cfg(feature = "ruledocs")]
+impl CapitalizedComments {
+    #[expect(clippy::unnecessary_wraps, unused)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        #[derive(Deserialize, JsonSchema)]
+        #[serde(rename_all = "camelCase", untagged, deny_unknown_fields)]
+        enum OptionsJsonDoc {
+            Base(CommentConfigJson),
+            Difference { line: Option<CommentConfigJson>, block: Option<CommentConfigJson> },
+        }
+
+        /// Configuration for the capitalized-comments rule.
+        ///
+        /// The first element specifies whether comments should `"always"` or `"never"`
+        /// begin with a capital letter. The second element is an optional object
+        /// containing additional options.
+        #[derive(JsonSchema, Deserialize)]
+        struct CapitalizedCommentsOptionsDocs(AlwaysNever, Option<OptionsJsonDoc>);
+
+        Some(r#gen.subschema_for::<CapitalizedCommentsOptionsDocs>())
+    }
+}
+
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[expect(clippy::struct_field_names)]
 struct CommentConfigJson {
     /// A regex pattern. Comments that match the pattern will not cause violations.
@@ -116,15 +133,6 @@ struct OptionsJson {
     block: Option<CommentConfigJson>,
 }
 
-/// Configuration for the capitalized-comments rule.
-///
-/// The first element specifies whether comments should `"always"` or `"never"`
-/// begin with a capital letter. The second element is an optional object
-/// containing additional options.
-#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
-#[expect(dead_code)]
-struct CapitalizedCommentsOptions(CapitalizeOption, Option<OptionsJson>);
-
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -153,7 +161,6 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
-    config = CapitalizedCommentsOptions,
     version = "1.34.0",
 );
 
@@ -247,8 +254,8 @@ impl Rule for CapitalizedComments {
 
             let is_uppercase = first_letter.is_uppercase();
             let (wrong_case, correct_case, fixed_letter) = match self.capitalize {
-                CapitalizeOption::Always if !is_uppercase => ("lowercase", "uppercase", upper),
-                CapitalizeOption::Never if is_uppercase => ("uppercase", "lowercase", lower),
+                AlwaysNever::Always if !is_uppercase => ("lowercase", "uppercase", upper),
+                AlwaysNever::Never if is_uppercase => ("uppercase", "lowercase", lower),
                 _ => continue,
             };
 

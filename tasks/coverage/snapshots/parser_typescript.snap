@@ -12973,22 +12973,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  12 │         }
     ╰────
 
-  × Keywords cannot contain escape characters
-    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:25:13]
- 24 │             default:    // Error, third 'default' clause
- 25 │             def\u0061ult: // Error, fourth 'default' clause.
-    ·             ────────────
- 26 │             // Errors on fifth-seventh
-    ╰────
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:27:22]
- 26 │             // Errors on fifth-seventh
- 27 │             default: return;
-    ·                      ──────
- 28 │             default: default:
-    ╰────
-
   × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:6:5]
  5 │         case 2:
@@ -13011,6 +12995,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  21 │ ├─▶                 break;
     · ╰──── Another 'default' clause cannot appear here.
  22 │                 case 10000:
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:25:13]
+ 24 │             default:    // Error, third 'default' clause
+ 25 │             def\u0061ult: // Error, fourth 'default' clause.
+    ·             ────────────
+ 26 │             // Errors on fifth-seventh
+    ╰────
+
+  × TS(1108): A 'return' statement can only be used within a function body.
+    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:27:22]
+ 26 │             // Errors on fifth-seventh
+ 27 │             default: return;
+    ·                      ──────
+ 28 │             default: default:
     ╰────
 
   × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
@@ -17020,6 +17020,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  29 │ }
     ╰────
 
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+ 31 │ abstract class B {
+ 32 │     abstract #quux = 3;      // Error
+    ·              ─────
+ 33 │ }
+    ╰────
+
   × TS(1267): Property '#quux' cannot have an initializer because it is marked abstract.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
  31 │ abstract class B {
@@ -17042,14 +17050,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  26 │     declare set #whatProp(value: number)         // Error
     ·                 ─────────
  27 │     async get #asyncProp() { return 1; }         // Error
-    ╰────
-
-  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
-    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
- 31 │ abstract class B {
- 32 │     abstract #quux = 3;      // Error
-    ·              ─────
- 33 │ }
     ╰────
 
   × Private identifier '#prop' is not allowed outside class bodies
@@ -18124,6 +18124,38 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │         baz = yield 1,
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × TS(2431): Enum name cannot be 'any'
+   ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:2:6]
+ 1 │ // Enum named with PredefinedTypes
+ 2 │ enum any { }
+   ·      ───
+ 3 │ enum number { }
+   ╰────
+
+  × TS(2431): Enum name cannot be 'number'
+   ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:3:6]
+ 2 │ enum any { }
+ 3 │ enum number { }
+   ·      ──────
+ 4 │ enum string { }
+   ╰────
+
+  × TS(2431): Enum name cannot be 'string'
+   ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:4:6]
+ 3 │ enum number { }
+ 4 │ enum string { }
+   ·      ──────
+ 5 │ enum boolean { }
+   ╰────
+
+  × TS(2431): Enum name cannot be 'boolean'
+   ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:5:6]
+ 4 │ enum string { }
+ 5 │ enum boolean { }
+   ·      ───────
+ 6 │ 
+   ╰────
 
   × Expected `,` or `}` but found `;`
     ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:48:18]
@@ -23240,6 +23272,37 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ }
    ╰────
   help: Only 'readonly' modifier is allowed here.
+
+  × TS(2427): Interface name cannot be 'any'
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:1:11]
+ 1 │ interface any { }
+   ·           ───
+ 2 │ interface number { }
+   ╰────
+
+  × TS(2427): Interface name cannot be 'number'
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:2:11]
+ 1 │ interface any { }
+ 2 │ interface number { }
+   ·           ──────
+ 3 │ interface string { }
+   ╰────
+
+  × TS(2427): Interface name cannot be 'string'
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:3:11]
+ 2 │ interface number { }
+ 3 │ interface string { }
+   ·           ──────
+ 4 │ interface boolean { }
+   ╰────
+
+  × TS(2427): Interface name cannot be 'boolean'
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:4:11]
+ 3 │ interface string { }
+ 4 │ interface boolean { }
+   ·           ───────
+ 5 │ interface void {}
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:5:10]
@@ -30291,6 +30354,38 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ·                     ╰── First seen here
  15 │ 
     ╰────
+
+  × TS(2457): Type alias name cannot be 'any'
+   ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:2:6]
+ 1 │ interface I {}
+ 2 │ type any = I;
+   ·      ───
+ 3 │ type number = I;
+   ╰────
+
+  × TS(2457): Type alias name cannot be 'number'
+   ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:3:6]
+ 2 │ type any = I;
+ 3 │ type number = I;
+   ·      ──────
+ 4 │ type boolean = I;
+   ╰────
+
+  × TS(2457): Type alias name cannot be 'boolean'
+   ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:4:6]
+ 3 │ type number = I;
+ 4 │ type boolean = I;
+   ·      ───────
+ 5 │ type string = I;
+   ╰────
+
+  × TS(2457): Type alias name cannot be 'string'
+   ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:5:6]
+ 4 │ type boolean = I;
+ 5 │ type string = I;
+   ·      ──────
+ 6 │ type void = I;
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:6:5]

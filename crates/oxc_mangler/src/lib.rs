@@ -303,6 +303,48 @@ impl<'t> Mangler<'t> {
         class_private_mappings
     }
 
+    /// Mangle the program: rewrite local bindings to the shortest legal names.
+    ///
+    /// Runs as a five-stage pipeline; each stage is one method and feeds the next:
+    ///
+    /// ```text
+    ///  collect constraints → assign slots → tally frequencies → generate names → apply names
+    ///    names we must NOT     group bindings   rank slots by how    make that many    give each slot a
+    ///    reuse or shadow       that can share   often referenced     short, legal      name and rewrite
+    ///    (keywords, globals,   one name into    (hottest first)      names             every reference
+    ///    exports, eval, …)     numbered "slots"
+    /// ```
+    ///
+    /// # The slot idea (stages 2–5 hinge on this)
+    ///
+    /// A *slot* is just an integer. Two bindings get the **same** slot exactly when they can
+    /// share one name — their live ranges never overlap. So the problem splits cleanly:
+    ///   1. *Which bindings may share a name?* → assign slots (graph-colour the scope tree by
+    ///      liveness: a slot is reusable in any scope where it isn't live).
+    ///   2. *Which name does each slot get?*  → tally + generate + apply (frequency-ranked
+    ///      base54 names, clustered by length).
+    ///
+    /// # Worked example
+    ///
+    /// ```js
+    /// function C(n) {
+    ///   for (var i = 0; i < n; i++) log(i);
+    ///   for (var j = 0; j < n; j++) log(j);
+    /// }
+    /// ```
+    /// - **assign slots**: `C`,`log` untouched (root binding / global); `n`→slot 1; `i`→slot 2;
+    ///   `j`→slot 3 (each its own slot — same-scope bindings never share today).
+    /// - **tally**: count references per slot, hottest first.
+    /// - **generate names**: `e, t, n, r, …` (base54), skipping any that collide with a keyword,
+    ///   a global like `log`, an export, a kept name, or an eval-visible name.
+    /// - **apply names**: shortest-*length* names to the hottest slots; within one length, in
+    ///   source order. Here the live slots are 1 char, assigned in declaration order:
+    /// ```js
+    /// function C(e) {
+    ///   for (var t = 0; t < e; t++) log(t);
+    ///   for (var n = 0; n < e; n++) log(n);
+    /// }
+    /// ```
     fn build_with_semantic_impl<const CAPACITY: usize, G: Fn(u32) -> InlineString<CAPACITY, u8>>(
         self,
         semantic: &mut Semantic<'_>,
@@ -310,365 +352,20 @@ impl<'t> Mangler<'t> {
         generate_name: G,
     ) {
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
-        let symbols_len = scoping.symbols_len();
+        let allocator = self.temp_allocator.as_ref();
 
-        let temp_allocator = self.temp_allocator.as_ref();
-
-        let top_level = self.options.top_level(program.source_type);
-        let (exported_names, exported_symbols) = if top_level && program.source_type.is_module() {
-            Mangler::collect_exported_symbols(program, temp_allocator, symbols_len)
-        } else {
-            (HashSet::new_in(temp_allocator), None)
-        };
-        let (keep_name_names, keep_name_symbols) = Mangler::collect_keep_name_symbols(
-            self.options.keep_names,
-            temp_allocator,
-            scoping,
-            ast_nodes,
-        );
-
-        // All symbols with their assigned slots. Keyed by symbol id.
-        let mut slots = Vec::from_iter_in(
-            iter::repeat_n(SLOT_UNASSIGNED, scoping.symbols_len()),
-            temp_allocator,
-        );
-
-        // Stores the lived scope ids for each slot. Keyed by slot number.
-        // Pre-allocate capacity based on number of symbols (upper bound for slots).
-        let mut slot_liveness: Vec<BitSet> =
-            Vec::with_capacity_in(scoping.symbols_len(), temp_allocator);
-        let mut tmp_bindings = Vec::with_capacity_in(100, temp_allocator);
-
-        let mut reusable_slots = Vec::new_in(temp_allocator);
-        // Pre-computed BitSet for ancestor membership tests - reused across iterations
-        let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), temp_allocator);
-        // Reserved names from scopes containing direct eval - these names should not
-        // be used as mangled names to avoid shadowing variables that eval can access.
-        //
-        // TODO: This is conservative, ideally, we would reserve names per-slot.
-        let mut eval_reserved_names: FxHashSet<&str> = FxHashSet::default();
-        // Walk down the scope tree and assign a slot number for each symbol.
-        // It is possible to do this in a loop over the symbol list,
-        // but walking down the scope tree seems to generate a better code.
-        for (scope_id, bindings) in scoping.iter_bindings() {
-            if bindings.is_empty() {
-                continue;
-            }
-            // Scopes with direct eval: collect binding names as reserved (they can be
-            // accessed by eval at runtime) and skip slot assignment (keep original names).
-            if scoping.scope_flags(scope_id).contains_direct_eval() {
-                for (name, _) in bindings {
-                    eval_reserved_names.insert(name.as_str());
-                }
-                continue;
-            }
-
-            // Sort `bindings` in declaration order.
-            tmp_bindings.clear();
-            tmp_bindings.extend(bindings.values().copied().filter(|binding| {
-                !keep_name_symbols
-                    .as_ref()
-                    .is_some_and(|keep_name_symbols| keep_name_symbols.has_bit(binding.index()))
-            }));
-            if tmp_bindings.is_empty() {
-                continue;
-            }
-            tmp_bindings.sort_unstable();
-
-            let mut slot = slot_liveness.len();
-
-            reusable_slots.clear();
-            reusable_slots.extend(
-                // Slots that are already assigned to other symbols, but does not live in the current scope.
-                slot_liveness
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, slot_liveness)| !slot_liveness.has_bit(scope_id.index()))
-                    .map(
-                        // `slot_liveness` is an arena `Vec`, so its indexes cannot exceed `u32::MAX`
-                        #[expect(clippy::cast_possible_truncation)]
-                        |(slot, _)| slot as Slot,
-                    )
-                    .take(tmp_bindings.len()),
-            );
-
-            // The number of new slots that needs to be allocated.
-            let remaining_count = tmp_bindings.len() - reusable_slots.len();
-            // There cannot be more slots than there are symbols, and `SymbolId` is a `u32`,
-            // so truncation is not possible here
-            #[expect(clippy::cast_possible_truncation)]
-            reusable_slots.extend((slot as Slot)..(slot + remaining_count) as Slot);
-
-            slot += remaining_count;
-            if slot_liveness.len() < slot {
-                slot_liveness.extend(
-                    iter::repeat_with(|| BitSet::new_in(scoping.scopes_len(), temp_allocator))
-                        .take(remaining_count),
-                );
-            }
-
-            // Pre-compute the set of ancestors from root to scope_id (exclusive) for O(1) membership tests.
-            // This avoids repeated `take_while` comparisons in the inner loop.
-            ancestor_set.clear();
-            for ancestor_id in scoping.scope_ancestors(scope_id).skip(1) {
-                ancestor_set.set_bit(ancestor_id.index());
-            }
-
-            let scope_id_index = scope_id.index();
-            for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
-                slots[symbol_id.index()] = assigned_slot;
-
-                // If the symbol is declared by `var`, then it can be hoisted to
-                // parent, so we need to include the scope where it is declared.
-                // (for cases like `function foo() { { var x; let y; } }`)
-                let declared_scope_id =
-                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
-
-                let redeclared_scope_ids = scoping
-                    .symbol_redeclarations(symbol_id)
-                    .iter()
-                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
-
-                let referenced_scope_ids =
-                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
-
-                // Calculate the scope ids that this symbol is alive in.
-                // For each used_scope_id, we walk up the ancestor chain and collect scopes
-                // that are descendants of scope_id (i.e., not in ancestor_set and not scope_id itself).
-                let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
-                for used_scope_id in referenced_scope_ids
-                    .chain(redeclared_scope_ids)
-                    .chain([scope_id, declared_scope_id])
-                {
-                    for ancestor_id in scoping.scope_ancestors(used_scope_id) {
-                        let ancestor_index = ancestor_id.index();
-                        // Stop when we reach scope_id or any of its ancestors
-                        if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index)
-                        {
-                            break;
-                        }
-                        if slot_liveness_bitset.has_bit(ancestor_index) {
-                            debug_assert!(
-                                scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
-                                    let idx = a.index();
-                                    slot_liveness_bitset.has_bit(idx)
-                                        || idx == scope_id_index
-                                        || ancestor_set.has_bit(idx)
-                                }),
-                                "Invariant violated: ancestor chain should be fully marked live"
-                            );
-                            break;
-                        }
-                        slot_liveness_bitset.set_bit(ancestor_index);
-                    }
-                }
-            }
-
-            // Repair an orphaned named-fn-expr name: a same-named body declaration
-            // (`var foo`, parameter `foo`) overwrites the fn-expr's binding-map entry,
-            // so the fn-expr symbol never appears in `bindings` and the main pass leaves
-            // its slot at `SLOT_UNASSIGNED`. Copy the shadower's slot so both render with
-            // the same mangled name — safe because every body reference resolves to the
-            // shadower, not the orphan. Only function expressions can host this orphaning;
-            // a function declaration's name lives in the parent scope and is unaffected.
-            // The shadower-slot guard catches the case where the shadower is in
-            // `keep_name_symbols` (filtered out above and itself unassigned).
-            if scoping.scope_flags(scope_id).is_function()
-                && let Some(func) = ast_nodes.kind(scoping.get_node_id(scope_id)).as_function()
-                && func.is_expression()
-                && let Some(id) = &func.id
-                && let Some(&shadower) = bindings.get(&id.name)
-                && shadower != id.symbol_id()
-                && slots[shadower.index()] != SLOT_UNASSIGNED
-            {
-                slots[id.symbol_id().index()] = slots[shadower.index()];
-            }
-        }
-
-        let total_number_of_slots = slot_liveness.len();
-
-        let frequencies = self.tally_slot_frequencies(
-            scoping,
-            exported_symbols.as_ref(),
-            keep_name_symbols.as_ref(),
-            total_number_of_slots,
-            &slots,
-            top_level,
-        );
-
-        let root_unresolved_references = scoping.root_unresolved_references();
-        let root_bindings = scoping.get_bindings(scoping.root_scope_id());
-
-        // Generate reserved names only for slots that have symbols (frequencies.len())
-        // instead of all slots. This avoids generating unused names.
-        let names_needed = frequencies.len();
-        let mut reserved_names = Vec::with_capacity_in(names_needed, temp_allocator);
-
-        let mut count = 0;
-        for _ in 0..names_needed {
-            let name = loop {
-                let name = generate_name(count);
-                count += 1;
-                // Do not mangle keywords, unresolved references, and names from eval scopes.
-                // Variables in direct-eval-containing scopes keep their original names
-                // (those scopes are skipped during slot assignment), and we also reserve
-                // those names here to prevent mangled names from shadowing them.
-                let n = name.as_str();
-                if !oxc_syntax::keyword::is_reserved_keyword(n)
-                    && !is_special_name(n)
-                    && !root_unresolved_references.contains_key(n)
-                    && !(root_bindings.contains_key(n)
-                        && (!top_level || exported_names.contains(n)))
-                    // TODO: only skip the names that are kept in the current scope
-                    && !keep_name_names.contains(n)
-                    && !eval_reserved_names.contains(n)
-                {
-                    break name;
-                }
-            };
-            reserved_names.push(name);
-        }
-
-        // Group similar symbols for smaller gzipped file
-        // <https://github.com/google/closure-compiler/blob/c383a3a1d2fce33b6c778ef76b5a626e07abca41/src/com/google/javascript/jscomp/RenameVars.java#L475-L483>
-        // Original Comment:
-        // 1) The most frequent vars get the shorter names.
-        // 2) If N number of vars are going to be assigned names of the same
-        //    length, we assign the N names based on the order at which the vars
-        //    first appear in the source. This makes the output somewhat less
-        //    random, because symbols declared close together are assigned names
-        //    that are quite similar. With this heuristic, the output is more
-        //    compressible.
-        //    For instance, the output may look like:
-        //    var da = "..", ea = "..";
-        //    function fa() { .. } function ga() { .. }
-
-        let mut freq_iter = frequencies.iter();
-        let mut symbols_renamed_in_this_batch = Vec::with_capacity_in(100, temp_allocator);
-        let mut slice_of_same_len_strings = Vec::with_capacity_in(100, temp_allocator);
-        // 2. "N number of vars are going to be assigned names of the same length"
-        for (_, slice_of_same_len_strings_group) in
-            &reserved_names.into_iter().chunk_by(InlineString::len)
-        {
-            // 1. "The most frequent vars get the shorter names"
-            // (freq_iter is sorted by frequency from highest to lowest,
-            //  so taking means take the N most frequent symbols remaining)
-            slice_of_same_len_strings.clear();
-            slice_of_same_len_strings.extend(slice_of_same_len_strings_group);
-            symbols_renamed_in_this_batch.clear();
-            symbols_renamed_in_this_batch
-                .extend(freq_iter.by_ref().take(slice_of_same_len_strings.len()));
-
-            debug_assert_eq!(symbols_renamed_in_this_batch.len(), slice_of_same_len_strings.len());
-
-            // 2. "we assign the N names based on the order at which the vars first appear in the source."
-            // sorting by slot enables us to sort by the order at which the vars first appear in the source
-            // (this is possible because the slots are discovered currently in a DFS method which is the same order
-            //  as variables appear in the source code)
-            symbols_renamed_in_this_batch.sort_unstable_by_key(|a| a.slot);
-
-            // here we just zip the iterator of symbols to rename with the iterator of new names for the next for loop
-            let symbols_to_rename_with_new_names =
-                symbols_renamed_in_this_batch.iter().zip(slice_of_same_len_strings.iter());
-
-            // rename the variables
-            for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
-                for &symbol_id in &symbol_to_rename.symbol_ids {
-                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
-                }
-            }
-        }
-    }
-
-    fn tally_slot_frequencies<'a>(
-        &'a self,
-        scoping: &Scoping,
-        exported_symbols: Option<&BitSet<'a>>,
-        keep_name_symbols: Option<&BitSet<'a>>,
-        total_number_of_slots: usize,
-        slots: &[Slot],
-        top_level: bool,
-    ) -> Vec<'a, SlotFrequency<'a>> {
-        let root_scope_id = scoping.root_scope_id();
-        let temp_allocator = self.temp_allocator.as_ref();
-        let mut frequencies = Vec::from_iter_in(
-            repeat_with(|| SlotFrequency::new(temp_allocator)).take(total_number_of_slots),
-            temp_allocator,
-        );
-
-        for (symbol_id, &slot) in slots.iter().enumerate() {
-            if slot == SLOT_UNASSIGNED {
-                continue;
-            }
-            let symbol_id = SymbolId::from_usize(symbol_id);
-            let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
-            if symbol_scope_id == root_scope_id
-                && (!top_level
-                    || exported_symbols.is_some_and(|exported_symbols| {
-                        exported_symbols.has_bit(symbol_id.index())
-                    }))
-            {
-                continue;
-            }
-            if scoping.scope_flags(symbol_scope_id).contains_direct_eval() {
-                continue;
-            }
-            if is_special_name(scoping.symbol_name(symbol_id)) {
-                continue;
-            }
-            if keep_name_symbols
-                .is_some_and(|keep_name_symbols| keep_name_symbols.has_bit(symbol_id.index()))
-            {
-                continue;
-            }
-            let index = slot as usize;
-            frequencies[index].slot = slot;
-            frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
-            frequencies[index].symbol_ids.push(symbol_id);
-        }
-
-        // Remove slots that have no symbols to rename before sorting.
-        frequencies.retain(|x| !x.symbol_ids.is_empty());
-        frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
-        frequencies
-    }
-
-    fn collect_exported_symbols<'a>(
-        program: &Program<'a>,
-        allocator: &'a Allocator,
-        symbols_len: usize,
-    ) -> (HashSet<'a, Str<'a>>, Option<BitSet<'a>>) {
-        let mut exported_symbols = BitSet::new_in(symbols_len, allocator);
-        let mut exported_names = HashSet::new_in(allocator);
-        for statement in &program.body {
-            let Statement::ExportNamedDeclaration(v) = statement else { continue };
-            let Some(decl) = &v.declaration else { continue };
-            if let Declaration::VariableDeclaration(decl) = decl {
-                for decl in &decl.declarations {
-                    if let Some(id) = decl.id.get_binding_identifier() {
-                        exported_names.insert(id.name.as_arena_str());
-                        exported_symbols.set_bit(id.symbol_id().index());
-                    }
-                }
-            } else if let Some(id) = decl.id() {
-                exported_names.insert(id.name.as_arena_str());
-                exported_symbols.set_bit(id.symbol_id().index());
-            }
-        }
-        (exported_names, Some(exported_symbols))
-    }
-
-    fn collect_keep_name_symbols<'a>(
-        keep_names: MangleOptionsKeepNames,
-        temp_allocator: &'t Allocator,
-        scoping: &'a Scoping,
-        nodes: &AstNodes,
-    ) -> (FxHashSet<&'a str>, Option<BitSet<'t>>) {
-        if !keep_names.function && !keep_names.class {
-            return (FxHashSet::default(), None);
-        }
-        let ids = collect_name_symbols(keep_names, temp_allocator, scoping, nodes);
-        (ids.ones().map(|id| scoping.symbol_name(SymbolId::from_usize(id))).collect(), Some(ids))
+        // ── Phase 1: collect constraints — names we must not reuse or shadow. ──
+        let constraints =
+            Constraints::collect(allocator, scoping, ast_nodes, program, self.options);
+        // ── Phase 2: assign slots — give bindings that can share a name the same slot. ──
+        let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints);
+        // ── Phase 3: rank slots by reference frequency (hottest first). ──
+        let ranking = SlotRanking::tally(allocator, scoping, &constraints, &slots);
+        // ── Phase 4: generate that many short, collision-free names. ──
+        let names =
+            NameTable::generate(allocator, scoping, &constraints, &ranking, &slots, generate_name);
+        // ── Phase 5: give each slot its name and rewrite every reference. ──
+        names.apply(allocator, scoping, &ranking);
     }
 
     /// Collects and generates mangled names for private members using semantic information
@@ -747,6 +444,401 @@ impl<'t> SlotFrequency<'t> {
     fn new(temp_allocator: &'t Allocator) -> Self {
         Self { slot: 0, frequency: 0, symbol_ids: Vec::new_in(temp_allocator) }
     }
+}
+
+// ─────────────────────────── Pipeline stages ───────────────────────────
+//
+// Mangling runs as five stages, each a typed value feeding the next:
+//   Constraints → SlotAssignment → SlotRanking → NameTable → (applied)
+// `Mangler::build_with_semantic_impl` orchestrates them. `'a` is the temporary
+// arena lifetime; `'s` is the borrow of `Scoping` (some name sets point into it).
+
+/// Phase 1 output — names and symbols mangling must not rename or shadow.
+struct Constraints<'a, 's> {
+    /// Whether top-level (module / CommonJS) bindings may be mangled at all.
+    top_level: bool,
+    /// Names of top-level exports — kept when `top_level` so importers still resolve.
+    exported_names: HashSet<'a, Str<'a>>,
+    exported_symbols: Option<BitSet<'a>>,
+    /// Names preserved by the `keep_names` option (function / class names).
+    keep_name_names: FxHashSet<&'s str>,
+    keep_name_symbols: Option<BitSet<'a>>,
+}
+
+/// Phase 2 output — each symbol's slot, plus the names a direct `eval` can see.
+struct SlotAssignment<'a, 's> {
+    /// `slots[symbol] == slot`, or `SLOT_UNASSIGNED` for symbols that keep their name.
+    slots: Vec<'a, Slot>,
+    total_slots: usize,
+    /// Names of bindings in direct-`eval` scopes — they keep their names, nothing may shadow them.
+    eval_reserved_names: FxHashSet<&'s str>,
+}
+
+/// Phase 3 output — slots ranked by reference count, hottest first.
+struct SlotRanking<'a> {
+    frequencies: Vec<'a, SlotFrequency<'a>>,
+}
+
+/// Phase 4 output — the short names to hand out, shortest first.
+struct NameTable<'a, const CAPACITY: usize> {
+    names: Vec<'a, InlineString<CAPACITY, u8>>,
+}
+
+impl<'a, 's> Constraints<'a, 's> {
+    /// Phase 1: gather everything the later phases must avoid renaming or shadowing.
+    fn collect(
+        allocator: &'a Allocator,
+        scoping: &'s Scoping,
+        ast_nodes: &AstNodes,
+        program: &'a Program<'a>,
+        options: MangleOptions,
+    ) -> Self {
+        let top_level = options.top_level(program.source_type);
+        let (exported_names, exported_symbols) = if top_level && program.source_type.is_module() {
+            collect_exported_symbols(program, allocator, scoping.symbols_len())
+        } else {
+            (HashSet::new_in(allocator), None)
+        };
+        let (keep_name_names, keep_name_symbols) =
+            collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
+        Self { top_level, exported_names, exported_symbols, keep_name_names, keep_name_symbols }
+    }
+}
+
+impl<'a, 's> SlotAssignment<'a, 's> {
+    /// Phase 2: assign every manglable binding a *slot*, reusing one slot across scopes whose
+    /// live ranges don't overlap (greedy graph-colouring of the scope tree by liveness).
+    ///
+    /// A slot is reusable in a scope when it isn't live there. We walk the scope tree top-down;
+    /// each scope's bindings take the slots that aren't live in it, allocating fresh slots only
+    /// when none are free. `slot_liveness[slot]` records the scopes a slot passes through live so
+    /// descendant scopes can tell what's free. Invariant on the result: two symbols sharing a slot
+    /// never have overlapping live ranges, so giving them one name is always safe.
+    fn compute(
+        allocator: &'a Allocator,
+        scoping: &'s Scoping,
+        ast_nodes: &AstNodes,
+        constraints: &Constraints,
+    ) -> Self {
+        let keep_name_symbols = constraints.keep_name_symbols.as_ref();
+        // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
+        // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
+        let mut eval_reserved_names: FxHashSet<&'s str> = FxHashSet::default();
+
+        // All symbols with their assigned slots. Keyed by symbol id.
+        let mut slots =
+            Vec::from_iter_in(iter::repeat_n(SLOT_UNASSIGNED, scoping.symbols_len()), allocator);
+        // Stores the lived scope ids for each slot. Keyed by slot number. Symbol count is the
+        // upper bound on slots.
+        let mut slot_liveness: Vec<BitSet> =
+            Vec::with_capacity_in(scoping.symbols_len(), allocator);
+        let mut tmp_bindings = Vec::with_capacity_in(100, allocator);
+        let mut reusable_slots = Vec::new_in(allocator);
+        // Pre-computed BitSet for ancestor membership tests - reused across iterations
+        let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
+
+        // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
+        // walk (rather than a flat symbol loop) generates better code.
+        for (scope_id, bindings) in scoping.iter_bindings() {
+            if bindings.is_empty() {
+                continue;
+            }
+            // Scopes with direct eval: collect binding names as reserved (they can be
+            // accessed by eval at runtime) and skip slot assignment (keep original names).
+            if scoping.scope_flags(scope_id).contains_direct_eval() {
+                for (name, _) in bindings {
+                    eval_reserved_names.insert(name.as_str());
+                }
+                continue;
+            }
+
+            // Sort `bindings` in declaration order.
+            tmp_bindings.clear();
+            tmp_bindings.extend(bindings.values().copied().filter(|binding| {
+                !keep_name_symbols.is_some_and(|keep| keep.has_bit(binding.index()))
+            }));
+            if tmp_bindings.is_empty() {
+                continue;
+            }
+            tmp_bindings.sort_unstable();
+
+            let mut slot = slot_liveness.len();
+
+            reusable_slots.clear();
+            reusable_slots.extend(
+                // Slots already assigned to other symbols, but not live in the current scope.
+                slot_liveness
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, slot_liveness)| !slot_liveness.has_bit(scope_id.index()))
+                    .map(
+                        // `slot_liveness` is an arena `Vec`, so its indexes cannot exceed `u32::MAX`
+                        #[expect(clippy::cast_possible_truncation)]
+                        |(slot, _)| slot as Slot,
+                    )
+                    .take(tmp_bindings.len()),
+            );
+
+            // The number of new slots that needs to be allocated.
+            let remaining_count = tmp_bindings.len() - reusable_slots.len();
+            // There cannot be more slots than there are symbols, and `SymbolId` is a `u32`,
+            // so truncation is not possible here
+            #[expect(clippy::cast_possible_truncation)]
+            reusable_slots.extend((slot as Slot)..(slot + remaining_count) as Slot);
+
+            slot += remaining_count;
+            if slot_liveness.len() < slot {
+                slot_liveness.extend(
+                    iter::repeat_with(|| BitSet::new_in(scoping.scopes_len(), allocator))
+                        .take(remaining_count),
+                );
+            }
+
+            // Pre-compute the set of ancestors from root to scope_id (exclusive) for O(1) tests.
+            ancestor_set.clear();
+            for ancestor_id in scoping.scope_ancestors(scope_id).skip(1) {
+                ancestor_set.set_bit(ancestor_id.index());
+            }
+
+            let scope_id_index = scope_id.index();
+            for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
+                slots[symbol_id.index()] = assigned_slot;
+
+                // `var` is hoisted, so include the scope where it is declared
+                // (for cases like `function foo() { { var x; let y; } }`).
+                let declared_scope_id =
+                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
+                let redeclared_scope_ids = scoping
+                    .symbol_redeclarations(symbol_id)
+                    .iter()
+                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
+                let referenced_scope_ids =
+                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
+
+                // The scopes this symbol is alive in: for each use, walk up to (but not including)
+                // `scope_id`, marking the descendant scopes it passes through.
+                let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
+                for used_scope_id in referenced_scope_ids
+                    .chain(redeclared_scope_ids)
+                    .chain([scope_id, declared_scope_id])
+                {
+                    for ancestor_id in scoping.scope_ancestors(used_scope_id) {
+                        let ancestor_index = ancestor_id.index();
+                        // Stop when we reach scope_id or any of its ancestors
+                        if ancestor_index == scope_id_index || ancestor_set.has_bit(ancestor_index)
+                        {
+                            break;
+                        }
+                        if slot_liveness_bitset.has_bit(ancestor_index) {
+                            debug_assert!(
+                                scoping.scope_ancestors(ancestor_id).skip(1).all(|a| {
+                                    let idx = a.index();
+                                    slot_liveness_bitset.has_bit(idx)
+                                        || idx == scope_id_index
+                                        || ancestor_set.has_bit(idx)
+                                }),
+                                "Invariant violated: ancestor chain should be fully marked live"
+                            );
+                            break;
+                        }
+                        slot_liveness_bitset.set_bit(ancestor_index);
+                    }
+                }
+            }
+
+            // Repair an orphaned named-fn-expr name: a same-named body declaration
+            // (`var foo`, parameter `foo`) overwrites the fn-expr's binding-map entry,
+            // so the fn-expr symbol never appears in `bindings` and the main pass leaves
+            // its slot at `SLOT_UNASSIGNED`. Copy the shadower's slot so both render with
+            // the same mangled name — safe because every body reference resolves to the
+            // shadower, not the orphan. Only function expressions can host this orphaning;
+            // a function declaration's name lives in the parent scope and is unaffected.
+            if scoping.scope_flags(scope_id).is_function()
+                && let Some(func) = ast_nodes.kind(scoping.get_node_id(scope_id)).as_function()
+                && func.is_expression()
+                && let Some(id) = &func.id
+                && let Some(&shadower) = bindings.get(&id.name)
+                && shadower != id.symbol_id()
+                && slots[shadower.index()] != SLOT_UNASSIGNED
+            {
+                slots[id.symbol_id().index()] = slots[shadower.index()];
+            }
+        }
+
+        let total_slots = slot_liveness.len();
+        Self { slots, total_slots, eval_reserved_names }
+    }
+}
+
+impl<'a> SlotRanking<'a> {
+    /// Phase 3: count references per slot and sort hottest-first, skipping slots whose only
+    /// symbols are kept, exported (at top level), eval-visible, or special (`arguments`).
+    fn tally(
+        allocator: &'a Allocator,
+        scoping: &Scoping,
+        constraints: &Constraints,
+        slots: &SlotAssignment,
+    ) -> Self {
+        let exported_symbols = constraints.exported_symbols.as_ref();
+        let keep_name_symbols = constraints.keep_name_symbols.as_ref();
+        let root_scope_id = scoping.root_scope_id();
+        let mut frequencies = Vec::from_iter_in(
+            repeat_with(|| SlotFrequency::new(allocator)).take(slots.total_slots),
+            allocator,
+        );
+
+        for (symbol_id, &slot) in slots.slots.iter().enumerate() {
+            if slot == SLOT_UNASSIGNED {
+                continue;
+            }
+            let symbol_id = SymbolId::from_usize(symbol_id);
+            let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
+            if symbol_scope_id == root_scope_id
+                && (!constraints.top_level
+                    || exported_symbols.is_some_and(|e| e.has_bit(symbol_id.index())))
+            {
+                continue;
+            }
+            if scoping.scope_flags(symbol_scope_id).contains_direct_eval() {
+                continue;
+            }
+            if is_special_name(scoping.symbol_name(symbol_id)) {
+                continue;
+            }
+            if keep_name_symbols.is_some_and(|keep| keep.has_bit(symbol_id.index())) {
+                continue;
+            }
+            let index = slot as usize;
+            frequencies[index].slot = slot;
+            frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
+            frequencies[index].symbol_ids.push(symbol_id);
+        }
+
+        // Remove slots that have no symbols to rename before sorting.
+        frequencies.retain(|x| !x.symbol_ids.is_empty());
+        frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
+        Self { frequencies }
+    }
+}
+
+impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
+    /// Phase 4: produce one short name per slot, in order of increasing length.
+    ///
+    /// Candidates come from `generate_name(0), generate_name(1), …` (base54: `e, t, n, …, ee,
+    /// te, …`); a candidate is *reserved* (skipped) if it would clash with a keyword, a global the
+    /// program still references by that name, a kept or eval-visible name, or — at the top level —
+    /// an export. So the i-th name is the i-th shortest name nothing else needs.
+    fn generate(
+        allocator: &'a Allocator,
+        scoping: &Scoping,
+        constraints: &Constraints,
+        ranking: &SlotRanking,
+        slots: &SlotAssignment,
+        generate_name: impl Fn(u32) -> InlineString<CAPACITY, u8>,
+    ) -> Self {
+        let root_unresolved_references = scoping.root_unresolved_references();
+        let root_bindings = scoping.get_bindings(scoping.root_scope_id());
+        let is_reserved = |name: &str| {
+            oxc_syntax::keyword::is_reserved_keyword(name)
+                || is_special_name(name)
+                || root_unresolved_references.contains_key(name)
+                || (root_bindings.contains_key(name)
+                    && (!constraints.top_level || constraints.exported_names.contains(name)))
+                // TODO: only skip the names that are kept in the current scope
+                || constraints.keep_name_names.contains(name)
+                || slots.eval_reserved_names.contains(name)
+        };
+
+        let count = ranking.frequencies.len();
+        let mut names = Vec::with_capacity_in(count, allocator);
+        let mut candidate = 0;
+        for _ in 0..count {
+            let name = loop {
+                let name = generate_name(candidate);
+                candidate += 1;
+                if !is_reserved(name.as_str()) {
+                    break name;
+                }
+            };
+            names.push(name);
+        }
+        Self { names }
+    }
+
+    /// Phase 5: give each slot its name and rewrite every reference to it.
+    ///
+    /// Names are bucketed by length and, within a bucket, handed out in source order (slot number
+    /// == declaration order). Symbols declared near each other thus get near-identical names,
+    /// which gzip compresses better — the trick is from Closure Compiler's `RenameVars`:
+    /// <https://github.com/google/closure-compiler/blob/c383a3a1d2fce33b6c778ef76b5a626e07abca41/src/com/google/javascript/jscomp/RenameVars.java#L475-L483>
+    fn apply(self, allocator: &'a Allocator, scoping: &mut Scoping, ranking: &SlotRanking) {
+        // Yields slots hottest-first as we consume each length bucket.
+        let mut freq_iter = ranking.frequencies.iter();
+        // Scratch buffers in the temp arena (reused/reset across files via `new_with_temp_allocator`).
+        let mut symbols_renamed_in_this_batch = Vec::with_capacity_in(100, allocator);
+        let mut slice_of_same_len_strings = Vec::with_capacity_in(100, allocator);
+        // Names are generated shortest-first, so each `chunk_by(len)` group is one name length.
+        for (_, group) in &self.names.into_iter().chunk_by(InlineString::len) {
+            // Take the N hottest remaining slots to receive the N names of this length...
+            slice_of_same_len_strings.clear();
+            slice_of_same_len_strings.extend(group);
+            symbols_renamed_in_this_batch.clear();
+            symbols_renamed_in_this_batch
+                .extend(freq_iter.by_ref().take(slice_of_same_len_strings.len()));
+
+            debug_assert_eq!(symbols_renamed_in_this_batch.len(), slice_of_same_len_strings.len());
+
+            // ...but hand the names out in source order, so neighbours get similar names.
+            symbols_renamed_in_this_batch.sort_unstable_by_key(|a: &&SlotFrequency| a.slot);
+
+            for (symbol_to_rename, new_name) in
+                symbols_renamed_in_this_batch.iter().zip(slice_of_same_len_strings.iter())
+            {
+                // A slot can be shared by several symbols (cross-scope reuse); rename them all.
+                for &symbol_id in &symbol_to_rename.symbol_ids {
+                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
+                }
+            }
+        }
+    }
+}
+
+fn collect_exported_symbols<'a>(
+    program: &Program<'a>,
+    allocator: &'a Allocator,
+    symbols_len: usize,
+) -> (HashSet<'a, Str<'a>>, Option<BitSet<'a>>) {
+    let mut exported_symbols = BitSet::new_in(symbols_len, allocator);
+    let mut exported_names = HashSet::new_in(allocator);
+    for statement in &program.body {
+        let Statement::ExportNamedDeclaration(v) = statement else { continue };
+        let Some(decl) = &v.declaration else { continue };
+        if let Declaration::VariableDeclaration(decl) = decl {
+            for decl in &decl.declarations {
+                if let Some(id) = decl.id.get_binding_identifier() {
+                    exported_names.insert(id.name.as_arena_str());
+                    exported_symbols.set_bit(id.symbol_id().index());
+                }
+            }
+        } else if let Some(id) = decl.id() {
+            exported_names.insert(id.name.as_arena_str());
+            exported_symbols.set_bit(id.symbol_id().index());
+        }
+    }
+    (exported_names, Some(exported_symbols))
+}
+
+fn collect_keep_name_symbols<'alloc, 's>(
+    keep_names: MangleOptionsKeepNames,
+    allocator: &'alloc Allocator,
+    scoping: &'s Scoping,
+    nodes: &AstNodes,
+) -> (FxHashSet<&'s str>, Option<BitSet<'alloc>>) {
+    if !keep_names.function && !keep_names.class {
+        return (FxHashSet::default(), None);
+    }
+    let ids = collect_name_symbols(keep_names, allocator, scoping, nodes);
+    (ids.ones().map(|id| scoping.symbol_name(SymbolId::from_usize(id))).collect(), Some(ids))
 }
 
 // Maximum length of string is 15 (`slot_4294967295` for `u32::MAX`).

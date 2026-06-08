@@ -36,6 +36,8 @@ pub struct NoUnusedExpressionsConfig {
     /// When set to `true`, enforces the rule for unused JSX expressions also.
     #[serde(rename = "enforceForJSX")]
     enforce_for_jsx: bool,
+    /// When set to `true`, allows directive prologues.
+    ignore_directives: bool,
 }
 
 declare_oxc_lint!(
@@ -233,7 +235,20 @@ fn test() {
         ("<></>", None),   // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
         ("var partial = <div />", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
         ("var partial = <div />", Some(serde_json::json!([{ "enforceForJSX": true }]))), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
-        ("var partial = <></>", Some(serde_json::json!([{ "enforceForJSX": true }]))), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
+        ("var partial = <></>", Some(serde_json::json!([{ "enforceForJSX": true }]))), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
+        (r#""use strict";"#, Some(serde_json::json!([{ "ignoreDirectives": true }]))),
+        (
+            r#""directive one"; "directive two"; f();"#,
+            Some(serde_json::json!([{ "ignoreDirectives": true }])),
+        ),
+        (
+            r#"function foo() {"use strict"; return true; }"#,
+            Some(serde_json::json!([{ "ignoreDirectives": true }])),
+        ),
+        (
+            r#"function foo() {"directive one"; "directive two"; f(); }"#,
+            Some(serde_json::json!([{ "ignoreDirectives": true }])),
+        ),
         // https://github.com/typescript-eslint/typescript-eslint/blob/32a7a7061abba5bbf1403230526514768d3e2760/packages/eslint-plugin/tests/rules/no-unused-expressions.test.ts#L29
         (
             "
@@ -397,7 +412,8 @@ fn test() {
             'bar'
              } }",
             None,
-        ), // { "ecmaVersion": 2022 }
+        ), // { "ecmaVersion": 2022 },
+        ("foo;", Some(serde_json::json!([{ "ignoreDirectives": true }]))),
         // https://github.com/typescript-eslint/typescript-eslint/blob/32a7a7061abba5bbf1403230526514768d3e2760/packages/eslint-plugin/tests/rules/no-unused-expressions.test.ts#L91
         (
             "
@@ -504,6 +520,13 @@ fn test() {
                   ",
             None,
         ),
+        (
+            "function foo() {
+              const foo = true;
+              ('use strict');
+            }",
+            None,
+        ),
         ("foo && foo?.bar;", Some(serde_json::json!([{ "allowShortCircuit": true }]))),
         ("foo ? foo?.bar : bar.baz;", Some(serde_json::json!([{ "allowTernary": true }]))),
         (
@@ -528,13 +551,6 @@ fn test() {
                   ",
             None,
         ),
-        // (
-        // "
-        // declare const foo: number | undefined;
-        // <any>foo;
-        // ",
-        // None,
-        // ),
         (
             "
             declare const foo: number | undefined;

@@ -7,6 +7,7 @@ import {
   formatEmbeddedDoc,
   sortTailwindClasses,
 } from "./libs/apis";
+import { toFormatFileResult, toNullable } from "./libs/napi-callbacks";
 // Types are auto-generated from the JSON Schema.
 import type {
   Oxfmtrc,
@@ -73,10 +74,10 @@ export async function format(fileName: string, sourceText: string, options?: For
     fileName,
     sourceText,
     options ?? {},
-    (options, code) => formatFile({ options, code }),
-    (options, code) => formatEmbeddedCode({ options, code }),
-    (options, texts) => formatEmbeddedDoc({ options, texts }),
-    (options, classes) => sortTailwindClasses({ options, classes }),
+    (options, code) => toFormatFileResult(formatFile({ options, code })),
+    (options, code) => toNullable(formatEmbeddedCode({ options, code })),
+    (options, texts) => toNullable(formatEmbeddedDoc({ options, texts })),
+    (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
 }
 
@@ -94,9 +95,9 @@ export async function jsTextToDoc(
     sourceText,
     oxfmtPluginOptionsJson,
     parentContext,
-    (_options, _code) => Promise.reject(/* Unreachable */),
-    (options, code) => formatEmbeddedCode({ options, code }),
-    (options, texts) => formatEmbeddedDoc({ options, texts }),
-    (options, classes) => sortTailwindClasses({ options, classes }),
+    () => toFormatFileResult(Promise.reject("formatFile is unavailable for jsTextToDoc")),
+    (options, code) => toNullable(formatEmbeddedCode({ options, code })),
+    (options, texts) => toNullable(formatEmbeddedDoc({ options, texts })),
+    (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
 }

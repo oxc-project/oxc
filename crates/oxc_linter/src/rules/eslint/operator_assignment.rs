@@ -9,19 +9,23 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::GetPrecedence;
-use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_member_expression};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::{AlwaysNever, is_same_member_expression},
+};
 
 fn operator_assignment_diagnostic(
-    mode: Mode,
+    mode: &AlwaysNever,
     span: Span,
     operator: &str,
     can_fix: bool,
 ) -> OxcDiagnostic {
-    let msg = if Mode::Never == mode {
+    let msg = if &AlwaysNever::Never == mode {
         format!("Unexpected operator assignment ({operator}) shorthand.")
     } else {
         format!("Assignment (=) can be replaced with operator assignment ({operator}).")
@@ -29,7 +33,7 @@ fn operator_assignment_diagnostic(
     let mut diagnostic = OxcDiagnostic::warn(msg).with_label(span);
 
     if !can_fix {
-        diagnostic = diagnostic.with_note(if Mode::Never == mode {
+        diagnostic = diagnostic.with_note(if &AlwaysNever::Never == mode {
             format!("Replace '{operator}' with a regular '=' assignment.")
         } else {
             format!("Use '{operator}' shorthand instead of '='.")
@@ -39,26 +43,8 @@ fn operator_assignment_diagnostic(
     diagnostic
 }
 
-#[derive(Debug, Default, PartialEq, Clone, Copy, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-enum Mode {
-    /// Requires assignment operator shorthand where possible.
-    #[default]
-    Always,
-    /// Disallows assignment operator shorthand.
-    Never,
-}
-
-impl Mode {
-    pub fn from(raw: &str) -> Self {
-        if raw == "never" { Self::Never } else { Self::Always }
-    }
-}
-
-#[derive(Debug, Default, Clone, Serialize)]
-pub struct OperatorAssignment {
-    mode: Mode,
-}
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct OperatorAssignment(AlwaysNever);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -109,28 +95,28 @@ declare_oxc_lint!(
     eslint,
     style,
     fix_dangerous,
-    config = Mode,
+    config = AlwaysNever,
     version = "0.15.13",
 );
 
 impl Rule for OperatorAssignment {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self { mode: value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default() })
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assign_expr) = node.kind() else {
             return;
         };
-        if self.mode == Mode::Never {
-            prohibit(assign_expr, self.mode, ctx);
+        if self.0 == AlwaysNever::Never {
+            prohibit(assign_expr, &self.0, ctx);
         } else {
-            verify(assign_expr, self.mode, ctx);
+            verify(assign_expr, &self.0, ctx);
         }
     }
 }
 
-fn verify(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
+fn verify(expr: &AssignmentExpression, mode: &AlwaysNever, ctx: &LintContext) {
     if !expr.operator.is_assign() {
         return;
     }
@@ -188,7 +174,7 @@ fn verify(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
     }
 }
 
-fn prohibit(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
+fn prohibit(expr: &AssignmentExpression, mode: &AlwaysNever, ctx: &LintContext) {
     if !expr.operator.is_assign() && !expr.operator.is_logical() {
         ctx.diagnostic_with_dangerous_fix(
 operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str(), true),

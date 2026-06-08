@@ -44,6 +44,9 @@ fn test_comment_at_top_of_file() {
 #[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
+    // A comment-only JSX expression container must not leak a leading space onto
+    // the following statement's indent.
+    test_same("x = <div>{/* Hello */}</div>;\ny = 1;\n");
     // https://github.com/oxc-project/oxc/issues/17266
     test("console.log(<div x={/*before*/ x} />)", "console.log(<div x={/*before*/ x} />);\n");
     test(

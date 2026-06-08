@@ -31,7 +31,7 @@ fn require_mock_type_parameters_diagnostic(span: Span, method_name: &str) -> Oxc
 pub struct RequireMockTypeParameters(Box<RequireMockTypeParametersConfig>);
 
 #[derive(Debug, Default, Deserialize, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireMockTypeParametersConfig {
     /// Also require type parameters for `importActual` and `importMock`.
     check_import_functions: bool,

@@ -14,6 +14,7 @@ pub enum TestLanguage {
     Ts,
     Json,
     Jsonc,
+    Json5,
 }
 
 impl TestLanguage {
@@ -23,6 +24,7 @@ impl TestLanguage {
             Self::Ts => "ts",
             Self::Json => "json",
             Self::Jsonc => "jsonc",
+            Self::Json5 => "json5",
         }
     }
 
@@ -33,21 +35,25 @@ impl TestLanguage {
             // There is no `tsx` directory, just check it works with TS
             // `SourceType`.`variant` is handled by spec file extension
             Self::Ts => ["typescript", "jsx"].iter().map(|dir| base.join(dir)).collect::<Vec<_>>(),
-            // The JSON formatter targets the `json` parser.
-            // `with-comment/` is shared with `Jsonc`: each call lists its own parser,
-            // so `spec.rs` keeps only the `json` ones here.
-            // Out-of-scope (TODO) siblings:
-            // - `json5-as-json-with-trailing-commas/`: `json5` parser
-            // - `json-superset/`: inline `snippets` shape, not parseable by `spec.rs`
-            // - `range/`: range-formatting tests, not a whole-file format
+            // For the JSON family (`Json`/`Jsonc`/`Json5`)
+            // the `json/` and `with-comment/` dirs are shared:
+            // each `format.test.js` call lists its own parser,
+            // so `spec.rs` keeps only the calls matching the active language.
+            //
+            // Out-of-scope siblings (all JSON variants):
+            // - `json-superset/`: inline `snippets`, not parseable by Rust(`spec.rs`)
+            // - `range/`: range-formatting, not whole-file
             Self::Json => {
                 vec![base.join("json").join("json"), base.join("json").join("with-comment")]
             }
-            // The `jsonc` parser. `with-comment/` is shared with `Json` (see above);
-            // `spec.rs` keeps only the `jsonc` calls here.
             Self::Jsonc => {
                 vec![base.join("json").join("jsonc"), base.join("json").join("with-comment")]
             }
+            Self::Json5 => vec![
+                base.join("json").join("json"),
+                base.join("json").join("with-comment"),
+                base.join("json").join("json5-as-json-with-trailing-commas"),
+            ],
         }
     }
 }

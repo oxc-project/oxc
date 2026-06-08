@@ -45,6 +45,9 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     if is_jsonc_file(extension) {
         return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::Jsonc });
     }
+    if is_json5_file(extension) {
+        return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::Json5 });
+    }
 
     // External formatter files are only supported with the `napi` feature
     #[cfg(feature = "napi")]
@@ -300,6 +303,11 @@ static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "sublime_session",
 };
 
+/// Returns `true` if this is a JSON5 file (handled by `oxc_formatter_json` with the `json5` variant).
+fn is_json5_file(extension: Option<&str>) -> bool {
+    extension == Some("json5")
+}
+
 // ---
 
 /// Returns parser name for external formatter, if supported.
@@ -307,14 +315,11 @@ static JSONC_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 #[cfg(feature = "napi")]
 fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
     // JSON and variants
-    // NOTE: `parser: json` and `parser: jsonc` are already supported by
+    // NOTE: `parser: json`, `parser: jsonc` and `parser: json5` are already supported by
     // `oxc_formatter_json` (handled in `classify_file_kind`);
-    // `json5` and `json-stringify` are routed to Prettier here.
+    // only `json-stringify` is routed to Prettier here.
     if file_name == "composer.json" || extension == Some("importmap") {
         return Some("json-stringify");
-    }
-    if extension == Some("json5") {
-        return Some("json5");
     }
 
     // YAML
@@ -605,12 +610,11 @@ mod tests {
         let test_cases = vec![
             // JSON variants
             // NOTE: `package.json` is handled in classify_file_kind, not here.
+            ("package.json", None),
             // Plain JSON (e.g. `data.json`, `schema.avsc`) is routed to
             // `oxc_formatter_json` and excluded from this map.
+            ("composer.json", Some("json-stringify")),
             ("config.importmap", Some("json-stringify")),
-            // NOTE: jsonc (e.g. `config.code-workspace`) is handled in
-            // classify_file_kind by `oxc_formatter_json`, not here.
-            ("settings.json5", Some("json5")),
             // HTML
             ("index.html", Some("html")),
             ("page.htm", Some("html")),
@@ -719,6 +723,15 @@ mod tests {
                 "`{file_name}` should be routed to oxc_formatter_json (jsonc)"
             );
         }
+    }
+
+    #[test]
+    fn test_json5_files_route_to_oxc_formatter_json() {
+        let result = classify_file_kind(Arc::from(Path::new("settings.json5")));
+        assert!(
+            matches!(result, Some(FileKind::OxcFormatterJson { variant: JsonVariant::Json5, .. })),
+            "`settings.json5` should be routed to oxc_formatter_json (json5)"
+        );
     }
 
     #[test]

@@ -36,7 +36,7 @@ fn max_statements_diagnostic(
 const DEFAULT_MAX_STATEMENTS: usize = 10;
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxStatementsConfig {
     /// Maximum number of statements allowed per function.
     max: usize,
@@ -58,6 +58,18 @@ impl std::ops::Deref for MaxStatements {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+#[cfg(feature = "ruledocs")]
+impl MaxStatements {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<MaxStatementsConfig>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
     }
 }
 

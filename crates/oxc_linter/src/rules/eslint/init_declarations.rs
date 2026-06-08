@@ -15,11 +15,15 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
-    utils::has_ambient_typescript_ancestor,
+    utils::{AlwaysNever, has_ambient_typescript_ancestor},
 };
 
-fn init_declarations_diagnostic(span: Span, mode: &Mode, identifier_name: &str) -> OxcDiagnostic {
-    let msg = if Mode::Always == *mode {
+fn init_declarations_diagnostic(
+    span: Span,
+    mode: &AlwaysNever,
+    identifier_name: &str,
+) -> OxcDiagnostic {
+    let msg = if &AlwaysNever::Always == mode {
         format!("Variable '{identifier_name}' should be initialized on declaration.")
     } else {
         format!("Variable '{identifier_name}' should not be initialized on declaration.")
@@ -29,19 +33,9 @@ fn init_declarations_diagnostic(span: Span, mode: &Mode, identifier_name: &str) 
         .with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-enum Mode {
-    /// Requires that variables be initialized on declaration. This is the default behavior.
-    #[default]
-    Always,
-    /// Disallows initialization during declaration.
-    Never,
-}
-
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct InitDeclarations(Mode, InitDeclarationsConfig);
+pub struct InitDeclarations(AlwaysNever, InitDeclarationsConfig);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
@@ -136,7 +130,7 @@ impl Rule for InitDeclarations {
             let InitDeclarations(mode, config) = &self;
             let parent = ctx.nodes().parent_node(node.id());
             // support for TypeScript's declare variables
-            if mode == &Mode::Always {
+            if mode == &AlwaysNever::Always {
                 if decl.declare {
                     return;
                 }
@@ -163,14 +157,14 @@ impl Rule for InitDeclarations {
                 };
 
                 match mode {
-                    Mode::Always if !is_initialized => {
+                    AlwaysNever::Always if !is_initialized => {
                         ctx.diagnostic(init_declarations_diagnostic(
                             v.span,
                             mode,
                             identifier.name.as_str(),
                         ));
                     }
-                    Mode::Never if is_initialized && !config.ignore_for_loop_init => {
+                    AlwaysNever::Never if is_initialized && !config.ignore_for_loop_init => {
                         if matches!(&v.kind, VariableDeclarationKind::Const) {
                             continue;
                         }

@@ -221,7 +221,7 @@ pub trait CompilerInterface {
     }
 
     fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
-        let mut builder = SemanticBuilder::new();
+        let mut builder = SemanticBuilder::new_compiler();
 
         if self.transform_options().is_some() {
             // Estimate transformer will triple scopes, symbols, references

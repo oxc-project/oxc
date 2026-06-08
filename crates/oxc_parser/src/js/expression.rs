@@ -645,12 +645,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
+        // Parser provides already-escaped values from source, so no escaping needed here
         self.ast.template_element_with_lone_surrogates(
             span,
             TemplateElementValue { raw, cooked },
             tail,
             lone_surrogates,
-            false, // escape_raw: parser provides already-escaped values from source
         )
     }
 
@@ -667,6 +667,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let property = self.parse_keyword_identifier(Kind::Meta);
                         let span = self.end_span(span);
                         self.module_record_builder.visit_import_meta(span);
+                        // `import.meta` is only allowed in module code.
+                        if !self.source_type.is_module() {
+                            self.error_on_script(diagnostics::import_meta(span));
+                        }
                         self.ast.expression_meta_property(span, meta, property)
                     }
                     // `import.source(expr)`
@@ -724,8 +728,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_lhs_expression_or_higher(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let mut in_optional_chain = false;
-        let lhs = self.parse_member_expression_or_higher(&mut in_optional_chain);
-        let lhs = self.parse_call_expression_rest(span, lhs, &mut in_optional_chain);
+        // `MemberExpression`
+        let primary = self.parse_primary_expression();
+        let member_expression = self.parse_member_expression_rest(
+            span,
+            primary,
+            &mut in_optional_chain,
+            /* allow_optional_chain */ true,
+        );
+        // A fully-parsed `MemberExpression` only extends into a `LeftHandSideExpression` via
+        // `Arguments` (`(`) or an `OptionalChain` (`?.`); see <https://tc39.es/ecma262/#sec-left-hand-side-expressions>.
+        // So skip `parse_call_expression_rest` (and its redundant member-rest re-scan) otherwise.
+        let lhs = if matches!(self.cur_kind(), Kind::LParen | Kind::QuestionDot) {
+            self.parse_call_expression_rest(span, member_expression, &mut in_optional_chain)
+        } else {
+            member_expression
+        };
         if !in_optional_chain {
             return lhs;
         }
@@ -757,21 +775,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             expr => expr,
         }
-    }
-
-    /// Section 13.3 Member Expression
-    fn parse_member_expression_or_higher(
-        &mut self,
-        in_optional_chain: &mut bool,
-    ) -> Expression<'a> {
-        let span = self.start_span();
-        let lhs = self.parse_primary_expression();
-        self.parse_member_expression_rest(
-            span,
-            lhs,
-            in_optional_chain,
-            /* allow_optional_chain */ true,
-        )
     }
 
     /// Section 13.3 Super Call
@@ -910,12 +913,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         Expression::from(if self.cur_kind() == Kind::PrivateIdentifier {
             let private_ident = self.parse_private_identifier();
-            self.ast.member_expression_private_field_expression(
-                self.end_span(lhs_span),
-                lhs,
-                private_ident,
-                optional,
-            )
+            let span = self.end_span(lhs_span);
+            // `super.#field` is not allowed.
+            if lhs.is_super() {
+                self.error(diagnostics::super_private(span));
+            }
+            self.ast.member_expression_private_field_expression(span, lhs, private_ident, optional)
         } else {
             let ident = self.parse_identifier_name();
             self.ast.member_expression_static(self.end_span(lhs_span), lhs, ident, optional)
@@ -945,7 +948,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.eat(Kind::Dot) {
             return if self.at(Kind::Target) {
                 let property = self.parse_keyword_identifier(Kind::Target);
-                self.ast.expression_meta_property(self.end_span(span), identifier, property)
+                let span = self.end_span(span);
+                if !self.ctx.has_new_target() {
+                    self.error(diagnostics::new_target_outside_function(span));
+                }
+                self.ast.expression_meta_property(span, identifier, property)
             } else {
                 self.bump_any();
                 self.fatal_error(diagnostics::new_target(self.end_span(span)))
@@ -1022,13 +1029,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         in_optional_chain: &mut bool,
     ) -> Expression<'a> {
         let mut lhs = lhs;
+        // The caller only enters here with the current token being `(` or `?.`. For `(`,
+        // `parse_member_expression_rest` is a no-op (`(` ∉ its FIRST set: `?.`, `.`, `[`,
+        // template, TS `!`/`<`), so skip the redundant re-scan on entry; entering on `?.`, and
+        // every later iteration (after `Arguments`), still needs it.
+        debug_assert!(
+            matches!(self.cur_kind(), Kind::LParen | Kind::QuestionDot),
+            "parse_call_expression_rest is only entered on `(` or `?.`",
+        );
+        let mut rescan_members = !self.at(Kind::LParen);
         while self.fatal_error.is_none() {
-            lhs = self.parse_member_expression_rest(
-                lhs_span,
-                lhs,
-                in_optional_chain,
-                /* allow_optional_chain */ true,
-            );
+            if rescan_members {
+                lhs = self.parse_member_expression_rest(
+                    lhs_span,
+                    lhs,
+                    in_optional_chain,
+                    /* allow_optional_chain */ true,
+                );
+            }
+            rescan_members = true;
             let question_dot_span = self.at(Kind::QuestionDot).then(|| self.cur_token().span());
             let question_dot = question_dot_span.is_some();
             if question_dot {
@@ -1525,6 +1544,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) {
                 self.error(diagnostics::invalid_assignment(span));
             }
+        }
+        // A destructuring pattern target is only valid with `=`, not a compound operator.
+        if operator != AssignmentOperator::Assign
+            && matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_))
+        {
+            self.error(diagnostics::assignment_is_not_simple(lhs.span()));
         }
         let left = AssignmentTarget::cover(lhs, self);
         self.bump_any();

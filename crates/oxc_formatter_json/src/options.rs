@@ -39,9 +39,16 @@ pub struct JsonFormatOptions {
     pub line_width: LineWidth,
     pub line_ending: LineEnding,
     pub variant: JsonVariant,
+    // Used by: JSON, JSONC, JSON5
     pub bracket_spacing: BracketSpacing,
+    // Used by: JSON, JSONC, JSON5
     pub expand: Expand,
+    // Used by: JSONC, JSON5
     pub trailing_commas: TrailingCommas,
+    // Used by: JSON5
+    pub single_quote: SingleQuote,
+    // Used by: JSON5
+    pub quote_props: QuoteProps,
 }
 
 impl JsonFormatOptions {
@@ -64,6 +71,74 @@ impl JsonFormatOptions {
                 matches!(self.trailing_commas, TrailingCommas::Always)
             }
         }
+    }
+
+    /// The quote byte (`b'"'` / `b'\''`) to enclose a string literal whose body is `inner`
+    /// (the content between the quotes), per Prettier's `print-string.js`.
+    ///
+    /// - `json` / `jsonc` / `json-stringify`: always `"`
+    /// - `json5` with `quoteProps: "preserve"` and `singleQuote: false`:
+    ///   - pinned to `"` (this lets the `json5` parser double as "JSON with comments and trailing commas")
+    /// - `json5` otherwise: Prettier's `getPreferredQuote`
+    ///   - start from the configured preference (`singleQuote`) and flip to the alternate when that reduces escapes
+    ///   - (i.e. when the preferred quote occurs more often in `inner` than the alternate)
+    pub fn preferred_quote(&self, inner: &str) -> u8 {
+        // Non-json5 always double-quotes: bail before touching any json5-only option.
+        if self.variant != JsonVariant::Json5 {
+            return b'"';
+        }
+        let is_single_quote = self.single_quote.value();
+        // `quoteProps: "preserve"` + `singleQuote: false` pins to `"` (JSON-with-comments mode).
+        if matches!(self.quote_props, QuoteProps::Preserve) && !is_single_quote {
+            return b'"';
+        }
+
+        let (preferred, alternate) = if is_single_quote { (b'\'', b'"') } else { (b'"', b'\'') };
+        // Count every occurrence (escaped ones included, matching `getPreferredQuote`).
+        let (mut preferred_count, mut alternate_count) = (0u32, 0u32);
+        for byte in inner.bytes() {
+            if byte == preferred {
+                preferred_count += 1;
+            } else if byte == alternate {
+                alternate_count += 1;
+            }
+        }
+
+        if preferred_count > alternate_count { alternate } else { preferred }
+    }
+}
+
+/// Whether and when to quote object keys.
+/// Mirrors Prettier's `quoteProps`: when (and whether) object keys keep their quotes.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum QuoteProps {
+    /// `quoteProps: "as-needed"`.
+    /// Drop quotes from keys that are valid identifier names,
+    /// quote the rest (numeric-string keys like `"1.5"` stay quoted in json5).
+    #[default]
+    AsNeeded,
+    /// `quoteProps: "preserve"`.
+    /// Keep keys exactly as authored (quoted stays quoted, unquoted stays unquoted).
+    Preserve,
+    /// `quoteProps: "consistent"`.
+    /// If any key in an object requires quotes, quote every quotable key in that object; otherwise behave like `AsNeeded`.
+    Consistent,
+}
+
+/// Whether string literals/keys prefer single quotes (`'`) over double (`"`).
+/// Mirrors Prettier's `singleQuote` (default `false`).
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub struct SingleQuote(bool);
+
+impl SingleQuote {
+    pub fn value(self) -> bool {
+        self.0
+    }
+}
+
+impl From<bool> for SingleQuote {
+    fn from(value: bool) -> Self {
+        Self(value)
     }
 }
 

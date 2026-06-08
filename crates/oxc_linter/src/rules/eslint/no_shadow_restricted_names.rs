@@ -201,8 +201,6 @@ fn test() {
             None,
         ), // { "ecmaVersion": 9 },
         ("var undefined; undefined = 5;", None),
-        ("class undefined {}", None),   // { "ecmaVersion": 2015, },
-        ("(class undefined {})", None), // { "ecmaVersion": 2015, },
         ("import undefined from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },
         ("import { undefined } from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },
         ("import { baz as undefined } from 'foo';", None), // { "ecmaVersion": 2015, "sourceType": "module", },

@@ -178,8 +178,7 @@ impl<'a> SemanticTester<'a> {
                 .collect::<String>()
         );
 
-        SemanticBuilder::new()
-            .with_check_syntax_error(true)
+        SemanticBuilder::new_compiler()
             .with_cfg(self.cfg)
             .build(self.allocator.alloc(parse.program))
     }

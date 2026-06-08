@@ -630,7 +630,7 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b'}');
     }
 
-    fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
+    fn print_body(&mut self, stmt: &Statement<'_>, ctx: Context) {
         match stmt {
             Statement::BlockStatement(stmt) => {
                 self.print_soft_space();
@@ -642,9 +642,10 @@ impl<'a> Codegen<'a> {
                 self.print_soft_newline();
             }
             stmt => {
-                if need_space && self.options.minify {
-                    self.print_hard_space();
-                }
+                // The statement's first token inserts a hard space itself (via
+                // `print_space_before_identifier`) when it would merge with a preceding
+                // identifier char (e.g. `else`), so `else{...}`/`else++x`/`else[0]` stay
+                // tight while `else x` keeps its space.
                 self.print_next_indent_as_space = true;
                 stmt.print(self, ctx);
             }
@@ -825,27 +826,32 @@ impl<'a> Codegen<'a> {
         // "x + + y" => "x+ +y"
         // "x ++ + y" => "x+++y"
         // "x + ++ y" => "x+ ++y"
-        // "-- >" => "-- >"
         // "< ! --" => "<! --"
+        // Note: `a-- > b` does not need a space (`a-->b` is `(a--) > b`); `-->` is
+        // only an HTML close comment at the start of a line, and a postfix `--`
+        // always has an operand before it.
         let bin_op_add = Operator::Binary(BinaryOperator::Addition);
         let bin_op_sub = Operator::Binary(BinaryOperator::Subtraction);
         let un_op_pos = Operator::Unary(UnaryOperator::UnaryPlus);
         let un_op_pre_inc = Operator::Update(UpdateOperator::Increment);
         let un_op_neg = Operator::Unary(UnaryOperator::UnaryNegation);
         let un_op_pre_dec = Operator::Update(UpdateOperator::Decrement);
-        let un_op_post_dec = Operator::Update(UpdateOperator::Decrement);
-        let bin_op_gt = Operator::Binary(BinaryOperator::GreaterThan);
         let un_op_not = Operator::Unary(UnaryOperator::LogicalNot);
         if ((prev == bin_op_add || prev == un_op_pos)
             && (next == bin_op_add || next == un_op_pos || next == un_op_pre_inc))
             || ((prev == bin_op_sub || prev == un_op_neg)
                 && (next == bin_op_sub || next == un_op_neg || next == un_op_pre_dec))
-            || (prev == un_op_post_dec && next == bin_op_gt)
             || (prev == un_op_not
                 && next == un_op_pre_dec
                 // `prev == UnaryOperator::LogicalNot` which means last byte is ASCII,
                 // and therefore previous character is 1 byte from end of buffer
                 && self.code.peek_nth_byte_back(1) == Some(b'<'))
+            // `a! == b`: keep the non-null `!` from gluing to `=` as `!=`/`!==`.
+            || (prev == un_op_not
+                && matches!(
+                    next,
+                    Operator::Binary(BinaryOperator::Equality | BinaryOperator::StrictEquality)
+                ))
         {
             self.print_hard_space();
         }
@@ -865,7 +871,10 @@ impl<'a> Codegen<'a> {
     fn print_decorators(&mut self, decorators: &[Decorator<'_>], ctx: Context) {
         for decorator in decorators {
             decorator.print(self, ctx);
-            self.print_hard_space();
+            // Only separate from the following token when the decorator ends in an
+            // identifier char (`@dec class`); `@dec() class` can be `@dec()class`.
+            self.print_soft_space();
+            self.print_space_before_identifier();
         }
     }
 
