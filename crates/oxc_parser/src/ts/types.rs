@@ -879,6 +879,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        // A type-argument list can only open with `<`, or `<<` for nested generics like
+        // `f<<T>() => U>()`. This mirrors TypeScript's `reScanLessThanToken`, which re-scans only
+        // `<`/`<<`. `<=`/`<<=` can never open one — splitting off the leading `<` leaves a `=`, and
+        // no type starts with `=` — so although `re_lex_ts_l_angle` would accept them (it is shared
+        // with type-context callers), speculating here can only fail and rewind to `None`. Bail
+        // before the checkpoint for any non-`<`-opening token (the common `a?.(`, `a?.b` paths),
+        // avoiding a checkpoint/rewind round-trip that returns `None` anyway.
+        if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
+            return None;
+        }
         let checkpoint = self.checkpoint();
         let span = self.start_span();
         if !self.re_lex_ts_l_angle() {
