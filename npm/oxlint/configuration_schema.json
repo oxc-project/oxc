@@ -8307,6 +8307,9 @@
         "unicorn/no-array-callback-reference": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-array-fill-with-reference-type": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-array-for-each": {
           "$ref": "#/definitions/RuleNoConfig"
         },

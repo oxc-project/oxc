@@ -1,0 +1,123 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:19]
+ 1 │ new Array(3).fill({})
+   ·                   ──
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:15]
+ 1 │ Array(3).fill([])
+   ·               ──
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:30]
+ 1 │ Array.from({length: 3}).fill(new Map())
+   ·                              ─────────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:16]
+ 1 │ [1, 2, 3].fill(new Set())
+   ·                ─────────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:30]
+ 1 │ const value = {}; array.fill(value)
+   ·                              ─────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:30]
+ 1 │ const value = []; array.fill(value)
+   ·                              ─────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:37]
+ 1 │ const value = new Map(); array.fill(value)
+   ·                                     ─────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:40]
+ 1 │ const value = new class {}; array.fill(value)
+   ·                                        ─────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:37]
+ 1 │ const RegExp = class {}; array.fill(new RegExp())
+   ·                                     ────────────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:12]
+ 1 │ array.fill(class {})
+   ·            ────────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:2:24]
+ 1 │ const value = {};
+ 2 │             array.fill(value, 1);
+   ·                        ─────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:12]
+ 1 │ array.fill({} as Foo)
+   ·            ─────────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:12]
+ 1 │ array.fill(<Foo>{})
+   ·            ───────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:12]
+ 1 │ array.fill({} satisfies Foo)
+   ·            ────────────────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:12]
+ 1 │ array.fill({}!)
+   ·            ───
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:37]
+ 1 │ const value = {} as Foo; array.fill(value)
+   ·                                     ─────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
+
+  ⚠ unicorn(no-array-fill-with-reference-type): Do not use a reference value as the fill value.
+   ╭─[no_array_fill_with_reference_type.ts:1:30]
+ 1 │ const value = {}; array.fill(value!)
+   ·                              ──────
+   ╰────
+  help: Use `Array.from()` or `.map()` to create a distinct value for each element.
