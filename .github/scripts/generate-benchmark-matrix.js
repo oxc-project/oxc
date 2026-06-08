@@ -21,6 +21,7 @@ const ALL_COMPONENTS = [
   "codegen",
   "formatter",
   "pipeline",
+  "react_compiler",
   "linter",
 ];
 
@@ -60,6 +61,9 @@ function checkGlobalChanges(changedFiles) {
 function getFeatureForComponent(component) {
   if (component === "linter") {
     return "linter";
+  }
+  if (component === "react_compiler") {
+    return "react_compiler";
   }
   return "compiler";
 }

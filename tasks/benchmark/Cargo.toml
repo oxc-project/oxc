@@ -54,6 +54,11 @@ harness = false
 name = "pipeline"
 harness = false
 
+[[bench]]
+name = "react_compiler"
+harness = false
+required-features = ["react_compiler"]
+
 # Only run in CI
 [[bench]]
 name = "parser_napi"
@@ -77,6 +82,7 @@ oxc_parser = { workspace = true, features = [
   "benchmarking",
   "regular_expression",
 ], optional = true }
+oxc_react_compiler = { workspace = true, optional = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true, optional = true, features = ["schemars", "serialize"] }
 oxc_tasks_common = { workspace = true, optional = true }
@@ -125,6 +131,14 @@ linter = [
   "dep:oxc_tasks_common",
   "oxc_semantic/cfg",
 ]
+react_compiler = [
+  "dep:oxc_allocator",
+  "dep:oxc_parser",
+  "dep:oxc_react_compiler",
+  "dep:oxc_semantic",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
 
 [dev-dependencies]
 rustc-hash = { workspace = true }
@@ -142,6 +156,7 @@ ignored = [
   "oxc_mangler",
   "oxc_minifier",
   "oxc_parser",
+  "oxc_react_compiler",
   "oxc_semantic",
   "oxc_span",
   "oxc_tasks_common",

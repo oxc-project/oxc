@@ -8,6 +8,7 @@ use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOption
 use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
+use oxc_react_compiler::{self, PluginOptions as ReactCompilerOptions};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
@@ -67,6 +68,13 @@ pub trait CompilerInterface {
     }
 
     fn transform_options(&self) -> Option<&TransformOptions> {
+        None
+    }
+
+    /// Options for the [React Compiler], which runs before all other transforms.
+    ///
+    /// [React Compiler]: oxc_react_compiler
+    fn react_compiler_options(&self) -> Option<ReactCompilerOptions> {
         None
     }
 
@@ -148,6 +156,15 @@ pub trait CompilerInterface {
         let stats = semantic_return.semantic.stats();
         let mut scoping = semantic_return.semantic.into_scoping();
 
+        /* React Compiler */
+
+        // Runs first, on the pristine AST, before every other transform.
+        let mut errors = Vec::new();
+        if let Some(options) = self.react_compiler_options() {
+            scoping =
+                oxc_react_compiler::run(&mut program, &allocator, scoping, &options, &mut errors);
+        }
+
         /* Transform */
 
         if let Some(options) = self.transform_options() {
@@ -155,8 +172,16 @@ pub trait CompilerInterface {
                 self.transform(options, &allocator, &mut program, source_path, scoping);
 
             if !transformer_return.errors.is_empty() {
-                self.handle_errors(transformer_return.errors);
+                errors.append(&mut transformer_return.errors);
+                self.handle_errors(errors);
                 return;
+            }
+
+            // The React Compiler always leaves a valid program (compiled on
+            // success, original on bail-out), so its diagnostics are reported but
+            // never abort codegen.
+            if !errors.is_empty() {
+                self.handle_errors(errors);
             }
 
             if self.after_transform(&mut program, &mut transformer_return).is_break() {
@@ -164,6 +189,10 @@ pub trait CompilerInterface {
             }
 
             (scoping) = transformer_return.scoping;
+        } else if !errors.is_empty() {
+            // The React Compiler ran without a transform; surface its diagnostics
+            // but never abort — it always leaves a valid program.
+            self.handle_errors(errors);
         }
 
         let inject_options = self.inject_options();
