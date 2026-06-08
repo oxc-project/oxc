@@ -117,7 +117,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     config = NoReservedKeys,
-    version = "next",
+    version = "1.69.0",
 );
 
 impl Rule for NoReservedKeys {
