@@ -1,0 +1,299 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:6:13]
+ 5 │           computed: {
+ 6 │             foo () {
+   ·             ───
+ 7 │             }
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:11:15]
+ 10 │             return {
+ 11 │               foo: null
+    ·               ───
+ 12 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:15:13]
+ 14 │           methods: {
+ 15 │             foo () {
+    ·             ───
+ 16 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:22:15]
+ 21 │             return {
+ 22 │               foo
+    ·               ───
+ 23 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:6:13]
+ 5 │           computed: {
+ 6 │             foo () {
+   ·             ───
+ 7 │             }
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:11:15]
+ 10 │             return {
+ 11 │               foo: null
+    ·               ───
+ 12 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:15:13]
+ 14 │           methods: {
+ 15 │             foo () {
+    ·             ───
+ 16 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:22:15]
+ 21 │             return {
+ 22 │               foo
+    ·               ───
+ 23 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:6:13]
+ 5 │           computed: {
+ 6 │             foo () {
+   ·             ───
+ 7 │             }
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:10:13]
+  9 │           data: () => ({
+ 10 │             foo: null
+    ·             ───
+ 11 │           }),
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:13:13]
+ 12 │           methods: {
+ 13 │             foo () {
+    ·             ───
+ 14 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:8:13]
+ 7 │           computed: {
+ 8 │             foo: {
+   ·             ───
+ 9 │               get () {
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:14:13]
+ 13 │           data: {
+ 14 │             foo: null
+    ·             ───
+ 15 │           },
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:17:13]
+ 16 │           methods: {
+ 17 │             foo () {
+    ·             ───
+ 18 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:24:15]
+ 23 │             return {
+ 24 │               foo
+    ·               ───
+ 25 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'bar'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:4:13]
+ 3 │           foo: {
+ 4 │             bar: String
+   ·             ───
+ 5 │           },
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:13:15]
+ 12 │             return {
+ 13 │               foo
+    ·               ───
+ 14 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:11:15]
+ 10 │             return {
+ 11 │               foo: () => 0
+    ·               ───
+ 12 │             }
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:10:13]
+  9 │           setup: () => ({
+ 10 │             foo: () => 0
+    ·             ───
+ 11 │           })
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:10:13]
+  9 │           setup: () => ({
+ 10 │             foo: computed(() => 0)
+    ·             ───
+ 11 │           })
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:10:13]
+  9 │           setup: () => ({
+ 10 │             foo: ref(0)
+    ·             ───
+ 11 │           })
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:10:13]
+  9 │           setup: () => ({
+ 10 │             foo: 0
+    ·             ───
+ 11 │           })
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'bar'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:4:13]
+ 3 │           foo: {
+ 4 │             bar: String
+   ·             ───
+ 5 │           },
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'bar'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:4:13]
+ 3 │           foo: {
+ 4 │             bar: String
+   ·             ───
+ 5 │           },
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:7:17]
+ 6 │           return {
+ 7 │             get foo() {
+   ·                 ───
+ 8 │               return foo
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:8:17]
+ 7 │             set foo(v) {},
+ 8 │             get foo() {}
+   ·                 ───
+ 9 │           }
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:7:17]
+ 6 │           return {
+ 7 │             set foo(v) {}
+   ·                 ───
+ 8 │           }
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:8:17]
+ 7 │             set foo(v) {},
+ 8 │             get foo() {},
+   ·                 ───
+ 9 │           }
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:8:17]
+ 7 │             set foo(v) {},
+ 8 │             set foo(v) {},
+   ·                 ───
+ 9 │           }
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:6:9]
+ 5 │   })
+ 6 │   const foo = 0
+   ·         ───
+ 7 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'baz'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:4:10]
+ 3 │   import { Foo } from './Foo.vue';
+ 4 │   import baz from './baz';
+   ·          ───
+ 5 │ 
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:12:12]
+ 11 │ 
+ 12 │   function foo() {
+    ·            ───
+ 13 │     const baz = 'baz';
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'bar'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:15:9]
+ 14 │   }
+ 15 │   const bar = () => 'bar';
+    ·         ───
+ 16 │ </script>
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:8:7]
+ 7 │ 
+ 8 │ const foo = 'foo';
+   ·       ───
+ 9 │ const bar = 'bar';
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'bar'. May cause name collision in script or template tag.
+    ╭─[no_dupe_keys.tsx:9:7]
+  8 │ const foo = 'foo';
+  9 │ const bar = 'bar';
+    ·       ───
+ 10 │ </script>
+    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'bar'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:5:7]
+ 4 │ const { foo } = props
+ 5 │ const bar = 42
+   ·       ───
+ 6 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'bar'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:5:7]
+ 4 │ const foo = 'foo'
+ 5 │ const bar = 'bar'
+   ·       ───
+ 6 │ </script>
+   ╰────
