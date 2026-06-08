@@ -15,7 +15,7 @@ fn deprecated_function(deprecated: &str, new: &str, span: Span) -> OxcDiagnostic
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JestConfig {
     /// The version of Jest being used.
     version: String,

@@ -780,7 +780,7 @@ export interface DummyRuleMap {
   "jest/no-conditional-expect"?: RuleNoConfig;
   "jest/no-conditional-in-test"?: RuleNoConfig;
   "jest/no-confusing-set-timeout"?: RuleNoConfig;
-  "jest/no-deprecated-functions"?: DummyRule;
+  "jest/no-deprecated-functions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDeprecatedFunctionsConfig];
   "jest/no-disabled-tests"?: RuleNoConfig;
   "jest/no-done-callback"?: RuleNoConfig;
   "jest/no-duplicate-hooks"?: RuleNoConfig;
@@ -2168,6 +2168,21 @@ export interface MaxNestedDescribeConfig {
    * Maximum allowed depth of nested describe calls.
    */
   max?: number;
+}
+export interface NoDeprecatedFunctionsConfig {
+  /**
+   * Jest configuration options.
+   * Deprecated config, it will be removed in future versions.
+   * Use please instead { "settings": { "jest": {"version": 29 } } } in `Oxlint config file`.
+   * Beware the value from the config have higher priority than the rule config.
+   */
+  jest?: JestConfig;
+}
+export interface JestConfig {
+  /**
+   * The version of Jest being used.
+   */
+  version?: string;
 }
 export interface PreferImportingJestGlobalsConfig {
   /**

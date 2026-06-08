@@ -2164,7 +2164,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/no-deprecated-functions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoDeprecatedFunctionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-disabled-tests": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -8882,6 +8899,18 @@ expression: json
       },
       "markdownDescription": "Configure JSX A11y plugin rules.\n\nSee\n[eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s\nconfiguration for a full reference."
     },
+    "JestConfig": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "description": "The version of Jest being used.",
+          "default": "29",
+          "type": "string",
+          "markdownDescription": "The version of Jest being used."
+        }
+      },
+      "additionalProperties": false
+    },
     "JestFnType": {
       "type": "string",
       "enum": [
@@ -9954,6 +9983,21 @@ expression: json
             "$ref": "#/definitions/TypeOrValueSpecifier"
           },
           "markdownDescription": "An array of type or value specifiers that are allowed to be used even if deprecated.\nUse this to allow specific deprecated APIs that you intentionally want to continue using."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoDeprecatedFunctionsConfig": {
+      "type": "object",
+      "properties": {
+        "jest": {
+          "description": "Jest configuration options.\nDeprecated config, it will be removed in future versions.\nUse please instead { \"settings\": { \"jest\": {\"version\": 29 } } } in `Oxlint config file`.\nBeware the value from the config have higher priority than the rule config.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JestConfig"
+            }
+          ],
+          "markdownDescription": "Jest configuration options.\nDeprecated config, it will be removed in future versions.\nUse please instead { \"settings\": { \"jest\": {\"version\": 29 } } } in `Oxlint config file`.\nBeware the value from the config have higher priority than the rule config."
         }
       },
       "additionalProperties": false
