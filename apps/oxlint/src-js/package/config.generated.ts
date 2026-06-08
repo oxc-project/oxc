@@ -1123,7 +1123,7 @@ export interface DummyRuleMap {
   "promise/always-return"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AlwaysReturnConfig];
   "promise/avoid-new"?: RuleNoConfig;
   "promise/catch-or-return"?: DummyRule;
-  "promise/no-callback-in-promise"?: DummyRule;
+  "promise/no-callback-in-promise"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoCallbackInPromiseConfig];
   "promise/no-multiple-resolved"?: RuleNoConfig;
   "promise/no-nesting"?: RuleNoConfig;
   "promise/no-new-statics"?: RuleNoConfig;
@@ -3803,6 +3803,20 @@ export interface AlwaysReturnConfig {
    * ```
    */
   ignoreLastCallback?: boolean;
+}
+export interface NoCallbackInPromiseConfig {
+  /**
+   * List of callback function names to check for within Promise `then` and `catch` methods.
+   */
+  callbacks?: string[];
+  /**
+   * List of callback function names to allow within Promise `then` and `catch` methods.
+   */
+  exceptions?: string[];
+  /**
+   * Boolean as to whether callbacks in timeout functions like `setTimeout` will err.
+   */
+  timeoutsErr?: boolean;
 }
 export interface NoPromiseInCallbackConfig {
   /**

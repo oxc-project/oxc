@@ -21,7 +21,7 @@ fn no_callback_in_promise_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoCallbackInPromise(Box<NoCallbackInPromiseConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCallbackInPromiseConfig {
     /// List of callback function names to check for within Promise `then` and `catch` methods.
     callbacks: Vec<CompactStr>,

@@ -4762,7 +4762,24 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "promise/no-callback-in-promise": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoCallbackInPromiseConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "promise/no-multiple-resolved": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10113,6 +10130,41 @@ expression: json
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true` the `int32Hint` option allows the use of bitwise OR in |0\npattern for type casting.\n\nFor example with `{ \"int32Hint\": true }` the following is permitted:\n\n```javascript\nconst b = a|0;\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoCallbackInPromiseConfig": {
+      "type": "object",
+      "properties": {
+        "callbacks": {
+          "description": "List of callback function names to check for within Promise `then` and `catch` methods.",
+          "default": [
+            "callback",
+            "cb",
+            "done",
+            "next"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of callback function names to check for within Promise `then` and `catch` methods."
+        },
+        "exceptions": {
+          "description": "List of callback function names to allow within Promise `then` and `catch` methods.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of callback function names to allow within Promise `then` and `catch` methods."
+        },
+        "timeoutsErr": {
+          "description": "Boolean as to whether callbacks in timeout functions like `setTimeout` will err.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Boolean as to whether callbacks in timeout functions like `setTimeout` will err."
         }
       },
       "additionalProperties": false
