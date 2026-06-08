@@ -1165,11 +1165,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.5 Unary Expression
     pub(crate) fn parse_unary_expression_or_higher(&mut self, lhs_span: u32) -> Expression<'a> {
-        // ++ -- prefix update expressions
-        if self.is_update_expression() {
-            return self.parse_update_expression(lhs_span);
+        match self.cur_kind() {
+            // `UnaryExpression : (delete | void | typeof | + | - | ~ | !) UnaryExpression`
+            // e.g. `!x`, `-1`, `typeof y`, `void 0`, `delete a.b`
+            kind if kind.is_unary_operator() => self.parse_unary_expression(),
+            // TS type assertion, a modified `UnaryExpression`: `< Type > UnaryExpression`, e.g. `<T>x`.
+            // In a non-JSX, non-TS file a leading `<` is instead a JSX-in-non-JSX error, e.g. `<div/>`.
+            // (`<` in a JSX file is not matched here; it falls through to the `UpdateExpression` arm,
+            // which parses the JSX element.)
+            Kind::LAngle if !self.source_type.is_jsx() => {
+                if self.is_ts {
+                    self.parse_ts_type_assertion()
+                } else {
+                    self.parse_jsx_in_non_jsx_error()
+                }
+            }
+            // `UnaryExpression : [+Await] AwaitExpression`, with `AwaitExpression : await UnaryExpression`
+            // e.g. `await foo`
+            Kind::Await => self.parse_await_expression(lhs_span),
+            // `UnaryExpression : UpdateExpression` — a `LeftHandSideExpression` with an optional
+            // prefix or postfix `++`/`--`. e.g. `a`, `f()`, `a++`, `++a`
+            _ => self.parse_update_expression(lhs_span),
         }
-        self.parse_simple_unary_expression(lhs_span)
     }
 
     pub(crate) fn parse_simple_unary_expression(&mut self, lhs_span: u32) -> Expression<'a> {
@@ -1182,19 +1199,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if self.is_ts {
                     return self.parse_ts_type_assertion();
                 }
-
-                let checkpoint = self.checkpoint_with_error_recovery();
-                let start = self.start_span();
-                self.parse_jsx_expression();
-                if self.fatal_error.is_none() {
-                    self.fatal_error(diagnostics::jsx_in_non_jsx(self.end_span(start)))
-                } else {
-                    self.rewind(checkpoint);
-                    self.unexpected()
-                }
+                self.parse_jsx_in_non_jsx_error()
             }
             Kind::Await => self.parse_await_expression(lhs_span),
             _ => self.parse_update_expression(lhs_span),
+        }
+    }
+
+    /// A leading `<` in a file where JSX is disabled and which is not TypeScript (so it is not a
+    /// type assertion either) is always an error. Speculatively parse the JSX so the diagnostic can
+    /// span the whole element (e.g. `<Foo />`), and so well-formed JSX gets the "enable JSX" help
+    /// while anything that is not valid JSX rewinds and falls back to a generic "unexpected token".
+    /// The parsed expression is intentionally discarded.
+    fn parse_jsx_in_non_jsx_error(&mut self) -> Expression<'a> {
+        let checkpoint = self.checkpoint_with_error_recovery();
+        let start = self.start_span();
+        self.parse_jsx_expression();
+        if self.fatal_error.is_none() {
+            self.fatal_error(diagnostics::jsx_in_non_jsx(self.end_span(start)))
+        } else {
+            self.rewind(checkpoint);
+            self.unexpected()
         }
     }
 
@@ -1692,20 +1717,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump @
         let expr = self.context_add(Context::Decorator, Self::parse_lhs_expression_or_higher);
         self.ast.decorator(self.end_span(span), expr)
-    }
-
-    fn is_update_expression(&self) -> bool {
-        match self.cur_kind() {
-            kind if kind.is_unary_operator() => false,
-            Kind::Await => false,
-            Kind::LAngle => {
-                if !self.source_type.is_jsx() {
-                    return false;
-                }
-                true
-            }
-            _ => true,
-        }
     }
 
     fn is_yield_expression(&mut self) -> bool {
