@@ -4,7 +4,7 @@ use oxc_span::{GetSpan, Span};
 
 /// Source text wrapper providing mechanical byte/offset access for the formatter.
 ///
-/// This owns only language-agnostic, offset-keyed access (slicing, raw-byte newline checks).
+/// This owns only language-agnostic, offset-keyed access (slicing, raw-byte lookups).
 /// Lexical-semantic scanning whose answer is language-defined
 /// ("what counts as a newline / comment / trivia") lives in each consumer. (e.g. `oxc_formatter`'s `SourceTextExt`)
 ///
@@ -60,73 +60,6 @@ impl<'a> SourceText<'a> {
         self.bytes_from(position)
             .find(|byte| !byte.is_ascii_whitespace())
             .is_some_and(|b| b == expected_byte)
-    }
-
-    // Newline detection
-    /// Check for newlines before position, stopping at first non-whitespace
-    pub fn has_newline_before(&self, position: u32) -> bool {
-        for byte in self.bytes_to(position) {
-            match byte {
-                b'\n' | b'\r' => return true,
-                b' ' | b'\t' => {}
-                _ => return false,
-            }
-        }
-        false
-    }
-
-    /// Check for newlines after position, stopping at first non-whitespace
-    pub fn has_newline_after(&self, position: u32) -> bool {
-        for byte in self.bytes_from(position) {
-            match byte {
-                b'\n' | b'\r' => return true,
-                b' ' | b'\t' => {}
-                _ => return false,
-            }
-        }
-        false
-    }
-
-    /// Check for a newline starting at `position`, scanning through comments.
-    /// Unlike [`Self::has_newline_after`], a comment between `position` and the newline is
-    /// transparent (matches Prettier detecting the newline in `{ /* comment */\n`).
-    ///
-    /// NOTE: comment scanning assumes C-family comment syntax (`//`, `/* */`),
-    /// shared by all current consumers (JS/TS and JSON, a JS subset).
-    /// A future non-C-family consumer must supply its own comment-aware scan,
-    /// or make this more generic. (e.g. pass comments ranges to skip)
-    pub fn has_newline_after_skipping_comments(&self, position: u32) -> bool {
-        let mut iter = self.bytes_from(position).peekable();
-
-        while let Some(byte) = iter.next() {
-            match byte {
-                b'\n' | b'\r' => return true,
-                b' ' | b'\t' => {}
-                b'/' => match iter.peek() {
-                    Some(&b'/') => {
-                        iter.next();
-                        // Line comment: scan until newline or EOF
-                        return iter.any(|b| b == b'\n' || b == b'\r');
-                    }
-                    Some(&b'*') => {
-                        iter.next();
-                        // Block comment: scan for */ and check for newlines
-                        while let Some(b) = iter.next() {
-                            if matches!(b, b'\n' | b'\r') {
-                                return true;
-                            }
-                            if b == b'*' && matches!(iter.peek(), Some(&b'/')) {
-                                iter.next();
-                                break;
-                            }
-                        }
-                    }
-                    _ => return false,
-                },
-                _ => return false,
-            }
-        }
-        false
     }
 
     // Byte range operations
