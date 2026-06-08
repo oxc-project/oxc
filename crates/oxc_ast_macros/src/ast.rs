@@ -39,10 +39,12 @@ fn modify_enum(item: &ItemEnum) -> TokenStream {
 /// Details of how `#[ast]` macro should modify a struct.
 pub struct StructDetails {
     pub field_order: Option<&'static [u8]>,
+    pub is_node: bool,
 }
 
 /// Add `#[repr(C)]` / `#[repr(transparent)]`, and `#[derive(::oxc_ast_macros::Ast)]` to struct,
 /// and static assertions for `#[generate_derive]`.
+/// If is an AST node (has a `NodeId`), add `#[non_exhaustive]` attr.
 /// Re-order struct fields if instructed by `STRUCTS` data.
 fn modify_struct(item: &mut ItemStruct, args: TokenStream) -> TokenStream {
     modify_struct_impl(item, args).unwrap_or_else(|message| {
@@ -84,8 +86,13 @@ fn modify_struct_impl(
     let field_count = item.fields.len();
     let repr = if field_count == 1 { quote!(#[repr(transparent)]) } else { quote!(#[repr(C)]) };
 
+    // `#[non_exhaustive]` on AST node types
+    let non_exhaustive =
+        if struct_details.is_node { Some(quote!(#[non_exhaustive])) } else { None };
+
     Ok(quote! {
         #repr
+        #non_exhaustive
         #[derive(::oxc_ast_macros::Ast)]
         #item
         #assertions
