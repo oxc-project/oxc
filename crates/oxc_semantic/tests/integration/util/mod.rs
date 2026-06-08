@@ -179,6 +179,7 @@ impl<'a> SemanticTester<'a> {
         );
 
         SemanticBuilder::new_compiler()
+            .with_build_nodes(true)
             .with_cfg(self.cfg)
             .build(self.allocator.alloc(parse.program))
     }

@@ -13,8 +13,8 @@ use crate::{builder::SemanticBuilder, diagnostics};
 pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
     if param.r#in || param.out {
         let is_allowed_node = matches!(
-            // skip parent TSTypeParameterDeclaration
-            ctx.nodes.parent_kind(ctx.nodes.parent_id(ctx.current_node_id)),
+            // skip parent TSTypeParameterDeclaration (grandparent is index 1)
+            ctx.ancestry().ancestor_kinds().nth(1).unwrap(),
             AstKind::TSInterfaceDeclaration(_)
                 | AstKind::Class(_)
                 | AstKind::TSTypeAliasDeclaration(_)
@@ -65,12 +65,11 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
 }
 
 pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuilder<'a>) {
-    let is_in_conditional_extends_clause =
-        ctx.nodes.ancestor_kinds(ctx.current_node_id).any(|kind| {
-            kind.as_ts_conditional_type().is_some_and(|conditional| {
-                conditional.extends_type.span().contains_inclusive(infer_type.span)
-            })
-        });
+    let is_in_conditional_extends_clause = ctx.ancestry().ancestor_kinds().any(|kind| {
+        kind.as_ts_conditional_type().is_some_and(|conditional| {
+            conditional.extends_type.span().contains_inclusive(infer_type.span)
+        })
+    });
 
     if !is_in_conditional_extends_clause {
         ctx.error(diagnostics::infer_declaration_only_permitted_in_extends_clause(infer_type.span));
@@ -120,8 +119,8 @@ pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &Sem
 
 fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
     // skip current node
-    for node in ctx.nodes.ancestors(ctx.current_node_id) {
-        match node.kind() {
+    for kind in ctx.ancestry().ancestor_kinds() {
+        match kind {
             AstKind::Program(_)
             | AstKind::TSModuleBlock(_)
             | AstKind::TSModuleDeclaration(_)
@@ -241,7 +240,7 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
             ctx.source_type.is_typescript_definition(),
             |id| {
                 let node_id = ctx.class_table_builder.classes.declarations[id];
-                let AstKind::Class(class) = ctx.nodes.get_node(node_id).kind() else {
+                let AstKind::Class(class) = ctx.ancestry().find_kind_by_node_id(node_id) else {
                     #[cfg(debug_assertions)]
                     panic!("current_class_id is set, but does not point to a Class node.");
                     #[cfg(not(debug_assertions))]

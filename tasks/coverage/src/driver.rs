@@ -54,6 +54,11 @@ impl CompilerInterface for Driver {
         self.transform.as_ref()
     }
 
+    fn build_semantic_nodes(&self) -> bool {
+        // The coverage checks read `Semantic::nodes()` (e.g. `nodes().program()`).
+        true
+    }
+
     fn compress_options(&self) -> Option<CompressOptions> {
         self.compress.clone()
     }

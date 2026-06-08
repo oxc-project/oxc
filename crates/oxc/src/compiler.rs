@@ -102,6 +102,16 @@ pub trait CompilerInterface {
         true
     }
 
+    /// Whether to build the full `AstNodes` store during semantic analysis.
+    ///
+    /// Off by default (the compiler pipeline only needs scoping). Override to
+    /// `true` if [`Self::after_semantic`] reads [`Semantic::nodes`].
+    ///
+    /// [`Semantic::nodes`]: oxc_semantic::Semantic::nodes
+    fn build_semantic_nodes(&self) -> bool {
+        false
+    }
+
     fn after_parse(&mut self, _parser_return: &mut ParserReturn) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
@@ -257,7 +267,10 @@ pub trait CompilerInterface {
             builder = builder.with_excess_capacity(2.0).with_enum_eval(true);
         }
 
-        builder.with_check_syntax_error(self.check_semantic_error()).build(program)
+        builder
+            .with_check_syntax_error(self.check_semantic_error())
+            .with_build_nodes(self.build_semantic_nodes())
+            .build(program)
     }
 
     fn isolated_declaration<'a>(

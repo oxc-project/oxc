@@ -89,7 +89,8 @@ fn bench_mangler(criterion: &mut Criterion) {
                 allocator.reset();
                 temp_allocator.reset();
                 let program = transform_to_js(&allocator, source_text, source_type, path);
-                let mut semantic = SemanticBuilder::new().build(&program).semantic;
+                let mut semantic =
+                    SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
                         .build_with_semantic(&mut semantic, &program);
@@ -112,7 +113,8 @@ fn bench_mangler(criterion: &mut Criterion) {
                 allocator.reset();
                 temp_allocator.reset();
                 let program = transform_to_js(&allocator, source_text, source_type, path);
-                let mut semantic = SemanticBuilder::new().build(&program).semantic;
+                let mut semantic =
+                    SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
                         .with_options(MangleOptions {

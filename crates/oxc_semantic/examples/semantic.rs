@@ -56,8 +56,9 @@ fn main() -> std::io::Result<()> {
 
     let program = parser_ret.program;
 
-    // Build semantic model with the compiler-pipeline defaults (syntax error checking).
-    let semantic = SemanticBuilder::new_compiler().build(&program);
+    // Compiler-pipeline defaults, plus the full `AstNodes` store since this
+    // example reads `semantic.nodes()`.
+    let semantic = SemanticBuilder::new_compiler().with_build_nodes(true).build(&program);
 
     // Report semantic analysis errors
     if !semantic.errors.is_empty() {

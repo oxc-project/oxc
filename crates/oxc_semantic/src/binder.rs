@@ -17,9 +17,10 @@ pub trait Binder<'a> {
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let is_declare = matches!(builder
-            .nodes
-            .parent_kind(builder.current_node_id), AstKind::VariableDeclaration(decl) if decl.declare);
+        let is_declare = matches!(
+            builder.ancestry().parent_kind(),
+            AstKind::VariableDeclaration(decl) if decl.declare
+        );
 
         let (mut includes, excludes) = match self.kind {
             VariableDeclarationKind::Const
@@ -209,10 +210,7 @@ impl<'a> Binder<'a> for Function<'a> {
         }
 
         // Bind scope flags: GetAccessor | SetAccessor
-        if !is_declaration
-            && let AstKind::ObjectProperty(prop) =
-                builder.nodes.parent_kind(builder.current_node_id)
-        {
+        if !is_declaration && let AstKind::ObjectProperty(prop) = builder.ancestry().parent_kind() {
             // Do not bind scope flags when function is inside of the object property key:
             //
             // { set [function() {}](val) {} }
@@ -233,7 +231,7 @@ impl<'a> Binder<'a> for Function<'a> {
 impl<'a> Binder<'a> for BindingRestElement<'a> {
     // Binds the FormalParameters's rest of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
+        let parent_kind = builder.ancestry().parent_kind();
         let AstKind::FormalParameters(_) = parent_kind else {
             return;
         };
@@ -251,7 +249,7 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
 impl<'a> Binder<'a> for FormalParameter<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
+        let parent_kind = builder.ancestry().parent_kind();
         let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
 
         let includes = SymbolFlags::FunctionScopedVariable;
@@ -286,7 +284,7 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
 impl<'a> Binder<'a> for FormalParameterRest<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
+        let parent_kind = builder.ancestry().parent_kind();
         let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
 
         let includes = SymbolFlags::FunctionScopedVariable;
@@ -349,7 +347,7 @@ fn declare_symbol_for_import_specifier<'a>(
     builder: &mut SemanticBuilder<'a>,
 ) {
     let includes = if is_type
-        || matches!(builder.nodes.parent_kind(builder.current_node_id), AstKind::ImportDeclaration(decl) if decl.import_kind.is_type(),
+        || matches!(builder.ancestry().parent_kind(), AstKind::ImportDeclaration(decl) if decl.import_kind.is_type(),
         ) {
         SymbolFlags::TypeImport
     } else {
@@ -457,7 +455,8 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let TSModuleDeclarationName::Identifier(id) = &self.id else { return };
         let instantiated =
-            get_module_instance_state(builder, self, builder.current_node_id).is_instantiated();
+            get_module_instance_state(builder, self, builder.node_store.current_node_id)
+                .is_instantiated();
         let (mut includes, excludes) = if instantiated {
             (SymbolFlags::ValueModule, SymbolFlags::ValueModuleExcludes)
         } else {
@@ -705,10 +704,12 @@ fn get_module_instance_state_for_alias_target<'a>(
             }
         }
 
-        let Some((node_id, node)) =
-            builder.nodes.ancestors_enumerated(current_node_id).find(|(_, node)| {
+        // Walk up the ancestry stack (excluding `current_node_id` itself) to the
+        // nearest enclosing block-like node.
+        let Some(kind) =
+            builder.ancestry().ancestor_kinds_from(Some(current_node_id)).skip(1).find(|kind| {
                 matches!(
-                    node.kind(),
+                    kind,
                     AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::BlockStatement(_)
                 )
             })
@@ -716,11 +717,11 @@ fn get_module_instance_state_for_alias_target<'a>(
             break;
         };
 
-        current_node_id = node_id;
+        current_node_id = kind.node_id();
         current_block_stmts.clear();
         // Didn't find the declaration whose name matches export specifier
         // in the current block, so we need to check the parent block.
-        current_block_stmts.extend(match node.kind() {
+        current_block_stmts.extend(match kind {
             AstKind::Program(program) => program.body.iter(),
             AstKind::TSModuleBlock(block) => block.body.iter(),
             AstKind::BlockStatement(block) => block.body.iter(),
@@ -734,10 +735,7 @@ fn get_module_instance_state_for_alias_target<'a>(
 
 impl<'a> Binder<'a> for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let scope_id = if matches!(
-            builder.nodes.parent_kind(builder.current_node_id),
-            AstKind::TSInferType(_)
-        ) {
+        let scope_id = if matches!(builder.ancestry().parent_kind(), AstKind::TSInferType(_)) {
             builder
                 .scoping
                 .scope_ancestors(builder.current_scope_id)

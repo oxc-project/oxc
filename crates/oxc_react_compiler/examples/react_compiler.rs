@@ -38,7 +38,8 @@ fn main() {
 
     let allocator = Allocator::default();
     let program = Parser::new(&allocator, &source_text, source_type).parse().program;
-    let semantic = SemanticBuilder::new().build(&program).semantic;
+    let semantic =
+        SemanticBuilder::new().with_build_nodes(true).with_enum_eval(true).build(&program).semantic;
 
     let result = transform(&program, &semantic, &allocator, default_plugin_options());
 

@@ -156,8 +156,11 @@ pub fn transform_source<'a>(
 ) -> TransformResult<'a> {
     let parsed = oxc_parser::Parser::new(allocator, source_text, source_type).parse();
 
-    let semantic =
-        oxc_semantic::SemanticBuilder::new().with_enum_eval(true).build(&parsed.program).semantic;
+    let semantic = oxc_semantic::SemanticBuilder::new()
+        .with_build_nodes(true)
+        .with_enum_eval(true)
+        .build(&parsed.program)
+        .semantic;
 
     transform(&parsed.program, &semantic, allocator, options)
 }
@@ -186,8 +189,11 @@ pub fn lint_source(
     let allocator = oxc_allocator::Allocator::default();
     let parsed = oxc_parser::Parser::new(&allocator, source_text, source_type).parse();
 
-    let semantic =
-        oxc_semantic::SemanticBuilder::new().with_enum_eval(true).build(&parsed.program).semantic;
+    let semantic = oxc_semantic::SemanticBuilder::new()
+        .with_build_nodes(true)
+        .with_enum_eval(true)
+        .build(&parsed.program)
+        .semantic;
 
     lint(&parsed.program, &semantic, options)
 }
@@ -205,8 +211,11 @@ pub fn run<'a>(
     // `compiled` lives in `allocator`, not borrowed from `*program`, so the
     // reassignment below is sound.
     let result = {
-        let semantic =
-            oxc_semantic::SemanticBuilder::new().with_enum_eval(true).build(program).semantic;
+        let semantic = oxc_semantic::SemanticBuilder::new()
+            .with_build_nodes(true)
+            .with_enum_eval(true)
+            .build(program)
+            .semantic;
         transform(program, &semantic, allocator, options.clone())
     };
     errors.extend(result.diagnostics);

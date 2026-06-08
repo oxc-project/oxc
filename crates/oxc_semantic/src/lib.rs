@@ -49,7 +49,7 @@ pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
 #[cfg(feature = "jsdoc")]
 pub use jsdoc::JSDocFinder;
-pub use node::{AstNode, AstNodes};
+pub use node::{Ancestry, AncestryStack, AstNode, AstNodes};
 #[cfg(feature = "jsdoc")]
 pub use oxc_jsdoc::{JSDoc, JSDocTag};
 pub use scoping::Scoping;
@@ -292,7 +292,8 @@ mod tests {
     ) -> Semantic<'s> {
         let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
         assert!(parse.errors.is_empty());
-        let semantic = SemanticBuilder::new().build(allocator.alloc(parse.program));
+        let semantic =
+            SemanticBuilder::new().with_build_nodes(true).build(allocator.alloc(parse.program));
         assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
         semantic.semantic
     }
