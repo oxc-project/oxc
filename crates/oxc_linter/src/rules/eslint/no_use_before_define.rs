@@ -102,6 +102,14 @@ declare_oxc_lint!(
 
 impl Rule for NoUseBeforeDefine {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
+        if let Some(serde_json::Value::String(s)) = value.as_array().and_then(|a| a.first())
+            && s == "nofunc"
+        {
+            return Ok(Self(NoUseBeforeDefineConfig {
+                functions: false,
+                ..NoUseBeforeDefineConfig::default()
+            }));
+        }
         serde_json::from_value::<DefaultRuleConfig<NoUseBeforeDefineConfig>>(value)
             .map(DefaultRuleConfig::into_inner)
             .map(Self)
@@ -2534,6 +2542,17 @@ fn test_typescript_eslint() {
                 ",
             None,
         ),
+        ("a(); function a() { alert(arguments); }", Some(serde_json::json!(["nofunc"]))),
+        (
+            "
+            a();
+            function a() {
+              alert(arguments);
+            }
+                  ",
+            Some(serde_json::json!(["nofunc"])),
+        ),
+        (r#""use strict"; { a(); function a() {} }"#, Some(serde_json::json!(["nofunc"]))),
     ];
 
     let fail = vec![
@@ -3000,6 +3019,15 @@ fn test_typescript_eslint() {
                   ",
             None,
         ),
+        ("a(); var a=function() {};", Some(serde_json::json!(["nofunc"]))),
+        (
+            "
+            a();
+            var a = function () {};
+                  ",
+            Some(serde_json::json!(["nofunc"])),
+        ),
+        ("export { a }; const a = 1;", Some(serde_json::json!(["nofunc"]))),
     ];
 
     Tester::new(NoUseBeforeDefine::NAME, NoUseBeforeDefine::PLUGIN, pass, fail)
