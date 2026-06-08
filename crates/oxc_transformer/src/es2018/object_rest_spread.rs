@@ -31,12 +31,17 @@ use std::mem;
 
 use serde::Deserialize;
 
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
-use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, SPAN};
+use oxc_str::Ident;
+use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
 
 use crate::{
@@ -554,50 +559,351 @@ impl<'a> ObjectRestSpread<'a> {
     // Transform `function foo({...x}) {}`.
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
+        let is_generator = func.generator;
         let Some(body) = func.body.as_mut() else { return };
-        for param in &mut func.params.items {
-            if Self::has_nested_object_rest(&param.pattern) {
-                Self::replace_rest_element(
-                    VariableDeclarationKind::Var,
-                    &mut param.pattern,
-                    &mut body.statements,
-                    scope_id,
-                    ctx,
-                );
-            }
-        }
+        Self::transform_function_params(
+            &mut func.params,
+            &mut body.statements,
+            scope_id,
+            is_generator,
+            ctx,
+        );
     }
 
     // Transform `(...x) => {}`.
     fn transform_arrow(arrow: &mut ArrowFunctionExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = arrow.scope_id();
-        for param in &mut arrow.params.items {
+        if !arrow.params.items.iter().any(|p| Self::has_nested_object_rest(&p.pattern)) {
+            return;
+        }
+
+        // `({ ...args }) => { args }` -> `({ ...args }) => { return args }`
+        if arrow.expression {
+            arrow.expression = false;
+
+            debug_assert!(arrow.body.statements.len() == 1);
+
+            let Statement::ExpressionStatement(stmt) = arrow.body.statements.pop().unwrap() else {
+                unreachable!(
+                    "`arrow.expression` is true, which means it has only one ExpressionStatement."
+                );
+            };
+            let return_stmt = ctx.ast.statement_return(stmt.span, Some(stmt.unbox().expression));
+            arrow.body.statements.push(return_stmt);
+        }
+
+        Self::transform_function_params(
+            &mut arrow.params,
+            &mut arrow.body.statements,
+            scope_id,
+            false,
+            ctx,
+        );
+    }
+
+    // Implements `@babel/plugin-transform-object-rest-spread`'s `Function` visitor.
+    //
+    // The "simple" case just moves each object-rest pattern into the function body
+    // (`function f({ ...x }) {}` -> `function f(_ref) { let { ...x } = _ref; }`).
+    //
+    // But when a parameter's initializer references a binding introduced by a *rest*
+    // parameter, evaluation order must be preserved (`({ ...R }, a = R) => {}`). Babel
+    // handles this by re-reading the affected parameters from `arguments` so the rest
+    // extraction can run first in the body. This mirrors `convertFunctionParams` from
+    // `@babel/plugin-transform-parameters`.
+    fn transform_function_params(
+        params: &mut FormalParameters<'a>,
+        body: &mut ArenaVec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+        is_generator: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Collect indices of params containing an object rest, and all binding ids they introduce.
+        let mut params_with_rest = FxHashSet::default();
+        let mut ids_in_rest_params = FxHashSet::default();
+        for (i, param) in params.items.iter().enumerate() {
             if Self::has_nested_object_rest(&param.pattern) {
-                // `({ ...args }) => { args }`
-                if arrow.expression {
-                    arrow.expression = false;
+                params_with_rest.insert(i);
+                param.pattern.bound_names(&mut |ident| {
+                    ids_in_rest_params.insert(ident.symbol_id());
+                });
+            }
+        }
+        if params_with_rest.is_empty() {
+            return;
+        }
 
-                    debug_assert!(arrow.body.statements.len() == 1);
+        // Find the first parameter (which itself has no rest) that references a binding
+        // introduced by a rest parameter.
+        let mut stop_index = None;
+        for (i, param) in params.items.iter().enumerate() {
+            if params_with_rest.contains(&i) {
+                continue;
+            }
+            let mut finder = RestIdReferenceFinder { ids: &ids_in_rest_params, ctx, found: false };
+            finder.visit_formal_parameter(param);
+            if finder.found {
+                stop_index = Some(i);
+                break;
+            }
+        }
 
-                    let Statement::ExpressionStatement(stmt) = arrow.body.statements.pop().unwrap()
-                    else {
-                        unreachable!(
-                            "`arrow.expression` is true, which means it has only one ExpressionStatement."
-                        );
-                    };
-                    let return_stmt =
-                        ctx.ast.statement_return(stmt.span, Some(stmt.unbox().expression));
-                    arrow.body.statements.push(return_stmt);
+        let Some(stop_index) = stop_index else {
+            // Simple case: just move each object rest pattern into the body.
+            for param in &mut params.items {
+                if Self::has_nested_object_rest(&param.pattern) {
+                    Self::replace_rest_element(
+                        VariableDeclarationKind::Var,
+                        &mut param.pattern,
+                        body,
+                        scope_id,
+                        ctx,
+                    );
                 }
+            }
+            return;
+        };
+
+        Self::convert_function_params(
+            params,
+            body,
+            scope_id,
+            is_generator,
+            stop_index,
+            &params_with_rest,
+            ctx,
+        );
+    }
+
+    fn convert_function_params(
+        params: &mut FormalParameters<'a>,
+        body: &mut ArenaVec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+        _is_generator: bool,
+        stop_index: usize,
+        params_with_rest: &FxHashSet<usize>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Names bound directly by the function body. If a relocated parameter default references
+        // one of these, moving it into the body would change which binding it resolves to, so the
+        // original body must be wrapped in an IIFE to preserve the outer binding (Babel's
+        // `needsOuterBinding`).
+        let mut body_declared_names = FxHashSet::default();
+        let mut body_declared_symbols = vec![];
+        let mut collect = |ident: &BindingIdentifier<'a>| {
+            body_declared_names.insert(ident.name);
+            body_declared_symbols.push(ident.symbol_id());
+        };
+        for stmt in body.iter() {
+            match stmt {
+                Statement::VariableDeclaration(decl) => decl.bound_names(&mut collect),
+                Statement::FunctionDeclaration(func) => {
+                    if let Some(id) = &func.id {
+                        collect(id);
+                    }
+                }
+                Statement::ClassDeclaration(class) => {
+                    if let Some(id) = &class.id {
+                        collect(id);
+                    }
+                }
+                _ => {}
+            }
+        }
+        let mut needs_outer_binding = false;
+
+        // Statements to prepend to the function body, in order.
+        let mut prepend = ctx.ast.vec();
+        let mut first_optional_index = None;
+
+        let len = params.items.len();
+        for i in 0..len {
+            // `shouldTransformParam(i)`: params at/after the breaking point, plus any rest param.
+            if i < stop_index && !params_with_rest.contains(&i) {
+                continue;
+            }
+
+            // `replaceRestElement`: extract the object rest into body statements and replace the
+            // pattern with a temporary `_ref`. Re-visiting these declarations transforms the rest.
+            let mut rest_nodes = ctx.ast.vec();
+            if params_with_rest.contains(&i) {
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
-                    &mut param.pattern,
-                    &mut arrow.body.statements,
+                    &mut params.items[i].pattern,
+                    &mut rest_nodes,
                     scope_id,
                     ctx,
                 );
             }
+
+            let param = &mut params.items[i];
+            // A defaulted parameter (`a = R` / `{ a } = R`) is stored as `pattern` + `initializer`.
+            if let Some(initializer) = param.initializer.take() {
+                // `let LEFT = arguments.length > i && arguments[i] !== undefined ? arguments[i] : RIGHT`
+                if first_optional_index.is_none() {
+                    first_optional_index = Some(i);
+                }
+                let left = param.pattern.take_in(ctx.ast);
+                let initializer = initializer.unbox();
+                if !needs_outer_binding && !body_declared_names.is_empty() {
+                    let mut finder =
+                        NameReferenceFinder { names: &body_declared_names, found: false };
+                    finder.visit_expression(&initializer);
+                    needs_outer_binding = finder.found;
+                }
+                let init = Self::build_default_param(initializer, i, ctx);
+                prepend.push(Self::let_declaration(left, init, ctx));
+            } else if first_optional_index.is_some() {
+                // `let PATTERN = arguments.length > i ? arguments[i] : undefined`
+                let p = param.pattern.take_in(ctx.ast);
+                let init = Self::build_safe_arguments_access(i, ctx);
+                prepend.push(Self::let_declaration(p, init, ctx));
+            } else if matches!(
+                param.pattern,
+                BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
+            ) {
+                // `let PATTERN = _ref` and replace the param with `_ref`.
+                let bound = ctx.generate_uid("ref", scope_id, SymbolFlags::FunctionScopedVariable);
+                let p = mem::replace(&mut param.pattern, bound.create_binding_pattern(ctx));
+                let init = bound.create_read_expression(ctx);
+                prepend.push(Self::let_declaration(p, init, ctx));
+            }
+
+            prepend.extend(rest_nodes);
         }
+
+        // Cut off all trailing parameters from the first optional one onwards.
+        if let Some(first_optional_index) = first_optional_index {
+            params.items.truncate(first_optional_index);
+        }
+
+        if needs_outer_binding {
+            // Wrap the original body in an IIFE so its bindings stay isolated from the relocated
+            // parameter defaults: `{ <body> }` -> `{ <prepend> return function () { <body> }(); }`
+            Self::wrap_body_in_iife(body, prepend, scope_id, &body_declared_symbols, ctx);
+        } else {
+            // Prepend the generated statements to the function body.
+            for stmt in prepend.into_iter().rev() {
+                body.insert(0, stmt);
+            }
+        }
+    }
+
+    fn wrap_body_in_iife(
+        body: &mut ArenaVec<'a, Statement<'a>>,
+        prepend: ArenaVec<'a, Statement<'a>>,
+        func_scope_id: ScopeId,
+        body_declared_symbols: &[SymbolId],
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let original = mem::replace(body, prepend);
+
+        // The wrapper function gets its own scope, child of the outer function's scope.
+        let inherited_strict =
+            ctx.scoping().scope_flags(func_scope_id).intersection(ScopeFlags::StrictMode);
+        let iife_scope_id =
+            ctx.create_child_scope(func_scope_id, ScopeFlags::Function | inherited_strict);
+
+        // Move the body bindings into the wrapper scope so they no longer shadow the outer
+        // references in the relocated parameter defaults.
+        for &symbol_id in body_declared_symbols {
+            ctx.scoping_mut().move_binding_by_symbol_id(func_scope_id, iife_scope_id, symbol_id);
+        }
+
+        let fn_body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), original);
+        let params = ctx.ast.alloc_formal_parameters(
+            SPAN,
+            FormalParameterKind::FormalParameter,
+            ctx.ast.vec(),
+            NONE,
+        );
+        let function = ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
+            SPAN,
+            FunctionType::FunctionExpression,
+            None,
+            false,
+            false,
+            false,
+            NONE,
+            NONE,
+            params,
+            NONE,
+            Some(fn_body),
+            iife_scope_id,
+            false,
+            false,
+        );
+        let call = ctx.ast.expression_call(SPAN, function, NONE, ctx.ast.vec(), false);
+        body.push(ctx.ast.statement_return(SPAN, Some(call)));
+    }
+
+    // `let PATTERN = INIT;`
+    fn let_declaration(
+        pattern: BindingPattern<'a>,
+        init: Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let kind = VariableDeclarationKind::Let;
+        let declarator = ctx.ast.variable_declarator(SPAN, kind, pattern, NONE, Some(init), false);
+        let decl = ctx.ast.alloc_variable_declaration(SPAN, kind, ctx.ast.vec1(declarator), false);
+        Statement::VariableDeclaration(decl)
+    }
+
+    fn arguments_read(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("arguments"), ReferenceFlags::Read)
+    }
+
+    #[expect(clippy::cast_precision_loss)]
+    fn index_literal(index: usize, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+        ctx.ast.expression_numeric_literal(
+            SPAN,
+            index as f64,
+            None,
+            oxc_syntax::number::NumberBase::Decimal,
+        )
+    }
+
+    // `arguments[index]`
+    fn arguments_element(index: usize, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        let arguments = Self::arguments_read(ctx);
+        let index = Self::index_literal(index, ctx);
+        Expression::from(ctx.ast.member_expression_computed(SPAN, arguments, index, false))
+    }
+
+    // `arguments.length > index`
+    fn arguments_length_gt(index: usize, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        let arguments = Self::arguments_read(ctx);
+        let length = ctx.ast.identifier_name(SPAN, "length");
+        let member =
+            Expression::from(ctx.ast.member_expression_static(SPAN, arguments, length, false));
+        let index = Self::index_literal(index, ctx);
+        ctx.ast.expression_binary(SPAN, member, BinaryOperator::GreaterThan, index)
+    }
+
+    // `arguments.length > index && arguments[index] !== undefined ? arguments[index] : default`
+    fn build_default_param(
+        default: Expression<'a>,
+        index: usize,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let length_gt = Self::arguments_length_gt(index, ctx);
+        let element = Self::arguments_element(index, ctx);
+        let undefined =
+            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("undefined"), ReferenceFlags::Read);
+        let not_undefined =
+            ctx.ast.expression_binary(SPAN, element, BinaryOperator::StrictInequality, undefined);
+        let test = ctx.ast.expression_logical(SPAN, length_gt, LogicalOperator::And, not_undefined);
+        let consequent = Self::arguments_element(index, ctx);
+        ctx.ast.expression_conditional(SPAN, test, consequent, default)
+    }
+
+    // `arguments.length > index ? arguments[index] : undefined`
+    fn build_safe_arguments_access(index: usize, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        let test = Self::arguments_length_gt(index, ctx);
+        let consequent = Self::arguments_element(index, ctx);
+        let undefined =
+            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("undefined"), ReferenceFlags::Read);
+        ctx.ast.expression_conditional(SPAN, test, consequent, undefined)
     }
 
     // Transform `try {} catch ({...x}) {}`.
@@ -1217,5 +1523,41 @@ impl<'a> ReferenceBuilder<'a> {
 
     fn create_read_expression(&mut self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         self.expr.take().unwrap_or_else(|| self.maybe_bound_identifier.create_read_expression(ctx))
+    }
+}
+
+// Checks whether a parameter references any of the given binding ids
+// (the bindings introduced by rest parameters).
+struct RestIdReferenceFinder<'a, 'ctx> {
+    ids: &'ctx FxHashSet<SymbolId>,
+    ctx: &'ctx TraverseCtx<'a>,
+    found: bool,
+}
+
+impl<'a> Visit<'a> for RestIdReferenceFinder<'a, '_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        if self.found {
+            return;
+        }
+        if let Some(symbol_id) = self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+            && self.ids.contains(&symbol_id)
+        {
+            self.found = true;
+        }
+    }
+}
+
+// Checks whether an expression references any of the given names by name (used to detect
+// whether a relocated parameter default would be captured by a body-declared binding).
+struct NameReferenceFinder<'a, 'ctx> {
+    names: &'ctx FxHashSet<Ident<'a>>,
+    found: bool,
+}
+
+impl<'a> Visit<'a> for NameReferenceFinder<'a, '_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        if !self.found && self.names.contains(&ident.name) {
+            self.found = true;
+        }
     }
 }
