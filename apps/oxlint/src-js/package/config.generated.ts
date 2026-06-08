@@ -774,7 +774,7 @@ export interface DummyRuleMap {
   "jest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
   "jest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
   "jest/max-expects"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxExpectsConfig];
-  "jest/max-nested-describe"?: DummyRule;
+  "jest/max-nested-describe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxNestedDescribeConfig];
   "jest/no-alias-methods"?: RuleNoConfig;
   "jest/no-commented-out-tests"?: RuleNoConfig;
   "jest/no-conditional-expect"?: RuleNoConfig;
@@ -1521,7 +1521,7 @@ export interface DummyRuleMap {
   "vitest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
   "vitest/hoisted-apis-on-top"?: RuleNoConfig;
   "vitest/max-expects"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxExpectsConfig];
-  "vitest/max-nested-describe"?: DummyRule;
+  "vitest/max-nested-describe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxNestedDescribeConfig];
   "vitest/no-alias-methods"?: RuleNoConfig;
   "vitest/no-commented-out-tests"?: RuleNoConfig;
   "vitest/no-conditional-expect"?: RuleNoConfig;
@@ -2160,6 +2160,12 @@ export interface ExpectExpectConfig {
 export interface MaxExpectsConfig {
   /**
    * Maximum number of `expect()` assertion calls allowed within a single test.
+   */
+  max?: number;
+}
+export interface MaxNestedDescribeConfig {
+  /**
+   * Maximum allowed depth of nested describe calls.
    */
   max?: number;
 }

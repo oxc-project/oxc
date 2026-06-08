@@ -2105,7 +2105,24 @@
           ]
         },
         "jest/max-nested-describe": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MaxNestedDescribeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-alias-methods": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7220,7 +7237,24 @@
           ]
         },
         "vitest/max-nested-describe": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MaxNestedDescribeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-alias-methods": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9221,6 +9255,20 @@
           "format": "uint",
           "minimum": 0.0,
           "markdownDescription": "The `max` enforces a maximum depth that callbacks can be nested."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxNestedDescribeConfig": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "Maximum allowed depth of nested describe calls.",
+          "default": 5,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum allowed depth of nested describe calls."
         }
       },
       "additionalProperties": false
