@@ -136,26 +136,42 @@ pub struct TransformOptions {
     /// Behaviour for runtime helpers.
     pub helpers: Option<Helpers>,
 
-    /// Define Plugin
-    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#define}
-    #[napi(ts_type = "Record<string, string>")]
-    pub define: Option<FxHashMap<String, String>>,
-
-    /// Inject Plugin
-    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#inject}
-    #[napi(ts_type = "Record<string, string | [string, string]>")]
-    pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
-
     /// Decorator plugin
     pub decorator: Option<DecoratorOptions>,
+
+    // NOTE: The plugins below run as separate passes, in the order in which they
+    // are declared here: React Compiler -> Inject -> Define. The main transform
+    // (configured by the options above) runs after React Compiler but before
+    // Inject and Define.
 
     /// Enable the experimental [React Compiler](https://github.com/facebook/react/pull/36173).
     ///
     /// `true` enables it with default options; an object enables it with the
-    /// given options; `false` or omitted disables it. When enabled, the compiler
-    /// runs as the first transform and memoizes React components and hooks.
+    /// given options; `false` or omitted disables it.
+    ///
+    /// When enabled, the compiler runs as the first pass on the original source,
+    /// before the main transform and before the {@link inject} and {@link define}
+    /// plugins, and memoizes React components and hooks.
     #[napi(ts_type = "boolean | ReactCompilerOptions")]
     pub react_compiler: Option<Either<bool, ReactCompilerOptions>>,
+
+    /// Inject Plugin
+    ///
+    /// Runs after the main transform (and after {@link reactCompiler}), but
+    /// before {@link define}.
+    ///
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#inject}
+    #[napi(ts_type = "Record<string, string | [string, string]>")]
+    pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
+
+    /// Define Plugin
+    ///
+    /// Runs last, after the main transform, {@link reactCompiler}, and
+    /// {@link inject}.
+    ///
+    /// @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#define}
+    #[napi(ts_type = "Record<string, string>")]
+    pub define: Option<FxHashMap<String, String>>,
 
     /// Third-party plugins to use.
     /// @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins}
@@ -758,10 +774,13 @@ struct Compiler {
     declaration: Option<String>,
     declaration_map: Option<SourceMap>,
 
-    define: Option<ReplaceGlobalDefinesConfig>,
-    inject: Option<InjectGlobalVariablesConfig>,
+    // The following options run as separate passes, in this order of evaluation
+    // (see `CompilerInterface::compile`): React Compiler runs first on the
+    // pristine AST, then the main transform, then inject, then define.
     #[expect(clippy::struct_field_names)]
     react_compiler: Option<oxc_react_compiler::PluginOptions>,
+    inject: Option<InjectGlobalVariablesConfig>,
+    define: Option<ReplaceGlobalDefinesConfig>,
 
     helpers_used: FxHashMap<String, String>,
     errors: Vec<OxcDiagnostic>,
@@ -779,14 +798,10 @@ impl Compiler {
 
         let sourcemap = options.as_ref().and_then(|o| o.sourcemap).unwrap_or_default();
 
-        let define = options
-            .as_mut()
-            .and_then(|options| options.define.take())
-            .map(|map| {
-                let define = map.into_iter().collect::<Vec<_>>();
-                ReplaceGlobalDefinesConfig::new(&define)
-            })
-            .transpose()?;
+        // Build options in their order of evaluation (see `CompilerInterface::compile`):
+        // React Compiler -> transform -> inject -> define.
+
+        let react_compiler = options.as_mut().and_then(TransformOptions::take_react_compiler);
 
         let inject = options
             .as_mut()
@@ -814,7 +829,14 @@ impl Compiler {
             .transpose()?
             .map(InjectGlobalVariablesConfig::new);
 
-        let react_compiler = options.as_mut().and_then(TransformOptions::take_react_compiler);
+        let define = options
+            .as_mut()
+            .and_then(|options| options.define.take())
+            .map(|map| {
+                let define = map.into_iter().collect::<Vec<_>>();
+                ReplaceGlobalDefinesConfig::new(&define)
+            })
+            .transpose()?;
 
         let transform_options = match options {
             Some(options) => oxc::transformer::TransformOptions::try_from(options)
@@ -830,9 +852,9 @@ impl Compiler {
             printed_sourcemap: None,
             declaration: None,
             declaration_map: None,
-            define,
-            inject,
             react_compiler,
+            inject,
+            define,
             helpers_used: FxHashMap::default(),
             errors: vec![],
         })
@@ -858,16 +880,16 @@ impl CompilerInterface for Compiler {
         self.isolated_declaration_options
     }
 
-    fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
-        self.define.clone()
+    fn react_compiler_options(&self) -> Option<oxc_react_compiler::PluginOptions> {
+        self.react_compiler.clone()
     }
 
     fn inject_options(&self) -> Option<InjectGlobalVariablesConfig> {
         self.inject.clone()
     }
 
-    fn react_compiler_options(&self) -> Option<oxc_react_compiler::PluginOptions> {
-        self.react_compiler.clone()
+    fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
+        self.define.clone()
     }
 
     fn after_codegen(&mut self, ret: CodegenReturn) {

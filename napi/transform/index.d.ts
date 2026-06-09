@@ -585,26 +585,37 @@ export interface TransformOptions {
   target?: string | Array<string>
   /** Behaviour for runtime helpers. */
   helpers?: Helpers
-  /**
-   * Define Plugin
-   * @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#define}
-   */
-  define?: Record<string, string>
-  /**
-   * Inject Plugin
-   * @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#inject}
-   */
-  inject?: Record<string, string | [string, string]>
   /** Decorator plugin */
   decorator?: DecoratorOptions
   /**
    * Enable the experimental [React Compiler](https://github.com/facebook/react/pull/36173).
    *
    * `true` enables it with default options; an object enables it with the
-   * given options; `false` or omitted disables it. When enabled, the compiler
-   * runs as the first transform and memoizes React components and hooks.
+   * given options; `false` or omitted disables it.
+   *
+   * When enabled, the compiler runs as the first pass on the original source,
+   * before the main transform and before the {@link inject} and {@link define}
+   * plugins, and memoizes React components and hooks.
    */
   reactCompiler?: boolean | ReactCompilerOptions
+  /**
+   * Inject Plugin
+   *
+   * Runs after the main transform (and after {@link reactCompiler}), but
+   * before {@link define}.
+   *
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#inject}
+   */
+  inject?: Record<string, string | [string, string]>
+  /**
+   * Define Plugin
+   *
+   * Runs last, after the main transform, {@link reactCompiler}, and
+   * {@link inject}.
+   *
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#define}
+   */
+  define?: Record<string, string>
   /**
    * Third-party plugins to use.
    * @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins}
