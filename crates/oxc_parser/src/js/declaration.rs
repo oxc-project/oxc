@@ -155,6 +155,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::variable_declarator_definite(span));
             } else if decl.type_annotation.is_none() {
                 self.error(diagnostics::variable_declarator_definite_type_assertion(span));
+            } else if self.ctx.has_ambient() {
+                self.error(diagnostics::definite_assignment_assertion_not_permitted(span));
             }
         }
         decl

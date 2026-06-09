@@ -17899,6 +17899,30 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  72 │ }
     ╰────
 
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:76:15]
+ 75 │ 
+ 76 │ declare let v1!: number;
+    ·               ─
+ 77 │ declare var v2!: number;
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:77:15]
+ 76 │ declare let v1!: number;
+ 77 │ declare var v2!: number;
+    ·               ─
+ 78 │ 
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:80:7]
+ 79 │ declare namespace foo {
+ 80 │     var v!: number;
+    ·          ─
+ 81 │ }
+    ╰────
+
   × Expected `,` or `}` but found `!`
    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertionsWithObjectShortHand.ts:2:16]
  1 │ const a: string | undefined = 'ff';
