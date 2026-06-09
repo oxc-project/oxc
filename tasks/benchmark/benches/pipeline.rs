@@ -1,14 +1,16 @@
 use std::path::Path;
 
-use oxc_allocator::Allocator;
+use oxc::{
+    allocator::Allocator,
+    codegen::{Codegen, CodegenOptions},
+    mangler::{MangleOptions, Mangler},
+    minifier::{CompressOptions, Compressor},
+    parser::Parser,
+    semantic::SemanticBuilder,
+    transformer::{TransformOptions, Transformer},
+};
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_mangler::{MangleOptions, Mangler};
-use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::TestFiles;
-use oxc_transformer::{TransformOptions, Transformer};
 
 /// Benchmark the complete compilation pipeline:
 /// allocate -> parse -> semantic -> transform -> minify -> mangle -> codegen -> drop
