@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use crate::ir_transform::sort_imports::{options::SortImportsOptions, source_line::SourceLine};
 
@@ -31,57 +31,59 @@ impl SortSortableImports for Vec<SortableImport<'_>> {
             return;
         }
 
-        // Stage 1: Separate ignored and non-ignored imports
-        let (ignored_indices, sortable_indices): (Vec<usize>, Vec<usize>) =
-            (0..imports_len).partition(|&idx| self[idx].is_ignored);
+        // Build a global permutation while sorting each contiguous non-ignored partition independently.
+        // This prevents sortable imports from crossing ignored imports (e.g. side effects with
+        // `sortSideEffects: false`), while keeping ignored imports fixed at their original positions.
+        let mut permutation: Vec<usize> = (0..imports_len).collect();
+        let mut partition_start: Option<usize> = None;
 
-        // If all imports are ignored, no sorting needed
-        if sortable_indices.is_empty() {
-            return;
-        }
-
-        // Stage 2: Group non-ignored imports by `group_idx`
-        let mut imports_by_group: FxHashMap<usize, Vec<usize>> = FxHashMap::default();
-        for &idx in &sortable_indices {
-            imports_by_group.entry(self[idx].group_idx).or_default().push(idx);
-        }
-
-        // Stage 3: Sort within each group and build sorted list
-        // Need to process `groups` in order by `group_idx`
-        let mut groups: Vec<_> = imports_by_group.iter_mut().collect();
-        groups.sort_unstable_by_key(|(gidx, _)| *gidx);
-
-        let mut sorted_indices = Vec::with_capacity(sortable_indices.len());
-        for (_, group_indices) in groups {
-            sort_within_group(group_indices, self, options);
-            sorted_indices.extend_from_slice(group_indices);
-        }
-
-        // Stage 4: Build final permutation by inserting ignored imports at their original positions
-        // If no ignored imports, we can skip the permutation step
-        if ignored_indices.is_empty() {
-            apply_permutation(self, &sorted_indices);
-        } else {
-            let ignored_set: FxHashSet<usize> = ignored_indices.into_iter().collect();
-            let mut permutation = vec![0; imports_len];
-            let mut sorted_iter = sorted_indices.into_iter();
-            for (target_pos, perm) in permutation.iter_mut().enumerate() {
-                if ignored_set.contains(&target_pos) {
-                    // Ignored import stays at its original position
-                    *perm = target_pos;
-                } else if let Some(source_idx) = sorted_iter.next() {
-                    *perm = source_idx;
+        for idx in 0..=imports_len {
+            let is_partition_end = idx == imports_len || self[idx].is_ignored;
+            if is_partition_end {
+                if let Some(start) = partition_start.take() {
+                    let sorted_indices =
+                        sort_indices_by_group_for_partition(start, idx, self, options);
+                    for (target_pos, source_idx) in (start..idx).zip(sorted_indices) {
+                        permutation[target_pos] = source_idx;
+                    }
                 }
+            } else if partition_start.is_none() {
+                partition_start = Some(idx);
             }
-
-            apply_permutation(self, &permutation);
         }
 
+        apply_permutation(self, &permutation);
         debug_assert!(self.len() == imports_len, "Length must remain the same after sorting.");
     }
 }
 
 // ---
+
+/// Sort one contiguous non-ignored partition.
+///
+/// Returns source indices in the target order for this partition's slots.
+fn sort_indices_by_group_for_partition(
+    start: usize,
+    end: usize,
+    imports: &[SortableImport],
+    options: &SortImportsOptions,
+) -> Vec<usize> {
+    let mut imports_by_group: FxHashMap<usize, Vec<usize>> = FxHashMap::default();
+    for idx in start..end {
+        imports_by_group.entry(imports[idx].group_idx).or_default().push(idx);
+    }
+
+    let mut groups: Vec<_> = imports_by_group.into_iter().collect();
+    groups.sort_unstable_by_key(|(gidx, _)| *gidx);
+
+    let mut sorted_indices = Vec::with_capacity(end - start);
+    for (_, mut group_indices) in groups {
+        sort_within_group(&mut group_indices, imports, options);
+        sorted_indices.extend(group_indices);
+    }
+
+    sorted_indices
+}
 
 /// Sort imports within a single group, respecting side-effect preservation rules.
 ///

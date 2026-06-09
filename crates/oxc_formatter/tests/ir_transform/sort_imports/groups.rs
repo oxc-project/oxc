@@ -218,7 +218,7 @@ import "bb";
 import "c";
 "#,
     );
-    // Side-effects stay in original position, only non-side-effects are sorted
+    // Side-effects are boundaries by default.
     assert_format(
         r#"
 import "./z-side-effect.scss";
@@ -235,11 +235,11 @@ import a from "./a";
 }"#,
         r#"
 import "./z-side-effect.scss";
-import a from "./a";
+import b from "./b";
 import "./b-side-effect";
 import "./g-side-effect.css";
 import "./a-side-effect";
-import b from "./b";
+import a from "./a";
 "#,
     );
     // Groups side-effect imports together without sorting them
@@ -318,7 +318,7 @@ import a from "./a";
 import b from "./b";
 "#,
     );
-    // Groups style side-effect imports separately without sorting
+    // Style side-effects can regroup, but ignored side-effects still split partitions.
     assert_format(
         r#"
 import "./z-side-effect";
@@ -336,11 +336,12 @@ import a from "./a";
         r#"
 import "./z-side-effect";
 import "./b-side-effect.scss";
+
+import b from "./b";
+import "./g-side-effect";
 import "./a-side-effect.css";
 
-import "./g-side-effect";
 import a from "./a";
-import b from "./b";
 "#,
     );
     // handles newlines and comments after fixes

@@ -859,7 +859,8 @@ import { log10 } from "./log10";
 
 #[test]
 fn should_sort_side_effects() {
-    // Side effect imports stay in their original positions by default
+    // Side-effect imports are boundaries by default.
+    // Value imports only sort within each partition.
     assert_format(
         r#"
 import c from "c";
@@ -870,10 +871,10 @@ import z from "z";
 "#,
         r#"{ "sortImports": {} }"#,
         r#"
-import a from "a";
 import b from "b";
-import "s";
 import c from "c";
+import "s";
+import a from "a";
 import z from "z";
 "#,
     );
@@ -888,19 +889,17 @@ import "./side-effect2";
 "#,
         r#"{ "sortImports": {} }"#,
         r#"
-import { a } from "a-package";
+import { b } from "b-package";
 
 import "./side-effect";
 
-import { b } from "b-package";
+import { a } from "a-package";
 
 import "./side-effect2";
 "#,
     );
 
-    // No blank line should be inserted on a "decreasing" group transition
-    // (e.g. ignored `style` side-effect → `internal` import) to align with
-    // the perfectionist plugin behavior.
+    // With side-effect boundaries, imports on each side stay in place.
     assert_format(
         r#"
 import { z } from "@/z";
@@ -910,26 +909,67 @@ import { a } from "@/a";
 "#,
         r#"{ "sortImports": {} }"#,
         r#"
-import { a } from "@/a";
+import { z } from "@/z";
 
 import "./style.css";
-import { z } from "@/z";
+import { a } from "@/a";
 "#,
     );
 
+    // `sortSideEffects: false` keeps side-effect imports as boundaries; value imports only sort within each partition.
     assert_format(
         r#"
 import y from "y";
 import "z";
+import c from "c";
 import "x";
+import b from "b";
 import a from "a";
 "#,
         r#"{ "sortImports": { "sortSideEffects": false } }"#,
         r#"
+import y from "y";
+import "z";
+import c from "c";
+import "x";
+import a from "a";
+import b from "b";
+"#,
+    );
+    // Consecutive side-effect imports still act as one boundary wall.
+    assert_format(
+        r#"
+import b from "b";
 import a from "a";
 import "z";
 import "x";
-import y from "y";
+import d from "d";
+import c from "c";
+"#,
+        r#"{ "sortImports": { "sortSideEffects": false } }"#,
+        r#"
+import a from "a";
+import b from "b";
+import "z";
+import "x";
+import c from "c";
+import d from "d";
+"#,
+    );
+    // Side-effects at the start/end remain fixed, middle partition sorts independently.
+    assert_format(
+        r#"
+import "z";
+import b from "b";
+import a from "a";
+import "x";
+"#,
+        r#"{ "sortImports": { "sortSideEffects": false } }"#,
+        r#"
+import "z";
+import a from "a";
+import b from "b";
+import "x";
 "#,
     );
     // Keep original order
