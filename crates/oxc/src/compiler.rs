@@ -171,8 +171,20 @@ pub trait CompilerInterface {
         // Runs first, on the pristine AST, before every other transform.
         let mut errors = Vec::new();
         if let Some(options) = self.react_compiler_options() {
-            scoping =
-                oxc_react_compiler::run(&mut program, &allocator, scoping, &options, &mut errors);
+            // `compiled` lives in `allocator`, not borrowed from `program`, so the
+            // reassignment below is sound.
+            let result = oxc_react_compiler::transform(&program, &allocator, options);
+            errors.extend(result.errors);
+            errors.extend(result.warnings);
+            if let Some(compiled) = result.program {
+                program = compiled;
+                // Rebuild scoping for downstream transforms.
+                scoping = SemanticBuilder::new()
+                    .with_enum_eval(true)
+                    .build(&program)
+                    .semantic
+                    .into_scoping();
+            }
         }
 
         /* Transform */
