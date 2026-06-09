@@ -278,6 +278,46 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
 
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:22:13]
+ 21 │ 
+ 22 │ interface I<const T> {}
+    ·             ───────
+ 23 │ interface J<const T extends U> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:23:13]
+ 22 │ interface I<const T> {}
+ 23 │ interface J<const T extends U> {}
+    ·             ─────────────────
+ 24 │ interface K<T, const U> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:24:16]
+ 23 │ interface J<const T extends U> {}
+ 24 │ interface K<T, const U> {}
+    ·                ───────
+ 25 │ interface L<in const T> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:25:13]
+ 24 │ interface K<T, const U> {}
+ 25 │ interface L<in const T> {}
+    ·             ──────────
+ 26 │ interface M<const in T> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:26:13]
+ 25 │ interface L<in const T> {}
+ 26 │ interface M<const in T> {}
+    ·             ──────────
+ 27 │ 
+    ╰────
+
   × Identifier `method` has already been declared
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:29:3]
  28 │ class _ {

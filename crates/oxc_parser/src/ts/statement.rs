@@ -217,6 +217,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let id = self.parse_binding_identifier();
         self.check_reserved_type_name(&id, "Interface");
         let type_parameters = self.parse_ts_type_parameters();
+        if let Some(type_parameters) = &type_parameters {
+            for param in &type_parameters.params {
+                if param.r#const {
+                    self.error(diagnostics::const_type_parameter(param.span));
+                }
+            }
+        }
         let (extends, implements) = self.parse_heritage_clause();
         let body = self.parse_ts_interface_body();
         let extends = extends.unwrap_or_else(|| self.ast.vec());

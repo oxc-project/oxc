@@ -30535,6 +30535,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
 
   × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts:49:14]
+ 48 │ 
+ 49 │ interface I1<const T> { x: T }  // Error
+    ·              ───────
+ 50 │ 
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts:55:9]
  54 │ 
  55 │ type T1<const T> = T;  // Error

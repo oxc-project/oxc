@@ -1311,6 +1311,11 @@ after transform: ScopeId(0): ["a", "b"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
+'const' modifier can only appear on a type parameter of a function, method or class
+'const' modifier can only appear on a type parameter of a function, method or class
+'const' modifier can only appear on a type parameter of a function, method or class
+'const' modifier can only appear on a type parameter of a function, method or class
+'const' modifier can only appear on a type parameter of a function, method or class
 Identifier `method` has already been declared
 Identifier `method` has already been declared
 
