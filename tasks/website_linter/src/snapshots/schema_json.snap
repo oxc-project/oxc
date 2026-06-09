@@ -2388,7 +2388,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/prefer-snapshot-hint": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/SnapshotHintMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/prefer-spy-on": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7605,7 +7622,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/prefer-snapshot-hint": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/SnapshotHintMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/prefer-spy-on": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -13552,6 +13586,26 @@ expression: json
         "consistent",
         "consistent-as-needed",
         "never"
+      ]
+    },
+    "SnapshotHintMode": {
+      "oneOf": [
+        {
+          "description": "Require a hint to always be provided when using external snapshot matchers.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Require a hint to always be provided when using external snapshot matchers."
+        },
+        {
+          "description": "Require a hint to be provided when there are multiple external snapshot matchers within the scope (meaning it includes nested calls).",
+          "type": "string",
+          "enum": [
+            "multi"
+          ],
+          "markdownDescription": "Require a hint to be provided when there are multiple external snapshot matchers within the scope (meaning it includes nested calls)."
+        }
       ]
     },
     "SortImportsOptions": {

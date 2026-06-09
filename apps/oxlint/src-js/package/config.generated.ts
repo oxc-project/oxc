@@ -91,6 +91,7 @@ export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
+export type SnapshotHintMode = "always" | "multi";
 export type CountThis = "always" | "never" | "except-void";
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
@@ -822,7 +823,7 @@ export interface DummyRuleMap {
   "jest/prefer-lowercase-title"?: DummyRule;
   "jest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "jest/prefer-mock-return-shorthand"?: RuleNoConfig;
-  "jest/prefer-snapshot-hint"?: DummyRule;
+  "jest/prefer-snapshot-hint"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SnapshotHintMode];
   "jest/prefer-spy-on"?: RuleNoConfig;
   "jest/prefer-strict-equal"?: RuleNoConfig;
   "jest/prefer-to-be"?: RuleNoConfig;
@@ -1566,7 +1567,7 @@ export interface DummyRuleMap {
   "vitest/prefer-lowercase-title"?: DummyRule;
   "vitest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "vitest/prefer-mock-return-shorthand"?: RuleNoConfig;
-  "vitest/prefer-snapshot-hint"?: DummyRule;
+  "vitest/prefer-snapshot-hint"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SnapshotHintMode];
   "vitest/prefer-spy-on"?: RuleNoConfig;
   "vitest/prefer-strict-boolean-matchers"?: RuleNoConfig;
   "vitest/prefer-strict-equal"?: RuleNoConfig;
