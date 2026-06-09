@@ -14,10 +14,11 @@ use crate::state::PassDirty;
 ///   call sets `dirty.eval_dropped = true`. Unresolved references are not
 ///   tracked (see `visit_identifier_reference`).
 ///
-/// - `resurrect_from_*` — invoked on the replacement value during a
-///   `replace_*` helper call. Every resolved reference found is REMOVED
-///   from `dirty.dead_refs`. Handles within-call and cross-call
-///   `ReferenceId` preservation via `clone_in_with_semantic_ids`.
+/// - `resurrect_from_expression` — invoked on the replacement value during a
+///   `replace_expression` call. Every resolved reference found is REMOVED
+///   from `dirty.dead_refs`. Load-bearing only for the single id-preserving
+///   site (`substitute_is_object_and_not_null`); other slot kinds cannot alias
+///   a `ReferenceId`, so they have no `resurrect_*`.
 pub struct DropDiff<'a, 's> {
     dirty: &'s mut PassDirty<'a>,
     scoping: &'s Scoping,
@@ -110,51 +111,22 @@ impl<'a, 's> DropDiff<'a, 's> {
         !self.marked
     }
 
+    /// Un-mark resolved references that `walk_old_expression` marked dead but
+    /// which survive inside the replacement expression. This is load-bearing
+    /// for exactly one site — `substitute_is_object_and_not_null`
+    /// (`substitute_alternate_syntax.rs`) — where `clone_in_with_semantic_ids`
+    /// and `expression_identifier_with_reference_id` reuse a `ReferenceId` so
+    /// the same id lands in both the dropped slot and the replacement.
+    ///
+    /// Only `Expression` needs this: aliasing can only produce an expression
+    /// (there is no statement/property-key/etc. clone), so the other slot kinds
+    /// have no `resurrect_*` — their `replace_*` helpers just `walk_old_*`.
     pub(crate) fn resurrect_from_expression(mut self, expr: &Expression<'a>) -> Self {
         if self.resurrect_is_noop() {
             return self;
         }
         self.mode = DropDiffMode::Resurrect;
         self.visit_expression(expr);
-        self
-    }
-
-    pub(crate) fn resurrect_from_statement(mut self, stmt: &Statement<'a>) -> Self {
-        if self.resurrect_is_noop() {
-            return self;
-        }
-        self.mode = DropDiffMode::Resurrect;
-        self.visit_statement(stmt);
-        self
-    }
-
-    pub(crate) fn resurrect_from_assignment_target_property(
-        mut self,
-        prop: &AssignmentTargetProperty<'a>,
-    ) -> Self {
-        if self.resurrect_is_noop() {
-            return self;
-        }
-        self.mode = DropDiffMode::Resurrect;
-        self.visit_assignment_target_property(prop);
-        self
-    }
-
-    pub(crate) fn resurrect_from_property_key(mut self, key: &PropertyKey<'a>) -> Self {
-        if self.resurrect_is_noop() {
-            return self;
-        }
-        self.mode = DropDiffMode::Resurrect;
-        self.visit_property_key(key);
-        self
-    }
-
-    pub(crate) fn resurrect_from_for_statement_left(mut self, lhs: &ForStatementLeft<'a>) -> Self {
-        if self.resurrect_is_noop() {
-            return self;
-        }
-        self.mode = DropDiffMode::Resurrect;
-        self.visit_for_statement_left(lhs);
         self
     }
 }

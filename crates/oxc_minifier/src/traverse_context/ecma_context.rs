@@ -385,7 +385,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a statement slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
-        self.dirty_diff().walk_old_statement(slot).resurrect_from_statement(&new);
+        self.dirty_diff().walk_old_statement(slot);
         *slot = new;
         self.state.mutations += 1;
     }
@@ -397,9 +397,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut AssignmentTargetProperty<'a>,
         new: AssignmentTargetProperty<'a>,
     ) {
-        self.dirty_diff()
-            .walk_old_assignment_target_property(slot)
-            .resurrect_from_assignment_target_property(&new);
+        self.dirty_diff().walk_old_assignment_target_property(slot);
         *slot = new;
         self.state.mutations += 1;
     }
@@ -407,7 +405,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a property-key slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
-        self.dirty_diff().walk_old_property_key(slot).resurrect_from_property_key(&new);
+        self.dirty_diff().walk_old_property_key(slot);
         *slot = new;
         self.state.mutations += 1;
     }
@@ -420,7 +418,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut ForStatementLeft<'a>,
         new: ForStatementLeft<'a>,
     ) {
-        self.dirty_diff().walk_old_for_statement_left(slot).resurrect_from_for_statement_left(&new);
+        self.dirty_diff().walk_old_for_statement_left(slot);
         *slot = new;
         self.state.mutations += 1;
     }
