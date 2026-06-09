@@ -61,7 +61,7 @@ export type LintPlugins = LintPluginOptionsSchema[];
 export type Mode2 = "as-needed" | "always" | "never";
 export type RuleNoConfig = AllowWarnDeny | [AllowWarnDeny];
 export type AlwaysNever = "always" | "never";
-export type OptionsJsonDoc =
+export type OptionsJsonEnum =
   | CommentConfigJson
   | {
       block?: CommentConfigJson;
@@ -707,7 +707,7 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, AlwaysNever]
-    | [AllowWarnDeny, AlwaysNever, OptionsJsonDoc];
+    | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ClassMethodsUseThisConfig];
   complexity?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | ComplexityConfig];
   "constructor-super"?: RuleNoConfig;

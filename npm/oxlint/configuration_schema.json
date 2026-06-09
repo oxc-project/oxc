@@ -677,7 +677,7 @@
       },
       "additionalProperties": false
     },
-    "CapitalizedCommentsOptionsDocs": {
+    "CapitalizedCommentsOptions": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
       "type": "array",
       "items": [
@@ -685,7 +685,7 @@
           "$ref": "#/definitions/AlwaysNever"
         },
         {
-          "$ref": "#/definitions/OptionsJsonDoc"
+          "$ref": "#/definitions/OptionsJsonEnum"
         }
       ],
       "maxItems": 2,
@@ -1416,7 +1416,7 @@
                   "$ref": "#/definitions/AlwaysNever"
                 },
                 {
-                  "$ref": "#/definitions/OptionsJsonDoc"
+                  "$ref": "#/definitions/OptionsJsonEnum"
                 }
               ],
               "maxItems": 3,
@@ -11977,7 +11977,7 @@
       },
       "additionalProperties": false
     },
-    "OptionsJsonDoc": {
+    "OptionsJsonEnum": {
       "anyOf": [
         {
           "$ref": "#/definitions/CommentConfigJson"
