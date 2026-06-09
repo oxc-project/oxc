@@ -8,12 +8,16 @@ use oxc::{
     parser::Parser,
     semantic::SemanticBuilder,
     transformer::{TransformOptions, Transformer},
+    transformer_plugins::{
+        InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefines,
+        ReplaceGlobalDefinesConfig,
+    },
 };
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_tasks_common::TestFiles;
 
 /// Benchmark the complete compilation pipeline:
-/// allocate -> parse -> semantic -> transform -> minify -> mangle -> codegen -> drop
+/// allocate -> parse -> semantic -> transform -> define -> inject -> minify -> mangle -> codegen -> drop
 fn bench_pipeline(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("pipeline");
 
@@ -36,6 +40,14 @@ fn bench_pipeline(criterion: &mut Criterion) {
                 let compress_options = CompressOptions::smallest();
                 let mangle_options = MangleOptions::default();
                 let codegen_options = CodegenOptions::default();
+                let define_config = ReplaceGlobalDefinesConfig::new(&[(
+                    "process.env.NODE_ENV",
+                    "'production'",
+                )])
+                .unwrap();
+                let inject_config = InjectGlobalVariablesConfig::new(vec![
+                    InjectImport::named_specifier("node:buffer", Some("Buffer"), "Buffer"),
+                ]);
 
                 runner.run(|| {
                     // Parse
@@ -57,7 +69,17 @@ fn bench_pipeline(criterion: &mut Criterion) {
                         &transform_options,
                     )
                     .build_with_scoping(scoping, &mut program);
-                    let _scoping = transformer_ret.scoping;
+                    let scoping = transformer_ret.scoping;
+
+                    // Define - replace global constants
+                    let define_ret = ReplaceGlobalDefines::new(&allocator, define_config)
+                        .build(scoping, &mut program);
+                    let scoping = define_ret.scoping;
+
+                    // Inject - inject global variable imports
+                    let inject_ret = InjectGlobalVariables::new(&allocator, inject_config)
+                        .build(scoping, &mut program);
+                    let _scoping = inject_ret.scoping;
 
                     // Compress (minify) - rebuilds semantic internally
                     Compressor::new(&allocator).build(&mut program, compress_options);
