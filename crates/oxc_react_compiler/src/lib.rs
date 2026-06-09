@@ -573,6 +573,50 @@ function Component(props) {\n  return <div>{E.A}{N.value}{props.text}</div>;\n}\
         );
     }
 
+    /// A local `export { x }` that re-exports an imported binding must keep its
+    /// `local` as an `IdentifierReference` after the round-trip, so semantic
+    /// analysis links it to the import and downstream TypeScript import elision
+    /// keeps the import alive instead of leaving a dangling export.
+    #[test]
+    fn local_reexport_keeps_its_import_binding() {
+        use oxc_ast::ast::{ModuleExportName, Statement};
+
+        let source = "\
+import { Foo } from './foo';\n\
+export { Foo };\n\
+function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
+        let allocator = oxc_allocator::Allocator::default();
+        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        let program = result.program.expect("component should be compiled");
+
+        let export = program
+            .body
+            .iter()
+            .find_map(|stmt| match stmt {
+                Statement::ExportNamedDeclaration(decl) if decl.source.is_none() => Some(decl),
+                _ => None,
+            })
+            .expect("a local `export { Foo }` should round-trip");
+        let local = &export.specifiers.first().expect("export specifier").local;
+        assert!(
+            matches!(local, ModuleExportName::IdentifierReference(_)),
+            "local export `local` must be an IdentifierReference so semantic links it to the import",
+        );
+
+        // The freshly-built scoping for the compiled program must record the
+        // export's reference to the import, or import elision would drop it.
+        let semantic = oxc_semantic::SemanticBuilder::new().build(&program).semantic;
+        let scoping = semantic.scoping();
+        let foo = scoping
+            .symbol_ids()
+            .find(|&id| scoping.symbol_name(id) == "Foo")
+            .expect("`Foo` import binding should exist");
+        assert!(
+            scoping.get_resolved_references(foo).next().is_some(),
+            "the local re-export must reference the `Foo` import binding",
+        );
+    }
+
     /// A `React.memo(...)` component is anonymous; the prefilter must still see it.
     #[test]
     fn memo_wrapped_component_compiles() {
