@@ -123,29 +123,27 @@ pub fn transform<'a>(
             convert_ast_reverse::convert_program_to_oxc_with_source(&file, allocator, source_text);
         compiled.source_type = program.source_type;
         apply_renames::apply_renames(&mut compiled, &rename_plan, allocator);
-        preserve_comments(&mut compiled, source_text, allocator);
+        preserve_comments(&mut compiled, program, allocator);
         compiled
     });
 
     TransformResult { program: compiled_program, errors, warnings, events }
 }
 
-/// Re-parse the source for comments and keep those attached to top-level
-/// statements of the compiled program, so codegen can re-emit them.
+/// Carry over the comments attached to top-level statements of the compiled
+/// program, so codegen can re-emit them. The `react_compiler_ast` roundtrip
+/// drops comments, so we reuse the ones from the original `source` program
+/// (already parsed) rather than re-parsing the source.
 fn preserve_comments<'a>(
-    program: &mut oxc_ast::ast::Program<'a>,
-    source_text: &str,
+    compiled: &mut oxc_ast::ast::Program<'a>,
+    source: &oxc_ast::ast::Program<'a>,
     allocator: &'a oxc_allocator::Allocator,
 ) {
-    let comment_allocator = oxc_allocator::Allocator::default();
-    let source_type = oxc_span::SourceType::tsx();
-    let parsed = oxc_parser::Parser::new(&comment_allocator, source_text, source_type).parse();
-
     // Keep only comments attached to a top-level statement; inner comments have
     // `attached_to` positions that match no top-level statement.
     let mut top_level_starts = FxHashSet::default();
     top_level_starts.insert(0u32);
-    for stmt in &program.body {
+    for stmt in &compiled.body {
         use oxc_span::GetSpan;
         let start = stmt.span().start;
         if start > 0 {
@@ -154,18 +152,17 @@ fn preserve_comments<'a>(
     }
 
     // Copy only comments attached to top-level statements.
-    let mut comments =
-        oxc_allocator::Vec::with_capacity_in(parsed.program.comments.len(), allocator);
-    for comment in &parsed.program.comments {
+    let mut comments = oxc_allocator::Vec::with_capacity_in(source.comments.len(), allocator);
+    for comment in &source.comments {
         if top_level_starts.contains(&comment.attached_to) {
             comments.push(*comment);
         }
     }
-    program.comments = comments;
+    compiled.comments = comments;
 
-    // Copy the source into `allocator` so codegen can read comment content from spans.
-    let source_in_alloc = oxc_allocator::StringBuilder::from_str_in(source_text, allocator);
-    program.source_text = source_in_alloc.into_str();
+    // Codegen reads comment content from `source_text` via span offsets, so the
+    // compiled program must point at the same source as the original.
+    compiled.source_text = source.source_text;
 }
 
 /// Convenience wrapper — parses source text, runs semantic analysis, then transforms.
@@ -614,6 +611,37 @@ function Component(props) {\n  return <div>{E.A}{N.value}{props.text}</div>;\n}\
             result.errors.is_empty(),
             "fbt warning must not be reported as an error: {:?}",
             result.errors
+        );
+    }
+
+    /// Comments are dropped by the `react_compiler_ast` roundtrip, so
+    /// `preserve_comments` carries top-level comments over from the original
+    /// program. Comments inside a compiled function are not recovered.
+    #[test]
+    fn top_level_comments_are_preserved() {
+        let source = "\
+// keep: leading\n\
+import { useState } from 'react';\n\
+/** keep: jsdoc */\n\
+function Component(props) {\n\
+  // drop: inner\n\
+  return <div onClick={() => props.onClick()}>{props.text}</div>;\n\
+}\n\
+// keep: trailing\n\
+export default Component;\n";
+
+        let allocator = oxc_allocator::Allocator::default();
+        let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
+        let program = result.program.expect("component should be compiled");
+        let output = oxc_codegen::Codegen::new().build(&program).code;
+
+        assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
+        assert!(output.contains("// keep: leading"), "leading comment lost:\n{output}");
+        assert!(output.contains("/** keep: jsdoc */"), "jsdoc comment lost:\n{output}");
+        assert!(output.contains("// keep: trailing"), "trailing comment lost:\n{output}");
+        assert!(
+            !output.contains("// drop: inner"),
+            "inner comment should not be recovered:\n{output}"
         );
     }
 }
