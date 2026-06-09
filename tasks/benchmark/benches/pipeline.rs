@@ -1,23 +1,57 @@
 use std::path::Path;
 
 use oxc::{
-    allocator::Allocator,
-    codegen::{Codegen, CodegenOptions},
-    mangler::{MangleOptions, Mangler},
-    minifier::{CompressOptions, Compressor},
-    parser::Parser,
-    semantic::SemanticBuilder,
-    transformer::{TransformOptions, Transformer},
-    transformer_plugins::{
-        InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefines,
-        ReplaceGlobalDefinesConfig,
-    },
+    CompilerInterface,
+    codegen::CodegenOptions,
+    mangler::MangleOptions,
+    minifier::CompressOptions,
+    transformer::TransformOptions,
+    transformer_plugins::{InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefinesConfig},
 };
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_tasks_common::TestFiles;
 
-/// Benchmark the complete compilation pipeline:
-/// allocate -> parse -> semantic -> transform -> define -> inject -> minify -> mangle -> codegen -> drop
+/// A [`CompilerInterface`] that runs the complete compilation pipeline:
+/// parse -> semantic -> transform -> define -> inject -> minify -> mangle -> codegen.
+struct PipelineCompiler {
+    transform_options: TransformOptions,
+    define_options: ReplaceGlobalDefinesConfig,
+    inject_options: InjectGlobalVariablesConfig,
+    compress_options: CompressOptions,
+    mangle_options: MangleOptions,
+    codegen_options: CodegenOptions,
+}
+
+impl CompilerInterface for PipelineCompiler {
+    fn transform_options(&self) -> Option<&TransformOptions> {
+        Some(&self.transform_options)
+    }
+
+    fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
+        Some(self.define_options.clone())
+    }
+
+    fn inject_options(&self) -> Option<InjectGlobalVariablesConfig> {
+        Some(self.inject_options.clone())
+    }
+
+    fn compress_options(&self) -> Option<CompressOptions> {
+        Some(self.compress_options.clone())
+    }
+
+    fn mangle_options(&self) -> Option<MangleOptions> {
+        Some(self.mangle_options)
+    }
+
+    fn codegen_options(&self) -> Option<CodegenOptions> {
+        Some(self.codegen_options.clone())
+    }
+
+    fn check_semantic_error(&self) -> bool {
+        false
+    }
+}
+
 fn bench_pipeline(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("pipeline");
 
@@ -25,75 +59,28 @@ fn bench_pipeline(criterion: &mut Criterion) {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_text = &file.source_text;
         let source_type = file.source_type;
-
-        // Create `Allocator` outside of `bench_function`, so same allocator is used for
-        // both the warmup and measurement phases
-        let mut allocator = Allocator::default();
+        let source_path = Path::new(&file.file_name);
 
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
-                // Reset allocator at start of each iteration
-                allocator.reset();
-
                 // Create options inside the closure to avoid move issues
-                let transform_options = TransformOptions::from_target("esnext").unwrap();
-                let compress_options = CompressOptions::smallest();
-                let mangle_options = MangleOptions::default();
-                let codegen_options = CodegenOptions::default();
-                let define_config =
-                    ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'production'")])
-                        .unwrap();
-                let inject_config =
-                    InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
-                        "node:buffer",
-                        Some("Buffer"),
-                        "Buffer",
-                    )]);
+                let mut compiler = PipelineCompiler {
+                    transform_options: TransformOptions::from_target("esnext").unwrap(),
+                    define_options: ReplaceGlobalDefinesConfig::new(&[(
+                        "process.env.NODE_ENV",
+                        "'production'",
+                    )])
+                    .unwrap(),
+                    inject_options: InjectGlobalVariablesConfig::new(vec![
+                        InjectImport::named_specifier("node:buffer", Some("Buffer"), "Buffer"),
+                    ]),
+                    compress_options: CompressOptions::smallest(),
+                    mangle_options: MangleOptions::default(),
+                    codegen_options: CodegenOptions::default(),
+                };
 
                 runner.run(|| {
-                    // Parse
-                    let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
-                    let mut program = parser_ret.program;
-
-                    // Semantic
-                    let scoping = SemanticBuilder::new()
-                        .with_excess_capacity(2.0)
-                        .with_enum_eval(true)
-                        .build(&program)
-                        .semantic
-                        .into_scoping();
-
-                    // Transform
-                    let transformer_ret = Transformer::new(
-                        &allocator,
-                        Path::new(&file.file_name),
-                        &transform_options,
-                    )
-                    .build_with_scoping(scoping, &mut program);
-                    let scoping = transformer_ret.scoping;
-
-                    // Define - replace global constants
-                    let define_ret = ReplaceGlobalDefines::new(&allocator, define_config)
-                        .build(scoping, &mut program);
-                    let scoping = define_ret.scoping;
-
-                    // Inject - inject global variable imports
-                    let inject_ret = InjectGlobalVariables::new(&allocator, inject_config)
-                        .build(scoping, &mut program);
-                    let _scoping = inject_ret.scoping;
-
-                    // Compress (minify) - rebuilds semantic internally
-                    Compressor::new(&allocator).build(&mut program, compress_options);
-
-                    // Mangle - rebuilds semantic internally
-                    let mangler_ret = Mangler::new().with_options(mangle_options).build(&program);
-
-                    // Codegen
-                    Codegen::new()
-                        .with_options(codegen_options)
-                        .with_scoping(Some(mangler_ret.scoping))
-                        .with_private_member_mappings(Some(mangler_ret.class_private_mappings))
-                        .build(&program)
+                    compiler.compile(source_text, source_type, source_path);
                 });
             });
         });
