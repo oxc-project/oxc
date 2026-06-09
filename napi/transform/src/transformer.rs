@@ -143,7 +143,6 @@ pub struct TransformOptions {
     // are declared here: React Compiler -> Inject -> Define. The main transform
     // (configured by the options above) runs after React Compiler but before
     // Inject and Define.
-
     /// Enable the experimental [React Compiler](https://github.com/facebook/react/pull/36173).
     ///
     /// `true` enables it with default options; an object enables it with the
