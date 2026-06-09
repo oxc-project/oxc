@@ -225,6 +225,7 @@ export type LibFrom = "lib";
 export type PackageFrom = "package";
 export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-correctness-only" | "never";
 export type BomOptionType = "always" | "never";
+export type NonZero = "greater-than" | "not-equal";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
 export type SwitchCaseBracesConfig = "always" | "avoid";
@@ -1385,7 +1386,7 @@ export interface DummyRuleMap {
   "unicorn/empty-brace-spaces"?: RuleNoConfig;
   "unicorn/error-message"?: RuleNoConfig;
   "unicorn/escape-case"?: RuleNoConfig;
-  "unicorn/explicit-length-check"?: DummyRule;
+  "unicorn/explicit-length-check"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExplicitLengthCheck];
   "unicorn/filename-case"?: DummyRule;
   "unicorn/import-style"?: DummyRule;
   "unicorn/new-for-builtins"?: RuleNoConfig;
@@ -4910,6 +4911,12 @@ export interface ConsistentFunctionScoping {
    * Whether to check scoping with arrow functions.
    */
   checkArrowFunctions?: boolean;
+}
+export interface ExplicitLengthCheck {
+  /**
+   * Configuration option to specify how non-zero length checks should be enforced.
+   */
+  "non-zero"?: NonZero;
 }
 export interface NoArrayReduce {
   /**

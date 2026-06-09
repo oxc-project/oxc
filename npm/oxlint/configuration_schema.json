@@ -6595,7 +6595,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/explicit-length-check": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExplicitLengthCheck"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/filename-case": {
           "$ref": "#/definitions/DummyRule"
@@ -8041,6 +8058,22 @@
           },
           "uniqueItems": true,
           "markdownDescription": "Array of function names that are exempt from requiring return type annotations."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExplicitLengthCheck": {
+      "type": "object",
+      "properties": {
+        "non-zero": {
+          "description": "Configuration option to specify how non-zero length checks should be enforced.",
+          "default": "greater-than",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NonZero"
+            }
+          ],
+          "markdownDescription": "Configuration option to specify how non-zero length checks should be enforced."
         }
       },
       "additionalProperties": false
@@ -11817,6 +11850,26 @@
       "type": "string",
       "enum": [
         "nofunc"
+      ]
+    },
+    "NonZero": {
+      "oneOf": [
+        {
+          "description": "Enforces non-zero to be checked with `foo.length > 0`.",
+          "type": "string",
+          "enum": [
+            "greater-than"
+          ],
+          "markdownDescription": "Enforces non-zero to be checked with `foo.length > 0`."
+        },
+        {
+          "description": "Enforces non-zero to be checked with `foo.length !== 0`.",
+          "type": "string",
+          "enum": [
+            "not-equal"
+          ],
+          "markdownDescription": "Enforces non-zero to be checked with `foo.length !== 0`."
+        }
       ]
     },
     "NullType": {
