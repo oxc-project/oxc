@@ -2451,7 +2451,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/require-top-level-describe": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireTopLevelDescribeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/valid-describe-callback": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7723,7 +7740,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/require-top-level-describe": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireTopLevelDescribeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/valid-describe-callback": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -13290,6 +13324,20 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to require a `@returns` tag for async functions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireTopLevelDescribeConfig": {
+      "type": "object",
+      "properties": {
+        "maxNumberOfTopLevelDescribes": {
+          "description": "The maximum number of top-level `describe` blocks allowed in a test file.",
+          "default": 18446744073709551615,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "The maximum number of top-level `describe` blocks allowed in a test file."
         }
       },
       "additionalProperties": false

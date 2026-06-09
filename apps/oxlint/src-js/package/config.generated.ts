@@ -834,7 +834,7 @@ export interface DummyRuleMap {
   "jest/prefer-todo"?: RuleNoConfig;
   "jest/require-hook"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireHookConfig];
   "jest/require-to-throw-message"?: RuleNoConfig;
-  "jest/require-top-level-describe"?: DummyRule;
+  "jest/require-top-level-describe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireTopLevelDescribeConfig];
   "jest/valid-describe-callback"?: RuleNoConfig;
   "jest/valid-expect"?: DummyRule;
   "jest/valid-expect-in-promise"?: RuleNoConfig;
@@ -1588,7 +1588,10 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, RequireMockTypeParametersConfig];
   "vitest/require-test-timeout"?: RuleNoConfig;
   "vitest/require-to-throw-message"?: RuleNoConfig;
-  "vitest/require-top-level-describe"?: DummyRule;
+  "vitest/require-top-level-describe"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, RequireTopLevelDescribeConfig];
   "vitest/valid-describe-callback"?: RuleNoConfig;
   "vitest/valid-expect"?: DummyRule;
   "vitest/valid-expect-in-promise"?: RuleNoConfig;
@@ -2244,6 +2247,12 @@ export interface RequireHookConfig {
    * An array of function names that are allowed to be called outside of hooks.
    */
   allowedFunctionCalls?: string[];
+}
+export interface RequireTopLevelDescribeConfig {
+  /**
+   * The maximum number of top-level `describe` blocks allowed in a test file.
+   */
+  maxNumberOfTopLevelDescribes?: number;
 }
 export interface CheckTagNamesConfig {
   /**
