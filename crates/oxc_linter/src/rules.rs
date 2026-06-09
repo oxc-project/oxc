@@ -871,6 +871,7 @@ pub(crate) mod vue {
     pub mod no_reserved_keys;
     pub mod no_reserved_props;
     pub mod no_shared_component_data;
+    pub mod no_side_effects_in_computed_properties;
     pub mod no_this_in_before_route_enter;
     pub mod no_watch_after_await;
     pub mod prefer_import_from_vue;

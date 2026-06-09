@@ -821,6 +821,7 @@ pub use crate::rules::vue::no_reserved_component_names::NoReservedComponentNames
 pub use crate::rules::vue::no_reserved_keys::NoReservedKeys as VueNoReservedKeys;
 pub use crate::rules::vue::no_reserved_props::NoReservedProps as VueNoReservedProps;
 pub use crate::rules::vue::no_shared_component_data::NoSharedComponentData as VueNoSharedComponentData;
+pub use crate::rules::vue::no_side_effects_in_computed_properties::NoSideEffectsInComputedProperties as VueNoSideEffectsInComputedProperties;
 pub use crate::rules::vue::no_this_in_before_route_enter::NoThisInBeforeRouteEnter as VueNoThisInBeforeRouteEnter;
 pub use crate::rules::vue::no_watch_after_await::NoWatchAfterAwait as VueNoWatchAfterAwait;
 pub use crate::rules::vue::prefer_import_from_vue::PreferImportFromVue as VuePreferImportFromVue;
@@ -1668,6 +1669,7 @@ pub enum RuleEnum {
     VueNoReservedKeys(VueNoReservedKeys),
     VueNoReservedProps(VueNoReservedProps),
     VueNoSharedComponentData(VueNoSharedComponentData),
+    VueNoSideEffectsInComputedProperties(VueNoSideEffectsInComputedProperties),
     VueNoThisInBeforeRouteEnter(VueNoThisInBeforeRouteEnter),
     VueNoWatchAfterAwait(VueNoWatchAfterAwait),
     VuePreferImportFromVue(VuePreferImportFromVue),
@@ -2602,7 +2604,10 @@ const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = VUE_NO_REQUIRED_PROP_WITH_DEFA
 const VUE_NO_RESERVED_KEYS_ID: usize = VUE_NO_RESERVED_COMPONENT_NAMES_ID + 1usize;
 const VUE_NO_RESERVED_PROPS_ID: usize = VUE_NO_RESERVED_KEYS_ID + 1usize;
 const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = VUE_NO_RESERVED_PROPS_ID + 1usize;
-const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = VUE_NO_SHARED_COMPONENT_DATA_ID + 1usize;
+const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize =
+    VUE_NO_SHARED_COMPONENT_DATA_ID + 1usize;
+const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize =
+    VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID + 1usize;
 const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID + 1usize;
 const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_NO_WATCH_AFTER_AWAIT_ID + 1usize;
 const VUE_PROP_NAME_CASING_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
@@ -3560,6 +3565,9 @@ impl RuleEnum {
             Self::VueNoReservedKeys(_) => VUE_NO_RESERVED_KEYS_ID,
             Self::VueNoReservedProps(_) => VUE_NO_RESERVED_PROPS_ID,
             Self::VueNoSharedComponentData(_) => VUE_NO_SHARED_COMPONENT_DATA_ID,
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID,
             Self::VueNoWatchAfterAwait(_) => VUE_NO_WATCH_AFTER_AWAIT_ID,
             Self::VuePreferImportFromVue(_) => VUE_PREFER_IMPORT_FROM_VUE_ID,
@@ -4503,6 +4511,9 @@ impl RuleEnum {
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::NAME,
             Self::VueNoReservedProps(_) => VueNoReservedProps::NAME,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::NAME,
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                VueNoSideEffectsInComputedProperties::NAME
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::NAME,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::NAME,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::NAME,
@@ -5504,6 +5515,9 @@ impl RuleEnum {
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::CATEGORY,
             Self::VueNoReservedProps(_) => VueNoReservedProps::CATEGORY,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::CATEGORY,
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                VueNoSideEffectsInComputedProperties::CATEGORY
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::CATEGORY,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::CATEGORY,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::CATEGORY,
@@ -6448,6 +6462,9 @@ impl RuleEnum {
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::FIX,
             Self::VueNoReservedProps(_) => VueNoReservedProps::FIX,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::FIX,
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                VueNoSideEffectsInComputedProperties::FIX
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::FIX,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::FIX,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FIX,
@@ -7652,6 +7669,9 @@ impl RuleEnum {
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::documentation(),
             Self::VueNoReservedProps(_) => VueNoReservedProps::documentation(),
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::documentation(),
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                VueNoSideEffectsInComputedProperties::documentation()
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::documentation(),
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::documentation(),
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::documentation(),
@@ -10011,6 +10031,10 @@ impl RuleEnum {
                 .or_else(|| VueNoReservedProps::schema(generator)),
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::config_schema(generator)
                 .or_else(|| VueNoSharedComponentData::schema(generator)),
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                VueNoSideEffectsInComputedProperties::config_schema(generator)
+                    .or_else(|| VueNoSideEffectsInComputedProperties::schema(generator))
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => {
                 VueNoThisInBeforeRouteEnter::config_schema(generator)
                     .or_else(|| VueNoThisInBeforeRouteEnter::schema(generator))
@@ -10872,6 +10896,7 @@ impl RuleEnum {
             Self::VueNoReservedKeys(_) => "vue",
             Self::VueNoReservedProps(_) => "vue",
             Self::VueNoSharedComponentData(_) => "vue",
+            Self::VueNoSideEffectsInComputedProperties(_) => "vue",
             Self::VueNoThisInBeforeRouteEnter(_) => "vue",
             Self::VueNoWatchAfterAwait(_) => "vue",
             Self::VuePreferImportFromVue(_) => "vue",
@@ -13512,6 +13537,11 @@ impl RuleEnum {
             Self::VueNoSharedComponentData(_) => Ok(Self::VueNoSharedComponentData(
                 VueNoSharedComponentData::from_configuration(value)?,
             )),
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                Ok(Self::VueNoSideEffectsInComputedProperties(
+                    VueNoSideEffectsInComputedProperties::from_configuration(value)?,
+                ))
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => Ok(Self::VueNoThisInBeforeRouteEnter(
                 VueNoThisInBeforeRouteEnter::from_configuration(value)?,
             )),
@@ -14385,6 +14415,7 @@ impl RuleEnum {
             Self::VueNoReservedKeys(rule) => rule.to_configuration(),
             Self::VueNoReservedProps(rule) => rule.to_configuration(),
             Self::VueNoSharedComponentData(rule) => rule.to_configuration(),
+            Self::VueNoSideEffectsInComputedProperties(rule) => rule.to_configuration(),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.to_configuration(),
             Self::VueNoWatchAfterAwait(rule) => rule.to_configuration(),
             Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
@@ -15228,6 +15259,7 @@ impl RuleEnum {
                 Self::VueNoReservedKeys(rule) => rule.run(node, ctx),
                 Self::VueNoReservedProps(rule) => rule.run(node, ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run(node, ctx),
+                Self::VueNoSideEffectsInComputedProperties(rule) => rule.run(node, ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run(node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run(node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
@@ -16064,6 +16096,7 @@ impl RuleEnum {
                 Self::VueNoReservedKeys(rule) => rule.run(node, ctx),
                 Self::VueNoReservedProps(rule) => rule.run(node, ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run(node, ctx),
+                Self::VueNoSideEffectsInComputedProperties(rule) => rule.run(node, ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run(node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run(node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
@@ -16907,6 +16940,7 @@ impl RuleEnum {
                 Self::VueNoReservedKeys(rule) => rule.run_once(ctx),
                 Self::VueNoReservedProps(rule) => rule.run_once(ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run_once(ctx),
+                Self::VueNoSideEffectsInComputedProperties(rule) => rule.run_once(ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_once(ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_once(ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
@@ -17743,6 +17777,7 @@ impl RuleEnum {
                 Self::VueNoReservedKeys(rule) => rule.run_once(ctx),
                 Self::VueNoReservedProps(rule) => rule.run_once(ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run_once(ctx),
+                Self::VueNoSideEffectsInComputedProperties(rule) => rule.run_once(ctx),
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_once(ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_once(ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
@@ -18843,6 +18878,9 @@ impl RuleEnum {
                 Self::VueNoReservedKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoReservedProps(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoSideEffectsInComputedProperties(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19935,6 +19973,9 @@ impl RuleEnum {
                 Self::VueNoReservedKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoReservedProps(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoSharedComponentData(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNoSideEffectsInComputedProperties(rule) => {
+                    rule.run_on_jest_node(jest_node, ctx)
+                }
                 Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoWatchAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20769,6 +20810,7 @@ impl RuleEnum {
             Self::VueNoReservedKeys(rule) => rule.should_run(ctx),
             Self::VueNoReservedProps(rule) => rule.should_run(ctx),
             Self::VueNoSharedComponentData(rule) => rule.should_run(ctx),
+            Self::VueNoSideEffectsInComputedProperties(rule) => rule.should_run(ctx),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.should_run(ctx),
             Self::VueNoWatchAfterAwait(rule) => rule.should_run(ctx),
             Self::VuePreferImportFromVue(rule) => rule.should_run(ctx),
@@ -21972,6 +22014,9 @@ impl RuleEnum {
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::IS_TSGOLINT_RULE,
             Self::VueNoReservedProps(_) => VueNoReservedProps::IS_TSGOLINT_RULE,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::IS_TSGOLINT_RULE,
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                VueNoSideEffectsInComputedProperties::IS_TSGOLINT_RULE
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::IS_TSGOLINT_RULE,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::IS_TSGOLINT_RULE,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
@@ -22977,6 +23022,9 @@ impl RuleEnum {
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::VERSION,
             Self::VueNoReservedProps(_) => VueNoReservedProps::VERSION,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::VERSION,
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                VueNoSideEffectsInComputedProperties::VERSION
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::VERSION,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::VERSION,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
@@ -24017,6 +24065,9 @@ impl RuleEnum {
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::HAS_CONFIG,
             Self::VueNoReservedProps(_) => VueNoReservedProps::HAS_CONFIG,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::HAS_CONFIG,
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                VueNoSideEffectsInComputedProperties::HAS_CONFIG
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::HAS_CONFIG,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::HAS_CONFIG,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
@@ -25800,6 +25851,7 @@ impl RuleEnum {
             Self::VueNoReservedKeys(rule) => rule.types_info(),
             Self::VueNoReservedProps(rule) => rule.types_info(),
             Self::VueNoSharedComponentData(rule) => rule.types_info(),
+            Self::VueNoSideEffectsInComputedProperties(rule) => rule.types_info(),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.types_info(),
             Self::VueNoWatchAfterAwait(rule) => rule.types_info(),
             Self::VuePreferImportFromVue(rule) => rule.types_info(),
@@ -26633,6 +26685,7 @@ impl RuleEnum {
             Self::VueNoReservedKeys(rule) => rule.run_info(),
             Self::VueNoReservedProps(rule) => rule.run_info(),
             Self::VueNoSharedComponentData(rule) => rule.run_info(),
+            Self::VueNoSideEffectsInComputedProperties(rule) => rule.run_info(),
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_info(),
             Self::VueNoWatchAfterAwait(rule) => rule.run_info(),
             Self::VuePreferImportFromVue(rule) => rule.run_info(),
@@ -27598,6 +27651,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueNoReservedKeys(VueNoReservedKeys::default()),
         RuleEnum::VueNoReservedProps(VueNoReservedProps::default()),
         RuleEnum::VueNoSharedComponentData(VueNoSharedComponentData::default()),
+        RuleEnum::VueNoSideEffectsInComputedProperties(
+            VueNoSideEffectsInComputedProperties::default(),
+        ),
         RuleEnum::VueNoThisInBeforeRouteEnter(VueNoThisInBeforeRouteEnter::default()),
         RuleEnum::VueNoWatchAfterAwait(VueNoWatchAfterAwait::default()),
         RuleEnum::VuePreferImportFromVue(VuePreferImportFromVue::default()),
