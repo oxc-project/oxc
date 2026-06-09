@@ -1111,7 +1111,7 @@ fn is_stable_value<'a, 'b>(
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
             if declaration.kind == VariableDeclarationKind::Const
                 && (matches!(
-                    init,
+                    init.get_inner_expression(),
                     Expression::BooleanLiteral(_)
                         | Expression::NullLiteral(_)
                         | Expression::NumericLiteral(_)
@@ -2840,6 +2840,11 @@ export const useTest = () => {
 
     console.log(state);
 }"#,
+        r"const Component = () => {
+  const DATA = 'test' as const;
+  const data = useMemo(() => DATA, []);
+  return <div>{data}</div>;
+};",
     ];
 
     let fail = vec![
