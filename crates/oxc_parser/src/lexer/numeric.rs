@@ -2,7 +2,7 @@ use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
-use super::{Kind, Lexer, Span};
+use super::{Kind, Lexer, Span, cold_branch};
 
 impl<C: Config> Lexer<'_, C> {
     /// 12.9.3 Numeric Literals with `0` prefix
@@ -222,18 +222,22 @@ impl<C: Config> Lexer<'_, C> {
             None => return kind,
         }
 
-        // Invalid next char
-        let offset = self.offset();
-        self.consume_char();
-        while let Some(c) = self.peek_char() {
-            if is_identifier_start(c) {
-                self.consume_char();
-            } else {
-                break;
+        // Invalid next char (identifier/digit immediately after a number). This is invalid JS,
+        // so a cold path: building the diagnostic out-of-line keeps the `OxcDiagnostic` return
+        // buffer out of this function's stack frame, so the common (valid) return is near-leaf.
+        cold_branch(|| {
+            let offset = self.offset();
+            self.consume_char();
+            while let Some(c) = self.peek_char() {
+                if is_identifier_start(c) {
+                    self.consume_char();
+                } else {
+                    break;
+                }
             }
-        }
-        self.error(diagnostics::invalid_number_end(Span::new(offset, self.offset())));
-        self.advance_to_end();
-        Kind::Eof
+            self.error(diagnostics::invalid_number_end(Span::new(offset, self.offset())));
+            self.advance_to_end();
+            Kind::Eof
+        })
     }
 }
