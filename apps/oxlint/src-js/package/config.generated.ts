@@ -810,7 +810,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, PreferEndingWithAnExpectConfig];
   "jest/prefer-equality-matcher"?: RuleNoConfig;
-  "jest/prefer-expect-assertions"?: DummyRule;
+  "jest/prefer-expect-assertions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferExpectAssertionsConfig];
   "jest/prefer-expect-resolves"?: RuleNoConfig;
   "jest/prefer-hooks-in-order"?: RuleNoConfig;
   "jest/prefer-hooks-on-top"?: RuleNoConfig;
@@ -1556,7 +1556,7 @@ export interface DummyRuleMap {
   "vitest/prefer-describe-function-title"?: RuleNoConfig;
   "vitest/prefer-each"?: RuleNoConfig;
   "vitest/prefer-equality-matcher"?: RuleNoConfig;
-  "vitest/prefer-expect-assertions"?: DummyRule;
+  "vitest/prefer-expect-assertions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferExpectAssertionsConfig];
   "vitest/prefer-expect-resolves"?: RuleNoConfig;
   "vitest/prefer-expect-type-of"?: RuleNoConfig;
   "vitest/prefer-hooks-in-order"?: RuleNoConfig;
@@ -2226,6 +2226,11 @@ export interface PreferEndingWithAnExpectConfig {
    * A list of function names that should be treated as assertion functions.
    */
   assertFunctionNames?: string[];
+}
+export interface PreferExpectAssertionsConfig {
+  onlyFunctionsWithAsyncKeyword?: boolean;
+  onlyFunctionsWithExpectInCallback?: boolean;
+  onlyFunctionsWithExpectInLoop?: boolean;
 }
 export interface PreferImportingJestGlobalsConfig {
   /**

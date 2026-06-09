@@ -2323,7 +2323,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/prefer-expect-assertions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferExpectAssertionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/prefer-expect-resolves": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7537,7 +7554,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/prefer-expect-assertions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferExpectAssertionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/prefer-expect-resolves": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -12671,6 +12705,24 @@
             "type": "string"
           },
           "markdownDescription": "A list of function names that should be treated as assertion functions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferExpectAssertionsConfig": {
+      "type": "object",
+      "properties": {
+        "onlyFunctionsWithAsyncKeyword": {
+          "default": false,
+          "type": "boolean"
+        },
+        "onlyFunctionsWithExpectInCallback": {
+          "default": false,
+          "type": "boolean"
+        },
+        "onlyFunctionsWithExpectInLoop": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "additionalProperties": false
