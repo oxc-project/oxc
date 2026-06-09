@@ -787,7 +787,7 @@ export interface DummyRuleMap {
   "jest/no-duplicate-hooks"?: RuleNoConfig;
   "jest/no-export"?: RuleNoConfig;
   "jest/no-focused-tests"?: RuleNoConfig;
-  "jest/no-hooks"?: DummyRule;
+  "jest/no-hooks"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoHooksConfig];
   "jest/no-identical-title"?: RuleNoConfig;
   "jest/no-interpolation-in-snapshots"?: RuleNoConfig;
   "jest/no-jasmine-globals"?: RuleNoConfig;
@@ -1531,7 +1531,7 @@ export interface DummyRuleMap {
   "vitest/no-disabled-tests"?: RuleNoConfig;
   "vitest/no-duplicate-hooks"?: RuleNoConfig;
   "vitest/no-focused-tests"?: RuleNoConfig;
-  "vitest/no-hooks"?: DummyRule;
+  "vitest/no-hooks"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoHooksConfig];
   "vitest/no-identical-title"?: RuleNoConfig;
   "vitest/no-import-node-test"?: RuleNoConfig;
   "vitest/no-importing-vitest-globals"?: RuleNoConfig;
@@ -2184,6 +2184,12 @@ export interface JestConfigJson {
    * The version of Jest being used.
    */
   version?: string;
+}
+export interface NoHooksConfig {
+  /**
+   * An array of hook function names that are permitted for use.
+   */
+  allow?: string[];
 }
 export interface PreferImportingJestGlobalsConfig {
   /**

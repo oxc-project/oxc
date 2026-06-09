@@ -2195,7 +2195,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/no-hooks": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoHooksConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-identical-title": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7352,7 +7369,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/no-hooks": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoHooksConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-identical-title": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10339,6 +10373,21 @@
             "type": "string"
           },
           "markdownDescription": "List of global variable names to exclude from this rule.\nGlobals listed here can be assigned to without triggering warnings."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoHooksConfig": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "An array of hook function names that are permitted for use.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of hook function names that are permitted for use."
         }
       },
       "additionalProperties": false
