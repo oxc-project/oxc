@@ -385,7 +385,13 @@ impl<'a> PeepholeOptimizations {
         e.expressions.retain_mut(|e| {
             i += 1;
             if should_keep_as_sequence_expr && i == old_len - 1 {
-                if Self::remove_unused_expression(e, ctx) {
+                // Idempotency: skip the rewrite when `e` is already the canonical
+                // `0` placeholder. Without this gate the re-wrap re-bumps the
+                // mutation counter every iteration (mirrors the `len == 2` guard
+                // above), spinning the fixed-point loop. `0` is side-effect-free,
+                // so `remove_unused_expression` would return `true` and produce a
+                // structurally-identical fresh `0`.
+                if !e.is_number_0() && Self::remove_unused_expression(e, ctx) {
                     let new_expr = ctx.ast.expression_numeric_literal(
                         e.span(),
                         0.0,

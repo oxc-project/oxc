@@ -197,6 +197,13 @@ fn remove_unused_expressions_in_sequence() {
     test("var foo; (true, foo.bar)();", "var foo; (0, foo.bar)();");
     test("var foo; (true, true, foo.bar)();", "var foo; (0, foo.bar)();");
 
+    // Regression: a >=3 element sequence in indirect-access position whose
+    // second-to-last element is already `0` must converge. Re-wrapping the
+    // already-`0` element bumps the mutation counter every iteration, spinning
+    // the fixed-point loop into the 10-iteration debug_assert.
+    test_same("(sideEffect(), 0, foo.bar)();");
+    test_same("delete (sideEffect(), 0, foo.bar);");
+
     test("typeof (0, foo);", "foo");
     test_same("v = typeof (0, foo);");
     test("var foo; typeof (0, foo);", "var foo;");
