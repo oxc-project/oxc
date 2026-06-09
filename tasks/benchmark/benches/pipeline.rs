@@ -40,14 +40,15 @@ fn bench_pipeline(criterion: &mut Criterion) {
                 let compress_options = CompressOptions::smallest();
                 let mangle_options = MangleOptions::default();
                 let codegen_options = CodegenOptions::default();
-                let define_config = ReplaceGlobalDefinesConfig::new(&[(
-                    "process.env.NODE_ENV",
-                    "'production'",
-                )])
-                .unwrap();
-                let inject_config = InjectGlobalVariablesConfig::new(vec![
-                    InjectImport::named_specifier("node:buffer", Some("Buffer"), "Buffer"),
-                ]);
+                let define_config =
+                    ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'production'")])
+                        .unwrap();
+                let inject_config =
+                    InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
+                        "node:buffer",
+                        Some("Buffer"),
+                        "Buffer",
+                    )]);
 
                 runner.run(|| {
                     // Parse
