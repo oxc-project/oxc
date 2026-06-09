@@ -287,8 +287,8 @@ fn find_mutation_span(start_node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option
                 current = parent;
             }
 
-            // ChainExpression is transparent (optional chaining wrapper)
-            AstKind::ChainExpression(_) => {
+            // ChainExpression and ParenthesizedExpression are transparent wrappers
+            AstKind::ChainExpression(_) | AstKind::ParenthesizedExpression(_) => {
                 current = parent;
             }
 
@@ -312,9 +312,7 @@ fn find_mutation_span(start_node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option
 
             // Call expression — check if we are the callee
             AstKind::CallExpression(call) if call.callee.span() == current.span() => {
-                if last_static_name
-                    .as_deref()
-                    .is_some_and(|name| MUTATING_METHODS.contains(&name))
+                if last_static_name.as_deref().is_some_and(|name| MUTATING_METHODS.contains(&name))
                 {
                     return Some(call.span());
                 }

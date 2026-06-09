@@ -122,6 +122,22 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       },
    ╰────
 
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "test2" computed property.
+   ╭─[no_side_effects_in_computed_properties.tsx:7:32]
+ 6 │                       test2() {
+ 7 │                         return (this?.something)?.reverse?.()
+   ·                                ──────────────────────────────
+ 8 │                       },
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "test3" computed property.
+    ╭─[no_side_effects_in_computed_properties.tsx:10:32]
+  9 │                       test3() {
+ 10 │                         return (this?.something?.reverse)?.()
+    ·                                ──────────────────────────────
+ 11 │                       },
+    ╰────
+
   ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "fooBar" computed property.
    ╭─[no_side_effects_in_computed_properties.tsx:4:30]
  3 │                       fooBar() {
