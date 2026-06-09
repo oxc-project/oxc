@@ -181,20 +181,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts
 
   × TS(1264): Declarations with definite assignment assertions must also have type annotations.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts:5:3]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts:5:5]
  4 │   #c?: number;
  5 │   #d!;
-   ·   ────
+   ·     ─
  6 │   #e!: boolean;
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
 
   × TS(1264): Declarations with definite assignment assertions must also have type annotations.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:6:5]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:6:6]
  5 │     x: number = 1;
  6 │     x!;
-   ·     ───
+   ·      ─
  7 │     x!: number;
    ╰────
 

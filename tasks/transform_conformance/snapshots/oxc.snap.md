@@ -144,20 +144,20 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
   x TS(1263): Declarations with initializers cannot also have definite
   | assignment assertions.
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/declare-and-definite-with-initializer/input.ts:8:4]
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/declare-and-definite-with-initializer/input.ts:8:16]
  7 | class DefiniteExample {
  8 |    readonly bar! = "test";
-   :    ^^^^^^^^^^^^^^^^^^^^^^^
+   :                ^
  9 |    readonly foo! = 1;
    `----
 
 
   x TS(1263): Declarations with initializers cannot also have definite
   | assignment assertions.
-    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/declare-and-definite-with-initializer/input.ts:9:4]
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/declare-and-definite-with-initializer/input.ts:9:16]
   8 |    readonly bar! = "test";
   9 |    readonly foo! = 1;
-    :    ^^^^^^^^^^^^^^^^^^
+    :                ^
  10 | }
     `----
 

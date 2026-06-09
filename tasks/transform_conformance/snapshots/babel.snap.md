@@ -1171,10 +1171,10 @@ x Output mismatch
 
   x TS(1264): Declarations with definite assignment assertions must also have
   | type annotations.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/uninitialized-definite/input.ts:2:3]
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/uninitialized-definite/input.ts:2:4]
  1 | class A {
  2 |   x!;
-   :   ^^^
+   :    ^
  3 | }
    `----
 
