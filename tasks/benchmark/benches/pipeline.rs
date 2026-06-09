@@ -14,37 +14,37 @@ use oxc_tasks_common::TestFiles;
 /// A [`CompilerInterface`] that runs the complete compilation pipeline:
 /// parse -> semantic -> transform -> define -> inject -> minify -> mangle -> codegen.
 struct PipelineCompiler {
-    transform_options: TransformOptions,
-    define_options: ReplaceGlobalDefinesConfig,
-    inject_options: InjectGlobalVariablesConfig,
-    compress_options: CompressOptions,
-    mangle_options: MangleOptions,
-    codegen_options: CodegenOptions,
+    transform: TransformOptions,
+    define: ReplaceGlobalDefinesConfig,
+    inject: InjectGlobalVariablesConfig,
+    compress: CompressOptions,
+    mangle: MangleOptions,
+    codegen: CodegenOptions,
 }
 
 impl CompilerInterface for PipelineCompiler {
     fn transform_options(&self) -> Option<&TransformOptions> {
-        Some(&self.transform_options)
+        Some(&self.transform)
     }
 
     fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
-        Some(self.define_options.clone())
+        Some(self.define.clone())
     }
 
     fn inject_options(&self) -> Option<InjectGlobalVariablesConfig> {
-        Some(self.inject_options.clone())
+        Some(self.inject.clone())
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {
-        Some(self.compress_options.clone())
+        Some(self.compress.clone())
     }
 
     fn mangle_options(&self) -> Option<MangleOptions> {
-        Some(self.mangle_options)
+        Some(self.mangle)
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
-        Some(self.codegen_options.clone())
+        Some(self.codegen.clone())
     }
 
     fn check_semantic_error(&self) -> bool {
@@ -63,21 +63,19 @@ fn bench_pipeline(criterion: &mut Criterion) {
 
         // `compile` creates its own `Allocator` and keeps no state between runs,
         // so the compiler and its options can be built once and reused.
-        let mut compiler =
-            PipelineCompiler {
-                transform_options: TransformOptions::from_target("esnext").unwrap(),
-                define_options: ReplaceGlobalDefinesConfig::new(&[(
-                    "process.env.NODE_ENV",
-                    "'production'",
-                )])
+        let mut compiler = PipelineCompiler {
+            transform: TransformOptions::from_target("esnext").unwrap(),
+            define: ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'production'")])
                 .unwrap(),
-                inject_options: InjectGlobalVariablesConfig::new(vec![
-                    InjectImport::named_specifier("node:buffer", Some("Buffer"), "Buffer"),
-                ]),
-                compress_options: CompressOptions::smallest(),
-                mangle_options: MangleOptions::default(),
-                codegen_options: CodegenOptions::default(),
-            };
+            inject: InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
+                "node:buffer",
+                Some("Buffer"),
+                "Buffer",
+            )]),
+            compress: CompressOptions::smallest(),
+            mangle: MangleOptions::default(),
+            codegen: CodegenOptions::default(),
+        };
 
         group.bench_function(id, |b| {
             b.iter(|| {
