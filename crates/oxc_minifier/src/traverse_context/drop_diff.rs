@@ -84,24 +84,27 @@ impl<'a, 's> DropDiff<'a, 's> {
     /// no-op and can be skipped.
     ///
     /// `resurrect_*` exists to UN-mark resolved references that `walk_old_*`
-    /// marked dead but which actually survive inside the replacement value
-    /// (the only way a reference can be in both the old subtree and the new
-    /// value is `clone_in_with_semantic_ids`, which preserves the
-    /// `ReferenceId` — see `substitute_alternate_syntax.rs`). If `walk_old_*`
-    /// marked nothing this call (`!marked`), there is no bit for this call's
-    /// resurrect to clear, so walking the (often large, moved-in) replacement
-    /// subtree only re-confirms already-clear bits.
+    /// marked dead but which actually survive inside the replacement value. The
+    /// only way a `ReferenceId` can be in both the old subtree and the new value
+    /// is an id-preserving copy. There are exactly two such sites in the
+    /// minifier, both in `substitute_alternate_syntax.rs` and both landing within
+    /// a single `replace_expression` call: `clone_in_with_semantic_ids` (the
+    /// `typeof` operand clone) and `expression_identifier_with_reference_id`
+    /// (reusing the null operand's `ReferenceId`).
+    /// If `walk_old_*` marked nothing this call (`!marked`), there is no bit for
+    /// this call's resurrect to clear, so walking the (often large, moved-in)
+    /// replacement subtree only re-confirms already-clear bits.
     ///
     /// Safety: this relies on the same no-cross-call-aliasing invariant the
     /// whole incremental refresh already depends on — a `ReferenceId` is never
     /// simultaneously in a subtree dropped by one helper call and the
-    /// replacement value of a *different* call. Cloning (the only id-aliasing
-    /// site) drops the original and installs the clone within a single
-    /// `replace_*` call, so the surviving clone is always un-marked by THIS
-    /// call's resurrect (where `marked` is `true`). If a future pass ever splits
-    /// an aliased id across two helper calls, this skip would leave a live
-    /// reference pruned — verified absent by `cargo coverage -- minifier` (no
-    /// output diff) and a debug over-prune assertion during review.
+    /// replacement value of a *different* call. Both id-preserving sites above
+    /// drop the original and install the copy within a single `replace_*` call,
+    /// so the survivor is always un-marked by THIS call's resurrect (where
+    /// `marked` is `true`). If a future pass ever splits an aliased id across two
+    /// helper calls, this skip would leave a live reference pruned — verified
+    /// absent by `cargo coverage -- minifier` (no output diff) and the debug
+    /// over-prune assertion (`debug_assert_no_over_prune`).
     #[inline]
     fn resurrect_is_noop(&self) -> bool {
         !self.marked
