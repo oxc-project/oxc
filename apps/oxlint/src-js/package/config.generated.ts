@@ -805,7 +805,10 @@ export interface DummyRuleMap {
   "jest/prefer-called-with"?: RuleNoConfig;
   "jest/prefer-comparison-matcher"?: RuleNoConfig;
   "jest/prefer-each"?: RuleNoConfig;
-  "jest/prefer-ending-with-an-expect"?: DummyRule;
+  "jest/prefer-ending-with-an-expect"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, PreferEndingWithAnExpectConfig];
   "jest/prefer-equality-matcher"?: RuleNoConfig;
   "jest/prefer-expect-assertions"?: DummyRule;
   "jest/prefer-expect-resolves"?: RuleNoConfig;
@@ -2213,6 +2216,16 @@ export interface NoStandaloneExpectConfig {
    * An array of function names that should also be treated as test blocks.
    */
   additionalTestBlockFunctions?: string[];
+}
+export interface PreferEndingWithAnExpectConfig {
+  /**
+   * An array of function names that should also be treated as test blocks.
+   */
+  additionalTestBlockFunctions?: string[];
+  /**
+   * A list of function names that should be treated as assertion functions.
+   */
+  assertFunctionNames?: string[];
 }
 export interface PreferImportingJestGlobalsConfig {
   /**

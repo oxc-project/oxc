@@ -2300,7 +2300,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/prefer-ending-with-an-expect": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferEndingWithAnExpectConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/prefer-equality-matcher": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -12628,6 +12645,32 @@
             }
           ],
           "markdownDescription": "Configuration option to specify the target type for preferring default exports."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferEndingWithAnExpectConfig": {
+      "type": "object",
+      "properties": {
+        "additionalTestBlockFunctions": {
+          "description": "An array of function names that should also be treated as test blocks.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of function names that should also be treated as test blocks."
+        },
+        "assertFunctionNames": {
+          "description": "A list of function names that should be treated as assertion functions.",
+          "default": [
+            "expect"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of function names that should be treated as assertion functions."
         }
       },
       "additionalProperties": false
