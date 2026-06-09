@@ -856,7 +856,11 @@ impl ExhaustiveDeps {
 fn get_node_name_without_react_namespace<'a>(expr: &Expression<'a>) -> Option<&'a str> {
     match expr {
         Expression::StaticMemberExpression(member) => {
-            if let Expression::Identifier(_ident) = &member.object {
+            if member
+                .object
+                .get_identifier_reference()
+                .is_some_and(|reference| reference.name == "React")
+            {
                 return Some(member.property.name.as_str());
             }
             None
@@ -2844,6 +2848,15 @@ export const useTest = () => {
   const DATA = 'test' as const;
   const data = useMemo(() => DATA, []);
   return <div>{data}</div>;
+};",
+        "const ReactActual = jest.requireActual('react');
+const Component = ({ filter }) => {
+    const [data, setData] = ReactActual.useState(filter);
+    ReactActual.useEffect(() => {
+        setData(filter);
+    }, [filter]);
+
+    return <div>test</div>;
 };",
     ];
 
