@@ -709,10 +709,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 initializer.span(),
             ));
         }
-        if definite && (self.ctx.has_ambient() || r#abstract) {
-            self.error(diagnostics::definite_assignment_assertion_not_permitted(
-                self.end_span(span),
-            ));
+        if definite {
+            if initializer.is_some() {
+                self.error(diagnostics::variable_declarator_definite(self.end_span(span)));
+            } else if self.ctx.has_ambient() || r#abstract {
+                self.error(diagnostics::definite_assignment_assertion_not_permitted(
+                    self.end_span(span),
+                ));
+            }
         }
         self.ast.class_element_property_definition(
             self.end_span(span),

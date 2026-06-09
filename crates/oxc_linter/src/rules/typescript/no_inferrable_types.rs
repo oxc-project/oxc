@@ -520,7 +520,7 @@ fn test() {
         (
             "
             class A {
-              a!: number = 1;
+              a: number = 1;
             }
                   ",
             Some(serde_json::json!([ { "ignoreProperties": false, }, ])),
@@ -604,7 +604,7 @@ fn test() {
         (
             "
             class A {
-              a!: number = 1;
+              a: number = 1;
             }
                   ",
             "

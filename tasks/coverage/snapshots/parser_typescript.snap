@@ -17821,6 +17821,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Only 'readonly' modifier is allowed here.
 
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:20:5]
+ 19 │ class C3 {
+ 20 │     a! = 1;
+    ·     ───────
+ 21 │     b!: number = 1;
+    ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:21:5]
+ 20 │     a! = 1;
+ 21 │     b!: number = 1;
+    ·     ───────────────
+ 22 │     static c!: number;
+    ╰────
+
   × TS(1255): A definite assignment assertion '!' is not permitted in this context.
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:29:5]
  28 │ declare class C4 {

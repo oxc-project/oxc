@@ -1,6 +1,6 @@
 commit: 2688fbd1
 
-Passed: 237/395
+Passed: 236/395
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -63,7 +63,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (24/60)
+# babel-plugin-transform-typescript (23/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -139,6 +139,28 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Phase":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+* declare-and-definite-with-initializer/input.ts
+
+  x TS(1263): Declarations with initializers cannot also have definite
+  | assignment assertions.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/declare-and-definite-with-initializer/input.ts:8:4]
+ 7 | class DefiniteExample {
+ 8 |    readonly bar! = "test";
+   :    ^^^^^^^^^^^^^^^^^^^^^^^
+ 9 |    readonly foo! = 1;
+   `----
+
+
+  x TS(1263): Declarations with initializers cannot also have definite
+  | assignment assertions.
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/declare-and-definite-with-initializer/input.ts:9:4]
+  8 |    readonly bar! = "test";
+  9 |    readonly foo! = 1;
+    :    ^^^^^^^^^^^^^^^^^^
+ 10 | }
+    `----
+
 
 * elimination-declare/input.ts
 Bindings mismatch:
