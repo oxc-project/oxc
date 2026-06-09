@@ -197,6 +197,7 @@
       "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Languages: Vue\n- Default: `false`"
     }
   },
+  "additionalProperties": false,
   "allowComments": true,
   "allowTrailingCommas": true,
   "definitions": {
@@ -238,7 +239,8 @@
           "type": "string",
           "markdownDescription": "Selector to match the import kind.\n\nPossible values: `\"type\"`, `\"side_effect_style\"`, `\"side_effect\"`, `\"style\"`, `\"index\"`,\n`\"sibling\"`, `\"parent\"`, `\"subpath\"`, `\"internal\"`, `\"builtin\"`, `\"external\"`, `\"import\"`"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "EmbeddedLanguageFormattingConfig": {
       "type": "string",
@@ -434,7 +436,8 @@
           "type": "boolean",
           "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Languages: Vue\n- Default: `false`"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "GlobSet": {
       "description": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory.",
@@ -510,7 +513,8 @@
           "type": "boolean",
           "markdownDescription": "Add blank lines between different tag groups (e.g. between `@param` and `@returns`).\n\n- Default: `false`"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "JsdocUserConfig": {
       "anyOf": [
@@ -533,6 +537,7 @@
           "type": "boolean"
         }
       },
+      "additionalProperties": false,
       "markdownDescription": "A marker object for overriding `newlinesBetween` at a specific group boundary."
     },
     "ObjectWrapConfig": {
@@ -576,7 +581,8 @@
           ],
           "markdownDescription": "Format options to apply for matched files."
         }
-      }
+      },
+      "additionalProperties": false
     },
     "ProseWrapConfig": {
       "type": "string",
@@ -681,7 +687,8 @@
           "type": "boolean",
           "markdownDescription": "Specifies whether side effect imports should be sorted.\n\nBy default, sorting side-effect imports is disabled for security reasons.\n\n- Default: `false`"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "SortImportsUserConfig": {
       "anyOf": [
@@ -708,7 +715,8 @@
           "type": "boolean",
           "markdownDescription": "Sort the `scripts` field alphabetically.\n\n- Default: `false`"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "SortPackageJsonUserConfig": {
       "anyOf": [
@@ -759,7 +767,8 @@
           "type": "string",
           "markdownDescription": "Path to your Tailwind CSS stylesheet (v4).\n\nNOTE: Paths are resolved relative to the Oxfmt configuration file.\n\n- Default: Installed Tailwind CSS's `theme.css`"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "SortTailwindcssUserConfig": {
       "anyOf": [
@@ -789,7 +798,8 @@
           "type": "string",
           "markdownDescription": "The order in which Svelte component sections are printed.\nFormat: join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want;\nor `none` if you don't want to reorder anything.\n\n- Default: `\"options-scripts-markup-styles\"`"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "SvelteUserConfig": {
       "anyOf": [

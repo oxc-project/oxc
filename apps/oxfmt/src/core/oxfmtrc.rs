@@ -13,7 +13,7 @@ use crate::core::utils;
 /// Most options are the same as Prettier's options, but not all of them.
 /// In addition, some options are our own extensions.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct Oxfmtrc {
     #[serde(flatten)]
     pub format_config: FormatConfig,
@@ -34,7 +34,7 @@ pub struct Oxfmtrc {
 // ---
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct OxfmtOverrideConfig {
     /// Glob patterns to match files for this override.
     pub files: GlobSet,
@@ -50,7 +50,7 @@ pub struct OxfmtOverrideConfig {
 
 // NOTE: All fields are typed as `Option` to distinguish between user-specified values and defaults.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct FormatConfig {
     // ============================================================================================
     // Prettier compatible options, also used by `oxc_formatter` and TOML formatter
@@ -440,7 +440,7 @@ impl SortImportsUserConfig {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SortImportsConfig {
     /// Enables the empty line to separate imports into logical groups.
     ///
@@ -591,7 +591,7 @@ pub enum SortGroupItemConfig {
 
 /// A marker object for overriding `newlinesBetween` at a specific group boundary.
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NewlinesBetweenMarker {
     pub newlines_between: bool,
 }
@@ -609,7 +609,7 @@ impl SortGroupItemConfig {
 }
 
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CustomGroupItemConfig {
     /// Name of the custom group, used in the `groups` option.
     pub group_name: String,
@@ -655,7 +655,7 @@ impl SortPackageJsonUserConfig {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SortPackageJsonConfig {
     /// Sort the `scripts` field alphabetically.
     ///
@@ -684,7 +684,7 @@ impl SortTailwindcssUserConfig {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SortTailwindcssConfig {
     /// Path to your Tailwind CSS configuration file (v3).
     ///
@@ -750,7 +750,7 @@ impl JsdocUserConfig {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct JsdocConfig {
     /// Capitalize the first letter of tag descriptions.
     ///
@@ -836,7 +836,7 @@ impl SvelteUserConfig {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SvelteConfig {
     /// The order in which Svelte component sections are printed.
     /// Format: join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want;
@@ -913,6 +913,63 @@ mod tests_json_deep_merge {
 }
 
 // ---
+
+#[cfg(test)]
+// This module intentionally contains misspelled keys to assert they are rejected.
+// spellchecker:off
+mod tests_deny_coverage {
+    use super::*;
+
+    #[test]
+    fn toplevel_base_typo_is_rejected() {
+        let r = serde_json::from_str::<Oxfmtrc>(r#"{ "semi": true, "tabWidht": 4 }"#);
+        assert!(r.is_err(), "toplevel typo should be rejected: {r:?}");
+    }
+
+    #[test]
+    fn override_options_typo_is_rejected() {
+        let json = r#"{ "overrides": [ { "files": ["*.ts"], "options": { "tabWidht": 4 } } ] }"#;
+        let r = serde_json::from_str::<Oxfmtrc>(json);
+        assert!(r.is_err(), "override option typo should be rejected: {r:?}");
+    }
+
+    #[test]
+    fn override_unknown_key_is_rejected() {
+        let json = r#"{ "overrides": [ { "files": ["*.ts"], "optionz": {} } ] }"#;
+        let r = serde_json::from_str::<Oxfmtrc>(json);
+        assert!(r.is_err(), "override unknown key should be rejected: {r:?}");
+    }
+
+    // The critical one: nested config behind an `untagged` enum (Bool | Object).
+    #[test]
+    fn nested_untagged_object_typo_is_rejected() {
+        let r =
+            serde_json::from_str::<FormatConfig>(r#"{ "sortImports": { "ignoreCsae": true } }"#);
+        assert!(r.is_err(), "nested untagged typo should be rejected: {r:?}");
+    }
+
+    #[test]
+    fn nested_jsdoc_typo_is_rejected() {
+        let r = serde_json::from_str::<FormatConfig>(r#"{ "jsdoc": { "bracketSpcing": true } }"#);
+        assert!(r.is_err(), "nested jsdoc typo should be rejected: {r:?}");
+    }
+
+    // Sanity: valid configs still parse.
+    #[test]
+    fn valid_config_still_parses() {
+        let json = r#"{ "semi": false, "sortImports": { "ignoreCase": false }, "jsdoc": true, "overrides": [], "ignorePatterns": ["x"] }"#;
+        let r = serde_json::from_str::<Oxfmtrc>(json);
+        assert!(r.is_ok(), "valid config must parse: {r:?}");
+    }
+
+    #[test]
+    fn experimental_friendly_message_survives() {
+        let r = serde_json::from_str::<Oxfmtrc>(r#"{ "experimentalTernaries": true }"#);
+        let err = r.unwrap_err().to_string();
+        assert!(err.contains("experimentalTernaries"), "got: {err}");
+    }
+}
+// spellchecker:on
 
 #[cfg(test)]
 mod tests_reject_experimental {

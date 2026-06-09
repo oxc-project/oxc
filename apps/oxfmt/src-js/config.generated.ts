@@ -264,7 +264,6 @@ export interface Oxfmtrc {
    * - Default: `false`
    */
   vueIndentScriptAndStyle?: boolean;
-  [k: string]: unknown;
 }
 export interface JsdocConfig {
   /**
@@ -340,7 +339,6 @@ export interface JsdocConfig {
    * - Default: `false`
    */
   separateTagGroups?: boolean;
-  [k: string]: unknown;
 }
 export interface OxfmtOverrideConfig {
   /**
@@ -355,7 +353,6 @@ export interface OxfmtOverrideConfig {
    * Format options to apply for matched files.
    */
   options?: FormatConfig;
-  [k: string]: unknown;
 }
 export interface FormatConfig {
   /**
@@ -577,7 +574,6 @@ export interface FormatConfig {
    * - Default: `false`
    */
   vueIndentScriptAndStyle?: boolean;
-  [k: string]: unknown;
 }
 export interface SortImportsConfig {
   /**
@@ -715,7 +711,6 @@ export interface SortImportsConfig {
    * - Default: `false`
    */
   sortSideEffects?: boolean;
-  [k: string]: unknown;
 }
 export interface CustomGroupItemConfig {
   /**
@@ -740,14 +735,12 @@ export interface CustomGroupItemConfig {
    * `"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
    */
   selector?: string;
-  [k: string]: unknown;
 }
 /**
  * A marker object for overriding `newlinesBetween` at a specific group boundary.
  */
 export interface NewlinesBetweenMarker {
   newlinesBetween: boolean;
-  [k: string]: unknown;
 }
 export interface SortPackageJsonConfig {
   /**
@@ -756,7 +749,6 @@ export interface SortPackageJsonConfig {
    * - Default: `false`
    */
   sortScripts?: boolean;
-  [k: string]: unknown;
 }
 export interface SortTailwindcssConfig {
   /**
@@ -805,7 +797,6 @@ export interface SortTailwindcssConfig {
    * - Default: Installed Tailwind CSS's `theme.css`
    */
   stylesheet?: string;
-  [k: string]: unknown;
 }
 export interface SvelteConfig {
   /**
@@ -828,5 +819,4 @@ export interface SvelteConfig {
    * - Default: `"options-scripts-markup-styles"`
    */
   sortOrder?: string;
-  [k: string]: unknown;
 }

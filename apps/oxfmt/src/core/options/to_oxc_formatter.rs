@@ -382,21 +382,16 @@ mod tests {
     }
 
     #[test]
-    fn test_ignore_unknown_fields() {
-        let config: FormatConfig = serde_json::from_str(
+    fn test_reject_unknown_fields() {
+        // `FormatConfig` uses `deny_unknown_fields`, so unknown keys (typos) are rejected.
+        let err = serde_json::from_str::<FormatConfig>(
             r#"{
                 "unknownField": "someValue",
                 "anotherUnknown": 123
             }"#,
         )
-        .unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
-
-        // Should use defaults
-        assert!(format_options.indent_style.is_space());
-        assert_eq!(format_options.indent_width.value(), 2);
-        assert_eq!(format_options.line_width.value(), 100);
-        assert_eq!(format_options.sort_imports, None);
+        .unwrap_err();
+        assert!(err.to_string().contains("unknownField"), "got: {err}");
     }
 
     #[test]

@@ -468,8 +468,10 @@ impl ConfigResolver {
 
         // Slow path: must rebuild from `raw_config`, NOT from `base_config`.
         // See `raw_config` field doc for why cloning the typed snapshot is insufficient.
-        let mut format_config: FormatConfig = serde_json::from_value(self.raw_config.clone())
-            .expect("`build_and_validate()` should catch this before");
+        let mut format_config: FormatConfig =
+            serde_json::from_value::<Oxfmtrc>(self.raw_config.clone())
+                .expect("`build_and_validate()` should catch this before")
+                .format_config;
 
         // Apply oxfmtrc overrides first (explicit settings)
         if let Some(overrides) = &self.oxfmtrc_overrides {
