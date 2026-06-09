@@ -5315,6 +5315,9 @@
         "react/jsx-no-duplicate-props": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "react/jsx-no-literals": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/jsx-no-script-url": {
           "$ref": "#/definitions/DummyRule"
         },

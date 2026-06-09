@@ -1172,6 +1172,7 @@ export interface DummyRuleMap {
   "react/jsx-no-comment-textnodes"?: RuleNoConfig;
   "react/jsx-no-constructed-context-values"?: RuleNoConfig;
   "react/jsx-no-duplicate-props"?: RuleNoConfig;
+  "react/jsx-no-literals"?: RuleNoConfig;
   "react/jsx-no-script-url"?: DummyRule;
   "react/jsx-no-target-blank"?: DummyRule;
   "react/jsx-no-undef"?: RuleNoConfig;
