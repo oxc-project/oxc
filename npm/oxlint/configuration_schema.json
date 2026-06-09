@@ -2224,7 +2224,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/no-large-snapshots": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoLargeSnapshotsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-mocks-import": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7401,7 +7418,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/no-large-snapshots": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoLargeSnapshotsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-mocks-import": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10590,6 +10624,40 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "If set to `true`, this rule ignores labels which are sticking to switch statements.\nExamples of **correct** code with this option set to `true`:\n```js\nlabel:\nswitch (a) {\ncase 0:\nbreak label;\n}\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoLargeSnapshotsConfig": {
+      "type": "object",
+      "properties": {
+        "allowedSnapshots": {
+          "description": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions.",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "markdownDescription": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions."
+        },
+        "inlineMaxSize": {
+          "description": "Maximum number of lines allowed for inline snapshots.",
+          "default": 50,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of lines allowed for inline snapshots."
+        },
+        "maxSize": {
+          "description": "Maximum number of lines allowed for external snapshot files.",
+          "default": 50,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of lines allowed for external snapshot files."
         }
       },
       "additionalProperties": false

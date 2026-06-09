@@ -791,7 +791,7 @@ export interface DummyRuleMap {
   "jest/no-identical-title"?: RuleNoConfig;
   "jest/no-interpolation-in-snapshots"?: RuleNoConfig;
   "jest/no-jasmine-globals"?: RuleNoConfig;
-  "jest/no-large-snapshots"?: DummyRule;
+  "jest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "jest/no-mocks-import"?: RuleNoConfig;
   "jest/no-restricted-jest-methods"?: DummyRule;
   "jest/no-restricted-matchers"?: DummyRule;
@@ -1536,7 +1536,7 @@ export interface DummyRuleMap {
   "vitest/no-import-node-test"?: RuleNoConfig;
   "vitest/no-importing-vitest-globals"?: RuleNoConfig;
   "vitest/no-interpolation-in-snapshots"?: RuleNoConfig;
-  "vitest/no-large-snapshots"?: DummyRule;
+  "vitest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "vitest/no-mocks-import"?: RuleNoConfig;
   "vitest/no-restricted-matchers"?: DummyRule;
   "vitest/no-restricted-vi-methods"?: DummyRule;
@@ -2190,6 +2190,23 @@ export interface NoHooksConfig {
    * An array of hook function names that are permitted for use.
    */
   allow?: string[];
+}
+export interface NoLargeSnapshotsConfig {
+  /**
+   * A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.
+   * Snapshot names can be specified as regular expressions.
+   */
+  allowedSnapshots?: {
+    [k: string]: string[];
+  };
+  /**
+   * Maximum number of lines allowed for inline snapshots.
+   */
+  inlineMaxSize?: number;
+  /**
+   * Maximum number of lines allowed for external snapshot files.
+   */
+  maxSize?: number;
 }
 export interface PreferImportingJestGlobalsConfig {
   /**
