@@ -795,7 +795,7 @@ export interface DummyRuleMap {
   "jest/no-mocks-import"?: RuleNoConfig;
   "jest/no-restricted-jest-methods"?: DummyRule;
   "jest/no-restricted-matchers"?: DummyRule;
-  "jest/no-standalone-expect"?: DummyRule;
+  "jest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "jest/no-test-prefixes"?: RuleNoConfig;
   "jest/no-test-return-statement"?: RuleNoConfig;
   "jest/no-unneeded-async-expect-function"?: RuleNoConfig;
@@ -1540,7 +1540,7 @@ export interface DummyRuleMap {
   "vitest/no-mocks-import"?: RuleNoConfig;
   "vitest/no-restricted-matchers"?: DummyRule;
   "vitest/no-restricted-vi-methods"?: DummyRule;
-  "vitest/no-standalone-expect"?: DummyRule;
+  "vitest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "vitest/no-test-prefixes"?: RuleNoConfig;
   "vitest/no-test-return-statement"?: RuleNoConfig;
   "vitest/no-unneeded-async-expect-function"?: RuleNoConfig;
@@ -2207,6 +2207,12 @@ export interface NoLargeSnapshotsConfig {
    * Maximum number of lines allowed for external snapshot files.
    */
   maxSize?: number;
+}
+export interface NoStandaloneExpectConfig {
+  /**
+   * An array of function names that should also be treated as test blocks.
+   */
+  additionalTestBlockFunctions?: string[];
 }
 export interface PreferImportingJestGlobalsConfig {
   /**

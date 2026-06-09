@@ -2253,7 +2253,24 @@
           "$ref": "#/definitions/DummyRule"
         },
         "jest/no-standalone-expect": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoStandaloneExpectConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-test-prefixes": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7447,7 +7464,24 @@
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/no-standalone-expect": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoStandaloneExpectConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-test-prefixes": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -11254,6 +11288,21 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "If true, also report shadowing of `globalThis`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoStandaloneExpectConfig": {
+      "type": "object",
+      "properties": {
+        "additionalTestBlockFunctions": {
+          "description": "An array of function names that should also be treated as test blocks.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of function names that should also be treated as test blocks."
         }
       },
       "additionalProperties": false
