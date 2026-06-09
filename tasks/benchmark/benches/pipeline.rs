@@ -61,27 +61,28 @@ fn bench_pipeline(criterion: &mut Criterion) {
         let source_type = file.source_type;
         let source_path = Path::new(&file.file_name);
 
-        group.bench_function(id, |b| {
-            b.iter_with_setup_wrapper(|runner| {
-                // Create options inside the closure to avoid move issues
-                let mut compiler = PipelineCompiler {
-                    transform_options: TransformOptions::from_target("esnext").unwrap(),
-                    define_options: ReplaceGlobalDefinesConfig::new(&[(
-                        "process.env.NODE_ENV",
-                        "'production'",
-                    )])
-                    .unwrap(),
-                    inject_options: InjectGlobalVariablesConfig::new(vec![
-                        InjectImport::named_specifier("node:buffer", Some("Buffer"), "Buffer"),
-                    ]),
-                    compress_options: CompressOptions::smallest(),
-                    mangle_options: MangleOptions::default(),
-                    codegen_options: CodegenOptions::default(),
-                };
+        // `compile` creates its own `Allocator` and keeps no state between runs,
+        // so the compiler and its options can be built once and reused.
+        let mut compiler = PipelineCompiler {
+            transform_options: TransformOptions::from_target("esnext").unwrap(),
+            define_options: ReplaceGlobalDefinesConfig::new(&[(
+                "process.env.NODE_ENV",
+                "'production'",
+            )])
+            .unwrap(),
+            inject_options: InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
+                "node:buffer",
+                Some("Buffer"),
+                "Buffer",
+            )]),
+            compress_options: CompressOptions::smallest(),
+            mangle_options: MangleOptions::default(),
+            codegen_options: CodegenOptions::default(),
+        };
 
-                runner.run(|| {
-                    compiler.compile(source_text, source_type, source_path);
-                });
+        group.bench_function(id, |b| {
+            b.iter(|| {
+                compiler.compile(source_text, source_type, source_path);
             });
         });
     }
