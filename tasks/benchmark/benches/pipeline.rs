@@ -63,22 +63,21 @@ fn bench_pipeline(criterion: &mut Criterion) {
 
         // `compile` creates its own `Allocator` and keeps no state between runs,
         // so the compiler and its options can be built once and reused.
-        let mut compiler = PipelineCompiler {
-            transform_options: TransformOptions::from_target("esnext").unwrap(),
-            define_options: ReplaceGlobalDefinesConfig::new(&[(
-                "process.env.NODE_ENV",
-                "'production'",
-            )])
-            .unwrap(),
-            inject_options: InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
-                "node:buffer",
-                Some("Buffer"),
-                "Buffer",
-            )]),
-            compress_options: CompressOptions::smallest(),
-            mangle_options: MangleOptions::default(),
-            codegen_options: CodegenOptions::default(),
-        };
+        let mut compiler =
+            PipelineCompiler {
+                transform_options: TransformOptions::from_target("esnext").unwrap(),
+                define_options: ReplaceGlobalDefinesConfig::new(&[(
+                    "process.env.NODE_ENV",
+                    "'production'",
+                )])
+                .unwrap(),
+                inject_options: InjectGlobalVariablesConfig::new(vec![
+                    InjectImport::named_specifier("node:buffer", Some("Buffer"), "Buffer"),
+                ]),
+                compress_options: CompressOptions::smallest(),
+                mangle_options: MangleOptions::default(),
+                codegen_options: CodegenOptions::default(),
+            };
 
         group.bench_function(id, |b| {
             b.iter(|| {
