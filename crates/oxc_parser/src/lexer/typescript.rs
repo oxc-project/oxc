@@ -22,7 +22,11 @@ impl<C: Config> Lexer<'_, C> {
     /// will be lexed as separate tokens on subsequent `next_token` calls.
     pub(crate) fn re_lex_as_typescript_l_angle(&mut self, offset: u32) -> Token {
         self.token.set_start(self.offset() - offset);
-        self.source.back(offset as usize - 1);
+        // `offset` is the length of the compound token being split (`<<`=2, `<=`=2, `<<=`=3),
+        // so `n = offset - 1` is 1 or 2: `n > 0`, `n <= offset <= bytes consumed`, and the byte
+        // landed on is the ASCII `<` (or second `<`/`=`), always a UTF-8 boundary.
+        // SAFETY: the invariants above satisfy `back_unchecked`'s contract.
+        unsafe { self.source.back_unchecked(offset as usize - 1) };
         if self.config.tokens() {
             let popped = self.tokens.pop();
             debug_assert!(popped.is_some());
@@ -46,7 +50,11 @@ impl<C: Config> Lexer<'_, C> {
     /// position, `truncate(checkpoint.tokens_len)` on rewind removes it automatically.
     pub(crate) fn re_lex_as_typescript_r_angle(&mut self, offset: u32) -> Token {
         self.token.set_start(self.offset() - offset);
-        self.source.back(offset as usize - 1);
+        // `offset` is the length of the compound token being split (`>>`=2, `>>>`=3), so
+        // `n = offset - 1` is 1 or 2: `n > 0`, `n <= offset <= bytes consumed`, and the byte
+        // landed on is an ASCII `>`, always a UTF-8 boundary.
+        // SAFETY: the invariants above satisfy `back_unchecked`'s contract.
+        unsafe { self.source.back_unchecked(offset as usize - 1) };
         self.finish_re_lex(Kind::RAngle)
     }
 }

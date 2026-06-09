@@ -326,40 +326,27 @@ impl<'a> Source<'a> {
         unsafe { pos.offset_from(self.start()) }
     }
 
-    /// Move current position back by `n` bytes.
+    /// Move current position back by `n` bytes, without bounds / boundary checks.
     ///
-    /// # Panic
-    /// Panics if:
-    /// * `n` is 0.
-    /// * `n` is greater than current offset in source.
-    /// * Moving back `n` bytes would not place current position on a UTF-8 character boundary.
+    /// A previous safe `back` asserted `n > 0`, `n <= bytes_consumed`, and that the destination is
+    /// on a UTF-8 character boundary. The only callers (the TS `<`/`>` re-lexers) statically know
+    /// all three hold, so those asserts were dead — but the compiler could not prove it (the
+    /// argument is derived by wrapping `u32` arithmetic), leaving cold panic stubs + a stack frame
+    /// on the call site. This unchecked variant elides them.
+    ///
+    /// # SAFETY
+    /// * `n` must be `> 0`.
+    /// * `n` must be `<=` the number of bytes consumed so far (`self.offset()`).
+    /// * Moving back `n` bytes must place the position on a UTF-8 character boundary.
     #[inline]
-    pub(super) fn back(&mut self, n: usize) {
-        // This assertion is essential to ensure safety of `new_pos.read()` call below.
-        // Without this check, calling `back(0)` on an empty `Source` would cause reading
-        // out of bounds.
-        // Compiler should remove this assertion when inlining this function,
-        // as long as it can deduce from calling code that `n` is non-zero.
-        assert!(n > 0, "Cannot call `Source::back` with 0");
-
-        // Ensure not attempting to go back to before start of source
-        let offset = self.offset_usize();
-        assert!(n <= offset, "Cannot go back {n} bytes - only {offset} bytes consumed");
-
-        // SAFETY: We have checked that `n` is less than distance between `start` and `ptr`,
-        // so `new_ptr` cannot be outside of allocation of original `&str`
+    pub(super) unsafe fn back_unchecked(&mut self, n: usize) {
+        debug_assert!(n > 0, "Cannot call `Source::back_unchecked` with 0");
+        debug_assert!(n <= self.offset_usize(), "`back_unchecked` went before start of source");
+        // SAFETY: Caller guarantees `n <= bytes consumed`, so `new_pos` is in bounds of the source.
         let new_pos = unsafe { self.position().sub(n) };
-
-        // Enforce invariant that `ptr` must be positioned on a UTF-8 character boundary.
-        // SAFETY: `new_ptr` is in bounds of original `&str`, and `n > 0` assertion ensures
-        // not at the end, so valid to read a byte.
-        // `Source`'s invariants guarantee that `self.start` - `self.end` contains allocated memory.
-        // `Source::new` takes an immutable ref `&str`, guaranteeing that the memory `new_ptr`
-        // addresses cannot be aliased by a `&mut` ref as long as `Source` exists.
-        let byte = unsafe { new_pos.read() };
-        assert!(!is_utf8_cont_byte(byte), "Offset is not on a UTF-8 character boundary");
-
-        // Move current position. The checks above satisfy `Source`'s invariants.
+        // SAFETY: `n > 0` (caller guarantee) means `new_pos` is not at the end, so a byte is
+        // readable; caller guarantees it is a UTF-8 character boundary.
+        debug_assert!(unsafe { !is_utf8_cont_byte(new_pos.read()) });
         self.ptr = new_pos.ptr;
     }
 
