@@ -52,7 +52,7 @@ expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
 ";
 
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ValidExpectConfig {
     /// List of matchers that are considered async and therefore require awaiting (e.g. `toResolve`, `toReject`).
     async_matchers: Vec<String>,

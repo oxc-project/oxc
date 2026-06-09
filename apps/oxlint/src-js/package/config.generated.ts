@@ -836,7 +836,7 @@ export interface DummyRuleMap {
   "jest/require-to-throw-message"?: RuleNoConfig;
   "jest/require-top-level-describe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireTopLevelDescribeConfig];
   "jest/valid-describe-callback"?: RuleNoConfig;
-  "jest/valid-expect"?: DummyRule;
+  "jest/valid-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ValidExpectConfig];
   "jest/valid-expect-in-promise"?: RuleNoConfig;
   "jest/valid-title"?: DummyRule;
   "jsdoc/check-access"?: RuleNoConfig;
@@ -1593,7 +1593,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, RequireTopLevelDescribeConfig];
   "vitest/valid-describe-callback"?: RuleNoConfig;
-  "vitest/valid-expect"?: DummyRule;
+  "vitest/valid-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ValidExpectConfig];
   "vitest/valid-expect-in-promise"?: RuleNoConfig;
   "vitest/valid-title"?: DummyRule;
   "vitest/warn-todo"?: RuleNoConfig;
@@ -2253,6 +2253,24 @@ export interface RequireTopLevelDescribeConfig {
    * The maximum number of top-level `describe` blocks allowed in a test file.
    */
   maxNumberOfTopLevelDescribes?: number;
+}
+export interface ValidExpectConfig {
+  /**
+   * When `true`, async assertions must be awaited in all contexts (not just return statements).
+   */
+  alwaysAwait?: boolean;
+  /**
+   * List of matchers that are considered async and therefore require awaiting (e.g. `toResolve`, `toReject`).
+   */
+  asyncMatchers?: string[];
+  /**
+   * Maximum number of arguments `expect` should be called with.
+   */
+  maxArgs?: number;
+  /**
+   * Minimum number of arguments `expect` should be called with.
+   */
+  minArgs?: number;
 }
 export interface CheckTagNamesConfig {
   /**
