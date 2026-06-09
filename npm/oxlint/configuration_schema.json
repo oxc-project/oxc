@@ -8895,7 +8895,7 @@
       },
       "markdownDescription": "Configure JSX A11y plugin rules.\n\nSee\n[eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s\nconfiguration for a full reference."
     },
-    "JestConfig": {
+    "JestConfigJson": {
       "type": "object",
       "properties": {
         "version": {
@@ -9990,7 +9990,7 @@
           "description": "Jest configuration options.\nDeprecated config, it will be removed in future versions.\nUse please instead { \"settings\": { \"jest\": {\"version\": 29 } } } in `Oxlint config file`.\nBeware the value from the config have higher priority than the rule config.",
           "allOf": [
             {
-              "$ref": "#/definitions/JestConfig"
+              "$ref": "#/definitions/JestConfigJson"
             }
           ],
           "markdownDescription": "Jest configuration options.\nDeprecated config, it will be removed in future versions.\nUse please instead { \"settings\": { \"jest\": {\"version\": 29 } } } in `Oxlint config file`.\nBeware the value from the config have higher priority than the rule config."

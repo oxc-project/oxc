@@ -2176,9 +2176,9 @@ export interface NoDeprecatedFunctionsConfig {
    * Use please instead { "settings": { "jest": {"version": 29 } } } in `Oxlint config file`.
    * Beware the value from the config have higher priority than the rule config.
    */
-  jest?: JestConfig;
+  jest?: JestConfigJson;
 }
-export interface JestConfig {
+export interface JestConfigJson {
   /**
    * The version of Jest being used.
    */
