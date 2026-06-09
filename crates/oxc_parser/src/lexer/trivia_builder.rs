@@ -340,7 +340,9 @@ impl<'a> TriviaBuilder<'a> {
 
         // Check for __PURE__ or __NO_SIDE_EFFECTS__ after @ or #
         if start < bytes.len() && bytes[start..].starts_with(b"__") {
-            let rest = &bytes[start + 2..];
+            // SAFETY: `starts_with(b"__")` guarantees `bytes[start..]` has at least 2 bytes,
+            // so `start + 2 <= bytes.len()` and the slice is in bounds.
+            let rest = unsafe { bytes.get_unchecked(start + 2..) };
             if rest.starts_with(b"PURE__") {
                 comment.content = CommentContent::Pure;
                 return;

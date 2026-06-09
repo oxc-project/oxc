@@ -128,8 +128,11 @@ impl<'a, C: Config> Lexer<'a, C> {
             }
         }
 
-        // Return identifier
-        self.source.str_from_pos_to_current(start_pos)
+        // Return identifier.
+        // SAFETY: `start_pos` is the identifier start; only forward `consume_char`s have happened
+        // since (no `set_position`, `start_pos` not advanced), so it is not after the current
+        // position, satisfying `str_from_pos_to_current_unchecked`.
+        unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) }
     }
 
     /// Handle identifier starting with `\` escape.

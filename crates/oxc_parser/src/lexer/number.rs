@@ -20,23 +20,31 @@ pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str
             Ok(if has_sep { parse_decimal_with_underscores(s) } else { parse_decimal(s) })
         }
         Kind::Binary => {
-            let s = &s[2..];
+            // SAFETY: a `Binary` token always begins with the 2-byte ASCII prefix `0b`/`0B`, so
+            // slicing off 2 bytes is in bounds and on a UTF-8 character boundary — the same
+            // invariant the `Octal` arm below already relies on with `get_unchecked`.
+            let s = unsafe { s.get_unchecked(2..) };
             Ok(if has_sep { parse_binary_with_underscores(s) } else { parse_binary(s) })
         }
         Kind::Octal => {
-            // Octals always begin with `0`. Trim off leading `0`, `0o` or `0O`.
-            let second_byte = s.as_bytes()[1];
+            // Octals always begin with `0` and are at least 2 chars (`0o<digit>` or legacy
+            // `0<digit>`), so byte index 1 and slicing off 1 byte are always in bounds.
+            // SAFETY: an `Octal` token is guaranteed >= 2 ASCII bytes.
+            let second_byte = unsafe { *s.as_bytes().get_unchecked(1) };
             let s = if second_byte == b'o' || second_byte == b'O' {
-                // SAFETY: We just checked that 2nd byte is ASCII, so slicing off 2 bytes
-                // must be in bounds and on a UTF-8 character boundary.
+                // SAFETY: 2nd byte is ASCII, so slicing off 2 bytes is in bounds and on a
+                // UTF-8 character boundary.
                 unsafe { s.get_unchecked(2..) }
             } else {
-                &s[1..] // legacy octal
+                // SAFETY: legacy octal is >= 2 ASCII bytes, so slicing off 1 byte is in bounds.
+                unsafe { s.get_unchecked(1..) } // legacy octal
             };
             Ok(if has_sep { parse_octal_with_underscores(s) } else { parse_octal(s) })
         }
         Kind::Hex => {
-            let s = &s[2..];
+            // SAFETY: a `Hex` token always begins with the 2-byte ASCII prefix `0x`/`0X`, so
+            // slicing off 2 bytes is in bounds and on a UTF-8 character boundary (see `Octal`).
+            let s = unsafe { s.get_unchecked(2..) };
             Ok(if has_sep { parse_hex_with_underscores(s) } else { parse_hex(s) })
         }
         _ => unreachable!(),
