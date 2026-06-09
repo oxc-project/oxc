@@ -712,7 +712,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if definite {
             if initializer.is_some() {
                 self.error(diagnostics::variable_declarator_definite(self.end_span(span)));
-            } else if self.ctx.has_ambient() || r#abstract {
+            } else if type_annotation.is_none() {
+                self.error(diagnostics::variable_declarator_definite_type_assertion(
+                    self.end_span(span),
+                ));
+            } else if self.ctx.has_ambient() || r#static || r#abstract {
                 self.error(diagnostics::definite_assignment_assertion_not_permitted(
                     self.end_span(span),
                 ));

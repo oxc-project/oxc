@@ -1,6 +1,6 @@
 commit: 2688fbd1
 
-Passed: 703/1165
+Passed: 702/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1095,7 +1095,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (55/157)
+# babel-plugin-transform-typescript (54/157)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1166,6 +1166,18 @@ x Output mismatch
 
 * class/private-method-override-transform-private/input.ts
 x Output mismatch
+
+* class/uninitialized-definite/input.ts
+
+  x TS(1264): Declarations with definite assignment assertions must also have
+  | type annotations.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/uninitialized-definite/input.ts:2:3]
+ 1 | class A {
+ 2 |   x!;
+   :   ^^^
+ 3 | }
+   `----
+
 
 * declarations/const-enum/input.ts
 Bindings mismatch:

@@ -2,7 +2,7 @@ commit: 2688fbd1
 
 parser_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2222/2236 (99.37%)
+Positive Passed: 2221/2236 (99.33%)
 Negative Passed: 1709/1723 (99.19%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -178,7 +178,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │         // Also works on AssignmentPattern
    ╰────
 
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts:5:3]
+ 4 │   #c?: number;
+ 5 │   #d!;
+   ·   ────
+ 6 │   #e!: boolean;
+   ╰────
+
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:6:5]
+ 5 │     x: number = 1;
+ 6 │     x!;
+   ·     ───
+ 7 │     x!: number;
+   ╰────
 
   × Identifier `x` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:2:5]
