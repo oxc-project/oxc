@@ -152,21 +152,26 @@ impl<C: Config> Lexer<'_, C> {
         while let Some(b) = self.peek_byte() {
             match b {
                 b'_' => {
-                    self.consume_char();
+                    // SAFETY: `b` (`_`) was just peeked, so a byte exists, and it is ASCII, so
+                    // consuming exactly 1 byte leaves `source` on a UTF-8 character boundary.
+                    // (`consume_char` would re-peek + unwrap the same byte we already have.)
+                    unsafe { self.source.next_byte_unchecked() };
                     // NOTE: it looks invalid numeric tokens are still parsed.
                     // This seems to be a waste. It also requires us to put this
                     // call here instead of after we ensure the next character
                     // is an ASCII digit
                     self.token.set_has_separator(true);
                     if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
-                        self.consume_char();
+                        // SAFETY: an ASCII digit was just peeked (exists, ASCII).
+                        unsafe { self.source.next_byte_unchecked() };
                     } else {
                         self.unexpected_err();
                         return;
                     }
                 }
                 b'0'..=b'9' => {
-                    self.consume_char();
+                    // SAFETY: `b` (an ASCII digit) was just peeked (exists, ASCII).
+                    unsafe { self.source.next_byte_unchecked() };
                 }
                 _ => break,
             }
