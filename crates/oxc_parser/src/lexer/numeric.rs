@@ -43,7 +43,12 @@ impl<C: Config> Lexer<'_, C> {
     // Inline into the 3 calls from `read_zero` so that value of `kind` is known
     // and `kind.matches_number_byte` can be statically reduced to just the match arm
     // that applies for this specific kind. `matches_number_byte` is also marked `#[inline]`.
-    #[inline]
+    // `#[inline(always)]` (not just `#[inline]`) is required: with plain `#[inline]` the
+    // function stayed a single shared out-of-line copy taking `kind` as a runtime argument,
+    // so the per-digit `kind.matches_number_byte(b)` was never folded to the single applicable
+    // arm. Forcing inlining monomorphizes each `0x`/`0o`/`0b` call site on its constant `kind`.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn read_non_decimal(&mut self, kind: Kind) -> Kind {
         self.consume_char();
 
