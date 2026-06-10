@@ -214,7 +214,7 @@ fn check_object_props<'a>(
         } else {
             let display = format!("[{}]", prop.key.span().source_text(ctx.source_text()));
             ctx.diagnostic(require_default_prop_diagnostic(prop.span(), &display));
-        };
+        }
     }
 }
 
