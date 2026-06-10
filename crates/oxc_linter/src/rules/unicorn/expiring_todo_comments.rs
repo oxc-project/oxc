@@ -2,11 +2,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
+use schemars::JsonSchema;
+use serde::{Deserialize, de::Error};
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -35,11 +36,6 @@ fn unexpected_comment_diagnostic(term: &str, comment: &str, span: Span) -> OxcDi
         comment.trim()
     ))
     .with_label(span)
-}
-
-fn format_trailing(message: &str) -> String {
-    let trimmed = message.trim();
-    if trimmed.is_empty() { String::new() } else { format!(" {trimmed}") }
 }
 
 /// User-facing configuration shape — drives the JSON schema and deserialization.
@@ -72,44 +68,6 @@ impl Default for ExpiringTodoCommentsConfig {
             allow_warning_comments: true,
             date: None,
         }
-    }
-}
-
-/// Runtime state — the user config with all per-config artifacts precomputed.
-/// Built once in `from_configuration`, reused on every file.
-#[derive(Debug, Clone)]
-struct ExpiringTodoCommentsState {
-    /// Lowercased terms (ASCII lowercase). Non-ASCII terms keep their case
-    /// since `eq_ignore_ascii_case` only folds ASCII letters.
-    terms_lower: Vec<String>,
-    ignore_patterns: Vec<Regex>,
-    ignore_dates: bool,
-    ignore_dates_on_pull_requests: bool,
-    allow_warning_comments: bool,
-    date: Option<String>,
-}
-
-impl Default for ExpiringTodoCommentsState {
-    fn default() -> Self {
-        // `unwrap` is safe: the default config has no `ignore` patterns to compile.
-        Self::from_config(ExpiringTodoCommentsConfig::default()).expect("default config is valid")
-    }
-}
-
-impl ExpiringTodoCommentsState {
-    fn from_config(cfg: ExpiringTodoCommentsConfig) -> Result<Self, lazy_regex::regex::Error> {
-        let terms_lower =
-            cfg.terms.iter().map(|t| t.cow_to_ascii_lowercase().into_owned()).collect();
-        let ignore_patterns =
-            cfg.ignore.iter().map(|p| Regex::new(p)).collect::<Result<Vec<_>, _>>()?;
-        Ok(Self {
-            terms_lower,
-            ignore_patterns,
-            ignore_dates: cfg.ignore_dates,
-            ignore_dates_on_pull_requests: cfg.ignore_dates_on_pull_requests,
-            allow_warning_comments: cfg.allow_warning_comments,
-            date: cfg.date,
-        })
     }
 }
 
@@ -168,7 +126,6 @@ declare_oxc_lint!(
 
 impl Rule for ExpiringTodoComments {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        use serde::de::Error;
         let cfg = serde_json::from_value::<DefaultRuleConfig<ExpiringTodoCommentsConfig>>(value)
             .map(DefaultRuleConfig::into_inner)?;
         let state = ExpiringTodoCommentsState::from_config(cfg)
@@ -243,6 +200,49 @@ impl Rule for ExpiringTodoComments {
             }
         }
     }
+}
+
+/// Runtime state — the user config with all per-config artifacts precomputed.
+/// Built once in `from_configuration`, reused on every file.
+#[derive(Debug, Clone)]
+struct ExpiringTodoCommentsState {
+    /// Lowercased terms (ASCII lowercase). Non-ASCII terms keep their case
+    /// since `eq_ignore_ascii_case` only folds ASCII letters.
+    terms_lower: Vec<String>,
+    ignore_patterns: Vec<Regex>,
+    ignore_dates: bool,
+    ignore_dates_on_pull_requests: bool,
+    allow_warning_comments: bool,
+    date: Option<String>,
+}
+
+impl Default for ExpiringTodoCommentsState {
+    fn default() -> Self {
+        // `unwrap` is safe: the default config has no `ignore` patterns to compile.
+        Self::from_config(ExpiringTodoCommentsConfig::default()).expect("default config is valid")
+    }
+}
+
+impl ExpiringTodoCommentsState {
+    fn from_config(cfg: ExpiringTodoCommentsConfig) -> Result<Self, lazy_regex::regex::Error> {
+        let terms_lower =
+            cfg.terms.iter().map(|t| t.cow_to_ascii_lowercase().into_owned()).collect();
+        let ignore_patterns =
+            cfg.ignore.iter().map(|p| Regex::new(p)).collect::<Result<Vec<_>, _>>()?;
+        Ok(Self {
+            terms_lower,
+            ignore_patterns,
+            ignore_dates: cfg.ignore_dates,
+            ignore_dates_on_pull_requests: cfg.ignore_dates_on_pull_requests,
+            allow_warning_comments: cfg.allow_warning_comments,
+            date: cfg.date,
+        })
+    }
+}
+
+fn format_trailing(message: &str) -> String {
+    let trimmed = message.trim();
+    if trimmed.is_empty() { String::new() } else { format!(" {trimmed}") }
 }
 
 fn process_line(
