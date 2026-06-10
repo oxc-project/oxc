@@ -7282,7 +7282,24 @@
           ]
         },
         "unicorn/prefer-object-from-entries": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferObjectFromEntriesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/prefer-optional-catch-binding": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -13177,6 +13194,24 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "If set to `true`, checks for usage of `NaN` as a global variable."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferObjectFromEntriesConfig": {
+      "type": "object",
+      "properties": {
+        "functions": {
+          "description": "Additional functions to treat as equivalents to `Object.fromEntries`.",
+          "default": [
+            "_.fromPairs",
+            "lodash.fromPairs"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional functions to treat as equivalents to `Object.fromEntries`."
         }
       },
       "additionalProperties": false
