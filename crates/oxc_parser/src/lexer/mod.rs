@@ -60,6 +60,24 @@ enum ErrorSnapshot {
     Full(Vec<OxcDiagnostic>),
 }
 
+/// Cached result of lexing the next token in [`Lexer::peek_token`].
+///
+/// When the parser advances after a peek, [`Lexer::next_token`] replays this cached result
+/// instead of re-lexing the same token.
+#[derive(Clone, Copy)]
+struct Lookahead<'a> {
+    /// Source position the peeked token was lexed from
+    start: SourcePosition<'a>,
+    /// Source position after the peeked token
+    end: SourcePosition<'a>,
+    /// The peeked token
+    token: Token,
+    /// `trivia_builder.pure_comment` after lexing the peeked token
+    pure_comment: Option<usize>,
+    /// `trivia_builder.has_no_side_effects_comment` after lexing the peeked token
+    has_no_side_effects_comment: bool,
+}
+
 /// Action to take when finishing a token.
 /// Passed to [`Lexer::finish_next_inner`].
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -102,6 +120,9 @@ pub struct Lexer<'a, C: Config> {
 
     /// Collected tokens in source order.
     tokens: ArenaVec<'a, Token>,
+
+    /// Cached token from `peek_token`, replayed by `next_token` when still at the same position.
+    lookahead: Option<Lookahead<'a>>,
 
     /// Config
     pub(crate) config: C,
@@ -152,6 +173,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
             tokens,
+            lookahead: None,
             config,
         }
     }
@@ -232,8 +254,30 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     pub fn peek_token(&mut self) -> Token {
+        let start = self.source.position();
+        if let Some(lookahead) = &self.lookahead
+            && lookahead.start == start
+        {
+            return lookahead.token;
+        }
+
         let checkpoint = self.checkpoint();
+        let errors_len = self.errors.len();
+        let deferred_errors_len = self.deferred_module_errors.len();
         let token = self.next_token();
+        // Only cache if lexing produced no errors. If it did, the parser must re-lex on advance
+        // so the errors are emitted for real (`rewind` below removes them).
+        if self.errors.len() == errors_len
+            && self.deferred_module_errors.len() == deferred_errors_len
+        {
+            self.lookahead = Some(Lookahead {
+                start,
+                end: self.source.position(),
+                token,
+                pure_comment: self.trivia_builder.pure_comment,
+                has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
+            });
+        }
         self.rewind(checkpoint);
         token
     }
@@ -256,8 +300,32 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Read next token in file.
     /// Use `first_token` for first token, and this method for all further tokens.
     pub fn next_token(&mut self) -> Token {
+        if let Some(lookahead) = self.lookahead
+            && lookahead.start == self.source.position()
+        {
+            return self.replay_lookahead(lookahead);
+        }
         let kind = self.read_next_token();
         self.finish_next(kind)
+    }
+
+    /// Advance over a token previously lexed by [`Lexer::peek_token`], without re-lexing it.
+    ///
+    /// Replicates the effects of `read_next_token` + `finish_next`:
+    /// comments were already collected during the peek (and are deduplicated on insertion),
+    /// so only the source position, token stream, and trivia state need replaying.
+    fn replay_lookahead(&mut self, lookahead: Lookahead<'a>) -> Token {
+        self.lookahead = None;
+        self.source.set_position(lookahead.end);
+        self.trivia_builder.pure_comment = lookahead.pure_comment;
+        self.trivia_builder.has_no_side_effects_comment = lookahead.has_no_side_effects_comment;
+        let token = lookahead.token;
+        if self.config.tokens() {
+            self.tokens.push_fast(token);
+        }
+        self.trivia_builder.handle_token(token);
+        self.token = Token::default();
+        token
     }
 
     /// Read the next token after `=` in a JSX attribute.
