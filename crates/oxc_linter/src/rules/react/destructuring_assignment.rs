@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, StaticMemberExpression},
@@ -6,8 +9,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -276,6 +277,64 @@ declare_oxc_lint!(
     version = "next",
 );
 
+impl Rule for DestructuringAssignment {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
+    }
+
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::StaticMemberExpression(member) => {
+                if self.should_skip_member(node, ctx) || self.apply_never {
+                    return;
+                }
+                if let Some(parent) = get_parent_stateless_component(node, ctx) {
+                    handle_function_component_usage(member, ctx, &parent);
+                } else if get_parent_component(node, ctx).is_some() {
+                    handle_class_component_usage(member, ctx);
+                }
+            }
+            AstKind::FormalParameter(param)
+                if param.pattern.is_object_pattern() && self.apply_never =>
+            {
+                if let Some(parent) = get_parent_stateless_component(node, ctx) {
+                    let params = parent.params();
+                    if params.items[0].span == param.span {
+                        ctx.diagnostic(no_destruct_props_in_sfc_arg_diagnostic(param.span));
+                    } else if params.items[1].span == param.span {
+                        ctx.diagnostic(no_destruct_context_in_sfc_arg_diagnostic(param.span));
+                    }
+                }
+            }
+            AstKind::ObjectPattern(_) if self.apply_never || self.apply_to_signature => {
+                let Some((object_pattern_span, decl_span, param_span)) =
+                    self.handle_object_pattern(node.id(), ctx)
+                else {
+                    return;
+                };
+                ctx.diagnostic_with_fix(destructure_in_signature_diagnostic(decl_span), |fixer| {
+                    let mut fix = fixer.new_fix_with_capacity(2);
+                    fix.push(
+                        fixer.replace(
+                            param_span,
+                            fixer.source_range(object_pattern_span).to_string(),
+                        ),
+                    );
+                    let expanded_decl_span =
+                        expand_span_to_statement_boundaries(fixer.source_text(), decl_span);
+                    fix.push(fixer.delete_range(expanded_decl_span));
+                    fix.with_message("Replace object pattern with destructuring in signature")
+                });
+            }
+            _ => {}
+        }
+    }
+}
+
 impl DestructuringAssignment {
     fn handle_object_pattern(
         &self,
@@ -351,64 +410,6 @@ impl DestructuringAssignment {
                     )
             }
             _ => false,
-        }
-    }
-}
-
-impl Rule for DestructuringAssignment {
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
-    }
-
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::StaticMemberExpression(member) => {
-                if self.should_skip_member(node, ctx) || self.apply_never {
-                    return;
-                }
-                if let Some(parent) = get_parent_stateless_component(node, ctx) {
-                    handle_function_component_usage(member, ctx, &parent);
-                } else if get_parent_component(node, ctx).is_some() {
-                    handle_class_component_usage(member, ctx);
-                }
-            }
-            AstKind::FormalParameter(param)
-                if param.pattern.is_object_pattern() && self.apply_never =>
-            {
-                if let Some(parent) = get_parent_stateless_component(node, ctx) {
-                    let params = parent.params();
-                    if params.items[0].span == param.span {
-                        ctx.diagnostic(no_destruct_props_in_sfc_arg_diagnostic(param.span));
-                    } else if params.items[1].span == param.span {
-                        ctx.diagnostic(no_destruct_context_in_sfc_arg_diagnostic(param.span));
-                    }
-                }
-            }
-            AstKind::ObjectPattern(_) if self.apply_never || self.apply_to_signature => {
-                let Some((object_pattern_span, decl_span, param_span)) =
-                    self.handle_object_pattern(node.id(), ctx)
-                else {
-                    return;
-                };
-                ctx.diagnostic_with_fix(destructure_in_signature_diagnostic(decl_span), |fixer| {
-                    let mut fix = fixer.new_fix_with_capacity(2);
-                    fix.push(
-                        fixer.replace(
-                            param_span,
-                            fixer.source_range(object_pattern_span).to_string(),
-                        ),
-                    );
-                    let expanded_decl_span =
-                        expand_span_to_statement_boundaries(fixer.source_text(), decl_span);
-                    fix.push(fixer.delete_range(expanded_decl_span));
-                    fix.with_message("Replace object pattern with destructuring in signature")
-                });
-            }
-            _ => {}
         }
     }
 }
