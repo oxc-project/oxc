@@ -1172,7 +1172,7 @@ export interface DummyRuleMap {
   "react/jsx-no-comment-textnodes"?: RuleNoConfig;
   "react/jsx-no-constructed-context-values"?: RuleNoConfig;
   "react/jsx-no-duplicate-props"?: RuleNoConfig;
-  "react/jsx-no-literals"?: RuleNoConfig;
+  "react/jsx-no-literals"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxNoLiteralsConfig];
   "react/jsx-no-script-url"?: DummyRule;
   "react/jsx-no-target-blank"?: DummyRule;
   "react/jsx-no-undef"?: RuleNoConfig;
@@ -4077,6 +4077,72 @@ export interface JsxMaxDepthConfig {
    * The maximum allowed depth of nested JSX elements and fragments.
    */
   max?: number;
+}
+/**
+ * The options shared between the top-level config and each `elementOverrides` entry.
+ */
+export interface JsxNoLiteralsConfig {
+  /**
+   * An array of unique string values that would otherwise warn, but will be ignored.
+   */
+  allowedStrings?: string[];
+  /**
+   * An object where the keys are the element names and the values are objects with the same options as above. This allows you to specify different options for different elements.
+   */
+  elementOverrides?: {
+    [k: string]: ElementOverrideOptions;
+  };
+  /**
+   * (default: false) - When true the rule ignores literals used in props, wrapped or unwrapped.
+   */
+  ignoreProps?: boolean;
+  /**
+   * (default: false) - Enforces no string literals used in attributes when set to true.
+   */
+  noAttributeStrings?: boolean;
+  /**
+   * (default: false) - Enforces no string literals used as children, wrapped or unwrapped.
+   */
+  noStrings?: boolean;
+  /**
+   * An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.
+   */
+  restrictedAttributes?: string[];
+  [k: string]: unknown;
+}
+/**
+ * One entry in `elementOverrides`: the base options plus override-only fields.
+ */
+export interface ElementOverrideOptions {
+  /**
+   * (default: false) - When true the rule will allow the specified element to have string literals as children, wrapped or unwrapped without warning.
+   */
+  allowElement?: boolean;
+  /**
+   * An array of unique string values that would otherwise warn, but will be ignored.
+   */
+  allowedStrings?: string[];
+  /**
+   * (default: true) - When false the rule will not apply the current options set to nested elements. This is useful when you want to apply the rule to a specific element, but not to its children.
+   */
+  applyToNestedElements?: boolean;
+  /**
+   * (default: false) - When true the rule ignores literals used in props, wrapped or unwrapped.
+   */
+  ignoreProps?: boolean;
+  /**
+   * (default: false) - Enforces no string literals used in attributes when set to true.
+   */
+  noAttributeStrings?: boolean;
+  /**
+   * (default: false) - Enforces no string literals used as children, wrapped or unwrapped.
+   */
+  noStrings?: boolean;
+  /**
+   * An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.
+   */
+  restrictedAttributes?: string[];
+  [k: string]: unknown;
 }
 export interface JsxNoUselessFragment {
   /**
