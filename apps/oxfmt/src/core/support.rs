@@ -36,7 +36,7 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     if is_extra_js_file(file_name, extension) {
         return Some(FileKind::OxcFormatter { path, source_type: SourceType::default() });
     }
-    if is_toml_file(file_name) {
+    if is_toml_file(file_name, extension) {
         return Some(FileKind::OxfmtToml { path });
     }
     // `package.json` is special: sorted by `sort-package-json` then formatted
@@ -200,16 +200,16 @@ static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
 // ---
 
 /// Returns `true` if this is a TOML file.
-fn is_toml_file(file_name: &str) -> bool {
+fn is_toml_file(file_name: &str, extension: Option<&str>) -> bool {
     if TOML_FILENAMES.contains(file_name) {
         return true;
     }
-
-    #[expect(clippy::case_sensitive_file_extension_comparisons)]
-    if file_name.ends_with(".toml.example") || file_name.ends_with(".toml") {
+    if extension == Some("toml") {
         return true;
     }
-
+    if file_name.ends_with(".toml.example") {
+        return true;
+    }
     false
 }
 
@@ -238,6 +238,9 @@ fn is_json_file(file_name: &str, extension: Option<&str>) -> bool {
     {
         return true;
     }
+    if file_name.ends_with(".json.example") || file_name.ends_with(".tfstate.backup") {
+        return true;
+    }
     false
 }
 
@@ -251,12 +254,10 @@ static JSON_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "har",
     "ice",
     "JSON-tmLanguage",
-    "json.example",
     "mcmeta",
     "sarif",
     "tact",
     "tfstate",
-    "tfstate.backup",
     "topojson",
     "webapp",
     "webmanifest",
@@ -664,6 +665,10 @@ mod tests {
             // JSON_EXTENSIONS
             ("data.json", JsonVariant::Json),
             ("config.webmanifest", JsonVariant::Json),
+            ("infra.tfstate", JsonVariant::Json),
+            // Compound extensions (`Path::extension()` only sees the last segment)
+            ("config.json.example", JsonVariant::Json),
+            ("infra.tfstate.backup", JsonVariant::Json),
             // JSON_FILENAMES
             (".babelrc", JsonVariant::Json),
             (".eslintrc.json", JsonVariant::Json),
