@@ -103,16 +103,6 @@ impl std::ops::Deref for DestructuringAssignment {
     }
 }
 
-impl<'de> Deserialize<'de> for DestructuringAssignment {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let config = DestructuringAssignmentTupleConfig::deserialize(deserializer)?;
-        Ok(Self(Box::new(config.into())))
-    }
-}
-
 impl Default for DestructuringAssignmentConfig {
     fn default() -> Self {
         Self { apply_never: false, apply_to_class_fields: true, apply_to_signature: false }
@@ -279,7 +269,8 @@ declare_oxc_lint!(
 
 impl Rule for DestructuringAssignment {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
+        serde_json::from_value::<TupleRuleConfig<DestructuringAssignmentTupleConfig>>(value)
+            .map(|config| Self(Box::new(config.into_inner().into())))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
