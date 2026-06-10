@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 68/68 (100.00%)
 Positive Passed: 68/68 (100.00%)
-Negative Passed: 145/145 (100.00%)
+Negative Passed: 146/146 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3561,6 +3561,22 @@ Negative Passed: 145/145 (100.00%)
     ·       ─────
  10 │ }
     ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+   ╭─[misc/fail/oxc-23170.ts:2:16]
+ 1 │ declare class AmbientAccessor {
+ 2 │   accessor prop!: string;
+   ·                ─
+ 3 │ }
+   ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+   ╭─[misc/fail/oxc-23170.ts:6:25]
+ 5 │ abstract class AbstractAccessor {
+ 6 │   abstract accessor prop!: string;
+   ·                         ─
+ 7 │ }
+   ╰────
 
   × Empty parenthesized expression
    ╭─[misc/fail/oxc-232.js:1:5]
