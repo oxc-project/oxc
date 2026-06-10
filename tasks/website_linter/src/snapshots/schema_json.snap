@@ -2257,7 +2257,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/no-restricted-jest-methods": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedTestMethodsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-restricted-matchers": {
           "$ref": "#/definitions/DummyRule"
@@ -7641,7 +7658,24 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/no-restricted-vi-methods": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedTestMethodsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-standalone-expect": {
           "anyOf": [
@@ -11519,6 +11553,19 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "NoRestrictedTestMethodsConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
     },
     "NoReturnAssignMode": {
       "oneOf": [

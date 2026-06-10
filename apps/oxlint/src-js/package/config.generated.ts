@@ -797,7 +797,7 @@ export interface DummyRuleMap {
   "jest/no-jasmine-globals"?: RuleNoConfig;
   "jest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "jest/no-mocks-import"?: RuleNoConfig;
-  "jest/no-restricted-jest-methods"?: DummyRule;
+  "jest/no-restricted-jest-methods"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedTestMethodsConfig];
   "jest/no-restricted-matchers"?: DummyRule;
   "jest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "jest/no-test-prefixes"?: RuleNoConfig;
@@ -1546,7 +1546,7 @@ export interface DummyRuleMap {
   "vitest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "vitest/no-mocks-import"?: RuleNoConfig;
   "vitest/no-restricted-matchers"?: DummyRule;
-  "vitest/no-restricted-vi-methods"?: DummyRule;
+  "vitest/no-restricted-vi-methods"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedTestMethodsConfig];
   "vitest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "vitest/no-test-prefixes"?: RuleNoConfig;
   "vitest/no-test-return-statement"?: RuleNoConfig;
@@ -2218,6 +2218,9 @@ export interface NoLargeSnapshotsConfig {
    * Maximum number of lines allowed for external snapshot files.
    */
   maxSize?: number;
+}
+export interface NoRestrictedTestMethodsConfig {
+  [k: string]: string | null;
 }
 export interface NoStandaloneExpectConfig {
   /**
