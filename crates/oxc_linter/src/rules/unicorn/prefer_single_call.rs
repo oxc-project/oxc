@@ -5,8 +5,15 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, fixer::Fix, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::Fix,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn prefer_single_call_diagnostic(span: Span, description: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not call `{description}` multiple times."))
@@ -14,14 +21,22 @@ fn prefer_single_call_diagnostic(span: Span, description: &str) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct PreferSingleCall;
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(default, deny_unknown_fields)]
+pub struct PreferSingleCallConfig {
+    /// Methods to ignore.
+    #[serde(default)]
+    ignore: Vec<String>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct PreferSingleCall(Box<PreferSingleCallConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces combining multiple `Array#push()`, `Element#classList.{add,remove}()`,
-    /// and `importScripts()` into a single call.
+    /// Enforces combining multiple `Array#{push,unshift}()`,
+    /// `Element#classList.{add,remove}()`, and `importScripts()` into a single call.
     ///
     /// Supersedes the deprecated `unicorn/no-array-push-push` rule.
     ///
@@ -38,6 +53,9 @@ declare_oxc_lint!(
     /// foo.push(1);
     /// foo.push(2);
     ///
+    /// foo.unshift(1);
+    /// foo.unshift(2);
+    ///
     /// element.classList.add('foo');
     /// element.classList.add('bar');
     ///
@@ -49,6 +67,8 @@ declare_oxc_lint!(
     /// ```javascript
     /// foo.push(1, 2);
     ///
+    /// foo.unshift(2, 1);
+    ///
     /// element.classList.add('foo', 'bar');
     ///
     /// importScripts('foo.js', 'bar.js');
@@ -58,17 +78,24 @@ declare_oxc_lint!(
     pedantic,
     pending,
     fix,
+    config = PreferSingleCallConfig,
     version = "0.0.0",
 );
 
-/// Callee source-text patterns to ignore for `Array#push`.
-const PUSH_IGNORE: &[&str] = &[
+/// Callee source-text patterns to ignore for `Array#{push,unshift}`.
+const DEFAULT_ARRAY_MUTATION_IGNORE: &[&str] = &[
     "stream.push",
     "this.push",
     "this.stream.push",
     "process.stdin.push",
     "process.stdout.push",
     "process.stderr.push",
+    "stream.unshift",
+    "this.unshift",
+    "this.stream.unshift",
+    "process.stdin.unshift",
+    "process.stdout.unshift",
+    "process.stderr.unshift",
 ];
 
 /// Information extracted from a matched call expression.
@@ -82,6 +109,10 @@ struct CallInfo<'a> {
     receiver_text: &'a str,
     /// Span to attach the diagnostic label to (the method name identifier).
     diagnostic_span: Span,
+    /// Whether to keep the second call and merge the first call's arguments
+    /// into it. This is required for `unshift`, where call order affects the
+    /// final array order.
+    keep_second_call: bool,
 }
 
 /// Returns `true` if `expr` is a "stable" receiver — an expression whose
@@ -98,13 +129,17 @@ fn is_stable_receiver(expr: &Expression<'_>) -> bool {
 
 /// If `call` matches one of the tracked patterns, return its [`CallInfo`];
 /// otherwise return `None`.
-fn classify_call<'a>(call: &'a CallExpression<'a>, src: &'a str) -> Option<CallInfo<'a>> {
+fn classify_call<'a>(
+    call: &'a CallExpression<'a>,
+    src: &'a str,
+    ignored_callees: &[String],
+) -> Option<CallInfo<'a>> {
     if call.optional {
         return None;
     }
 
     match call.callee.without_parentheses() {
-        // `receiver.push(...)`, `el.classList.add(...)`, `el.classList.remove(...)`
+        // `receiver.push/unshift(...)`, `el.classList.add(...)`, `el.classList.remove(...)`
         Expression::StaticMemberExpression(member) => {
             if member.optional {
                 return None;
@@ -112,19 +147,27 @@ fn classify_call<'a>(call: &'a CallExpression<'a>, src: &'a str) -> Option<CallI
             let method = member.property.name.as_str();
 
             match method {
-                "push" => {
+                "push" | "unshift" => {
                     if !is_stable_receiver(&member.object) {
                         return None;
                     }
                     let callee_text = call.callee.span().source_text(src);
-                    if PUSH_IGNORE.contains(&callee_text) {
+                    if DEFAULT_ARRAY_MUTATION_IGNORE.contains(&callee_text)
+                        || ignored_callees.iter().any(|ignored| ignored == callee_text)
+                    {
                         return None;
                     }
                     let receiver_text = member.object.without_parentheses().span().source_text(src);
+                    let (description, keep_second_call) = if method == "push" {
+                        ("Array#push()", false)
+                    } else {
+                        ("Array#unshift()", true)
+                    };
                     Some(CallInfo {
-                        description: "Array#push()",
+                        description,
                         receiver_text,
                         diagnostic_span: member.property.span,
+                        keep_second_call,
                     })
                 }
 
@@ -152,6 +195,7 @@ fn classify_call<'a>(call: &'a CallExpression<'a>, src: &'a str) -> Option<CallI
                         description,
                         receiver_text,
                         diagnostic_span: member.property.span,
+                        keep_second_call: false,
                     })
                 }
 
@@ -164,6 +208,7 @@ fn classify_call<'a>(call: &'a CallExpression<'a>, src: &'a str) -> Option<CallI
             description: "importScripts()",
             receiver_text: "importScripts",
             diagnostic_span: ident.span,
+            keep_second_call: false,
         }),
 
         _ => None,
@@ -210,6 +255,10 @@ fn is_js_ident_continue(c: char) -> bool {
 }
 
 impl Rule for PreferSingleCall {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Match only expression statements, then look at the parent statement
         // list to find the immediate previous sibling. This keeps the rule off
@@ -222,7 +271,7 @@ impl Rule for PreferSingleCall {
         };
 
         let src = ctx.source_text();
-        let Some(curr_info) = classify_call(curr_call, src) else {
+        let Some(curr_info) = classify_call(curr_call, src, &self.0.ignore) else {
             return;
         };
 
@@ -249,7 +298,7 @@ impl Rule for PreferSingleCall {
         let Expression::CallExpression(prev_call) = &prev_es.expression else {
             return;
         };
-        let Some(prev_info) = classify_call(prev_call, src) else {
+        let Some(prev_info) = classify_call(prev_call, src, &self.0.ignore) else {
             return;
         };
 
@@ -258,9 +307,17 @@ impl Rule for PreferSingleCall {
         }
 
         let first_call_span = prev_call.span;
+        let second_call_span = curr_call.span;
+        let first_stmt_start = prev_es.span.start;
         let first_stmt_end = prev_es.span.end;
+        let second_stmt_start = curr_es.span.start;
         let second_stmt_end = curr_es.span.end;
-        let second_args = &curr_call.arguments;
+        let keep_second_call = curr_info.keep_second_call;
+        let (target_call, source_args) = if keep_second_call {
+            (curr_call, &prev_call.arguments)
+        } else {
+            (prev_call, &curr_call.arguments)
+        };
         let description = curr_info.description;
         let diag_span = curr_info.diagnostic_span;
         let receiver = prev_info.receiver_text;
@@ -269,13 +326,19 @@ impl Rule for PreferSingleCall {
         // receiver — merging would change the evaluation order because the
         // first call mutates the receiver before those args are read.
         // e.g. `arr.push(1); arr.push(arr.length);`
-        let has_state_dep_args = second_args
+        let has_state_dep_args = curr_call
+            .arguments
             .iter()
             .any(|a| arg_references_receiver(a.span().source_text(src), receiver));
 
         // P2: Skip autofix when there are comments in the gap between the
         // two statements — deleting the gap would silently drop them.
-        let has_gap_comments = ctx.comments_range(first_stmt_end..second_stmt_end).count() > 0;
+        let removal_span = if keep_second_call {
+            Span::new(first_stmt_start, second_stmt_start)
+        } else {
+            Span::new(first_stmt_end, second_stmt_end)
+        };
+        let has_gap_comments = ctx.comments_range(removal_span.start..removal_span.end).count() > 0;
 
         if has_state_dep_args || has_gap_comments {
             ctx.diagnostic(prefer_single_call_diagnostic(diag_span, description));
@@ -287,19 +350,19 @@ impl Rule for PreferSingleCall {
                 .new_fix_with_capacity(2)
                 .with_message(format!("Merge into previous `{description}` call"));
 
-            // If the second call has arguments, insert them into the first call.
-            if !second_args.is_empty() {
-                let args_text = second_args
+            // Insert the source call's arguments into the target call.
+            if !source_args.is_empty() {
+                let args_text = source_args
                     .iter()
                     .map(|a| a.span().source_text(src))
                     .collect::<Vec<_>>()
                     .join(", ");
 
-                // Determine separator. Check whether the first call ends with a
+                // Determine separator. Check whether the target call ends with a
                 // trailing comma (like `push(a,)`) to avoid generating `push(a,, b)`.
-                let first_src = first_call_span.source_text(src);
-                let before_paren = first_src[..first_src.len().saturating_sub(1)].trim_end();
-                let separator = if prev_call.arguments.is_empty() {
+                let target_src = target_call.span.source_text(src);
+                let before_paren = target_src[..target_src.len().saturating_sub(1)].trim_end();
+                let separator = if target_call.arguments.is_empty() {
                     ""
                 } else if before_paren.ends_with(',') {
                     " "
@@ -307,8 +370,9 @@ impl Rule for PreferSingleCall {
                     ", "
                 };
 
-                // Replace the closing ')' of the first call with `{sep}{args})`.
-                let close_paren = Span::new(first_call_span.end - 1, first_call_span.end);
+                // Replace the closing ')' of the target call with `{sep}{args})`.
+                let target_span = if keep_second_call { second_call_span } else { first_call_span };
+                let close_paren = Span::new(target_span.end - 1, target_span.end);
                 fix.push(Fix::new(format!("{separator}{args_text})"), close_paren));
             }
 
@@ -319,11 +383,10 @@ impl Rule for PreferSingleCall {
             // second does, preserve the semicolon so the result stays valid.
             let first_has_semi = prev_es.span.source_text(src).trim_end().ends_with(';');
             let second_has_semi = curr_es.span.source_text(src).trim_end().ends_with(';');
-            let gap_span = Span::new(first_stmt_end, second_stmt_end);
-            if !first_has_semi && second_has_semi {
-                fix.push(Fix::new(";", gap_span));
+            if !keep_second_call && !first_has_semi && second_has_semi {
+                fix.push(Fix::new(";", removal_span));
             } else {
-                fix.push(Fix::delete(gap_span));
+                fix.push(Fix::delete(removal_span));
             }
 
             fix
@@ -333,7 +396,7 @@ impl Rule for PreferSingleCall {
 
 #[cfg(test)]
 mod tests {
-    use crate::tester::Tester;
+    use crate::tester::{TestCase, Tester};
 
     use super::*;
 
@@ -359,6 +422,12 @@ mod tests {
             "process.stdout.push(1); process.stdout.push(2);",
             "process.stderr.push(1); process.stderr.push(2);",
             "this.stream.push(1); this.stream.push(2);",
+            "stream.unshift(1); stream.unshift(2);",
+            "this.unshift(1); this.unshift(2);",
+            "this.stream.unshift(1); this.stream.unshift(2);",
+            "process.stdin.unshift(1); process.stdin.unshift(2);",
+            "process.stdout.unshift(1); process.stdout.unshift(2);",
+            "process.stderr.unshift(1); process.stderr.unshift(2);",
             // classList on different elements.
             "a.classList.add('x'); b.classList.add('y');",
             // add vs remove — different method.
@@ -390,6 +459,11 @@ mod tests {
             "foo.push(1)\nfoo.push(2);",
             // Spread argument.
             "foo.push(...a); foo.push(...b);",
+            // Array#unshift keeps the second call and prepends the first call's args.
+            "foo.unshift(1); foo.unshift(2);",
+            "foo.unshift(1, 2); foo.unshift(3, 4);",
+            "foo.unshift(1); foo.unshift();",
+            "foo.unshift(); foo.unshift(1);",
             // classList.add.
             "el.classList.add('foo'); el.classList.add('bar');",
             // classList.remove.
@@ -425,6 +499,10 @@ mod tests {
             // ASI: semicolon from second statement is preserved.
             ("foo.push(1)\nfoo.push(2);", "foo.push(1, 2);"),
             ("foo.push(...a); foo.push(...b);", "foo.push(...a, ...b);"),
+            ("foo.unshift(1); foo.unshift(2);", "foo.unshift(2, 1);"),
+            ("foo.unshift(1, 2); foo.unshift(3, 4);", "foo.unshift(3, 4, 1, 2);"),
+            ("foo.unshift(1); foo.unshift();", "foo.unshift(1);"),
+            ("foo.unshift(); foo.unshift(1);", "foo.unshift(1);"),
             (
                 "el.classList.add('foo'); el.classList.add('bar');",
                 "el.classList.add('foo', 'bar');",
@@ -443,6 +521,18 @@ mod tests {
             ("(foo).push(1); foo.push(2);", "(foo).push(1, 2);"),
             ("foo.push(1); (foo).push(2);", "foo.push(1, 2);"),
         ];
+
+        let mut pass = pass.into_iter().map(TestCase::from).collect::<Vec<_>>();
+        pass.extend([
+            ("foo.push(1); foo.push(2);", Some(serde_json::json!([{ "ignore": ["foo.push"] }])))
+                .into(),
+            (
+                "foo.unshift(1); foo.unshift(2);",
+                Some(serde_json::json!([{ "ignore": ["foo.unshift"] }])),
+            )
+                .into(),
+        ]);
+        let fail = fail.into_iter().map(TestCase::from).collect::<Vec<_>>();
 
         Tester::new(PreferSingleCall::NAME, PreferSingleCall::PLUGIN, pass, fail)
             .expect_fix(fix)

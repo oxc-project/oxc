@@ -60,6 +60,34 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge with the previous call.
 
+  ⚠ unicorn(prefer-single-call): Do not call `Array#unshift()` multiple times.
+   ╭─[prefer_single_call.tsx:1:21]
+ 1 │ foo.unshift(1); foo.unshift(2);
+   ·                     ───────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#unshift()` multiple times.
+   ╭─[prefer_single_call.tsx:1:24]
+ 1 │ foo.unshift(1, 2); foo.unshift(3, 4);
+   ·                        ───────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#unshift()` multiple times.
+   ╭─[prefer_single_call.tsx:1:21]
+ 1 │ foo.unshift(1); foo.unshift();
+   ·                     ───────
+   ╰────
+  help: Merge with the previous call.
+
+  ⚠ unicorn(prefer-single-call): Do not call `Array#unshift()` multiple times.
+   ╭─[prefer_single_call.tsx:1:20]
+ 1 │ foo.unshift(); foo.unshift(1);
+   ·                    ───────
+   ╰────
+  help: Merge with the previous call.
+
   ⚠ unicorn(prefer-single-call): Do not call `Element#classList.add()` multiple times.
    ╭─[prefer_single_call.tsx:1:39]
  1 │ el.classList.add('foo'); el.classList.add('bar');
