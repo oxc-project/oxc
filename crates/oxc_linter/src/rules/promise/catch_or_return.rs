@@ -7,9 +7,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
-    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_promise,
+    AstNode,
+    ast_util::is_method_call,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_promise,
 };
 
 fn catch_or_return_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
@@ -18,17 +23,21 @@ fn catch_or_return_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct CatchOrReturn(Box<CatchOrReturnConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CatchOrReturnConfig {
     /// Whether to allow `finally()` as a termination method.
     allow_finally: bool,
     /// Whether to allow `then()` with two arguments as a termination method.
     allow_then: bool,
     /// List of allowed termination methods (e.g., `catch`, `done`).
+    #[serde(
+        default = "default_termination_method",
+        deserialize_with = "deserialize_termination_method"
+    )]
     termination_method: Vec<CompactStr>,
 }
 
@@ -37,9 +46,30 @@ impl Default for CatchOrReturnConfig {
         Self {
             allow_finally: false,
             allow_then: false,
-            termination_method: vec![CompactStr::new("catch")],
+            termination_method: default_termination_method(),
         }
     }
+}
+
+fn default_termination_method() -> Vec<CompactStr> {
+    vec![CompactStr::new("catch")]
+}
+
+fn deserialize_termination_method<'de, D>(deserializer: D) -> Result<Vec<CompactStr>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum TerminationMethod {
+        Single(CompactStr),
+        Multiple(Vec<CompactStr>),
+    }
+
+    Ok(match TerminationMethod::deserialize(deserializer)? {
+        TerminationMethod::Single(method) => vec![method],
+        TerminationMethod::Multiple(methods) => methods,
+    })
 }
 
 impl std::ops::Deref for CatchOrReturn {
@@ -88,41 +118,7 @@ declare_oxc_lint!(
 
 impl Rule for CatchOrReturn {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let mut config = CatchOrReturnConfig::default();
-
-        if let Some(termination_array_config) = value
-            .get(0)
-            .and_then(|v| v.get("terminationMethod"))
-            .and_then(serde_json::Value::as_array)
-        {
-            config.termination_method = termination_array_config
-                .iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(CompactStr::from)
-                .collect();
-        }
-
-        if let Some(termination_string_config) = value
-            .get(0)
-            .and_then(|v| v.get("terminationMethod"))
-            .and_then(serde_json::Value::as_str)
-        {
-            config.termination_method = vec![CompactStr::new(termination_string_config)];
-        }
-
-        if let Some(allow_finally_config) =
-            value.get(0).and_then(|v| v.get("allowFinally")).and_then(serde_json::Value::as_bool)
-        {
-            config.allow_finally = allow_finally_config;
-        }
-
-        if let Some(allow_then_config) =
-            value.get(0).and_then(|v| v.get("allowThen")).and_then(serde_json::Value::as_bool)
-        {
-            config.allow_then = allow_then_config;
-        }
-
-        Ok(Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -182,7 +178,7 @@ impl CatchOrReturn {
         }
 
         // somePromise.catch()
-        if self.termination_method.contains(&CompactStr::from(prop_name)) {
+        if self.termination_method.iter().any(|method| method == prop_name) {
             return true;
         }
 
