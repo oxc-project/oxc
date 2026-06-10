@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
 use schemars::JsonSchema;
-use serde::{Deserialize, de::Error};
+use serde::Deserialize;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -43,9 +43,11 @@ fn unexpected_comment_diagnostic(term: &str, comment: &str, span: Span) -> OxcDi
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExpiringTodoCommentsConfig {
     /// Terms to match as warning comments (case-insensitive).
+    #[serde(deserialize_with = "deserialize_terms")]
     pub terms: Vec<String>,
     /// Regex patterns (matched against the comment line) to ignore.
-    pub ignore: Vec<String>,
+    #[serde(deserialize_with = "deserialize_ignore_patterns")]
+    pub ignore: Vec<Regex>,
     /// If `true`, all date expiration checks are skipped.
     pub ignore_dates: bool,
     /// If `true`, date expiration checks are skipped when running on a pull
@@ -71,8 +73,30 @@ impl Default for ExpiringTodoCommentsConfig {
     }
 }
 
+fn deserialize_terms<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Ok(Vec::<String>::deserialize(deserializer)?
+        .into_iter()
+        .map(|term| term.cow_to_ascii_lowercase().into_owned())
+        .collect())
+}
+
+fn deserialize_ignore_patterns<'de, D>(deserializer: D) -> Result<Vec<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Vec::<String>::deserialize(deserializer)?
+        .into_iter()
+        .map(|pattern| Regex::new(&pattern).map_err(D::Error::custom))
+        .collect()
+}
+
 #[derive(Debug, Clone, Default)]
-pub struct ExpiringTodoComments(Box<ExpiringTodoCommentsState>);
+pub struct ExpiringTodoComments(Box<ExpiringTodoCommentsConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -126,18 +150,17 @@ declare_oxc_lint!(
 
 impl Rule for ExpiringTodoComments {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let cfg = serde_json::from_value::<DefaultRuleConfig<ExpiringTodoCommentsConfig>>(value)
-            .map(DefaultRuleConfig::into_inner)?;
-        let state = ExpiringTodoCommentsState::from_config(cfg)
-            .map_err(|e| serde_json::Error::custom(format!("invalid `ignore` regex: {e}")))?;
-        Ok(Self(Box::new(state)))
+        serde_json::from_value::<DefaultRuleConfig<ExpiringTodoCommentsConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(Box::new)
+            .map(Self)
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let state = &*self.0;
+        let config = &*self.0;
 
         let today_owned;
-        let today: &str = if let Some(d) = state.date.as_deref() {
+        let today: &str = if let Some(d) = config.date.as_deref() {
             d
         } else {
             today_owned = today_string();
@@ -145,7 +168,7 @@ impl Rule for ExpiringTodoComments {
         };
 
         let in_pr = is_running_in_pull_request();
-        let skip_dates = state.ignore_dates || (state.ignore_dates_on_pull_requests && in_pr);
+        let skip_dates = config.ignore_dates || (config.ignore_dates_on_pull_requests && in_pr);
 
         for comment in ctx.semantic().comments() {
             let content_span = comment.content_span();
@@ -170,11 +193,11 @@ impl Rule for ExpiringTodoComments {
                     continue;
                 }
 
-                if state.ignore_patterns.iter().any(|r| r.is_match(line)) {
+                if config.ignore.iter().any(|r| r.is_match(line)) {
                     continue;
                 }
 
-                let Some(matched_term) = find_term_in_line(line, &state.terms_lower) else {
+                let Some(matched_term) = find_term_in_line(line, &config.terms) else {
                     continue;
                 };
 
@@ -194,49 +217,11 @@ impl Rule for ExpiringTodoComments {
                     report_span,
                     today,
                     skip_dates,
-                    state.allow_warning_comments,
+                    config.allow_warning_comments,
                     ctx,
                 );
             }
         }
-    }
-}
-
-/// Runtime state — the user config with all per-config artifacts precomputed.
-/// Built once in `from_configuration`, reused on every file.
-#[derive(Debug, Clone)]
-struct ExpiringTodoCommentsState {
-    /// Lowercased terms (ASCII lowercase). Non-ASCII terms keep their case
-    /// since `eq_ignore_ascii_case` only folds ASCII letters.
-    terms_lower: Vec<String>,
-    ignore_patterns: Vec<Regex>,
-    ignore_dates: bool,
-    ignore_dates_on_pull_requests: bool,
-    allow_warning_comments: bool,
-    date: Option<String>,
-}
-
-impl Default for ExpiringTodoCommentsState {
-    fn default() -> Self {
-        // `unwrap` is safe: the default config has no `ignore` patterns to compile.
-        Self::from_config(ExpiringTodoCommentsConfig::default()).expect("default config is valid")
-    }
-}
-
-impl ExpiringTodoCommentsState {
-    fn from_config(cfg: ExpiringTodoCommentsConfig) -> Result<Self, lazy_regex::regex::Error> {
-        let terms_lower =
-            cfg.terms.iter().map(|t| t.cow_to_ascii_lowercase().into_owned()).collect();
-        let ignore_patterns =
-            cfg.ignore.iter().map(|p| Regex::new(p)).collect::<Result<Vec<_>, _>>()?;
-        Ok(Self {
-            terms_lower,
-            ignore_patterns,
-            ignore_dates: cfg.ignore_dates,
-            ignore_dates_on_pull_requests: cfg.ignore_dates_on_pull_requests,
-            allow_warning_comments: cfg.allow_warning_comments,
-            date: cfg.date,
-        })
     }
 }
 
@@ -323,9 +308,9 @@ fn strip_comment_decoration(raw_line: &str, is_block_continuation: bool) -> (&st
 /// Case-insensitive (ASCII) search for any of the lowercase `terms` in
 /// `line`. Returns the matched substring borrowed from `line`, preserving
 /// the original casing for the diagnostic.
-fn find_term_in_line<'a>(line: &'a str, terms_lower: &[String]) -> Option<&'a str> {
+fn find_term_in_line<'a>(line: &'a str, terms: &[String]) -> Option<&'a str> {
     let line_bytes = line.as_bytes();
-    for term in terms_lower {
+    for term in terms {
         let term_bytes = term.as_bytes();
         if term_bytes.is_empty() || term_bytes.len() > line_bytes.len() {
             continue;
