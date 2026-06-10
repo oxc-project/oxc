@@ -24889,6 +24889,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::INFO,
             Self::VuePropNameCasing(_) => VuePropNameCasing::INFO,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::INFO,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::INFO,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::INFO,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::INFO,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::INFO,
