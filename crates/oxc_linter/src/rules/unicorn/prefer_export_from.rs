@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 use schemars::JsonSchema;
@@ -1022,7 +1023,7 @@ impl PreferExportFrom {
 
     fn get_processed_exports_str(exports_str: &str, re_export: &ExportNamedDeclaration) -> String {
         if matches!(re_export.export_kind, ImportOrExportKind::Type) {
-            exports_str.replace("type ", "")
+            exports_str.cow_replace("type ", "").to_string()
         } else {
             exports_str.to_string()
         }
