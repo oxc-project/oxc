@@ -152,6 +152,10 @@ export type RadixType = "always" | "as-needed";
 export type NativeAllowList = AllKeyword | string[];
 export type AllKeyword = "all";
 /**
+ * Controls whether destructuring assignments are required or forbidden in function signatures.
+ */
+export type DestructureInSignature = "always" | "ignore";
+/**
  * A forbidden prop, either as a plain prop name string or with options.
  */
 export type ForbidItem = string | ForbidItemObject;
@@ -1150,6 +1154,11 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
+  "react/destructuring-assignment"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, AlwaysNever]
+    | [AllowWarnDeny, AlwaysNever, DestructuringAssignmentOptions];
   "react/display-name"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DisplayNameConfig];
   "react/exhaustive-deps"?: DummyRule;
   "react/forbid-component-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ForbidComponentPropsConfig];
@@ -3906,6 +3915,16 @@ export interface CheckedRequiresOnchangeOrReadonly {
    * Ignore the requirement to provide either `onChange` or `readOnly` when the `checked` prop is present.
    */
   ignoreMissingProperties?: boolean;
+}
+export interface DestructuringAssignmentOptions {
+  /**
+   * Whether to ignore destructuring in function signature.
+   */
+  destructureInSignature?: DestructureInSignature;
+  /**
+   * Whether to ignore class fields when destructuring.
+   */
+  ignoreClassFields?: boolean;
 }
 export interface DisplayNameConfig {
   /**
