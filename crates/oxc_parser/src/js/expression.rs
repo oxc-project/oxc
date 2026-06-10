@@ -832,85 +832,92 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return lhs;
             }
 
-            let mut question_dot = false;
-            let is_property_access = if allow_optional_chain && self.at(Kind::QuestionDot) {
-                // ?.
-                // Fast check to avoid checkpoint/rewind in common cases
-                let next_kind = self.lexer.peek_token().kind();
-                if next_kind == Kind::LBrack
-                    || next_kind.is_identifier_or_keyword()
-                    || next_kind.is_template_start_of_tagged_template()
-                {
-                    // This is likely a valid optional chain, proceed with normal parsing
-                    self.bump_any(); // consume ?.
-                    let kind = self.cur_kind();
-                    let is_identifier_or_keyword = kind.is_identifier_or_keyword();
-                    // ?.[
-                    // ?.something
-                    // ?.template`...`
-                    *in_optional_chain = true;
-                    question_dot = true;
-                    is_identifier_or_keyword
-                } else {
-                    // This is not a valid optional chain pattern, don't consume ?.
-                    // Should be a cold branch here, as most real-world optional chaining will look like
-                    // `?.something` or `?.[expr]`
-                    false
+            // Dispatch on the current token once. The loop runs after every postfix expression,
+            // and most iterations exit immediately, so a single `match` beats sequential checks.
+            match self.cur_kind() {
+                Kind::Dot => {
+                    self.bump_any();
+                    self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_span);
+                    lhs = self.parse_static_member_expression(lhs_span, lhs, false);
                 }
-            } else {
-                self.eat(Kind::Dot)
-            };
-
-            if is_property_access {
-                self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_span);
-                lhs = self.parse_static_member_expression(lhs_span, lhs, question_dot);
-                continue;
-            }
-
-            if (question_dot || !self.ctx.has_decorator()) && self.at(Kind::LBrack) {
-                self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_span);
-                lhs = self.parse_computed_member_expression(lhs_span, lhs, question_dot);
-                continue;
-            }
-
-            if self.cur_kind().is_template_start_of_tagged_template() {
-                let (expr, type_arguments) =
-                    if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
-                        let expr = instantiation_expr.unbox();
-                        (expr.expression, Some(expr.type_arguments))
+                Kind::QuestionDot if allow_optional_chain => {
+                    // Fast check to avoid checkpoint/rewind in common cases
+                    let next_kind = self.lexer.peek_token().kind();
+                    if next_kind == Kind::LBrack
+                        || next_kind.is_identifier_or_keyword()
+                        || next_kind.is_template_start_of_tagged_template()
+                    {
+                        // This is likely a valid optional chain, proceed with normal parsing
+                        self.bump_any(); // consume ?.
+                        *in_optional_chain = true;
+                        if self.cur_kind().is_identifier_or_keyword() {
+                            // ?.something
+                            self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_span);
+                            lhs = self.parse_static_member_expression(lhs_span, lhs, true);
+                        } else if self.at(Kind::LBrack) {
+                            // ?.[
+                            self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_span);
+                            lhs = self.parse_computed_member_expression(lhs_span, lhs, true);
+                        } else {
+                            // ?.template`...`
+                            lhs =
+                                self.parse_tagged_template_rest(lhs_span, lhs, *in_optional_chain);
+                        }
                     } else {
-                        (lhs, None)
-                    };
-                lhs =
-                    self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_arguments);
-                continue;
-            }
-
-            if !question_dot && self.is_ts {
-                if !self.cur_token().is_on_new_line() && self.eat(Kind::Bang) {
-                    lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
-                    continue;
+                        // This is not a valid optional chain pattern, don't consume ?.
+                        // Should be a cold branch here, as most real-world optional chaining will look like
+                        // `?.something` or `?.[expr]`
+                        return lhs;
+                    }
                 }
-
-                if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
+                Kind::LBrack if !self.ctx.has_decorator() => {
+                    self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_span);
+                    lhs = self.parse_computed_member_expression(lhs_span, lhs, false);
+                }
+                kind if kind.is_template_start_of_tagged_template() => {
+                    lhs = self.parse_tagged_template_rest(lhs_span, lhs, *in_optional_chain);
+                }
+                Kind::Bang if self.is_ts && !self.cur_token().is_on_new_line() => {
+                    self.bump_any();
+                    lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
+                }
+                Kind::LAngle | Kind::ShiftLeft if self.is_ts => {
                     if let Some(arguments) = self.parse_type_arguments_in_expression() {
                         lhs = self.ast.expression_ts_instantiation(
                             self.end_span(lhs_span),
                             lhs,
                             arguments,
                         );
-                        continue;
+                    } else {
+                        // `re_lex_as_typescript_l_angle` may have popped the original token
+                        // (e.g. `<<`) from the collected token stream. Rewind restored the
+                        // parser's current token, so write it back to the stream.
+                        // This is a no-op when tokens are statically disabled (`NoTokensLexerConfig`).
+                        self.lexer.rewrite_last_collected_token(self.token);
+                        return lhs;
                     }
-                    // `re_lex_as_typescript_l_angle` may have popped the original token
-                    // (e.g. `<<`) from the collected token stream. Rewind restored the
-                    // parser's current token, so write it back to the stream.
-                    // This is a no-op when tokens are statically disabled (`NoTokensLexerConfig`).
-                    self.lexer.rewrite_last_collected_token(self.token);
                 }
+                _ => return lhs,
             }
-
-            return lhs;
         }
+    }
+
+    /// Parse the tagged template continuation of a member expression,
+    /// unwrapping a `TSInstantiationExpression` lhs (`` foo<T>`...` ``) into its type arguments.
+    fn parse_tagged_template_rest(
+        &mut self,
+        lhs_span: u32,
+        lhs: Expression<'a>,
+        in_optional_chain: bool,
+    ) -> Expression<'a> {
+        let (expr, type_arguments) =
+            if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
+                let expr = instantiation_expr.unbox();
+                (expr.expression, Some(expr.type_arguments))
+            } else {
+                (lhs, None)
+            };
+        self.parse_tagged_template(lhs_span, expr, in_optional_chain, type_arguments)
     }
 
     /// Section 13.3 `MemberExpression`
