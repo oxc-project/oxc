@@ -213,7 +213,8 @@ impl<'a> TypeScript<'a> {
             // If there is no constructor, we need to create a default constructor
             // that initializes the public fields
             // TODO: should use `ctx.insert_scope_below_statements`, but it only accept an `ArenaVec` rather than std `Vec`.
-            let scope_id = ctx.create_child_scope_of_current(
+            let scope_id = ctx.create_child_scope(
+                class_scope_id,
                 ScopeFlags::StrictMode | ScopeFlags::Function | ScopeFlags::Constructor,
             );
             let ctor = create_class_constructor(
