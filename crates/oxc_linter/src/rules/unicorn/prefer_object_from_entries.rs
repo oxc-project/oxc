@@ -26,7 +26,7 @@ fn prefer_object_from_entries_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct PreferObjectFromEntries(Box<PreferObjectFromEntriesConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferObjectFromEntriesConfig {
     /// Additional functions to treat as equivalents to `Object.fromEntries`.
     functions: Vec<String>,

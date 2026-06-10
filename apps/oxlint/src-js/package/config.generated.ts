@@ -1487,7 +1487,10 @@ export interface DummyRuleMap {
   "unicorn/prefer-negative-index"?: RuleNoConfig;
   "unicorn/prefer-node-protocol"?: RuleNoConfig;
   "unicorn/prefer-number-properties"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferNumberPropertiesConfig];
-  "unicorn/prefer-object-from-entries"?: DummyRule;
+  "unicorn/prefer-object-from-entries"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, PreferObjectFromEntriesConfig];
   "unicorn/prefer-optional-catch-binding"?: RuleNoConfig;
   "unicorn/prefer-prototype-methods"?: RuleNoConfig;
   "unicorn/prefer-query-selector"?: RuleNoConfig;
@@ -5109,6 +5112,12 @@ export interface PreferNumberPropertiesConfig {
    * If set to `true`, checks for usage of `NaN` as a global variable.
    */
   checkNaN?: boolean;
+}
+export interface PreferObjectFromEntriesConfig {
+  /**
+   * Additional functions to treat as equivalents to `Object.fromEntries`.
+   */
+  functions?: string[];
 }
 export interface PreferStructuredCloneConfig {
   /**
