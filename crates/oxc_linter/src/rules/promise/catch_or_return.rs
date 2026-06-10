@@ -8,6 +8,7 @@ use oxc_span::Span;
 use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
+use std::fmt::Write as _;
 
 use crate::{
     AstNode,
@@ -17,10 +18,59 @@ use crate::{
     utils::is_promise,
 };
 
-fn catch_or_return_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Expected `{method_name}` or `return`."))
-        .with_help(format!("Return the promise or chain a `{method_name}()`."))
-        .with_label(span)
+fn format_termination_method(method: &CompactStr, as_call: bool) -> String {
+    if as_call { format!("`{method}()`") } else { format!("`{method}`") }
+}
+
+fn join_termination_methods(methods: &[CompactStr], as_call: bool) -> String {
+    match methods {
+        [] => String::new(),
+        [method] => format_termination_method(method, as_call),
+        [first, second] => {
+            format!(
+                "{} or {}",
+                format_termination_method(first, as_call),
+                format_termination_method(second, as_call)
+            )
+        }
+        [methods @ .., last] => {
+            let mut message = methods
+                .iter()
+                .map(|method| format_termination_method(method, as_call))
+                .collect::<Vec<_>>()
+                .join(", ");
+            let _ = write!(message, ", or {}", format_termination_method(last, as_call));
+            message
+        }
+    }
+}
+
+fn catch_or_return_diagnostic(methods: &[CompactStr], span: Span) -> OxcDiagnostic {
+    let expected_methods = match methods {
+        [] => "`return`".to_string(),
+        [method] => format!("`{method}` or `return`"),
+        [first, second] => format!("`{first}`, `{second}`, or `return`"),
+        [methods @ .., last] => {
+            let mut message =
+                methods.iter().map(|method| format!("`{method}`")).collect::<Vec<_>>().join(", ");
+            let _ = write!(message, ", `{last}`, or `return`");
+            message
+        }
+    };
+
+    let diagnostic = OxcDiagnostic::warn(format!("Expected {expected_methods}.")).with_label(span);
+
+    match methods {
+        [] => diagnostic.with_help("Return the promise."),
+        [_] => {
+            let chain_methods = join_termination_methods(methods, true);
+            diagnostic.with_help(format!("Return the promise or chain a {chain_methods}."))
+        }
+        [_, ..] => {
+            let chain_methods = join_termination_methods(methods, true);
+            diagnostic.with_help(format!("Return the promise or chain {chain_methods}."))
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -147,8 +197,7 @@ impl Rule for CatchOrReturn {
             return;
         }
 
-        let termination_method = &self.termination_method[0];
-        ctx.diagnostic(catch_or_return_diagnostic(termination_method, call_expr.span));
+        ctx.diagnostic(catch_or_return_diagnostic(&self.termination_method, call_expr.span));
     }
 }
 
@@ -405,6 +454,8 @@ fn test() {
         ),
         ("frank().then(go)", Some(serde_json::json!([{ "terminationMethod": "done" }]))),
         ("frank().catch(go)", Some(serde_json::json!([{ "terminationMethod": "done" }]))),
+        ("frank().then(go)", Some(serde_json::json!([{ "terminationMethod": ["catch", "done"] }]))),
+        ("frank().then(go)", Some(serde_json::json!([{ "terminationMethod": [] }]))),
         ("frank().catch(go).someOtherMethod()", None),
         ("frank()['catch'](go).someOtherMethod()", None),
         ("frank().then(a).then(b).then(null, c)", None),

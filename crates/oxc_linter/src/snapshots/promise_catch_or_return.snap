@@ -156,6 +156,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Return the promise or chain a `done()`.
 
+  ⚠ promise(catch-or-return): Expected `catch`, `done`, or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(go)
+   · ────────────────
+   ╰────
+  help: Return the promise or chain `catch()` or `done()`.
+
+  ⚠ promise(catch-or-return): Expected `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(go)
+   · ────────────────
+   ╰────
+  help: Return the promise.
+
   ⚠ promise(catch-or-return): Expected `catch` or `return`.
    ╭─[catch_or_return.mjs:1:1]
  1 │ frank().catch(go).someOtherMethod()
