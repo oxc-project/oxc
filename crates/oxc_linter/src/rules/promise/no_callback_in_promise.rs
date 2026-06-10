@@ -24,6 +24,7 @@ pub struct NoCallbackInPromise(Box<NoCallbackInPromiseConfig>);
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCallbackInPromiseConfig {
     /// List of callback function names to check for within Promise `then` and `catch` methods.
+    #[serde(skip)]
     callbacks: Vec<CompactStr>,
     /// List of callback function names to allow within Promise `then` and `catch` methods.
     exceptions: Vec<CompactStr>,
