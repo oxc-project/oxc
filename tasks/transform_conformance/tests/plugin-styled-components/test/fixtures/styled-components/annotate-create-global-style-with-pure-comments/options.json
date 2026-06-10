@@ -1,7 +1,8 @@
 {
   "plugins": [
     ["styled-components", {
-      "pure": true
+      "pure": true,
+      "transpileTemplateLiterals": true
     }]
   ]
 }

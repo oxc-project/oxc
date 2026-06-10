@@ -472,7 +472,10 @@ pub struct StyledComponentsOptions {
     /// Transpiles styled-components tagged template literals to a smaller representation
     /// than what Babel normally creates, helping to reduce bundle size.
     ///
-    /// @default true
+    /// Disabled by default because Oxc does not down-level template literals, so this
+    /// transform only increases output size.
+    ///
+    /// @default false
     pub transpile_template_literals: Option<bool>,
 
     /// Minifies CSS content by removing all whitespace and comments from your CSS,
