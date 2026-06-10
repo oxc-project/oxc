@@ -401,3 +401,139 @@ source: crates/oxc_linter/src/tester.rs
     ·                           ──────────────────────────────────────────────
  15 │                           return foo.settings
     ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "set" computed property.
+   ╭─[no_side_effects_in_computed_properties.tsx:4:32]
+ 3 │                       set() {
+ 4 │                         return this.something.reverse()
+   ·                                ────────────────────────
+ 5 │                       }
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "test1" computed property.
+   ╭─[no_side_effects_in_computed_properties.tsx:4:25]
+ 3 │                       test1() {
+ 4 │                         this.$set = function() {}
+   ·                         ─────────────────────────
+ 5 │                         return this.foo
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "test1" computed property.
+   ╭─[no_side_effects_in_computed_properties.tsx:4:32]
+ 3 │                       test1() {
+ 4 │                         return this.arr['push']('x')
+   ·                                ─────────────────────
+ 5 │                       },
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "test2" computed property.
+   ╭─[no_side_effects_in_computed_properties.tsx:7:32]
+ 6 │                       test2() {
+ 7 │                         return this.arr['reverse']()
+   ·                                ─────────────────────
+ 8 │                       }
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+   ╭─[no_side_effects_in_computed_properties.tsx:7:45]
+ 6 │                       const foo = useFoo()
+ 7 │                       const test1 = c(() => foo.something.reverse())
+   ·                                             ───────────────────────
+ 8 │                       const test2 = c(() => {
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+    ╭─[no_side_effects_in_computed_properties.tsx:9:25]
+  8 │                       const test2 = c(() => {
+  9 │                         foo.firstName = 'lorem'
+    ·                         ───────────────────────
+ 10 │                       })
+    ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "test1" computed property.
+   ╭─[no_side_effects_in_computed_properties.tsx:4:25]
+ 3 │                       test1() {
+ 4 │                         this['foo'] = 1
+   ·                         ───────────────
+ 5 │                       },
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "test2" computed property.
+   ╭─[no_side_effects_in_computed_properties.tsx:7:32]
+ 6 │                       test2() {
+ 7 │                         return this['arr'].push(x)
+   ·                                ───────────────────
+ 8 │                       },
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "test3" computed property.
+    ╭─[no_side_effects_in_computed_properties.tsx:10:25]
+  9 │                       test3() {
+ 10 │                         this['count']++
+    ·                         ───────────────
+ 11 │                       },
+    ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "test4" computed property.
+    ╭─[no_side_effects_in_computed_properties.tsx:13:25]
+ 12 │                       test4() {
+ 13 │                         delete this['foo']
+    ·                         ──────────────────
+ 14 │                       }
+    ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+   ╭─[no_side_effects_in_computed_properties.tsx:8:25]
+ 7 │                       const test1 = computed(() => {
+ 8 │                         foo['firstName'] = 'lorem'
+   ·                         ──────────────────────────
+ 9 │                       })
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+    ╭─[no_side_effects_in_computed_properties.tsx:10:52]
+  9 │                       })
+ 10 │                       const test2 = computed(() => foo['arr'].reverse())
+    ·                                                    ────────────────────
+ 11 │                     }
+    ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+   ╭─[no_side_effects_in_computed_properties.tsx:7:52]
+ 6 │                       const foo = useFoo()
+ 7 │                       const test1 = computed(() => foo.something.reverse())
+   ·                                                    ───────────────────────
+ 8 │                       const test2 = computed(() => {
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+    ╭─[no_side_effects_in_computed_properties.tsx:9:25]
+  8 │                       const test2 = computed(() => {
+  9 │                         foo.firstName = 'lorem'
+    ·                         ───────────────────────
+ 10 │                       })
+    ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+   ╭─[no_side_effects_in_computed_properties.tsx:7:52]
+ 6 │                       const self = this
+ 7 │                       const test1 = computed(() => self.items.reverse())
+   ·                                                    ────────────────────
+ 8 │                       const test2 = computed(() => {
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+    ╭─[no_side_effects_in_computed_properties.tsx:9:25]
+  8 │                       const test2 = computed(() => {
+  9 │                         self.firstName = 'lorem'
+    ·                         ────────────────────────
+ 10 │                       })
+    ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "test1" computed property.
+   ╭─[no_side_effects_in_computed_properties.tsx:4:31]
+ 3 │                       test1() {
+ 4 │                         (this.$set)(this, 'foo', 'lorem')
+   ·                               ────
+ 5 │                         return this.foo
+   ╰────

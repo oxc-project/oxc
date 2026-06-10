@@ -5147,8 +5147,7 @@ impl RuleRunner for crate::rules::vue::no_shared_component_data::NoSharedCompone
 impl RuleRunner
     for crate::rules::vue::no_side_effects_in_computed_properties::NoSideEffectsInComputedProperties
 {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::StaticMemberExpression]));
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
