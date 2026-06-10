@@ -1,10 +1,8 @@
-use rustc_hash::FxHashSet;
-
 use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpressionElement, BindingPattern, CallExpression, Expression, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, TSSignature, TSType, TSTypeName,
+        ObjectPattern, ObjectPropertyKind, PropertyKey, TSSignature, TSType, TSTypeName,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -80,10 +78,10 @@ declare_oxc_lint!(
 /// Tracks how default values may be supplied for `<script setup>` props, so a
 /// prop covered by `withDefaults` or a destructure default is not flagged.
 #[derive(Default)]
-struct PropsContext {
-    using_destructure: bool,
-    destructure_defaults: FxHashSet<String>,
-    with_defaults: Option<FxHashSet<String>>,
+struct PropsContext<'a> {
+    destructure: Option<&'a ObjectPattern<'a>>,
+    has_with_defaults: bool,
+    with_defaults: Option<&'a ObjectExpression<'a>>,
 }
 
 impl Rule for RequireDefaultProp {
@@ -109,7 +107,7 @@ impl Rule for RequireDefaultProp {
                     // A `defineProps` wrapped by `withDefaults` is handled by the
                     // `withDefaults` branch, which also knows the default values.
                     "defineProps" if !is_wrapped_by_with_defaults(node, ctx) => {
-                        let props_ctx = destructure_context(node, ctx, None);
+                        let props_ctx = destructure_context(node, ctx, false, None);
                         handle_define_props(call, ctx, &props_ctx);
                     }
                     "withDefaults" if call.arguments.len() == 2 => {
@@ -123,19 +121,30 @@ impl Rule for RequireDefaultProp {
     }
 }
 
-fn handle_with_defaults<'a>(node: &AstNode<'a>, call: &CallExpression<'a>, ctx: &LintContext<'a>) {
+fn handle_with_defaults<'a>(
+    node: &AstNode<'a>,
+    call: &'a CallExpression<'a>,
+    ctx: &LintContext<'a>,
+) {
     let Some(first) = call.arguments.first().and_then(|a| a.as_expression()) else { return };
     let Some(second) = call.arguments.get(1).and_then(|a| a.as_expression()) else { return };
     let Expression::CallExpression(define_props) = first.get_inner_expression() else { return };
     if !define_props.callee.get_identifier_reference().is_some_and(|i| i.name == "defineProps") {
         return;
     }
-    let with_defaults = object_keys(second.get_inner_expression());
-    let props_ctx = destructure_context(node, ctx, Some(with_defaults));
+    let with_defaults = match second.get_inner_expression() {
+        Expression::ObjectExpression(obj) => Some(obj.as_ref()),
+        _ => None,
+    };
+    let props_ctx = destructure_context(node, ctx, true, with_defaults);
     handle_define_props(define_props, ctx, &props_ctx);
 }
 
-fn handle_define_props<'a>(call: &CallExpression<'a>, ctx: &LintContext<'a>, pc: &PropsContext) {
+fn handle_define_props<'a>(
+    call: &CallExpression<'a>,
+    ctx: &LintContext<'a>,
+    pc: &PropsContext<'a>,
+) {
     if let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) {
         if let Expression::ObjectExpression(obj) = arg.get_inner_expression() {
             check_object_props(obj, ctx, pc);
@@ -154,23 +163,17 @@ fn handle_define_props<'a>(call: &CallExpression<'a>, ctx: &LintContext<'a>, pc:
 fn destructure_context<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
-    with_defaults: Option<FxHashSet<String>>,
-) -> PropsContext {
-    let mut pc = PropsContext { with_defaults, ..PropsContext::default() };
+    has_with_defaults: bool,
+    with_defaults: Option<&'a ObjectExpression<'a>>,
+) -> PropsContext<'a> {
+    let mut pc = PropsContext { has_with_defaults, with_defaults, ..PropsContext::default() };
     let declarator = ctx.nodes().ancestors(node.id()).find_map(|ancestor| {
         if let AstKind::VariableDeclarator(decl) = ancestor.kind() { Some(decl) } else { None }
     });
     if let Some(decl) = declarator
         && let BindingPattern::ObjectPattern(pattern) = &decl.id
     {
-        pc.using_destructure = true;
-        for prop in &pattern.properties {
-            if matches!(prop.value, BindingPattern::AssignmentPattern(_))
-                && let Some(name) = prop.key.static_name()
-            {
-                pc.destructure_defaults.insert(name.to_string());
-            }
-        }
+        pc.destructure = Some(pattern);
     }
     pc
 }
@@ -183,20 +186,11 @@ fn is_wrapped_by_with_defaults(node: &AstNode, ctx: &LintContext) -> bool {
     )
 }
 
-fn object_keys(expr: &Expression) -> FxHashSet<String> {
-    let Expression::ObjectExpression(obj) = expr else { return FxHashSet::default() };
-    obj.properties
-        .iter()
-        .filter_map(|prop| match prop {
-            ObjectPropertyKind::ObjectProperty(prop) => {
-                prop.key.static_name().map(|name| name.to_string())
-            }
-            ObjectPropertyKind::SpreadProperty(_) => None,
-        })
-        .collect()
-}
-
-fn check_object_props<'a>(obj: &ObjectExpression<'a>, ctx: &LintContext<'a>, pc: &PropsContext) {
+fn check_object_props<'a>(
+    obj: &ObjectExpression<'a>,
+    ctx: &LintContext<'a>,
+    pc: &PropsContext<'a>,
+) {
     for prop in &obj.properties {
         let ObjectPropertyKind::ObjectProperty(prop) = prop else { continue };
         if prop.shorthand {
@@ -207,26 +201,41 @@ fn check_object_props<'a>(obj: &ObjectExpression<'a>, ctx: &LintContext<'a>, pc:
             continue;
         }
         let name = prop.key.static_name();
-        if pc.using_destructure {
+        if let Some(destructure) = pc.destructure {
             match &name {
                 // A computed key whose name is unknown is ignored under a destructure.
                 None => continue,
-                Some(name) if pc.destructure_defaults.contains(name.as_ref()) => continue,
+                Some(name) if has_destructure_default(destructure, name.as_ref()) => continue,
                 _ => {}
             }
         }
-        let display = match &name {
-            Some(name) => name.to_string(),
-            None => format!("[{}]", prop.key.span().source_text(ctx.source_text())),
+        if let Some(name) = &name {
+            ctx.diagnostic(require_default_prop_diagnostic(prop.span(), name.as_ref()));
+        } else {
+            let display = format!("[{}]", prop.key.span().source_text(ctx.source_text()));
+            ctx.diagnostic(require_default_prop_diagnostic(prop.span(), &display));
         };
-        ctx.diagnostic(require_default_prop_diagnostic(prop.span(), &display));
     }
+}
+
+fn has_destructure_default(pattern: &ObjectPattern, name: &str) -> bool {
+    pattern.properties.iter().any(|prop| {
+        matches!(prop.value, BindingPattern::AssignmentPattern(_))
+            && prop.key.static_name().as_deref() == Some(name)
+    })
+}
+
+fn object_has_key(obj: &ObjectExpression, name: &str) -> bool {
+    obj.properties.iter().any(|prop| {
+        matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
+            if prop.key.static_name().as_deref() == Some(name))
+    })
 }
 
 /// Mirrors upstream `flattenTypeNodes`: a `defineProps<T>()` type is walked
 /// recursively so unions, intersections and `interface`/`type` references are
 /// all resolved down to their property signatures.
-fn check_type_props<'a>(ts_type: &TSType<'a>, ctx: &LintContext<'a>, pc: &PropsContext) {
+fn check_type_props<'a>(ts_type: &TSType<'a>, ctx: &LintContext<'a>, pc: &PropsContext<'a>) {
     match ts_type {
         TSType::TSTypeLiteral(literal) => {
             for signature in &literal.members {
@@ -270,7 +279,11 @@ fn check_type_props<'a>(ts_type: &TSType<'a>, ctx: &LintContext<'a>, pc: &PropsC
     }
 }
 
-fn check_type_signature<'a>(signature: &TSSignature<'a>, ctx: &LintContext<'a>, pc: &PropsContext) {
+fn check_type_signature<'a>(
+    signature: &TSSignature<'a>,
+    ctx: &LintContext<'a>,
+    pc: &PropsContext<'a>,
+) {
     let (key, optional) = match signature {
         TSSignature::TSPropertySignature(sig) => (&sig.key, sig.optional),
         TSSignature::TSMethodSignature(sig) => (&sig.key, sig.optional),
@@ -286,13 +299,14 @@ fn check_type_signature<'a>(signature: &TSSignature<'a>, ctx: &LintContext<'a>, 
     }
     // Without `withDefaults`/destructure there is nowhere to attach a default,
     // so a bare `defineProps<T>()` type prop is never reported.
-    if pc.with_defaults.is_none() && !pc.using_destructure {
+    if !pc.has_with_defaults && pc.destructure.is_none() {
         return;
     }
-    if pc.with_defaults.as_ref().is_some_and(|keys| keys.contains(name.as_ref())) {
+    if pc.with_defaults.is_some_and(|defaults| object_has_key(defaults, name.as_ref())) {
         return;
     }
-    if pc.using_destructure && pc.destructure_defaults.contains(name.as_ref()) {
+    if pc.destructure.is_some_and(|destructure| has_destructure_default(destructure, name.as_ref()))
+    {
         return;
     }
     ctx.diagnostic(require_default_prop_diagnostic(signature.span(), name.as_ref()));
