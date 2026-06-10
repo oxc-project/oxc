@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🚀 Features
+
+- 5b8dd68 parser: Report TS1255 for invalid class definite assertions (#22917) (camc314)
+
+### 🐛 Bug Fixes
+
+- cf53285 parser: Report reserved type-declaration names in the parser (#23035) (Boshen)
+- c543154 parser: Report comma operator in JSX expression in the parser (#23030) (Boshen)
+- 95dd3a2 parser: Report `import type` alias to a non-external reference in the parser (#23032) (Boshen)
+- 6da876e parser: Report `abstract` private class field in the parser (#23029) (Boshen)
+- 989230a parser: Report compound assignment to non-simple target in the parser (#23022) (Boshen)
+- 06f367c parser: Report `super.#field` private access in the parser (#23014) (Boshen)
+- 4d722e0 parser: Report duplicate switch `default` clause in the parser (#23012) (Boshen)
+- 1295882 parser: Report `new.target` and `import.meta` syntax errors in the parser (#23003) (Boshen)
+- 17e7cf3 parser: Disallow unerasable `as`/`satisfies` assertions (#22986) (Boshen)
+- beb46d3 parser: Commit to module goal on decorated exports (#22941) (Boshen)
+
+### ⚡ Performance
+
+- 7d89909 parser: Peek instead of lookahead for yield disambiguation (#23071) (Boshen)
+- bf872f0 parser: Skip arrow lookahead for a parenthesized literal (#23070) (Boshen)
+- d19fc54 parser: Guard type-argument speculation behind an angle-token check (#23069) (Boshen)
+- 8eb5507 parser: Skip redundant member-rest re-scan on call entry (#23068) (Boshen)
+- 883dfc1 parser: Skip parse_call_expression_rest when no call follows (#23063) (Boshen)
+- b171153 parser: Peek before the await-using lookahead (#23059) (Boshen)
+- 56f21bd parser: Use peek_token for the TS `asserts` type predicate (#23058) (Boshen)
+- 68805ac parser: Use peek_token instead of checkpoint/rewind for single-token decisions (#23056) (Boshen)
+
 ## [0.134.0] - 2026-06-01
 
 ### 🐛 Bug Fixes

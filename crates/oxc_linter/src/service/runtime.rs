@@ -1092,12 +1092,8 @@ impl Runtime {
                     let err: Vec<OxcDiagnostic> = err
                         .into_iter()
                         .map(|mut diagnostic| {
-                            if let Some(labels) = &mut diagnostic.labels {
-                                for label in labels.iter_mut() {
-                                    label.set_span_offset(
-                                        label.offset() + section_source.start as usize,
-                                    );
-                                }
+                            for label in &mut diagnostic.labels {
+                                label.set_span_offset(label.offset() + section_source.start);
                             }
                             diagnostic
                         })
@@ -1141,9 +1137,7 @@ impl Runtime {
             return Err(if ret.is_flow_language { vec![] } else { ret.errors });
         }
 
-        let semantic_ret = SemanticBuilder::new()
-            .with_cfg(true)
-            .with_class_table(true)
+        let semantic_ret = SemanticBuilder::new_linter()
             .with_check_syntax_error(check_syntax_errors)
             .build(allocator.alloc(ret.program));
 

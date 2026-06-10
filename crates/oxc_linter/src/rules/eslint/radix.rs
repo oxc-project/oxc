@@ -39,10 +39,8 @@ pub struct Radix(RadixType);
 enum RadixType {
     /// Always require the radix parameter when using `parseInt()`.
     #[default]
-    #[schemars(skip)]
     Always,
     /// Only require the radix parameter when necessary.
-    #[schemars(skip)]
     AsNeeded,
 }
 

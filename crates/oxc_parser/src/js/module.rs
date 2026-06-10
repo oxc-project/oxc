@@ -697,34 +697,33 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let function_span = self.start_span();
 
-        let checkpoint = self.checkpoint();
-        let mut is_abstract = false;
-        let mut is_async = false;
-        let mut is_interface = false;
-
-        match self.cur_kind() {
-            Kind::Abstract => is_abstract = true,
-            Kind::Async => is_async = true,
-            Kind::Interface => is_interface = true,
-            _ => {}
-        }
-
-        if is_abstract || is_async || is_interface {
+        // ExportDeclaration :
+        //   export default HoistableDeclaration
+        //   export default ClassDeclaration
+        //   export default [lookahead ∉ { function, async [no LineTerminator here] function, class }]
+        //                  AssignmentExpression ;
+        // <https://tc39.es/ecma262/#prod-ExportDeclaration>
+        //
+        // `abstract`/`interface` (TS) and `async` are contextual keywords, so each can be the start
+        // of the `AssignmentExpression` (`export default async;`). Peek the token after the keyword
+        // to apply the lookahead restriction without consuming it, committing only when it confirms
+        // a declaration. `[no LineTerminator here]` maps to `!next.is_on_new_line()`.
+        let kind = self.cur_kind();
+        if matches!(kind, Kind::Abstract | Kind::Async | Kind::Interface) {
             let modifier_span = self.start_span();
-            self.bump_any();
-            let cur_token = self.cur_token();
-            let kind = cur_token.kind();
-            if !cur_token.is_on_new_line() {
-                // export default abstract class ...
-                if is_abstract && kind == Kind::Class {
+            let next = self.lexer.peek_token();
+            if !next.is_on_new_line() {
+                // export default abstract class C {}
+                if kind == Kind::Abstract && next.kind() == Kind::Class {
+                    self.bump_any();
                     let modifiers = Modifiers::new_single(ModifierKind::Abstract, modifier_span);
                     return ExportDefaultDeclarationKind::ClassDeclaration(
                         self.parse_class_declaration(decl_span, &modifiers, decorators),
                     );
                 }
-
-                // export default async function ...
-                if is_async && kind == Kind::Function {
+                // export default async function f() {}
+                if kind == Kind::Async && next.kind() == Kind::Function {
+                    self.bump_any();
                     for decorator in &decorators {
                         self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
                     }
@@ -738,9 +737,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     return ExportDefaultDeclarationKind::FunctionDeclaration(func);
                 }
-
-                // export default interface ...
-                if is_interface {
+                // export default interface I {}
+                if kind == Kind::Interface {
+                    self.bump_any();
                     for decorator in &decorators {
                         self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
                     }
@@ -751,11 +750,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
             }
-            self.rewind(checkpoint);
+            // Used as an identifier (`export default async;`); nothing consumed, so fall through.
         }
 
         let kind = self.cur_kind();
-        // export default class ...
+        // export default class C {}
         if kind == Kind::Class {
             return ExportDefaultDeclarationKind::ClassDeclaration(self.parse_class_declaration(
                 decl_span,
@@ -768,7 +767,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
         }
 
-        // export default function ...
+        // export default function f() {}
         if kind == Kind::Function {
             let mut func = self.parse_function_impl(
                 function_span,
@@ -781,7 +780,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return ExportDefaultDeclarationKind::FunctionDeclaration(func);
         }
 
-        // export default expr
+        // export default 1 + 1;
         let decl = ExportDefaultDeclarationKind::from(self.parse_assignment_expression_or_higher());
         self.asi();
         decl
@@ -1298,8 +1297,10 @@ mod test {
             }
         });
 
+        // `import type foo = bar` builds the AST but is a semantic error (TS1392:
+        // an import alias cannot use `import type`), reported by the parser.
         let src = "import type foo = bar";
-        parse_and_assert_statements(src, |statements| {
+        parse_and_assert_statements_with_error(src, |statements| {
             if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
                 assert_eq!(decl.import_kind, ImportOrExportKind::Type);
                 assert_eq!(decl.id.name, "foo");
@@ -1357,6 +1358,19 @@ mod test {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, src, source_type).parse();
         assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
+        f(ret.program.body.iter().collect::<Vec<_>>());
+    }
+
+    /// Like [`parse_and_assert_statements`] but for a recoverable error: the parser
+    /// reports a diagnostic yet still builds the AST, which `f` asserts on.
+    fn parse_and_assert_statements_with_error(
+        src: &'static str,
+        f: fn(Vec<&oxc_ast::ast::Statement<'_>>) -> (),
+    ) {
+        let source_type = SourceType::default().with_typescript(true);
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, src, source_type).parse();
+        assert!(!ret.errors.is_empty(), "Expected a parse error for source: {src:?}");
         f(ret.program.body.iter().collect::<Vec<_>>());
     }
 

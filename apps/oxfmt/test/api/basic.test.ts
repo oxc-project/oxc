@@ -38,6 +38,14 @@ describe("Format non-js", () => {
     );
     expect(result.errors).toStrictEqual([]);
   });
+
+  it("should surface Prettier parse errors as-is", async () => {
+    const brokenVue = `<template><div></template>`;
+    const result = await format("broken.vue", brokenVue, {});
+
+    expect(result.code).toBe(brokenVue);
+    expect(result.errors[0]?.message).toMatch(/Unexpected closing tag/);
+  });
 });
 
 describe("Format empty", () => {

@@ -92,14 +92,9 @@ impl<'a> Error<'a> {
         named_source: &Arc<NamedSource<String>>,
         allocator: &'a Allocator,
     ) -> Self {
-        let labels = diagnostic.labels.as_ref().map_or_else(
-            || Vec::new_in(allocator),
-            |labels| {
-                Vec::from_iter_in(
-                    labels.iter().map(|label| ErrorLabel::from_in(label, allocator)),
-                    allocator,
-                )
-            },
+        let labels = Vec::from_iter_in(
+            diagnostic.labels.iter().map(|label| ErrorLabel::from_in(label, allocator)),
+            allocator,
         );
 
         let severity = ErrorSeverity::from(diagnostic.severity);
@@ -146,8 +141,7 @@ impl<'a> FromIn<'a, &LabeledSpan> for ErrorLabel<'a> {
     fn from_in(label: &LabeledSpan, allocator: &'a Allocator) -> Self {
         Self {
             message: label.label().map(|message| Str::from_in(message, allocator)),
-            #[expect(clippy::cast_possible_truncation)]
-            span: Span::sized(label.offset() as u32, label.len() as u32),
+            span: Span::sized(label.offset(), label.len()),
         }
     }
 }

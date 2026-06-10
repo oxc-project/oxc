@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::ast::{NumericLiteral, StringLiteral};
 use oxc_formatter_core::{
-    Buffer, Format,
+    Buffer, Format, FormatContext,
     builders::text,
     spec::{format_trimmed_number, normalize_string},
     write,
@@ -10,7 +10,7 @@ use oxc_formatter_core::{
 
 use crate::context::JsonFormatContext;
 
-use super::{JsonFormatter, arena_cow_str};
+use super::{JsonFormatter, arena_cow_str, write_quoted_str};
 
 pub struct FmtJsonString<'a, 'b> {
     pub lit: &'b StringLiteral<'a>,
@@ -29,19 +29,22 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonString<'a, '_> {
             return;
         };
         let inner = &raw_str[1..raw_str.len() - 1];
-        let quotes_will_change = outer_quote != b'"';
 
-        // Prettier's `json` parser normalizes string quotes to `"` and `\r\n` / lone `\r` to `\n`.
+        // `json` always normalizes to `"`, but `json5` may keep/choose `'`
+        let chosen_quote = f.context().options().preferred_quote(inner);
+        let quotes_will_change = outer_quote != chosen_quote;
+
+        // Prettier normalizes string quotes to `chosen_quote` and `\r\n` / lone `\r` to `\n`.
         // The shared `normalize_string` handles both.
-        let normalized = normalize_string(inner, b'"', quotes_will_change);
+        let normalized = normalize_string(inner, chosen_quote, quotes_will_change);
 
-        // Fast path: outer was already `"` and the body wasn't rewritten.
+        // Fast path: outer already matched the chosen quote and the body wasn't rewritten
         if !quotes_will_change && matches!(normalized, Cow::Borrowed(_)) {
             write!(f, text(raw_str));
             return;
         }
 
-        write!(f, [text("\""), text(arena_cow_str(normalized, f)), text("\"")]);
+        write_quoted_str(f, chosen_quote, arena_cow_str(normalized, f));
     }
 }
 

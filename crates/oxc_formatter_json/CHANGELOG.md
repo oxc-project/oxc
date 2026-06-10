@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.54.0] - 2026-06-08
+
+### 🚀 Features
+
+- 3da77e0 oxfmt: Format `parser:json5` files by `oxc_formatter_json` (#22990) (leaysgur)
+- 27a6db8 formatter_json: Implement jsonc variant (#22912) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 01e0871 formatter,formatter_json: Handle PS/LS as line terminator (#22978) (leaysgur)
+- 23902d9 formatter_json: Handle CR only line breaks (#22977) (leaysgur)
+- 136b72b formatter_json: Use line_suffix for line comment outside array (#22931) (leaysgur)
+- 44e40fa formatter_json: Expand line comment inside array (#22911) (leaysgur)
+- 2c86896 formatter_json: Avoid example binary name collision (#22904) (camc314)
+
+### 📚 Documentation
+
+- cc69d8d formatter_json: Update AGENTS.md (#22981) (leaysgur)
+- 0490721 formatter_json: Update AGENTS.md (#22976) (leaysgur)
+- 7e514bf formatter_json: Update AGENTS.md (#22930) (leaysgur)
+
 ## [0.53.0] - 2026-06-01
 
 ### 🚀 Features

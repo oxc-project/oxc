@@ -8,6 +8,10 @@ use schemars::{
     r#gen::SchemaGenerator,
     schema::{ArrayValidation, InstanceType, Schema, SchemaObject},
 };
+
+#[cfg(feature = "ruledocs")]
+use schemars::schema::SingleOrVec;
+
 use serde::{
     Deserialize, Serialize, Serializer,
     de::{self, Deserializer, Visitor},
@@ -17,6 +21,8 @@ use smallvec::SmallVec;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
+#[cfg(feature = "ruledocs")]
+use crate::utils::should_skip_config_schema;
 use crate::{
     AllowWarnDeny, ExternalPluginStore, LintPlugins,
     external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
@@ -261,6 +267,14 @@ impl JsonSchema for OxlintRules {
             ToggleAndConfig(ToggleAndConfig),
         }
 
+        #[expect(unused)]
+        #[derive(Debug, Clone, JsonSchema)]
+        #[serde(untagged)]
+        enum RuleNoConfig {
+            Toggle(AllowWarnDeny),
+            ToggleOnly(ToggleOnly),
+        }
+
         #[derive(Debug, Clone)]
         struct ToggleAndConfig;
 
@@ -292,6 +306,38 @@ impl JsonSchema for OxlintRules {
             }
         }
 
+        #[derive(Debug, Clone)]
+        struct ToggleOnly;
+
+        impl JsonSchema for ToggleOnly {
+            fn is_referenceable() -> bool {
+                false
+            }
+
+            fn schema_name() -> String {
+                "ToggleOnly".to_string()
+            }
+
+            fn schema_id() -> Cow<'static, str> {
+                "ToggleOnly".into()
+            }
+
+            fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+                SchemaObject {
+                    instance_type: Some(InstanceType::Array.into()),
+                    array: Some(Box::new(ArrayValidation {
+                        items: Some(vec![r#gen.subschema_for::<AllowWarnDeny>()].into()),
+                        min_items: Some(1),
+                        max_items: Some(1),
+                        additional_items: Some(Box::new(Schema::Bool(false))),
+                        ..Default::default()
+                    })),
+                    ..Default::default()
+                }
+                .into()
+            }
+        }
+
         #[expect(unused)]
         #[derive(Debug)]
         struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
@@ -306,15 +352,173 @@ impl JsonSchema for OxlintRules {
             }
 
             fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+                #[cfg(feature = "ruledocs")]
+                fn resolve_references_in_schema<'a>(
+                    schema: &'a Schema,
+                    r#gen: &'a SchemaGenerator,
+                ) -> &'a Schema {
+                    let mut current = schema;
+                    while let Some(next) = r#gen.dereference(current) {
+                        current = next;
+                    }
+
+                    let Schema::Object(obj) = current else {
+                        return current;
+                    };
+
+                    // We only need to dereference array schemas for rule config.
+                    // Reuse the schema for other cases.
+                    if obj.array.is_none() {
+                        return schema;
+                    }
+
+                    // TODO: the reference should be removed from the generator.
+                    current
+                }
+
+                // we expect that rules config items does not extend 4,294,967,295 entries.
+                #[expect(clippy::cast_possible_truncation)]
+                #[cfg(feature = "ruledocs")]
+                fn rule_config_schema(r: &RuleEnum, r#gen: &mut SchemaGenerator) -> Schema {
+                    fn with_toggle_schema(
+                        config_schema: Schema,
+                        r#gen: &mut SchemaGenerator,
+                    ) -> Schema {
+                        SchemaObject {
+                            subschemas: Some(Box::new(schemars::schema::SubschemaValidation {
+                                any_of: Some(vec![
+                                    r#gen.subschema_for::<AllowWarnDeny>(),
+                                    config_schema,
+                                ]),
+                                ..Default::default()
+                            })),
+                            ..Default::default()
+                        }
+                        .into()
+                    }
+
+                    let Some(schema) = r.schema(r#gen) else {
+                        return r#gen.subschema_for::<RuleNoConfig>();
+                    };
+
+                    let schema = resolve_references_in_schema(&schema, r#gen).clone();
+
+                    let Schema::Object(obj) = schema else {
+                        let array_schema = SchemaObject {
+                            instance_type: Some(InstanceType::Array.into()),
+                            array: Some(Box::new(ArrayValidation {
+                                items: Some(SingleOrVec::Vec(vec![
+                                    r#gen.subschema_for::<AllowWarnDeny>(),
+                                    Schema::Bool(true),
+                                ])),
+                                min_items: Some(1),
+                                max_items: Some(2),
+                                ..Default::default()
+                            })),
+                            ..Default::default()
+                        }
+                        .into();
+                        return with_toggle_schema(array_schema, r#gen);
+                    };
+
+                    debug_assert!(
+                        (u8::from(obj.array.is_some())
+                            + u8::from(obj.object.is_some())
+                            + u8::from(obj.reference.is_some()))
+                            <= 1,
+                        "Expected rule schema to be either an object, an array, or a reference, but not multiple"
+                    );
+
+                    if let Some(reference) = obj.reference {
+                        let array_schema = SchemaObject {
+                            instance_type: Some(InstanceType::Array.into()),
+                            array: Some(Box::new(ArrayValidation {
+                                items: Some(SingleOrVec::Vec(vec![
+                                    r#gen.subschema_for::<AllowWarnDeny>(),
+                                    Schema::Object(SchemaObject {
+                                        reference: Some(reference),
+                                        ..Default::default()
+                                    }),
+                                ])),
+                                min_items: Some(1),
+                                max_items: Some(2),
+                                ..Default::default()
+                            })),
+                            ..Default::default()
+                        }
+                        .into();
+                        return with_toggle_schema(array_schema, r#gen);
+                    }
+
+                    if let Some(array) = obj.array {
+                        let items = match array.items {
+                            None => vec![r#gen.subschema_for::<AllowWarnDeny>()],
+                            Some(SingleOrVec::Single(config)) => {
+                                vec![r#gen.subschema_for::<AllowWarnDeny>(), *config]
+                            }
+                            Some(SingleOrVec::Vec(configs)) => {
+                                let mut items = Vec::with_capacity(configs.len().saturating_add(1));
+                                items.push(r#gen.subschema_for::<AllowWarnDeny>());
+                                items.extend(configs);
+                                items
+                            }
+                        };
+
+                        let config_length = items.len() as u32;
+
+                        let array_schema = SchemaObject {
+                            instance_type: Some(InstanceType::Array.into()),
+                            array: Some(Box::new(ArrayValidation {
+                                items: Some(SingleOrVec::Vec(items)),
+                                min_items: Some(1),
+                                max_items: Some(config_length),
+                                ..Default::default()
+                            })),
+                            ..Default::default()
+                        }
+                        .into();
+                        return with_toggle_schema(array_schema, r#gen);
+                    }
+
+                    let array_schema = Schema::Object(SchemaObject {
+                        instance_type: Some(InstanceType::Array.into()),
+                        array: Some(Box::new(ArrayValidation {
+                            items: Some(SingleOrVec::Vec(vec![
+                                r#gen.subschema_for::<AllowWarnDeny>(),
+                                Schema::Object(obj),
+                            ])),
+                            min_items: Some(1),
+                            max_items: Some(2),
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    });
+
+                    with_toggle_schema(array_schema, r#gen)
+                }
+
+                let dummy_schema = r#gen.subschema_for::<DummyRule>();
+
                 let rules_enum = RULES.iter().map(|r| {
-                    if r.plugin_name() == "eslint" {
-                        r.name().to_string()
+                    #[cfg(feature = "ruledocs")]
+                    let schema = if should_skip_config_schema(r) {
+                        r#gen.subschema_for::<DummyRule>()
                     } else {
-                        format!(
-                            "{}/{}",
-                            // replace `jsx_a11y` with `jsx-a11y`, `react_perf` with `react-perf`.
-                            r.plugin_name().cow_replace('_', "-"),
-                            r.name()
+                        rule_config_schema(r, r#gen)
+                    };
+                    #[cfg(not(feature = "ruledocs"))]
+                    let schema = r#gen.subschema_for::<DummyRule>();
+                    if r.plugin_name() == "eslint" {
+                        (r.name().to_string(), schema)
+                    } else {
+                        (
+                            format!(
+                                "{}/{}",
+                                // replace `jsx_a11y` with `jsx-a11y`, `react_perf` with `react-perf`.
+                                r.plugin_name().cow_replace('_', "-"),
+                                r.name()
+                            ),
+                            schema,
                         )
                     }
                 });
@@ -329,10 +533,8 @@ impl JsonSchema for OxlintRules {
                     })),
                     instance_type: Some(InstanceType::Object.into()),
                     object: Some(Box::new(schemars::schema::ObjectValidation {
-                        additional_properties: Some(Box::new(r#gen.subschema_for::<DummyRule>())),
-                        properties: rules_enum
-                            .map(|rule_name| (rule_name, r#gen.subschema_for::<DummyRule>()))
-                            .collect(),
+                        additional_properties: Some(Box::new(dummy_schema)),
+                        properties: rules_enum.collect(),
                         ..Default::default()
                     })),
                     ..Default::default()

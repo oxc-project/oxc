@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 🚀 Features
+
+- 85efabf semantic: Make building the class table optional, off by default (#22862) (Boshen)
+
+### 🐛 Bug Fixes
+
+- cf53285 parser: Report reserved type-declaration names in the parser (#23035) (Boshen)
+- c543154 parser: Report comma operator in JSX expression in the parser (#23030) (Boshen)
+- 95dd3a2 parser: Report `import type` alias to a non-external reference in the parser (#23032) (Boshen)
+- 6da876e parser: Report `abstract` private class field in the parser (#23029) (Boshen)
+- 989230a parser: Report compound assignment to non-simple target in the parser (#23022) (Boshen)
+- 06f367c parser: Report `super.#field` private access in the parser (#23014) (Boshen)
+- 4d722e0 parser: Report duplicate switch `default` clause in the parser (#23012) (Boshen)
+- 1295882 parser: Report `new.target` and `import.meta` syntax errors in the parser (#23003) (Boshen)
+
+### ⚡ Performance
+
+- 502b04d semantic: Move cold function redeclaration handling into `#[cold]` function (#22973) (overlookmotel)
+
 ## [0.134.0] - 2026-06-01
 
 ### ⚡ Performance

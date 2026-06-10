@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_ast::ast::Expression;
-use oxc_formatter_core::{Buffer, Format, Formatter, builders::FormatWith, write};
+use oxc_formatter_core::{Buffer, Format, Formatter, builders::FormatWith, builders::text, write};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -33,6 +33,13 @@ pub fn arena_cow_str<'a>(cow: Cow<'a, str>, f: &JsonFormatter<'_, 'a>) -> &'a st
         Cow::Borrowed(s) => s,
         Cow::Owned(s) => f.allocator().alloc_str(&s),
     }
+}
+
+/// Writes `body` enclosed in the character named by `quote_byte` (`b'"'` / `b'\''`).
+/// `body` must already be escape-normalized for that quote.
+pub fn write_quoted_str<'a>(f: &mut JsonFormatter<'_, 'a>, quote_byte: u8, body: &'a str) {
+    let quote = if quote_byte == b'\'' { "'" } else { "\"" };
+    write!(f, [text(quote), text(body), text(quote)]);
 }
 
 /// Wraps a re-entrant JSON closure in a [`FormatWith`]. The closure's context is

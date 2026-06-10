@@ -166,17 +166,6 @@ fn test() {
                         console.log('2')
         }
         ",
-        "
-        switch (1) {
-            default:
-                handleDefaultCase1();
-                break;
-            case 1:
-            default:
-                handleDefaultCase2();
-                break;
-        }
-        ",
     ];
 
     let fail = vec![

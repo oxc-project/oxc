@@ -796,6 +796,7 @@ pub use crate::rules::vue::define_emits_declaration::DefineEmitsDeclaration as V
 pub use crate::rules::vue::define_props_declaration::DefinePropsDeclaration as VueDefinePropsDeclaration;
 pub use crate::rules::vue::define_props_destructuring::DefinePropsDestructuring as VueDefinePropsDestructuring;
 pub use crate::rules::vue::max_props::MaxProps as VueMaxProps;
+pub use crate::rules::vue::next_tick_style::NextTickStyle as VueNextTickStyle;
 pub use crate::rules::vue::no_arrow_functions_in_watch::NoArrowFunctionsInWatch as VueNoArrowFunctionsInWatch;
 pub use crate::rules::vue::no_computed_properties_in_data::NoComputedPropertiesInData as VueNoComputedPropertiesInData;
 pub use crate::rules::vue::no_deprecated_data_object_declaration::NoDeprecatedDataObjectDeclaration as VueNoDeprecatedDataObjectDeclaration;
@@ -1638,6 +1639,7 @@ pub enum RuleEnum {
     VueDefinePropsDeclaration(VueDefinePropsDeclaration),
     VueDefinePropsDestructuring(VueDefinePropsDestructuring),
     VueMaxProps(VueMaxProps),
+    VueNextTickStyle(VueNextTickStyle),
     VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch),
     VueNoComputedPropertiesInData(VueNoComputedPropertiesInData),
     VueNoDeprecatedDataObjectDeclaration(VueNoDeprecatedDataObjectDeclaration),
@@ -2563,7 +2565,8 @@ const VUE_DEFINE_EMITS_DECLARATION_ID: usize = VUE_COMPONENT_DEFINITION_NAME_CAS
 const VUE_DEFINE_PROPS_DECLARATION_ID: usize = VUE_DEFINE_EMITS_DECLARATION_ID + 1usize;
 const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID + 1usize;
 const VUE_MAX_PROPS_ID: usize = VUE_DEFINE_PROPS_DESTRUCTURING_ID + 1usize;
-const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = VUE_MAX_PROPS_ID + 1usize;
+const VUE_NEXT_TICK_STYLE_ID: usize = VUE_MAX_PROPS_ID + 1usize;
+const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = VUE_NEXT_TICK_STYLE_ID + 1usize;
 const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID + 1usize;
 const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize =
     VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID + 1usize;
@@ -3518,6 +3521,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(_) => VUE_DEFINE_PROPS_DECLARATION_ID,
             Self::VueDefinePropsDestructuring(_) => VUE_DEFINE_PROPS_DESTRUCTURING_ID,
             Self::VueMaxProps(_) => VUE_MAX_PROPS_ID,
+            Self::VueNextTickStyle(_) => VUE_NEXT_TICK_STYLE_ID,
             Self::VueNoArrowFunctionsInWatch(_) => VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID,
             Self::VueNoComputedPropertiesInData(_) => VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
@@ -4456,6 +4460,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::NAME,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::NAME,
             Self::VueMaxProps(_) => VueMaxProps::NAME,
+            Self::VueNextTickStyle(_) => VueNextTickStyle::NAME,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::NAME,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::NAME,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
@@ -5450,6 +5455,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::CATEGORY,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::CATEGORY,
             Self::VueMaxProps(_) => VueMaxProps::CATEGORY,
+            Self::VueNextTickStyle(_) => VueNextTickStyle::CATEGORY,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::CATEGORY,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::CATEGORY,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
@@ -6391,6 +6397,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FIX,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::FIX,
             Self::VueMaxProps(_) => VueMaxProps::FIX,
+            Self::VueNextTickStyle(_) => VueNextTickStyle::FIX,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::FIX,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::FIX,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
@@ -7580,6 +7587,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::documentation(),
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::documentation(),
             Self::VueMaxProps(_) => VueMaxProps::documentation(),
+            Self::VueNextTickStyle(_) => VueNextTickStyle::documentation(),
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::documentation(),
             Self::VueNoComputedPropertiesInData(_) => {
                 VueNoComputedPropertiesInData::documentation()
@@ -9903,6 +9911,8 @@ impl RuleEnum {
             Self::VueMaxProps(_) => {
                 VueMaxProps::config_schema(generator).or_else(|| VueMaxProps::schema(generator))
             }
+            Self::VueNextTickStyle(_) => VueNextTickStyle::config_schema(generator)
+                .or_else(|| VueNextTickStyle::schema(generator)),
             Self::VueNoArrowFunctionsInWatch(_) => {
                 VueNoArrowFunctionsInWatch::config_schema(generator)
                     .or_else(|| VueNoArrowFunctionsInWatch::schema(generator))
@@ -10797,6 +10807,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(_) => "vue",
             Self::VueDefinePropsDestructuring(_) => "vue",
             Self::VueMaxProps(_) => "vue",
+            Self::VueNextTickStyle(_) => "vue",
             Self::VueNoArrowFunctionsInWatch(_) => "vue",
             Self::VueNoComputedPropertiesInData(_) => "vue",
             Self::VueNoDeprecatedDataObjectDeclaration(_) => "vue",
@@ -13380,6 +13391,9 @@ impl RuleEnum {
                 VueDefinePropsDestructuring::from_configuration(value)?,
             )),
             Self::VueMaxProps(_) => Ok(Self::VueMaxProps(VueMaxProps::from_configuration(value)?)),
+            Self::VueNextTickStyle(_) => {
+                Ok(Self::VueNextTickStyle(VueNextTickStyle::from_configuration(value)?))
+            }
             Self::VueNoArrowFunctionsInWatch(_) => Ok(Self::VueNoArrowFunctionsInWatch(
                 VueNoArrowFunctionsInWatch::from_configuration(value)?,
             )),
@@ -14290,6 +14304,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(rule) => rule.to_configuration(),
             Self::VueDefinePropsDestructuring(rule) => rule.to_configuration(),
             Self::VueMaxProps(rule) => rule.to_configuration(),
+            Self::VueNextTickStyle(rule) => rule.to_configuration(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.to_configuration(),
             Self::VueNoComputedPropertiesInData(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.to_configuration(),
@@ -15128,6 +15143,7 @@ impl RuleEnum {
                 Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run(node, ctx),
                 Self::VueMaxProps(rule) => rule.run(node, ctx),
+                Self::VueNextTickStyle(rule) => rule.run(node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run(node, ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run(node, ctx),
@@ -15959,6 +15975,7 @@ impl RuleEnum {
                 Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run(node, ctx),
                 Self::VueMaxProps(rule) => rule.run(node, ctx),
+                Self::VueNextTickStyle(rule) => rule.run(node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run(node, ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run(node, ctx),
@@ -16797,6 +16814,7 @@ impl RuleEnum {
                 Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run_once(ctx),
                 Self::VueMaxProps(rule) => rule.run_once(ctx),
+                Self::VueNextTickStyle(rule) => rule.run_once(ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_once(ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_once(ctx),
@@ -17628,6 +17646,7 @@ impl RuleEnum {
                 Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run_once(ctx),
                 Self::VueMaxProps(rule) => rule.run_once(ctx),
+                Self::VueNextTickStyle(rule) => rule.run_once(ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_once(ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_once(ctx),
@@ -18715,6 +18734,7 @@ impl RuleEnum {
                 Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueMaxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNextTickStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
@@ -19802,6 +19822,7 @@ impl RuleEnum {
                 Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueDefinePropsDestructuring(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueMaxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueNextTickStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoArrowFunctionsInWatch(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoComputedPropertiesInData(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoDeprecatedDataObjectDeclaration(rule) => {
@@ -20639,6 +20660,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDestructuring(rule) => rule.should_run(ctx),
             Self::VueMaxProps(rule) => rule.should_run(ctx),
+            Self::VueNextTickStyle(rule) => rule.should_run(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.should_run(ctx),
             Self::VueNoComputedPropertiesInData(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.should_run(ctx),
@@ -21825,6 +21847,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::IS_TSGOLINT_RULE,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::IS_TSGOLINT_RULE,
             Self::VueMaxProps(_) => VueMaxProps::IS_TSGOLINT_RULE,
+            Self::VueNextTickStyle(_) => VueNextTickStyle::IS_TSGOLINT_RULE,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::IS_TSGOLINT_RULE,
             Self::VueNoComputedPropertiesInData(_) => {
                 VueNoComputedPropertiesInData::IS_TSGOLINT_RULE
@@ -22833,6 +22856,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::VERSION,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::VERSION,
             Self::VueMaxProps(_) => VueMaxProps::VERSION,
+            Self::VueNextTickStyle(_) => VueNextTickStyle::VERSION,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::VERSION,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::VERSION,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
@@ -23866,6 +23890,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::HAS_CONFIG,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::HAS_CONFIG,
             Self::VueMaxProps(_) => VueMaxProps::HAS_CONFIG,
+            Self::VueNextTickStyle(_) => VueNextTickStyle::HAS_CONFIG,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::HAS_CONFIG,
             Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::HAS_CONFIG,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
@@ -24700,6 +24725,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDestructuring(rule) => rule.types_info(),
             Self::VueMaxProps(rule) => rule.types_info(),
+            Self::VueNextTickStyle(rule) => rule.types_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.types_info(),
             Self::VueNoComputedPropertiesInData(rule) => rule.types_info(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.types_info(),
@@ -25528,6 +25554,7 @@ impl RuleEnum {
             Self::VueDefinePropsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDestructuring(rule) => rule.run_info(),
             Self::VueMaxProps(rule) => rule.run_info(),
+            Self::VueNextTickStyle(rule) => rule.run_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_info(),
             Self::VueNoComputedPropertiesInData(rule) => rule.run_info(),
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_info(),
@@ -26486,6 +26513,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueDefinePropsDeclaration(VueDefinePropsDeclaration::default()),
         RuleEnum::VueDefinePropsDestructuring(VueDefinePropsDestructuring::default()),
         RuleEnum::VueMaxProps(VueMaxProps::default()),
+        RuleEnum::VueNextTickStyle(VueNextTickStyle::default()),
         RuleEnum::VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch::default()),
         RuleEnum::VueNoComputedPropertiesInData(VueNoComputedPropertiesInData::default()),
         RuleEnum::VueNoDeprecatedDataObjectDeclaration(

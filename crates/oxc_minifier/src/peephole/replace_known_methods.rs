@@ -316,11 +316,11 @@ impl<'a> PeepholeOptimizations {
                         let cooked = ast.str(scratch);
                         let raw_cow = Self::escape_string_for_template_literal(scratch);
                         let raw = ast.str(&raw_cow);
+                        // `raw` is already escaped
                         quasis.push(ast.template_element(
                             SPAN,
                             TemplateElementValue { raw, cooked: Some(cooked) },
                             false,
-                            false, // raw is already escaped
                         ));
                         scratch.clear(); // maintains INVARIANT above
                         // checked that all the arguments are expression above
@@ -340,11 +340,11 @@ impl<'a> PeepholeOptimizations {
                 let cooked = ast.str(scratch);
                 let raw_cow = Self::escape_string_for_template_literal(scratch);
                 let raw = ast.str(&raw_cow);
+                // `raw` is already escaped
                 quasis.push(ast.template_element(
                     SPAN,
                     TemplateElementValue { raw, cooked: Some(cooked) },
                     true, // tail
-                    false,
                 ));
 
                 debug_assert_eq!(quasis.len(), expressions.len() + 1);

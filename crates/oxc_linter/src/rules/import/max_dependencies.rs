@@ -55,6 +55,14 @@ impl Default for MaxDependenciesConfig {
     }
 }
 
+#[derive(Debug, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)] // only for schema generation
+enum MaxDependenciesConfigJson {
+    Number(usize),
+    Object(MaxDependenciesConfig),
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -89,7 +97,7 @@ declare_oxc_lint!(
     MaxDependencies,
     import,
     pedantic,
-    config = MaxDependenciesConfig,
+    config = MaxDependenciesConfigJson,
     version = "0.5.0",
 );
 

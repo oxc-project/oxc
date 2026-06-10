@@ -25,11 +25,19 @@ fn no_null_diagnostic(null: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `null` literals").with_label(null)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoNull {
     /// When set to `true`, the rule will also check strict equality/inequality comparisons (`===` and `!==`) against `null`.
     check_strict_equality: bool,
+    /// When set to `true`, disallow the use of `null` as a direct function call or constructor argument.
+    check_arguments: bool,
+}
+
+impl Default for NoNull {
+    fn default() -> Self {
+        Self { check_strict_equality: false, check_arguments: true }
+    }
 }
 
 declare_oxc_lint!(
@@ -73,6 +81,13 @@ fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool 
         Some(Expression::NullLiteral(null_lit)) => span.contains_inclusive(null_lit.span),
         _ => false,
     }
+}
+
+fn match_direct_null_arg(arguments: &[Argument], span: Span) -> bool {
+    arguments
+        .iter()
+        .filter_map(Argument::as_expression)
+        .any(|expr| matches!(expr.get_inner_expression(), Expression::NullLiteral(null_lit) if span.contains_inclusive(null_lit.span)))
 }
 
 impl NoNull {
@@ -198,6 +213,18 @@ impl Rule for NoNull {
             {
                 // no violation
             }
+            (AstKind::CallExpression(call_expr), _)
+                if !self.check_arguments
+                    && match_direct_null_arg(&call_expr.arguments, null_literal.span) =>
+            {
+                // no violation
+            }
+            (AstKind::NewExpression(new_expr), _)
+                if !self.check_arguments
+                    && match_direct_null_arg(&new_expr.arguments, null_literal.span) =>
+            {
+                // no violation
+            }
             (AstKind::BinaryExpression(binary_expr), _) => {
                 self.diagnose_binary_expression(ctx, null_literal, binary_expr);
             }
@@ -264,6 +291,17 @@ fn test() {
             "checkStrictEquality": option,
         }])
     }
+    fn check_arguments(option: bool) -> serde_json::Value {
+        serde_json::json!([{
+            "checkArguments": option,
+        }])
+    }
+    fn check_arguments_and_strict_equality() -> serde_json::Value {
+        serde_json::json!([{
+            "checkArguments": false,
+            "checkStrictEquality": true,
+        }])
+    }
 
     let pass = vec![
         ("let foo", None),
@@ -290,6 +328,14 @@ fn test() {
         ("if (foo !== null) {}", Some(check_strict_equality(false))),
         ("if (null !== foo) {}", Some(check_strict_equality(false))),
         ("if (foo === null || foo === undefined) {}", None),
+        ("foo(null)", Some(check_arguments(false))),
+        ("foo(bar, null)", Some(check_arguments(false))),
+        ("drawingManager.setMap(null)", Some(check_arguments(false))),
+        ("markers[index].setMap(null)", Some(check_arguments(false))),
+        ("object?.method?.(null)", Some(check_arguments(false))),
+        ("foo?.(null)", Some(check_arguments(false))),
+        ("new HttpResponse(null)", Some(check_arguments(false))),
+        ("new HttpResponse(body, null)", Some(check_arguments(false))),
     ];
 
     let fail = vec![
@@ -312,6 +358,18 @@ fn test() {
         ("var foo = null;", None),
         ("var foo = 1, bar = null, baz = 2;", None),
         ("const foo = null;", None),
+        ("const foo = null;", Some(check_arguments(false))),
+        (
+            "function foo() {
+            return null;
+            }",
+            Some(check_arguments(false)),
+        ),
+        ("if (foo === null) {}", Some(check_arguments_and_strict_equality())),
+        ("foo([null])", Some(check_arguments(false))),
+        ("foo(bar ?? null)", Some(check_arguments(false))),
+        ("foo(...[null])", Some(check_arguments(false))),
+        ("new HttpResponse([null])", Some(check_arguments(false))),
         // `checkStrictEquality`
         ("if (foo === null) {}", Some(check_strict_equality(true))),
         ("if (null === foo) {}", Some(check_strict_equality(true))),

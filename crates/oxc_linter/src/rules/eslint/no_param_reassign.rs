@@ -24,7 +24,7 @@ fn assignment_to_param_property_diagnostic(name: &str, span: Span) -> OxcDiagnos
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoParamReassignConfig {
     /// When true, also check for modifications to properties of parameters.
     props: bool,

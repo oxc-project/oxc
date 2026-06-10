@@ -143,6 +143,7 @@ impl<'a> Minifier {
             .mangle
             .map(|options| {
                 let mut semantic = SemanticBuilder::new()
+                    .with_build_nodes(true)
                     .with_stats(stats)
                     .with_class_table(true)
                     .build(program)

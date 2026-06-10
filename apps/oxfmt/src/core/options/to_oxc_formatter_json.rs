@@ -1,15 +1,15 @@
-use oxc_formatter_json::{BracketSpacing, Expand, JsonFormatOptions, JsonVariant, TrailingCommas};
+use oxc_formatter_json::{
+    BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas,
+};
 
 use super::{
-    super::oxfmtrc::{FormatConfig, ObjectWrapConfig, TrailingCommaConfig},
+    super::oxfmtrc::{FormatConfig, ObjectWrapConfig, QuotePropsConfig, TrailingCommaConfig},
     to_core_options::to_core_options,
 };
 
 /// Convert `FormatConfig` into validated `JsonFormatOptions` for `oxc_formatter_json`.
 ///
 /// Most JSON-specific output options are fixed by [`oxc_formatter_json::JsonVariant`].
-/// The exception is `trailingComma`, which the `jsonc`/`json5` variants honor
-/// (the `json` variant ignores it, matching Prettier forcing `"none"`).
 ///
 /// # Errors
 /// Returns error if any option value is invalid.
@@ -28,11 +28,10 @@ pub fn to_oxc_formatter_json(
         ..JsonFormatOptions::default()
     };
 
-    // [Prettier] trailingComma: "all" | "es5" | "none" (default "all").
-    // Only honored by `jsonc`/`json5`, `json`/`json-stringify` ignore it.
-    // And "all" and "es5" are indistinguishable for JSON.
+    // [Prettier] trailingComma: "all" | "es5" | "none"
     if let Some(commas) = config.trailing_comma {
         options.trailing_commas = match commas {
+            // "all" and "es5" are indistinguishable for JSON
             TrailingCommaConfig::All | TrailingCommaConfig::Es5 => TrailingCommas::Always,
             TrailingCommaConfig::None => TrailingCommas::Never,
         };
@@ -46,6 +45,18 @@ pub fn to_oxc_formatter_json(
         options.expand = match wrap {
             ObjectWrapConfig::Preserve => Expand::Auto,
             ObjectWrapConfig::Collapse => Expand::Never,
+        };
+    }
+    // [Prettier] singleQuote: boolean
+    if let Some(single_quote) = config.single_quote {
+        options.single_quote = single_quote.into();
+    }
+    // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
+    if let Some(quote_props) = config.quote_props {
+        options.quote_props = match quote_props {
+            QuotePropsConfig::AsNeeded => QuoteProps::AsNeeded,
+            QuotePropsConfig::Consistent => QuoteProps::Consistent,
+            QuotePropsConfig::Preserve => QuoteProps::Preserve,
         };
     }
 

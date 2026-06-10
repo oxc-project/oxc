@@ -1,9 +1,9 @@
-commit: d9fe348c
+commit: 2688fbd1
 
 parser_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2222/2236 (99.37%)
-Negative Passed: 1708/1723 (99.13%)
+Positive Passed: 2221/2236 (99.33%)
+Negative Passed: 1709/1723 (99.19%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -31,8 +31,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 
@@ -180,7 +178,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │         // Also works on AssignmentPattern
    ╰────
 
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts:5:5]
+ 4 │   #c?: number;
+ 5 │   #d!;
+   ·     ─
+ 6 │   #e!: boolean;
+   ╰────
+
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:6:6]
+ 5 │     x: number = 1;
+ 6 │     x!;
+   ·      ─
+ 7 │     x!: number;
+   ╰────
 
   × Identifier `x` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:2:5]
@@ -261,6 +277,46 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:22:13]
+ 21 │ 
+ 22 │ interface I<const T> {}
+    ·             ───────
+ 23 │ interface J<const T extends U> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:23:13]
+ 22 │ interface I<const T> {}
+ 23 │ interface J<const T extends U> {}
+    ·             ─────────────────
+ 24 │ interface K<T, const U> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:24:16]
+ 23 │ interface J<const T extends U> {}
+ 24 │ interface K<T, const U> {}
+    ·                ───────
+ 25 │ interface L<in const T> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:25:13]
+ 24 │ interface K<T, const U> {}
+ 25 │ interface L<in const T> {}
+    ·             ──────────
+ 26 │ interface M<const in T> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:26:13]
+ 25 │ interface L<in const T> {}
+ 26 │ interface M<const in T> {}
+    ·             ──────────
+ 27 │ 
+    ╰────
 
   × Identifier `method` has already been declared
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:29:3]
@@ -14846,6 +14902,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-as-string/input.ts:1:22]
  1 │ import { type foo as "bar" } from "mod";
    ·                      ─────
+   ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts:1:8]
+ 1 │ type T<const U> = {};
+   ·        ───────
    ╰────
 
   × TS(1363): A type-only import can specify a default import or named bindings, but not both.

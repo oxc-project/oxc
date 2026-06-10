@@ -60,7 +60,7 @@ declare_oxc_lint!(
     RequirePropTypes,
     vue,
     style,
-    version = "next",
+    version = "1.69.0",
 );
 
 impl Rule for RequirePropTypes {

@@ -144,13 +144,10 @@ fn is_error_suppressed_by_ts_ignore(
     }
 
     // Get the error's byte offset from the first label
-    let Some(labels) = &error.labels else {
+    let Some(first_label) = error.labels.first() else {
         return false;
     };
-    let Some(first_label) = labels.first() else {
-        return false;
-    };
-    let error_offset = first_label.offset();
+    let error_offset = first_label.offset() as usize;
 
     // Check if any ts-ignore span covers the line before this error
     for ts_ignore_span in ts_ignore_spans {

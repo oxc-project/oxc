@@ -1,5 +1,6 @@
 use lazy_regex::{Regex, RegexBuilder};
-use serde::Deserialize;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 /// Always returns `true`.
 ///
@@ -25,6 +26,14 @@ use serde::Deserialize;
 #[inline]
 pub const fn default_true() -> bool {
     true
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum AlwaysNever {
+    #[default]
+    Always,
+    Never,
 }
 
 pub fn deserialize_regex_option<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
