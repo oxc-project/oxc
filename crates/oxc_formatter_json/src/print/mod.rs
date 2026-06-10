@@ -12,6 +12,9 @@ use crate::{
 pub mod array;
 pub mod literal;
 pub mod object;
+mod stringify;
+
+pub use stringify::FmtJsonStringifyValue;
 
 pub type JsonFormatter<'buf, 'a> = Formatter<'buf, 'a, JsonFormatContext<'a>>;
 
@@ -40,6 +43,20 @@ pub fn arena_cow_str<'a>(cow: Cow<'a, str>, f: &JsonFormatter<'_, 'a>) -> &'a st
 pub fn write_quoted_str<'a>(f: &mut JsonFormatter<'_, 'a>, quote_byte: u8, body: &'a str) {
     let quote = if quote_byte == b'\'' { "'" } else { "\"" };
     write!(f, [text(quote), text(body), text(quote)]);
+}
+
+/// Emulates JS `String(Number(s)) === s`: `true` when `s` parses as a finite `f64`
+/// whose ECMAScript string form is byte-identical to `s`.
+/// Both the `json`/`jsonc` and `json-stringify` numeric-key quoting rules build on this.
+///
+/// Rust's `f64` parsing and JS `Number()` differ on some inputs
+/// (hex / binary / octal prefixes, numeric separators),
+/// but every such input fails the round-trip on both sides.
+/// JS stringifies the parsed value into a different shape (`"16"` for `0x10`, `"NaN"` for `1_2`),
+/// Rust simply fails to parse, so `Err` mapping to `false` matches.
+pub fn number_string_round_trips(s: &str) -> bool {
+    s.parse::<f64>()
+        .is_ok_and(|value| value.is_finite() && dragonbox_ecma::Buffer::new().format(value) == s)
 }
 
 /// Wraps a re-entrant JSON closure in a [`FormatWith`]. The closure's context is
