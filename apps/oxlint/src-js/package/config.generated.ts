@@ -61,7 +61,7 @@ export type LintPlugins = LintPluginOptionsSchema[];
 export type Mode2 = "as-needed" | "always" | "never";
 export type RuleNoConfig = AllowWarnDeny | [AllowWarnDeny];
 export type AlwaysNever = "always" | "never";
-export type OptionsJsonDoc =
+export type OptionsJsonEnum =
   | CommentConfigJson
   | {
       block?: CommentConfigJson;
@@ -91,6 +91,7 @@ export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
+export type SnapshotHintMode = "always" | "multi";
 export type CountThis = "always" | "never" | "except-void";
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
@@ -225,6 +226,7 @@ export type LibFrom = "lib";
 export type PackageFrom = "package";
 export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-correctness-only" | "never";
 export type BomOptionType = "always" | "never";
+export type NonZero = "greater-than" | "not-equal";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
 export type SwitchCaseBracesConfig = "always" | "avoid";
@@ -707,7 +709,7 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, AlwaysNever]
-    | [AllowWarnDeny, AlwaysNever, OptionsJsonDoc];
+    | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ClassMethodsUseThisConfig];
   complexity?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | ComplexityConfig];
   "constructor-super"?: RuleNoConfig;
@@ -786,15 +788,15 @@ export interface DummyRuleMap {
   "jest/no-duplicate-hooks"?: RuleNoConfig;
   "jest/no-export"?: RuleNoConfig;
   "jest/no-focused-tests"?: RuleNoConfig;
-  "jest/no-hooks"?: DummyRule;
+  "jest/no-hooks"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoHooksConfig];
   "jest/no-identical-title"?: RuleNoConfig;
   "jest/no-interpolation-in-snapshots"?: RuleNoConfig;
   "jest/no-jasmine-globals"?: RuleNoConfig;
-  "jest/no-large-snapshots"?: DummyRule;
+  "jest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "jest/no-mocks-import"?: RuleNoConfig;
   "jest/no-restricted-jest-methods"?: DummyRule;
   "jest/no-restricted-matchers"?: DummyRule;
-  "jest/no-standalone-expect"?: DummyRule;
+  "jest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "jest/no-test-prefixes"?: RuleNoConfig;
   "jest/no-test-return-statement"?: RuleNoConfig;
   "jest/no-unneeded-async-expect-function"?: RuleNoConfig;
@@ -804,9 +806,12 @@ export interface DummyRuleMap {
   "jest/prefer-called-with"?: RuleNoConfig;
   "jest/prefer-comparison-matcher"?: RuleNoConfig;
   "jest/prefer-each"?: RuleNoConfig;
-  "jest/prefer-ending-with-an-expect"?: DummyRule;
+  "jest/prefer-ending-with-an-expect"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, PreferEndingWithAnExpectConfig];
   "jest/prefer-equality-matcher"?: RuleNoConfig;
-  "jest/prefer-expect-assertions"?: DummyRule;
+  "jest/prefer-expect-assertions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferExpectAssertionsConfig];
   "jest/prefer-expect-resolves"?: RuleNoConfig;
   "jest/prefer-hooks-in-order"?: RuleNoConfig;
   "jest/prefer-hooks-on-top"?: RuleNoConfig;
@@ -818,7 +823,7 @@ export interface DummyRuleMap {
   "jest/prefer-lowercase-title"?: DummyRule;
   "jest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "jest/prefer-mock-return-shorthand"?: RuleNoConfig;
-  "jest/prefer-snapshot-hint"?: DummyRule;
+  "jest/prefer-snapshot-hint"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SnapshotHintMode];
   "jest/prefer-spy-on"?: RuleNoConfig;
   "jest/prefer-strict-equal"?: RuleNoConfig;
   "jest/prefer-to-be"?: RuleNoConfig;
@@ -829,9 +834,9 @@ export interface DummyRuleMap {
   "jest/prefer-todo"?: RuleNoConfig;
   "jest/require-hook"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireHookConfig];
   "jest/require-to-throw-message"?: RuleNoConfig;
-  "jest/require-top-level-describe"?: DummyRule;
+  "jest/require-top-level-describe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireTopLevelDescribeConfig];
   "jest/valid-describe-callback"?: RuleNoConfig;
-  "jest/valid-expect"?: DummyRule;
+  "jest/valid-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ValidExpectConfig];
   "jest/valid-expect-in-promise"?: RuleNoConfig;
   "jest/valid-title"?: DummyRule;
   "jsdoc/check-access"?: RuleNoConfig;
@@ -1385,7 +1390,7 @@ export interface DummyRuleMap {
   "unicorn/empty-brace-spaces"?: RuleNoConfig;
   "unicorn/error-message"?: RuleNoConfig;
   "unicorn/escape-case"?: RuleNoConfig;
-  "unicorn/explicit-length-check"?: DummyRule;
+  "unicorn/explicit-length-check"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExplicitLengthCheck];
   "unicorn/filename-case"?: DummyRule;
   "unicorn/import-style"?: DummyRule;
   "unicorn/new-for-builtins"?: RuleNoConfig;
@@ -1530,16 +1535,16 @@ export interface DummyRuleMap {
   "vitest/no-disabled-tests"?: RuleNoConfig;
   "vitest/no-duplicate-hooks"?: RuleNoConfig;
   "vitest/no-focused-tests"?: RuleNoConfig;
-  "vitest/no-hooks"?: DummyRule;
+  "vitest/no-hooks"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoHooksConfig];
   "vitest/no-identical-title"?: RuleNoConfig;
   "vitest/no-import-node-test"?: RuleNoConfig;
   "vitest/no-importing-vitest-globals"?: RuleNoConfig;
   "vitest/no-interpolation-in-snapshots"?: RuleNoConfig;
-  "vitest/no-large-snapshots"?: DummyRule;
+  "vitest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "vitest/no-mocks-import"?: RuleNoConfig;
   "vitest/no-restricted-matchers"?: DummyRule;
   "vitest/no-restricted-vi-methods"?: DummyRule;
-  "vitest/no-standalone-expect"?: DummyRule;
+  "vitest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "vitest/no-test-prefixes"?: RuleNoConfig;
   "vitest/no-test-return-statement"?: RuleNoConfig;
   "vitest/no-unneeded-async-expect-function"?: RuleNoConfig;
@@ -1552,7 +1557,7 @@ export interface DummyRuleMap {
   "vitest/prefer-describe-function-title"?: RuleNoConfig;
   "vitest/prefer-each"?: RuleNoConfig;
   "vitest/prefer-equality-matcher"?: RuleNoConfig;
-  "vitest/prefer-expect-assertions"?: DummyRule;
+  "vitest/prefer-expect-assertions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferExpectAssertionsConfig];
   "vitest/prefer-expect-resolves"?: RuleNoConfig;
   "vitest/prefer-expect-type-of"?: RuleNoConfig;
   "vitest/prefer-hooks-in-order"?: RuleNoConfig;
@@ -1562,7 +1567,7 @@ export interface DummyRuleMap {
   "vitest/prefer-lowercase-title"?: DummyRule;
   "vitest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "vitest/prefer-mock-return-shorthand"?: RuleNoConfig;
-  "vitest/prefer-snapshot-hint"?: DummyRule;
+  "vitest/prefer-snapshot-hint"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SnapshotHintMode];
   "vitest/prefer-spy-on"?: RuleNoConfig;
   "vitest/prefer-strict-boolean-matchers"?: RuleNoConfig;
   "vitest/prefer-strict-equal"?: RuleNoConfig;
@@ -1583,9 +1588,12 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, RequireMockTypeParametersConfig];
   "vitest/require-test-timeout"?: RuleNoConfig;
   "vitest/require-to-throw-message"?: RuleNoConfig;
-  "vitest/require-top-level-describe"?: DummyRule;
+  "vitest/require-top-level-describe"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, RequireTopLevelDescribeConfig];
   "vitest/valid-describe-callback"?: RuleNoConfig;
-  "vitest/valid-expect"?: DummyRule;
+  "vitest/valid-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ValidExpectConfig];
   "vitest/valid-expect-in-promise"?: RuleNoConfig;
   "vitest/valid-title"?: DummyRule;
   "vitest/warn-todo"?: RuleNoConfig;
@@ -2176,13 +2184,57 @@ export interface NoDeprecatedFunctionsConfig {
    * Use please instead { "settings": { "jest": {"version": 29 } } } in `Oxlint config file`.
    * Beware the value from the config have higher priority than the rule config.
    */
-  jest?: JestConfig;
+  jest?: JestConfigJson;
 }
-export interface JestConfig {
+export interface JestConfigJson {
   /**
    * The version of Jest being used.
    */
   version?: string;
+}
+export interface NoHooksConfig {
+  /**
+   * An array of hook function names that are permitted for use.
+   */
+  allow?: string[];
+}
+export interface NoLargeSnapshotsConfig {
+  /**
+   * A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.
+   * Snapshot names can be specified as regular expressions.
+   */
+  allowedSnapshots?: {
+    [k: string]: string[];
+  };
+  /**
+   * Maximum number of lines allowed for inline snapshots.
+   */
+  inlineMaxSize?: number;
+  /**
+   * Maximum number of lines allowed for external snapshot files.
+   */
+  maxSize?: number;
+}
+export interface NoStandaloneExpectConfig {
+  /**
+   * An array of function names that should also be treated as test blocks.
+   */
+  additionalTestBlockFunctions?: string[];
+}
+export interface PreferEndingWithAnExpectConfig {
+  /**
+   * An array of function names that should also be treated as test blocks.
+   */
+  additionalTestBlockFunctions?: string[];
+  /**
+   * A list of function names that should be treated as assertion functions.
+   */
+  assertFunctionNames?: string[];
+}
+export interface PreferExpectAssertionsConfig {
+  onlyFunctionsWithAsyncKeyword?: boolean;
+  onlyFunctionsWithExpectInCallback?: boolean;
+  onlyFunctionsWithExpectInLoop?: boolean;
 }
 export interface PreferImportingJestGlobalsConfig {
   /**
@@ -2195,6 +2247,30 @@ export interface RequireHookConfig {
    * An array of function names that are allowed to be called outside of hooks.
    */
   allowedFunctionCalls?: string[];
+}
+export interface RequireTopLevelDescribeConfig {
+  /**
+   * The maximum number of top-level `describe` blocks allowed in a test file.
+   */
+  maxNumberOfTopLevelDescribes?: number;
+}
+export interface ValidExpectConfig {
+  /**
+   * When `true`, async assertions must be awaited in all contexts (not just return statements).
+   */
+  alwaysAwait?: boolean;
+  /**
+   * List of matchers that are considered async and therefore require awaiting (e.g. `toResolve`, `toReject`).
+   */
+  asyncMatchers?: string[];
+  /**
+   * Maximum number of arguments `expect` should be called with.
+   */
+  maxArgs?: number;
+  /**
+   * Minimum number of arguments `expect` should be called with.
+   */
+  minArgs?: number;
 }
 export interface CheckTagNamesConfig {
   /**
@@ -4910,6 +4986,12 @@ export interface ConsistentFunctionScoping {
    * Whether to check scoping with arrow functions.
    */
   checkArrowFunctions?: boolean;
+}
+export interface ExplicitLengthCheck {
+  /**
+   * Configuration option to specify how non-zero length checks should be enforced.
+   */
+  "non-zero"?: NonZero;
 }
 export interface NoArrayReduce {
   /**

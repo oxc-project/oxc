@@ -8,7 +8,7 @@ use oxc_formatter_core::{
     write,
 };
 use oxc_span::GetSpan;
-use oxc_syntax::{identifier::is_identifier_name_patched, number::ToJsString};
+use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
     comments::{
@@ -22,7 +22,7 @@ use crate::{
 
 use super::{
     FmtJsonValue, FormatInvalidJson, JsonFormatter, arena_cow_str, format_with,
-    literal::FmtJsonString, write_quoted_str,
+    literal::FmtJsonString, number_string_round_trips, write_quoted_str,
 };
 
 pub struct FmtJsonObject<'a, 'b> {
@@ -277,9 +277,5 @@ fn normalized_numeric_key<'a>(lit: &NumericLiteral<'a>, f: &JsonFormatter<'_, 'a
 /// This keeps `0`/`0.1` quoted while leaving `1e2`/`1.0`/`0xdecaf`/ `999999999999999999999999999999`/`0.000...001`
 /// (which lose precision or change shape under JS `String(Number)`) unquoted.
 fn should_quote_numeric_key(printed: &str) -> bool {
-    if !is_simple_number(printed) {
-        return false;
-    }
-    let Ok(v) = printed.parse::<f64>() else { return false };
-    v.to_js_string() == printed
+    is_simple_number(printed) && number_string_round_trips(printed)
 }

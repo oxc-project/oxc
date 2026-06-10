@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, Format, FormatState, Formatted, VecBuffer,
+    Buffer, Document, Format, FormatContext, FormatState, Formatted, VecBuffer,
     builders::{hard_line_break, text},
     write,
 };
@@ -12,9 +12,9 @@ use oxc_syntax::identifier::ZWNBSP;
 use crate::{
     comments::write_trailing_inside_comments,
     context::JsonFormatContext,
-    options::JsonFormatOptions,
+    options::{JsonFormatOptions, JsonVariant},
     parse::parse_json,
-    print::{FmtJsonValue, JsonFormatter},
+    print::{FmtJsonStringifyValue, FmtJsonValue, JsonFormatter},
 };
 
 /// Parse `source_text` as JSON and build its formatter IR.
@@ -71,7 +71,11 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FormatJsonRoot<'a, '_> {
         }
 
         let trailing_anchor = if let Some(expression) = self.expression {
-            FmtJsonValue { expression }.fmt(f);
+            if f.context().options().variant == JsonVariant::JsonStringify {
+                FmtJsonStringifyValue { expression }.fmt(f);
+            } else {
+                FmtJsonValue { expression }.fmt(f);
+            }
             expression.span().end
         } else {
             // Comments-only source: emit pending comments from the start of the source

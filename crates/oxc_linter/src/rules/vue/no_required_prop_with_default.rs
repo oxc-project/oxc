@@ -700,7 +700,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -719,7 +719,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -738,7 +738,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -758,7 +758,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -776,7 +776,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -795,7 +795,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -814,7 +814,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -833,7 +833,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -852,7 +852,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -871,7 +871,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -891,7 +891,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -911,7 +911,7 @@ fn test() {
                       );
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -928,7 +928,7 @@ fn test() {
                     }
                     </script>
                   ",
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -945,7 +945,7 @@ fn test() {
                     }
                     </script>
                   ",
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -963,7 +963,7 @@ fn test() {
                     })
                     </script>
                   ",
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -981,7 +981,7 @@ fn test() {
                     })
                     </script>
                   ",
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -1014,7 +1014,7 @@ fn test() {
                       })
                     </script>
                   ",
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
@@ -1027,7 +1027,7 @@ fn test() {
                       const {name="World"} = defineProps<TestPropType>();
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -1039,7 +1039,7 @@ fn test() {
                       }>();
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
@@ -1053,7 +1053,7 @@ fn test() {
                       });
                     </script>
                   "#,
-            Some(serde_json::json!([{ "autofix": true }])),
+            None, // Some(serde_json::json!([{ "autofix": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),

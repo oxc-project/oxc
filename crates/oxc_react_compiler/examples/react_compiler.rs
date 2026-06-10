@@ -17,7 +17,6 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 use oxc_react_compiler::{default_plugin_options, transform};
@@ -38,14 +37,12 @@ fn main() {
 
     let allocator = Allocator::default();
     let program = Parser::new(&allocator, &source_text, source_type).parse().program;
-    let semantic =
-        SemanticBuilder::new().with_build_nodes(true).with_enum_eval(true).build(&program).semantic;
 
-    let result = transform(&program, &semantic, &allocator, default_plugin_options());
+    let result = transform(&program, &allocator, default_plugin_options());
 
-    if !result.diagnostics.is_empty() {
+    if !result.errors.is_empty() || !result.warnings.is_empty() {
         println!("Diagnostics:\n");
-        for diagnostic in &result.diagnostics {
+        for diagnostic in result.errors.iter().chain(&result.warnings) {
             println!("{diagnostic:?}");
         }
         println!();

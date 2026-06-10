@@ -584,9 +584,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
         }
 
-        let definite = self.eat(Kind::Bang);
+        let is_definite = self.eat(Kind::Bang);
+        let definite = is_definite.then_some(self.prev_token_end - 1);
 
-        if definite && let Some(optional_span) = optional_span {
+        if is_definite && let Some(optional_span) = optional_span {
             self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
         }
 
@@ -598,7 +599,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::constructor_accessor(name.span()));
             }
             return self.parse_class_accessor_property(
-                span, name, computed, definite, modifiers, decorators,
+                span,
+                name,
+                computed,
+                is_definite,
+                modifiers,
+                decorators,
             );
         }
 
@@ -652,7 +658,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         name: PropertyKey<'a>,
         computed: bool,
         optional_span: Option<Span>,
-        definite: bool,
+        definite: Option<u32>,
         modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
@@ -709,10 +715,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 initializer.span(),
             ));
         }
-        if definite && (self.ctx.has_ambient() || r#abstract) {
-            self.error(diagnostics::definite_assignment_assertion_not_permitted(
-                self.end_span(span),
-            ));
+        if let Some(definite_token_start) = definite {
+            let definite_span = Span::sized(definite_token_start, 1);
+            if initializer.is_some() {
+                self.error(diagnostics::variable_declarator_definite(definite_span));
+            } else if type_annotation.is_none() {
+                self.error(diagnostics::variable_declarator_definite_type_assertion(definite_span));
+            } else if self.ctx.has_ambient() || r#static || r#abstract {
+                self.error(diagnostics::definite_assignment_assertion_not_permitted(definite_span));
+            }
         }
         self.ast.class_element_property_definition(
             self.end_span(span),
@@ -726,7 +737,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains(ModifierKind::Declare),
             modifiers.contains(ModifierKind::Override),
             optional_span.is_some(),
-            definite,
+            definite.is_some(),
             modifiers.contains(ModifierKind::Readonly),
             modifiers.accessibility(),
         )

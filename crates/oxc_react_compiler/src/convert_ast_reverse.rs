@@ -2829,14 +2829,42 @@ impl<'a> ReverseCtx<'a> {
         }
     }
 
+    /// Like [`Self::convert_module_export_name`], but builds an identifier `local`
+    /// of a local export specifier as an `IdentifierReference` (not a bare
+    /// `IdentifierName`) so semantic analysis links it to the exported binding. A
+    /// string-literal local is only valid with a `source`, so it falls back to the
+    /// plain name.
+    fn convert_module_export_name_local_ref(
+        &self,
+        name: &react_compiler_ast::declarations::ModuleExportName,
+    ) -> oxc::ModuleExportName<'a> {
+        match name {
+            react_compiler_ast::declarations::ModuleExportName::Identifier(id) => {
+                oxc::ModuleExportName::IdentifierReference(
+                    self.builder.identifier_reference(SPAN, self.atom(&id.name)),
+                )
+            }
+            react_compiler_ast::declarations::ModuleExportName::StringLiteral(_) => {
+                self.convert_module_export_name(name)
+            }
+        }
+    }
+
     fn convert_export_named_declaration(
         &self,
         decl: &ExportNamedDeclaration,
     ) -> oxc::ExportNamedDeclaration<'a> {
         let declaration = decl.declaration.as_ref().map(|d| self.convert_declaration(d));
-        let specifiers = self
-            .builder
-            .vec_from_iter(decl.specifiers.iter().map(|s| self.convert_export_specifier(s)));
+        // For a local export (`export { x }`, no `source`) the specifier `local`
+        // refers to a binding in this module, so it must be an `IdentifierReference`
+        // for semantic analysis to link it (and thus keep its import alive through
+        // TypeScript import elision). Re-exports (`export { x } from`) keep an
+        // `IdentifierName`, since `local` names an export of the other module. This
+        // mirrors the parser (`parse_export_named_specifiers`).
+        let local_is_reference = decl.source.is_none();
+        let specifiers = self.builder.vec_from_iter(
+            decl.specifiers.iter().map(|s| self.convert_export_specifier(s, local_is_reference)),
+        );
         let source = decl
             .source
             .as_ref()
@@ -2886,10 +2914,15 @@ impl<'a> ReverseCtx<'a> {
     fn convert_export_specifier(
         &self,
         spec: &react_compiler_ast::declarations::ExportSpecifier,
+        local_is_reference: bool,
     ) -> oxc::ExportSpecifier<'a> {
         match spec {
             react_compiler_ast::declarations::ExportSpecifier::ExportSpecifier(s) => {
-                let local = self.convert_module_export_name(&s.local);
+                let local = if local_is_reference {
+                    self.convert_module_export_name_local_ref(&s.local)
+                } else {
+                    self.convert_module_export_name(&s.local)
+                };
                 let exported = self.convert_module_export_name(&s.exported);
                 let export_kind = match s.export_kind.as_ref() {
                     Some(ExportKind::Type) => oxc::ImportOrExportKind::Type,

@@ -796,6 +796,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.expression_super(span)
     }
 
+    /// An instantiation expression (`MemberExpression TypeArguments`) directly followed by a
+    /// member access is TS1477; a parenthesized one is allowed:
+    ///
+    /// ```text
+    /// a<b>.c      // error
+    /// a<b>?.[c]   // error
+    /// (a<b>).c    // ok
+    /// ```
+    fn error_if_unparenthesized_instantiation_expression(
+        &mut self,
+        lhs: &Expression<'a>,
+        lhs_span: u32,
+    ) {
+        if matches!(lhs, Expression::TSInstantiationExpression(e) if e.span.start == lhs_span) {
+            self.error(
+                diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
+                    self.end_span(lhs_span),
+                ),
+            );
+        }
+    }
+
     /// parse rhs of a member expression, starting from lhs
     fn parse_member_expression_rest(
         &mut self,
@@ -840,25 +862,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
 
             if is_property_access {
-                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
-                    self.error(
-                        diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
-                            self.end_span(lhs_span),
-                        ),
-                    );
-                }
+                self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_span);
                 lhs = self.parse_static_member_expression(lhs_span, lhs, question_dot);
                 continue;
             }
 
             if (question_dot || !self.ctx.has_decorator()) && self.at(Kind::LBrack) {
-                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
-                    self.error(
-                        diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
-                            self.end_span(lhs_span),
-                        ),
-                    );
-                }
+                self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_span);
                 lhs = self.parse_computed_member_expression(lhs_span, lhs, question_dot);
                 continue;
             }

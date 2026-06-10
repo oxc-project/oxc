@@ -3,7 +3,10 @@ use oxc_formatter_json::{
 };
 
 use super::{
-    super::oxfmtrc::{FormatConfig, ObjectWrapConfig, QuotePropsConfig, TrailingCommaConfig},
+    super::oxfmtrc::{
+        FormatConfig, ObjectWrapConfig, QuotePropsConfig, SortPackageJsonConfig,
+        SortPackageJsonUserConfig, TrailingCommaConfig,
+    },
     to_core_options::to_core_options,
 };
 
@@ -61,4 +64,23 @@ pub fn to_oxc_formatter_json(
     }
 
     Ok(options)
+}
+
+/// Convert `FormatConfig` into `sort_package_json::SortOptions`,
+/// the companion of [`to_oxc_formatter_json`] for the `package.json` pipeline
+/// (sorted by `sort-package-json`, then formatted with the `json-stringify` variant).
+///
+/// `package.json` sorting is opt-out: when `sort_package_json` is unset,
+/// it defaults to enabled with default options.
+/// Returns `None` only when the user explicitly sets `sort_package_json: false`.
+pub fn to_sort_package_json(config: &FormatConfig) -> Option<sort_package_json::SortOptions> {
+    let sort_config = config.sort_package_json.clone().map_or_else(
+        || Some(SortPackageJsonConfig::default()),
+        SortPackageJsonUserConfig::into_config,
+    )?;
+    Some(sort_package_json::SortOptions {
+        sort_scripts: sort_config.sort_scripts.unwrap_or(false),
+        // Small optimization: `oxc_formatter_json` will reformat anyway
+        pretty: false,
+    })
 }
