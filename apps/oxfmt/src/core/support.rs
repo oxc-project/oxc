@@ -39,6 +39,14 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     if is_toml_file(file_name) {
         return Some(FileKind::OxfmtToml { path });
     }
+    // `package.json` is special: sorted by `sort-package-json` then formatted
+    if file_name == "package.json" {
+        return Some(FileKind::OxcFormatterJsonPackageJson { path });
+    }
+    // Check some `.json` files, better formatted with `JSON.stringify`-style
+    if is_json_stringify_file(file_name, extension) {
+        return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::JsonStringify });
+    }
     if is_json_file(file_name, extension) {
         return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::Json });
     }
@@ -52,14 +60,6 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     // External formatter files are only supported with the `napi` feature
     #[cfg(feature = "napi")]
     {
-        // `package.json` is special: sorted then formatted
-        if file_name == "package.json" {
-            return Some(FileKind::ExternalFormatterPackageJson {
-                path,
-                parser_name: "json-stringify",
-            });
-        }
-
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
             let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
             let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
@@ -87,6 +87,9 @@ pub enum FileKind {
     OxcFormatter { path: Arc<Path>, source_type: SourceType },
     /// JSON (and JSON-like) files formatted by `oxc_formatter_json`.
     OxcFormatterJson { path: Arc<Path>, variant: JsonVariant },
+    /// `package.json` is special: sorted by `sort-package-json` then formatted
+    /// by `oxc_formatter_json` with the `json-stringify` variant.
+    OxcFormatterJsonPackageJson { path: Arc<Path> },
     /// TOML files formatted by taplo (Pure Rust).
     OxfmtToml { path: Arc<Path> },
     /// Files formatted by external formatter (Prettier).
@@ -103,10 +106,6 @@ pub enum FileKind {
         supports_oxfmt: bool,
         supports_svelte: bool,
     },
-    /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
-    /// Only available with the `napi` feature; without it, the classifier rejects such files.
-    #[cfg(feature = "napi")]
-    ExternalFormatterPackageJson { path: Arc<Path>, parser_name: &'static str },
 }
 
 impl FileKind {
@@ -114,10 +113,10 @@ impl FileKind {
         match self {
             Self::OxcFormatter { path, .. }
             | Self::OxcFormatterJson { path, .. }
+            | Self::OxcFormatterJsonPackageJson { path }
             | Self::OxfmtToml { path } => path,
             #[cfg(feature = "napi")]
-            Self::ExternalFormatter { path, .. }
-            | Self::ExternalFormatterPackageJson { path, .. } => path,
+            Self::ExternalFormatter { path, .. } => path,
         }
     }
 
@@ -221,11 +220,16 @@ static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
 
 // ---
 
+/// Returns `true` if this is a `JSON.stringify`-style file
+/// (handled by `oxc_formatter_json` with the `json-stringify` variant).
+/// `package.json` also uses this variant but is classified separately for sorting.
+fn is_json_stringify_file(file_name: &str, extension: Option<&str>) -> bool {
+    file_name == "composer.json" || extension == Some("importmap")
+}
+
 /// Returns `true` if this is a plain JSON file (handled by `oxc_formatter_json`).
+/// `json-stringify` files like `package.json` should be classified earlier, before this runs.
 fn is_json_file(file_name: &str, extension: Option<&str>) -> bool {
-    if matches!(file_name, "package.json" | "composer.json") {
-        return false;
-    }
     if JSON_FILENAMES.contains(file_name) {
         return true;
     }
@@ -314,14 +318,6 @@ fn is_json5_file(extension: Option<&str>) -> bool {
 /// See also `prettier --support-info | jq '.languages[]'`
 #[cfg(feature = "napi")]
 fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
-    // JSON and variants
-    // NOTE: `parser: json`, `parser: jsonc` and `parser: json5` are already supported by
-    // `oxc_formatter_json` (handled in `classify_file_kind`);
-    // only `json-stringify` is routed to Prettier here.
-    if file_name == "composer.json" || extension == Some("importmap") {
-        return Some("json-stringify");
-    }
-
     // YAML
     if YAML_FILENAMES.contains(file_name) {
         return Some("yaml");
@@ -608,13 +604,11 @@ mod tests {
         }
 
         let test_cases = vec![
-            // JSON variants
-            // NOTE: `package.json` is handled in classify_file_kind, not here.
+            // JSON variants (e.g. `data.json`, `package.json`, `config.importmap`) are
+            // all routed to `oxc_formatter_json` in `classify_file_kind` and excluded from this map.
             ("package.json", None),
-            // Plain JSON (e.g. `data.json`, `schema.avsc`) is routed to
-            // `oxc_formatter_json` and excluded from this map.
-            ("composer.json", Some("json-stringify")),
-            ("config.importmap", Some("json-stringify")),
+            ("composer.json", None),
+            ("config.importmap", None),
             // HTML
             ("index.html", Some("html")),
             ("page.htm", Some("html")),
@@ -665,73 +659,38 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "napi")]
-    fn test_package_json_is_special() {
-        let kind = classify_file_kind(Arc::from(Path::new("package.json"))).unwrap();
-        assert!(matches!(kind, FileKind::ExternalFormatterPackageJson { .. }));
-
-        let kind = classify_file_kind(Arc::from(Path::new("composer.json"))).unwrap();
-        assert!(matches!(kind, FileKind::ExternalFormatter { .. }));
-    }
-
-    #[test]
     fn test_json_files_route_to_oxc_formatter_json() {
-        let json_files = vec![
+        let test_cases = vec![
             // JSON_EXTENSIONS
-            "data.json",
-            "schema.avsc",
-            "map.geojson",
-            "model.gltf",
-            "config.webmanifest",
+            ("data.json", JsonVariant::Json),
+            ("config.webmanifest", JsonVariant::Json),
             // JSON_FILENAMES
-            ".babelrc",
-            ".eslintrc.json",
-            ".swcrc",
-            ".watchmanconfig",
+            (".babelrc", JsonVariant::Json),
+            (".eslintrc.json", JsonVariant::Json),
             // tsconfig (handled via standard `.json` extension)
-            "tsconfig.json",
+            ("tsconfig.json", JsonVariant::Json),
+            // JSONC_EXTENSIONS
+            ("settings.jsonc", JsonVariant::Jsonc),
+            ("project.code-workspace", JsonVariant::Jsonc),
+            // JSON5
+            ("settings.json5", JsonVariant::Json5),
+            // `JSON.stringify`-style files
+            ("composer.json", JsonVariant::JsonStringify),
+            ("config.importmap", JsonVariant::JsonStringify),
         ];
 
-        for file_name in json_files {
+        for (file_name, expected) in test_cases {
             let result = classify_file_kind(Arc::from(Path::new(file_name)));
             assert!(
-                matches!(
-                    result,
-                    Some(FileKind::OxcFormatterJson { variant: JsonVariant::Json, .. })
-                ),
-                "`{file_name}` should be routed to oxc_formatter_json (json)"
+                matches!(result, Some(FileKind::OxcFormatterJson { variant, .. }) if variant == expected),
+                "`{file_name}` should be routed to oxc_formatter_json ({expected:?})"
             );
         }
-    }
 
-    #[test]
-    fn test_jsonc_files_route_to_oxc_formatter_json() {
-        let jsonc_files = vec![
-            "settings.jsonc",
-            "project.code-workspace",
-            "keymap.sublime-keymap",
-            "theme.sublime-theme",
-        ];
-
-        for file_name in jsonc_files {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
-            assert!(
-                matches!(
-                    result,
-                    Some(FileKind::OxcFormatterJson { variant: JsonVariant::Jsonc, .. })
-                ),
-                "`{file_name}` should be routed to oxc_formatter_json (jsonc)"
-            );
-        }
-    }
-
-    #[test]
-    fn test_json5_files_route_to_oxc_formatter_json() {
-        let result = classify_file_kind(Arc::from(Path::new("settings.json5")));
-        assert!(
-            matches!(result, Some(FileKind::OxcFormatterJson { variant: JsonVariant::Json5, .. })),
-            "`settings.json5` should be routed to oxc_formatter_json (json5)"
-        );
+        // `package.json` also uses the `json-stringify` variant,
+        // but is the lone dedicated kind for the sorting pre-process
+        let kind = classify_file_kind(Arc::from(Path::new("package.json"))).unwrap();
+        assert!(matches!(kind, FileKind::OxcFormatterJsonPackageJson { .. }));
     }
 
     #[test]
