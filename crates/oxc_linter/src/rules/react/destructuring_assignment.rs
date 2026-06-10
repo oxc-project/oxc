@@ -74,32 +74,6 @@ declare_oxc_lint!(
     ///
     /// Destructuring can make it easier to read and understand what properties are being used in a component.
     ///
-    /// ### Options
-    ///
-    /// This rule takes one string and one optional object as arguments:
-    ///
-    /// ```jsonc
-    /// {
-    ///   "rules": {
-    ///     "react/destructuring-assignment": [
-    ///       "error",
-    ///       "always", // or "never"
-    ///       {
-    ///         "ignoreClassFields": false,
-    ///         "destructureInSignature": "ignore" // or "always"
-    ///       }
-    ///     ]
-    ///   }
-    /// }
-    /// ```
-    ///
-    /// - `"always"` (default): enforce destructuring of `props`, `state`, and `context`.
-    /// - `"never"`: forbid destructuring of `props`, `state`, and `context`.
-    /// - `ignoreClassFields` (default `false`): when `true`, ignore class field
-    ///   declarations such as `bar = this.props.bar`.
-    /// - `destructureInSignature` (default `"ignore"`): when set to `"always"`,
-    ///   require props destructuring to happen in the function signature.
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule, when configured with `"always"` (the default):
