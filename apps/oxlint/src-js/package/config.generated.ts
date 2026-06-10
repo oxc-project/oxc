@@ -149,6 +149,8 @@ export type HandleCallbackErrConfig = string;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 export type Destructuring = "any" | "all";
 export type RadixType = "always" | "as-needed";
+export type NativeAllowList = AllKeyword | string[];
+export type AllKeyword = null;
 /**
  * A forbidden prop, either as a plain prop name string or with options.
  */
@@ -1138,9 +1140,9 @@ export interface DummyRuleMap {
   "promise/spec-only"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SpecOnlyConfig];
   "promise/valid-params"?: RuleNoConfig;
   radix?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RadixType];
-  "react-perf/jsx-no-jsx-as-prop"?: RuleNoConfig;
-  "react-perf/jsx-no-new-array-as-prop"?: RuleNoConfig;
-  "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig;
+  "react-perf/jsx-no-jsx-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
+  "react-perf/jsx-no-new-array-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
+  "react-perf/jsx-no-new-function-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-object-as-prop"?: DummyRule;
   "react/button-has-type"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ButtonHasType];
   "react/checked-requires-onchange-or-readonly"?:
@@ -3851,6 +3853,14 @@ export interface SpecOnlyConfig {
    * List of Promise static methods that are allowed to be used.
    */
   allowedMethods?: string[];
+}
+export interface ReactPerfConfig {
+  /**
+   * Controls whether native elements (lowercase-first-letter tags such as `div`)
+   * are ignored by the rule. Either `"all"` to ignore the rule entirely on native
+   * elements, or an array of attribute names to ignore on native elements.
+   */
+  nativeAllowList?: NativeAllowList;
 }
 export interface ButtonHasType {
   /**

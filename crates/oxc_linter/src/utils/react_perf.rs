@@ -7,8 +7,58 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
+use oxc_str::CompactStr;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, LintContext, context::ContextHost, rule::Rule};
+use crate::{
+    AstNode, LintContext,
+    context::ContextHost,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_react_component_name,
+};
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct ReactPerfConfig {
+    /// Controls whether native elements (lowercase-first-letter tags such as `div`)
+    /// are ignored by the rule. Either `"all"` to ignore the rule entirely on native
+    /// elements, or an array of attribute names to ignore on native elements.
+    native_allow_list: NativeAllowList,
+}
+
+impl ReactPerfConfig {
+    pub fn native_allow_list(&self) -> &NativeAllowList {
+        &self.native_allow_list
+    }
+}
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum NativeAllowList {
+    All(AllKeyword),
+    List(Vec<CompactStr>),
+    #[default]
+    #[serde(skip)]
+    None,
+}
+
+#[derive(Debug, Clone, Copy, JsonSchema)]
+pub struct AllKeyword;
+
+impl<'de> Deserialize<'de> for AllKeyword {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?;
+        if value == "all" {
+            Ok(AllKeyword)
+        } else {
+            Err(serde::de::Error::custom(r#"expected the string "all""#))
+        }
+    }
+}
 
 fn react_perf_inline_diagnostic(message: &'static str, attr_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(message)
@@ -37,6 +87,9 @@ fn react_perf_reference_diagnostic(
 pub trait ReactPerfRule: Sized + Default + fmt::Debug {
     const MESSAGE: &'static str;
 
+    /// The `nativeAllowList` configuration for this rule.
+    fn native_allow_list(&self) -> &NativeAllowList;
+
     /// Check if an [`Expression`] violates a react perf rule. If it does,
     /// report the [`OxcDiagnostic`] and return `true`.
     ///
@@ -55,8 +108,12 @@ pub trait ReactPerfRule: Sized + Default + fmt::Debug {
 
 impl<R> Rule for R
 where
-    R: ReactPerfRule,
+    R: ReactPerfRule + serde::de::DeserializeOwned,
 {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // new objects/arrays/etc created at the root scope do not get
         // re-created on each render and thus do not affect performance.
@@ -75,6 +132,26 @@ where
         let Some(expr) = container.expression.as_expression() else {
             return;
         };
+
+        // skip native elements (lowercase-first-letter tags like `div`) that are
+        // exempted by the `nativeAllowList` configuration.
+        if !matches!(self.native_allow_list(), NativeAllowList::None)
+            && let AstKind::JSXOpeningElement(opening) = ctx.nodes().parent_kind(node.id())
+            && let Some(tag_name) = opening.name.get_identifier_name()
+            && !is_react_component_name(&tag_name)
+        {
+            match self.native_allow_list() {
+                NativeAllowList::All(_) => return,
+                NativeAllowList::List(names) => {
+                    if let Some(attr_name) = attr.name.as_identifier()
+                        && names.iter().any(|n| n.as_str().eq_ignore_ascii_case(&attr_name.name))
+                    {
+                        return;
+                    }
+                }
+                NativeAllowList::None => {}
+            }
+        }
 
         // strip parenthesis and TS type casting expressions
         let expr = expr.get_inner_expression();
