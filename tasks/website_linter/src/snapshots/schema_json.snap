@@ -13371,9 +13371,9 @@ expression: json
       "properties": {
         "maxNumberOfTopLevelDescribes": {
           "description": "The maximum number of top-level `describe` blocks allowed in a test file.",
-          "default": 18446744073709551615,
+          "default": 4294967295,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum number of top-level `describe` blocks allowed in a test file."
         }
