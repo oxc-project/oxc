@@ -537,3 +537,27 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ────
  5 │                         return this.foo
    ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+   ╭─[no_side_effects_in_computed_properties.tsx:7:52]
+ 6 │                       const foo = useFoo()
+ 7 │                       const test1 = computed(() => foo.something.reverse())
+   ·                                                    ───────────────────────
+ 8 │                       const test2 = computed(() => {
+   ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+    ╭─[no_side_effects_in_computed_properties.tsx:9:25]
+  8 │                       const test2 = computed(() => {
+  9 │                         foo.firstName = 'lorem'
+    ·                         ───────────────────────
+ 10 │                       })
+    ╰────
+
+  ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
+   ╭─[no_side_effects_in_computed_properties.tsx:7:52]
+ 6 │                       const self = this
+ 7 │                       const test1 = computed(() => self.reverse())
+   ·                                                    ──────────────
+ 8 │                     }
+   ╰────

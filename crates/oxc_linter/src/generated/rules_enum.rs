@@ -25013,6 +25013,9 @@ impl RuleEnum {
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::INFO,
             Self::VueNoReservedProps(_) => VueNoReservedProps::INFO,
             Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::INFO,
+            Self::VueNoSideEffectsInComputedProperties(_) => {
+                VueNoSideEffectsInComputedProperties::INFO
+            }
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::INFO,
             Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::INFO,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::INFO,

@@ -74,48 +74,12 @@ declare_oxc_lint!(
 
 impl Rule for NoSideEffectsInComputedProperties {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Handle bracket-notation mutations: this['foo'] = 1, foo['arr'].reverse(), etc.
-        if let AstKind::ComputedMemberExpression(mem) = node.kind() {
-            match &mem.object {
-                expr if is_this_object(expr, ctx) => {
-                    let Some(mutation_span) = find_mutation_span(node, ctx) else { return };
-                    match find_computed_context(node, ctx) {
-                        Some(ComputedContext::OptionsApi(key)) => {
-                            let key = key.as_deref().unwrap_or("Unknown");
-                            ctx.diagnostic(unexpected_side_effect_in_property(mutation_span, key));
-                        }
-                        Some(ComputedContext::CompositionApi(_)) => {
-                            ctx.diagnostic(unexpected_side_effect_in_function(mutation_span));
-                        }
-                        None => {}
-                    }
-                }
-                Expression::Identifier(ident) => {
-                    let Some(mutation_span) = find_mutation_span(node, ctx) else { return };
-                    let Some(ComputedContext::CompositionApi(getter_fn_span)) =
-                        find_computed_context(node, ctx)
-                    else {
-                        return;
-                    };
-                    if !is_setup_variable(ident, getter_fn_span, ctx) {
-                        return;
-                    }
-                    ctx.diagnostic(unexpected_side_effect_in_function(mutation_span));
-                }
-                _ => {}
-            }
-            return;
-        }
-
-        let AstKind::StaticMemberExpression(mem) = node.kind() else { return };
-
-        match &mem.object {
-            // Options API: `this.xxx` mutations
-            expr if is_this_object(expr, ctx) => {
-                // Special case: `this.$set(...)` — report on the property name span and return early.
-                // If `this.$set` is not called (e.g. assignment `this.$set = fn`), fall through to
-                // general mutation detection so it is caught there.
-                if mem.property.name == "$set" {
+        match node.kind() {
+            AstKind::StaticMemberExpression(mem) => {
+                // Special case: `this.$set(...)` — report on the property name span and return.
+                // If `this.$set` is not called (e.g. assignment `this.$set = fn`), fall through
+                // to general mutation detection so it is caught there.
+                if mem.property.name == "$set" && is_this_object(&mem.object, ctx) {
                     let mut parent = ctx.nodes().parent_node(node.id());
                     // `(this.$set)(...)` — skip parenthesized wrappers between the member and the call
                     while matches!(parent.kind(), AstKind::ParenthesizedExpression(_)) {
@@ -135,50 +99,66 @@ impl Rule for NoSideEffectsInComputedProperties {
                     }
                 }
 
-                // General mutation detection
-                let Some(mutation_span) = find_mutation_span(node, ctx) else { return };
-                match find_computed_context(node, ctx) {
-                    Some(ComputedContext::OptionsApi(key)) => {
-                        let key = key.as_deref().unwrap_or("Unknown");
-                        ctx.diagnostic(unexpected_side_effect_in_property(mutation_span, key));
-                    }
-                    // `this`-alias (e.g. `const self = this`) used inside a Composition API computed
-                    Some(ComputedContext::CompositionApi(_)) => {
-                        ctx.diagnostic(unexpected_side_effect_in_function(mutation_span));
-                    }
-                    None => {}
-                }
-            }
-
-            // Options API special case: `Vue.set(...)`
-            Expression::Identifier(ident) if ident.name == "Vue" && mem.property.name == "set" => {
-                let parent = ctx.nodes().parent_node(node.id());
-                if matches!(parent.kind(), AstKind::CallExpression(_))
-                    && let Some(ComputedContext::OptionsApi(key)) = find_computed_context(node, ctx)
+                // Special case: `Vue.set(...)`
+                if mem.property.name == "set"
+                    && matches!(&mem.object, Expression::Identifier(ident) if ident.name == "Vue")
                 {
-                    let key = key.as_deref().unwrap_or("Unknown");
-                    ctx.diagnostic(unexpected_side_effect_in_property(mem.property.span, key));
-                }
-            }
-
-            // Composition API: `foo.xxx` mutations where foo might be a setup variable
-            Expression::Identifier(ident) => {
-                let Some(mutation_span) = find_mutation_span(node, ctx) else { return };
-                let Some(ComputedContext::CompositionApi(getter_fn_span)) =
-                    find_computed_context(node, ctx)
-                else {
-                    return;
-                };
-
-                if !is_setup_variable(ident, getter_fn_span, ctx) {
+                    let parent = ctx.nodes().parent_node(node.id());
+                    if matches!(parent.kind(), AstKind::CallExpression(_))
+                        && let Some(ComputedContext::OptionsApi(key)) =
+                            find_computed_context(node, ctx)
+                    {
+                        let key = key.as_deref().unwrap_or("Unknown");
+                        ctx.diagnostic(unexpected_side_effect_in_property(mem.property.span, key));
+                    }
                     return;
                 }
 
-                ctx.diagnostic(unexpected_side_effect_in_function(mutation_span));
+                check_mutation(node, &mem.object, ctx);
             }
-
+            AstKind::ComputedMemberExpression(mem) => {
+                check_mutation(node, &mem.object, ctx);
+            }
             _ => {}
         }
+    }
+}
+
+/// General mutation detection shared by static and computed member expressions.
+///
+/// Mirrors ESLint's split between the two contexts:
+/// - In an Options API computed property only `this` (and its aliases) is checked,
+///   and the mutation walk starts AT the member expression — so a first-level
+///   method call like `this.reverse()` is a component method, not a mutation.
+/// - In a Composition API computed function `this` is ignored entirely, and
+///   identifiers (including `this` aliases) are checked as setup variables with
+///   the walk starting at the identifier — so `foo.reverse()` IS a mutation.
+fn check_mutation<'a>(node: &AstNode<'a>, object: &Expression<'a>, ctx: &LintContext<'a>) {
+    if !matches!(object, Expression::ThisExpression(_) | Expression::Identifier(_)) {
+        return;
+    }
+
+    // The seeded walk finds a superset of the unseeded one — use it as a cheap gate
+    // before resolving the computed context.
+    let Some(mutation_span) = find_mutation_span(node, ctx, true) else { return };
+
+    match find_computed_context(node, ctx) {
+        Some(ComputedContext::OptionsApi(key)) => {
+            if !is_this_object(object, ctx) {
+                return;
+            }
+            let Some(mutation_span) = find_mutation_span(node, ctx, false) else { return };
+            let key = key.as_deref().unwrap_or("Unknown");
+            ctx.diagnostic(unexpected_side_effect_in_property(mutation_span, key));
+        }
+        Some(ComputedContext::CompositionApi(getter_fn_span)) => {
+            let Expression::Identifier(ident) = object else { return };
+            if !is_setup_variable(ident, getter_fn_span, ctx) {
+                return;
+            }
+            ctx.diagnostic(unexpected_side_effect_in_function(mutation_span));
+        }
+        None => {}
     }
 }
 
@@ -286,7 +266,8 @@ fn get_computed_getter_context(
     None
 }
 
-/// Check if a `computed(...)` call uses the `computed` export from `'vue'`, including aliases
+/// Check if a `computed(...)` call uses the `computed` export from `'vue'`,
+/// `'@vue/composition-api'`, or `'#imports'` (Nuxt), including aliases
 /// (`import { computed as c } from 'vue'`). Matches by symbol ID so the local name is irrelevant.
 fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
     let Expression::Identifier(ident) = call.callee.get_inner_expression() else {
@@ -297,7 +278,7 @@ fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> boo
         return false;
     };
     ctx.module_record().import_entries.iter().any(|entry| {
-        if !matches!(entry.module_request.name(), "vue" | "@vue/composition-api") {
+        if !matches!(entry.module_request.name(), "vue" | "@vue/composition-api" | "#imports") {
             return false;
         }
         let ImportImportName::Name(name_span) = &entry.import_name else { return false };
@@ -311,38 +292,35 @@ fn is_vue_computed_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> boo
 const MUTATING_METHODS: &[&str] =
     &["push", "pop", "shift", "unshift", "reverse", "splice", "sort", "copyWithin", "fill"];
 
-/// Starting from `start_node` (a StaticMemberExpression where object = this/ident),
+/// Starting from `start_node` (a member expression where object = this/ident),
 /// walk up through parent nodes and detect if the member chain is being mutated.
 /// Returns the span of the outermost mutation expression, or None if no mutation found.
-fn find_mutation_span(start_node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<Span> {
+///
+/// `seed_start` controls where the walk conceptually begins, matching ESLint's
+/// two findMutating call sites: `true` starts at the identifier (Composition API),
+/// so the start node's own property counts as a chain step and a first-level
+/// mutating call like `foo.reverse()` is detected; `false` starts at the member
+/// expression itself (Options API), so `this.reverse()` is not a mutation.
+fn find_mutation_span(
+    start_node: &AstNode<'_>,
+    ctx: &LintContext<'_>,
+    seed_start: bool,
+) -> Option<Span> {
     let nodes = ctx.nodes();
     let mut current = start_node;
-    // Seed for Composition API (object is Identifier): compensates for starting at MemberExpression
-    // level rather than the inner Identifier like ESLint does.
-    // Do NOT seed for Options API (object is `this`): ESLint's findMutating starts from the
-    // MemberExpression with lastStaticPropertyName=null, so `this.reverse()` is not a mutation.
-    let mut last_static_name: Option<String> = match start_node.kind() {
-        AstKind::StaticMemberExpression(m) => {
-            if is_this_object(&m.object, ctx) {
-                None
-            } else {
-                Some(m.property.name.to_string())
-            }
+    let mut last_static_name: Option<String> = if seed_start {
+        match start_node.kind() {
+            AstKind::StaticMemberExpression(m) => Some(m.property.name.to_string()),
+            AstKind::ComputedMemberExpression(m) => m.static_property_name().map(|s| s.to_string()),
+            _ => None,
         }
-        AstKind::ComputedMemberExpression(m) => {
-            if is_this_object(&m.object, ctx) {
-                None
-            } else {
-                m.static_property_name().map(|s| s.to_string())
-            }
-        }
-        _ => None,
+    } else {
+        None
     };
 
     loop {
         let parent = nodes.parent_node(current.id());
         match parent.kind() {
-            // Walking through static member chain: this.foo.bar...
             AstKind::StaticMemberExpression(mem) if mem.object.span() == current.span() => {
                 last_static_name = Some(mem.property.name.to_string());
                 current = parent;
@@ -437,9 +415,6 @@ fn is_setup_variable(
     if getter_fn_span.contains_inclusive(decl_span) {
         return false;
     }
-
-    // Function or class declarations are valid setup variables (they can still be mutated)
-    // but we skip if the declaration is neither inside setup ranges nor a top-level script-setup binding
 
     // <script setup>: all top-level bindings are setup variables, except import declarations
     // (ESLint excludes def.type === 'ImportBinding' from setup ranges)
@@ -691,7 +666,7 @@ fn test() {
             None,
             None,
         ),
-        // Issue 1: <script setup> import bindings are not setup variables
+        // <script setup>: import bindings are not setup variables
         (
             "
                   <script setup>
@@ -709,7 +684,7 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        // Issue 4: Case B ({get, set}) arrow getter is not analyzed by ESLint
+        // arrow function getter in the {get, set} object form is not analyzed
         (
             "Vue.component('test', {
                     computed: {
@@ -724,7 +699,7 @@ fn test() {
             None,
             None,
         ),
-        // FP3: `this.method()` where method name matches MUTATING_METHODS is not a side effect
+        // component methods named like mutating array methods are not mutations
         (
             "Vue.component('test', {
                     computed: {
@@ -743,7 +718,7 @@ fn test() {
             None,
             None,
         ),
-        // FP2: setup() function parameters are not "setup variables"
+        // setup() function parameters are not setup variables
         (
             "
                   <script>
@@ -762,7 +737,7 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        // FP4: arrow function values in Options API computed are not analyzed by ESLint
+        // arrow function values in Options API computed are not analyzed
         (
             "Vue.component('test', {
                     computed: {
@@ -775,7 +750,7 @@ fn test() {
             None,
             None,
         ),
-        // FP5: `computed:` key nested inside data() is not a Vue computed option
+        // a `computed:` key nested inside data() is not a Vue computed option
         (
             "Vue.component('test', {
                     data() {
@@ -791,6 +766,63 @@ fn test() {
             None,
             None,
             None,
+        ),
+        // ESLint ignores `this` inside Composition API computed functions
+        (
+            "
+                  <script>
+                  import { computed } from 'vue'
+                  export default {
+                    setup() {
+                      const test1 = computed(() => {
+                        this.x = 1
+                      })
+                      const test2 = computed(() => this['y'].push(1))
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // a `this`-alias local to the computed function is a local variable, not a setup variable
+        (
+            "
+                  <script>
+                  import { computed } from 'vue'
+                  export default {
+                    setup() {
+                      const test1 = computed(() => {
+                        const self = this
+                        self.x = 1
+                      })
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // a `this`-alias declared at module scope is not a setup variable
+        (
+            "
+                  <script>
+                  import { computed } from 'vue'
+                  const self = this
+                  export default {
+                    setup() {
+                      const test1 = computed(() => {
+                        self.x = 1
+                      })
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
         ),
         (
             "
@@ -1208,7 +1240,7 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        // FN8: computed property whose key happens to be named "set" is incorrectly skipped
+        // a computed property literally named "set" is still a getter
         (
             "Vue.component('test', {
                     computed: {
@@ -1221,7 +1253,7 @@ fn test() {
             None,
             None,
         ),
-        // FN10: assignment to `this.$set` is not a call, should fall through to mutation detection
+        // assignment to `this.$set` is a plain property mutation
         (
             "Vue.component('test', {
                     computed: {
@@ -1235,7 +1267,7 @@ fn test() {
             None,
             None,
         ),
-        // FN9: bracket notation with string literal key for a mutating method
+        // bracket notation with a string-literal key for a mutating method
         (
             "Vue.component('test', {
                     computed: {
@@ -1251,7 +1283,7 @@ fn test() {
             None,
             None,
         ),
-        // FN7: aliased import of `computed` from 'vue' is not detected
+        // aliased import of `computed` from 'vue'
         (
             "
                   <script>
@@ -1271,7 +1303,7 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        // Issue 2: ComputedMemberExpression as starting point (this['foo'] = 1, etc.)
+        // bracket-notation mutations on `this`
         (
             "Vue.component('test', {
                     computed: {
@@ -1293,7 +1325,7 @@ fn test() {
             None,
             None,
         ),
-        // Issue 2 (Composition API): bracket-notation mutations on setup variables
+        // bracket-notation mutations on setup variables
         (
             "
                   <script>
@@ -1313,7 +1345,7 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        // Issue 3: @vue/composition-api support
+        // `computed` imported from '@vue/composition-api'
         (
             "
                   <script>
@@ -1333,7 +1365,7 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        // Issue 5: this-alias (const self = this) in Composition API context
+        // a `this`-alias declared in setup() is checked as a setup variable
         (
             "
                   <script>
@@ -1353,7 +1385,7 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        // Issue 6: (this.$set)(...) — parenthesized callee
+        // `(this.$set)(...)` — parenthesized callee
         (
             "Vue.component('test', {
                     computed: {
@@ -1366,6 +1398,44 @@ fn test() {
             None,
             None,
             None,
+        ),
+        // `computed` imported from '#imports' (Nuxt auto-import)
+        (
+            "
+                  <script>
+                  import { computed } from '#imports'
+                  export default {
+                    setup() {
+                      const foo = useFoo()
+                      const test1 = computed(() => foo.something.reverse())
+                      const test2 = computed(() => {
+                        foo.firstName = 'lorem'
+                      })
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // a `this`-alias declared in setup() is an ordinary setup variable:
+        // the walk starts at the identifier, so a first-level mutating call counts
+        (
+            "
+                  <script>
+                  import { computed } from 'vue'
+                  export default {
+                    setup() {
+                      const self = this
+                      const test1 = computed(() => self.reverse())
+                    }
+                  }
+                  </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
         ),
     ];
 
