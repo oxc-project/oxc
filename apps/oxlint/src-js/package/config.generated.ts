@@ -1473,7 +1473,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-dom-node-remove"?: RuleNoConfig;
   "unicorn/prefer-dom-node-text-content"?: RuleNoConfig;
   "unicorn/prefer-event-target"?: RuleNoConfig;
-  "unicorn/prefer-export-from"?: RuleNoConfig;
+  "unicorn/prefer-export-from"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferExportFrom];
   "unicorn/prefer-global-this"?: RuleNoConfig;
   "unicorn/prefer-import-meta-properties"?: RuleNoConfig;
   "unicorn/prefer-includes"?: RuleNoConfig;
@@ -5100,6 +5100,12 @@ export interface NoUselessUndefined {
    * Whether to check for useless `undefined` in arrow function bodies.
    */
   checkArrowFunctionBody?: boolean;
+}
+export interface PreferExportFrom {
+  /**
+   * When false, if any import binding is used somewhere other than a re-export, all variables in the import declaration are ignored.
+   */
+  checkUsedVariables?: boolean;
 }
 export interface PreferNumberPropertiesConfig {
   /**
