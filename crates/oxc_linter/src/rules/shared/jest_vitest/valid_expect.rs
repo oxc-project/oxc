@@ -57,9 +57,9 @@ pub struct ValidExpectConfig {
     /// List of matchers that are considered async and therefore require awaiting (e.g. `toResolve`, `toReject`).
     async_matchers: Vec<String>,
     /// Minimum number of arguments `expect` should be called with.
-    min_args: usize,
+    min_args: u32,
     /// Maximum number of arguments `expect` should be called with.
-    max_args: usize,
+    max_args: u32,
     /// When `true`, allow a string or template literal second argument as a custom message.
     #[serde(skip)]
     allow_string_message_arg: bool,
@@ -94,13 +94,13 @@ impl ValidExpectConfig {
             .and_then(|config| config.get("minArgs"))
             .and_then(serde_json::Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .map_or(1, |v| usize::try_from(v).unwrap_or(1));
+            .map_or(1, |v| u32::try_from(v).unwrap_or(1));
 
         let max_args = config
             .and_then(|config| config.get("maxArgs"))
             .and_then(serde_json::Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .map_or(1, |v| usize::try_from(v).unwrap_or(1));
+            .map_or(1, |v| u32::try_from(v).unwrap_or(1));
 
         let always_await = config
             .and_then(|config| config.get("alwaysAwait"))
@@ -125,6 +125,7 @@ impl ValidExpectConfig {
         }
     }
 
+    #[expect(clippy::cast_possible_truncation)] // the length of arguments can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run<'a>(
         &self,
         possible_jest_node: &PossibleJestNode<'a, '_>,
@@ -173,7 +174,7 @@ impl ValidExpectConfig {
                 matches!(expr, Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
             });
 
-        if call_expr.arguments.len() > self.max_args && !allow_message_arg {
+        if (call_expr.arguments.len() as u32) > self.max_args && !allow_message_arg {
             let error = format!(
                 "Expect takes at most {} argument{} ",
                 self.max_args,
@@ -183,7 +184,7 @@ impl ValidExpectConfig {
             ctx.diagnostic(valid_expect_diagnostic(error, help, call_expr.span));
             return;
         }
-        if call_expr.arguments.len() < self.min_args {
+        if (call_expr.arguments.len() as u32) < self.min_args {
             let error = format!(
                 "Expect requires at least {} argument{} ",
                 self.min_args,

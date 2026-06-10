@@ -924,7 +924,7 @@ expression: json
           "description": "Maximum amount of cyclomatic complexity",
           "default": 20,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum amount of cyclomatic complexity"
         },
@@ -9572,7 +9572,7 @@ expression: json
           "description": "The maximum allowed depth of nested JSX elements and fragments.",
           "default": 2,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum allowed depth of nested JSX elements and fragments."
         }
@@ -9735,7 +9735,7 @@ expression: json
           "description": "The maximum number of classes allowed per file.",
           "default": 1,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum number of classes allowed per file."
         }
@@ -9755,7 +9755,7 @@ expression: json
           "description": "Maximum number of dependencies allowed in a file.",
           "default": 10,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of dependencies allowed in a file."
         }
@@ -9766,7 +9766,7 @@ expression: json
       "anyOf": [
         {
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0
         },
         {
@@ -9781,7 +9781,7 @@ expression: json
           "description": "The `max` enforces a maximum depth that blocks can be nested",
           "default": 4,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The `max` enforces a maximum depth that blocks can be nested"
         }
@@ -9795,7 +9795,7 @@ expression: json
           "description": "Maximum number of `expect()` assertion calls allowed within a single test.",
           "default": 5,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of `expect()` assertion calls allowed within a single test."
         }
@@ -9809,7 +9809,7 @@ expression: json
           "description": "Maximum number of lines allowed per file.",
           "default": 300,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of lines allowed per file."
         },
@@ -9841,7 +9841,7 @@ expression: json
           "description": "Maximum number of lines allowed in a function.",
           "default": 50,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of lines allowed in a function."
         },
@@ -9867,7 +9867,7 @@ expression: json
           "description": "The `max` enforces a maximum depth that callbacks can be nested.",
           "default": 10,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The `max` enforces a maximum depth that callbacks can be nested."
         }
@@ -9881,7 +9881,7 @@ expression: json
           "description": "Maximum allowed depth of nested describe calls.",
           "default": 5,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum allowed depth of nested describe calls."
         }
@@ -9910,7 +9910,7 @@ expression: json
           "description": "Maximum number of parameters allowed in function definitions.",
           "default": 3,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of parameters allowed in function definitions."
         }
@@ -9924,7 +9924,7 @@ expression: json
           "description": "The maximum number of props allowed in a Vue SFC.",
           "default": 1,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum number of props allowed in a Vue SFC."
         }
@@ -9944,7 +9944,7 @@ expression: json
           "description": "Maximum number of statements allowed per function.",
           "default": 10,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of statements allowed per function."
         }
@@ -10348,7 +10348,7 @@ expression: json
           "description": "The maximum number of modules that can be re-exported via `export *`\nbefore the rule is triggered.",
           "default": 100,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum number of modules that can be re-exported via `export *`\nbefore the rule is triggered."
         }
@@ -11204,7 +11204,7 @@ expression: json
           "description": "Maximum number of lines allowed for inline snapshots.",
           "default": 50,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of lines allowed for inline snapshots."
         },
@@ -11212,7 +11212,7 @@ expression: json
           "description": "Maximum number of lines allowed for external snapshot files.",
           "default": 50,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of lines allowed for external snapshot files."
         }
@@ -14191,7 +14191,7 @@ expression: json
           "description": "Minimum number of properties required in an object before sorting is enforced.",
           "default": 2,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Minimum number of properties required in an object before sorting is enforced."
         },
@@ -14564,7 +14564,7 @@ expression: json
           "description": "Maximum number of arguments `expect` should be called with.",
           "default": 1,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of arguments `expect` should be called with."
         },
@@ -14572,7 +14572,7 @@ expression: json
           "description": "Minimum number of arguments `expect` should be called with.",
           "default": 1,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Minimum number of arguments `expect` should be called with."
         }

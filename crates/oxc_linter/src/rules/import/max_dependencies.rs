@@ -30,7 +30,7 @@ pub struct MaxDependencies(Box<MaxDependenciesConfig>);
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxDependenciesConfig {
     /// Maximum number of dependencies allowed in a file.
-    max: usize,
+    max: u32,
     /// Whether to ignore type imports when counting dependencies.
     ///
     /// ```ts
@@ -59,7 +59,7 @@ impl Default for MaxDependenciesConfig {
 #[serde(untagged)]
 #[expect(unused)] // only for schema generation
 enum MaxDependenciesConfigJson {
-    Number(usize),
+    Number(u32),
     Object(MaxDependenciesConfig),
 }
 
@@ -110,7 +110,7 @@ impl Rule for MaxDependencies {
             .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
         {
             Ok(Self(Box::new(MaxDependenciesConfig { max, ignore_type_imports: false })))
         } else {
