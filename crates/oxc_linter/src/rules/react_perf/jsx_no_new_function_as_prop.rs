@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, MemberExpression},
@@ -5,7 +7,6 @@ use oxc_ast::{
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
-use serde::Deserialize;
 
 use crate::utils::{NativeAllowList, ReactPerfConfig, ReactPerfRule, is_constructor_matching_name};
 
