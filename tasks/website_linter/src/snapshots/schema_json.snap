@@ -289,6 +289,9 @@ expression: json
       },
       "additionalProperties": false
     },
+    "AllKeyword": {
+      "type": "null"
+    },
     "AllowKind": {
       "description": "Kinds of functions that can be allowed to be empty.",
       "oneOf": [
@@ -4906,13 +4909,64 @@ expression: json
           ]
         },
         "react-perf/jsx-no-jsx-as-prop": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactPerfConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react-perf/jsx-no-new-array-as-prop": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactPerfConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react-perf/jsx-no-new-function-as-prop": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactPerfConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react-perf/jsx-no-new-object-as-prop": {
           "$ref": "#/definitions/DummyRule"
@@ -9826,6 +9880,19 @@ expression: json
       },
       "additionalProperties": false
     },
+    "NativeAllowList": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AllKeyword"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
     "NewCapConfig": {
       "type": "object",
       "properties": {
@@ -13243,6 +13310,21 @@ expression: json
           "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
+    },
+    "ReactPerfConfig": {
+      "type": "object",
+      "properties": {
+        "nativeAllowList": {
+          "description": "Controls whether native elements (lowercase-first-letter tags such as `div`)\nare ignored by the rule. Either `\"all\"` to ignore the rule entirely on native\nelements, or an array of attribute names to ignore on native elements.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NativeAllowList"
+            }
+          ],
+          "markdownDescription": "Controls whether native elements (lowercase-first-letter tags such as `div`)\nare ignored by the rule. Either `\"all\"` to ignore the rule entirely on native\nelements, or an array of attribute names to ignore on native elements."
+        }
+      },
+      "additionalProperties": false
     },
     "ReactPluginSettings": {
       "description": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)",
