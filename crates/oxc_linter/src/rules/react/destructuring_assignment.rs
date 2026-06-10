@@ -278,10 +278,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for DestructuringAssignment {
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
-    }
-
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
@@ -332,6 +328,10 @@ impl Rule for DestructuringAssignment {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 
