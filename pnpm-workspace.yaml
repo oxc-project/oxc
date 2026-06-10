@@ -35,6 +35,7 @@ allowBuilds:
 
 verifyDepsBeforeRun: install
 minimumReleaseAgeExclude:
+  - "@napi-rs/*"
   - "@oxc-parser/*"
   - "@oxc-project/*"
   - "@oxfmt/*"
