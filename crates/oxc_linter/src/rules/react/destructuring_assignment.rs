@@ -16,7 +16,7 @@ use crate::{
     fixer::expand_span_to_statement_boundaries,
     rule::{Rule, TupleRuleConfig},
     rules::ContextHost,
-    utils::{FunctionLike, get_parent_component, get_parent_stateless_component},
+    utils::{AlwaysNever, FunctionLike, get_parent_component, get_parent_stateless_component},
 };
 
 fn no_destruct_props_in_sfc_arg_diagnostic(span: Span) -> OxcDiagnostic {
@@ -41,18 +41,13 @@ fn destructure_in_signature_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Must destructure props in the function signature.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub enum Mode {
-    #[default]
-    Always,
-    Never,
-}
-
+/// Controls whether destructuring assignments are required or forbidden in function signatures.
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum DestructureInSignature {
+    /// Require destructuring in the function signature when props are only used for destructuring.
     Always,
+    /// Allow destructuring in either the function signature or function body.
     #[default]
     Ignore,
 }
@@ -60,15 +55,15 @@ pub enum DestructureInSignature {
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct DestructuringAssignmentOptions {
-    // Whether to ignore class fields when destructuring.
+    /// Whether to ignore class fields when destructuring.
     ignore_class_fields: bool,
-    // Whether to ignore destructuring in function signature.
+    /// Whether to ignore destructuring in function signature.
     destructure_in_signature: DestructureInSignature,
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(default)]
-pub struct DestructuringAssignment(Mode, DestructuringAssignmentOptions);
+pub struct DestructuringAssignment(AlwaysNever, DestructuringAssignmentOptions);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -365,7 +360,7 @@ impl DestructuringAssignment {
     }
 
     fn apply_never(&self) -> bool {
-        matches!(&self.0, Mode::Never)
+        matches!(&self.0, AlwaysNever::Never)
     }
 
     fn apply_to_class_fields(&self) -> bool {
