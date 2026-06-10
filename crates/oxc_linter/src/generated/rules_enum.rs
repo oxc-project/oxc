@@ -24530,6 +24530,7 @@ impl RuleEnum {
             Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::INFO,
             Self::UnicornErrorMessage(_) => UnicornErrorMessage::INFO,
             Self::UnicornEscapeCase(_) => UnicornEscapeCase::INFO,
+            Self::UnicornExpiringTodoComments(_) => UnicornExpiringTodoComments::INFO,
             Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::INFO,
             Self::UnicornFilenameCase(_) => UnicornFilenameCase::INFO,
             Self::UnicornImportStyle(_) => UnicornImportStyle::INFO,

@@ -1393,6 +1393,7 @@ export interface DummyRuleMap {
   "unicorn/empty-brace-spaces"?: RuleNoConfig;
   "unicorn/error-message"?: RuleNoConfig;
   "unicorn/escape-case"?: RuleNoConfig;
+  "unicorn/expiring-todo-comments"?: DummyRule;
   "unicorn/explicit-length-check"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExplicitLengthCheck];
   "unicorn/filename-case"?: DummyRule;
   "unicorn/import-style"?: DummyRule;
