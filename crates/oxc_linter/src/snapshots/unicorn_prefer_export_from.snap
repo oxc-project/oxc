@@ -755,6 +755,18 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
    ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
+ 2 │             use(named);
+ 3 │             export {named};
+   ·                     ──┬──
+   ·                       ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import { foo } from "foo";
    · ─────────────┬────────────
    ·              ╰── Imported here.

@@ -25,21 +25,27 @@ use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
+    utils::default_true,
 };
-
-type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
 fn prefer_export_from_diagnostic(import_span: Span, export_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer re-exporting directly from the source module.")
         .with_labels([import_span.label("Imported here."), export_span.label("Re-exported here.")])
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferExportFrom {
-    /// When true, if an import is used in other places than just a re-export, all variables in the import declaration will be ignored.
-    ignore_used_variables: bool,
+    /// When false, if any import binding is used somewhere other than a re-export, all variables in the import declaration are ignored.
+    #[serde(default = "default_true")]
+    check_used_variables: bool,
+}
+
+impl Default for PreferExportFrom {
+    fn default() -> Self {
+        Self { check_used_variables: true }
+    }
 }
 
 // See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
@@ -87,34 +93,11 @@ declare_oxc_lint!(
     version = "next",
 );
 
-// Define SpecifierSpec structure
-#[derive(Debug)]
-struct SpecifierSpec<'a> {
-    specifier: &'a ImportDeclarationSpecifier<'a>,
-    name: String,
-    decl_type: bool,
-}
-
-/// Represents a violation where an import is unnecessarily imported and then re-exported
-#[derive(Debug)]
-struct Violation {
-    /// The name to use in the export statement
-    export_name: String,
-    /// The AST node ID of the export declaration containing this violation
-    export_node_id: NodeId,
-    /// The AST node ID of the import specifier that is being re-exported
-    import_specifier_id: NodeId,
-    /// Whether this represents a namespace export (export * as name)
-    is_namespace_export: bool,
-    /// Whether this is a TypeScript type import/export
-    is_typescript_type: bool,
-    /// Whether the export needs to include source info (for mixed type/value exports)
-    needs_source: bool,
-    /// The span of the original export statement that should be replaced
-    original_export_span: Option<Span>,
-}
-
 impl Rule for PreferExportFrom {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ImportDeclaration(import_decl) = node.kind() {
             if import_decl.specifiers.is_none() {
@@ -140,79 +123,24 @@ impl Rule for PreferExportFrom {
     }
 }
 
-fn has_matching_type_alias<'a>(
-    import_decl: &'a ImportDeclaration<'a>,
-    ctx: &LintContext<'a>,
-) -> bool {
-    if !matches!(import_decl.import_kind, ImportOrExportKind::Value) {
-        return false;
-    }
-    let Some(specifiers) = &import_decl.specifiers else { return false };
+type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
-    let import_names: FxHashSet<&str> =
-        specifiers.iter().map(|specifier| specifier.local().name.as_str()).collect();
-
-    let scoping = ctx.scoping();
-    let root_scope_id = scoping.root_scope_id();
-    let root_bindings = scoping.get_bindings(root_scope_id);
-
-    for (_, &symbol_id) in root_bindings {
-        for declaration_node_id in scoping.symbol_declarations(symbol_id) {
-            let node = ctx.nodes().get_node(declaration_node_id);
-            if let AstKind::TSTypeAliasDeclaration(decl) = node.kind()
-                && import_names.contains(decl.id.name.as_str())
-            {
-                return true;
-            }
-        }
-    }
-
-    false
+#[derive(Debug)]
+struct SpecifierSpec<'a> {
+    specifier: &'a ImportDeclarationSpecifier<'a>,
+    name: String,
+    decl_type: bool,
 }
 
-fn find_corresponding_export<'a>(
-    ctx: &LintContext<'a>,
-    import_decl: &'a ImportDeclaration<'a>,
-) -> Option<&'a ExportNamedDeclaration<'a>> {
-    let source = import_decl.source.value.as_str();
-    let program = ctx.nodes().program();
-
-    for stmt in &program.body {
-        let Statement::ExportNamedDeclaration(export_decl) = stmt else {
-            continue;
-        };
-
-        if export_decl.source.is_none() {
-            continue;
-        }
-
-        if export_decl.source.as_ref().unwrap().value.as_str() != source {
-            continue;
-        }
-
-        if import_decl.import_kind == export_decl.export_kind {
-            return Some(export_decl);
-        }
-        if matches!(import_decl.import_kind, ImportOrExportKind::Type) {
-            let all_type = export_decl
-                .specifiers
-                .iter()
-                .all(|s| matches!(s.export_kind, ImportOrExportKind::Type));
-            if all_type {
-                return Some(export_decl);
-            }
-        }
-    }
-
-    None
-}
-
-// Helper function to check if a reference is not in an export statement
-fn is_not_in_export_statement(parent_node: &AstNode) -> bool {
-    !matches!(
-        parent_node.kind(),
-        AstKind::ExportSpecifier(_) | AstKind::ExportDefaultDeclaration(_)
-    )
+#[derive(Debug)]
+struct Violation {
+    export_name: String,
+    export_node_id: NodeId,
+    import_specifier_id: NodeId,
+    is_namespace_export: bool,
+    is_typescript_type: bool,
+    needs_source: bool,
+    original_export_span: Option<Span>,
 }
 
 impl PreferExportFrom {
@@ -321,23 +249,12 @@ impl PreferExportFrom {
         let mut used_specifiers: Vec<SymbolId> = Vec::new();
         let mut grouped_violations: FxHashMap<NodeId, Vec<Violation>> = FxHashMap::default();
 
+        if !self.check_used_variables && Self::import_has_ignored_usage(ctx, symbol_to_specifier) {
+            return (used_specifiers, grouped_violations);
+        }
+
         for (symbol_id, specifier_spec) in symbol_to_specifier {
-            // Check if we should ignore this symbol because it's used outside export statements
-            let mut references = ctx.symbol_references(*symbol_id);
-            if self.ignore_used_variables {
-                let has_non_export_usage = references.any(|reference| {
-                    let ref_node = ctx.nodes().get_node(reference.node_id());
-                    let parent_node = ctx.nodes().parent_node(ref_node.id());
-                    is_not_in_export_statement(parent_node)
-                });
-
-                if has_non_export_usage {
-                    break;
-                }
-            }
-
-            // let references = ctx.symbol_references(*symbol_id);
-            for reference in references {
+            for reference in ctx.symbol_references(*symbol_id) {
                 let ref_node = ctx.nodes().get_node(reference.node_id());
                 let parent_node = ctx.nodes().parent_node(ref_node.id());
 
@@ -389,6 +306,63 @@ impl PreferExportFrom {
             }
         }
         (used_specifiers, grouped_violations)
+    }
+
+    fn import_has_ignored_usage(
+        ctx: &LintContext<'_>,
+        symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'_>>,
+    ) -> bool {
+        symbol_to_specifier.iter().any(|(symbol_id, specifier_spec)| {
+            ctx.symbol_references(*symbol_id).any(|reference| {
+                let ref_node = ctx.nodes().get_node(reference.node_id());
+                let parent_node = ctx.nodes().parent_node(ref_node.id());
+                Self::is_ignored_usage_when_not_checking_used_variables(
+                    ctx,
+                    parent_node,
+                    specifier_spec,
+                )
+            })
+        })
+    }
+
+    fn is_ignored_usage_when_not_checking_used_variables(
+        ctx: &LintContext<'_>,
+        parent_node: &AstNode<'_>,
+        specifier_spec: &SpecifierSpec<'_>,
+    ) -> bool {
+        match parent_node.kind() {
+            AstKind::ExportSpecifier(export_specifier) => {
+                matches!(
+                    specifier_spec.specifier,
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)
+                ) && Self::is_module_export_name_default(&export_specifier.exported)
+            }
+            AstKind::ExportDefaultDeclaration(_) => matches!(
+                specifier_spec.specifier,
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)
+            ),
+            AstKind::VariableDeclarator(var_decl) if var_decl.type_annotation.is_none() => {
+                let declaration_node = ctx.nodes().parent_node(var_decl.node_id());
+                !matches!(
+                    declaration_node.kind(),
+                    AstKind::VariableDeclaration(variable_declaration)
+                        if variable_declaration.kind == VariableDeclarationKind::Const
+                            && matches!(
+                                ctx.nodes().parent_node(declaration_node.id()).kind(),
+                                AstKind::ExportNamedDeclaration(_)
+                            )
+                )
+            }
+            _ => true,
+        }
+    }
+
+    fn is_module_export_name_default(name: &ModuleExportName<'_>) -> bool {
+        match name {
+            ModuleExportName::IdentifierName(ident_name) => ident_name.name == "default",
+            ModuleExportName::IdentifierReference(ident_ref) => ident_ref.name == "default",
+            ModuleExportName::StringLiteral(literal) => literal.value == "default",
+        }
     }
 
     fn analyze_default_export_usage(
@@ -1226,6 +1200,73 @@ impl PreferExportFrom {
     }
 }
 
+fn has_matching_type_alias<'a>(
+    import_decl: &'a ImportDeclaration<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    if !matches!(import_decl.import_kind, ImportOrExportKind::Value) {
+        return false;
+    }
+    let Some(specifiers) = &import_decl.specifiers else { return false };
+
+    let import_names: FxHashSet<&str> =
+        specifiers.iter().map(|specifier| specifier.local().name.as_str()).collect();
+
+    let scoping = ctx.scoping();
+    let root_scope_id = scoping.root_scope_id();
+    let root_bindings = scoping.get_bindings(root_scope_id);
+
+    for (_, &symbol_id) in root_bindings {
+        for declaration_node_id in scoping.symbol_declarations(symbol_id) {
+            let node = ctx.nodes().get_node(declaration_node_id);
+            if let AstKind::TSTypeAliasDeclaration(decl) = node.kind()
+                && import_names.contains(decl.id.name.as_str())
+            {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+fn find_corresponding_export<'a>(
+    ctx: &LintContext<'a>,
+    import_decl: &'a ImportDeclaration<'a>,
+) -> Option<&'a ExportNamedDeclaration<'a>> {
+    let source = import_decl.source.value.as_str();
+    let program = ctx.nodes().program();
+
+    for stmt in &program.body {
+        let Statement::ExportNamedDeclaration(export_decl) = stmt else {
+            continue;
+        };
+
+        if export_decl.source.is_none() {
+            continue;
+        }
+
+        if export_decl.source.as_ref().unwrap().value.as_str() != source {
+            continue;
+        }
+
+        if import_decl.import_kind == export_decl.export_kind {
+            return Some(export_decl);
+        }
+        if matches!(import_decl.import_kind, ImportOrExportKind::Type) {
+            let all_type = export_decl
+                .specifiers
+                .iter()
+                .all(|s| matches!(s.export_kind, ImportOrExportKind::Type));
+            if all_type {
+                return Some(export_decl);
+            }
+        }
+    }
+
+    None
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -1412,6 +1453,9 @@ fn test() {
             export default foo;",
         "import {'*' as foo} from 'foo';
             export {foo};",
+        "import {named} from 'foo';
+            use(named);
+            export {named};",
         r#"import { foo } from "foo";
             export { foo };
             export type { bar } from "foo";"#,
@@ -1930,5 +1974,148 @@ fn test() {
     ];
     Tester::new(PreferExportFrom::NAME, PreferExportFrom::PLUGIN, pass, fail)
         .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn check_used_variables_option() {
+    use crate::tester::Tester;
+
+    let options = serde_json::json!([{ "checkUsedVariables": false }]);
+
+    let pass = vec![
+        (
+            "import defaultExport from 'foo';
+            use(defaultExport);
+            export default defaultExport;",
+            Some(options.clone()),
+        ),
+        (
+            "import defaultExport from 'foo';
+            use(defaultExport);
+            export {defaultExport};",
+            Some(options.clone()),
+        ),
+        (
+            "import {named} from 'foo';
+            use(named);
+            export {named};",
+            Some(options.clone()),
+        ),
+        (
+            "import {named} from 'foo';
+            use(named);
+            export default named;",
+            Some(options.clone()),
+        ),
+        (
+            "import * as namespace from 'foo';
+            use(namespace);
+            export {namespace};",
+            Some(options.clone()),
+        ),
+        (
+            "import * as namespace from 'foo';
+            use(namespace);
+            export default namespace;",
+            Some(options.clone()),
+        ),
+        (
+            "import * as namespace from 'foo';
+            export {namespace as default};
+            export {namespace as named};",
+            Some(options.clone()),
+        ),
+        (
+            "import * as namespace from 'foo';
+            export default namespace;
+            export {namespace as named};",
+            Some(options.clone()),
+        ),
+        (
+            "import defaultExport, {named} from 'foo';
+            use(defaultExport);
+            export {named};",
+            Some(options.clone()),
+        ),
+        (
+            "import defaultExport, {named} from 'foo';
+            use(named);
+            export {defaultExport};",
+            Some(options.clone()),
+        ),
+        (
+            "import {named1, named2} from 'foo';
+            use(named1);
+            export {named2};",
+            Some(options.clone()),
+        ),
+        (
+            "import defaultExport, {named1, named2} from 'foo';
+            use(defaultExport);
+            export {named1, named2};",
+            Some(options.clone()),
+        ),
+        (
+            "import defaultExport, {named1, named2} from 'foo';
+            use(named1);
+            export {defaultExport, named2};",
+            Some(options.clone()),
+        ),
+    ];
+
+    let fail = vec![
+        (
+            "import defaultExport from 'foo';
+            export {defaultExport as default};
+            export {defaultExport as named};",
+            Some(options.clone()),
+        ),
+        (
+            "import {named} from 'foo';
+            export {named as default};
+            export {named as named};",
+            Some(options.clone()),
+        ),
+        (
+            "import {named} from 'foo';
+            export default named;
+            export {named as named};",
+            Some(options.clone()),
+        ),
+        (
+            "import defaultExport, {named} from 'foo';
+            export default defaultExport;
+            export {named};",
+            Some(options.clone()),
+        ),
+        (
+            "import defaultExport, {named} from 'foo';
+            export {defaultExport as default, named};",
+            Some(options.clone()),
+        ),
+        (
+            "import defaultExport from 'foo';
+            export const variable = defaultExport;",
+            Some(options.clone()),
+        ),
+        (
+            "import {notUsedNotExported, exported} from 'foo';
+            export {exported};",
+            Some(options.clone()),
+        ),
+    ];
+
+    let fix = vec![(
+        "import defaultExport from 'foo';
+            export {defaultExport as default};
+            export {defaultExport as named};",
+        "export { default, default as named } from 'foo';\n",
+        Some(options),
+    )];
+
+    Tester::new(PreferExportFrom::NAME, PreferExportFrom::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .with_snapshot_suffix("check_used_variables")
         .test_and_snapshot();
 }
