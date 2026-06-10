@@ -4,7 +4,7 @@ use itertools::Itertools;
 use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use oxc_ast::{
     AstKind, AstType,
@@ -33,7 +33,8 @@ use crate::{
         get_declaration_from_reference_id, get_declaration_of_variable, get_enclosing_function,
     },
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_option,
 };
 
 const SCOPE: &str = "react-hooks";
@@ -219,19 +220,23 @@ fn functions_returned_from_use_effect_event_must_not_be_included_in_dependency_a
     .with_error_code_scope(SCOPE)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ExhaustiveDeps(Box<ExhaustiveDepsConfig>);
 
-#[derive(Debug, Clone, Default)]
-pub struct ExhaustiveDepsConfig {
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct ExhaustiveDepsConfig {
+    /// Optionally provide a regex of additional hooks to check.
+    #[serde(default, deserialize_with = "deserialize_additional_hooks")]
     additional_hooks: Option<Regex>,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-struct ExhaustiveDepsConfigJson {
-    /// Optionally provide a regex of additional hooks to check.
-    additional_hooks: Option<String>,
+fn deserialize_additional_hooks<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserialize_regex_option(deserializer)
+        .map(|regex| regex.filter(|regex| !regex.as_str().is_empty()))
 }
 
 declare_oxc_lint!(
@@ -269,7 +274,7 @@ declare_oxc_lint!(
     react,
     correctness,
     safe_fixes_and_dangerous_suggestions,
-    config = ExhaustiveDepsConfigJson,
+    config = ExhaustiveDepsConfig,
     version = "0.12.0",
 );
 
@@ -277,21 +282,7 @@ const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"]
 
 impl Rule for ExhaustiveDeps {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|first| {
-                serde_json::from_value::<ExhaustiveDepsConfigJson>(first.clone()).ok()
-            })
-            .map(|config_json| ExhaustiveDepsConfig {
-                additional_hooks: config_json
-                    .additional_hooks
-                    .filter(|pattern| !pattern.is_empty())
-                    .and_then(|pattern| Regex::new(&pattern).ok()),
-            })
-            .unwrap_or_default();
-
-        Ok(Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -1674,6 +1665,24 @@ mod fix {
         )));
         fixer.replace(deps.span, codegen.into_source_text())
     }
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    let invalid_regex = serde_json::json!([{ "additionalHooks": "[" }]);
+    assert!(ExhaustiveDeps::from_configuration(invalid_regex).is_err());
+
+    let unknown_field = serde_json::json!([{ "unknown": true }]);
+    assert!(ExhaustiveDeps::from_configuration(unknown_field).is_err());
+
+    let wrong_type = serde_json::json!([{ "additionalHooks": 1 }]);
+    assert!(ExhaustiveDeps::from_configuration(wrong_type).is_err());
+
+    let empty_regex = serde_json::json!([{ "additionalHooks": "" }]);
+    assert!(ExhaustiveDeps::from_configuration(empty_regex).is_ok());
+
+    let valid_regex = serde_json::json!([{ "additionalHooks": "useSpecialEffect" }]);
+    assert!(ExhaustiveDeps::from_configuration(valid_regex).is_ok());
 }
 
 #[test]
