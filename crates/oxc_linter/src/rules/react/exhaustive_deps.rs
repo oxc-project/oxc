@@ -228,7 +228,7 @@ pub struct ExhaustiveDepsConfig {
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct ExhaustiveDepsConfigJson {
     /// Optionally provide a regex of additional hooks to check.
     additional_hooks: Option<String>,
