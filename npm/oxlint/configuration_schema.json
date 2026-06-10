@@ -10133,20 +10133,6 @@
     "NoCallbackInPromiseConfig": {
       "type": "object",
       "properties": {
-        "callbacks": {
-          "description": "List of callback function names to check for within Promise `then` and `catch` methods.",
-          "default": [
-            "callback",
-            "cb",
-            "done",
-            "next"
-          ],
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "List of callback function names to check for within Promise `then` and `catch` methods."
-        },
         "exceptions": {
           "description": "List of callback function names to allow within Promise `then` and `catch` methods.",
           "default": [],

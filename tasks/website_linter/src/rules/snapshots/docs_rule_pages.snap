@@ -947,15 +947,6 @@ Promise.resolve()
 
 This rule accepts a configuration object with the following properties:
 
-### callbacks
-
-type: `string[]`
-
-default: `["callback", "cb", "done", "next"]`
-
-List of callback function names to check for within Promise `then` and `catch` methods.
-
-
 ### exceptions
 
 type: `string[]`

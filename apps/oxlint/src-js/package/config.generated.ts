@@ -3806,10 +3806,6 @@ export interface AlwaysReturnConfig {
 }
 export interface NoCallbackInPromiseConfig {
   /**
-   * List of callback function names to check for within Promise `then` and `catch` methods.
-   */
-  callbacks?: string[];
-  /**
    * List of callback function names to allow within Promise `then` and `catch` methods.
    */
   exceptions?: string[];
