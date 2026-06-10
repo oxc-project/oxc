@@ -69,8 +69,8 @@ fn sort_indices_by_group_for_partition(
     options: &SortImportsOptions,
 ) -> Vec<usize> {
     let mut imports_by_group: FxHashMap<usize, Vec<usize>> = FxHashMap::default();
-    for idx in start..end {
-        imports_by_group.entry(imports[idx].group_idx).or_default().push(idx);
+    for (idx, import) in imports.iter().enumerate().take(end).skip(start) {
+        imports_by_group.entry(import.group_idx).or_default().push(idx);
     }
 
     let mut groups: Vec<_> = imports_by_group.into_iter().collect();
