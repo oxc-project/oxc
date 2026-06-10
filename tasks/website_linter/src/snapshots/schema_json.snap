@@ -5320,7 +5320,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/jsx-no-literals": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxNoLiteralsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/jsx-no-script-url": {
           "$ref": "#/definitions/DummyRule"
@@ -8474,6 +8491,61 @@ expression: json
       },
       "markdownDescription": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
     },
+    "ElementOverrideOptions": {
+      "description": "One entry in `elementOverrides`: the base options plus override-only fields.",
+      "type": "object",
+      "properties": {
+        "allowElement": {
+          "description": "(default: false) - When true the rule will allow the specified element to have string literals as children, wrapped or unwrapped without warning.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - When true the rule will allow the specified element to have string literals as children, wrapped or unwrapped without warning."
+        },
+        "allowedStrings": {
+          "description": "An array of unique string values that would otherwise warn, but will be ignored.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of unique string values that would otherwise warn, but will be ignored."
+        },
+        "applyToNestedElements": {
+          "description": "(default: true) - When false the rule will not apply the current options set to nested elements. This is useful when you want to apply the rule to a specific element, but not to its children.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "(default: true) - When false the rule will not apply the current options set to nested elements. This is useful when you want to apply the rule to a specific element, but not to its children."
+        },
+        "ignoreProps": {
+          "description": "(default: false) - When true the rule ignores literals used in props, wrapped or unwrapped.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - When true the rule ignores literals used in props, wrapped or unwrapped."
+        },
+        "noAttributeStrings": {
+          "description": "(default: false) - Enforces no string literals used in attributes when set to true.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - Enforces no string literals used in attributes when set to true."
+        },
+        "noStrings": {
+          "description": "(default: false) - Enforces no string literals used as children, wrapped or unwrapped.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - Enforces no string literals used as children, wrapped or unwrapped."
+        },
+        "restrictedAttributes": {
+          "description": "An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level."
+        }
+      },
+      "markdownDescription": "One entry in `elementOverrides`: the base options plus override-only fields."
+    },
     "EmptyTagsConfig": {
       "type": "object",
       "properties": {
@@ -9621,6 +9693,57 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "JsxNoLiteralsConfig": {
+      "description": "The options shared between the top-level config and each `elementOverrides` entry.",
+      "type": "object",
+      "properties": {
+        "allowedStrings": {
+          "description": "An array of unique string values that would otherwise warn, but will be ignored.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of unique string values that would otherwise warn, but will be ignored."
+        },
+        "elementOverrides": {
+          "description": "An object where the keys are the element names and the values are objects with the same options as above. This allows you to specify different options for different elements.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ElementOverrideOptions"
+          },
+          "markdownDescription": "An object where the keys are the element names and the values are objects with the same options as above. This allows you to specify different options for different elements."
+        },
+        "ignoreProps": {
+          "description": "(default: false) - When true the rule ignores literals used in props, wrapped or unwrapped.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - When true the rule ignores literals used in props, wrapped or unwrapped."
+        },
+        "noAttributeStrings": {
+          "description": "(default: false) - Enforces no string literals used in attributes when set to true.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - Enforces no string literals used in attributes when set to true."
+        },
+        "noStrings": {
+          "description": "(default: false) - Enforces no string literals used as children, wrapped or unwrapped.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - Enforces no string literals used as children, wrapped or unwrapped."
+        },
+        "restrictedAttributes": {
+          "description": "An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level."
+        }
+      },
+      "markdownDescription": "The options shared between the top-level config and each `elementOverrides` entry."
     },
     "JsxNoUselessFragment": {
       "type": "object",

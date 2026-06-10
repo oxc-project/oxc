@@ -1,29 +1,50 @@
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement, JSXExpression},
+    ast::{
+        BindingPattern, Expression, IdentifierReference, JSXAttribute, JSXAttributeItem,
+        JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
+        JSXFragment, JSXMemberExpression, JSXMemberExpressionObject, ModuleExportName, PropertyKey,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
+use std::default::Default;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::is_react_component_name,
 };
 
-fn jsx_no_literals_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow usage of unwrapped string literals in JSX")
-        .with_help("Wrap this string in a JSX expression container, such as a call to a translation function.")
+fn literal_text_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow literal text as JSX children")
+        .with_help("Wrap this text in a JSX expression container, such as a call to a translation function.")
         .with_label(span)
 }
 
+fn literal_attribute_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow string literals in JSX attributes")
+        .with_help("Replace this string literal with a non-literal expression, such as a call to a translation function.")
+        .with_label(span)
+}
+
+fn restricted_attribute_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow string literals on restricted JSX attributes")
+        .with_help("This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.")
+        .with_label(span)
+}
+
+/// The options shared between the top-level config and each `elementOverrides` entry.
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-pub struct JsxNoLiterals {
+pub struct JsxNoLiteralsOptions {
     /// (default: false) - Enforces no string literals used as children, wrapped or unwrapped.
     no_strings: bool,
     /// An array of unique string values that would otherwise warn, but will be ignored.
@@ -34,6 +55,46 @@ pub struct JsxNoLiterals {
     no_attribute_strings: bool,
     /// An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.
     restricted_attributes: Vec<CompactStr>,
+}
+
+/// One entry in `elementOverrides`: the base options plus override-only fields.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ElementOverrideOptions {
+    #[serde(flatten)]
+    options: JsxNoLiteralsOptions,
+
+    /// (default: false) - When true the rule will allow the specified element to have string literals as children, wrapped or unwrapped without warning.
+    allow_element: bool,
+
+    /// (default: true) - When false the rule will not apply the current options set to nested elements. This is useful when you want to apply the rule to a specific element, but not to its children.
+    apply_to_nested_elements: bool,
+}
+
+impl Default for ElementOverrideOptions {
+    fn default() -> Self {
+        Self {
+            options: JsxNoLiteralsOptions::default(),
+            allow_element: false,
+            apply_to_nested_elements: true,
+        }
+    }
+}
+
+// Boxed so the struct stays pointer-sized: every rule is a `RuleEnum` variant
+// that runs in a tight loop, and the config (two `Vec`s plus a `FxHashMap`) is
+// otherwise large enough to bloat the whole enum.
+#[derive(Debug, Default, Clone)]
+pub struct JsxNoLiterals(Box<JsxNoLiteralsConfig>);
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct JsxNoLiteralsConfig {
+    #[serde(flatten)]
+    options: JsxNoLiteralsOptions,
+
+    /// An object where the keys are the element names and the values are objects with the same options as above. This allows you to specify different options for different elements.
+    element_overrides: FxHashMap<CompactStr, ElementOverrideOptions>,
 }
 
 declare_oxc_lint!(
@@ -66,35 +127,162 @@ declare_oxc_lint!(
     react,
     restriction,
     none,
-    config = JsxNoLiterals,
+    config = JsxNoLiteralsConfig,
     version = "next",
 );
 
 impl Rule for JsxNoLiterals {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        serde_json::from_value::<DefaultRuleConfig<JsxNoLiteralsConfig>>(value)
+            .map(|config| Self(Box::new(config.into_inner())))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXElement(jsx_el) = node.kind() else {
-            return;
-        };
-
-        self.check_in_attributes(jsx_el, ctx);
-        self.check_in_children(jsx_el, ctx);
+        // Deliberately chose to structure the code like this so it can be optimized by linter codegen
+        match node.kind() {
+            AstKind::JSXElement(jsx_el) => {
+                if Self::has_parent_jsx_element(node, ctx) {
+                    return;
+                }
+                self.check_element(jsx_el, None, ctx);
+            }
+            AstKind::JSXFragment(fragment) => {
+                if Self::has_parent_jsx_element(node, ctx) {
+                    return;
+                }
+                self.check_fragment(fragment, None, ctx);
+            }
+            _ => {}
+        }
     }
 }
 
 impl JsxNoLiterals {
-    fn is_allowed_string(&self, str_literal: &str) -> bool {
-        self.allowed_strings.iter().any(|allowed| allowed.as_str().trim() == str_literal.trim())
+    fn is_allowed_string(str_literal: &str, cfg: &JsxNoLiteralsOptions) -> bool {
+        cfg.allowed_strings.iter().any(|allowed| allowed.as_str().trim() == str_literal.trim())
     }
 
-    fn check_in_attributes(&self, jsx_el: &JSXElement, ctx: &LintContext) {
-        if self.ignore_props {
-            return;
+    fn has_parent_jsx_element(node: &AstNode, ctx: &LintContext) -> bool {
+        ctx.nodes().ancestors(node.id()).any(|ancestor| {
+            matches!(ancestor.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_))
+        })
+    }
+
+    fn resolve_from_object_pattern(
+        binding: &BindingPattern,
+        symbol_id: SymbolId,
+    ) -> Option<CompactStr> {
+        let BindingPattern::ObjectPattern(obj) = binding else { return None };
+
+        for prop in &obj.properties {
+            if let BindingPattern::BindingIdentifier(local) = &prop.value
+                && local.symbol_id.get() == Some(symbol_id)
+                && let PropertyKey::StaticIdentifier(key) = &prop.key
+            {
+                return Some(key.name.to_compact_str());
+            }
+        }
+        None
+    }
+
+    fn resolve_element_name(id_ref: &IdentifierReference, ctx: &LintContext) -> CompactStr {
+        let local_name = id_ref.name.to_compact_str();
+
+        let Some(reference_id) = id_ref.reference_id.get() else {
+            return local_name;
+        };
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+            return local_name;
+        };
+
+        let decl = ctx.semantic().symbol_declaration(symbol_id);
+
+        match decl.kind() {
+            AstKind::ImportSpecifier(specifier) => {
+                if let ModuleExportName::IdentifierName(imported) = &specifier.imported {
+                    return imported.name.to_compact_str();
+                }
+            }
+            AstKind::VariableDeclarator(declarator) => {
+                if let Some(name) = Self::resolve_from_object_pattern(&declarator.id, symbol_id) {
+                    return name;
+                }
+            }
+            _ => {}
         }
 
+        local_name
+    }
+
+    fn resolve_member_expression_name(
+        member_expr: &JSXMemberExpression,
+        ctx: &LintContext,
+    ) -> CompactStr {
+        let object = match &member_expr.object {
+            JSXMemberExpressionObject::IdentifierReference(id_ref) => {
+                Self::resolve_element_name(id_ref, ctx)
+            }
+            JSXMemberExpressionObject::MemberExpression(inner) => {
+                Self::resolve_member_expression_name(inner, ctx)
+            }
+            JSXMemberExpressionObject::ThisExpression(_) => CompactStr::from("this"),
+        };
+
+        CompactStr::from(format!("{object}.{}", member_expr.property.name).as_str())
+    }
+
+    fn inspect_element_literals(
+        children: &[JSXChild],
+        options: &JsxNoLiteralsOptions,
+        ctx: &LintContext,
+    ) {
+        for child in children {
+            match child {
+                JSXChild::Text(text) => {
+                    let value = text.value.as_str();
+
+                    if Self::is_allowed_string(value, options) {
+                        continue;
+                    }
+
+                    if !value.trim().is_empty() {
+                        ctx.diagnostic(literal_text_diagnostic(text.span));
+                    }
+                }
+                JSXChild::ExpressionContainer(container) if options.no_strings => {
+                    match &container.expression {
+                        JSXExpression::StringLiteral(literal) => {
+                            ctx.diagnostic(literal_text_diagnostic(literal.span));
+                        }
+                        JSXExpression::TemplateLiteral(literal) => {
+                            ctx.diagnostic(literal_text_diagnostic(literal.span));
+                        }
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    fn inspect_jsx_expression(expr: &Expression, attr: &JSXAttribute, ctx: &LintContext) {
+        match &expr {
+            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
+                ctx.diagnostic(literal_attribute_diagnostic(attr.span));
+            }
+            Expression::BinaryExpression(expression) => {
+                Self::inspect_jsx_expression(&expression.left, attr, ctx);
+                Self::inspect_jsx_expression(&expression.right, attr, ctx);
+            }
+            _ => {}
+        }
+    }
+
+    fn inspect_element_attributes(
+        jsx_el: &JSXElement,
+        options: &JsxNoLiteralsOptions,
+        ctx: &LintContext,
+    ) {
         for attr in &jsx_el.opening_element.attributes {
             let JSXAttributeItem::Attribute(attr) = attr else {
                 continue;
@@ -104,60 +292,146 @@ impl JsxNoLiterals {
                 continue;
             };
 
-            let JSXAttributeValue::StringLiteral(str_literal) = value else {
-                continue;
-            };
-
-            if self.no_attribute_strings {
-                ctx.diagnostic(jsx_no_literals_diagnostic(attr.span));
-                continue;
-            }
-
-            if self.is_allowed_string(&str_literal.value.as_str()) {
-                continue;
-            }
-
-            if self.no_strings != true {
-                continue;
-            }
-
-            ctx.diagnostic(jsx_no_literals_diagnostic(attr.span));
-        }
-    }
-
-    fn check_in_children(&self, jsx_el: &JSXElement, ctx: &LintContext) {
-        for child in &jsx_el.children {
-            match child {
-                JSXChild::Element(element) => {
-                    self.check_in_attributes(element, ctx);
-                }
-                JSXChild::Text(text) => {
-                    let value = text.value.as_str();
-
-                    if self.is_allowed_string(value) {
+            match value {
+                JSXAttributeValue::StringLiteral(str_literal) => {
+                    if Self::is_allowed_string(str_literal.value.as_str(), options) {
                         continue;
                     }
 
-                    if !value.trim().is_empty() {
-                        ctx.diagnostic(jsx_no_literals_diagnostic(text.span));
+                    if !options.restricted_attributes.is_empty() {
+                        let attr_name = match &attr.name {
+                            JSXAttributeName::Identifier(ident) => ident.name.as_str(),
+                            JSXAttributeName::NamespacedName(namespaced_name) => {
+                                namespaced_name.name.name.as_str()
+                            }
+                        };
+
+                        if options
+                            .restricted_attributes
+                            .iter()
+                            .any(|restricted| restricted.as_str() == attr_name)
+                        {
+                            ctx.diagnostic(restricted_attribute_diagnostic(attr.span));
+                            continue;
+                        }
+                    }
+
+                    if options.ignore_props {
+                        continue;
+                    }
+
+                    if options.no_attribute_strings || options.no_strings {
+                        ctx.diagnostic(literal_attribute_diagnostic(attr.span));
                     }
                 }
-                JSXChild::ExpressionContainer(container) => {
-                    if self.no_strings {
-                        match &container.expression {
-                            JSXExpression::StringLiteral(literal) => {
-                                ctx.diagnostic(jsx_no_literals_diagnostic(literal.span))
-                            }
-                            JSXExpression::TemplateLiteral(literal) => {
-                                ctx.diagnostic(jsx_no_literals_diagnostic(literal.span))
-                            }
-                            _ => {}
-                        }
+                JSXAttributeValue::ExpressionContainer(container) => {
+                    if options.no_strings
+                        && let Some(expr) = container.expression.as_expression()
+                    {
+                        Self::inspect_jsx_expression(expr, attr, ctx);
                     }
                 }
                 _ => {}
             }
         }
+    }
+
+    fn get_element_override_opts(
+        &self,
+        jsx_el: &JSXElement,
+        ctx: &LintContext,
+    ) -> Option<&ElementOverrideOptions> {
+        let resolved = match &jsx_el.opening_element.name {
+            JSXElementName::IdentifierReference(id_ref) => Self::resolve_element_name(id_ref, ctx),
+            JSXElementName::MemberExpression(member_expr) => {
+                Self::resolve_member_expression_name(member_expr, ctx)
+            }
+            JSXElementName::Identifier(ident) => ident.name.to_compact_str(),
+            JSXElementName::NamespacedName(namespaced) => CompactStr::from(
+                format!("{}:{}", namespaced.namespace.name, namespaced.name.name).as_str(),
+            ),
+            JSXElementName::ThisExpression(_) => {
+                return None;
+            }
+        };
+
+        if !is_react_component_name(resolved.as_str()) {
+            return None;
+        }
+
+        if let Some(opts) = self.0.element_overrides.get(&resolved) {
+            return Some(opts);
+        }
+
+        // For member expressions (e.g. `React.Fragment`), the full dotted name is
+        // tried first, then the bare last-property name (`Fragment`) as a fallback.
+        if let JSXElementName::MemberExpression(member_expr) = &jsx_el.opening_element.name {
+            return self.0.element_overrides.get(&member_expr.property.name.to_compact_str());
+        }
+
+        None
+    }
+
+    fn descend_child_elements(
+        &self,
+        children: &[JSXChild],
+        options: Option<&ElementOverrideOptions>,
+        ctx: &LintContext,
+    ) {
+        for child in children {
+            match child {
+                JSXChild::Element(jsx_el) => {
+                    self.check_element(jsx_el, options, ctx);
+                }
+                JSXChild::Fragment(fragment) => {
+                    self.check_fragment(fragment, options, ctx);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    fn check_element(
+        &self,
+        jsx_el: &JSXElement,
+        inherited_opts: Option<&ElementOverrideOptions>,
+        ctx: &LintContext,
+    ) {
+        let element_override_opts = self.get_element_override_opts(jsx_el, ctx).or(inherited_opts);
+
+        let (options, allow_element, apply_to_nested_elements) =
+            if let Some(element_override_opts) = element_override_opts {
+                (
+                    &element_override_opts.options,
+                    element_override_opts.allow_element,
+                    element_override_opts.apply_to_nested_elements,
+                )
+            } else {
+                (&self.0.options, false, true)
+            };
+
+        if !allow_element {
+            Self::inspect_element_literals(&jsx_el.children, options, ctx);
+            Self::inspect_element_attributes(jsx_el, options, ctx);
+        }
+
+        self.descend_child_elements(
+            &jsx_el.children,
+            if apply_to_nested_elements { element_override_opts } else { None },
+            ctx,
+        );
+    }
+
+    fn check_fragment(
+        &self,
+        fragment: &JSXFragment,
+        inherited_opts: Option<&ElementOverrideOptions>,
+        ctx: &LintContext,
+    ) {
+        let options = inherited_opts.map_or(&self.0.options, |opts| &opts.options);
+
+        Self::inspect_element_literals(&fragment.children, options, ctx);
+        self.descend_child_elements(&fragment.children, inherited_opts, ctx);
     }
 }
 
