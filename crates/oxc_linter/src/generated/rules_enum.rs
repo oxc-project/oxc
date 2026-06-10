@@ -24516,6 +24516,7 @@ impl RuleEnum {
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::INFO,
             Self::ReactJsxNoConstructedContextValues(_) => ReactJsxNoConstructedContextValues::INFO,
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::INFO,
+            Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::INFO,
             Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::INFO,
             Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::INFO,
             Self::ReactJsxNoUndef(_) => ReactJsxNoUndef::INFO,
