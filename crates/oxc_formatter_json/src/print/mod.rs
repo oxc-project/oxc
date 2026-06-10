@@ -101,13 +101,30 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonValue<'a, '_> {
             Expression::ObjectExpression(obj) => {
                 object::FmtJsonObject { object: obj }.fmt(f);
             }
-            // `-9876.54321`, `+123`, `-Infinity`, etc. Prettier's `json` parser routes
-            // through the JS estree printer, which keeps both `+` and `-` operators
-            // while recursing into the argument so the inner number is normalized
-            // (`-1.0e+2` → `-1.0e2`).
+            // `-9876.54321`, `+123`, `-Infinity`, etc.
+            // Prettier's `json` parser routes through the JS estree printer,
+            // which keeps both `+` and `-` operators while recursing into the argument
+            // so the inner number is normalized (`-1.0e+2` → `-1.0e2`).
             Expression::UnaryExpression(unary) => {
                 write!(f, unary.operator.as_str());
                 FmtJsonValue { expression: &unary.argument }.fmt(f);
+            }
+            // JSON5 `Infinity` / `NaN`, JSON6 `undefined`
+            // Prettier accepts these identifiers for every JSON variant and prints them verbatim.
+            // Other identifiers stay invalid (Prettier rejects them at parse time, we report at format time).
+            Expression::Identifier(ident)
+                if matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined") =>
+            {
+                write!(f, text(ident.name.as_str()));
+            }
+            // A substitution-free template literal is kept verbatim, backticks included
+            // (Prettier's shared `estree` printer emits the quasi raw;
+            // only `json-stringify` converts it to a double-quoted string).
+            // `raw` is safe for `text()`: the lexer normalizes `\r\n` / `\r` to `\n` (spec TRV).
+            Expression::TemplateLiteral(template)
+                if template.expressions.is_empty() && template.quasis.len() == 1 =>
+            {
+                write!(f, [text("`"), text(template.quasis[0].value.raw.as_str()), text("`")]);
             }
             _ => write!(f, FormatInvalidJson(span)),
         }
