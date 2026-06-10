@@ -3,34 +3,233 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
-   ╭─[react_compiler.tsx:3:21]
- 2 │                 if (props.cond) {
- 3 │                     useState(0);
-   ·                     ────────
- 4 │                 }
+   ╭─[react_compiler.tsx:4:26]
+ 3 │ function Component() {
+ 4 │   const result = cond ?? useConditionalHook();
+   ·                          ──────────────────
+ 5 │   return <>
    ╰────
 
-  ⚠ react(react-compiler): RenderSetState: Cannot call setState during render
-   ╭─[react_compiler.tsx:3:17]
- 2 │                 const [state, setState] = useState(0);
- 3 │                 setState(1);
-   ·                 ────┬───
-   ·                     ╰── Found setState() in render
- 4 │                 return <div>{state}</div>;
+  ⚠ react(react-compiler): CapitalizedCalls: Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config
+   ╭─[react_compiler.tsx:6:6]
+ 5 │   return <>
+ 6 │     {Child(result)}
+   ·      ─────────────
+ 7 │   </>;
    ╰────
-  help: Calling setState during render may trigger an infinite loop.
-        * To reset state when other state/props change, store the previous value in state and update conditionally: https://react.dev/reference/react/useState#storing-information-from-previous-renders
-        * To derive data from other state/props, compute the derived data during render without using state
+  help: Child may be a component
+
+  ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler.tsx:4:18]
+ 3 │   'use memo';
+ 4 │   return cond ?? useConditionalHook();
+   ·                  ──────────────────
+ 5 │ }
+   ╰────
+
+  ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler.tsx:8:24]
+ 7 │   'use memo';
+ 8 │   return props.cond && useConditionalHook();
+   ·                        ──────────────────
+ 9 │ }
+   ╰────
+
+  ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler.tsx:5:18]
+ 4 │   'use no forget';
+ 5 │   return cond ?? useConditionalHook();
+   ·                  ──────────────────
+ 6 │ 
+   ╰────
+
+  ⚠ react(react-compiler): VoidUseMemo: useMemo() callbacks must return a value
+    ╭─[react_compiler.tsx:8:11]
+  7 │     
+  8 │ ╭─▶   useMemo(() => {
+  9 │ │       if (cond) {
+ 10 │ │         setPrevItem(item);
+ 11 │ │         setState(0);
+ 12 │ │       }
+ 13 │ ├─▶   }, [cond, item, init]);
+    · ╰──── useMemo() callbacks must return a value
+ 14 │     
+    ╰────
+  help: This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects
+
+  ⚠ react(react-compiler): RenderSetState: Calling setState from useMemo may trigger an infinite loop
+    ╭─[react_compiler.tsx:10:7]
+  9 │     if (cond) {
+ 10 │       setPrevItem(item);
+    ·       ─────┬─────
+    ·            ╰── Found setState() within useMemo()
+ 11 │       setState(0);
+    ╰────
+  help: Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/react/useState)
+
+  ⚠ react(react-compiler): RenderSetState: Calling setState from useMemo may trigger an infinite loop
+    ╭─[react_compiler.tsx:11:7]
+ 10 │       setPrevItem(item);
+ 11 │       setState(0);
+    ·       ────┬───
+    ·           ╰── Found setState() within useMemo()
+ 12 │     }
+    ╰────
+  help: Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/react/useState)
+
+  ⚠ react(react-compiler): MemoDependencies: Found extra memoization dependencies
+    ╭─[react_compiler.tsx:13:19]
+ 12 │     }
+ 13 │   }, [cond, item, init]);
+    ·                   ──┬─
+    ·                     ╰── Unnecessary dependency `init`. Values declared outside of a component/hook should not be listed as dependencies as the component will not re-render if they change
+ 14 │ 
+    ╰────
+  help: Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often
+
+  ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler.tsx:4:5]
+ 3 │   if (cond) {
+ 4 │     useConditionalHook();
+   ·     ──────────────────
+ 5 │   }
+   ╰────
+
+  ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler.tsx:3:11]
+ 2 │ function useConditional() {
+ 3 │   cond ?? useConditionalHook();
+   ·           ──────────────────
+ 4 │   props.cond && useConditionalHook();
+   ╰────
+
+  ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler.tsx:4:17]
+ 3 │   cond ?? useConditionalHook();
+ 4 │   props.cond && useConditionalHook();
+   ·                 ──────────────────
+ 5 │   return <div>Hello world</div>;
+   ╰────
+
+  ⚠ react(react-compiler): Purity: Cannot call impure function during render
+   ╭─[react_compiler.tsx:3:16]
+ 2 │ function Component() {
+ 3 │   const date = Date.now();
+   ·                ─────┬────
+   ·                     ╰── Cannot call impure function
+ 4 │   const now = performance.now();
+   ╰────
+  help: `Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent)
+
+  ⚠ react(react-compiler): Purity: Cannot call impure function during render
+   ╭─[react_compiler.tsx:4:15]
+ 3 │   const date = Date.now();
+ 4 │   const now = performance.now();
+   ·               ────────┬────────
+   ·                       ╰── Cannot call impure function
+ 5 │   const rand = Math.random();
+   ╰────
+  help: `performance.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent)
+
+  ⚠ react(react-compiler): Purity: Cannot call impure function during render
+   ╭─[react_compiler.tsx:5:16]
+ 4 │   const now = performance.now();
+ 5 │   const rand = Math.random();
+   ·                ──────┬──────
+   ·                      ╰── Cannot call impure function
+ 6 │   return <Foo date={date} now={now} rand={rand} />;
+   ╰────
+  help: `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent)
+
+  ⚠ react(react-compiler): ErrorBoundaries: Avoid constructing JSX within try/catch
+   ╭─[react_compiler.tsx:5:10]
+ 4 │   try {
+ 5 │     el = <Child />;
+   ·          ────┬────
+   ·              ╰── Avoid constructing JSX within try/catch
+ 6 │   } catch {
+   ╰────
+  help: React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
+
+  ⚠ react(react-compiler): CapitalizedCalls: Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config
+   ╭─[react_compiler.tsx:5:6]
+ 4 │   return <>
+ 5 │     {Child()}
+   ·      ───────
+ 6 │   </>;
+   ╰────
+  help: Child may be a component
+
+  ⚠ react(react-compiler): CapitalizedCalls: Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config
+   ╭─[react_compiler.tsx:5:6]
+ 4 │   return <>
+ 5 │     {myModule.Child()}
+   ·      ────────────────
+ 6 │   </>;
+   ╰────
+  help: Child may be a component
+
+  ⚠ react(react-compiler): CapitalizedCalls: Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config
+   ╭─[react_compiler.tsx:6:6]
+ 5 │   return <>
+ 6 │     {Child1()}
+   ·      ────────
+ 7 │     {MyModule.Child2()}
+   ╰────
+  help: Child1 may be a component
+
+  ⚠ react(react-compiler): CapitalizedCalls: Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config
+   ╭─[react_compiler.tsx:7:6]
+ 6 │     {Child1()}
+ 7 │     {MyModule.Child2()}
+   ·      ─────────────────
+ 8 │   </>;
+   ╰────
+  help: Child2 may be a component
 
   ⚠ react(react-compiler): Refs: Cannot access refs during render
-   ╭─[react_compiler.tsx:3:31]
- 2 │                 const ref = useRef(null);
- 3 │                 const value = ref.current;
-   ·                               ─────┬─────
-   ·                                    ╰── Cannot access ref value during render
- 4 │                 return <div>{value}</div>;
+   ╭─[react_compiler.tsx:4:17]
+ 3 │   const ref = useRef(null);
+ 4 │   const value = ref.current;
+   ·                 ─────┬─────
+   ·                      ╰── Cannot access ref value during render
+ 5 │   return value;
    ╰────
   help: React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef)
+
+  ⚠ react(react-compiler): Immutability: This value cannot be modified
+   ╭─[react_compiler.tsx:7:11]
+ 6 │           const [state, setState] = useState({a: 0});
+ 7 │           state.a = 1;
+   ·           ──┬──
+   ·             ╰── value cannot be modified
+ 8 │           return <div>{props.foo}</div>;
+   ╰────
+  help: Modifying a value returned from 'useState()', which should not be modified directly. Use the setter function to update instead
+
+  ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler.tsx:3:26]
+ 2 │ function Component() {
+ 3 │   const result = cond ?? useConditionalHook();
+   ·                          ──────────────────
+ 4 │   return <div>{result}</div>;
+   ╰────
+
+  ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler.tsx:4:18]
+ 3 │   'use memo';
+ 4 │   return cond ?? useConditionalHook();
+   ·                  ──────────────────
+ 5 │ }
+   ╰────
+
+  ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler.tsx:8:24]
+ 7 │   'use memo';
+ 8 │   return props.cond && useConditionalHook();
+   ·                        ──────────────────
+ 9 │ }
+   ╰────
 
   ⚠ react(react-compiler): Todo: Support local variables named `fbt`
    ╭─[react_compiler.tsx:2:23]
