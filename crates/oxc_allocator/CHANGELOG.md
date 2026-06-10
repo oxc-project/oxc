@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.131.0] - 2026-05-15
+
+### 🐛 Bug Fixes
+
+- 4ab57eb allocator: Fixed-size allocators use `VirtualAlloc` on Windows (#22124) (overlookmotel)
+- 66d77eb allocator: Fix segfault on Linux MUSL with fixed-size allocators (#22388) (overlookmotel)
+
+### ⚡ Performance
+
+- 73a9043 allocator/bitset: Avoid temp heap `String` allocation (#22403) (camc314)
+
 ## [0.129.0] - 2026-05-05
 
 ### 💥 BREAKING CHANGES

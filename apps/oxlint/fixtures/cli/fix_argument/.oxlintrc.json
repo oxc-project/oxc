@@ -1,0 +1,9 @@
+{
+  "categories": {
+    "correctness": "off",
+  },
+  "rules": {
+    "no-new-wrappers": "error",
+    "no-debugger": "error",
+  }
+}

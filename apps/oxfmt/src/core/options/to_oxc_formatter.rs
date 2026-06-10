@@ -2,59 +2,40 @@ use rustc_hash::FxHashSet;
 
 use oxc_formatter::{
     ArrayExpand, ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
-    CustomGroupDefinition, EmbeddedLanguageFormatting, Expand, FormatOptions, GroupEntry,
-    ImportModifier, ImportSelector, IndentStyle, IndentWidth, LineEnding, LineWidth,
-    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, SortTailwindcssOptions,
-    TrailingCommas,
+    CustomGroupDefinition, EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier,
+    ImportSelector, JsFormatOptions, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions,
+    SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 
-use super::super::oxfmtrc::{
-    ArrayWrapConfig, ArrayWrapMode, ArrowParensConfig, CustomGroupItemConfig,
-    EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
-    HtmlWhitespaceSensitivityConfig, JsdocUserConfig, ObjectWrapConfig, QuotePropsConfig,
-    SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig,
-    TrailingCommaConfig,
+use super::{
+    super::oxfmtrc::{
+        ArrayWrapConfig, ArrayWrapMode, ArrowParensConfig, CustomGroupItemConfig,
+        EmbeddedLanguageFormattingConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
+        JsdocUserConfig, ObjectWrapConfig, QuotePropsConfig, SortGroupItemConfig,
+        SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig, TrailingCommaConfig,
+    },
+    to_core_options::to_core_options,
 };
 
-/// Convert `FormatConfig` into validated `FormatOptions` for `oxc_formatter`.
+/// Convert `FormatConfig` into validated `JsFormatOptions` for `oxc_formatter`.
 ///
 /// # Errors
-/// Returns error if any option value is invalid
-pub fn to_oxc_formatter(config: &FormatConfig) -> Result<FormatOptions, String> {
+/// Returns error if any option value is invalid.
+pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String> {
+    let core = to_core_options(config)?;
+
+    let mut format_options = JsFormatOptions {
+        indent_style: core.indent_style,
+        indent_width: core.indent_width,
+        line_width: core.line_width,
+        line_ending: core.line_ending,
+        ..JsFormatOptions::default()
+    };
+
     // NOTE: Not yet supported options:
     // [Prettier] experimentalOperatorPosition: "start" | "end"
     // [Prettier] experimentalTernaries: boolean
     // These are rejected at deserialize time so they never reach here.
-
-    // All values are based on defaults from `FormatOptions::default()`
-    let mut format_options = FormatOptions::default();
-
-    // [Prettier] useTabs: boolean
-    if let Some(use_tabs) = config.use_tabs {
-        format_options.indent_style = if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
-    }
-
-    // [Prettier] tabWidth: number
-    if let Some(width) = config.tab_width {
-        format_options.indent_width =
-            IndentWidth::try_from(width).map_err(|e| format!("Invalid tabWidth: {e}"))?;
-    }
-
-    // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
-    // NOTE: "auto" is not supported
-    if let Some(ending) = config.end_of_line {
-        format_options.line_ending = match ending {
-            EndOfLineConfig::Lf => LineEnding::Lf,
-            EndOfLineConfig::Crlf => LineEnding::Crlf,
-            EndOfLineConfig::Cr => LineEnding::Cr,
-        };
-    }
-
-    // [Prettier] printWidth: number
-    if let Some(width) = config.print_width {
-        format_options.line_width =
-            LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
-    }
 
     // [Prettier] singleQuote: boolean
     if let Some(single_quote) = config.single_quote {
@@ -152,123 +133,7 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<FormatOptions, String> 
         };
     }
 
-    if let Some(sort_imports_config) =
-        config.sort_imports.clone().and_then(SortImportsUserConfig::into_config)
-    {
-        let mut sort_imports = SortImportsOptions::default();
-
-        if let Some(v) = sort_imports_config.partition_by_newline {
-            sort_imports.partition_by_newline = v;
-        }
-        if let Some(v) = sort_imports_config.partition_by_comment {
-            sort_imports.partition_by_comment = v;
-        }
-        if let Some(v) = sort_imports_config.sort_side_effects {
-            sort_imports.sort_side_effects = v;
-        }
-        if let Some(v) = sort_imports_config.order {
-            sort_imports.order = match v {
-                SortOrderConfig::Asc => SortOrder::Asc,
-                SortOrderConfig::Desc => SortOrder::Desc,
-            };
-        }
-        if let Some(v) = sort_imports_config.ignore_case {
-            sort_imports.ignore_case = v;
-        }
-        if let Some(v) = sort_imports_config.newlines_between {
-            sort_imports.newlines_between = v;
-        }
-        if let Some(v) = sort_imports_config.internal_pattern {
-            sort_imports.internal_pattern = v;
-        }
-        // Validate and parse `customGroups` first, since `groups` may refer to custom group names.
-        if let Some(v) = sort_imports_config.custom_groups {
-            let mut custom_groups = Vec::with_capacity(v.len());
-            for cg in v {
-                let CustomGroupItemConfig { group_name, element_name_pattern, .. } = cg;
-                let selector = match cg.selector.as_deref() {
-                    Some(s) => match ImportSelector::parse(s) {
-                        Some(parsed) => Some(parsed),
-                        None => {
-                            return Err(format!(
-                                "Invalid `sortImports` configuration: unknown selector: `{s}` in customGroups: `{group_name}`"
-                            ));
-                        }
-                    },
-                    None => None,
-                };
-                let raw_modifiers = cg.modifiers.unwrap_or_default();
-                let mut modifiers = Vec::with_capacity(raw_modifiers.len());
-                for m in &raw_modifiers {
-                    match ImportModifier::parse(m) {
-                        Some(parsed) => modifiers.push(parsed),
-                        None => {
-                            return Err(format!(
-                                "Invalid `sortImports` configuration: unknown modifier: `{m}` in customGroups: `{group_name}`"
-                            ));
-                        }
-                    }
-                }
-                custom_groups.push(CustomGroupDefinition {
-                    group_name,
-                    element_name_pattern,
-                    selector,
-                    modifiers,
-                });
-            }
-            sort_imports.custom_groups = custom_groups;
-        }
-        if let Some(v) = sort_imports_config.groups {
-            let custom_group_names: FxHashSet<&str> =
-                sort_imports.custom_groups.iter().map(|g| g.group_name.as_str()).collect();
-            let mut groups = Vec::new();
-            let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
-            let mut pending_override: Option<bool> = None;
-
-            for item in v {
-                match item {
-                    SortGroupItemConfig::NewlinesBetween(marker) => {
-                        if groups.is_empty() {
-                            return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the start of `groups`".to_string());
-                        }
-                        if pending_override.is_some() {
-                            return Err("Invalid `sortImports` configuration: consecutive `{ \"newlinesBetween\" }` markers are not allowed in `groups`".to_string());
-                        }
-                        pending_override = Some(marker.newlines_between);
-                    }
-                    other => {
-                        if !groups.is_empty() {
-                            newline_boundary_overrides.push(pending_override.take());
-                        }
-                        let mut entries = Vec::new();
-                        for name in other.into_vec() {
-                            let entry = GroupEntry::parse(&name);
-                            if let GroupEntry::Custom(ref n) = entry
-                                && !custom_group_names.contains(n.as_str())
-                            {
-                                return Err(format!(
-                                    "Invalid `sortImports` configuration: unknown group name `{name}` in `groups`"
-                                ));
-                            }
-                            entries.push(entry);
-                        }
-                        groups.push(entries);
-                    }
-                }
-            }
-
-            if pending_override.is_some() {
-                return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the end of `groups`".to_string());
-            }
-
-            sort_imports.groups = groups;
-            sort_imports.newline_boundary_overrides = newline_boundary_overrides;
-        }
-
-        sort_imports.validate().map_err(|e| format!("Invalid `sortImports` configuration: {e}"))?;
-
-        format_options.sort_imports = Some(sort_imports);
-    }
+    format_options.sort_imports = to_sort_imports(config)?;
 
     if let Some(tw_config) =
         config.sort_tailwindcss.clone().and_then(SortTailwindcssUserConfig::into_config)
@@ -283,62 +148,206 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<FormatOptions, String> 
         });
     }
 
-    if let Some(jsdoc_config) = config.jsdoc.clone().and_then(JsdocUserConfig::into_config) {
-        let mut opts = oxc_formatter::JsdocOptions::default();
-        if let Some(v) = jsdoc_config.capitalize_descriptions {
-            opts.capitalize_descriptions = v;
-        }
-        if let Some(v) = jsdoc_config.description_with_dot {
-            opts.description_with_dot = v;
-        }
-        if let Some(v) = jsdoc_config.add_default_to_description {
-            opts.add_default_to_description = v;
-        }
-        if let Some(v) = jsdoc_config.prefer_code_fences {
-            opts.prefer_code_fences = v;
-        }
-        if let Some(ref v) = jsdoc_config.line_wrapping_style {
-            opts.line_wrapping_style = match v.as_str() {
-                "greedy" => oxc_formatter::LineWrappingStyle::Greedy,
-                "balance" => oxc_formatter::LineWrappingStyle::Balance,
-                other => {
-                    return Err(format!(
-                        "Invalid jsdoc lineWrappingStyle: {other:?}. Expected \"greedy\" or \"balance\"."
-                    ));
-                }
-            };
-        }
-        if let Some(ref v) = jsdoc_config.comment_line_strategy {
-            opts.comment_line_strategy = match v.as_str() {
-                "singleLine" => oxc_formatter::CommentLineStrategy::SingleLine,
-                "multiline" => oxc_formatter::CommentLineStrategy::Multiline,
-                "keep" => oxc_formatter::CommentLineStrategy::Keep,
-                other => {
-                    return Err(format!(
-                        "Invalid jsdoc commentLineStrategy: {other:?}. Expected \"singleLine\", \"multiline\", or \"keep\"."
-                    ));
-                }
-            };
-        }
-        if let Some(v) = jsdoc_config.separate_tag_groups {
-            opts.separate_tag_groups = v;
-        }
-        if let Some(v) = jsdoc_config.separate_returns_from_param {
-            opts.separate_returns_from_param = v;
-        }
-        if let Some(v) = jsdoc_config.bracket_spacing {
-            opts.bracket_spacing = v;
-        }
-        if let Some(v) = jsdoc_config.description_tag {
-            opts.description_tag = v;
-        }
-        if let Some(v) = jsdoc_config.keep_unparsable_example_indent {
-            opts.keep_unparsable_example_indent = v;
-        }
-        format_options.jsdoc = Some(opts);
-    }
+    format_options.jsdoc = to_jsdoc(config)?;
 
     Ok(format_options)
+}
+
+/// Parse and validate `sortImports` into [`SortImportsOptions`].
+///
+/// Parsing is the validation here, so this is shared by
+/// both [`to_oxc_formatter()`] (build) and [`super::validate::validate()`] (gate).
+///
+/// # Errors
+/// Returns an error if the `sortImports` configuration is invalid.
+pub(super) fn to_sort_imports(config: &FormatConfig) -> Result<Option<SortImportsOptions>, String> {
+    let Some(sort_imports_config) =
+        config.sort_imports.clone().and_then(SortImportsUserConfig::into_config)
+    else {
+        return Ok(None);
+    };
+
+    let mut sort_imports = SortImportsOptions::default();
+
+    if let Some(v) = sort_imports_config.partition_by_newline {
+        sort_imports.partition_by_newline = v;
+    }
+    if let Some(v) = sort_imports_config.partition_by_comment {
+        sort_imports.partition_by_comment = v;
+    }
+    if let Some(v) = sort_imports_config.sort_side_effects {
+        sort_imports.sort_side_effects = v;
+    }
+    if let Some(v) = sort_imports_config.order {
+        sort_imports.order = match v {
+            SortOrderConfig::Asc => SortOrder::Asc,
+            SortOrderConfig::Desc => SortOrder::Desc,
+        };
+    }
+    if let Some(v) = sort_imports_config.ignore_case {
+        sort_imports.ignore_case = v;
+    }
+    if let Some(v) = sort_imports_config.newlines_between {
+        sort_imports.newlines_between = v;
+    }
+    if let Some(v) = sort_imports_config.internal_pattern {
+        sort_imports.internal_pattern = v;
+    }
+    // Validate and parse `customGroups` first, since `groups` may refer to custom group names.
+    if let Some(v) = sort_imports_config.custom_groups {
+        let mut custom_groups = Vec::with_capacity(v.len());
+        for cg in v {
+            let CustomGroupItemConfig { group_name, element_name_pattern, .. } = cg;
+            let selector = match cg.selector.as_deref() {
+                Some(s) => match ImportSelector::parse(s) {
+                    Some(parsed) => Some(parsed),
+                    None => {
+                        return Err(format!(
+                            "Invalid `sortImports` configuration: unknown selector: `{s}` in customGroups: `{group_name}`"
+                        ));
+                    }
+                },
+                None => None,
+            };
+            let raw_modifiers = cg.modifiers.unwrap_or_default();
+            let mut modifiers = Vec::with_capacity(raw_modifiers.len());
+            for m in &raw_modifiers {
+                match ImportModifier::parse(m) {
+                    Some(parsed) => modifiers.push(parsed),
+                    None => {
+                        return Err(format!(
+                            "Invalid `sortImports` configuration: unknown modifier: `{m}` in customGroups: `{group_name}`"
+                        ));
+                    }
+                }
+            }
+            custom_groups.push(CustomGroupDefinition {
+                group_name,
+                element_name_pattern,
+                selector,
+                modifiers,
+            });
+        }
+        sort_imports.custom_groups = custom_groups;
+    }
+    if let Some(v) = sort_imports_config.groups {
+        let custom_group_names: FxHashSet<&str> =
+            sort_imports.custom_groups.iter().map(|g| g.group_name.as_str()).collect();
+        let mut groups = Vec::new();
+        let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
+        let mut pending_override: Option<bool> = None;
+
+        for item in v {
+            match item {
+                SortGroupItemConfig::NewlinesBetween(marker) => {
+                    if groups.is_empty() {
+                        return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the start of `groups`".to_string());
+                    }
+                    if pending_override.is_some() {
+                        return Err("Invalid `sortImports` configuration: consecutive `{ \"newlinesBetween\" }` markers are not allowed in `groups`".to_string());
+                    }
+                    pending_override = Some(marker.newlines_between);
+                }
+                other => {
+                    if !groups.is_empty() {
+                        newline_boundary_overrides.push(pending_override.take());
+                    }
+                    let mut entries = Vec::new();
+                    for name in other.into_vec() {
+                        let entry = GroupEntry::parse(&name);
+                        if let GroupEntry::Custom(ref n) = entry
+                            && !custom_group_names.contains(n.as_str())
+                        {
+                            return Err(format!(
+                                "Invalid `sortImports` configuration: unknown group name `{name}` in `groups`"
+                            ));
+                        }
+                        entries.push(entry);
+                    }
+                    groups.push(entries);
+                }
+            }
+        }
+
+        if pending_override.is_some() {
+            return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the end of `groups`".to_string());
+        }
+
+        sort_imports.groups = groups;
+        sort_imports.newline_boundary_overrides = newline_boundary_overrides;
+    }
+
+    sort_imports.validate().map_err(|e| format!("Invalid `sortImports` configuration: {e}"))?;
+
+    Ok(Some(sort_imports))
+}
+
+/// Parse and validate `jsdoc` into [`oxc_formatter::JsdocOptions`].
+///
+/// Shared by both [`to_oxc_formatter()`] (build) and [`super::validate::validate()`] (gate).
+///
+/// # Errors
+/// Returns an error if `lineWrappingStyle` / `commentLineStrategy` is invalid.
+pub(super) fn to_jsdoc(
+    config: &FormatConfig,
+) -> Result<Option<oxc_formatter::JsdocOptions>, String> {
+    let Some(jsdoc_config) = config.jsdoc.clone().and_then(JsdocUserConfig::into_config) else {
+        return Ok(None);
+    };
+
+    let mut opts = oxc_formatter::JsdocOptions::default();
+    if let Some(v) = jsdoc_config.capitalize_descriptions {
+        opts.capitalize_descriptions = v;
+    }
+    if let Some(v) = jsdoc_config.description_with_dot {
+        opts.description_with_dot = v;
+    }
+    if let Some(v) = jsdoc_config.add_default_to_description {
+        opts.add_default_to_description = v;
+    }
+    if let Some(v) = jsdoc_config.prefer_code_fences {
+        opts.prefer_code_fences = v;
+    }
+    if let Some(ref v) = jsdoc_config.line_wrapping_style {
+        opts.line_wrapping_style = match v.as_str() {
+            "greedy" => oxc_formatter::LineWrappingStyle::Greedy,
+            "balance" => oxc_formatter::LineWrappingStyle::Balance,
+            other => {
+                return Err(format!(
+                    "Invalid jsdoc lineWrappingStyle: {other:?}. Expected \"greedy\" or \"balance\"."
+                ));
+            }
+        };
+    }
+    if let Some(ref v) = jsdoc_config.comment_line_strategy {
+        opts.comment_line_strategy = match v.as_str() {
+            "singleLine" => oxc_formatter::CommentLineStrategy::SingleLine,
+            "multiline" => oxc_formatter::CommentLineStrategy::Multiline,
+            "keep" => oxc_formatter::CommentLineStrategy::Keep,
+            other => {
+                return Err(format!(
+                    "Invalid jsdoc commentLineStrategy: {other:?}. Expected \"singleLine\", \"multiline\", or \"keep\"."
+                ));
+            }
+        };
+    }
+    if let Some(v) = jsdoc_config.separate_tag_groups {
+        opts.separate_tag_groups = v;
+    }
+    if let Some(v) = jsdoc_config.separate_returns_from_param {
+        opts.separate_returns_from_param = v;
+    }
+    if let Some(v) = jsdoc_config.bracket_spacing {
+        opts.bracket_spacing = v;
+    }
+    if let Some(v) = jsdoc_config.description_tag {
+        opts.description_tag = v;
+    }
+    if let Some(v) = jsdoc_config.keep_unparsable_example_indent {
+        opts.keep_unparsable_example_indent = v;
+    }
+
+    Ok(Some(opts))
 }
 
 // ---
@@ -347,6 +356,7 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<FormatOptions, String> 
 mod tests {
     use oxc_formatter::{Expand, GroupName};
 
+    use super::super::validate::validate;
     use super::*;
 
     #[test]
@@ -666,5 +676,33 @@ mod tests {
 
         let config: FormatConfig = serde_json::from_str(r#"{"jsdoc": false}"#).unwrap();
         assert!(to_oxc_formatter(&config).unwrap().jsdoc.is_none());
+    }
+
+    #[test]
+    fn validate_matches_build_validation() {
+        // Valid config: both build and validate succeed.
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "printWidth": 80, "sortImports": true }"#).unwrap();
+        assert!(validate(&config).is_ok());
+        assert!(to_oxc_formatter(&config).is_ok());
+
+        // Core range error (valid u16, but outside `LineWidth` bounds).
+        let config: FormatConfig = serde_json::from_str(r#"{ "printWidth": 1000 }"#).unwrap();
+        assert!(validate(&config).is_err());
+        assert!(to_oxc_formatter(&config).is_err());
+
+        // JS-specific error (sortImports) must be caught by `validate` too,
+        // not just by building `JsFormatOptions`.
+        let config: FormatConfig = serde_json::from_str(
+            r#"{ "experimentalSortImports": { "groups": [{ "newlinesBetween": false }, "builtin"] } }"#,
+        )
+        .unwrap();
+        assert!(validate(&config).is_err_and(|e| e.contains("start")));
+        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("start")));
+
+        // JS-specific error (jsdoc enum).
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "jsdoc": { "lineWrappingStyle": "bogus" } }"#).unwrap();
+        assert!(validate(&config).is_err_and(|e| e.contains("lineWrappingStyle")));
     }
 }

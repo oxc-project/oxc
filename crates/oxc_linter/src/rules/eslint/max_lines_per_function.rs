@@ -70,6 +70,18 @@ impl Deref for MaxLinesPerFunction {
     }
 }
 
+#[cfg(feature = "ruledocs")]
+impl MaxLinesPerFunction {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<MaxLinesPerFunctionConfig>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
+    }
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -416,16 +428,6 @@ fn test() {
             Some(serde_json::json!([1])),
         ),
         (&repeat_60, Some(serde_json::json!([{}]))),
-        (
-            "function name() {
-            var x = 5;
-
-
-
-            var x = 2;
-            }",
-            Some(serde_json::json!([{ "max": 6, "skipComments": false, "skipBlankLines": false }])),
-        ),
         (
             "function name() {
             var x = 5;

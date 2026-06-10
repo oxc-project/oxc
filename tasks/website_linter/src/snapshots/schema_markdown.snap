@@ -183,6 +183,8 @@ Example
 type: `Record<string, boolean>`
 
 
+Environments enable and disable collections of global variables.
+
 Predefine global variables.
 
 Environments specify what global variables are predefined.
@@ -247,6 +249,8 @@ overriding the previous ones.
 
 type: `Record<string, string>`
 
+
+Enabled or disabled specific global variables.
 
 Add or remove global variables.
 
@@ -375,7 +379,7 @@ Note: The following plugin names are reserved because they are implemented nativ
 - jsdoc
 - jest
 - vitest
-- jsx-a11y
+- jsx-a11y (includes jsx-a11y-x)
 - nextjs
 - react-perf
 - promise
@@ -398,6 +402,8 @@ Path or package name of the plugin
 
 type: `object`
 
+
+Oxlint config options.
 
 Options for the linter.
 
@@ -475,7 +481,7 @@ Note that this requires the `oxlint-tsgolint` package to be installed.
 type: `array`
 
 
-
+Add, remove, or otherwise reconfigure rules for specific files or groups of files.
 
 
 ### overrides[n]
@@ -494,12 +500,35 @@ type: `object`
 Environments enable and disable collections of global variables.
 
 
+#### overrides[n].excludeFiles
+
+type: `string[]`
+
+
+A list of glob patterns to exclude from this override.
+
+Files matching these patterns are not globally ignored; this override
+simply does not apply to them.
+
+## Example
+`[ "*.generated.ts", "fixtures/**" ]`
+
+A set of glob patterns.
+Patterns are matched against paths relative to the configuration file's directory.
+
+
 #### overrides[n].files
 
 type: `string[]`
 
 
+A list of glob patterns to override.
+
+## Example
+`[ "*.test.ts", "*.spec.ts" ]`
+
 A set of glob patterns.
+Patterns are matched against paths relative to the configuration file's directory.
 
 
 #### overrides[n].globals
@@ -508,14 +537,6 @@ type: `object`
 
 
 Enabled or disabled specific global variables.
-
-
-#### overrides[n].ignores
-
-type: `string[]`
-
-
-A set of glob patterns.
 
 
 #### overrides[n].jsPlugins
@@ -555,7 +576,7 @@ Note: The following plugin names are reserved because they are implemented nativ
 - jsdoc
 - jest
 - vitest
-- jsx-a11y
+- jsx-a11y (includes jsx-a11y-x)
 - nextjs
 - react-perf
 - promise
@@ -627,6 +648,29 @@ type: `"eslint" | "react" | "unicorn" | "typescript" | "oxc" | "import" | "jsdoc
 type: `object`
 
 
+Example
+
+`.oxlintrc.json`
+
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "rules": {
+    "eqeqeq": "warn",
+    "import/no-cycle": "error",
+    "prefer-const": [
+      "error",
+      {
+        "ignoreReadBeforeAssign": true
+      }
+    ]
+  }
+}
+```
+
+See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html) for the list of
+rules.
+
 See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
 
 
@@ -634,6 +678,10 @@ See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
 
 type: `object`
 
+
+Plugin-specific configuration for both built-in and custom plugins.
+This includes settings for built-in plugins such as `react` and `jsdoc`
+as well as configuring settings for JS custom plugins loaded via `jsPlugins`.
 
 Configure the behavior of linter plugins.
 
@@ -864,7 +912,22 @@ Configure Next.js plugin rules.
 type: `array | string`
 
 
+The root directory of the Next.js project.
 
+This is particularly useful when you have a monorepo and your Next.js
+project is in a subfolder.
+
+Example:
+
+```json
+{
+  "settings": {
+    "next": {
+      "rootDir": "apps/dashboard/"
+    }
+  }
+}
+```
 
 
 ##### settings.next.rootDir[n]

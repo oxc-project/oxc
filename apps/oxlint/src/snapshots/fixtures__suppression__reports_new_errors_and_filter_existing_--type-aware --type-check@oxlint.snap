@@ -1,0 +1,65 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware --type-check
+working directory: fixtures/suppression/reports_new_errors_and_filter_existing
+----------
+
+  ! eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ,-[folder_b/test.ts:1:7]
+ 1 | const foo: number = "42";
+   :       ^|^
+   :        `-- 'foo' is declared here
+ 2 | debugger;
+   `----
+  help: Consider removing this declaration.
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[folder_b/test.ts:1:7]
+ 1 | const foo: number = "42";
+   :       ^^^
+ 2 | debugger;
+   `----
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[folder_b/test.ts:2:1]
+ 1 | const foo: number = "42";
+ 2 | debugger;
+   : ^^^^^^^^^
+ 3 | 
+   `----
+  help: Remove the debugger statement
+
+  ! eslint(no-unused-vars): Function 'none' is declared but never used.
+   ,-[folder_b/test.ts:4:16]
+ 3 | 
+ 4 | async function none() {
+   :                ^^|^
+   :                  `-- 'none' is declared here
+ 5 |   console.log();
+   `----
+  help: Consider removing this declaration.
+
+  x typescript(TS2584): Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+   ,-[folder_b/test.ts:5:3]
+ 4 | async function none() {
+ 5 |   console.log();
+   :   ^^^^^^^
+ 6 | }
+   `----
+
+  ! eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ,-[folder_b/test.ts:8:7]
+ 7 | 
+ 8 | const a: Array<number> = new Array<number>();
+   :       |
+   :       `-- 'a' is declared here
+   `----
+  help: Consider removing this declaration.
+
+Found 4 warnings and 2 errors.
+Finished in <variable>ms on 2 files with 86 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

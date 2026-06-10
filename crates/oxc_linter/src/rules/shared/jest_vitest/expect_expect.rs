@@ -45,7 +45,7 @@ test('should assert something', () => {});
 ```
 ";
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExpectExpectConfig {
     /// A list of function names that should be treated as assertion functions.
     ///
@@ -74,12 +74,19 @@ impl Default for ExpectExpectConfig {
     }
 }
 
+fn default_assert_function_names_jest() -> Vec<CompactStr> {
+    vec!["expect".into()]
+}
+
+fn default_assert_function_names_vitest() -> Vec<CompactStr> {
+    vec!["expect".into(), "expectTypeOf".into(), "assert".into(), "assertType".into()]
+}
+
 impl ExpectExpectConfig {
     #[expect(clippy::unnecessary_wraps)]
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let default_assert_function_names_jest = vec!["expect".into()];
-        let default_assert_function_names_vitest =
-            vec!["expect".into(), "expectTypeOf".into(), "assert".into(), "assertType".into()];
+        let default_assert_function_names_jest = default_assert_function_names_jest();
+        let default_assert_function_names_vitest = default_assert_function_names_vitest();
         let config = value.get(0);
 
         let assert_function_names = config
@@ -88,7 +95,7 @@ impl ExpectExpectConfig {
             .map(|v| {
                 v.iter()
                     .filter_map(serde_json::Value::as_str)
-                    .map(convert_pattern)
+                    .map(CompactStr::from)
                     .collect::<Vec<_>>()
             });
 
@@ -151,8 +158,10 @@ fn run<'a>(
             } else {
                 &rule.assert_function_names_jest
             };
+            let assert_function_names =
+                assert_function_names.iter().map(|name| convert_pattern(name)).collect::<Vec<_>>();
 
-            let mut visitor = AssertionVisitor::new(ctx, assert_function_names);
+            let mut visitor = AssertionVisitor::new(ctx, &assert_function_names);
 
             // Visit each argument of the test call
             for argument in &call_expr.arguments {

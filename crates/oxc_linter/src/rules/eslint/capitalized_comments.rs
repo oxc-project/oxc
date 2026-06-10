@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::AlwaysNever};
 
 /// Common directive prefixes that should be ignored (module-level to avoid items-after-statements)
 const DIRECTIVES: &[&str] = &[
@@ -47,18 +47,10 @@ struct CommentConfig {
     ignore_consecutive_comments: bool,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-enum CapitalizeOption {
-    #[default]
-    Always,
-    Never,
-}
-
 /// Internal configuration structure (boxed for size optimization)
 #[derive(Debug, Clone, Default)]
 pub struct CapitalizedCommentsConfig {
-    capitalize: CapitalizeOption,
+    capitalize: AlwaysNever,
     line_config: CommentConfig,
     block_config: CommentConfig,
 }
@@ -76,7 +68,7 @@ impl std::ops::Deref for CapitalizedComments {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[expect(clippy::struct_field_names)]
 struct CommentConfigJson {
     /// A regex pattern. Comments that match the pattern will not cause violations.
@@ -105,6 +97,14 @@ impl CommentConfigJson {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", untagged, deny_unknown_fields)]
+#[expect(unused)] // Only for schemars docs, not used in actual config parsing
+enum OptionsJsonEnum {
+    Base(CommentConfigJson),
+    Difference { line: Option<CommentConfigJson>, block: Option<CommentConfigJson> },
+}
+
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 struct OptionsJson {
@@ -123,7 +123,7 @@ struct OptionsJson {
 /// containing additional options.
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
 #[expect(dead_code)]
-struct CapitalizedCommentsOptions(CapitalizeOption, Option<OptionsJson>);
+struct CapitalizedCommentsOptions(AlwaysNever, Option<OptionsJsonEnum>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -247,8 +247,8 @@ impl Rule for CapitalizedComments {
 
             let is_uppercase = first_letter.is_uppercase();
             let (wrong_case, correct_case, fixed_letter) = match self.capitalize {
-                CapitalizeOption::Always if !is_uppercase => ("lowercase", "uppercase", upper),
-                CapitalizeOption::Never if is_uppercase => ("uppercase", "lowercase", lower),
+                AlwaysNever::Always if !is_uppercase => ("lowercase", "uppercase", upper),
+                AlwaysNever::Never if is_uppercase => ("uppercase", "lowercase", lower),
                 _ => continue,
             };
 
@@ -406,11 +406,6 @@ fn test() {
         (
             "/*
 */", None,
-        ),
-        (
-            "/*
-            */",
-            None,
         ),
         ("/* */", None),
         ("/* */", None),

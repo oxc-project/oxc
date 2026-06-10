@@ -7,10 +7,11 @@ use rustc_hash::FxHashSet;
 use schemars::{JsonSchema, r#gen, schema::Schema};
 use serde::{Deserialize, Serialize};
 
+use oxc_config::GlobSet;
+
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
 use super::external_plugins::{ExternalPluginEntry, external_plugins_schema};
-use super::glob_set::GlobSet;
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -78,7 +79,7 @@ impl JsonSchema for OxlintOverrides {
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[non_exhaustive]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct OxlintOverride {
     /// A list of glob patterns to override.
     ///
@@ -94,7 +95,7 @@ pub struct OxlintOverride {
     /// ## Example
     /// `[ "*.generated.ts", "fixtures/**" ]`
     #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
-    pub ignores: GlobSet,
+    pub exclude_files: GlobSet,
 
     /// Environments enable and disable collections of global variables.
     pub env: Option<OxlintEnv>,
@@ -152,15 +153,15 @@ mod test {
     }
 
     #[test]
-    fn test_parsing_ignores() {
+    fn test_parsing_exclude_files() {
         let config: OxlintOverride = from_value(json!({
             "files": ["*.tsx"],
-            "ignores": ["*.generated.tsx"],
+            "excludeFiles": ["*.generated.tsx"],
         }))
         .unwrap();
 
-        assert!(config.ignores.is_match("App.generated.tsx"));
-        assert!(!config.ignores.is_match("App.tsx"));
+        assert!(config.exclude_files.is_match("App.generated.tsx"));
+        assert!(!config.exclude_files.is_match("App.tsx"));
     }
 
     #[test]

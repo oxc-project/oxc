@@ -175,32 +175,4 @@ TextEdit: TextEdit {
 
 
 ########### Fix All Action
-CodeAction: 
-Title: fix all safe fixable oxlint issues
-Is Preferred: Some(true)
-TextEdit: TextEdit {
-    range: Range {
-        start: Position {
-            line: 18,
-            character: 0,
-        },
-        end: Position {
-            line: 18,
-            character: 0,
-        },
-    },
-    new_text: "void ",
-}
-TextEdit: TextEdit {
-    range: Range {
-        start: Position {
-            line: 38,
-            character: 0,
-        },
-        end: Position {
-            line: 38,
-            character: 0,
-        },
-    },
-    new_text: "void ",
-}
+None

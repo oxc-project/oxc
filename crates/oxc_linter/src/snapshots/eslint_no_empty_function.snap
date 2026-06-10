@@ -159,13 +159,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this constructor or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Unexpected empty function `foo`
-   ╭─[no_empty_function.tsx:1:16]
- 1 │ function foo() {}
-   ·                ──
-   ╰────
-  help: Consider removing this function or adding logic to it.
-
   ⚠ eslint(no-empty-function): Unexpected empty method `foo`
    ╭─[no_empty_function.tsx:4:17]
  3 │           @decorator()

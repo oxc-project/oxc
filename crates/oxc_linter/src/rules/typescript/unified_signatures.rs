@@ -31,7 +31,7 @@ fn unified_signatures_diagnostic<L: Into<LabeledSpan>, T: IntoIterator<Item = L>
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(default, rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct UnifiedSignaturesOptions {
     /// Whether to ignore parameter name differences when comparing signatures. If `false`, signatures
     /// will not be considered unifiable if they have parameters in the same position with different

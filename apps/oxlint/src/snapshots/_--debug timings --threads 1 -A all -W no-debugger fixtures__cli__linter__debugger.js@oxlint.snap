@@ -1,0 +1,25 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --debug timings --threads 1 -A all -W no-debugger fixtures/cli/linter/debugger.js
+working directory: 
+----------
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[fixtures/cli/linter/debugger.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+
+Rule timings:
+Rule                 Time (ms)  Relative  Calls  Source
+------------------  ----------  --------  -----  ------
+eslint/no-debugger       <variable>    <variable>%      1  native
+----------
+CLI result: LintSucceeded
+----------

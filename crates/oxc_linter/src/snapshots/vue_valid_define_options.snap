@@ -1,0 +1,99 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(valid-define-options): `defineOptions` is referencing locally declared variables.
+   ╭─[valid_define_options.tsx:4:35]
+ 3 │                     const def = { name: 'Foo' }
+ 4 │                     defineOptions(def)
+   ·                                   ───
+ 5 │                   </script>
+   ╰────
+
+  ⚠ vue(valid-define-options): `defineOptions` has been called multiple times.
+   ╭─[valid_define_options.tsx:3:21]
+ 2 │                   <script setup>
+ 3 │                     defineOptions({ name: 'Foo' })
+   ·                     ──────────────────────────────
+ 4 │                     defineOptions({ name: 'Bar' })
+   ╰────
+
+  ⚠ vue(valid-define-options): `defineOptions` has been called multiple times.
+   ╭─[valid_define_options.tsx:4:21]
+ 3 │                     defineOptions({ name: 'Foo' })
+ 4 │                     defineOptions({ name: 'Bar' })
+   ·                     ──────────────────────────────
+ 5 │                   </script>
+   ╰────
+
+  ⚠ vue(valid-define-options): Options are not defined.
+   ╭─[valid_define_options.tsx:3:21]
+ 2 │                   <script setup>
+ 3 │                     defineOptions()
+   ·                     ───────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(valid-define-options): `defineOptions()` cannot accept type arguments.
+   ╭─[valid_define_options.tsx:3:32]
+ 2 │                   <script setup lang="ts">
+ 3 │                   defineOptions<{ name: 'Foo' }>()
+   ·                                ─────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(valid-define-options): Options are not defined.
+   ╭─[valid_define_options.tsx:3:19]
+ 2 │                   <script setup lang="ts">
+ 3 │                   defineOptions<{ name: 'Foo' }>()
+   ·                   ────────────────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(valid-define-options): `defineOptions()` cannot be used to declare `props`. Use `defineProps()` instead.
+   ╭─[valid_define_options.tsx:3:21]
+ 2 │                   <script setup>
+ 3 │                     defineOptions({ props: { msg: String } })
+   ·                     ─────────────────────────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(valid-define-options): `defineOptions()` cannot be used to declare `emits`. Use `defineEmits()` instead.
+   ╭─[valid_define_options.tsx:3:21]
+ 2 │                   <script setup>
+ 3 │                     defineOptions({ emits: ['click'] })
+   ·                     ───────────────────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(valid-define-options): `defineOptions()` cannot be used to declare `expose`. Use `defineExpose()` instead.
+   ╭─[valid_define_options.tsx:3:21]
+ 2 │                   <script setup>
+ 3 │                     defineOptions({ expose: ['foo'] })
+   ·                     ──────────────────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(valid-define-options): `defineOptions()` cannot be used to declare `slots`. Use `defineSlots()` instead.
+   ╭─[valid_define_options.tsx:3:21]
+ 2 │                   <script setup>
+ 3 │                     defineOptions({ slots: Object })
+   ·                     ────────────────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(valid-define-options): `defineOptions()` cannot be used to declare `props`. Use `defineProps()` instead.
+   ╭─[valid_define_options.tsx:3:21]
+ 2 │                   <script setup>
+ 3 │                     defineOptions({ props: { msg: String }, emits: ['click'] })
+   ·                     ───────────────────────────────────────────────────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(valid-define-options): `defineOptions()` cannot be used to declare `emits`. Use `defineEmits()` instead.
+   ╭─[valid_define_options.tsx:3:21]
+ 2 │                   <script setup>
+ 3 │                     defineOptions({ props: { msg: String }, emits: ['click'] })
+   ·                     ───────────────────────────────────────────────────────────
+ 4 │                   </script>
+   ╰────

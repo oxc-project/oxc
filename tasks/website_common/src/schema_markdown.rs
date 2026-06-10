@@ -68,6 +68,7 @@ pub struct Renderer {
     handlebars: Handlebars<'static>,
     root_schema: RootSchema,
     with_title: bool,
+    property_filters: Vec<&'static str>,
 }
 
 impl Renderer {
@@ -84,11 +85,15 @@ impl Renderer {
         handlebars
             .register_template_string("section", SECTION)
             .expect("Failed to register section template.");
-        Self { handlebars, root_schema, with_title: true }
+        Self { handlebars, root_schema, with_title: true, property_filters: Vec::new() }
     }
 
     pub fn with_title(&mut self, with_title: bool) {
         self.with_title = with_title;
+    }
+
+    pub fn with_property_filters(&mut self, filters: Vec<&'static str>) {
+        self.property_filters = filters;
     }
 
     /// Renders the schema to markdown documentation.
@@ -144,6 +149,13 @@ impl Renderer {
         parent_key: Option<&str>,
         schema: &SchemaObject,
     ) -> Vec<Section> {
+        // Filter out properties that should be hidden from the documentation.
+        if let Some(parent_key) = parent_key
+            && self.property_filters.contains(&parent_key)
+        {
+            return vec![];
+        }
+
         if let Some(array) = &schema.array {
             return array
                 .items
@@ -211,6 +223,19 @@ impl Renderer {
                     let mut section = self.render_schema_impl(depth, key, subschema);
                     if section.default.is_none() && !subschema.has_type(InstanceType::Object) {
                         section.default = Self::render_default(schema);
+                    }
+                    // Schemars' draft-07 visitor wraps a `$ref` in `allOf` when sibling
+                    // properties (e.g. `description`) exist. Combine the property-level
+                    // description (context-specific) with the referenced type's description
+                    // (generic semantics) so neither layer is hidden by the other.
+                    if let Some(outer_desc) =
+                        schema.metadata.as_ref().and_then(|m| m.description.clone())
+                    {
+                        section.description = if section.description.is_empty() {
+                            outer_desc
+                        } else {
+                            format!("{outer_desc}\n\n{}", section.description)
+                        };
                     }
                     section.sanitize();
                     section

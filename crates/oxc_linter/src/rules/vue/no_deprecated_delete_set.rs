@@ -1,15 +1,13 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        BindingPattern, Expression, IdentifierReference, MemberExpression, StaticMemberExpression,
-    },
+    ast::{Expression, IdentifierReference, MemberExpression, StaticMemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::module_record::ImportImportName;
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_this_object};
 
 fn no_deprecated_delete_set_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`$delete` and `$set` are deprecated.").with_label(span)
@@ -85,7 +83,7 @@ impl Rule for NoDeprecatedDeleteSet {
             }
 
             if matches!(prop_name, "$set" | "$delete")
-                && is_this_or_alias(object, ctx)
+                && is_this_object(object, ctx)
                 && is_in_vue_component(node, ctx)
             {
                 ctx.diagnostic(no_deprecated_delete_set_diagnostic(member.property.span));
@@ -140,23 +138,6 @@ fn static_member_callee<'a, 'b>(
     match member {
         MemberExpression::StaticMemberExpression(m) => Some(m),
         _ => None,
-    }
-}
-
-fn is_this_or_alias<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
-    match expr {
-        Expression::ThisExpression(_) => true,
-        Expression::Identifier(ident) => {
-            let scoping = ctx.scoping();
-            let reference = scoping.get_reference(ident.reference_id());
-            let Some(symbol_id) = reference.symbol_id() else { return false };
-            let declaration = ctx.symbol_declaration(symbol_id);
-            let AstKind::VariableDeclarator(decl) = declaration.kind() else { return false };
-            let BindingPattern::BindingIdentifier(_) = &decl.id else { return false };
-            let Some(init) = &decl.init else { return false };
-            matches!(init.get_inner_expression(), Expression::ThisExpression(_))
-        }
-        _ => false,
     }
 }
 
@@ -338,6 +319,22 @@ fn test() {
                     this.$delete(obj, key)
                   }
                 })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r"
+                <script>
+                export default {
+                  mounted() {
+                    let vm = this
+                    vm = other
+                    vm.$set(obj, key, value)
+                  }
+                }
                 </script>
             ",
             None,

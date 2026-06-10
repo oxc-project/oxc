@@ -1,9 +1,6 @@
 //! `Drop` implementation for `Arena`, and `reset` method.
 
-use std::{
-    alloc::{self, GlobalAlloc, System},
-    ptr::NonNull,
-};
+use std::{alloc, ptr::NonNull};
 
 use super::{Arena, ChunkFooter, utils::is_pointer_aligned_to};
 
@@ -106,7 +103,7 @@ unsafe fn dealloc_chunk_list(footer_ptr: Option<NonNull<ChunkFooter>>) {
         }
 
         // SAFETY: `footer_ptr` always points to a valid `ChunkFooter`
-        unsafe { dealloc_arena_chunk(footer_ptr) };
+        unsafe { dealloc_chunk(footer_ptr) };
     }
 }
 
@@ -114,7 +111,7 @@ unsafe fn dealloc_chunk_list(footer_ptr: Option<NonNull<ChunkFooter>>) {
 ///
 /// # SAFETY
 /// `footer_ptr` must point to a valid `ChunkFooter`.
-pub unsafe fn dealloc_arena_chunk(footer_ptr: NonNull<ChunkFooter>) {
+unsafe fn dealloc_chunk(footer_ptr: NonNull<ChunkFooter>) {
     // Create `&ChunkFooter` reference within a block, to ensure the reference is not live
     // when we deallocate the chunk's memory (which includes the `ChunkFooter`)
     let (backing_alloc_ptr, layout, is_fixed_size) = {
@@ -123,13 +120,36 @@ pub unsafe fn dealloc_arena_chunk(footer_ptr: NonNull<ChunkFooter>) {
         (footer.backing_alloc_ptr.as_ptr(), footer.layout, footer.is_fixed_size)
     };
 
+    // If is a fixed-size allocator, delegate to `dealloc_fixed_size_arena_chunk`
     if is_fixed_size {
-        // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
-        // `is_fixed_size` is `true`, so backing allocation was made via `System` allocator.
-        unsafe { System.dealloc(backing_alloc_ptr, layout) };
-    } else {
-        // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
-        // `is_fixed_size` is `false`, so backing allocation was made via global allocator.
-        unsafe { alloc::dealloc(backing_alloc_ptr, layout) };
+        #[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
+        {
+            // SAFETY: Caller guarantees that `footer_ptr` points to a valid `ChunkFooter`,
+            // and `is_fixed_size` indicates that the chunk is fixed-size
+            unsafe { super::fixed_size::dealloc_fixed_size_arena_chunk(footer_ptr) };
+            return;
+        }
+
+        // Note: `napi/parser` and Oxlint's `RuleTester` create `Arena`s with `is_fixed_size: true`,
+        // but in both cases the memory backing the `Arena` is owned by JS, and they prevent the `Arena`
+        // from being dropped, by wrapping it in `ManuallyDrop`. So this code is unreachable in those cases.
+        //
+        // Using `debug_assert!` not `panic!` here means this whole `if is_fixed_size { ... }` block
+        // is dead code in release builds where `fixed_size` feature is not enabled.
+        #[cfg(not(all(
+            feature = "fixed_size",
+            target_pointer_width = "64",
+            target_endian = "little"
+        )))]
+        {
+            debug_assert!(
+                false,
+                "`is_fixed_size` should be `false` when `fixed_size` feature is disabled"
+            );
+        }
     }
+
+    // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
+    // `is_fixed_size` is `false`, so backing allocation was made via global allocator.
+    unsafe { alloc::dealloc(backing_alloc_ptr, layout) };
 }

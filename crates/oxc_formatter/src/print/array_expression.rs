@@ -3,7 +3,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{Buffer, Formatter, prelude::*},
+    formatter::{Buffer, prelude::*},
     options::ArrayExpand,
     write,
 };
@@ -26,8 +26,8 @@ impl<'a, 'b> FormatArrayExpression<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "[");
 
         if self.array.elements().is_empty() {
@@ -67,10 +67,14 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
     }
 }
 
-fn elements_have_leading_newline(array: &AstNode<'_, ArrayExpression<'_>>, f: &Formatter) -> bool {
-    array.elements().first().is_some_and(|e| {
-        f.source_text().contains_newline_between(array.span.start, e.span().start)
-    })
+fn elements_have_leading_newline(
+    array: &AstNode<'_, ArrayExpression<'_>>,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    array
+        .elements()
+        .first()
+        .is_some_and(|e| f.source_text().contains_newline_between(array.span.start, e.span().start))
 }
 
 /// Returns `true` for arrays containing at least two elements if:

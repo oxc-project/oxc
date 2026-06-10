@@ -21,7 +21,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferExpectAssertionsConfig {
     pub only_functions_with_async_keyword: bool,
     pub only_functions_with_expect_in_callback: bool,

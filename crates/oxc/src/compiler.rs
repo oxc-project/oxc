@@ -8,7 +8,8 @@ use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOption
 use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
-use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn};
+use oxc_react_compiler::{self, PluginOptions as ReactCompilerOptions};
+use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn, Stats};
 use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
 use oxc_transformer_plugins::{
@@ -70,6 +71,13 @@ pub trait CompilerInterface {
         None
     }
 
+    /// Options for the [React Compiler], which runs before all other transforms.
+    ///
+    /// [React Compiler]: oxc_react_compiler
+    fn react_compiler_options(&self) -> Option<ReactCompilerOptions> {
+        None
+    }
+
     fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
         None
     }
@@ -92,6 +100,16 @@ pub trait CompilerInterface {
 
     fn check_semantic_error(&self) -> bool {
         true
+    }
+
+    /// Whether to build the full `AstNodes` store during semantic analysis.
+    ///
+    /// Off by default (the compiler pipeline only needs scoping). Override to
+    /// `true` if [`Self::after_semantic`] reads [`Semantic::nodes`].
+    ///
+    /// [`Semantic::nodes`]: oxc_semantic::Semantic::nodes
+    fn build_semantic_nodes(&self) -> bool {
+        false
     }
 
     fn after_parse(&mut self, _parser_return: &mut ParserReturn) -> ControlFlow<()> {
@@ -148,6 +166,27 @@ pub trait CompilerInterface {
         let stats = semantic_return.semantic.stats();
         let mut scoping = semantic_return.semantic.into_scoping();
 
+        /* React Compiler */
+
+        // Runs first, on the pristine AST, before every other transform.
+        let mut errors = Vec::new();
+        if let Some(options) = self.react_compiler_options() {
+            // `compiled` lives in `allocator`, not borrowed from `program`, so the
+            // reassignment below is sound.
+            let result = oxc_react_compiler::transform(&program, &allocator, options);
+            errors.extend(result.errors);
+            errors.extend(result.warnings);
+            if let Some(compiled) = result.program {
+                program = compiled;
+                // Rebuild scoping for downstream transforms.
+                scoping = SemanticBuilder::new()
+                    .with_enum_eval(true)
+                    .build(&program)
+                    .semantic
+                    .into_scoping();
+            }
+        }
+
         /* Transform */
 
         if let Some(options) = self.transform_options() {
@@ -155,8 +194,16 @@ pub trait CompilerInterface {
                 self.transform(options, &allocator, &mut program, source_path, scoping);
 
             if !transformer_return.errors.is_empty() {
-                self.handle_errors(transformer_return.errors);
+                errors.append(&mut transformer_return.errors);
+                self.handle_errors(errors);
                 return;
+            }
+
+            // The React Compiler always leaves a valid program (compiled on
+            // success, original on bail-out), so its diagnostics are reported but
+            // never abort codegen.
+            if !errors.is_empty() {
+                self.handle_errors(errors);
             }
 
             if self.after_transform(&mut program, &mut transformer_return).is_break() {
@@ -164,39 +211,60 @@ pub trait CompilerInterface {
             }
 
             (scoping) = transformer_return.scoping;
+        } else if !errors.is_empty() {
+            // The React Compiler ran without a transform; surface its diagnostics
+            // but never abort — it always leaves a valid program.
+            self.handle_errors(errors);
         }
+
+        // The transformer leaves symbols and scopes out of sync with the AST;
+        // the parser, React Compiler, and any fresh semantic build leave them in
+        // sync. Track the state so each consumer below only rebuilds when needed.
+        let transform = self.transform_options().is_some();
+        let mut scoping_dirty = transform;
 
         let inject_options = self.inject_options();
         let define_options = self.define_options();
+        let has_define = define_options.is_some();
 
-        // Symbols and scopes are out of sync.
-        if inject_options.is_some() || define_options.is_some() {
-            scoping =
-                SemanticBuilder::new().with_stats(stats).build(&program).semantic.into_scoping();
+        // The inject/define plugins require in-sync scoping as input.
+        if scoping_dirty && (inject_options.is_some() || has_define) {
+            scoping = rebuild_scoping(&program, stats, transform);
+            scoping_dirty = false;
         }
 
         if let Some(options) = inject_options {
             let ret = InjectGlobalVariables::new(&allocator, options).build(scoping, &mut program);
             scoping = ret.scoping;
+            scoping_dirty |= ret.changed;
         }
 
         if let Some(options) = define_options {
             let ret = ReplaceGlobalDefines::new(&allocator, options).build(scoping, &mut program);
             scoping = ret.scoping;
-            // Run DCE if minification is disabled.
-            if self.compress_options().is_none() {
-                Compressor::new(&allocator).dead_code_elimination_with_scoping(
-                    &mut program,
-                    scoping,
-                    CompressOptions::dce(),
-                );
-            }
+            scoping_dirty |= ret.changed;
         }
 
-        /* Compress */
+        /* Compress / DCE */
 
+        // Both consumers need in-sync scoping; only rebuild when a preceding step
+        // (transform or a plugin that mutated the AST) left it dirty. The branches
+        // are mutually exclusive, so `scoping` is moved into exactly one of them.
         if let Some(options) = self.compress_options() {
-            self.compress(&allocator, &mut program, options);
+            if scoping_dirty {
+                scoping = rebuild_scoping(&program, stats, transform);
+            }
+            self.compress(&allocator, &mut program, scoping, options);
+        } else if has_define {
+            // Run DCE if minification is disabled.
+            if scoping_dirty {
+                scoping = rebuild_scoping(&program, stats, transform);
+            }
+            Compressor::new(&allocator).dead_code_elimination_with_scoping(
+                &mut program,
+                scoping,
+                CompressOptions::dce(),
+            );
         }
 
         /* Mangler */
@@ -221,14 +289,17 @@ pub trait CompilerInterface {
     }
 
     fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
-        let mut builder = SemanticBuilder::new();
+        let mut builder = SemanticBuilder::new_compiler();
 
         if self.transform_options().is_some() {
             // Estimate transformer will triple scopes, symbols, references
             builder = builder.with_excess_capacity(2.0).with_enum_eval(true);
         }
 
-        builder.with_check_syntax_error(self.check_semantic_error()).build(program)
+        builder
+            .with_check_syntax_error(self.check_semantic_error())
+            .with_build_nodes(self.build_semantic_nodes())
+            .build(program)
     }
 
     fn isolated_declaration<'a>(
@@ -264,9 +335,10 @@ pub trait CompilerInterface {
         &self,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
+        scoping: Scoping,
         options: CompressOptions,
     ) {
-        Compressor::new(allocator).build(program, options);
+        Compressor::new(allocator).build_with_scoping(program, scoping, options);
     }
 
     fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> ManglerReturn {
@@ -293,4 +365,20 @@ pub trait CompilerInterface {
             .with_private_member_mappings(class_private_mappings)
             .build(program)
     }
+}
+
+/// Rebuild [`Scoping`] from scratch, reusing prior `stats` to size allocations.
+///
+/// Used to re-sync symbols and scopes with the AST after a step that left them
+/// out of date (the transformer, or an inject/define plugin that mutated nodes).
+///
+/// `enum_eval` must match the original semantic build so downstream transforms
+/// see the same const-enum resolution.
+fn rebuild_scoping(program: &Program<'_>, stats: Stats, enum_eval: bool) -> Scoping {
+    SemanticBuilder::new()
+        .with_stats(stats)
+        .with_enum_eval(enum_eval)
+        .build(program)
+        .semantic
+        .into_scoping()
 }

@@ -772,7 +772,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         let hashbang = self.parse_hashbang();
         self.ctx |= Context::TopLevel;
-        let (directives, mut statements) = self.parse_directives_and_statements();
+        let (directives, mut statements) =
+            self.parse_directives_and_statements(/* in_ts_namespace_body */ false);
 
         // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
         // we need to reparse statements that were originally parsed with `await` as identifier.
@@ -840,9 +841,13 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }
-        // CommonJS files are wrapped in a function, so return is allowed at top-level
+        // CommonJS files are wrapped in a function, so return and `new.target`
+        // are allowed at top-level
         if options.allow_return_outside_function || source_type.is_commonjs() {
             ctx = ctx.and_return(true);
+        }
+        if source_type.is_commonjs() {
+            ctx = ctx.and_new_target(true);
         }
         ctx
     }

@@ -24,7 +24,7 @@ fn no_nodejs_modules_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic 
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase")]
+#[schemars(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NoNodejsModulesConfig {
     /// Array of names of allowed modules. Defaults to an empty array.
     allow: FxHashSet<CompactStr>,

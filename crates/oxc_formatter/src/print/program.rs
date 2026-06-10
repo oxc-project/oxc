@@ -18,7 +18,7 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let format_trailing_comments = format_with(|f| {
             write!(
                 f,
@@ -54,15 +54,28 @@ impl<'a> Deref for FormatStatementsWithImports<'a, '_> {
     }
 }
 
-impl<'a> Format<'a> for FormatStatementsWithImports<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let import_sort_enabled = f.options().sort_imports.is_some();
-        let mut imports_chunk_start: Option<usize> = None;
 
         let mut join = f.join_nodes_with_hardline();
-        for stmt in
-            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
-        {
+
+        let mut stmts_iter =
+            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)));
+        while let Some(mut stmt) = stmts_iter.next() {
+            // Suppressed imports are emitted verbatim and act as partition boundaries,
+            // so they are excluded from the sortable run.
+            if import_sort_enabled
+                && matches!(stmt.as_ref(), Statement::ImportDeclaration(_))
+                && !is_import_suppressed(stmt, join.fmt())
+            {
+                let next_stmt = format_import_decls_with_sort(stmt, &mut stmts_iter, &mut join);
+                match next_stmt {
+                    Some(next_stmt) => stmt = next_stmt,
+                    None => break,
+                }
+            }
+
             let span = match stmt.as_ref() {
                 // `@decorator export class A {}`
                 // Get the span of the decorator.
@@ -92,35 +105,75 @@ impl<'a> Format<'a> for FormatStatementsWithImports<'a, '_> {
                 _ => stmt.span(),
             };
 
-            if import_sort_enabled {
-                if matches!(stmt.as_ref(), Statement::ImportDeclaration(_)) {
-                    if imports_chunk_start.is_none() {
-                        // First import in a chunk. Output inter-statement separator separately
-                        // so `imports_chunk_start` points to start of IR for the `ImportDeclaration` itself.
-                        join.separator_no_entry(span);
-                        imports_chunk_start = Some(join.fmt().elements().len());
-                        join.entry_no_separator(stmt);
-                        continue;
-                    }
-                } else if let Some(chunk_start) = imports_chunk_start.take() {
-                    // Any other statement after an `ImportDeclaration`, or a run of them.
-                    // Sort the chunk of imports.
-                    sort_imports_chunk(join.fmt_mut(), chunk_start);
-                }
-            }
-
             join.entry(span, stmt);
-        }
-
-        // If last statement was an `ImportDeclaration`, sort the chunk of imports
-        if let Some(chunk_start) = imports_chunk_start.take() {
-            sort_imports_chunk(join.fmt_mut(), chunk_start);
         }
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+/// Collect a run of consecutive `ImportDeclaration`s from `stmts_iter`, format them using `join`,
+/// then sort them in place.
+///
+/// Returns the next statement after the run of `ImportDeclaration`s, or `None` if there are no more statements.
+///
+/// The caller must already have verified that `sort_imports` option is enabled.
+///
+/// # Panics
+/// Panics if `sort_imports` option is not enabled.
+//
+// `#[cold]` because most statements aren't `ImportDeclaration`s.
+// Also, when there *are* lots of `ImportDeclaration`s, they tend to all be grouped together.
+// This function consumes the whole run, so is unlikely to be called more than once, even in files with lots of imports.
+#[cold]
+fn format_import_decls_with_sort<'a, 'iter>(
+    stmt: &AstNode<'a, Statement<'a>>,
+    stmts_iter: &mut impl Iterator<Item = &'iter AstNode<'a, Statement<'a>>>,
+    join: &mut JoinNodesBuilder<'_, '_, 'a, Line>,
+) -> Option<&'iter AstNode<'a, Statement<'a>>> {
+    // Output inter-statement separator separately, so `chunk_start` points
+    // to start of IR for the `ImportDeclaration` itself
+    join.separator_no_entry(stmt.span());
+    let chunk_start = join.fmt().elements().len();
+
+    // Output first `ImportDeclaration`
+    join.entry_no_separator(stmt);
+
+    // The first import was already written above, so start the count at 1.
+    // A suppressed `ImportDeclaration` ends the run:
+    // its verbatim IR has no `JsLabels::ImportDeclaration` label, so the sort transform can't see it as an import.
+    let mut count = 1;
+    let mut next_stmt = None;
+    for stmt in stmts_iter {
+        if let Statement::ImportDeclaration(decl) = stmt.as_ref() {
+            if is_import_suppressed(stmt, join.fmt()) {
+                next_stmt = Some(stmt);
+                break;
+            }
+            join.entry(decl.span, stmt);
+            count += 1;
+        } else {
+            next_stmt = Some(stmt);
+            break;
+        }
+    }
+
+    // A single-import run is already in order, so skip the transform.
+    if count >= 2 {
+        sort_imports_chunk(join.fmt_mut(), chunk_start);
+    }
+
+    next_stmt
+}
+
+/// An `ImportDeclaration` is suppressed if it has a leading or trailing suppression comment,
+/// which causes it to be emitted verbatim and act as a partition boundary, excluding it from the sortable run.
+fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &JsFormatter<'_, '_>) -> bool {
+    let span = stmt.span();
+    let comments = f.comments();
+    comments.is_suppressed(span.start) || comments.has_trailing_suppression_comment(span.end)
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, Directive<'a>>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let Some(last_directive) = self.last() else {
             // No directives, no extra new line
             return;
@@ -154,7 +207,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(
             f,
             [
@@ -171,7 +224,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["#!", text(self.value().as_str().trim_end())]);
 
         if f.source_text().lines_after(self.span.end) > 1 {

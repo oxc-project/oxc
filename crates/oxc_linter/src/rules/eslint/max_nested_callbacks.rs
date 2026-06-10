@@ -35,6 +35,18 @@ impl Default for MaxNestedCallbacks {
     }
 }
 
+#[cfg(feature = "ruledocs")]
+impl MaxNestedCallbacks {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<Self>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
+    }
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///

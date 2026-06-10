@@ -30,7 +30,7 @@ use oxc::{
 use oxc_napi::{OxcError, get_source_type};
 use oxc_sourcemap::napi::SourceMap;
 
-use crate::IsolatedDeclarationsOptions;
+use crate::{IsolatedDeclarationsOptions, react_compiler::ReactCompilerOptions};
 
 #[derive(Default)]
 #[napi(object)]
@@ -149,6 +149,14 @@ pub struct TransformOptions {
     /// Decorator plugin
     pub decorator: Option<DecoratorOptions>,
 
+    /// Enable the experimental [React Compiler](https://github.com/facebook/react/pull/36173).
+    ///
+    /// `true` enables it with default options; an object enables it with the
+    /// given options; `false` or omitted disables it. When enabled, the compiler
+    /// runs as the first transform and memoizes React components and hooks.
+    #[napi(ts_type = "boolean | ReactCompilerOptions")]
+    pub react_compiler: Option<Either<bool, ReactCompilerOptions>>,
+
     /// Third-party plugins to use.
     /// @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins}
     pub plugins: Option<PluginsOptions>,
@@ -195,6 +203,16 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 .map(oxc::transformer::PluginsOptions::from)
                 .unwrap_or_default(),
         })
+    }
+}
+
+impl TransformOptions {
+    /// Take the `reactCompiler` option and resolve it into the compiler's
+    /// `PluginOptions`. The React Compiler is a standalone pass driven by the
+    /// [`CompilerInterface`], so it is not part of
+    /// `oxc::transformer::TransformOptions`.
+    fn take_react_compiler(&mut self) -> Option<oxc_react_compiler::PluginOptions> {
+        crate::react_compiler::resolve(self.react_compiler.take())
     }
 }
 
@@ -404,6 +422,17 @@ pub struct DecoratorOptions {
     /// @see https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata
     /// @default false
     pub emit_decorator_metadata: Option<bool>,
+
+    /// Aligns nullable-union `design:type` emission with `--strictNullChecks`.
+    ///
+    /// When `true` (default), `T | null` and `T | undefined` emit `Object`, matching tsc strict.
+    /// When `false`, `null` and `undefined` are elided from the union so the underlying
+    /// primitive constructor is emitted, matching tsc with `--strictNullChecks=false`
+    /// and `babel-plugin-transform-typescript-metadata`.
+    ///
+    /// @see https://www.typescriptlang.org/tsconfig/#strictNullChecks
+    /// @default true
+    pub strict_null_checks: Option<bool>,
 }
 
 impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
@@ -411,6 +440,7 @@ impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
         oxc::transformer::DecoratorOptions {
             legacy: options.legacy.unwrap_or_default(),
             emit_decorator_metadata: options.emit_decorator_metadata.unwrap_or_default(),
+            strict_null_checks: options.strict_null_checks.unwrap_or(true),
         }
     }
 }
@@ -730,6 +760,8 @@ struct Compiler {
 
     define: Option<ReplaceGlobalDefinesConfig>,
     inject: Option<InjectGlobalVariablesConfig>,
+    #[expect(clippy::struct_field_names)]
+    react_compiler: Option<oxc_react_compiler::PluginOptions>,
 
     helpers_used: FxHashMap<String, String>,
     errors: Vec<OxcDiagnostic>,
@@ -782,6 +814,8 @@ impl Compiler {
             .transpose()?
             .map(InjectGlobalVariablesConfig::new);
 
+        let react_compiler = options.as_mut().and_then(TransformOptions::take_react_compiler);
+
         let transform_options = match options {
             Some(options) => oxc::transformer::TransformOptions::try_from(options)
                 .map_err(|err| vec![OxcDiagnostic::error(err)])?,
@@ -798,6 +832,7 @@ impl Compiler {
             declaration_map: None,
             define,
             inject,
+            react_compiler,
             helpers_used: FxHashMap::default(),
             errors: vec![],
         })
@@ -829,6 +864,10 @@ impl CompilerInterface for Compiler {
 
     fn inject_options(&self) -> Option<InjectGlobalVariablesConfig> {
         self.inject.clone()
+    }
+
+    fn react_compiler_options(&self) -> Option<oxc_react_compiler::PluginOptions> {
+        self.react_compiler.clone()
     }
 
     fn after_codegen(&mut self, ret: CodegenReturn) {
@@ -1046,7 +1085,7 @@ fn module_runner_transform_impl(
     let mut program = parser_ret.program;
 
     let SemanticBuilderReturn { semantic, errors } =
-        SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+        SemanticBuilder::new_compiler().build(&program);
     parser_ret.errors.extend(errors);
 
     let scoping = semantic.into_scoping();

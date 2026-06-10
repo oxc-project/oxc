@@ -1,0 +1,13 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --debug files fixtures/cli/linter
+working directory: 
+----------
+fixtures/cli/linter/debugger.js
+fixtures/cli/linter/js_as_jsx.js
+fixtures/cli/linter/nan.js
+----------
+CLI result: LintSucceeded
+----------

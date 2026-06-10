@@ -4,6 +4,71 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 🚀 Features
+
+- 85efabf semantic: Make building the class table optional, off by default (#22862) (Boshen)
+
+### 🐛 Bug Fixes
+
+- cf53285 parser: Report reserved type-declaration names in the parser (#23035) (Boshen)
+- c543154 parser: Report comma operator in JSX expression in the parser (#23030) (Boshen)
+- 95dd3a2 parser: Report `import type` alias to a non-external reference in the parser (#23032) (Boshen)
+- 6da876e parser: Report `abstract` private class field in the parser (#23029) (Boshen)
+- 989230a parser: Report compound assignment to non-simple target in the parser (#23022) (Boshen)
+- 06f367c parser: Report `super.#field` private access in the parser (#23014) (Boshen)
+- 4d722e0 parser: Report duplicate switch `default` clause in the parser (#23012) (Boshen)
+- 1295882 parser: Report `new.target` and `import.meta` syntax errors in the parser (#23003) (Boshen)
+
+### ⚡ Performance
+
+- 502b04d semantic: Move cold function redeclaration handling into `#[cold]` function (#22973) (overlookmotel)
+
+## [0.134.0] - 2026-06-01
+
+### ⚡ Performance
+
+- 9e496a7 semantic: Defer declare lookup for empty accessors (#22810) (camc314)
+
+## [0.133.0] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- fa7c463 semantic: Correct TS enum member symbol spans (#22689) (camc314)
+- 26b9396 semantic: Resolve parameter decorators outside parameter scope (#22623) (camc314)
+- dfa931d semantic: Propagate unresolved auto-increment enum value instead of defaulting to 0 (#22646) (Dunqing)
+
+### ⚡ Performance
+
+- 2f623b0 semantic: Skip unresolved checks for re-exports (#22660) (camc314)
+- 0d9553d semantic: Early-exit `check_object_expression` for objects with <2 properties (#22668) (Dunqing)
+- d721ad9 semantic: Use direct grandparent lookup for TS type parameters (#22658) (camc314)
+- 0aff288 semantic: Reorder numeric literal strict mode checks (#22657) (camc314)
+- 4d5ddb1 semantic: Reorder binding identifier checks (#22656) (camc314)
+- e32acd8 semantic: Reorder identifier ambient binding check (#22653) (camc314)
+- 09fe178 semantic: Reorder ident reference strict mode check (#22652) (camc314)
+- 4b6add2 semantic: Avoid duplicate ident clone for bindings (#22663) (camc314)
+- 7b84314 semantic: Use direct byte access for numeric leading-zero check (#22642) (camc314)
+- 0345a31 semantic: Pre-size class elements hash map (#22618) (camc314)
+- 4f289f1 semantic: Resolve_references_for_current_scope without a temp Vec (#22599) (Dunqing)
+- e862c15 semantic: Avoid heap alloc for var hoist scope ids (#22603) (Dunqing)
+- 8ff8674 semantic: Early return if `excess` is `0` in `Stats::increase_by` (#22616) (camc314)
+- 7a4120e semantic: Pre-reserve unresolved_references using Stats::references (#22580) (Dunqing)
+
+## [0.132.0] - 2026-05-18
+
+### ⚡ Performance
+
+- ce92c6c semantic: `#[inline]` `Scoping::get_binding` (#22414) (Dunqing)
+- d782b78 minifier: Use BitSet for LiveUsageCollector live references (#22425) (Boshen)
+
+## [0.130.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- a7c3e22 semantic: Clear member write target for computed keys (#22302) (camc314)
+
 ## [0.125.0] - 2026-04-13
 
 ### 💥 BREAKING CHANGES

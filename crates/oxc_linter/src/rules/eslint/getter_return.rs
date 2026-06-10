@@ -237,8 +237,7 @@ impl GetterReturn {
                     match event {
                         // We only need to check paths that are normal or jump.
                         DfsEvent::TreeEdge(a, b) => {
-                            let edges = graph.edges_connecting(a, b).collect::<Vec<_>>();
-                            if edges.iter().any(|e| {
+                            if graph.edges_connecting(a, b).any(|e| {
                                 matches!(
                                     e.weight(),
                                     EdgeType::Normal

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 66/66 (100.00%)
-Positive Passed: 66/66 (100.00%)
-Negative Passed: 136/136 (100.00%)
+AST Parsed     : 68/68 (100.00%)
+Positive Passed: 68/68 (100.00%)
+Negative Passed: 145/145 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -290,6 +290,12 @@ Negative Passed: 136/136 (100.00%)
    ·                   ╰── `from` expected
    ╰────
 
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
+   ╭─[misc/fail/import-sync-expression.js:1:11]
+ 1 │ const x = import.sync("baz");
+   ·           ───────────
+   ╰────
+
   × TS(1363): A type-only import can specify a default import or named bindings, but not both.
    ╭─[misc/fail/import-type-mixed-empty.ts:3:13]
  2 │ // TS1363: A type-only import can specify a default import or named bindings, but not both.
@@ -347,6 +353,12 @@ Negative Passed: 136/136 (100.00%)
  1 │ import unknown 'module';
    ·                ────┬───
    ·                    ╰── `from` expected
+   ╰────
+
+  × TS(2368): Type parameter name cannot be 'string'
+   ╭─[misc/fail/infer-reserved-type-name.ts:1:29]
+ 1 │ type T<X> = X extends infer string ? string : never;
+   ·                             ──────
    ╰────
 
   × Unexpected JSX expression
@@ -3484,6 +3496,12 @@ Negative Passed: 136/136 (100.00%)
    ·        ─────
    ╰────
 
+  × Unexpected token
+   ╭─[misc/fail/oxc-22515.js:1:14]
+ 1 │ class extends,{
+   ·              ─
+   ╰────
+
   × Optional declaration is not allowed here
    ╭─[misc/fail/oxc-2253.ts:1:8]
  1 │ const a? = "A"
@@ -3535,6 +3553,14 @@ Negative Passed: 136/136 (100.00%)
    ·                      ─
    ╰────
   help: Remove the `?`
+
+  × The keyword 'await' is reserved
+    ╭─[misc/fail/oxc-22684.js:9:7]
+  8 │ export default class C {
+  9 │   x = await + 1;
+    ·       ─────
+ 10 │ }
+    ╰────
 
   × Empty parenthesized expression
    ╭─[misc/fail/oxc-232.js:1:5]
@@ -3807,6 +3833,20 @@ Negative Passed: 136/136 (100.00%)
    ╰────
   help: Add an identifier after '?.'
 
+  × Invalid rest element target in destructuring assignment
+   ╭─[misc/fail/rest-assignment-target.js:1:6]
+ 1 │ ({...[]} = {});
+   ·      ──
+   ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
+
+  × Invalid rest element target in destructuring pattern
+   ╭─[misc/fail/rest-binding-element.js:1:11]
+ 1 │ const {...[]} = obj;
+   ·           ──
+   ╰────
+  help: Expected an identifier, like `...rest`.
+
   × 'using' declarations are not allowed at the top level of a script
    ╭─[misc/fail/script-top-level-using.js:2:1]
  1 │ // 'using' is not allowed at top level in scripts
@@ -3832,3 +3872,27 @@ Negative Passed: 136/136 (100.00%)
  3 │ }
    ╰────
   help: If this is intended to be the condition for the switch statement, add `case` before it.
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]
+ 3 │ // so the trailing `*` still makes the assertion impossible to erase. Syntax error.
+ 4 │ const x = 1 + 1 as any as number * 2;
+   ·                                 ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-unerasable-as.ts:4:26]
+ 3 │ // trailing `*` binds tighter than the leading `+`. This is a syntax error.
+ 4 │ const x = 1 + 1 as number * 2;
+   ·                          ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/ts-unerasable-satisfies.ts:4:33]
+ 3 │ // is a syntax error.
+ 4 │ const x = 1 + 1 satisfies number * 2;
+   ·                                 ▲
+   ╰────
+  help: Try inserting a semicolon here

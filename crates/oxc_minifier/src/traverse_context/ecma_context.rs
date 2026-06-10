@@ -3,7 +3,8 @@ use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     GlobalContext,
     constant_evaluation::{
-        ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
+        ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, ValueType,
+        binary_operation_evaluate_value,
     },
     side_effects::{
         MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects, is_pure_function,
@@ -33,13 +34,11 @@ impl<'a> GlobalContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
         &self,
         reference_id: ReferenceId,
     ) -> Option<ConstantValue<'a>> {
-        self.scoping()
-            .get_reference(reference_id)
-            .symbol_id()
-            .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
-            .filter(|sv| sv.write_references_count == 0)
-            .and_then(|sv| sv.initialized_constant.as_ref())
-            .cloned()
+        self.tracked_constant_for_reference_id(reference_id).cloned()
+    }
+
+    fn value_type_for_reference_id(&self, reference_id: ReferenceId) -> Option<ValueType> {
+        self.tracked_constant_for_reference_id(reference_id).map(ConstantValue::value_type)
     }
 }
 
@@ -54,6 +53,10 @@ impl<'a> GlobalContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
     ) -> Option<ConstantValue<'a>> {
         (*self).get_constant_value_for_reference_id(reference_id)
     }
+
+    fn value_type_for_reference_id(&self, reference_id: ReferenceId) -> Option<ValueType> {
+        (*self).value_type_for_reference_id(reference_id)
+    }
 }
 
 impl<'a> GlobalContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
@@ -66,6 +69,10 @@ impl<'a> GlobalContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
         reference_id: ReferenceId,
     ) -> Option<ConstantValue<'a>> {
         (**self).get_constant_value_for_reference_id(reference_id)
+    }
+
+    fn value_type_for_reference_id(&self, reference_id: ReferenceId) -> Option<ValueType> {
+        (**self).value_type_for_reference_id(reference_id)
     }
 }
 
@@ -175,6 +182,18 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     pub fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
         ident.is_global_reference(self.scoping())
+    }
+
+    fn tracked_constant_for_reference_id(
+        &self,
+        reference_id: ReferenceId,
+    ) -> Option<&ConstantValue<'a>> {
+        self.scoping()
+            .get_reference(reference_id)
+            .symbol_id()
+            .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
+            .filter(|sv| sv.write_references_count == 0)
+            .and_then(|sv| sv.initialized_constant.as_ref())
     }
 
     pub fn eval_binary(&self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {

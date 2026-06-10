@@ -1,9 +1,10 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrayExpressionElement, AssignmentTarget, Expression, match_assignment_target_pattern},
+    ast::{AssignmentTarget, match_assignment_target_pattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 use oxc_syntax::operator::LogicalOperator;
 use schemars::JsonSchema;
@@ -70,76 +71,18 @@ impl Rule for NoUnsafeOptionalChaining {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::CallExpression(expr) if !expr.optional => {
-                Self::check_unsafe_usage(&expr.callee, ctx);
+        let AstKind::ChainExpression(chain) = node.kind() else {
+            return;
+        };
+
+        match self.unsafe_context(node.id(), ctx) {
+            Some(ErrorType::Usage) => {
+                ctx.diagnostic(no_unsafe_optional_chaining_diagnostic(chain.span));
             }
-            AstKind::StaticMemberExpression(expr) if !expr.optional => {
-                Self::check_unsafe_usage(&expr.object, ctx);
+            Some(ErrorType::Arithmetic) => {
+                ctx.diagnostic(no_unsafe_arithmetic_diagnostic(chain.span));
             }
-            AstKind::ComputedMemberExpression(expr) if !expr.optional => {
-                Self::check_unsafe_usage(&expr.object, ctx);
-            }
-            AstKind::PrivateFieldExpression(expr) if !expr.optional => {
-                Self::check_unsafe_usage(&expr.object, ctx);
-            }
-            AstKind::TaggedTemplateExpression(expr) => {
-                Self::check_unsafe_usage(&expr.tag, ctx);
-            }
-            AstKind::NewExpression(expr) => {
-                Self::check_unsafe_usage(&expr.callee, ctx);
-            }
-            AstKind::AssignmentExpression(expr) => {
-                if matches!(expr.left, match_assignment_target_pattern!(AssignmentTarget)) {
-                    Self::check_unsafe_usage(&expr.right, ctx);
-                }
-                if expr.operator.is_arithmetic() {
-                    self.check_unsafe_arithmetic(&expr.right, ctx);
-                }
-            }
-            AstKind::BinaryExpression(expr) => match expr.operator {
-                op if op.is_relational() => Self::check_unsafe_usage(&expr.right, ctx),
-                op if op.is_arithmetic() => {
-                    self.check_unsafe_arithmetic(&expr.left, ctx);
-                    self.check_unsafe_arithmetic(&expr.right, ctx);
-                }
-                _ => {}
-            },
-            AstKind::UnaryExpression(expr) if expr.operator.is_arithmetic() => {
-                self.check_unsafe_arithmetic(&expr.argument, ctx);
-            }
-            AstKind::ForOfStatement(stmt) => {
-                Self::check_unsafe_usage(&stmt.right, ctx);
-            }
-            AstKind::WithStatement(stmt) => {
-                Self::check_unsafe_usage(&stmt.object, ctx);
-            }
-            AstKind::Class(class) => {
-                if let Some(expr) = &class.super_class {
-                    Self::check_unsafe_usage(expr, ctx);
-                }
-            }
-            AstKind::AssignmentPattern(pat) if pat.left.is_destructuring_pattern() => {
-                Self::check_unsafe_usage(&pat.right, ctx);
-            }
-            AstKind::VariableDeclarator(decl) if decl.id.is_destructuring_pattern() => {
-                if let Some(expr) = &decl.init {
-                    Self::check_unsafe_usage(expr, ctx);
-                }
-            }
-            AstKind::AssignmentTargetWithDefault(target) => {
-                if matches!(target.binding, match_assignment_target_pattern!(AssignmentTarget)) {
-                    Self::check_unsafe_usage(&target.init, ctx);
-                }
-            }
-            AstKind::ArrayExpression(arr_expr) => {
-                for elem in &arr_expr.elements {
-                    if let ArrayExpressionElement::SpreadElement(spread_exp) = elem {
-                        Self::check_unsafe_usage(&spread_exp.argument, ctx);
-                    }
-                }
-            }
-            _ => {}
+            None => {}
         }
     }
 }
@@ -151,53 +94,163 @@ enum ErrorType {
 }
 
 impl NoUnsafeOptionalChaining {
-    fn check_unsafe_usage<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) {
-        Self::check_undefined_short_circuit(expr, ErrorType::Usage, ctx);
-    }
+    fn unsafe_context(&self, chain_id: NodeId, ctx: &LintContext<'_>) -> Option<ErrorType> {
+        let mut current_id = chain_id;
 
-    fn check_unsafe_arithmetic<'a>(&self, expr: &Expression<'a>, ctx: &LintContext<'a>) {
-        if self.disallow_arithmetic_operators {
-            Self::check_undefined_short_circuit(expr, ErrorType::Arithmetic, ctx);
+        for parent in ctx.nodes().ancestors(chain_id) {
+            let parent_id = parent.id();
+            match parent.kind() {
+                AstKind::ParenthesizedExpression(expr)
+                    if expr.expression.node_id() == current_id =>
+                {
+                    current_id = parent_id;
+                }
+                AstKind::TSAsExpression(expr) if expr.expression.node_id() == current_id => {
+                    current_id = parent_id;
+                }
+                AstKind::TSSatisfiesExpression(expr) if expr.expression.node_id() == current_id => {
+                    current_id = parent_id;
+                }
+                AstKind::TSTypeAssertion(expr) if expr.expression.node_id() == current_id => {
+                    current_id = parent_id;
+                }
+                AstKind::TSNonNullExpression(expr) if expr.expression.node_id() == current_id => {
+                    current_id = parent_id;
+                }
+                AstKind::TSInstantiationExpression(expr)
+                    if expr.expression.node_id() == current_id =>
+                {
+                    current_id = parent_id;
+                }
+                AstKind::AwaitExpression(expr) if expr.argument.node_id() == current_id => {
+                    current_id = parent_id;
+                }
+                AstKind::LogicalExpression(expr) => {
+                    let propagates_short_circuit = match expr.operator {
+                        LogicalOperator::And => {
+                            expr.left.node_id() == current_id || expr.right.node_id() == current_id
+                        }
+                        LogicalOperator::Or | LogicalOperator::Coalesce => {
+                            expr.right.node_id() == current_id
+                        }
+                    };
+                    if !propagates_short_circuit {
+                        return None;
+                    }
+                    current_id = parent_id;
+                }
+                AstKind::ConditionalExpression(expr)
+                    if expr.consequent.node_id() == current_id
+                        || expr.alternate.node_id() == current_id =>
+                {
+                    current_id = parent_id;
+                }
+                AstKind::SequenceExpression(expr)
+                    if expr.expressions.last().is_some_and(|expr| expr.node_id() == current_id) =>
+                {
+                    current_id = parent_id;
+                }
+                AstKind::CallExpression(expr)
+                    if !expr.optional && expr.callee.node_id() == current_id =>
+                {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::StaticMemberExpression(expr)
+                    if !expr.optional && expr.object.node_id() == current_id =>
+                {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::ComputedMemberExpression(expr)
+                    if !expr.optional && expr.object.node_id() == current_id =>
+                {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::PrivateFieldExpression(expr)
+                    if !expr.optional && expr.object.node_id() == current_id =>
+                {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::TaggedTemplateExpression(expr) if expr.tag.node_id() == current_id => {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::NewExpression(expr) if expr.callee.node_id() == current_id => {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::AssignmentExpression(expr) if expr.right.node_id() == current_id => {
+                    if matches!(expr.left, match_assignment_target_pattern!(AssignmentTarget)) {
+                        return Some(ErrorType::Usage);
+                    }
+                    if self.disallow_arithmetic_operators && expr.operator.is_arithmetic() {
+                        return Some(ErrorType::Arithmetic);
+                    }
+                    return None;
+                }
+                AstKind::BinaryExpression(expr) => {
+                    if expr.operator.is_relational() && expr.right.node_id() == current_id {
+                        return Some(ErrorType::Usage);
+                    }
+                    if self.disallow_arithmetic_operators
+                        && expr.operator.is_arithmetic()
+                        && (expr.left.node_id() == current_id || expr.right.node_id() == current_id)
+                    {
+                        return Some(ErrorType::Arithmetic);
+                    }
+                    return None;
+                }
+                AstKind::UnaryExpression(expr)
+                    if self.disallow_arithmetic_operators
+                        && expr.operator.is_arithmetic()
+                        && expr.argument.node_id() == current_id =>
+                {
+                    return Some(ErrorType::Arithmetic);
+                }
+                AstKind::ForOfStatement(stmt) if stmt.right.node_id() == current_id => {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::WithStatement(stmt) if stmt.object.node_id() == current_id => {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::Class(class)
+                    if class
+                        .super_class
+                        .as_ref()
+                        .is_some_and(|expr| expr.node_id() == current_id) =>
+                {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::AssignmentPattern(pat)
+                    if pat.left.is_destructuring_pattern() && pat.right.node_id() == current_id =>
+                {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::VariableDeclarator(decl)
+                    if decl.id.is_destructuring_pattern()
+                        && decl.init.as_ref().is_some_and(|expr| expr.node_id() == current_id) =>
+                {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::AssignmentTargetWithDefault(target)
+                    if matches!(
+                        target.binding,
+                        match_assignment_target_pattern!(AssignmentTarget)
+                    ) && target.init.node_id() == current_id =>
+                {
+                    return Some(ErrorType::Usage);
+                }
+                AstKind::SpreadElement(spread)
+                    if spread.argument.node_id() == current_id
+                        && matches!(
+                            ctx.nodes().parent_kind(parent_id),
+                            AstKind::ArrayExpression(_)
+                        ) =>
+                {
+                    return Some(ErrorType::Usage);
+                }
+                _ => return None,
+            }
         }
-    }
 
-    fn check_undefined_short_circuit<'a>(
-        expr: &Expression<'a>,
-        error_type: ErrorType,
-        ctx: &LintContext<'a>,
-    ) {
-        match expr.get_inner_expression() {
-            Expression::LogicalExpression(expr) => match expr.operator {
-                LogicalOperator::Or | LogicalOperator::Coalesce => {
-                    Self::check_undefined_short_circuit(&expr.right, error_type, ctx);
-                }
-                LogicalOperator::And => {
-                    Self::check_undefined_short_circuit(&expr.left, error_type, ctx);
-                    Self::check_undefined_short_circuit(&expr.right, error_type, ctx);
-                }
-            },
-            Expression::AwaitExpression(expr) => {
-                Self::check_undefined_short_circuit(&expr.argument, error_type, ctx);
-            }
-            Expression::ConditionalExpression(expr) => {
-                Self::check_undefined_short_circuit(&expr.consequent, error_type, ctx);
-                Self::check_undefined_short_circuit(&expr.alternate, error_type, ctx);
-            }
-            Expression::SequenceExpression(expr) => {
-                if let Some(expr) = expr.expressions.iter().last() {
-                    Self::check_undefined_short_circuit(expr, error_type, ctx);
-                }
-            }
-            Expression::ChainExpression(expr) => match error_type {
-                ErrorType::Usage => {
-                    ctx.diagnostic(no_unsafe_optional_chaining_diagnostic(expr.span));
-                }
-                ErrorType::Arithmetic => {
-                    ctx.diagnostic(no_unsafe_arithmetic_diagnostic(expr.span));
-                }
-            },
-            _ => {}
-        }
+        None
     }
 }
 
@@ -241,6 +294,7 @@ fn test() {
         ("({foo = obj?.bar} = obj);", None),
         ("({foo: obj.bar = obj?.baz} = obj);", None),
         ("(foo?.bar, bar)();", None),
+        ("(obj?.foo || bar).baz;", None),
         ("(foo?.bar ? baz : qux)();", None),
         (
             "\n        async function func() {\n          await obj?.foo();\n          await obj?.foo?.();\n          (await obj?.foo)?.();\n          (await obj?.foo)?.bar;\n          await bar?.baz;\n          await (foo ?? obj?.foo.baz);\n          (await bar?.baz ?? bar).baz;\n          (await bar?.baz ?? await bar).baz;\n          await (foo?.bar ? baz : qux);\n        }\n        ",
@@ -283,6 +337,15 @@ fn test() {
     ];
 
     let fail = vec![
+        ("(obj?.foo).bar", None),
+        ("(obj?.foo)();", None),
+        ("new (obj?.foo)();", None),
+        ("(obj?.foo)`template`", None),
+        ("class A extends obj?.foo {}", None),
+        ("const {foo} = obj?.bar;", None),
+        ("({foo} = obj?.bar);", None),
+        ("foo in obj?.bar;", None),
+        ("for (foo of obj?.bar) {}", None),
         ("(obj?.foo && obj?.baz).bar", None),
         ("with (obj?.foo) {};", None),
         ("async function foo() { with ( await obj?.foo) {}; }", None),
@@ -291,6 +354,7 @@ fn test() {
         ("const b = [...c, ...obj?.foo];", None),
         ("const s = [], t = [...obj?.foo];", None),
         ("const c = () => ([...(obj?.foo)]);", None),
+        ("bar + obj?.foo;", Some(serde_json::json!([{ "disallowArithmeticOperators": true }]))),
     ];
 
     Tester::new(NoUnsafeOptionalChaining::NAME, NoUnsafeOptionalChaining::PLUGIN, pass, fail)

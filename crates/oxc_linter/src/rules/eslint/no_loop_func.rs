@@ -1,11 +1,20 @@
-use oxc_ast::AstKind;
+use rustc_hash::FxHashSet;
+
+use oxc_ast::{
+    AstKind,
+    ast::{
+        ArrowFunctionExpression, DoWhileStatement, ForInStatement, ForOfStatement, ForStatement,
+        Function, IdentifierReference, Statement, WhileStatement,
+    },
+};
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, SymbolId};
+use oxc_semantic::{AstNode, NodeId, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::symbol::SymbolFlags;
+use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn no_loop_func_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Function declared in a loop contains unsafe references to variable(s)")
@@ -57,7 +66,35 @@ declare_oxc_lint!(
 
 impl Rule for NoLoopFunc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Check for function expressions, arrow functions, and function declarations
+        match node.kind() {
+            AstKind::ForStatement(statement) => Self::check_loop_body(node, &statement.body, ctx),
+            AstKind::ForInStatement(statement) => Self::check_loop_body(node, &statement.body, ctx),
+            AstKind::ForOfStatement(statement) => Self::check_loop_body(node, &statement.body, ctx),
+            AstKind::WhileStatement(statement) => Self::check_loop_body(node, &statement.body, ctx),
+            AstKind::DoWhileStatement(statement) => {
+                Self::check_loop_body(node, &statement.body, ctx);
+            }
+            _ => {}
+        }
+    }
+}
+
+impl NoLoopFunc {
+    fn check_loop_body<'a>(loop_node: &AstNode<'a>, body: &Statement<'a>, ctx: &LintContext<'a>) {
+        let mut collector = LoopFunctionCollector::default();
+        collector.visit_statement(body);
+
+        for function_node_id in collector.function_node_ids {
+            let function_node = ctx.nodes().get_node(function_node_id);
+            Self::check_function_in_loop(function_node, loop_node, ctx);
+        }
+    }
+
+    fn check_function_in_loop<'a>(
+        node: &AstNode<'a>,
+        loop_node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) {
         let (func_span, is_async_or_generator) = match node.kind() {
             AstKind::Function(func) => {
                 // Skip if not inside a statement (i.e., method definitions, etc.)
@@ -69,11 +106,6 @@ impl Rule for NoLoopFunc {
             }
             AstKind::ArrowFunctionExpression(arrow) => (arrow.span, arrow.r#async),
             _ => return,
-        };
-
-        // Find the containing loop, if any
-        let Some(loop_node) = Self::get_containing_loop(node, ctx) else {
-            return;
         };
 
         // Skip synchronous IIFEs (Immediately Invoked Function Expressions) only if they
@@ -94,9 +126,7 @@ impl Rule for NoLoopFunc {
             ctx.diagnostic(no_loop_func_diagnostic(func_span));
         }
     }
-}
 
-impl NoLoopFunc {
     /// Check if the function is a safe IIFE (Immediately Invoked Function Expression).
     /// A safe IIFE is one that:
     /// 1. Is immediately invoked (has a CallExpression parent where this function is the callee)
@@ -108,10 +138,9 @@ impl NoLoopFunc {
     fn is_safe_iife<'a>(func_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         let nodes = ctx.nodes();
 
-        let mut current = nodes.parent_node(func_node.id());
-        while matches!(current.kind(), AstKind::ParenthesizedExpression(_)) {
-            current = nodes.parent_node(current.id());
-        }
+        let Some(current) = outermost_paren_parent(func_node, ctx) else {
+            return false;
+        };
 
         let AstKind::CallExpression(call_expr) = current.kind() else {
             return false;
@@ -146,95 +175,9 @@ impl NoLoopFunc {
     /// - It's async or a generator (even if IIFE, execution doesn't complete immediately), OR
     /// - It's a named IIFE that references itself (could store itself somewhere)
     fn contains_nested_functions<'a>(func_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-        let func_span = func_node.span();
-        let nodes = ctx.nodes();
-        let scoping = ctx.scoping();
-
-        // Check all nodes to find nested functions within this function
-        for node in ctx.nodes() {
-            let node_span = node.span();
-            if node_span == func_span || !func_span.contains_inclusive(node_span) {
-                continue;
-            }
-
-            let (is_async_or_generator, func_id, is_function) = match node.kind() {
-                AstKind::Function(f) => (f.r#async || f.generator, f.id.as_ref(), true),
-                AstKind::ArrowFunctionExpression(f) => (f.r#async, None, true),
-                _ => (false, None, false),
-            };
-
-            if !is_function {
-                continue;
-            }
-
-            // Async/generator functions are never safe, even if immediately invoked
-            if is_async_or_generator {
-                return true;
-            }
-
-            // Check if this nested function is itself immediately invoked (IIFE).
-            // If it is and it's synchronous, it might be safe. If not, it could escape.
-            let mut parent = nodes.parent_node(node.id());
-            while matches!(parent.kind(), AstKind::ParenthesizedExpression(_)) {
-                parent = nodes.parent_node(parent.id());
-            }
-
-            let is_iife = if let AstKind::CallExpression(call) = parent.kind() {
-                call.callee.span().contains_inclusive(node_span)
-            } else {
-                false
-            };
-
-            if !is_iife {
-                return true;
-            }
-
-            // Even if it's an IIFE, check if it has a name that references itself
-            // (could escape by storing itself somewhere like `arr.push(f)`)
-            if let Some(id) = func_id {
-                return scoping
-                    .get_resolved_references(id.symbol_id())
-                    .map(|reference| nodes.get_node(reference.node_id()))
-                    .any(|ref_node| node_span.contains_inclusive(ref_node.span()));
-            }
-        }
-
-        false
-    }
-
-    /// Find the containing loop statement, stopping at function boundaries.
-    /// Only returns a loop if the function is inside the loop's body (not init/test/update).
-    fn get_containing_loop<'a, 'b>(
-        node: &AstNode<'a>,
-        ctx: &'b LintContext<'a>,
-    ) -> Option<&'b AstNode<'a>> {
-        let nodes = ctx.nodes();
-        let func_span = node.span();
-        let mut current = nodes.parent_node(node.id());
-
-        loop {
-            match current.kind() {
-                // Found a loop - check if function is in the body (not init/test/update)
-                AstKind::ForStatement(_)
-                | AstKind::ForInStatement(_)
-                | AstKind::ForOfStatement(_)
-                | AstKind::WhileStatement(_)
-                | AstKind::DoWhileStatement(_) => {
-                    let body_span = Self::get_loop_body_span(current);
-                    if body_span.contains_inclusive(func_span) {
-                        return Some(current);
-                    }
-                }
-                // Stop at function boundaries or program root
-                AstKind::Function(_)
-                | AstKind::ArrowFunctionExpression(_)
-                | AstKind::Program(_) => {
-                    return None;
-                }
-                _ => {}
-            }
-            current = nodes.parent_node(current.id());
-        }
+        let mut finder = NestedFunctionFinder::new(func_node.id(), ctx);
+        Self::visit_function_node(func_node, &mut finder);
+        finder.found
     }
 
     /// Check if the function has any unsafe references to variables
@@ -243,52 +186,19 @@ impl NoLoopFunc {
         loop_node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
-        let scoping = ctx.scoping();
-        let nodes = ctx.nodes();
-        let func_span = func_node.span();
+        let mut finder = UnsafeReferenceFinder::new(func_node.span(), loop_node, ctx);
+        Self::visit_function_node(func_node, &mut finder);
+        finder.found
+    }
 
-        // Iterate through all symbols and check their references
-        for symbol_id in scoping.symbol_ids() {
-            let flags = scoping.symbol_flags(symbol_id);
-
-            // Skip type-only symbols (TypeScript types, interfaces, etc.)
-            if flags.is_type() && !flags.is_value() {
-                continue;
+    fn visit_function_node<'a, V: Visit<'a>>(func_node: &AstNode<'a>, visitor: &mut V) {
+        match func_node.kind() {
+            AstKind::Function(function) => visitor.visit_function(function, ScopeFlags::Function),
+            AstKind::ArrowFunctionExpression(arrow) => {
+                visitor.visit_arrow_function_expression(arrow);
             }
-
-            // Get the declaration node for the symbol
-            let symbol_decl_node_id = scoping.symbol_declaration(symbol_id);
-            let symbol_decl_node = nodes.get_node(symbol_decl_node_id);
-            let symbol_decl_span = symbol_decl_node.span();
-
-            // Skip if the symbol is declared inside the function (local variable)
-            if func_span.contains_inclusive(symbol_decl_span) {
-                continue;
-            }
-
-            // Check if any reference to this symbol is from inside the function
-            let mut is_referenced_in_function = false;
-            for reference in scoping.get_resolved_references(symbol_id) {
-                let ref_node = nodes.get_node(reference.node_id());
-                let ref_span = ref_node.span();
-                // A reference is only inside the function if its span is contained within the function's span
-                if func_span.contains_inclusive(ref_span) {
-                    is_referenced_in_function = true;
-                    break;
-                }
-            }
-
-            if !is_referenced_in_function {
-                continue;
-            }
-
-            // Now check if this reference is unsafe
-            if Self::is_unsafe_reference(symbol_id, loop_node, ctx) {
-                return true;
-            }
+            _ => {}
         }
-
-        false
     }
 
     /// Determine if a variable reference is unsafe within a loop context
@@ -416,11 +326,11 @@ impl NoLoopFunc {
     }
 
     /// Check if a let-declared variable is unsafe in a loop
-    fn is_let_unsafe_in_loop(
+    fn is_let_unsafe_in_loop<'a>(
         symbol_id: SymbolId,
-        symbol_decl_node: &AstNode,
-        loop_node: &AstNode,
-        ctx: &LintContext,
+        symbol_decl_node: &AstNode<'a>,
+        loop_node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
     ) -> bool {
         let loop_body_span = Self::get_loop_body_span(loop_node);
         let decl_span = symbol_decl_node.span();
@@ -430,21 +340,134 @@ impl NoLoopFunc {
             return false;
         }
 
-        // For `for` loops, check if let is declared in the loop header (init expression)
-        // `for (let i = 0; ...)` creates fresh bindings per iteration - safe
-        if Self::is_in_for_loop_header(symbol_decl_node, loop_node) {
+        // For `for` loops, check if let is declared in this loop header or in a containing
+        // loop header. `for (let i = 0; ...)` creates fresh bindings per iteration, and that
+        // binding remains safe for functions in nested loop bodies within the same iteration.
+        if Self::is_in_containing_for_loop_header(symbol_decl_node, loop_node, ctx) {
             return false;
         }
 
-        // If declared outside the loop body, check for modifications
         let scoping = ctx.scoping();
+        let border = Self::get_top_loop_node(loop_node, Some(symbol_decl_node), ctx).span().start;
+        let symbol_variable_scope_id =
+            Self::get_enclosing_variable_scope_id(scoping.symbol_scope_id(symbol_id), ctx);
+
+        // If declared outside the loop body, writes are safe only when they happen before the
+        // relevant loop and in the same variable scope as the declaration.
         for reference in scoping.get_resolved_references(symbol_id) {
             if reference.is_write() {
-                return true;
+                let ref_span = ctx.semantic().reference_span(reference);
+                let ref_variable_scope_id =
+                    Self::get_enclosing_variable_scope_id(reference.scope_id(), ctx);
+                if ref_span.start >= border || ref_variable_scope_id != symbol_variable_scope_id {
+                    return true;
+                }
             }
         }
 
         false
+    }
+
+    /// Get the outermost loop that starts after an excluded node.
+    fn get_top_loop_node<'a, 'ctx>(
+        loop_node: &'ctx AstNode<'a>,
+        excluded_node: Option<&AstNode>,
+        ctx: &'ctx LintContext<'a>,
+    ) -> &'ctx AstNode<'a> {
+        let border = excluded_node.map_or(0, |node| node.span().end);
+        let mut top_loop_node = loop_node;
+        let mut containing_loop_node = Some(loop_node);
+
+        while let Some(current_loop_node) = containing_loop_node {
+            if current_loop_node.span().start < border {
+                break;
+            }
+            top_loop_node = current_loop_node;
+            containing_loop_node = Self::get_containing_loop_node(current_loop_node, ctx);
+        }
+
+        top_loop_node
+    }
+
+    /// Gets the containing loop node of a node without crossing function boundaries.
+    fn get_containing_loop_node<'a, 'ctx>(
+        node: &'ctx AstNode<'a>,
+        ctx: &'ctx LintContext<'a>,
+    ) -> Option<&'ctx AstNode<'a>> {
+        let nodes = ctx.nodes();
+        let mut current = node;
+
+        loop {
+            let parent = nodes.parent_node(current.id());
+            match parent.kind() {
+                AstKind::WhileStatement(_) | AstKind::DoWhileStatement(_) => return Some(parent),
+                AstKind::ForStatement(stmt) => {
+                    if stmt
+                        .init
+                        .as_ref()
+                        .is_none_or(|init| !init.span().contains_inclusive(current.span()))
+                    {
+                        return Some(parent);
+                    }
+                }
+                AstKind::ForInStatement(stmt) => {
+                    if !stmt.right.span().contains_inclusive(current.span()) {
+                        return Some(parent);
+                    }
+                }
+                AstKind::ForOfStatement(stmt) => {
+                    if !stmt.right.span().contains_inclusive(current.span()) {
+                        return Some(parent);
+                    }
+                }
+                AstKind::Function(_)
+                | AstKind::ArrowFunctionExpression(_)
+                | AstKind::Program(_) => {
+                    return None;
+                }
+                _ => {}
+            }
+            current = parent;
+        }
+    }
+
+    fn get_enclosing_variable_scope_id(scope_id: ScopeId, ctx: &LintContext) -> ScopeId {
+        let scoping = ctx.scoping();
+        let mut current_scope_id = scope_id;
+        loop {
+            if scoping.scope_flags(current_scope_id).is_var() {
+                return current_scope_id;
+            }
+            let Some(parent_scope_id) = scoping.scope_parent_id(current_scope_id) else {
+                return current_scope_id;
+            };
+            current_scope_id = parent_scope_id;
+        }
+    }
+
+    fn is_in_containing_for_loop_header<'a>(
+        symbol_decl_node: &AstNode<'a>,
+        loop_node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) -> bool {
+        let nodes = ctx.nodes();
+        let mut current = loop_node;
+
+        loop {
+            if Self::is_in_for_loop_header(symbol_decl_node, current) {
+                return true;
+            }
+
+            let parent = nodes.parent_node(current.id());
+            match parent.kind() {
+                AstKind::Function(_)
+                | AstKind::ArrowFunctionExpression(_)
+                | AstKind::Program(_) => {
+                    return false;
+                }
+                _ => current = parent,
+            }
+        }
     }
 
     /// Check if a variable declaration is in a for loop's header (init expression)
@@ -479,6 +502,154 @@ impl NoLoopFunc {
             AstKind::WhileStatement(stmt) => stmt.body.span(),
             AstKind::DoWhileStatement(stmt) => stmt.body.span(),
             _ => loop_node.span(),
+        }
+    }
+}
+
+/// Collects functions in the current loop body. Nested loop bodies are skipped because
+/// nested loops get their own rule invocation, but their headers still belong to this loop body.
+#[derive(Default)]
+struct LoopFunctionCollector {
+    function_node_ids: Vec<NodeId>,
+}
+
+impl<'a> Visit<'a> for LoopFunctionCollector {
+    fn visit_function(&mut self, function: &Function<'a>, _flags: ScopeFlags) {
+        if function.is_expression() || function.is_declaration() {
+            self.function_node_ids.push(function.node_id());
+        }
+    }
+
+    fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
+        self.function_node_ids.push(arrow.node_id());
+    }
+
+    fn visit_for_statement(&mut self, statement: &ForStatement<'a>) {
+        if let Some(init) = &statement.init {
+            self.visit_for_statement_init(init);
+        }
+        if let Some(test) = &statement.test {
+            self.visit_expression(test);
+        }
+        if let Some(update) = &statement.update {
+            self.visit_expression(update);
+        }
+    }
+
+    fn visit_for_in_statement(&mut self, statement: &ForInStatement<'a>) {
+        self.visit_for_statement_left(&statement.left);
+        self.visit_expression(&statement.right);
+    }
+
+    fn visit_for_of_statement(&mut self, statement: &ForOfStatement<'a>) {
+        self.visit_for_statement_left(&statement.left);
+        self.visit_expression(&statement.right);
+    }
+
+    fn visit_while_statement(&mut self, statement: &WhileStatement<'a>) {
+        self.visit_expression(&statement.test);
+    }
+
+    fn visit_do_while_statement(&mut self, statement: &DoWhileStatement<'a>) {
+        self.visit_expression(&statement.test);
+    }
+}
+
+/// Finds nested functions inside of a given function node.
+struct NestedFunctionFinder<'a, 'ctx> {
+    ctx: &'ctx LintContext<'a>,
+    root_node_id: NodeId,
+    found: bool,
+}
+
+impl<'a, 'ctx> NestedFunctionFinder<'a, 'ctx> {
+    fn new(root_node_id: NodeId, ctx: &'ctx LintContext<'a>) -> Self {
+        Self { ctx, root_node_id, found: false }
+    }
+
+    fn should_walk_function(&mut self, node_id: NodeId, is_async_or_generator: bool) -> bool {
+        if self.found {
+            return false;
+        }
+
+        if node_id == self.root_node_id {
+            return true;
+        }
+
+        if is_async_or_generator {
+            self.found = true;
+            return false;
+        }
+
+        let node = self.ctx.nodes().get_node(node_id);
+        if NoLoopFunc::is_safe_iife(node, self.ctx) {
+            true
+        } else {
+            self.found = true;
+            false
+        }
+    }
+}
+
+impl<'a> Visit<'a> for NestedFunctionFinder<'a, '_> {
+    fn visit_function(&mut self, function: &Function<'a>, flags: ScopeFlags) {
+        if self.should_walk_function(function.node_id(), function.r#async || function.generator) {
+            walk::walk_function(self, function, flags);
+        }
+    }
+
+    fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
+        if self.should_walk_function(arrow.node_id(), arrow.r#async) {
+            walk::walk_arrow_function_expression(self, arrow);
+        }
+    }
+}
+
+/// Finds unsafe variable references inside of a given function node. A reference is unsafe if it resolves
+/// to a variable that is declared outside the loop body and is modified across iterations.
+struct UnsafeReferenceFinder<'a, 'ctx> {
+    ctx: &'ctx LintContext<'a>,
+    loop_node: &'ctx AstNode<'a>,
+    func_span: Span,
+    seen_symbols: FxHashSet<SymbolId>,
+    found: bool,
+}
+
+impl<'a, 'ctx> UnsafeReferenceFinder<'a, 'ctx> {
+    fn new(func_span: Span, loop_node: &'ctx AstNode<'a>, ctx: &'ctx LintContext<'a>) -> Self {
+        Self { ctx, loop_node, func_span, seen_symbols: FxHashSet::default(), found: false }
+    }
+}
+
+impl<'a> Visit<'a> for UnsafeReferenceFinder<'a, '_> {
+    fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
+        if self.found {
+            return;
+        }
+
+        let reference = self.ctx.scoping().get_reference(identifier.reference_id());
+        let Some(symbol_id) = reference.symbol_id() else {
+            return;
+        };
+
+        if !self.seen_symbols.insert(symbol_id) {
+            return;
+        }
+
+        let scoping = self.ctx.scoping();
+        let flags = scoping.symbol_flags(symbol_id);
+
+        if flags.is_type() && !flags.is_value() {
+            return;
+        }
+
+        let symbol_decl_node = self.ctx.nodes().get_node(scoping.symbol_declaration(symbol_id));
+        if self.func_span.contains_inclusive(symbol_decl_node.span()) {
+            return;
+        }
+
+        if NoLoopFunc::is_unsafe_reference(symbol_id, self.loop_node, self.ctx) {
+            self.found = true;
         }
     }
 }
@@ -608,18 +779,6 @@ fn test() {
               for (let i = 0; i < 10; i += 1) {
                 someArray = someArray.filter((item: MyType) => !!item);
               }
-                  ",
-"
-              let someArray: MyType[] = [];
-              for (let i = 0; i < 10; i += 1) {
-                someArray = someArray.filter((item: MyType) => !!item);
-              }
-                    ",
-"
-              let someArray: MyType[] = [];
-              for (let i = 0; i < 10; i += 1) {
-                someArray = someArray.filter((item: MyType) => !!item);
-              }
                     ",
 "
               type MyType = 1;
@@ -650,6 +809,36 @@ fn test() {
                   };
                 }
                   ",
+        // Function in the for-update slot is not in the loop body.
+        "for (var i = 0; i < l; i++, (function () { i; })()) { }",
+        r"
+            const callbacks = [];
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < 5; col++) {
+                    callbacks.push(function () {
+                        return row + col;
+                    });
+                }
+            }
+
+            let factor = 0;
+            if (factor < 5) {
+                factor++;
+            } else {
+                for (let index = 0; index < 5; index++) {
+                    const compute = (value, index) => factor * value + index;
+                }
+            }
+
+            let isOn = false;
+            if (isOn) {
+                isOn = true;
+            }
+
+            for (let imageId = 0; imageId < 5; imageId++) {
+                image.onload = () => (isOn ? 'enabled' : 'disabled');
+            }
+        ",
     ];
 
     let fail = vec![
@@ -888,6 +1077,31 @@ fn test() {
                 })();
             }
             ",
+        // Multiple sibling functions in one loop body — all must be reported.
+        "for (var i = 0; i < 5; i++) {
+            (function () { return i; });
+            (function () { return i + 1; });
+            (() => i);
+        }",
+        // Function nested inside switch/if/try inside a loop body — descendant walk
+        // must reach it.
+        "for (var i = 0; i < 5; i++) {
+            if (cond) {
+                try {
+                    arr.push(function () { return i; });
+                } catch (e) {}
+            } else {
+                switch (k) {
+                    case 1:
+                        arr.push(() => i);
+                }
+            }
+        }",
+        // do-while body comes before the test in source; multiple statements in body.
+        "var i = 0; do {
+            arr.push(function () { return i; });
+            arr.push(() => i);
+        } while (i++ < 5);",
     ];
 
     Tester::new(NoLoopFunc::NAME, NoLoopFunc::PLUGIN, pass, fail).test_and_snapshot();

@@ -64,7 +64,7 @@ pub type Severity = miette::Severity;
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
-pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource};
+pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, Labels, NamedSource};
 
 /// Describes an error or warning that occurred.
 ///
@@ -72,13 +72,11 @@ pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSourc
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[must_use]
 pub struct OxcDiagnostic {
-    // `Box` the data to make `OxcDiagnostic` 8 bytes so that `Result` is small.
-    // This is required because rust does not performance return value optimization.
-    inner: Box<OxcDiagnosticInner>,
+    inner: OxcDiagnosticInner,
 }
 
 impl Deref for OxcDiagnostic {
-    type Target = Box<OxcDiagnosticInner>;
+    type Target = OxcDiagnosticInner;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
@@ -117,7 +115,7 @@ impl Display for OxcCode {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OxcDiagnosticInner {
     pub message: Cow<'static, str>,
-    pub labels: Option<Vec<LabeledSpan>>,
+    pub labels: Labels,
     pub help: Option<Cow<'static, str>>,
     pub note: Option<Cow<'static, str>>,
     pub severity: Severity,
@@ -135,16 +133,16 @@ impl std::error::Error for OxcDiagnostic {}
 
 impl Diagnostic for OxcDiagnostic {
     /// The secondary help message.
-    fn help<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
-        self.help.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
+    fn help(&self) -> Option<Cow<'_, str>> {
+        self.help.as_deref().map(Cow::Borrowed)
     }
 
     /// A note for the diagnostic.
     ///
     /// Similar to rustc - intended for additional explanation and information,
     /// e.g. why an error was emitted, how to turn it off.
-    fn note<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
-        self.note.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
+    fn note(&self) -> Option<Cow<'_, str>> {
+        self.note.as_deref().map(Cow::Borrowed)
     }
 
     /// The severity level of this diagnostic.
@@ -155,24 +153,20 @@ impl Diagnostic for OxcDiagnostic {
     }
 
     /// Labels covering problematic portions of source code.
-    fn labels(&self) -> Option<Box<dyn Iterator<Item = LabeledSpan> + '_>> {
-        self.labels
-            .as_ref()
-            .map(|ls| ls.iter().cloned())
-            .map(Box::new)
-            .map(|b| b as Box<dyn Iterator<Item = LabeledSpan>>)
+    fn labels(&self) -> Labels {
+        self.labels.clone()
     }
 
     /// An error code uniquely identifying this diagnostic.
     ///
     /// Note that codes may be scoped, which will be rendered as `scope(code)`.
-    fn code<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
-        self.code.is_some().then(|| Box::new(&self.code) as Box<dyn Display>)
+    fn code(&self) -> Option<Cow<'_, str>> {
+        self.code.is_some().then(|| Cow::Owned(self.code.to_string()))
     }
 
     /// A URL that provides more information about the problem that occurred.
-    fn url<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
-        self.url.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
+    fn url(&self) -> Option<Cow<'_, str>> {
+        self.url.as_deref().map(Cow::Borrowed)
     }
 }
 
@@ -180,30 +174,30 @@ impl OxcDiagnostic {
     /// Create new an error-level [`OxcDiagnostic`].
     pub fn error<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self {
-            inner: Box::new(OxcDiagnosticInner {
+            inner: OxcDiagnosticInner {
                 message: message.into(),
-                labels: None,
+                labels: Labels::None,
                 note: None,
                 help: None,
                 severity: Severity::Error,
                 code: OxcCode::default(),
                 url: None,
-            }),
+            },
         }
     }
 
     /// Create new a warning-level [`OxcDiagnostic`].
     pub fn warn<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self {
-            inner: Box::new(OxcDiagnosticInner {
+            inner: OxcDiagnosticInner {
                 message: message.into(),
-                labels: None,
+                labels: Labels::None,
                 help: None,
                 note: None,
                 severity: Severity::Warning,
                 code: OxcCode::default(),
                 url: None,
-            }),
+            },
         }
     }
 
@@ -312,7 +306,7 @@ impl OxcDiagnostic {
     /// [`oxc_span::Span`]: https://docs.rs/oxc_span/latest/oxc_span/struct.Span.html
     /// [`label`]: https://docs.rs/oxc_span/latest/oxc_span/struct.Span.html#method.label
     pub fn with_label<T: Into<LabeledSpan>>(mut self, label: T) -> Self {
-        self.inner.labels = Some(vec![label.into()]);
+        self.inner.labels = Labels::One([label.into()]);
         self
     }
 
@@ -333,15 +327,13 @@ impl OxcDiagnostic {
         mut self,
         labels: T,
     ) -> Self {
-        self.inner.labels = Some(labels.into_iter().map(Into::into).collect());
+        self.inner.labels = labels.into_iter().map(Into::into).collect();
         self
     }
 
     /// Add a label to this diagnostic without clobbering existing labels.
     pub fn and_label<T: Into<LabeledSpan>>(mut self, label: T) -> Self {
-        let mut labels = self.inner.labels.unwrap_or_default();
-        labels.push(label.into());
-        self.inner.labels = Some(labels);
+        self.inner.labels.push(label.into());
         self
     }
 
@@ -350,9 +342,7 @@ impl OxcDiagnostic {
         mut self,
         labels: T,
     ) -> Self {
-        let mut all_labels = self.inner.labels.unwrap_or_default();
-        all_labels.extend(labels.into_iter().map(Into::into));
-        self.inner.labels = Some(all_labels);
+        self.inner.labels.extend(labels.into_iter().map(Into::into));
         self
     }
 
@@ -371,6 +361,6 @@ impl OxcDiagnostic {
 
     /// Consumes the diagnostic and returns the inner owned data.
     pub fn inner_owned(self) -> OxcDiagnosticInner {
-        *self.inner
+        self.inner
     }
 }

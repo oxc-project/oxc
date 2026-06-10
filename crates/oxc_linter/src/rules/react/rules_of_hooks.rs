@@ -332,11 +332,24 @@ impl Rule for RulesOfHooks {
                 r#async: true,
                 ..
             }) => {
-                return ctx.diagnostic(diagnostics::async_component(
-                    span,
-                    async_keyword_span(ctx, *async_span),
-                    hook_name,
-                ));
+                if is_directly_inside_component_or_hook(nodes, parent_func.id()) {
+                    return ctx.diagnostic(diagnostics::async_component(
+                        span,
+                        async_keyword_span(ctx, *async_span),
+                        hook_name,
+                    ));
+                }
+
+                if get_declaration_identifier(nodes, parent_func.id())
+                    .is_some_and(|name| !is_react_component_or_hook_name(&name))
+                {
+                    return ctx.diagnostic(diagnostics::function_error(
+                        call.callee.span(),
+                        *async_span,
+                        hook_name,
+                        "Anonymous",
+                    ));
+                }
             }
             _ => {}
         }
@@ -652,6 +665,20 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> b
             ident.is_some_and(|name| is_react_component_or_hook_name(&name))
                 || is_memo_or_forward_ref_callback(nodes, id)
         })
+}
+
+fn is_directly_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
+    let node = nodes.get_node(node_id);
+    let directly_named = match node.kind() {
+        AstKind::Function(func) => {
+            func.name().is_some_and(|name| is_react_component_or_hook_name(name.as_str()))
+        }
+        AstKind::ArrowFunctionExpression(_) => get_declaration_identifier(nodes, node_id)
+            .is_some_and(|name| is_react_component_or_hook_name(&name)),
+        _ => unreachable!(),
+    };
+
+    directly_named || is_memo_or_forward_ref_callback(nodes, node_id)
 }
 
 fn get_declaration_identifier<'a>(
@@ -1304,7 +1331,12 @@ fn test() {
     r"const MyComponent = makeComponent(() => { useHook(); });",
     r"const MyComponent2 = makeComponent(function () { useHook(); });",
     r"const MyComponent4 = makeComponent(function InnerComponent() { useHook(); });",
-    r"const Foo = hoc((props) => { if (props.cond) { const [_a, _b] = useState(false); } });"
+    r"const Foo = hoc((props) => { if (props.cond) { const [_a, _b] = useState(false); } });",
+    "
+        async (_, use) => {
+          await use();
+        };
+    "
     ];
 
     let fail = vec![

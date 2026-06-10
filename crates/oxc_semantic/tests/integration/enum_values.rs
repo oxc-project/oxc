@@ -118,6 +118,19 @@ fn auto_increment_after_string_fails() {
 }
 
 #[test]
+fn auto_increment_after_unresolvable_fails() {
+    // Auto-increment must propagate the "unknown" state of the previous member,
+    // not silently restart at 0.
+    let source = "enum A { X = foo(), Y }";
+    debug_assert_eq!(get_enum_member_value(source, "X"), None);
+    debug_assert_eq!(get_enum_member_value(source, "Y"), None);
+
+    let source = "enum A { X = foo(), Y, Z }";
+    debug_assert_eq!(get_enum_member_value(source, "Y"), None);
+    debug_assert_eq!(get_enum_member_value(source, "Z"), None);
+}
+
+#[test]
 fn parenthesized_expression() {
     let source = "enum A { X = (1 + 2) }";
     debug_assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(3.0)));

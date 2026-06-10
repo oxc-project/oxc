@@ -217,8 +217,137 @@ impl<'a> RawNum<'a> {
 }
 
 impl NoLossOfPrecision {
+    const MAX_OBVIOUSLY_SAFE_SIGNIFICANT_DIGITS: usize = 15;
+
+    fn strip_numeric_separators(raw: &str) -> Cow<'_, str> {
+        if !raw.as_bytes().contains(&b'_') {
+            return Cow::Borrowed(raw);
+        }
+        raw.cow_replace('_', "")
+    }
+
+    fn non_base_ten_literal_is_exact(raw: &str) -> bool {
+        let raw = raw.trim_start_matches(['+', '-']);
+        let (radix, digits) =
+            if let Some(digits) = raw.strip_prefix("0b").or_else(|| raw.strip_prefix("0B")) {
+                (2, digits)
+            } else if let Some(digits) = raw.strip_prefix("0o").or_else(|| raw.strip_prefix("0O")) {
+                (8, digits)
+            } else if let Some(digits) = raw.strip_prefix("0x").or_else(|| raw.strip_prefix("0X")) {
+                (16, digits)
+            } else {
+                (8, raw.trim_start_matches('0'))
+            };
+
+        let mut bit_len = 0;
+        for byte in digits.bytes() {
+            if byte == b'_' {
+                continue;
+            }
+
+            let digit = match byte {
+                b'0'..=b'9' => byte - b'0',
+                b'a'..=b'f' => byte - b'a' + 10,
+                b'A'..=b'F' => byte - b'A' + 10,
+                _ => return false,
+            };
+
+            if bit_len == 0 {
+                if digit == 0 {
+                    continue;
+                }
+                bit_len = match radix {
+                    2 => 1,
+                    8 => match digit {
+                        1 => 1,
+                        2 | 3 => 2,
+                        _ => 3,
+                    },
+                    _ => match digit {
+                        1 => 1,
+                        2 | 3 => 2,
+                        4..=7 => 3,
+                        _ => 4,
+                    },
+                };
+            } else {
+                bit_len += match radix {
+                    2 => 1,
+                    8 => 3,
+                    _ => 4,
+                };
+            }
+
+            if bit_len > 53 {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    fn base_ten_literal_is_safe(raw: &str, value: f64) -> bool {
+        if !value.is_finite() {
+            return false;
+        }
+
+        let raw = raw.trim_start_matches(['+', '-']);
+        let exponent_start = raw.find(['e', 'E']).unwrap_or(raw.len());
+        if exponent_start != raw.len() {
+            return false;
+        }
+        let mantissa = &raw[..exponent_start];
+
+        let mut digit_index = 0;
+        let mut first_non_zero = None;
+        let mut last_non_zero = None;
+        let mut fractional_has_non_zero = false;
+        let mut dot_digit_index = None;
+
+        for byte in mantissa.bytes() {
+            match byte {
+                b'_' => continue,
+                b'.' => {
+                    dot_digit_index = Some(digit_index);
+                    continue;
+                }
+                b'0'..=b'9' => {}
+                _ => return false,
+            }
+
+            if byte != b'0' {
+                first_non_zero.get_or_insert(digit_index);
+                last_non_zero = Some(digit_index);
+                fractional_has_non_zero |= dot_digit_index.is_some();
+            }
+            digit_index += 1;
+        }
+
+        let Some(first_non_zero) = first_non_zero else {
+            return true;
+        };
+        if value == 0.0 {
+            return false;
+        }
+
+        if let Some(dot_digit_index) = dot_digit_index
+            && !fractional_has_non_zero
+        {
+            return dot_digit_index - first_non_zero <= Self::MAX_OBVIOUSLY_SAFE_SIGNIFICANT_DIGITS;
+        }
+
+        let last_significant =
+            if dot_digit_index.is_some() { digit_index - 1 } else { last_non_zero.unwrap() };
+        last_significant - first_non_zero < Self::MAX_OBVIOUSLY_SAFE_SIGNIFICANT_DIGITS
+    }
+
     fn not_base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
-        let raw = node.raw.as_ref().unwrap().as_str().cow_replace('_', "");
+        let raw = node.raw.as_ref().unwrap().as_str();
+        if Self::non_base_ten_literal_is_exact(raw) {
+            return false;
+        }
+
+        let raw = Self::strip_numeric_separators(raw);
         let raw = raw.cow_to_ascii_uppercase();
         #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         // AST always store number as f64, need a cast to format in bin/oct/hex
@@ -234,7 +363,12 @@ impl NoLossOfPrecision {
     }
 
     fn base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
-        let raw = node.raw.as_ref().unwrap().as_str().cow_replace('_', "");
+        let raw = node.raw.as_ref().unwrap().as_str();
+        if Self::base_ten_literal_is_safe(raw, node.value) {
+            return false;
+        }
+
+        let raw = Self::strip_numeric_separators(raw);
         let Some(raw) = Self::normalize(&raw, false) else {
             return true;
         };

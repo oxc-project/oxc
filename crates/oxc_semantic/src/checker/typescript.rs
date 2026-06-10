@@ -11,16 +11,13 @@ use oxc_str::Str;
 use crate::{builder::SemanticBuilder, diagnostics};
 
 pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
-    check_type_name_is_reserved(&param.name, ctx, "Type parameter");
     if param.r#in || param.out {
         let is_allowed_node = matches!(
-            // skip parent TSTypeParameterDeclaration
-            ctx.nodes.ancestor_kinds(ctx.current_node_id).nth(1),
-            Some(
-                AstKind::TSInterfaceDeclaration(_)
-                    | AstKind::Class(_)
-                    | AstKind::TSTypeAliasDeclaration(_)
-            )
+            // skip parent TSTypeParameterDeclaration (grandparent is index 1)
+            ctx.ancestry().ancestor_kinds().nth(1).unwrap(),
+            AstKind::TSInterfaceDeclaration(_)
+                | AstKind::Class(_)
+                | AstKind::TSTypeAliasDeclaration(_)
         );
         if !is_allowed_node {
             if param.r#in {
@@ -67,20 +64,12 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
     ));
 }
 
-pub fn check_ts_type_alias_declaration<'a>(
-    decl: &TSTypeAliasDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    check_type_name_is_reserved(&decl.id, ctx, "Type alias");
-}
-
 pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuilder<'a>) {
-    let is_in_conditional_extends_clause =
-        ctx.nodes.ancestor_kinds(ctx.current_node_id).any(|kind| {
-            kind.as_ts_conditional_type().is_some_and(|conditional| {
-                conditional.extends_type.span().contains_inclusive(infer_type.span)
-            })
-        });
+    let is_in_conditional_extends_clause = ctx.ancestry().ancestor_kinds().any(|kind| {
+        kind.as_ts_conditional_type().is_some_and(|conditional| {
+            conditional.extends_type.span().contains_inclusive(infer_type.span)
+        })
+    });
 
     if !is_in_conditional_extends_clause {
         ctx.error(diagnostics::infer_declaration_only_permitted_in_extends_clause(infer_type.span));
@@ -130,8 +119,8 @@ pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &Sem
 
 fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
     // skip current node
-    for node in ctx.nodes.ancestors(ctx.current_node_id) {
-        match node.kind() {
+    for kind in ctx.ancestry().ancestor_kinds() {
+        match kind {
             AstKind::Program(_)
             | AstKind::TSModuleBlock(_)
             | AstKind::TSModuleDeclaration(_)
@@ -171,19 +160,6 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
             ctx.error(diagnostics::enum_member_must_have_initializer(member.span));
         }
     });
-
-    check_type_name_is_reserved(&decl.id, ctx, "Enum");
-}
-
-pub fn check_ts_import_equals_declaration<'a>(
-    decl: &TSImportEqualsDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    // `import type Foo = require('./foo')` is allowed
-    // `import { Foo } from './foo'; import type Bar = Foo.Bar` is not allowed
-    if decl.import_kind.is_type() && !decl.module_reference.is_external() {
-        ctx.error(diagnostics::import_alias_cannot_use_import_type(decl.span));
-    }
 }
 
 pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
@@ -230,67 +206,10 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
             }
         }
     }
-    if let Some(id) = &class.id {
-        check_type_name_is_reserved(id, ctx, "Class");
-    }
-}
-
-pub fn check_ts_interface_declaration<'a>(
-    decl: &TSInterfaceDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    check_type_name_is_reserved(&decl.id, ctx, "Interface");
-}
-
-/// ```ts
-/// function checkTypeNameIsReserved(name: Identifier, message: DiagnosticMessage): void {
-///     // TS 1.0 spec (April 2014): 3.6.1
-///     // The predefined type keywords are reserved and cannot be used as names of user defined types.
-///     switch (name.escapedText) {
-///         case "any":
-///         case "unknown":
-///         case "never":
-///         case "number":
-///         case "bigint":
-///         case "boolean":
-///         case "string":
-///         case "symbol":
-///         case "void":
-///         case "object":
-///         case "undefined":
-///             error(name, message, name.escapedText as string);
-///     }
-/// }
-/// ```
-fn check_type_name_is_reserved<'a>(
-    id: &BindingIdentifier<'a>,
-    ctx: &SemanticBuilder<'a>,
-    syntax_name: &str,
-) {
-    match id.name.as_str() {
-        "any" | "unknown" | "never" | "number" | "bigint" | "boolean" | "string" | "symbol"
-        | "void" | "object" | "undefined" => {
-            ctx.error(diagnostics::reserved_type_name(id.span, id.name.as_str(), syntax_name));
-        }
-        _ => {}
-    }
 }
 
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
     let is_abstract = method.r#type.is_abstract();
-    let is_declare = ctx.class_table_builder.current_class_id.map_or(
-        ctx.source_type.is_typescript_definition(),
-        |id| {
-            let node_id = ctx.class_table_builder.classes.declarations[id];
-            let AstKind::Class(class) = ctx.nodes.get_node(node_id).kind() else {
-                #[cfg(debug_assertions)]
-                panic!("current_class_id is set, but does not point to a Class node.");
-                #[cfg(not(debug_assertions))]
-                return ctx.source_type.is_typescript_definition();
-            };
-            class.declare || ctx.source_type.is_typescript_definition()
-        },
-    );
 
     if is_abstract {
         // constructors cannot be abstract, no matter what
@@ -316,24 +235,23 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     }
 
     // Illegal to have `get foo();` or `set foo(a)`
-    if method.kind.is_accessor() && is_empty_body && !is_abstract && !is_declare {
-        ctx.error(diagnostics::accessor_without_body(method.key.span()));
-    }
-}
-
-pub fn check_property_definition(prop: &PropertyDefinition, ctx: &SemanticBuilder<'_>) {
-    // abstract cannot be used with private identifiers
-    if prop.r#type.is_abstract() && prop.key.is_private_identifier() {
-        ctx.error(diagnostics::abstract_cannot_be_used_with_private_identifier(prop.key.span()));
-    }
-}
-
-pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
-    if let Expression::FunctionExpression(func) = &prop.value
-        && prop.kind.is_accessor()
-        && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
-    {
-        ctx.error(diagnostics::accessor_without_body(prop.key.span()));
+    if method.kind.is_accessor() && is_empty_body && !is_abstract {
+        let is_declare = ctx.class_table_builder.current_class_id.map_or(
+            ctx.source_type.is_typescript_definition(),
+            |id| {
+                let node_id = ctx.class_table_builder.classes.declarations[id];
+                let AstKind::Class(class) = ctx.ancestry().find_kind_by_node_id(node_id) else {
+                    #[cfg(debug_assertions)]
+                    panic!("current_class_id is set, but does not point to a Class node.");
+                    #[cfg(not(debug_assertions))]
+                    return ctx.source_type.is_typescript_definition();
+                };
+                class.declare || ctx.source_type.is_typescript_definition()
+            },
+        );
+        if !is_declare {
+            ctx.error(diagnostics::accessor_without_body(method.key.span()));
+        }
     }
 }
 
@@ -347,17 +265,6 @@ pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &
             let span = decl.id.span();
             ctx.error(diagnostics::type_annotation_in_for_left(span, is_for_in));
         }
-    }
-}
-
-pub fn check_jsx_expression_container(
-    container: &JSXExpressionContainer,
-    ctx: &SemanticBuilder<'_>,
-) {
-    if matches!(container.expression, JSXExpression::SequenceExpression(_)) {
-        ctx.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
-            container.expression.span(),
-        ));
     }
 }
 

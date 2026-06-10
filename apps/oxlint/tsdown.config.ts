@@ -103,6 +103,8 @@ export default defineConfig([
         // External native bindings
         "./oxlint.*.node",
         "@oxlint/*",
+        // Optional peer dependency; must be installed by the user
+        "vite-plus",
       ],
     },
     minify: minifyConfig,

@@ -183,56 +183,49 @@ exports[`LSP code actions > with code action only context > should handle quickf
 "--- FILE -----------
 context_only/test.ts
 --- Original Content ---------
-debugger;
-debugger;
-
+if (foo == NaN) {}
+if (bar == NaN) {}
 --- Code Actions ---------
 
-Title : Remove the debugger statement
+Title : Replace \`foo == NaN\` with \`isNaN(foo)\`.
 Preferred: Yes
 Resulting Content:
+if (isNaN(foo)) {}
+if (bar == NaN) {}######
 
-debugger;
-######
-
-Title : Disable no-debugger for this line
+Title : Disable use-isnan for this line
 Preferred: No
 Resulting Content:
-// oxlint-disable-next-line no-debugger
-debugger;
-debugger;
-######
+// oxlint-disable-next-line use-isnan
+if (foo == NaN) {}
+if (bar == NaN) {}######
 
-Title : Disable no-debugger for this whole file
+Title : Disable use-isnan for this whole file
 Preferred: No
 Resulting Content:
-// oxlint-disable no-debugger
-debugger;
-debugger;
-######
+// oxlint-disable use-isnan
+if (foo == NaN) {}
+if (bar == NaN) {}######
 
-Title : Remove the debugger statement
+Title : Replace \`bar == NaN\` with \`isNaN(bar)\`.
 Preferred: Yes
 Resulting Content:
-debugger;
+if (foo == NaN) {}
+if (isNaN(bar)) {}######
 
-######
-
-Title : Disable no-debugger for this line
+Title : Disable use-isnan for this line
 Preferred: No
 Resulting Content:
-debugger;
-// oxlint-disable-next-line no-debugger
-debugger;
-######
+if (foo == NaN) {}
+// oxlint-disable-next-line use-isnan
+if (bar == NaN) {}######
 
-Title : Disable no-debugger for this whole file
+Title : Disable use-isnan for this whole file
 Preferred: No
 Resulting Content:
-// oxlint-disable no-debugger
-debugger;
-debugger;
-
+// oxlint-disable use-isnan
+if (foo == NaN) {}
+if (bar == NaN) {}
 --------------------"
 `;
 
@@ -240,17 +233,15 @@ exports[`LSP code actions > with code action only context > should handle source
 "--- FILE -----------
 context_only/test.ts
 --- Original Content ---------
-debugger;
-debugger;
-
+if (foo == NaN) {}
+if (bar == NaN) {}
 --- Code Actions ---------
 
 Title : fix all safe fixable oxlint issues
 Preferred: Yes
 Resulting Content:
-
-
-
+if (isNaN(foo)) {}
+if (isNaN(bar)) {}
 --------------------"
 `;
 
@@ -258,17 +249,15 @@ exports[`LSP code actions > with code action only context > should handle source
 "--- FILE -----------
 context_only/test.ts
 --- Original Content ---------
-debugger;
-debugger;
-
+if (foo == NaN) {}
+if (bar == NaN) {}
 --- Code Actions ---------
 
 Title : fix all safe fixable oxlint issues
 Preferred: Yes
 Resulting Content:
-
-
-
+if (isNaN(foo)) {}
+if (isNaN(bar)) {}
 --------------------"
 `;
 
@@ -276,16 +265,14 @@ exports[`LSP code actions > with code action only context > should handle source
 "--- FILE -----------
 context_only/test.ts
 --- Original Content ---------
-debugger;
-debugger;
-
+if (foo == NaN) {}
+if (bar == NaN) {}
 --- Code Actions ---------
 
 Title : fix all fixable oxlint issues
 Preferred: Yes
 Resulting Content:
-
-
-
+if (isNaN(foo)) {}
+if (isNaN(bar)) {}
 --------------------"
 `;

@@ -27,7 +27,7 @@ fn complexity_diagnostic(span: Span, name: &str, complexity: usize, max: usize) 
 const THRESHOLD_DEFAULT: usize = 20;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ComplexityConfig {
     /// Maximum amount of cyclomatic complexity
     #[serde(alias = "maximum")]
@@ -61,6 +61,18 @@ impl Deref for Complexity {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+#[cfg(feature = "ruledocs")]
+impl Complexity {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<ComplexityConfig>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
     }
 }
 

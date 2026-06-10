@@ -18,10 +18,10 @@ use oxc::{
 };
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_pretty_json};
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
-    Semicolons, TrailingCommas, get_parse_options,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, JsFormatOptions,
+    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
+use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use rayon::prelude::*;
 
 use crate::{
@@ -144,13 +144,10 @@ fn is_error_suppressed_by_ts_ignore(
     }
 
     // Get the error's byte offset from the first label
-    let Some(labels) = &error.labels else {
+    let Some(first_label) = error.labels.first() else {
         return false;
     };
-    let Some(first_label) = labels.first() else {
-        return false;
-    };
-    let error_offset = first_label.offset();
+    let error_offset = first_label.offset() as usize;
 
     // Check if any ts-ignore span covers the line before this error
     for ts_ignore_span in ts_ignore_spans {
@@ -229,18 +226,22 @@ pub fn run_parser_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
     files
         .par_iter()
         .map(|f| {
+            // `// @alwaysStrict: true, false` can request multiple variants; run each.
+            // When the directive is absent, the field is `[false]` (the default).
             let mut final_result = TestResult::Passed;
-            for unit in &f.units {
-                let result = run_parser_typescript_unit(
-                    &f.path,
-                    &unit.content,
-                    unit.source_type,
-                    f.settings.always_strict,
-                    &unit.ts_ignore_spans,
-                );
-                if !matches!(result, TestResult::Passed) {
-                    final_result = result;
-                    break;
+            'outer: for &always_strict in &f.settings.always_strict {
+                for unit in &f.units {
+                    let result = run_parser_typescript_unit(
+                        &f.path,
+                        &unit.content,
+                        unit.source_type,
+                        always_strict,
+                        &unit.ts_ignore_spans,
+                    );
+                    if !matches!(result, TestResult::Passed) {
+                        final_result = result;
+                        break 'outer;
+                    }
                 }
             }
             let result = evaluate_result(final_result, f.should_fail);
@@ -444,10 +445,10 @@ pub fn run_codegen_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
 // Formatter
 // ================================
 
-fn get_formatter_options_list() -> [FormatOptions; 3] {
+fn get_formatter_options_list() -> [JsFormatOptions; 3] {
     [
-        FormatOptions::default(),
-        FormatOptions {
+        JsFormatOptions::default(),
+        JsFormatOptions {
             indent_style: IndentStyle::Tab,
             indent_width: IndentWidth::try_from(4).unwrap(),
             line_ending: LineEnding::Crlf,
@@ -464,7 +465,7 @@ fn get_formatter_options_list() -> [FormatOptions; 3] {
             expand: Expand::Never,
             ..Default::default()
         },
-        FormatOptions {
+        JsFormatOptions {
             indent_width: IndentWidth::try_from(8).unwrap(),
             line_width: LineWidth::try_from(120).unwrap(),
             line_ending: LineEnding::Lf,
@@ -476,29 +477,20 @@ fn get_formatter_options_list() -> [FormatOptions; 3] {
 }
 
 fn run_formatter(code: &str, source_type: SourceType) -> TestResult {
-    let allocator = Allocator::default();
-    let ParserReturn { program, errors, .. } =
-        Parser::new(&allocator, code, source_type).with_options(get_parse_options()).parse();
-
-    if !errors.is_empty() {
-        return TestResult::Passed; // Skip if parse error
-    }
-
     for options in get_formatter_options_list() {
-        let text1 = Formatter::new(&allocator, options.clone()).build(&program);
+        let allocator = Allocator::default();
+        let text1 =
+            match oxc_formatter::format(&allocator, code, source_type, options.clone(), None) {
+                Ok(formatted) => formatted.print().unwrap().into_code(),
+                Err(_) => return TestResult::Passed, // Skip if parse error
+            };
 
+        // Re-format the output: a parse error on the second pass is a real formatter bug.
         let allocator2 = Allocator::default();
-        let ParserReturn { program: program2, errors, .. } =
-            Parser::new(&allocator2, &text1, source_type).with_options(get_parse_options()).parse();
-
-        if !errors.is_empty() {
-            return TestResult::ParseError(
-                errors.iter().map(std::string::ToString::to_string).collect(),
-                false,
-            );
-        }
-
-        let text2 = Formatter::new(&allocator2, options).build(&program2);
+        let text2 = match oxc_formatter::format(&allocator2, &text1, source_type, options, None) {
+            Ok(formatted) => formatted.print().unwrap().into_code(),
+            Err(err) => return TestResult::ParseError(err.to_string(), false),
+        };
 
         if text1 != text2 {
             return TestResult::Mismatch("Mismatch", text1, text2);
