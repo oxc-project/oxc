@@ -69,37 +69,37 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs: Expression<'a>,
         allow_return_type_in_arrow_function: bool,
     ) -> Result<Expression<'a>, Expression<'a>> {
-        // A TS return type may sit between `)` and `=>` (`(a): T => ...`). Only treat a `:` as a
-        // return type where arrow return types are allowed; otherwise (e.g. a conditional
-        // consequent `cond ? (a) : b`) the `:` belongs to the enclosing conditional.
-        let has_return_type =
-            self.is_ts && self.at(Kind::Colon) && allow_return_type_in_arrow_function;
-        if !has_return_type && !self.at(Kind::Arrow) {
+        // A TS return type may sit between `)` and `=>` (`(a): T => ...`); a `:` here may instead
+        // belong to an enclosing conditional (`cond ? (a) : b`). Resolved by the speculation below.
+        let at_return_type = self.is_ts && self.at(Kind::Colon);
+        if !at_return_type && !self.at(Kind::Arrow) {
             return Err(lhs);
         }
-        // `( a )` parses to `ParenthesizedExpression(Identifier)` (with `preserve_parens`) or a bare
-        // `Identifier`. Anything else (e.g. `(a).b =>`) is not a refinable arrow head.
-        let is_parenthesized_identifier = match &lhs {
-            Expression::Identifier(_) => true,
-            Expression::ParenthesizedExpression(p) => {
-                matches!(&p.expression, Expression::Identifier(_))
-            }
-            _ => false,
-        };
-        if !is_parenthesized_identifier {
+        // The cover head parses (with `preserve_parens`) to a `ParenthesizedExpression` wrapping the
+        // refinable `Expression`, or — when `=>` follows so the wrapper was skipped — to the bare
+        // expression. Anything else (e.g. `(a).b =>`, `(a + b) =>`) is not a refinable arrow head.
+        if !Self::is_refinable_cover_head(&lhs) {
             return Err(lhs);
         }
         // `( .. )` span (prev_token_end is the `)` end — before any return type), matching the
         // direct param-parse path.
         let params_span = self.end_span(span);
-        if has_return_type {
+        if at_return_type {
             // The TS `(a): T =>` case is rare; speculate the return-type + `=>` tail so a malformed
-            // `(a): =>` errors exactly like the old rewind path (falls back to `(a)` as an
-            // expression, then a stray `:`). For the common no-return-type arrow there is no
-            // speculation.
+            // `(a): =>` errors exactly like the old rewind path. For the common no-return-type arrow
+            // there is no speculation.
             let checkpoint = self.checkpoint();
             self.parse_ts_return_type_annotation();
-            let is_arrow = self.fatal_error.is_none() && self.at(Kind::Arrow);
+            let mut is_arrow = self.fatal_error.is_none() && self.at(Kind::Arrow);
+            if is_arrow && !allow_return_type_in_arrow_function {
+                // Return types are not unconditionally allowed here (a conditional consequent): the
+                // `:` could instead terminate the enclosing conditional. As the speculate path does,
+                // accept the arrow only if a `:` follows the body — `cond ? (a): T => b : c` is an
+                // arrow, but `cond ? (a) : b => c` is `(a)` then the conditional's `b => c`.
+                self.bump_any(); // `=>`
+                self.skip_concise_arrow_body();
+                is_arrow = self.fatal_error.is_none() && self.at(Kind::Colon);
+            }
             self.rewind(checkpoint);
             if !is_arrow {
                 return Err(lhs);
@@ -111,7 +111,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         let params = self.refine_arrow_params(inner, params_span);
         let return_type =
-            if has_return_type { self.parse_ts_return_type_annotation() } else { None };
+            if at_return_type { self.parse_ts_return_type_annotation() } else { None };
         if self.cur_token().is_on_new_line() {
             self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
         }
@@ -119,6 +119,61 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let head =
             ArrowFunctionHead { type_parameters: None, params, return_type, r#async: false, span };
         Ok(self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function))
+    }
+
+    /// Whether `expr` is a `CoverParenthesizedExpressionAndArrowParameterList` that can be refined to
+    /// `ArrowFormalParameters` by [`Self::refine_arrow_params`]: a single binding `( a )`, a
+    /// sequence `( a , b )`, a destructuring `( [ … ] )` / `( { … } )`, or a default `( a = init )` —
+    /// looking through the optional `ParenthesizedExpression` wrapper (kept for the `): T =>`
+    /// return-type head). A bare `...rest`-only head never reaches here (it is `ArrowKind::Yes`).
+    fn is_refinable_cover_head(expr: &Expression<'a>) -> bool {
+        let inner = match expr {
+            Expression::ParenthesizedExpression(paren) => &paren.expression,
+            other => other,
+        };
+        match inner {
+            Expression::Identifier(_)
+            | Expression::SequenceExpression(_)
+            | Expression::ArrayExpression(_)
+            | Expression::ObjectExpression(_) => true,
+            Expression::AssignmentExpression(assign) => {
+                assign.operator == AssignmentOperator::Assign
+            }
+            _ => false,
+        }
+    }
+
+    /// Parse past an arrow `ConciseBody` (used inside a speculation to find a trailing `:`); the
+    /// result is discarded on rewind, so only the lexer position matters.
+    fn skip_concise_arrow_body(&mut self) {
+        if self.at(Kind::LCurly) {
+            self.parse_function_body();
+        } else {
+            self.parse_assignment_expression_or_higher();
+        }
+    }
+
+    /// Build the arrow from a cover head already refined to `FormalParameters` because a TS type
+    /// annotation made it unambiguously params (`(a, b: T) =>`). The `)` has been consumed; an
+    /// optional return type, the `=>`, and the body follow. `span` is the `(` start.
+    pub(crate) fn finish_cover_arrow_from_params(
+        &mut self,
+        span: u32,
+        params: Box<'a, FormalParameters<'a>>,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        let return_type = if self.is_ts && self.at(Kind::Colon) {
+            self.parse_ts_return_type_annotation()
+        } else {
+            None
+        };
+        if self.cur_token().is_on_new_line() {
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
+        }
+        self.expect(Kind::Arrow);
+        let head =
+            ArrowFunctionHead { type_parameters: None, params, return_type, r#async: false, span };
+        self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function)
     }
 
     pub(super) fn try_parse_async_simple_arrow_function_expression(
@@ -220,11 +275,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             _ => ArrowKind::No,
                         }
                     }
-                    // "([" or "({": destructuring params or an array/object literal. These can
-                    // still hide a top-level `...rest` or trailing comma the worker can't see
-                    // (`([x], ...r) =>`, `([x],) =>`), neither of which has an expression form, so
-                    // keep them on the speculate path.
-                    Kind::LBrack | Kind::LCurly => ArrowKind::Speculate,
+                    // "([" or "({": destructuring params, or an array/object literal that is the
+                    // first element of the cover head. Either way the head is parsed once as an
+                    // expression and refined; a hidden top-level `...rest`/trailing comma
+                    // (`([x], ...r) =>`, `([x],) =>`) is handled by the cover paren.
+                    Kind::LBrack | Kind::LCurly => ArrowKind::Cover,
                     // Simple case: "(..." — an arrow with a rest parameter; leading rest has no
                     // expression form, keep speculating.
                     Kind::Dot3 => {
@@ -294,10 +349,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 ArrowKind::Speculate
                             }
                             Kind::RParen => ArrowKind::Cover,
-                            // "(a =" / "(a," may hide a later top-level `...rest` or more params the
-                            // worker can't see (`(a = 1, ...r) =>`), with no expression form. Keep
-                            // them on the speculate path.
-                            Kind::Eq | Kind::Comma => ArrowKind::Speculate,
+                            // "(a =" / "(a," — a default or a multi-element head. Parsed once as an
+                            // expression (assignment / sequence) and refined; a later top-level
+                            // `...rest`/trailing comma (`(a = 1, ...r) =>`) is handled by the cover
+                            // paren.
+                            Kind::Eq | Kind::Comma => ArrowKind::Cover,
                             // It is definitely not an arrow function
                             _ => ArrowKind::No,
                         }

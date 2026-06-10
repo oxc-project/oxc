@@ -24,6 +24,25 @@ use crate::{
     modifiers::Modifiers,
 };
 
+/// Result of parsing an `ArrowKind::Cover` head `( … )`.
+enum CoverHead<'a> {
+    /// The ambiguous cover grammar — `( a )`, `( a, b )`, `( [x] )`, `( a = 1 )`, `( a, ...r )` — is
+    /// parsed once as expressions and refined to params or a `ParenthesizedExpression` after the `)`.
+    Expressions {
+        expressions: Vec<'a, Expression<'a>>,
+        /// Start of a trailing comma, if any.
+        comma_span: Option<u32>,
+        /// `...` span of a stashed top-level rest, if any.
+        rest_dot3: Option<Span>,
+    },
+    /// A TS `: Type` after an element (`(a, b: T) =>`) makes the head unambiguously params; it is
+    /// refined and parsed directly into params (the `)` is not yet consumed).
+    TypedParams {
+        items: Vec<'a, FormalParameter<'a>>,
+        rest: Option<Box<'a, FormalParameterRest<'a>>>,
+    },
+}
+
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_paren_expression(&mut self) -> Expression<'a> {
         let opening_span = self.cur_token().span();
@@ -246,10 +265,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_parenthesized_expression(&mut self) -> Expression<'a> {
-        // Read-and-clear so only this (outermost) paren — the `ArrowKind::Cover` `( a )` — is
-        // affected, not any nested paren. When `=>` follows the `)` below, the
+        // Read-and-clear so only this (outermost) paren — the `ArrowKind::Cover` head — is affected,
+        // not any nested paren. In cover mode the contents are parsed once via the cover path (which
+        // tolerates the params-only `...rest`/trailing comma); when `=>` follows the `)` the
         // `ParenthesizedExpression` wrapper is skipped (the arrow refinement would discard it).
         let cover_paren = std::mem::take(&mut self.state.cover_paren_arrow);
+        let cover_allow_return_type = std::mem::take(&mut self.state.cover_paren_allow_return_type);
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         // Capture annotation flags before bumping `(` since bump resets them
@@ -257,31 +278,77 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         self.bump_any(); // `bump` `(`
         let expr_span = self.start_span();
-        let (mut expressions, comma_span) = self.context(Context::In, Context::Decorator, |p| {
-            p.parse_delimited_list(
-                Kind::RParen,
-                Kind::Comma,
-                opening_span,
-                Self::parse_assignment_expression_or_higher,
-            )
-        });
+        let (mut expressions, comma_span, rest_dot3) = if cover_paren {
+            match self.parse_cover_paren_elements(opening_span) {
+                CoverHead::Expressions { expressions, comma_span, rest_dot3 } => {
+                    (expressions, comma_span, rest_dot3)
+                }
+                // `(a, b: T) =>` — a TS type annotation made the head unambiguously params; build
+                // the arrow directly (no expression form, so no refinement decision is needed).
+                CoverHead::TypedParams { items, rest } => {
+                    self.expect(Kind::RParen);
+                    let params_span = self.end_span(span);
+                    let params = self.ast.alloc_formal_parameters(
+                        params_span,
+                        FormalParameterKind::ArrowFormalParameters,
+                        items,
+                        rest,
+                    );
+                    return self.finish_cover_arrow_from_params(
+                        span,
+                        params,
+                        cover_allow_return_type,
+                    );
+                }
+            }
+        } else {
+            let (expressions, comma_span) = self.context(Context::In, Context::Decorator, |p| {
+                p.parse_delimited_list(
+                    Kind::RParen,
+                    Kind::Comma,
+                    opening_span,
+                    Self::parse_assignment_expression_or_higher,
+                )
+            });
+            (expressions, comma_span, None)
+        };
 
-        if let Some(comma_span) = comma_span {
+        let expr_span = self.end_span(expr_span);
+        self.expect(Kind::RParen);
+
+        // `(a, b,): T =>` / `(a, ...r) =>`: when an arrow head follows the `)`, the params-only
+        // trailing comma and `...rest` are legal and the wrapper is discarded by the refinement.
+        // Otherwise they are the same errors as before. (`:` only counts in TS, where a return type
+        // may sit between `)` and `=>`.)
+        let params_head = cover_paren
+            && (self.at(Kind::Arrow)
+                || (self.is_ts && cover_allow_return_type && self.at(Kind::Colon)));
+
+        if let Some(comma_span) = comma_span
+            && !params_head
+        {
+            // The trailing comma is a single character; build its span directly (the `)` has now
+            // been consumed, so `end_span` would over-extend onto it).
             let error = diagnostics::unexpected_trailing_comma(
                 "Parenthesized expressions",
-                self.end_span(comma_span),
+                Span::new(comma_span, comma_span + 1),
             );
             return self.fatal_error(error);
         }
 
-        if expressions.is_empty() {
-            self.expect(Kind::RParen);
+        // A `...rest` only has a `BindingRestElement` (params) form — never a parenthesized
+        // expression. When no arrow head follows it is the same "Unexpected token" the expression
+        // parser raises on the leading `...`.
+        if rest_dot3.is_some() && !params_head {
+            let rest_dot3 = rest_dot3.unwrap();
+            self.state.cover_paren_rest = None;
+            return self.fatal_error(diagnostics::unexpected_token(rest_dot3));
+        }
+
+        if expressions.is_empty() && self.state.cover_paren_rest.is_none() {
             let error = diagnostics::empty_parenthesized_expression(self.end_span(span));
             return self.fatal_error(error);
         }
-
-        let expr_span = self.end_span(expr_span);
-        self.expect(Kind::RParen);
 
         // ParenthesizedExpression is from acorn --preserveParens
         let mut expression = if expressions.len() == 1 {
@@ -306,12 +373,94 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => {}
         }
 
-        // Skip the wrapper for a cover `( a ) =>` head: the arrow refinement discards it anyway.
+        // Skip the wrapper for a cover `( … ) =>` head: the arrow refinement discards it anyway.
+        // (For the TS `( … ): T =>` return-type head the wrapper is kept and unwrapped in
+        // `try_refine_cover_arrow`, matching the conditional-vs-return-type disambiguation.)
         if self.options.preserve_parens && !(cover_paren && self.at(Kind::Arrow)) {
             self.ast.expression_parenthesized(self.end_span(span), expression)
         } else {
             expression
         }
+    }
+
+    /// Parse the comma-separated elements of an `ArrowKind::Cover` head `( … )` (already past `(`),
+    /// the cover-grammar `( Expression )` / `( Expression , )` / `( Expression , ...Rest )` parse.
+    /// Mirrors [`Self::parse_delimited_list`] but additionally accepts a trailing `...rest` (stashed
+    /// in `state.cover_paren_rest`, as it has no `Expression` form to carry up the precedence climb).
+    /// Returns the element expressions, the trailing-comma start, and the `...` span (if a rest was
+    /// stashed) for the not-an-arrow error path.
+    fn parse_cover_paren_elements(&mut self, opening_span: Span) -> CoverHead<'a> {
+        self.context(Context::In, Context::Decorator, |p| {
+            // Read `ident?` as an optional-parameter marker while parsing these elements.
+            let saved_cover_element = p.state.cover_paren_element;
+            p.state.cover_paren_element = true;
+            let mut expressions = p.ast.vec();
+            let mut comma_span = None;
+            let mut rest_dot3 = None;
+            loop {
+                let kind = p.cur_kind();
+                if kind == Kind::RParen
+                    || matches!(kind, Kind::Eof | Kind::Undetermined)
+                    || p.fatal_error.is_some()
+                {
+                    break;
+                }
+                if kind == Kind::Dot3 {
+                    rest_dot3 = Some(p.cur_token().span());
+                    let rest = p.parse_cover_rest_element();
+                    p.state.cover_paren_rest = Some(rest);
+                    break;
+                }
+                expressions.push(p.parse_assignment_expression_or_higher());
+                // A top-level `: Type` or optional `?` (TS) directly after an element has no
+                // expression form, so the head is unambiguously params (`(a, b: T) =>`,
+                // `(a, b?) =>`): refine and finish as params.
+                if p.is_ts && (p.at(Kind::Colon) || p.at(Kind::Question)) {
+                    p.state.cover_paren_element = saved_cover_element;
+                    let (items, rest) = p.finish_cover_typed_params(expressions);
+                    return CoverHead::TypedParams { items, rest };
+                }
+                let kind = p.cur_kind();
+                if kind == Kind::RParen
+                    || matches!(kind, Kind::Eof | Kind::Undetermined)
+                    || p.fatal_error.is_some()
+                {
+                    break;
+                }
+                if kind != Kind::Comma {
+                    p.set_fatal_error(diagnostics::expect_closing_or_separator(
+                        Kind::RParen.to_str(),
+                        Kind::Comma.to_str(),
+                        kind.to_str(),
+                        p.cur_token().span(),
+                        opening_span,
+                    ));
+                    break;
+                }
+                p.advance(Kind::Comma);
+                if p.cur_kind() == Kind::RParen {
+                    comma_span = Some(p.prev_token_end - 1);
+                    break;
+                }
+            }
+            p.state.cover_paren_element = saved_cover_element;
+            CoverHead::Expressions { expressions, comma_span, rest_dot3 }
+        })
+    }
+
+    /// Parse a `...rest` at the top level of a cover head into a `FormalParameterRest` (no
+    /// decorators; the TS type annotation, if any, is consumed). Mirrors the rest arm of
+    /// `parse_formal_parameters_list`.
+    pub(crate) fn parse_cover_rest_element(&mut self) -> Box<'a, FormalParameterRest<'a>> {
+        let span = self.start_span();
+        let rest_element = self.parse_rest_element_for_formal_parameter();
+        let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
+        self.ast.alloc_formal_parameter_rest(
+            self.end_span(span),
+            self.ast.vec(),
+            rest_element,
+            type_annotation,
+        )
     }
 
     /// Section 13.2.2 This Expression
@@ -1398,9 +1547,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let question_span = self.token.span();
-        if !self.eat(Kind::Question) {
+        if !self.at(Kind::Question) {
             return lhs;
         }
+        // In a cover head, a TS `ident?` followed by `:`/`,`/`)`/`=` is an optional-parameter marker
+        // (`(a, b?) =>`, `(a, b?: T) =>`), not a conditional — a conditional with no consequent is
+        // always a syntax error. Leave the `?` for the cover loop to refine into params.
+        if self.is_ts
+            && self.state.cover_paren_element
+            && matches!(
+                self.lexer.peek_token().kind(),
+                Kind::Colon | Kind::Comma | Kind::RParen | Kind::Eq
+            )
+        {
+            return lhs;
+        }
+        self.bump_any(); // `?`
         let consequent = self.context_add(Context::In, |p| {
             p.parse_assignment_expression_or_higher_impl(
                 /* allow_return_type_in_arrow_function */ false,
@@ -1465,6 +1627,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Let the cover paren skip its `ParenthesizedExpression` wrapper when `=>` follows (it would
         // be discarded by the refinement below); harmless when this isn't actually an arrow.
         self.state.cover_paren_arrow = cover_mode;
+        self.state.cover_paren_allow_return_type =
+            cover_mode && allow_return_type_in_arrow_function;
         let mut lhs = self.parse_binary_expression_or_higher(Precedence::Comma);
         // `( a ) =>`: refine the parenthesized identifier into arrow params. Returns `lhs` unchanged
         // (no token consumed) when `=>` does not follow, so parsing continues as a paren expression.
