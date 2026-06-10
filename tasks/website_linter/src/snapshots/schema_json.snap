@@ -6883,7 +6883,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-instanceof-builtins": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoInstanceofBuiltinsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/no-invalid-fetch-options": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10786,6 +10803,46 @@ expression: json
       },
       "additionalProperties": false
     },
+    "NoInstanceofBuiltinsConfig": {
+      "type": "object",
+      "properties": {
+        "exclude": {
+          "description": "Constructor names to exclude from checking.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Constructor names to exclude from checking."
+        },
+        "include": {
+          "description": "Additional constructor names to check beyond the default set.\nUse this to extend the rule with additional constructors.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional constructor names to check beyond the default set.\nUse this to extend the rule with additional constructors."
+        },
+        "strategy": {
+          "description": "Controls which built-in constructors are checked.",
+          "default": "loose",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Strategy"
+            }
+          ],
+          "markdownDescription": "Controls which built-in constructors are checked."
+        },
+        "useErrorIsError": {
+          "description": "When `true`, checks `instanceof Error` and suggests using `Error.isError()` instead.\nRequires [the `Error.isError()` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/isError)\nto be available.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When `true`, checks `instanceof Error` and suggests using `Error.isError()` instead.\nRequires [the `Error.isError()` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/isError)\nto be available."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoInvalidRegexpConfig": {
       "type": "object",
       "properties": {
@@ -13853,6 +13910,26 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "Strategy": {
+      "oneOf": [
+        {
+          "description": "Additionally checks Error types, collections, typed arrays, and other built-in constructors.",
+          "type": "string",
+          "enum": [
+            "strict"
+          ],
+          "markdownDescription": "Additionally checks Error types, collections, typed arrays, and other built-in constructors."
+        },
+        {
+          "description": "Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers.",
+          "type": "string",
+          "enum": [
+            "loose"
+          ],
+          "markdownDescription": "Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers."
+        }
+      ]
     },
     "StrictBooleanExpressionsConfig": {
       "type": "object",

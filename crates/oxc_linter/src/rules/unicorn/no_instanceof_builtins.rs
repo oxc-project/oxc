@@ -66,7 +66,7 @@ const STRICT_STRATEGY_CONSTRUCTORS: &[&str] = &[
 ];
 
 #[derive(Debug, Clone, Default, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoInstanceofBuiltinsConfig {
     /// Additional constructor names to check beyond the default set.
     /// Use this to extend the rule with additional constructors.

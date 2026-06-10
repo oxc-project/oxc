@@ -227,6 +227,7 @@ export type PackageFrom = "package";
 export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-correctness-only" | "never";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
+export type Strategy = "strict" | "loose";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
 export type SwitchCaseBracesConfig = "always" | "avoid";
@@ -1411,7 +1412,7 @@ export interface DummyRuleMap {
   "unicorn/no-hex-escape"?: RuleNoConfig;
   "unicorn/no-immediate-mutation"?: RuleNoConfig;
   "unicorn/no-instanceof-array"?: RuleNoConfig;
-  "unicorn/no-instanceof-builtins"?: DummyRule;
+  "unicorn/no-instanceof-builtins"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoInstanceofBuiltinsConfig];
   "unicorn/no-invalid-fetch-options"?: RuleNoConfig;
   "unicorn/no-invalid-remove-event-listener"?: RuleNoConfig;
   "unicorn/no-length-as-slice-end"?: RuleNoConfig;
@@ -5032,6 +5033,27 @@ export interface NoArraySort {
    * ```
    */
   allowExpressionStatement?: boolean;
+}
+export interface NoInstanceofBuiltinsConfig {
+  /**
+   * Constructor names to exclude from checking.
+   */
+  exclude?: string[];
+  /**
+   * Additional constructor names to check beyond the default set.
+   * Use this to extend the rule with additional constructors.
+   */
+  include?: string[];
+  /**
+   * Controls which built-in constructors are checked.
+   */
+  strategy?: Strategy;
+  /**
+   * When `true`, checks `instanceof Error` and suggests using `Error.isError()` instead.
+   * Requires [the `Error.isError()` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/isError)
+   * to be available.
+   */
+  useErrorIsError?: boolean;
 }
 export interface NoNull {
   /**
