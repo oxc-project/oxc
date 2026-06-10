@@ -229,7 +229,7 @@ export type PackageFrom = "package";
 export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-correctness-only" | "never";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
-export type Strategy = "strict" | "loose";
+export type NoInstanceofBuiltinsStrategy = "strict" | "loose";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
 export type SwitchCaseBracesConfig = "always" | "avoid";
@@ -5057,7 +5057,7 @@ export interface NoInstanceofBuiltinsConfig {
   /**
    * Controls which built-in constructors are checked.
    */
-  strategy?: Strategy;
+  strategy?: NoInstanceofBuiltinsStrategy;
   /**
    * When `true`, checks `instanceof Error` and suggests using `Error.isError()` instead.
    * Requires [the `Error.isError()` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/isError)

@@ -10892,7 +10892,7 @@
           "default": "loose",
           "allOf": [
             {
-              "$ref": "#/definitions/Strategy"
+              "$ref": "#/definitions/NoInstanceofBuiltinsStrategy"
             }
           ],
           "markdownDescription": "Controls which built-in constructors are checked."
@@ -10905,6 +10905,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "NoInstanceofBuiltinsStrategy": {
+      "oneOf": [
+        {
+          "description": "Additionally checks Error types, collections, typed arrays, and other built-in constructors.",
+          "type": "string",
+          "enum": [
+            "strict"
+          ],
+          "markdownDescription": "Additionally checks Error types, collections, typed arrays, and other built-in constructors."
+        },
+        {
+          "description": "Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers.",
+          "type": "string",
+          "enum": [
+            "loose"
+          ],
+          "markdownDescription": "Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers."
+        }
+      ]
     },
     "NoInvalidRegexpConfig": {
       "type": "object",
@@ -13988,26 +14008,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "Strategy": {
-      "oneOf": [
-        {
-          "description": "Additionally checks Error types, collections, typed arrays, and other built-in constructors.",
-          "type": "string",
-          "enum": [
-            "strict"
-          ],
-          "markdownDescription": "Additionally checks Error types, collections, typed arrays, and other built-in constructors."
-        },
-        {
-          "description": "Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers.",
-          "type": "string",
-          "enum": [
-            "loose"
-          ],
-          "markdownDescription": "Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers."
-        }
-      ]
     },
     "StrictBooleanExpressionsConfig": {
       "type": "object",
