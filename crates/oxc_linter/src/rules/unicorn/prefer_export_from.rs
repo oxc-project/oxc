@@ -48,7 +48,6 @@ impl Default for PreferExportFrom {
     }
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -1235,36 +1234,51 @@ fn find_corresponding_export<'a>(
     import_decl: &'a ImportDeclaration<'a>,
 ) -> Option<&'a ExportNamedDeclaration<'a>> {
     let source = import_decl.source.value.as_str();
-    let program = ctx.nodes().program();
 
-    for stmt in &program.body {
-        let Statement::ExportNamedDeclaration(export_decl) = stmt else {
+    for requested_module in ctx.module_record().requested_modules.get(source)? {
+        if requested_module.is_import {
+            continue;
+        }
+
+        let Some(export_decl) =
+            find_export_named_declaration_by_span(ctx, requested_module.statement_span)
+        else {
             continue;
         };
 
-        if export_decl.source.is_none() {
-            continue;
-        }
-
-        if export_decl.source.as_ref().unwrap().value.as_str() != source {
-            continue;
-        }
-
-        if import_decl.import_kind == export_decl.export_kind {
+        if is_matching_export_kind(import_decl, export_decl) {
             return Some(export_decl);
-        }
-        if matches!(import_decl.import_kind, ImportOrExportKind::Type) {
-            let all_type = export_decl
-                .specifiers
-                .iter()
-                .all(|s| matches!(s.export_kind, ImportOrExportKind::Type));
-            if all_type {
-                return Some(export_decl);
-            }
         }
     }
 
     None
+}
+
+fn find_export_named_declaration_by_span<'a>(
+    ctx: &LintContext<'a>,
+    span: Span,
+) -> Option<&'a ExportNamedDeclaration<'a>> {
+    ctx.nodes().iter().find_map(|node| {
+        if let AstKind::ExportNamedDeclaration(export_decl) = node.kind()
+            && export_decl.span() == span
+        {
+            Some(export_decl)
+        } else {
+            None
+        }
+    })
+}
+
+fn is_matching_export_kind(
+    import_decl: &ImportDeclaration<'_>,
+    export_decl: &ExportNamedDeclaration<'_>,
+) -> bool {
+    if import_decl.import_kind == export_decl.export_kind {
+        return true;
+    }
+
+    matches!(import_decl.import_kind, ImportOrExportKind::Type)
+        && export_decl.specifiers.iter().all(|s| matches!(s.export_kind, ImportOrExportKind::Type))
 }
 
 #[test]
