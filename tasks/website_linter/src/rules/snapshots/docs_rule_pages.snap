@@ -2070,7 +2070,7 @@ This rule accepts a configuration object with the following properties:
 
 type: `integer`
 
-default: `4294967295`
+default: `Infinity`
 
 The maximum number of top-level `describe` blocks allowed in a test file.
 
