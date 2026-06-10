@@ -24617,6 +24617,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::INFO,
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::INFO,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::INFO,
+            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::INFO,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::INFO,
             Self::UnicornPreferImportMetaProperties(_) => UnicornPreferImportMetaProperties::INFO,
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::INFO,
