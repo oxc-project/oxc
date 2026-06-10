@@ -315,7 +315,7 @@ impl Rule for PreferSingleCall {
             // Delete the second statement (from end of first stmt to end of
             // second stmt, including any whitespace/newline in between).
             //
-            // ASI safety: if the first statement has no semicolon but the
+            // ASI handling: if the first statement has no semicolon but the
             // second does, preserve the semicolon so the result stays valid.
             let first_has_semi = prev_es.span.source_text(src).trim_end().ends_with(';');
             let second_has_semi = curr_es.span.source_text(src).trim_end().ends_with(';');
