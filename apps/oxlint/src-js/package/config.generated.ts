@@ -798,7 +798,7 @@ export interface DummyRuleMap {
   "jest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "jest/no-mocks-import"?: RuleNoConfig;
   "jest/no-restricted-jest-methods"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedTestMethodsConfig];
-  "jest/no-restricted-matchers"?: DummyRule;
+  "jest/no-restricted-matchers"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedMatchersConfig];
   "jest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "jest/no-test-prefixes"?: RuleNoConfig;
   "jest/no-test-return-statement"?: RuleNoConfig;
@@ -1545,7 +1545,7 @@ export interface DummyRuleMap {
   "vitest/no-interpolation-in-snapshots"?: RuleNoConfig;
   "vitest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "vitest/no-mocks-import"?: RuleNoConfig;
-  "vitest/no-restricted-matchers"?: DummyRule;
+  "vitest/no-restricted-matchers"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedMatchersConfig];
   "vitest/no-restricted-vi-methods"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedTestMethodsConfig];
   "vitest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "vitest/no-test-prefixes"?: RuleNoConfig;
@@ -2220,6 +2220,9 @@ export interface NoLargeSnapshotsConfig {
   maxSize?: number;
 }
 export interface NoRestrictedTestMethodsConfig {
+  [k: string]: string | null;
+}
+export interface NoRestrictedMatchersConfig {
   [k: string]: string | null;
 }
 export interface NoStandaloneExpectConfig {

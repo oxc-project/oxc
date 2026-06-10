@@ -2277,7 +2277,24 @@ expression: json
           ]
         },
         "jest/no-restricted-matchers": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedMatchersConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-standalone-expect": {
           "anyOf": [
@@ -7655,7 +7672,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/no-restricted-matchers": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedMatchersConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-restricted-vi-methods": {
           "anyOf": [
@@ -11553,6 +11587,19 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "NoRestrictedMatchersConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
     },
     "NoRestrictedTestMethodsConfig": {
       "type": "object",
