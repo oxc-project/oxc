@@ -254,7 +254,7 @@ impl Rule for DestructuringAssignment {
             }
             AstKind::ObjectPattern(_) if self.apply_never() || self.apply_to_signature() => {
                 let Some((object_pattern_span, decl_span, param_span)) =
-                    self.handle_object_pattern(node.id(), ctx)
+                    self.handle_object_pattern(node.id(), node.span(), ctx)
                 else {
                     return;
                 };
@@ -285,10 +285,10 @@ impl DestructuringAssignment {
     fn handle_object_pattern(
         &self,
         node_id: NodeId,
+        object_pattern_span: Span,
         ctx: &LintContext,
     ) -> Option<(Span, Span, Span)> {
         for ancestor in ctx.nodes().ancestors(node_id) {
-            let node = ctx.nodes().get_node(node_id);
             match ancestor.kind() {
                 AstKind::VariableDeclarator(decl) => {
                     let Some(init) = &decl.init else {
@@ -296,7 +296,7 @@ impl DestructuringAssignment {
                     };
 
                     if let Some(prop_name) = get_this_member_name(init) {
-                        if get_parent_component(node, ctx).is_some() {
+                        if get_parent_component(ancestor, ctx).is_some() {
                             ctx.diagnostic(no_destruct_assignment_diagnostic(decl.span, prop_name));
                         }
                         break;
@@ -305,7 +305,7 @@ impl DestructuringAssignment {
                     let Some(id_ref) = init.get_identifier_reference() else {
                         break;
                     };
-                    let Some(parent) = get_parent_stateless_component(node, ctx) else {
+                    let Some(parent) = get_parent_stateless_component(ancestor, ctx) else {
                         break;
                     };
                     let obj_name = id_ref.name.as_str();
@@ -329,7 +329,6 @@ impl DestructuringAssignment {
                             .count()
                             > 1;
                         if !used_more_than_once {
-                            let object_pattern_span = node.span();
                             let declaration_span = ctx.nodes().parent_node(decl.node_id()).span();
                             let param_span = param.pattern.span();
                             return Some((object_pattern_span, declaration_span, param_span));
