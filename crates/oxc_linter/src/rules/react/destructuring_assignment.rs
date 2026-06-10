@@ -68,46 +68,7 @@ struct DestructuringAssignmentOptions {
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(default)]
-pub struct DestructuringAssignmentTupleConfig(Mode, DestructuringAssignmentOptions);
-
-#[derive(Debug, Clone)]
-pub struct DestructuringAssignmentConfig {
-    apply_never: bool,
-    apply_to_class_fields: bool,
-    apply_to_signature: bool,
-}
-
-impl From<DestructuringAssignmentTupleConfig> for DestructuringAssignmentConfig {
-    fn from(value: DestructuringAssignmentTupleConfig) -> Self {
-        let DestructuringAssignmentTupleConfig(mode, options) = value;
-
-        DestructuringAssignmentConfig {
-            apply_never: matches!(mode, Mode::Never),
-            apply_to_class_fields: !options.ignore_class_fields,
-            apply_to_signature: matches!(
-                options.destructure_in_signature,
-                DestructureInSignature::Always
-            ),
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct DestructuringAssignment(Box<DestructuringAssignmentConfig>);
-
-impl std::ops::Deref for DestructuringAssignment {
-    type Target = DestructuringAssignmentConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl Default for DestructuringAssignmentConfig {
-    fn default() -> Self {
-        Self { apply_never: false, apply_to_class_fields: true, apply_to_signature: false }
-    }
-}
+pub struct DestructuringAssignment(Mode, DestructuringAssignmentOptions);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -263,20 +224,19 @@ declare_oxc_lint!(
     react,
     style,
     fix,
-    config = DestructuringAssignmentTupleConfig,
+    config = DestructuringAssignment,
     version = "next",
 );
 
 impl Rule for DestructuringAssignment {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<TupleRuleConfig<DestructuringAssignmentTupleConfig>>(value)
-            .map(|config| Self(Box::new(config.into_inner().into())))
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StaticMemberExpression(member) => {
-                if self.should_skip_member(node, ctx) || self.apply_never {
+                if self.should_skip_member(node, ctx) || self.apply_never() {
                     return;
                 }
                 if let Some(parent) = get_parent_stateless_component(node, ctx) {
@@ -286,7 +246,7 @@ impl Rule for DestructuringAssignment {
                 }
             }
             AstKind::FormalParameter(param)
-                if param.pattern.is_object_pattern() && self.apply_never =>
+                if param.pattern.is_object_pattern() && self.apply_never() =>
             {
                 if let Some(parent) = get_parent_stateless_component(node, ctx) {
                     let params = parent.params();
@@ -297,7 +257,7 @@ impl Rule for DestructuringAssignment {
                     }
                 }
             }
-            AstKind::ObjectPattern(_) if self.apply_never || self.apply_to_signature => {
+            AstKind::ObjectPattern(_) if self.apply_never() || self.apply_to_signature() => {
                 let Some((object_pattern_span, decl_span, param_span)) =
                     self.handle_object_pattern(node.id(), ctx)
                 else {
@@ -363,9 +323,9 @@ impl DestructuringAssignment {
                         break;
                     };
 
-                    if self.apply_never {
+                    if self.apply_never() {
                         ctx.diagnostic(no_destruct_assignment_diagnostic(decl.span, obj_name));
-                    } else if self.apply_to_signature {
+                    } else if self.apply_to_signature() {
                         let binding = param.pattern.get_binding_identifier().unwrap();
                         let used_more_than_once = ctx
                             .scoping()
@@ -392,9 +352,9 @@ impl DestructuringAssignment {
     fn should_skip_member(&self, node: &AstNode, ctx: &LintContext) -> bool {
         match ctx.nodes().parent_kind(node.id()) {
             AstKind::AssignmentExpression(assignment) => assignment.left.span() == node.span(),
-            AstKind::PropertyDefinition(_) => !self.apply_to_class_fields,
+            AstKind::PropertyDefinition(_) => !self.apply_to_class_fields(),
             AstKind::TemplateLiteral(_) => {
-                !self.apply_to_class_fields
+                !self.apply_to_class_fields()
                     && matches!(
                         ctx.nodes().parent_kind(ctx.nodes().parent_id(node.id())),
                         AstKind::PropertyDefinition(_)
@@ -402,6 +362,18 @@ impl DestructuringAssignment {
             }
             _ => false,
         }
+    }
+
+    fn apply_never(&self) -> bool {
+        matches!(&self.0, Mode::Never)
+    }
+
+    fn apply_to_class_fields(&self) -> bool {
+        !self.1.ignore_class_fields
+    }
+
+    fn apply_to_signature(&self) -> bool {
+        matches!(&self.1.destructure_in_signature, DestructureInSignature::Always)
     }
 }
 
