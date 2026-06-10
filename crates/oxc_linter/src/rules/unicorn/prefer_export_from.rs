@@ -1,9 +1,5 @@
-use std::fmt::Write;
-
-use cow_utils::CowUtils;
 use indexmap::IndexMap;
-use itertools::Itertools;
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -11,9 +7,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingPattern, ExportNamedDeclaration, ExportSpecifier, ImportAttributeKey,
-        ImportDeclaration, ImportDeclarationSpecifier, ImportNamespaceSpecifier,
-        ImportOrExportKind, ImportSpecifier, ModuleExportName, Statement, VariableDeclarationKind,
-        VariableDeclarator, WithClauseKeyword,
+        ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind, ModuleExportName,
+        Statement, VariableDeclarationKind, VariableDeclarator, WithClauseKeyword,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -103,7 +98,6 @@ impl Rule for PreferExportFrom {
                 return;
             }
 
-            // Check for duplicate TypeAliases, and skip the check if one exists.
             if has_matching_type_alias(import_decl, ctx) {
                 return;
             }
@@ -139,7 +133,6 @@ struct Violation {
     is_namespace_export: bool,
     is_typescript_type: bool,
     needs_source: bool,
-    original_export_span: Option<Span>,
 }
 
 impl PreferExportFrom {
@@ -150,17 +143,16 @@ impl PreferExportFrom {
         import_decl: &'a ImportDeclaration<'a>,
         re_export_decl: Option<&'a ExportNamedDeclaration<'a>>,
     ) {
-        let import_node_id = import_decl.node_id();
-        let (used_specifiers, grouped_violations) =
-            self.analyze_import_usage(ctx, symbol_to_specifier, import_node_id, import_decl);
+        let (used_specifiers, violations) =
+            self.analyze_import_usage(ctx, symbol_to_specifier, import_decl);
 
         let source = import_decl.source.value.as_str();
-        let with_clause = if let Some(with_clause) = import_decl.with_clause.as_ref() {
-            let assert_type = match with_clause.keyword {
+        let with_clause = import_decl.with_clause.as_ref().map(|with_clause| {
+            let keyword = match with_clause.keyword {
                 WithClauseKeyword::With => "with",
                 WithClauseKeyword::Assert => "assert",
             };
-            let with_clause_str = with_clause
+            let entries = with_clause
                 .with_entries
                 .iter()
                 .map(|attribute| {
@@ -173,65 +165,42 @@ impl PreferExportFrom {
                     let value = &attribute.value.raw.unwrap();
                     format!("{key}: {value}")
                 })
-                .format(", ");
+                .collect::<Vec<_>>()
+                .join(", ");
 
-            Some(&format!("{assert_type} {{ {with_clause_str} }}"))
-        } else {
-            None
-        };
+            format!("{keyword} {{ {entries} }}")
+        });
 
         let replace_span = Self::get_replace_span(ctx, import_decl.node_id());
 
-        let mut namespace_grouped_violations: FxHashMap<NodeId, Vec<Violation>> =
-            FxHashMap::default();
-        let mut regular_violations: FxHashMap<NodeId, Vec<Violation>> = FxHashMap::default();
+        let (namespace_violations, regular_violations): (Vec<Violation>, Vec<Violation>) =
+            violations.into_iter().partition(|v| v.is_namespace_export);
 
-        for (import_node_id, violations) in grouped_violations {
-            let (namespace_violations, regular_violations_part): (Vec<Violation>, Vec<Violation>) =
-                violations.into_iter().partition(|v| v.is_namespace_export);
-
-            if !namespace_violations.is_empty() {
-                namespace_grouped_violations.insert(import_node_id, namespace_violations);
-            }
-
-            if !regular_violations_part.is_empty() {
-                regular_violations.insert(import_node_id, regular_violations_part);
-            }
-        }
-
-        // Process namespace_grouped_violations according to template
-        if !namespace_grouped_violations.is_empty() {
-            for (_, violations) in namespace_grouped_violations {
-                Self::process_violations(
-                    ctx,
-                    &violations,
-                    &used_specifiers,
-                    symbol_to_specifier,
-                    import_decl,
-                    re_export_decl,
-                    source,
-                    with_clause,
-                    replace_span,
-                    true,
-                );
-            }
-        }
-
-        // Process regular exports (keep original logic)
-        for (_, violations) in regular_violations {
-            if violations.is_empty() {
-                continue;
-            }
-
+        if !namespace_violations.is_empty() {
             Self::process_violations(
                 ctx,
-                &violations,
+                &namespace_violations,
                 &used_specifiers,
                 symbol_to_specifier,
                 import_decl,
                 re_export_decl,
                 source,
-                with_clause,
+                with_clause.as_deref(),
+                replace_span,
+                true,
+            );
+        }
+
+        if !regular_violations.is_empty() {
+            Self::process_violations(
+                ctx,
+                &regular_violations,
+                &used_specifiers,
+                symbol_to_specifier,
+                import_decl,
+                re_export_decl,
+                source,
+                with_clause.as_deref(),
                 replace_span,
                 false,
             );
@@ -242,14 +211,13 @@ impl PreferExportFrom {
         &self,
         ctx: &LintContext<'a>,
         symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'a>>,
-        import_node_id: NodeId,
         import_decl: &ImportDeclaration<'a>,
-    ) -> (Vec<SymbolId>, FxHashMap<NodeId, Vec<Violation>>) {
-        let mut used_specifiers: Vec<SymbolId> = Vec::new();
-        let mut grouped_violations: FxHashMap<NodeId, Vec<Violation>> = FxHashMap::default();
+    ) -> (FxHashSet<SymbolId>, Vec<Violation>) {
+        let mut used_specifiers: FxHashSet<SymbolId> = FxHashSet::default();
+        let mut violations: Vec<Violation> = Vec::new();
 
         if !self.check_used_variables && Self::import_has_ignored_usage(ctx, symbol_to_specifier) {
-            return (used_specifiers, grouped_violations);
+            return (used_specifiers, violations);
         }
 
         for (symbol_id, specifier_spec) in symbol_to_specifier {
@@ -266,7 +234,6 @@ impl PreferExportFrom {
                             *symbol_id,
                             reference.node_id(),
                             parent_node.id(),
-                            parent_node.span(),
                         )
                     }
 
@@ -296,15 +263,12 @@ impl PreferExportFrom {
                 };
 
                 if let Some((sym_id, violation)) = result {
-                    if !used_specifiers.contains(&sym_id) {
-                        used_specifiers.push(sym_id);
-                    }
-
-                    grouped_violations.entry(import_node_id).or_default().push(violation);
+                    used_specifiers.insert(sym_id);
+                    violations.push(violation);
                 }
             }
         }
-        (used_specifiers, grouped_violations)
+        (used_specifiers, violations)
     }
 
     fn import_has_ignored_usage(
@@ -369,9 +333,7 @@ impl PreferExportFrom {
         symbol_id: SymbolId,
         reference_node_id: NodeId,
         parent_node_id: NodeId,
-        parent_span: Span,
     ) -> Option<(SymbolId, Violation)> {
-        //  Skip if namespace（import * as namespace from 'foo');
         if matches!(
             specifier_spec.specifier,
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)
@@ -397,7 +359,6 @@ impl PreferExportFrom {
             is_namespace_export: false,
             is_typescript_type: false,
             needs_source: false,
-            original_export_span: Some(parent_span),
         };
 
         Some((symbol_id, violation))
@@ -416,7 +377,6 @@ impl PreferExportFrom {
             let is_export_default = Self::is_export_as_default(&export_decl.specifiers);
             let export_ts_kind = export_decl.export_kind;
 
-            //Skip if namespaces and default export
             if matches!(
                 specifier_spec.specifier,
                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)
@@ -445,7 +405,6 @@ impl PreferExportFrom {
                     is_typescript_type: ts_kind,
                     needs_source: (import_ts_kind == ImportOrExportKind::Value
                         && export_ts_kind == ImportOrExportKind::Type),
-                    original_export_span: Some(export_decl.span()),
                 };
 
                 return Some((symbol_id, violation));
@@ -475,7 +434,6 @@ impl PreferExportFrom {
                     is_namespace_export: false,
                     is_typescript_type: ts_kind,
                     needs_source,
-                    original_export_span: Some(export_decl.span()),
                 };
 
                 return Some((symbol_id, violation));
@@ -525,7 +483,6 @@ impl PreferExportFrom {
                 is_namespace_export: is_namespace,
                 is_typescript_type: false,
                 needs_source: false,
-                original_export_span: None,
             };
 
             return Some((symbol_id, violation));
@@ -534,7 +491,6 @@ impl PreferExportFrom {
         None
     }
 
-    //Check if the exported variable is subsequently used
     fn is_variable_used_elsewhere(ctx: &LintContext<'_>, var_decl: &VariableDeclarator) -> bool {
         let var_decl_id_symbol_id =
             if let BindingPattern::BindingIdentifier(binding_identifier) = &var_decl.id {
@@ -621,7 +577,6 @@ impl PreferExportFrom {
                     ModuleExportName::IdentifierReference(ident_ref) => ident_ref.name.as_str(),
                     ModuleExportName::StringLiteral(literal) => &literal.raw.unwrap(),
                 };
-                // let temp_export = export_specifier.exported.to_string();
                 let temp_export =
                     if let ModuleExportName::StringLiteral(literal) = &export_specifier.exported {
                         literal.raw.as_ref().unwrap()
@@ -699,17 +654,16 @@ impl PreferExportFrom {
     }
     fn process_violations<'a>(
         ctx: &LintContext<'a>,
-        violations: &Vec<Violation>,
-        used_specifiers: &[SymbolId],
+        violations: &[Violation],
+        used_specifiers: &FxHashSet<SymbolId>,
         symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'a>>,
         import_decl: &'a ImportDeclaration<'a>,
         re_export_decl: Option<&'a ExportNamedDeclaration<'a>>,
         source: &str,
-        with_clause: Option<&String>,
+        with_clause: Option<&str>,
         replace_span: Span,
         is_namespace: bool,
     ) {
-        // Generate the export format based on whether it's a namespace export
         let export_format =
             Self::generate_export_format(violations, source, with_clause, is_namespace);
 
@@ -717,53 +671,34 @@ impl PreferExportFrom {
             return;
         }
 
-        let parent_nodes: Vec<&AstNode> =
+        let mut parent_nodes: Vec<&AstNode> =
             violations.iter().map(|v| ctx.nodes().get_node(v.export_node_id)).collect();
+        parent_nodes.sort_by_key(|node| node.span().start);
 
         let replace_export_spans: Vec<Span> = parent_nodes
             .iter()
             .map(|parent_node| Self::get_replace_span(ctx, parent_node.id()))
             .collect();
 
-        let sorted_nodes = parent_nodes
-            .iter()
-            .sorted_by(|a, b| a.span().start.cmp(&b.span().start))
-            .collect::<Vec<_>>();
-
-        let end = sorted_nodes.last().unwrap().span().end;
-        let start = sorted_nodes.first().unwrap().span().start;
+        let end = parent_nodes.last().unwrap().span().end;
+        let start = parent_nodes.first().unwrap().span().start;
         let delete_span = Span::new(start, end);
 
         let re_export_source_text =
             re_export_decl.map(|decl| ctx.source_range(decl.span())).unwrap_or_default();
 
+        let joined_names = format_export_names(violations);
+
         for violation in violations {
             let specifier_node = ctx.nodes().get_node(violation.import_specifier_id);
 
             if violation.needs_source {
+                let export_node = ctx.nodes().get_node(violation.export_node_id);
                 ctx.diagnostic_with_suggestion(
                     prefer_export_from_diagnostic(import_decl.span(), specifier_node.span()),
-                    |fixer| {
-                        Self::add_fix_for_export(
-                            fixer,
-                            violation.original_export_span.unwrap(),
-                            &export_format,
-                        )
-                    },
+                    |fixer| Self::add_fix_for_export(fixer, export_node.span(), &export_format),
                 );
             } else {
-                let join_names = &violations
-                    .iter()
-                    .map(|v| {
-                        if v.is_typescript_type {
-                            format!("type {}", v.export_name)
-                        } else {
-                            v.export_name.clone()
-                        }
-                    })
-                    .collect::<Vec<String>>()
-                    .join(", ");
-
                 ctx.diagnostic_with_suggestion(
                     prefer_export_from_diagnostic(import_decl.span(), specifier_node.span()),
                     |fixer| {
@@ -777,7 +712,7 @@ impl PreferExportFrom {
                             replace_span,
                             &replace_export_spans,
                             delete_span,
-                            if is_namespace { &violation.export_name } else { join_names },
+                            if is_namespace { &violation.export_name } else { &joined_names },
                             &export_format,
                             source,
                             is_namespace,
@@ -788,14 +723,12 @@ impl PreferExportFrom {
         }
     }
 
-    /// Generate the export format based on whether it's a namespace export
     fn generate_export_format(
         violations: &[Violation],
         source: &str,
-        with_clause: Option<&String>,
+        with_clause: Option<&str>,
         is_namespace: bool,
     ) -> String {
-        // For namespace exports, create separate export statements for each violation
         if is_namespace {
             violations
                 .iter()
@@ -809,18 +742,7 @@ impl PreferExportFrom {
                 })
                 .collect::<String>()
         } else {
-            // For regular exports, combine them into a single export statement
-            let export_names: Vec<String> = violations
-                .iter()
-                .map(|violation| {
-                    if violation.is_typescript_type {
-                        format!("type {}", violation.export_name)
-                    } else {
-                        violation.export_name.clone()
-                    }
-                })
-                .collect();
-
+            let export_names = format_export_names(violations);
             if export_names.is_empty() {
                 return String::new();
             }
@@ -828,17 +750,13 @@ impl PreferExportFrom {
             Self::format_export_statement(&export_names, source, with_clause)
         }
     }
-    /// Format a regular export statement with multiple exports
-    fn format_export_statement(
-        exports: &[String],
-        source: &str,
-        with_clause: Option<&String>,
-    ) -> String {
-        let joined_names = exports.join(", ");
-        let mut result = format!("export {{ {joined_names} }} from '{source}'");
+
+    fn format_export_statement(exports: &str, source: &str, with_clause: Option<&str>) -> String {
+        let mut result = format!("export {{ {exports} }} from '{source}'");
 
         if let Some(clause) = with_clause {
-            let _ = write!(result, " {clause}");
+            result.push(' ');
+            result.push_str(clause);
         }
 
         result.push(';');
@@ -847,12 +765,11 @@ impl PreferExportFrom {
         result
     }
 
-    /// Format a namespace export statement
     fn format_namespace_export(
         name: &str,
         source: &str,
         is_typescript_type: bool,
-        with_clause: Option<&String>,
+        with_clause: Option<&str>,
     ) -> String {
         let formatted_name =
             if is_typescript_type { format!("type {name}") } else { name.to_string() };
@@ -860,7 +777,8 @@ impl PreferExportFrom {
         let mut result = format!("export {formatted_name} from '{source}'");
 
         if let Some(clause) = with_clause {
-            let _ = write!(result, " {clause}");
+            result.push(' ');
+            result.push_str(clause);
         }
 
         result.push(';');
@@ -882,7 +800,7 @@ impl PreferExportFrom {
 
     fn create_fix_for_re_export<'a>(
         fixer: RuleFixer<'_, '_>,
-        used_specifiers: &[SymbolId],
+        used_specifiers: &FxHashSet<SymbolId>,
         symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'a>>,
         import_decl: &'a ImportDeclaration<'a>,
         re_export_decl: Option<&'a ExportNamedDeclaration<'a>>,
@@ -930,7 +848,6 @@ impl PreferExportFrom {
 
         rule_fixes.with_message("use `export ... from ...;`")
     }
-    /// Apply fix when all specifiers are used
     fn apply_complete_export_fix<'a>(
         fixer: RuleFixer<'_, '_>,
         rule_fixes: &mut RuleFix,
@@ -963,7 +880,6 @@ impl PreferExportFrom {
         rule_fixes.push(fixer.replace(delete_span, ""));
     }
 
-    /// Handle the case when there's a re-export declaration
     fn handle_reexport_case<'a>(
         fixer: RuleFixer<'_, '_>,
         rule_fixes: &mut RuleFix,
@@ -1000,7 +916,6 @@ impl PreferExportFrom {
             }
         }
     }
-    /// Get the span of the last specifier in an export declaration
     fn get_last_export_span(
         last_specifier: Option<&ExportSpecifier>,
         re_export_source_text: &str,
@@ -1016,11 +931,10 @@ impl PreferExportFrom {
         }
     }
 
-    /// Apply fix when only some specifiers are used
     fn apply_partial_export_fix<'a>(
         fixer: RuleFixer<'_, '_>,
         rule_fixes: &mut RuleFix,
-        used_specifiers: &[SymbolId],
+        used_specifiers: &FxHashSet<SymbolId>,
         symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'a>>,
         import_decl: &'a ImportDeclaration<'a>,
         replace_span: Span,
@@ -1033,8 +947,8 @@ impl PreferExportFrom {
         rule_fixes.push(fixer.delete(&replace_span));
 
         let unused_specifiers: Vec<(&SymbolId, &SpecifierSpec)> = symbol_to_specifier
-            .into_iter()
-            .filter(|(symbol_id, _)| !used_specifiers.contains(symbol_id))
+            .iter()
+            .filter(|(symbol_id, _)| !used_specifiers.contains(*symbol_id))
             .collect();
 
         if unused_specifiers.is_empty() {
@@ -1066,63 +980,34 @@ impl PreferExportFrom {
         for (_, spec) in unused_specifiers {
             match spec.specifier {
                 ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => {
-                    Self::add_default_import_part(&mut import_parts, &mut has_default, spec);
+                    if !has_default {
+                        has_default = true;
+                        import_parts.push(spec.name.clone());
+                    }
                 }
 
                 ImportDeclarationSpecifier::ImportSpecifier(import_spec) => {
-                    Self::add_named_import_part(&mut named_imports, import_spec);
+                    let local_name = &import_spec.local.name;
+                    let imported_name = match &import_spec.imported {
+                        ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
+                        ModuleExportName::IdentifierReference(ref_name) => ref_name.name.as_str(),
+                        ModuleExportName::StringLiteral(_) => "",
+                    };
+
+                    if imported_name == local_name.as_str() {
+                        named_imports.push(local_name.to_string());
+                    } else {
+                        named_imports.push(format!("{imported_name} as {local_name}"));
+                    }
                 }
 
                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(namespace_spec) => {
-                    Self::add_namespace_import_part(&mut import_parts, namespace_spec);
+                    import_parts.push(format!(" * as {}", namespace_spec.local.name));
                 }
             }
         }
-        Self::finalize_import_parts(&import_parts, &named_imports, source)
-    }
 
-    /// Add default import part to import parts vector
-    fn add_default_import_part(
-        import_parts: &mut Vec<String>,
-        has_default: &mut bool,
-        spec: &SpecifierSpec,
-    ) {
-        if !*has_default {
-            *has_default = true;
-            import_parts.push(spec.name.clone());
-        }
-    }
-    /// Add named import part to named imports vector
-    fn add_named_import_part(named_imports: &mut Vec<String>, import_spec: &ImportSpecifier) {
-        let local_name = &import_spec.local.name;
-        let imported_name = match &import_spec.imported {
-            ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
-            ModuleExportName::IdentifierReference(ref_name) => ref_name.name.as_str(),
-            ModuleExportName::StringLiteral(_) => "",
-        };
-
-        if imported_name == local_name.as_str() {
-            named_imports.push(local_name.to_string());
-        } else {
-            named_imports.push(format!("{imported_name} as {local_name}"));
-        }
-    }
-
-    /// Add namespace import part to import parts vector
-    fn add_namespace_import_part(
-        import_parts: &mut Vec<String>,
-        namespace_spec: &ImportNamespaceSpecifier,
-    ) {
-        import_parts.push(format!(" * as {}", namespace_spec.local.name));
-    }
-
-    /// Finalize the import parts and return the complete import declaration string
-    fn finalize_import_parts(
-        import_parts: &[String],
-        named_imports: &[String],
-        source: &str,
-    ) -> String {
-        let mut result_parts = import_parts.to_vec();
+        let mut result_parts = import_parts;
 
         if !named_imports.is_empty() {
             result_parts.push(format!("{{{}}}", named_imports.join(", ")));
@@ -1137,7 +1022,7 @@ impl PreferExportFrom {
 
     fn get_processed_exports_str(exports_str: &str, re_export: &ExportNamedDeclaration) -> String {
         if matches!(re_export.export_kind, ImportOrExportKind::Type) {
-            exports_str.cow_replace("type ", "").to_string()
+            exports_str.replace("type ", "")
         } else {
             exports_str.to_string()
         }
@@ -1197,6 +1082,20 @@ impl PreferExportFrom {
             })
             .collect()
     }
+}
+
+fn format_export_names(violations: &[Violation]) -> String {
+    violations
+        .iter()
+        .map(|violation| {
+            if violation.is_typescript_type {
+                format!("type {}", violation.export_name)
+            } else {
+                violation.export_name.clone()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn has_matching_type_alias<'a>(
