@@ -150,7 +150,7 @@ export type ShorthandType = "always" | "methods" | "properties" | "consistent" |
 export type Destructuring = "any" | "all";
 export type RadixType = "always" | "as-needed";
 export type NativeAllowList = AllKeyword | string[];
-export type AllKeyword = null;
+export type AllKeyword = "all";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
  */

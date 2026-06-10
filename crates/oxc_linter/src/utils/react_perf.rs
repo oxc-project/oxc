@@ -44,21 +44,10 @@ pub enum NativeAllowList {
     None,
 }
 
-#[derive(Debug, Clone, Copy, JsonSchema)]
-pub struct AllKeyword;
-
-impl<'de> Deserialize<'de> for AllKeyword {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let value = String::deserialize(deserializer)?;
-        if value == "all" {
-            Ok(AllKeyword)
-        } else {
-            Err(serde::de::Error::custom(r#"expected the string "all""#))
-        }
-    }
+#[derive(Debug, Clone, Copy, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum AllKeyword {
+    All,
 }
 
 fn react_perf_inline_diagnostic(message: &'static str, attr_span: Span) -> OxcDiagnostic {

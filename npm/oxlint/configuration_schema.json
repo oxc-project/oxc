@@ -286,7 +286,10 @@
       "additionalProperties": false
     },
     "AllKeyword": {
-      "type": "null"
+      "type": "string",
+      "enum": [
+        "all"
+      ]
     },
     "AllowKind": {
       "description": "Kinds of functions that can be allowed to be empty.",
