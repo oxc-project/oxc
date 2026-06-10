@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -33,6 +33,8 @@ pub struct CatchOrReturnConfig {
     allow_finally: bool,
     /// Whether to allow `then()` with two arguments as a termination method.
     allow_then: bool,
+    /// Whether to allow `then(null, handler)` as a termination method.
+    allow_then_strict: bool,
     /// List of allowed termination methods (e.g., `catch`, `done`).
     #[serde(
         default = "default_termination_method",
@@ -46,6 +48,7 @@ impl Default for CatchOrReturnConfig {
         Self {
             allow_finally: false,
             allow_then: false,
+            allow_then_strict: false,
             termination_method: default_termination_method(),
         }
     }
@@ -160,7 +163,12 @@ impl CatchOrReturn {
         };
 
         // somePromise.then(a, b)
-        if self.allow_then && prop_name == "then" && call_expr.arguments.len() == 2 {
+        if prop_name == "then"
+            && call_expr.arguments.len() == 2
+            && (self.allow_then
+                || (self.allow_then_strict
+                    && matches!(call_expr.arguments.first(), Some(Argument::NullLiteral(_)))))
+        {
             return true;
         }
 
@@ -300,6 +308,34 @@ fn test() {
             Some(serde_json::json!([{ "allowThen": true }])),
         ),
         (
+            "frank().then(go).then(null, doIt)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(go).then().then().then().then(null, doIt)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(go).then().then(null, function() { /* why bother */ })",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank.then(go).then(to).then(null, jail)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(a).then(b).then(null, c)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(a).then(b).then().then().then(null, doIt)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(a).then(b).then(null, function() { /* why bother */ })",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
             "frank().then(go).catch(doIt).finally(fn)",
             Some(serde_json::json!([{ "allowFinally": true }])),
         ),
@@ -371,6 +407,36 @@ fn test() {
         ("frank().catch(go)", Some(serde_json::json!([{ "terminationMethod": "done" }]))),
         ("frank().catch(go).someOtherMethod()", None),
         ("frank()['catch'](go).someOtherMethod()", None),
+        ("frank().then(a).then(b).then(null, c)", None),
+        ("frank().then(a).then(b).then().then().then(null, doIt)", None),
+        ("frank().then(a).then(b).then(null, function() { /* why bother */ })", None),
+        ("frank().then(a, b)", None),
+        ("frank().then(go).then(zam, doIt)", None),
+        ("frank().then(a).then(b).then(c, d)", None),
+        ("frank().then(go).then().then().then().then(wham, doIt)", None),
+        ("frank().then(go).then().then(function() {}, function() { /* why bother */ })", None),
+        ("frank.then(go).then(to).then(pewPew, jail)", None),
+        ("frank().then(a, b)", Some(serde_json::json!([{ "allowThenStrict": true }]))),
+        (
+            "frank().then(go).then(zam, doIt)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(a).then(b).then(c, d)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(go).then().then().then().then(wham, doIt)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(go).then().then(function() {}, function() { /* why bother */ })",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank.then(go).then(to).then(pewPew, jail)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
         ("const a = () => { Promise.resolve(null); }", None),
         ("function a() { const b = () => { Promise.resolve(null); }; return b; }", None),
     ];
