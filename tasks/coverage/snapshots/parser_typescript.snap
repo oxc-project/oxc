@@ -8380,12 +8380,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ var v = <string>undefined;
    ╰────
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:2:9]
  1 │ 0 as number;
  2 │ var v = <string>undefined;
    ·         ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeOfParameter.ts:1:13]
@@ -10642,45 +10643,50 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Did you mean to write 'undefined | null | undefined'?
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:2]
  1 │ ~< <
    ·  ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash2.ts:1:2]
  1 │ ~<></> <
-   ·  ─────
+   ·  ─
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash3.ts:1:2]
  1 │ !< {:>
    ·  ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <number> x;
    ·             ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <> x;
    ·             ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx3.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <1234> x;
    ·             ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx4.ts:5:14]
