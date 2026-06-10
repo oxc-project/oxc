@@ -6805,7 +6805,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/expiring-todo-comments": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExpiringTodoCommentsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/explicit-length-check": {
           "anyOf": [
@@ -8355,6 +8372,53 @@
         }
       },
       "additionalProperties": false
+    },
+    "ExpiringTodoCommentsConfig": {
+      "description": "User-facing configuration shape — drives the JSON schema and deserialization.",
+      "type": "object",
+      "properties": {
+        "allowWarningComments": {
+          "description": "If `false`, plain TODO/FIXME/XXX comments without expiration conditions\nare reported as well.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "If `false`, plain TODO/FIXME/XXX comments without expiration conditions\nare reported as well."
+        },
+        "ignore": {
+          "description": "Regex patterns (matched against the comment line) to ignore.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Regex patterns (matched against the comment line) to ignore."
+        },
+        "ignoreDates": {
+          "description": "If `true`, all date expiration checks are skipped.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `true`, all date expiration checks are skipped."
+        },
+        "ignoreDatesOnPullRequests": {
+          "description": "If `true`, date expiration checks are skipped when running on a pull\nrequest (detected via CI env vars).",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "If `true`, date expiration checks are skipped when running on a pull\nrequest (detected via CI env vars)."
+        },
+        "terms": {
+          "description": "Terms to match as warning comments (case-insensitive).",
+          "default": [
+            "todo",
+            "fixme",
+            "xxx"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Terms to match as warning comments (case-insensitive)."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "User-facing configuration shape — drives the JSON schema and deserialization."
     },
     "ExplicitFunctionReturnTypeConfig": {
       "type": "object",

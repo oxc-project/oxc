@@ -56,7 +56,7 @@ pub struct ExpiringTodoCommentsConfig {
     /// If `false`, plain TODO/FIXME/XXX comments without expiration conditions
     /// are reported as well.
     pub allow_warning_comments: bool,
-    /// Override the reference date (format: `YYYY-MM-DD`). Useful for tests.
+    #[schemars(skip)]
     pub date: Option<String>,
 }
 

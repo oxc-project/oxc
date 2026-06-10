@@ -1393,7 +1393,7 @@ export interface DummyRuleMap {
   "unicorn/empty-brace-spaces"?: RuleNoConfig;
   "unicorn/error-message"?: RuleNoConfig;
   "unicorn/escape-case"?: RuleNoConfig;
-  "unicorn/expiring-todo-comments"?: DummyRule;
+  "unicorn/expiring-todo-comments"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpiringTodoCommentsConfig];
   "unicorn/explicit-length-check"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExplicitLengthCheck];
   "unicorn/filename-case"?: DummyRule;
   "unicorn/import-style"?: DummyRule;
@@ -5010,6 +5010,33 @@ export interface ConsistentFunctionScoping {
    * Whether to check scoping with arrow functions.
    */
   checkArrowFunctions?: boolean;
+}
+/**
+ * User-facing configuration shape — drives the JSON schema and deserialization.
+ */
+export interface ExpiringTodoCommentsConfig {
+  /**
+   * If `false`, plain TODO/FIXME/XXX comments without expiration conditions
+   * are reported as well.
+   */
+  allowWarningComments?: boolean;
+  /**
+   * Regex patterns (matched against the comment line) to ignore.
+   */
+  ignore?: string[];
+  /**
+   * If `true`, all date expiration checks are skipped.
+   */
+  ignoreDates?: boolean;
+  /**
+   * If `true`, date expiration checks are skipped when running on a pull
+   * request (detected via CI env vars).
+   */
+  ignoreDatesOnPullRequests?: boolean;
+  /**
+   * Terms to match as warning comments (case-insensitive).
+   */
+  terms?: string[];
 }
 export interface ExplicitLengthCheck {
   /**
