@@ -1500,6 +1500,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-response-static-json"?: RuleNoConfig;
   "unicorn/prefer-set-has"?: RuleNoConfig;
   "unicorn/prefer-set-size"?: RuleNoConfig;
+  "unicorn/prefer-single-call"?: DummyRule;
   "unicorn/prefer-spread"?: RuleNoConfig;
   "unicorn/prefer-string-raw"?: RuleNoConfig;
   "unicorn/prefer-string-replace-all"?: RuleNoConfig;
