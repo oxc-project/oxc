@@ -8162,6 +8162,9 @@
         "vue/require-default-export": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/require-default-prop": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vue/require-direct-export": {
           "anyOf": [
             {

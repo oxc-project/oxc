@@ -1637,6 +1637,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, CaseType2]
     | [AllowWarnDeny, CaseType2, Options];
   "vue/require-default-export"?: RuleNoConfig;
+  "vue/require-default-prop"?: RuleNoConfig;
   "vue/require-direct-export"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireDirectExport];
   "vue/require-prop-type-constructor"?: RuleNoConfig;
   "vue/require-prop-types"?: RuleNoConfig;
