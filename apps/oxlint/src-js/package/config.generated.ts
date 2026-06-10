@@ -236,6 +236,7 @@ export type SwitchCaseBracesConfig = "always" | "avoid";
 export type CaseType = "PascalCase" | "kebab-case";
 export type DeclarationStyle = "type-based" | "type-literal" | "runtime";
 export type DeclarationStyle2 = "type-based" | "runtime";
+export type Destructure = "only-when-assigned" | "always" | "never";
 export type NextTickOption = "promise" | "callback";
 export type CaseType2 = "camelCase" | "snake_case";
 export type AllowYoda = "never" | "always";
@@ -1606,7 +1607,7 @@ export interface DummyRuleMap {
   "vue/component-definition-name-casing"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, CaseType];
   "vue/define-emits-declaration"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DeclarationStyle];
   "vue/define-props-declaration"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DeclarationStyle2];
-  "vue/define-props-destructuring"?: DummyRule;
+  "vue/define-props-destructuring"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DefinePropsDestructuring];
   "vue/max-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxProps];
   "vue/next-tick-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NextTickOption];
   "vue/no-arrow-functions-in-watch"?: RuleNoConfig;
@@ -5184,6 +5185,12 @@ export interface RequireMockTypeParametersConfig {
    * Also require type parameters for `importActual` and `importMock`.
    */
   checkImportFunctions?: boolean;
+}
+export interface DefinePropsDestructuring {
+  /**
+   * Require or prohibit destructuring.
+   */
+  destructure?: Destructure;
 }
 export interface MaxProps {
   /**

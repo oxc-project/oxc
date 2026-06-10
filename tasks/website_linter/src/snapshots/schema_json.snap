@@ -1250,6 +1250,50 @@ expression: json
       },
       "additionalProperties": false
     },
+    "DefinePropsDestructuring": {
+      "type": "object",
+      "properties": {
+        "destructure": {
+          "description": "Require or prohibit destructuring.",
+          "default": "only-when-assigned",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Destructure"
+            }
+          ],
+          "markdownDescription": "Require or prohibit destructuring."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Destructure": {
+      "oneOf": [
+        {
+          "description": "Requires destructuring when `defineProps` is assigned to a variable and warns against using `withDefaults` with destructuring",
+          "type": "string",
+          "enum": [
+            "only-when-assigned"
+          ],
+          "markdownDescription": "Requires destructuring when `defineProps` is assigned to a variable and warns against using `withDefaults` with destructuring"
+        },
+        {
+          "description": "Requires destructuring when using `defineProps` and warns against using `withDefaults` with destructuring",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Requires destructuring when using `defineProps` and warns against using `withDefaults` with destructuring"
+        },
+        {
+          "description": "Requires using a variable to store props and prohibits destructuring",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Requires using a variable to store props and prohibits destructuring"
+        }
+      ]
+    },
     "Destructuring": {
       "oneOf": [
         {
@@ -8066,7 +8110,24 @@ expression: json
           ]
         },
         "vue/define-props-destructuring": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/DefinePropsDestructuring"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vue/max-props": {
           "anyOf": [
