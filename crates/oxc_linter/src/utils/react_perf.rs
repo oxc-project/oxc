@@ -22,8 +22,9 @@ use crate::{
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ReactPerfConfig {
     /// Controls whether native elements (lowercase-first-letter tags such as `div`)
-    /// are ignored by the rule. Either `"all"` to ignore the rule entirely on native
-    /// elements, or an array of attribute names to ignore on native elements.
+    /// are ignored by the rule. Set to `"all"` to ignore every attribute on native
+    /// elements, or to an array of attribute names to ignore only those attributes
+    /// on native elements.
     native_allow_list: NativeAllowList,
 }
 

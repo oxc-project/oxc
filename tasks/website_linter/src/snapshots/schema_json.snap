@@ -13315,13 +13315,13 @@ expression: json
       "type": "object",
       "properties": {
         "nativeAllowList": {
-          "description": "Controls whether native elements (lowercase-first-letter tags such as `div`)\nare ignored by the rule. Either `\"all\"` to ignore the rule entirely on native\nelements, or an array of attribute names to ignore on native elements.",
+          "description": "Controls whether native elements (lowercase-first-letter tags such as `div`)\nare ignored by the rule. Set to `\"all\"` to ignore every attribute on native\nelements, or to an array of attribute names to ignore only those attributes\non native elements.",
           "allOf": [
             {
               "$ref": "#/definitions/NativeAllowList"
             }
           ],
-          "markdownDescription": "Controls whether native elements (lowercase-first-letter tags such as `div`)\nare ignored by the rule. Either `\"all\"` to ignore the rule entirely on native\nelements, or an array of attribute names to ignore on native elements."
+          "markdownDescription": "Controls whether native elements (lowercase-first-letter tags such as `div`)\nare ignored by the rule. Set to `\"all\"` to ignore every attribute on native\nelements, or to an array of attribute names to ignore only those attributes\non native elements."
         }
       },
       "additionalProperties": false

@@ -45,19 +45,6 @@ declare_oxc_lint!(
     /// ```jsx
     /// <Item callback={this.props.jsx} />
     /// ```
-    ///
-    /// ### Configuration
-    ///
-    /// This rule accepts a `nativeAllowList` option controlling whether native
-    /// elements (lowercase-first-letter tags) are ignored. Set it to `"all"` to
-    /// ignore the rule for all attributes on native elements, or to an array of
-    /// attribute names to ignore only those attributes on native elements.
-    ///
-    /// ```json
-    /// {
-    ///     "react-perf/jsx-no-jsx-as-prop": ["error", { "nativeAllowList": ["icon"] }]
-    /// }
-    /// ```
     JsxNoJsxAsProp,
     react_perf,
     perf,
