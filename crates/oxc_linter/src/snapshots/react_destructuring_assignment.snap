@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:3:40]
  2 │                     const MyComponent = (props) => {
  3 │                       return (<div id={props.id} />)
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     };
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must never use destructuring props assignment in SFC argument.
+  ⚠ react(destructuring-assignment): Must never use destructuring props assignment in SFC argument.
    ╭─[destructuring_assignment.tsx:2:42]
  1 │ 
  2 │                     const MyComponent = ({ id, className }) => (
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                       <div id={id} className={className} />
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must never use destructuring context assignment in SFC argument.
+  ⚠ react(destructuring-assignment): Must never use destructuring context assignment in SFC argument.
    ╭─[destructuring_assignment.tsx:2:49]
  1 │ 
  2 │                     const MyComponent = (props, { color }) => (
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                       <div id={props.id} className={props.className} />
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:4:38]
  3 │                       render() {
  4 │                         return <div>{this.props.foo}</div>;
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring state assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring state assignment.
    ╭─[destructuring_assignment.tsx:4:38]
  3 │                       render() {
  4 │                         return <div>{this.state.foo}</div>;
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring context assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring context assignment.
    ╭─[destructuring_assignment.tsx:4:38]
  3 │                       render() {
  4 │                         return <div>{this.context.foo}</div>;
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:5:32]
  4 │                       foo() {
  5 │                         return this.props.children;
@@ -58,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:4:39]
  3 │                       render: function() {
  4 │                         return <Text>{this.props.foo}</Text>;
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:4:36]
  3 │                       Foo(props) {
  4 │                         return <p>{props.a}</p>;
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:3:34]
  2 │                     export default function Foo(props) {
  3 │                       return <p>{props.a}</p>;
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     }
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:3:45]
  2 │                     function hof() {
  3 │                       return (props) => <p>{props.a}</p>;
@@ -90,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     }
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:4:37]
  3 │                       render() {
  4 │                         const foo = this.props.foo;
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         return <div>{foo}</div>;
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must never use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must never use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:4:31]
  3 │                       render() {
  4 │                         const { foo } = this.props;
@@ -106,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         return <div>{foo}</div>;
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must never use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must never use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:3:29]
  2 │                     const MyComponent = (props) => {
  3 │                       const { id, className } = props;
@@ -114,7 +114,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                       return <div id={id} className={className} />
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must never use destructuring state assignment.
+  ⚠ react(destructuring-assignment): Must never use destructuring state assignment.
    ╭─[destructuring_assignment.tsx:4:31]
  3 │                       render() {
  4 │                         const { foo } = this.state;
@@ -122,7 +122,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         return <div>{foo}</div>;
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:5:31]
  4 │                         CustomComponentName: function(props) {
  5 │                           if (props.url) {
@@ -130,7 +130,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                             return (
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:7:40]
  6 │                             return (
  7 │                               <a href={props.url}>
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │                                 {props.test}
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:8:34]
  7 │                               <a href={props.url}>
  8 │                                 {props.test}
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
  9 │                               </a>
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring context assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring context assignment.
    ╭─[destructuring_assignment.tsx:3:33]
  2 │                     function Foo(props, context) {
  3 │                       const d = context.describe();
@@ -154,7 +154,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                       return <div>{d}</div>;
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:3:37]
  2 │                     export default (props) => {
  3 │                       const match = props.str.match(/some expression/);
@@ -162,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                       if (match) {
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:5:23]
  4 │                     const TestComp = (props) => {
  5 │                       props.onClick3102();
@@ -170,7 +170,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │ 
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
     ╭─[destructuring_assignment.tsx:10:33]
   9 │                           onClick={(evt) => {
  10 │                             if (props.onClick3102) {
@@ -178,7 +178,7 @@ source: crates/oxc_linter/src/tester.rs
  11 │                               props.onClick3102(evt);
     ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
     ╭─[destructuring_assignment.tsx:11:31]
  10 │                             if (props.onClick3102) {
  11 │                               props.onClick3102(evt);
@@ -186,7 +186,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │                             }
     ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:4:34]
  3 │                         [A.b]: props => {
  4 │                           return props.editor !== null
@@ -194,7 +194,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                             ? <span>{props.editor}</span>
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:5:38]
  4 │                           return props.editor !== null
  5 │                             ? <span>{props.editor}</span>
@@ -202,7 +202,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                             : null
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:8:29]
  7 │                       return (props) => {
  8 │                         if (props.y) {
@@ -210,7 +210,7 @@ source: crates/oxc_linter/src/tester.rs
  9 │                           return <span>{props.y}</span>;
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
     ╭─[destructuring_assignment.tsx:9:41]
   8 │                         if (props.y) {
   9 │                           return <span>{props.y}</span>;
@@ -218,7 +218,7 @@ source: crates/oxc_linter/src/tester.rs
  10 │                         }
     ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
     ╭─[destructuring_assignment.tsx:11:39]
  10 │                         }
  11 │                         return <span>{props.x}</span>
@@ -226,7 +226,15 @@ source: crates/oxc_linter/src/tester.rs
  12 │                       };
     ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
+   ╭─[destructuring_assignment.tsx:4:28]
+ 3 │                       let id;
+ 4 │                       id = props.id;
+   ·                            ────────
+ 5 │                       return <div>{id}</div>;
+   ╰────
+
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:5:36]
  4 │                       type MyType = typeof props.text;
  5 │                       return <div>{props.text as MyType}</div>;
@@ -234,7 +242,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                     };
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must destructure props in the function signature.
+  ⚠ react(destructuring-assignment): Must destructure props in the function signature.
    ╭─[destructuring_assignment.tsx:4:23]
  3 │                     export const MyOtherComponent: React.FC<Props> = (props) => {
  4 │                       const { text } = props;
@@ -243,7 +251,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace object pattern with destructuring in signature
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:3:28]
  2 │                     function C(props: Props) {
  3 │                       void props.a
@@ -251,7 +259,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                       typeof props.b
    ╰────
 
-  ⚠ eslint-plugin-react(destructuring-assignment): Must use destructuring props assignment.
+  ⚠ react(destructuring-assignment): Must use destructuring props assignment.
    ╭─[destructuring_assignment.tsx:4:30]
  3 │                       void props.a
  4 │                       typeof props.b

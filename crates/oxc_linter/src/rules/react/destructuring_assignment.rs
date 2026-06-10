@@ -400,7 +400,7 @@ impl DestructuringAssignment {
 
     fn should_skip_member(&self, node: &AstNode, ctx: &LintContext) -> bool {
         match ctx.nodes().parent_kind(node.id()) {
-            AstKind::AssignmentExpression(_) => true,
+            AstKind::AssignmentExpression(assignment) => assignment.left.span() == node.span(),
             AstKind::PropertyDefinition(_) => !self.apply_to_class_fields,
             AstKind::TemplateLiteral(_) => {
                 !self.apply_to_class_fields
@@ -563,6 +563,16 @@ fn test() {
                     );
                   ",
             Some(serde_json::json!(["always"])),
+            None,
+        ),
+        (
+            "
+                    const MyComponent = (props) => {
+                      props.id = 'id';
+                      return <div />;
+                    };
+                  ",
+            None,
             None,
         ),
         (
@@ -1175,6 +1185,17 @@ fn test() {
                         return <span>{props.x}</span>
                       };
                     }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    const MyComponent = (props) => {
+                      let id;
+                      id = props.id;
+                      return <div>{id}</div>;
+                    };
                   ",
             None,
             None,
