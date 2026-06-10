@@ -4551,7 +4551,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "oxc/no-async-endpoint-handlers": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoAsyncEndpointHandlersConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "oxc/no-barrel-file": {
           "anyOf": [
@@ -10232,6 +10249,21 @@ expression: json
           "default": true,
           "type": "boolean",
           "markdownDescription": "When set to `true` (default), allows `array.sort()` as an expression statement.\nSet to `false` to forbid `Array#sort()` even if it's an expression statement.\n\nExample of **incorrect** code for this rule with `allowExpressionStatement` set to `false`:\n```js\narray.sort();\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoAsyncEndpointHandlersConfig": {
+      "type": "object",
+      "properties": {
+        "allowedNames": {
+          "description": "An array of names that are allowed to be async.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of names that are allowed to be async."
         }
       },
       "additionalProperties": false

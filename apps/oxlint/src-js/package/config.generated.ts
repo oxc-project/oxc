@@ -1099,7 +1099,7 @@ export interface DummyRuleMap {
   "oxc/missing-throw"?: RuleNoConfig;
   "oxc/no-accumulating-spread"?: RuleNoConfig;
   "oxc/no-async-await"?: RuleNoConfig;
-  "oxc/no-async-endpoint-handlers"?: DummyRule;
+  "oxc/no-async-endpoint-handlers"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoAsyncEndpointHandlersConfig];
   "oxc/no-barrel-file"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoBarrelFile];
   "oxc/no-const-enum"?: RuleNoConfig;
   "oxc/no-map-spread"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoMapSpreadConfig];
@@ -3620,6 +3620,12 @@ export interface ObjectShorthandOptions {
   avoidQuotes?: boolean;
   ignoreConstructors?: boolean;
   methodsIgnorePattern?: string;
+}
+export interface NoAsyncEndpointHandlersConfig {
+  /**
+   * An array of names that are allowed to be async.
+   */
+  allowedNames?: string[];
 }
 export interface NoBarrelFile {
   /**
