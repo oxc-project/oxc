@@ -639,8 +639,9 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
         "react-perf" => ("react_perf", rule_name),
         // e.g. "@next/google-font-display", "@next/next/google-font-display"
         "@next" | "@next/next" => ("nextjs", rule_name),
-        // For backwards compatibility, react hook rules reside in the react plugin.
-        "react-hooks" => ("react", rule_name),
+        // For backwards compatibility, react hook rules reside in the react plugin,
+        // and so does the react-compiler plugin's single rule.
+        "react-hooks" | "react-compiler" => ("react", rule_name),
         // For backwards compatibility, deepscan rules reside in the oxc plugin.
         "deepscan" => ("oxc", rule_name),
         _ => (plugin_name, rule_name),

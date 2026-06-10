@@ -66,7 +66,8 @@ bitflags! {
     pub struct LintPlugins: u16 {
         /// Not really a plugin. Included for completeness.
         const ESLINT = 0;
-        /// `eslint-plugin-react`, plus `eslint-plugin-react-hooks`
+        /// `eslint-plugin-react`, plus `eslint-plugin-react-hooks` and
+        /// `eslint-plugin-react-compiler`
         const REACT = 1 << 0;
         /// `eslint-plugin-unicorn`
         const UNICORN = 1 << 1;
@@ -140,7 +141,9 @@ impl TryFrom<&str> for LintPlugins {
         let value = normalized.as_ref();
 
         match value {
-            "react" | "react-hooks" | "react_hooks" => Ok(LintPlugins::REACT),
+            "react" | "react-hooks" | "react_hooks" | "react-compiler" | "react_compiler" => {
+                Ok(LintPlugins::REACT)
+            }
             "unicorn" => Ok(LintPlugins::UNICORN),
             "typescript" | "typescript-eslint" | "typescript_eslint" | "@typescript-eslint" => {
                 Ok(LintPlugins::TYPESCRIPT)
