@@ -12,7 +12,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{GetSpan, SPAN, SourceType};
 use oxc_str::{IdentHashSet, Str};
 
@@ -52,7 +52,7 @@ pub struct IsolatedDeclarationsReturn<'a> {
     /// Generated declaration program (`.d.ts` AST).
     pub program: Program<'a>,
     /// Diagnostics collected while generating declarations.
-    pub errors: Vec<OxcDiagnostic>,
+    pub diagnostics: Diagnostics,
 }
 
 /// Transformer that emits declaration-only AST from TypeScript source AST.
@@ -61,7 +61,7 @@ pub struct IsolatedDeclarations<'a> {
 
     // state
     scope: ScopeTree<'a>,
-    errors: RefCell<Vec<OxcDiagnostic>>,
+    errors: RefCell<Diagnostics>,
 
     // options
     strip_internal: bool,
@@ -79,7 +79,7 @@ impl<'a> IsolatedDeclarations<'a> {
             strip_internal,
             internal_annotations: FxHashSet::default(),
             scope: ScopeTree::new(),
-            errors: RefCell::new(vec![]),
+            errors: RefCell::new(Diagnostics::new()),
         }
     }
 
@@ -104,10 +104,10 @@ impl<'a> IsolatedDeclarations<'a> {
             directives,
             stmts,
         );
-        IsolatedDeclarationsReturn { program, errors: self.take_errors() }
+        IsolatedDeclarationsReturn { program, diagnostics: self.take_errors() }
     }
 
-    fn take_errors(&self) -> Vec<OxcDiagnostic> {
+    fn take_errors(&self) -> Diagnostics {
         mem::take(&mut self.errors.borrow_mut())
     }
 

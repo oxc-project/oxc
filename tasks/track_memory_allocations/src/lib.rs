@@ -149,7 +149,7 @@ pub fn run() -> Result<(), io::Error> {
         let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
             .with_options(parse_options)
             .parse();
-        assert!(parsed.errors.is_empty());
+        assert!(parsed.diagnostics.is_empty());
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
         let scoping = SemanticBuilder::new()
@@ -169,7 +169,7 @@ pub fn run() -> Result<(), io::Error> {
         // so re-parse with the formatter's parse options before formatting
         allocator.reset();
         let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
-        assert!(parsed.errors.is_empty());
+        assert!(parsed.diagnostics.is_empty());
         let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
             .print()
             .unwrap()
@@ -186,7 +186,7 @@ pub fn run() -> Result<(), io::Error> {
             let parsed = Parser::new(&allocator, &file.source_text, file.source_type)
                 .with_options(parse_options)
                 .parse();
-            assert!(parsed.errors.is_empty());
+            assert!(parsed.diagnostics.is_empty());
             parsed
         });
 
@@ -256,7 +256,7 @@ pub fn run() -> Result<(), io::Error> {
         reset_global_allocs();
 
         let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
-        assert!(parsed.errors.is_empty());
+        assert!(parsed.diagnostics.is_empty());
 
         let (_, formatter_stats) = record_stats_in(&allocator, || {
             format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)

@@ -5,7 +5,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::{Address, Allocator, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_semantic::{IsGlobalReference, ReferenceFlags, ScopeFlags, Scoping};
 use oxc_span::{SPAN, SourceType};
@@ -84,7 +84,7 @@ impl ReplaceGlobalDefinesConfig {
     ///
     /// * key is not an identifier
     /// * value has a syntax error
-    pub fn new<S: AsRef<str>>(defines: &[(S, S)]) -> Result<Self, Vec<OxcDiagnostic>> {
+    pub fn new<S: AsRef<str>>(defines: &[(S, S)]) -> Result<Self, Diagnostics> {
         let allocator = Allocator::default();
         let mut identifier_defines = vec![];
         let mut dot_defines = vec![];
@@ -145,7 +145,7 @@ impl ReplaceGlobalDefinesConfig {
         })))
     }
 
-    fn check_key(key: &str) -> Result<IdentifierType, Vec<OxcDiagnostic>> {
+    fn check_key(key: &str) -> Result<IdentifierType, Diagnostics> {
         let parts: Vec<&str> = key.split('.').collect();
 
         assert!(!parts.is_empty());
@@ -154,7 +154,8 @@ impl ReplaceGlobalDefinesConfig {
             if !is_identifier_name(parts[0]) {
                 return Err(vec![OxcDiagnostic::error(format!(
                     "The define key `{key}` is not an identifier."
-                ))]);
+                ))]
+                .into());
             }
             return Ok(IdentifierType::Identifier);
         }
@@ -167,7 +168,8 @@ impl ReplaceGlobalDefinesConfig {
             if !is_identifier_name(part) {
                 return Err(vec![OxcDiagnostic::error(format!(
                     "The define key `{key}` contains an invalid identifier `{part}`."
-                ))]);
+                ))]
+                .into());
             }
         }
         if is_import_meta {
@@ -187,7 +189,8 @@ impl ReplaceGlobalDefinesConfig {
         } else if normalized_parts_len != parts.len() {
             Err(vec![OxcDiagnostic::error(
                 "The postfix wildcard is only allowed for `import.meta`.".to_string(),
-            )])
+            )]
+            .into())
         } else {
             Ok(IdentifierType::DotDefines {
                 parts: parts
@@ -199,7 +202,7 @@ impl ReplaceGlobalDefinesConfig {
         }
     }
 
-    fn check_value(allocator: &Allocator, source_text: &str) -> Result<(), Vec<OxcDiagnostic>> {
+    fn check_value(allocator: &Allocator, source_text: &str) -> Result<(), Diagnostics> {
         Parser::new(allocator, source_text, SourceType::default()).parse_expression()?;
         Ok(())
     }

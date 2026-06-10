@@ -276,9 +276,9 @@ unsafe fn parse_raw_impl(
         let mut errors = if options.show_semantic_errors == Some(true) {
             let semantic_ret = SemanticBuilder::new_compiler().build(&program);
 
-            if !ret.errors.is_empty() || !semantic_ret.errors.is_empty() {
+            if !ret.diagnostics.is_empty() || !semantic_ret.diagnostics.is_empty() {
                 Error::from_diagnostics_in(
-                    ret.errors.into_iter().chain(semantic_ret.errors),
+                    ret.diagnostics.into_iter().chain(semantic_ret.diagnostics),
                     source_text,
                     filename,
                     &allocator,
@@ -286,8 +286,8 @@ unsafe fn parse_raw_impl(
             } else {
                 ArenaVec::new_in(&allocator)
             }
-        } else if !ret.errors.is_empty() {
-            Error::from_diagnostics_in(ret.errors, source_text, filename, &allocator)
+        } else if !ret.diagnostics.is_empty() {
+            Error::from_diagnostics_in(ret.diagnostics, source_text, filename, &allocator)
         } else {
             ArenaVec::new_in(&allocator)
         };

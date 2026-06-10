@@ -33,7 +33,7 @@ fn test_prop_name() {
         ";
     let ret = Parser::new(&allocator, source, source_type).parse();
     assert!(!ret.program.is_empty());
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
 
     let mut visitor = TestVisitor;
     visitor.visit_program(&ret.program);

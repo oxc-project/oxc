@@ -3,7 +3,7 @@ use std::{mem, ops::ControlFlow, path::Path};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::Diagnostics;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 use oxc_minifier::{CompressOptions, Compressor};
@@ -19,11 +19,11 @@ use oxc_transformer_plugins::{
 #[derive(Default)]
 pub struct Compiler {
     printed: String,
-    errors: Vec<OxcDiagnostic>,
+    errors: Diagnostics,
 }
 
 impl CompilerInterface for Compiler {
-    fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {
+    fn handle_errors(&mut self, errors: Diagnostics) {
         self.errors.extend(errors);
     }
 
@@ -35,13 +35,13 @@ impl CompilerInterface for Compiler {
 impl Compiler {
     /// # Errors
     ///
-    /// * A list of [OxcDiagnostic].
+    /// * The accumulated [Diagnostics].
     pub fn execute(
         &mut self,
         source_text: &str,
         source_type: SourceType,
         source_path: &Path,
-    ) -> Result<String, Vec<OxcDiagnostic>> {
+    ) -> Result<String, Diagnostics> {
         self.compile(source_text, source_type, source_path);
         if self.errors.is_empty() {
             Ok(mem::take(&mut self.printed))
@@ -52,7 +52,7 @@ impl Compiler {
 }
 
 pub trait CompilerInterface {
-    fn handle_errors(&mut self, _errors: Vec<OxcDiagnostic>) {}
+    fn handle_errors(&mut self, _errors: Diagnostics) {}
 
     fn enable_sourcemap(&self) -> bool {
         false
@@ -133,8 +133,8 @@ pub trait CompilerInterface {
         if self.after_parse(&mut parser_return).is_break() {
             return;
         }
-        if !parser_return.errors.is_empty() {
-            self.handle_errors(parser_return.errors);
+        if !parser_return.diagnostics.is_empty() {
+            self.handle_errors(parser_return.diagnostics);
         }
 
         let mut program = parser_return.program;
@@ -147,8 +147,8 @@ pub trait CompilerInterface {
         /* Semantic */
 
         let mut semantic_return = self.semantic(&program);
-        if !semantic_return.errors.is_empty() {
-            self.handle_errors(semantic_return.errors);
+        if !semantic_return.diagnostics.is_empty() {
+            self.handle_errors(semantic_return.diagnostics);
             return;
         }
         if self.after_semantic(&mut semantic_return).is_break() {
@@ -164,8 +164,14 @@ pub trait CompilerInterface {
             let mut transformer_return =
                 self.transform(options, &allocator, &mut program, source_path, scoping);
 
-            // Reported but non-fatal: the transformer always leaves a valid program.
-            self.handle_errors(mem::take(&mut transformer_return.errors));
+            // Errors are fatal (e.g. a React Compiler error); warnings are reported
+            // but codegen still runs.
+            let diagnostics = mem::take(&mut transformer_return.diagnostics);
+            let has_errors = diagnostics.has_errors();
+            self.handle_errors(diagnostics);
+            if has_errors {
+                return;
+            }
 
             if self.after_transform(&mut program, &mut transformer_return).is_break() {
                 return;
@@ -267,7 +273,7 @@ pub trait CompilerInterface {
         source_path: &Path,
     ) {
         let ret = IsolatedDeclarations::new(allocator, options).build(program);
-        self.handle_errors(ret.errors);
+        self.handle_errors(ret.diagnostics);
         let ret = self.codegen(
             &ret.program,
             source_path,

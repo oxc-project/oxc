@@ -94,7 +94,7 @@ pub struct ManglerReturn {
 /// let allocator = Allocator::default();
 /// let source = "const result = 1 + 2;";
 /// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
-/// assert!(parsed.errors.is_empty());
+/// assert!(parsed.diagnostics.is_empty());
 ///
 /// let mangled_symbols = Mangler::new()
 ///     .with_options(MangleOptions { top_level: true, debug: true })

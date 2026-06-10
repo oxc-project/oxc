@@ -40,9 +40,9 @@ fn main() {
 
     let result = transform(&program, &allocator, default_plugin_options());
 
-    if !result.errors.is_empty() || !result.warnings.is_empty() {
+    if !result.diagnostics.is_empty() {
         println!("Diagnostics:\n");
-        for diagnostic in result.errors.iter().chain(&result.warnings) {
+        for diagnostic in &result.diagnostics {
             println!("{diagnostic:?}");
         }
         println!();

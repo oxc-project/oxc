@@ -14,7 +14,7 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
     let source_type = SourceType::ts().with_module(true);
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
     let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let ret = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
@@ -368,7 +368,7 @@ fn test_define_then_transform_impl(
 
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
 
     // Step 1: Run define plugin first (like the playground does)
@@ -385,7 +385,7 @@ fn test_define_then_transform_impl(
     let filename = if source_type.is_typescript() { "test.ts" } else { "test.mjs" };
     let ret = Transformer::new(&allocator, Path::new(filename), &options)
         .build_with_scoping(scoping, &mut program);
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
 
     let result = Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })

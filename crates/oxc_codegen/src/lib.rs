@@ -75,7 +75,7 @@ pub struct CodegenReturn {
 /// let allocator = Allocator::default();
 /// let source = "const a = 1 + 2;";
 /// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
-/// assert!(parsed.errors.is_empty());
+/// assert!(parsed.diagnostics.is_empty());
 ///
 /// let js = Codegen::new().build(&parsed.program);
 /// assert_eq!(js.code, "const a = 1 + 2;\n");

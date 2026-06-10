@@ -15,7 +15,7 @@ use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
 };
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
 use oxc_str::{Ident, IdentHashMap};
 use oxc_syntax::{
@@ -74,7 +74,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) source_type: SourceType,
 
     /// Semantic early errors such as redeclaration errors.
-    pub(crate) errors: RefCell<Vec<OxcDiagnostic>>,
+    pub(crate) errors: RefCell<Diagnostics>,
 
     // states
     pub(crate) current_scope_id: ScopeId,
@@ -131,7 +131,7 @@ pub struct SemanticBuilderReturn<'a> {
     /// Built semantic model.
     pub semantic: Semantic<'a>,
     /// Diagnostics collected during semantic analysis.
-    pub errors: Vec<OxcDiagnostic>,
+    pub diagnostics: Diagnostics,
 }
 
 impl Default for SemanticBuilder<'_> {
@@ -149,7 +149,7 @@ impl<'a> SemanticBuilder<'a> {
         Self {
             source_text: "",
             source_type: SourceType::default(),
-            errors: RefCell::new(vec![]),
+            errors: RefCell::new(Diagnostics::new()),
             current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
             current_function_node_id: NodeId::ROOT,
@@ -390,7 +390,7 @@ impl<'a> SemanticBuilder<'a> {
             #[cfg(not(feature = "cfg"))]
             cfg: (),
         };
-        SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
+        SemanticBuilderReturn { semantic, diagnostics: self.errors.into_inner() }
     }
 
     /// Push a Syntax Error

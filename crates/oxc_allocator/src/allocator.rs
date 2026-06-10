@@ -204,7 +204,7 @@ use oxc_data_structures::assert_unchecked;
 ///
 /// let allocator = Allocator::default();
 /// let parsed = Parser::new(&allocator, "let x = 1;", SourceType::default());
-/// assert!(parsed.errors.is_empty());
+/// assert!(parsed.diagnostics.is_empty());
 /// ```
 ///
 /// [`reset`]: Allocator::reset

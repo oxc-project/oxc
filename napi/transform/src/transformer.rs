@@ -14,7 +14,7 @@ use oxc::{
     CompilerInterface,
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions, CodegenReturn},
-    diagnostics::OxcDiagnostic,
+    diagnostics::{Diagnostics, OxcDiagnostic},
     parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
@@ -756,7 +756,7 @@ struct Compiler {
     inject: Option<InjectGlobalVariablesConfig>,
 
     helpers_used: FxHashMap<String, String>,
-    errors: Vec<OxcDiagnostic>,
+    errors: Diagnostics,
 }
 
 impl Compiler {
@@ -823,13 +823,13 @@ impl Compiler {
             define,
             inject,
             helpers_used: FxHashMap::default(),
-            errors: vec![],
+            errors: Diagnostics::new(),
         })
     }
 }
 
 impl CompilerInterface for Compiler {
-    fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {
+    fn handle_errors(&mut self, errors: Diagnostics) {
         self.errors.extend(errors);
     }
 
@@ -1069,9 +1069,9 @@ fn module_runner_transform_impl(
     let mut parser_ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parser_ret.program;
 
-    let SemanticBuilderReturn { semantic, errors } =
+    let SemanticBuilderReturn { semantic, diagnostics } =
         SemanticBuilder::new_compiler().build(&program);
-    parser_ret.errors.extend(errors);
+    parser_ret.diagnostics.extend(diagnostics);
 
     let scoping = semantic.into_scoping();
     let (deps, dynamic_deps) =
@@ -1091,7 +1091,7 @@ fn module_runner_transform_impl(
         map: map.map(Into::into),
         deps: deps.into_iter().collect::<Vec<String>>(),
         dynamic_deps: dynamic_deps.into_iter().collect::<Vec<String>>(),
-        errors: OxcError::from_diagnostics(filename, source_text, parser_ret.errors),
+        errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
     }
 }
 

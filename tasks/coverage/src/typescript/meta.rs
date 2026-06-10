@@ -9,7 +9,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc::{
     allocator::Allocator,
     codegen::Codegen,
-    diagnostics::{NamedSource, OxcDiagnostic},
+    diagnostics::{Diagnostics, NamedSource},
     parser::Parser,
     span::{SourceType, Span},
 };
@@ -423,7 +423,7 @@ pub struct Baseline {
     pub original: String,
     pub original_diagnostic: Vec<String>,
     pub oxc_printed: String,
-    pub oxc_diagnostics: Vec<OxcDiagnostic>,
+    pub oxc_diagnostics: Diagnostics,
 }
 
 impl Baseline {
