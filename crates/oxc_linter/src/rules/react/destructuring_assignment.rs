@@ -208,10 +208,15 @@ impl Rule for DestructuringAssignment {
                 if self.should_skip_member(node, ctx) || self.apply_never() {
                     return;
                 }
-                if let Some(parent) = get_parent_stateless_component(node, ctx) {
-                    handle_function_component_usage(member, ctx, &parent);
-                } else if get_parent_component(node, ctx).is_some() {
-                    handle_class_component_usage(member, ctx);
+
+                if is_parameter_member_object(member, ctx) {
+                    if let Some(parent) = get_parent_stateless_component(node, ctx) {
+                        handle_function_component_usage(member, ctx, &parent);
+                    }
+                } else if let Some(prop_name) = get_this_member_name(&member.object)
+                    && get_parent_component(node, ctx).is_some()
+                {
+                    ctx.diagnostic(use_destruct_assignment_diagnostic(member.span, prop_name));
                 }
             }
             AstKind::FormalParameter(param)
@@ -345,13 +350,6 @@ impl DestructuringAssignment {
     }
 }
 
-fn handle_class_component_usage<'a>(node: &StaticMemberExpression<'a>, ctx: &LintContext<'a>) {
-    let Some(prop_name) = get_this_member_name(&node.object) else {
-        return;
-    };
-    ctx.diagnostic(use_destruct_assignment_diagnostic(node.span, prop_name));
-}
-
 fn handle_function_component_usage<'a>(
     node: &StaticMemberExpression<'a>,
     ctx: &LintContext<'a>,
@@ -370,6 +368,13 @@ fn handle_function_component_usage<'a>(
     if let Some(name) = matched_name {
         ctx.diagnostic(use_destruct_assignment_diagnostic(node.span, name));
     }
+}
+
+fn is_parameter_member_object(node: &StaticMemberExpression, ctx: &LintContext) -> bool {
+    let Some(id_ref) = node.object.get_identifier_reference() else { return false };
+    let reference = ctx.scoping().get_reference(id_ref.reference_id());
+    let Some(symbol_id) = reference.symbol_id() else { return false };
+    matches!(ctx.semantic().symbol_declaration(symbol_id).kind(), AstKind::FormalParameter(_))
 }
 
 fn get_this_member_name<'a>(expr: &Expression<'a>) -> Option<&'a str> {
