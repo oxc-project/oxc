@@ -10,7 +10,11 @@ use std::path::Path;
 use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
+#[cfg(feature = "react_compiler")]
+use oxc_react_compiler::{PluginOptions, transform as react_compiler_transform};
 use oxc_semantic::Scoping;
+#[cfg(feature = "react_compiler")]
+use oxc_semantic::SemanticBuilder;
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
@@ -109,6 +113,8 @@ pub struct Transformer<'a> {
     env: EnvOptions,
     #[expect(dead_code)]
     proposals: ProposalOptions,
+    #[cfg(feature = "react_compiler")]
+    react_compiler: Option<PluginOptions>,
 }
 
 impl<'a> Transformer<'a> {
@@ -124,6 +130,8 @@ impl<'a> Transformer<'a> {
             jsx: options.jsx.clone(),
             env: options.env,
             proposals: options.proposals,
+            #[cfg(feature = "react_compiler")]
+            react_compiler: options.react_compiler.clone(),
         }
     }
 
@@ -134,6 +142,12 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
+
+        #[cfg(feature = "react_compiler")]
+        let (scoping, react_compiler_diagnostics) = self.run_react_compiler(scoping, program);
+        #[cfg(not(feature = "react_compiler"))]
+        let react_compiler_diagnostics: std::vec::Vec<OxcDiagnostic> = std::vec::Vec::new();
+
         let ast_builder = AstBuilder::new(allocator);
 
         self.state.source_type = program.source_type;
@@ -188,8 +202,31 @@ impl<'a> Transformer<'a> {
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
         let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
         let helpers_used = state.helper_loader.used_helpers.drain().collect();
+        let mut errors = react_compiler_diagnostics;
+        errors.extend(state.take_errors());
         #[expect(deprecated)]
-        TransformerReturn { errors: state.take_errors(), scoping, helpers_used }
+        TransformerReturn { errors, scoping, helpers_used }
+    }
+
+    #[cfg(feature = "react_compiler")]
+    fn run_react_compiler(
+        &mut self,
+        scoping: Scoping,
+        program: &mut Program<'a>,
+    ) -> (Scoping, std::vec::Vec<OxcDiagnostic>) {
+        let Some(options) = self.react_compiler.take() else {
+            return (scoping, std::vec::Vec::new());
+        };
+        let result = react_compiler_transform(program, self.allocator, options);
+        let mut diagnostics = result.errors;
+        diagnostics.extend(result.warnings);
+        let Some(compiled) = result.program else {
+            return (scoping, diagnostics);
+        };
+        *program = compiled;
+        let scoping =
+            SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
+        (scoping, diagnostics)
     }
 }
 

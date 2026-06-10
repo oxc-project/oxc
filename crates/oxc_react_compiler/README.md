@@ -1,6 +1,6 @@
 # Oxc React Compiler
 
-oxc integration for the Rust port of the [React Compiler](https://github.com/facebook/react/pull/36173).
+oxc integration for the Rust port of the [React Compiler](https://github.com/react/react/tree/main/compiler).
 
 ## Overview
 

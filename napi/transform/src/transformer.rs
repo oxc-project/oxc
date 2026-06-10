@@ -149,7 +149,7 @@ pub struct TransformOptions {
     /// Decorator plugin
     pub decorator: Option<DecoratorOptions>,
 
-    /// Enable the experimental [React Compiler](https://github.com/facebook/react/pull/36173).
+    /// Enable the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
     ///
     /// `true` enables it with default options; an object enables it with the
     /// given options; `false` or omitted disables it. When enabled, the compiler
@@ -202,17 +202,8 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 .plugins
                 .map(oxc::transformer::PluginsOptions::from)
                 .unwrap_or_default(),
+            react_compiler: crate::react_compiler::resolve(options.react_compiler),
         })
-    }
-}
-
-impl TransformOptions {
-    /// Take the `reactCompiler` option and resolve it into the compiler's
-    /// `PluginOptions`. The React Compiler is a standalone pass driven by the
-    /// [`CompilerInterface`], so it is not part of
-    /// `oxc::transformer::TransformOptions`.
-    fn take_react_compiler(&mut self) -> Option<oxc_react_compiler::PluginOptions> {
-        crate::react_compiler::resolve(self.react_compiler.take())
     }
 }
 
@@ -763,8 +754,6 @@ struct Compiler {
 
     define: Option<ReplaceGlobalDefinesConfig>,
     inject: Option<InjectGlobalVariablesConfig>,
-    #[expect(clippy::struct_field_names)]
-    react_compiler: Option<oxc_react_compiler::PluginOptions>,
 
     helpers_used: FxHashMap<String, String>,
     errors: Vec<OxcDiagnostic>,
@@ -817,8 +806,6 @@ impl Compiler {
             .transpose()?
             .map(InjectGlobalVariablesConfig::new);
 
-        let react_compiler = options.as_mut().and_then(TransformOptions::take_react_compiler);
-
         let transform_options = match options {
             Some(options) => oxc::transformer::TransformOptions::try_from(options)
                 .map_err(|err| vec![OxcDiagnostic::error(err)])?,
@@ -835,7 +822,6 @@ impl Compiler {
             declaration_map: None,
             define,
             inject,
-            react_compiler,
             helpers_used: FxHashMap::default(),
             errors: vec![],
         })
@@ -867,10 +853,6 @@ impl CompilerInterface for Compiler {
 
     fn inject_options(&self) -> Option<InjectGlobalVariablesConfig> {
         self.inject.clone()
-    }
-
-    fn react_compiler_options(&self) -> Option<oxc_react_compiler::PluginOptions> {
-        self.react_compiler.clone()
     }
 
     fn after_codegen(&mut self, ret: CodegenReturn) {

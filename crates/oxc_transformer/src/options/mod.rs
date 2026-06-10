@@ -1,5 +1,8 @@
 use std::path::PathBuf;
 
+#[cfg(feature = "react_compiler")]
+use oxc_react_compiler::PluginOptions;
+
 use crate::{
     ReactRefreshOptions,
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
@@ -68,6 +71,10 @@ pub struct TransformOptions {
 
     /// Helper loading configuration for generated runtime helpers.
     pub helper_loader: HelperLoaderOptions,
+
+    /// Experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
+    #[cfg(feature = "react_compiler")]
+    pub react_compiler: Option<PluginOptions>,
 }
 
 impl TransformOptions {
@@ -100,6 +107,8 @@ impl TransformOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
             },
+            #[cfg(feature = "react_compiler")]
+            react_compiler: None,
         }
     }
 
@@ -302,6 +311,8 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             proposals: ProposalOptions::default(),
             helper_loader,
             plugins,
+            #[cfg(feature = "react_compiler")]
+            react_compiler: None,
         })
     }
 }

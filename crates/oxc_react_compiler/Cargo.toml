@@ -1,11 +1,12 @@
 # oxc_react_compiler
 #
-# Native oxc integration for the Rust port of React Compiler (facebook/react#36173).
+# Native oxc integration for the Rust port of the React Compiler:
+# https://github.com/react/react/tree/main/compiler
 #
 # This crate owns the oxc <-> react_compiler_ast conversion layer. The React
 # Compiler *core* crates are frontend-agnostic (they depend on serde/indexmap
 # only, never on oxc), so we consume them from crates.io (a published MIT fork of
-# facebook/react#36173) and keep the AST/scope conversion on our side, written
+# the React Compiler) and keep the AST/scope conversion on our side, written
 # against the live workspace oxc AST.
 
 [package]
@@ -37,7 +38,7 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 # React Compiler core crates — frontend-agnostic (no oxc deps). Published fork of
-# facebook/react#36173 (MIT). `package` keeps the in-code name `react_compiler*`.
+# the React Compiler (MIT). `package` keeps the in-code name `react_compiler*`.
 react_compiler = { package = "forked_react_compiler", version = "0.1.4" }
 react_compiler_ast = { package = "forked_react_compiler_ast", version = "0.1.4" }
 react_compiler_hir = { package = "forked_react_compiler_hir", version = "0.1.4" }

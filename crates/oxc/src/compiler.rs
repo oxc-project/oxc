@@ -8,7 +8,6 @@ use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOption
 use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
-use oxc_react_compiler::{self, PluginOptions as ReactCompilerOptions};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn, Stats};
 use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
@@ -68,13 +67,6 @@ pub trait CompilerInterface {
     }
 
     fn transform_options(&self) -> Option<&TransformOptions> {
-        None
-    }
-
-    /// Options for the [React Compiler], which runs before all other transforms.
-    ///
-    /// [React Compiler]: oxc_react_compiler
-    fn react_compiler_options(&self) -> Option<ReactCompilerOptions> {
         None
     }
 
@@ -166,60 +158,25 @@ pub trait CompilerInterface {
         let stats = semantic_return.semantic.stats();
         let mut scoping = semantic_return.semantic.into_scoping();
 
-        /* React Compiler */
-
-        // Runs first, on the pristine AST, before every other transform.
-        let mut errors = Vec::new();
-        if let Some(options) = self.react_compiler_options() {
-            // `compiled` lives in `allocator`, not borrowed from `program`, so the
-            // reassignment below is sound.
-            let result = oxc_react_compiler::transform(&program, &allocator, options);
-            errors.extend(result.errors);
-            errors.extend(result.warnings);
-            if let Some(compiled) = result.program {
-                program = compiled;
-                // Rebuild scoping for downstream transforms.
-                scoping = SemanticBuilder::new()
-                    .with_enum_eval(true)
-                    .build(&program)
-                    .semantic
-                    .into_scoping();
-            }
-        }
-
         /* Transform */
 
         if let Some(options) = self.transform_options() {
             let mut transformer_return =
                 self.transform(options, &allocator, &mut program, source_path, scoping);
 
-            if !transformer_return.errors.is_empty() {
-                errors.append(&mut transformer_return.errors);
-                self.handle_errors(errors);
-                return;
-            }
-
-            // The React Compiler always leaves a valid program (compiled on
-            // success, original on bail-out), so its diagnostics are reported but
-            // never abort codegen.
-            if !errors.is_empty() {
-                self.handle_errors(errors);
-            }
+            // Reported but non-fatal: the transformer always leaves a valid program.
+            self.handle_errors(mem::take(&mut transformer_return.errors));
 
             if self.after_transform(&mut program, &mut transformer_return).is_break() {
                 return;
             }
 
-            (scoping) = transformer_return.scoping;
-        } else if !errors.is_empty() {
-            // The React Compiler ran without a transform; surface its diagnostics
-            // but never abort — it always leaves a valid program.
-            self.handle_errors(errors);
+            scoping = transformer_return.scoping;
         }
 
         // The transformer leaves symbols and scopes out of sync with the AST;
-        // the parser, React Compiler, and any fresh semantic build leave them in
-        // sync. Track the state so each consumer below only rebuilds when needed.
+        // the parser and any fresh semantic build leave them in sync. Track the
+        // state so each consumer below only rebuilds when needed.
         let transform = self.transform_options().is_some();
         let mut scoping_dirty = transform;
 
