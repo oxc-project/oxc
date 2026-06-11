@@ -190,12 +190,32 @@ impl Rule for PreferSingleCall {
         if keep_second {
             ctx.diagnostic_with_suggestion(
                 prefer_single_call_diagnostic(diag_span, description),
-                |fixer| merge_calls(fixer, first_call, second_call, first_span, second_span, keep_second, ctx),
+                |fixer| {
+                    merge_calls(
+                        fixer,
+                        first_call,
+                        second_call,
+                        first_span,
+                        second_span,
+                        keep_second,
+                        ctx,
+                    )
+                },
             );
         } else {
             ctx.diagnostic_with_fix(
                 prefer_single_call_diagnostic(diag_span, description),
-                |fixer| merge_calls(fixer, first_call, second_call, first_span, second_span, keep_second, ctx),
+                |fixer| {
+                    merge_calls(
+                        fixer,
+                        first_call,
+                        second_call,
+                        first_span,
+                        second_span,
+                        keep_second,
+                        ctx,
+                    )
+                },
             );
         }
     }
@@ -237,7 +257,8 @@ fn get_call_from_expr_stmt<'a>(
 /// of the patterns this rule cares about.
 fn classify_call(call: &CallExpression) -> Option<CallKind> {
     // `importScripts` has no optional-call restriction (importScripts?.() still fires).
-    if matches!(call.callee.get_inner_expression(), Expression::Identifier(id) if id.name == "importScripts") {
+    if matches!(call.callee.get_inner_expression(), Expression::Identifier(id) if id.name == "importScripts")
+    {
         return Some(CallKind::ImportScripts);
     }
 
@@ -263,7 +284,11 @@ fn classify_call(call: &CallExpression) -> Option<CallKind> {
             if obj_member.static_property_name() != Some("classList") {
                 return None;
             }
-            if method == "add" { Some(CallKind::ClassListAdd) } else { Some(CallKind::ClassListRemove) }
+            if method == "add" {
+                Some(CallKind::ClassListAdd)
+            } else {
+                Some(CallKind::ClassListRemove)
+            }
         }
         _ => None,
     }
@@ -277,7 +302,10 @@ fn classify_call(call: &CallExpression) -> Option<CallKind> {
 /// ignore pattern.
 fn is_callee_ignored(call: &CallExpression, user_ignore: &[String]) -> bool {
     let callee = call.callee.get_inner_expression();
-    DEFAULT_IGNORE.iter().copied().chain(user_ignore.iter().map(String::as_str))
+    DEFAULT_IGNORE
+        .iter()
+        .copied()
+        .chain(user_ignore.iter().map(String::as_str))
         .any(|pattern| callee_matches_pattern(callee, pattern))
 }
 
@@ -372,8 +400,7 @@ fn args_insertion<'a>(
 ) -> Option<RuleFix> {
     let first_src = source.arguments.first()?;
     let last_src = source.arguments.last()?;
-    let src_text =
-        ctx.source_range(Span::new(first_src.span().start, last_src.span().end));
+    let src_text = ctx.source_range(Span::new(first_src.span().start, last_src.span().end));
 
     if target.arguments.is_empty() {
         // Insert before the closing `)` of the target.
@@ -390,8 +417,7 @@ fn args_insertion<'a>(
     if after_end <= close_pos {
         let between = &source_text[after_end..close_pos];
         if let Some(comma_off) = between.find(',') {
-            let insert_pos =
-                last_tgt.span().end + u32::try_from(comma_off).unwrap_or(0) + 1;
+            let insert_pos = last_tgt.span().end + u32::try_from(comma_off).unwrap_or(0) + 1;
             return Some(fixer.insert_text_after_range(
                 Span::new(insert_pos, insert_pos),
                 format!(" {src_text}"),
