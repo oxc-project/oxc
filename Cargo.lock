@@ -1865,9 +1865,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-schemars"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae3eac8cf44c508a9423cef2851b291ebf29b94d2c00f7c0c95e46fe01a39574"
+checksum = "70beb8d94ce75bafc509dc24824147b18dfbe7786e9afd4b49765b645d9cc505"
 dependencies = [
  "dyn-clone",
  "indexmap",
