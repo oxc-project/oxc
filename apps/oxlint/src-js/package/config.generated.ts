@@ -228,6 +228,13 @@ export type FileFrom = "file";
 export type NameSpecifier = string | string[];
 export type LibFrom = "lib";
 export type PackageFrom = "package";
+/**
+ * Represents the different ways `ignorePrimitives` can be specified in JSON.
+ * Can be:
+ * - `true` - ignore all primitive types
+ * - An object specifying which primitives to ignore
+ */
+export type IgnorePrimitives = boolean | IgnorePrimitivesOptions;
 export type AllowSingleElementEquality = "always" | "never";
 export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-correctness-only" | "never";
 export type PathOption = "always" | "never";
@@ -1354,7 +1361,10 @@ export interface DummyRuleMap {
   "typescript/prefer-includes"?: RuleNoConfig;
   "typescript/prefer-literal-enum-member"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferLiteralEnumMember];
   "typescript/prefer-namespace-keyword"?: RuleNoConfig;
-  "typescript/prefer-nullish-coalescing"?: DummyRule;
+  "typescript/prefer-nullish-coalescing"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, PreferNullishCoalescingConfig];
   "typescript/prefer-optional-chain"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferOptionalChainConfig];
   "typescript/prefer-promise-reject-errors"?:
     | AllowWarnDeny
@@ -4910,6 +4920,56 @@ export interface PreferLiteralEnumMember {
    * This includes bitwise NOT (`~`), AND (`&`), OR (`|`), XOR (`^`), and shift operators (`<<`, `>>`, `>>>`).
    */
   allowBitwiseExpressions?: boolean;
+}
+export interface PreferNullishCoalescingConfig {
+  /**
+   * Whether to ignore arguments to the `Boolean` constructor.
+   */
+  ignoreBooleanCoercion?: boolean;
+  /**
+   * Whether to ignore cases that are located within a conditional test.
+   */
+  ignoreConditionalTests?: boolean;
+  /**
+   * Whether to ignore any if statements that could be simplified by using
+   * the nullish coalescing operator.
+   */
+  ignoreIfStatements?: boolean;
+  /**
+   * Whether to ignore any logical or expressions that are part of a mixed
+   * logical expression (with `&&`).
+   */
+  ignoreMixedLogicalExpressions?: boolean;
+  /**
+   * Whether to ignore all (`true`) or some (an object with properties) primitive types.
+   */
+  ignorePrimitives?: IgnorePrimitives;
+  /**
+   * Whether to ignore any ternary expressions that could be simplified by
+   * using the nullish coalescing operator.
+   */
+  ignoreTernaryTests?: boolean;
+}
+/**
+ * Options for ignoring specific primitive types.
+ */
+export interface IgnorePrimitivesOptions {
+  /**
+   * Ignore bigint primitive types.
+   */
+  bigint?: boolean;
+  /**
+   * Ignore boolean primitive types.
+   */
+  boolean?: boolean;
+  /**
+   * Ignore number primitive types.
+   */
+  number?: boolean;
+  /**
+   * Ignore string primitive types.
+   */
+  string?: boolean;
 }
 export interface PreferOptionalChainConfig {
   /**

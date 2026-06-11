@@ -6759,7 +6759,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/prefer-nullish-coalescing": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferNullishCoalescingConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/prefer-optional-chain": {
           "anyOf": [
@@ -9759,6 +9776,58 @@ expression: json
           "markdownDescription": "The ignore pattern is a regex."
         }
       ]
+    },
+    "IgnorePrimitives": {
+      "description": "Represents the different ways `ignorePrimitives` can be specified in JSON.\nCan be:\n- `true` - ignore all primitive types\n- An object specifying which primitives to ignore",
+      "anyOf": [
+        {
+          "description": "`\"ignorePrimitives\": true` - ignore all primitive types",
+          "type": "boolean",
+          "markdownDescription": "`\"ignorePrimitives\": true` - ignore all primitive types"
+        },
+        {
+          "description": "`\"ignorePrimitives\": { \"string\": true, ... }` - ignore specific primitives",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnorePrimitivesOptions"
+            }
+          ],
+          "markdownDescription": "`\"ignorePrimitives\": { \"string\": true, ... }` - ignore specific primitives"
+        }
+      ],
+      "markdownDescription": "Represents the different ways `ignorePrimitives` can be specified in JSON.\nCan be:\n- `true` - ignore all primitive types\n- An object specifying which primitives to ignore"
+    },
+    "IgnorePrimitivesOptions": {
+      "description": "Options for ignoring specific primitive types.",
+      "type": "object",
+      "properties": {
+        "bigint": {
+          "description": "Ignore bigint primitive types.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Ignore bigint primitive types."
+        },
+        "boolean": {
+          "description": "Ignore boolean primitive types.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Ignore boolean primitive types."
+        },
+        "number": {
+          "description": "Ignore number primitive types.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Ignore number primitive types."
+        },
+        "string": {
+          "description": "Ignore string primitive types.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Ignore string primitive types."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Options for ignoring specific primitive types."
     },
     "ImportKind": {
       "type": "string",
@@ -13995,6 +14064,52 @@ expression: json
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true`, allows bitwise expressions in enum member initializers.\nThis includes bitwise NOT (`~`), AND (`&`), OR (`|`), XOR (`^`), and shift operators (`<<`, `>>`, `>>>`)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferNullishCoalescingConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreBooleanCoercion": {
+          "description": "Whether to ignore arguments to the `Boolean` constructor.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore arguments to the `Boolean` constructor."
+        },
+        "ignoreConditionalTests": {
+          "description": "Whether to ignore cases that are located within a conditional test.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore cases that are located within a conditional test."
+        },
+        "ignoreIfStatements": {
+          "description": "Whether to ignore any if statements that could be simplified by using\nthe nullish coalescing operator.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore any if statements that could be simplified by using\nthe nullish coalescing operator."
+        },
+        "ignoreMixedLogicalExpressions": {
+          "description": "Whether to ignore any logical or expressions that are part of a mixed\nlogical expression (with `&&`).",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore any logical or expressions that are part of a mixed\nlogical expression (with `&&`)."
+        },
+        "ignorePrimitives": {
+          "description": "Whether to ignore all (`true`) or some (an object with properties) primitive types.",
+          "default": false,
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnorePrimitives"
+            }
+          ],
+          "markdownDescription": "Whether to ignore all (`true`) or some (an object with properties) primitive types."
+        },
+        "ignoreTernaryTests": {
+          "description": "Whether to ignore any ternary expressions that could be simplified by\nusing the nullish coalescing operator.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore any ternary expressions that could be simplified by\nusing the nullish coalescing operator."
         }
       },
       "additionalProperties": false
