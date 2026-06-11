@@ -228,6 +228,15 @@ export type FileFrom = "file";
 export type NameSpecifier = string | string[];
 export type LibFrom = "lib";
 export type PackageFrom = "package";
+export type Modifier =
+  | "private"
+  | "private readonly"
+  | "protected"
+  | "protected readonly"
+  | "public"
+  | "public readonly"
+  | "readonly";
+export type Prefer = "class-property" | "parameter-property";
 /**
  * Represents the different ways `ignorePrimitives` can be specified in JSON.
  * Can be:
@@ -1352,7 +1361,7 @@ export interface DummyRuleMap {
   "typescript/no-wrapper-object-types"?: RuleNoConfig;
   "typescript/non-nullable-type-assertion-style"?: RuleNoConfig;
   "typescript/only-throw-error"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, OnlyThrowErrorConfig];
-  "typescript/parameter-properties"?: DummyRule;
+  "typescript/parameter-properties"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ParameterPropertiesConfig];
   "typescript/prefer-as-const"?: RuleNoConfig;
   "typescript/prefer-enum-initializers"?: RuleNoConfig;
   "typescript/prefer-find"?: RuleNoConfig;
@@ -4913,6 +4922,16 @@ export interface OnlyThrowErrorConfig {
    * Whether to allow throwing values typed as `unknown`.
    */
   allowThrowingUnknown?: boolean;
+}
+export interface ParameterPropertiesConfig {
+  /**
+   * Modifiers that are allowed to be used with parameter properties or class properties, depending on the `prefer` option.
+   */
+  allow?: Modifier[];
+  /**
+   * Whether to prefer parameter properties or class properties.
+   */
+  prefer?: Prefer;
 }
 export interface PreferLiteralEnumMember {
   /**

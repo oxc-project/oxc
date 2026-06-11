@@ -6715,7 +6715,24 @@ expression: json
           ]
         },
         "typescript/parameter-properties": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ParameterPropertiesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/prefer-as-const": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10645,6 +10662,18 @@ expression: json
         "never"
       ]
     },
+    "Modifier": {
+      "type": "string",
+      "enum": [
+        "private",
+        "private readonly",
+        "protected",
+        "protected readonly",
+        "public",
+        "public readonly",
+        "readonly"
+      ]
+    },
     "MouseEventsHaveKeyEventsConfig": {
       "type": "object",
       "properties": {
@@ -13856,6 +13885,31 @@ expression: json
       },
       "additionalProperties": false
     },
+    "ParameterPropertiesConfig": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "Modifiers that are allowed to be used with parameter properties or class properties, depending on the `prefer` option.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Modifier"
+          },
+          "markdownDescription": "Modifiers that are allowed to be used with parameter properties or class properties, depending on the `prefer` option."
+        },
+        "prefer": {
+          "description": "Whether to prefer parameter properties or class properties.",
+          "default": "class-property",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Prefer"
+            }
+          ],
+          "markdownDescription": "Whether to prefer parameter properties or class properties."
+        }
+      },
+      "additionalProperties": false
+    },
     "PathOption": {
       "oneOf": [
         {
@@ -13874,6 +13928,13 @@ expression: json
           ],
           "markdownDescription": "Disallow triple-slash `path` references."
         }
+      ]
+    },
+    "Prefer": {
+      "type": "string",
+      "enum": [
+        "class-property",
+        "parameter-property"
       ]
     },
     "PreferArrowCallback": {
