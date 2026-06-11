@@ -24644,6 +24644,7 @@ impl RuleEnum {
             Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::INFO,
             Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::INFO,
             Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::INFO,
+            Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::INFO,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::INFO,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::INFO,
             Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::INFO,
