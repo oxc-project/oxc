@@ -369,9 +369,7 @@ impl Rule for ExhaustiveDeps {
                                 if ctx
                                     .semantic()
                                     .scoping()
-                                    .scope_ancestors(component_scope_id)
-                                    .skip(1)
-                                    .contains(&decl.scope_id())
+                                    .scope_is_descendant_of(component_scope_id, decl.scope_id())
                                 {
                                     return;
                                 }
@@ -587,9 +585,7 @@ impl Rule for ExhaustiveDeps {
                 if !(ctx
                     .semantic()
                     .scoping()
-                    .scope_ancestors(component_scope_id)
-                    .skip(1)
-                    .contains(&dependency_scope_id)
+                    .scope_is_descendant_of(component_scope_id, dependency_scope_id)
                     || is_ref_current_non_dependency)
                 {
                     continue;
