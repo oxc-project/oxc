@@ -1,0 +1,153 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expect block
+   ╭─[padding_around_expect_groups.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ expect(thing).toBe(123);
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding after expect block
+   ╭─[padding_around_expect_groups.tsx:2:1]
+ 1 │ expect(thing).toBe(123);
+ 2 │ const other = 456;
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line after the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expectTypeOf block
+   ╭─[padding_around_expect_groups.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ expectTypeOf(thing).toBeNumber();
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the expectTypeOf block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expectTypeOf block
+   ╭─[padding_around_expect_groups.tsx:5:1]
+ 4 │ expect(a).toBe(1);
+ 5 │ expectTypeOf(a).toBeNumber();
+   · ▲
+ 6 │ });
+   ╰────
+  help: Make sure there is an empty new line before the expectTypeOf block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expectTypeOf block
+    ╭─[padding_around_expect_groups.tsx:61:3]
+ 60 │   const hoge = 123;
+ 61 │   expectTypeOf(hoge).toBeNumber();
+    ·   ▲
+ 62 │   expectTypeOf(hoge).toBeNumber();
+    ╰────
+  help: Make sure there is an empty new line before the expectTypeOf block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding after expectTypeOf block
+    ╭─[padding_around_expect_groups.tsx:63:3]
+ 62 │   expectTypeOf(hoge).toBeNumber();
+ 63 │   const foo = "abc";
+    ·   ▲
+ 64 │   // Comment
+    ╰────
+  help: Make sure there is an empty new line after the expectTypeOf block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expectTypeOf block
+    ╭─[padding_around_expect_groups.tsx:65:3]
+ 64 │   // Comment
+ 65 │   expectTypeOf(foo).toBeString();
+    ·   ▲
+ 66 │   expectTypeOf(foo).toBeString();
+    ╰────
+  help: Make sure there is an empty new line before the expectTypeOf block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expect block
+    ╭─[padding_around_expect_groups.tsx:13:3]
+ 12 │   let abc = 123;
+ 13 │   expect(abc).toEqual(123);
+    ·   ▲
+ 14 │   expect(123).toEqual(abc); // Line comment
+    ╰────
+  help: Make sure there is an empty new line before the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding after expect block
+    ╭─[padding_around_expect_groups.tsx:15:3]
+ 14 │   expect(123).toEqual(abc); // Line comment
+ 15 │   abc = 456;
+    ·   ▲
+ 16 │   expect(abc).toEqual(456);
+    ╰────
+  help: Make sure there is an empty new line after the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expect block
+    ╭─[padding_around_expect_groups.tsx:16:3]
+ 15 │   abc = 456;
+ 16 │   expect(abc).toEqual(456);
+    ·   ▲
+ 17 │ });
+    ╰────
+  help: Make sure there is an empty new line before the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expect block
+    ╭─[padding_around_expect_groups.tsx:21:3]
+ 20 │   const abc = 123;
+ 21 │   expect(abc).toEqual(123);
+    ·   ▲
+ 22 │ 
+    ╰────
+  help: Make sure there is an empty new line before the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expect block
+    ╭─[padding_around_expect_groups.tsx:24:3]
+ 23 │   const xyz = 987;
+ 24 │   expect(123).toEqual(abc); // Line comment
+    ·   ▲
+ 25 │ });
+    ╰────
+  help: Make sure there is an empty new line before the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expect block
+    ╭─[padding_around_expect_groups.tsx:32:7]
+ 31 │       // Comment
+ 32 │       expect(xyz).toEqual(987);
+    ·       ▲
+ 33 │       expect(1)
+    ╰────
+  help: Make sure there is an empty new line before the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expect block
+    ╭─[padding_around_expect_groups.tsx:43:3]
+ 42 │   const hasAPromise = () => Promise.resolve('foo');
+ 43 │   await expect(hasAPromise()).resolves.toEqual('foo');
+    ·   ▲
+ 44 │   expect(abc).toEqual(123);
+    ╰────
+  help: Make sure there is an empty new line before the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expect block
+    ╭─[padding_around_expect_groups.tsx:47:3]
+ 46 │   const efg = 456;
+ 47 │   expect(123).toEqual(abc);
+    ·   ▲
+ 48 │   await expect(hasAPromise()).resolves.toEqual('foo');
+    ╰────
+  help: Make sure there is an empty new line before the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expect block
+    ╭─[padding_around_expect_groups.tsx:51:3]
+ 50 │   const hij = 789;
+ 51 │   await expect(hasAPromise()).resolves.toEqual('foo');
+    ·   ▲
+ 52 │   await expect(hasAPromise()).resolves.toEqual('foo');
+    ╰────
+  help: Make sure there is an empty new line before the expect block
+
+  ⚠ vitest(padding-around-expect-groups): Missing padding before expect block
+    ╭─[padding_around_expect_groups.tsx:56:3]
+ 55 │   await somethingElseAsync();
+ 56 │   await expect(hasAPromise()).resolves.toEqual('foo');
+    ·   ▲
+ 57 │ });
+    ╰────
+  help: Make sure there is an empty new line before the expect block

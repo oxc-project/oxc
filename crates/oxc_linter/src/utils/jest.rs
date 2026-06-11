@@ -19,7 +19,10 @@ pub use crate::utils::jest::parse_jest_fn::{
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
-pub use padding_around_block::report_missing_padding_before_jest_block;
+pub use padding_around_block::{
+    PaddingDirection, check_padding_between, enclosing_statement_index, enclosing_statement_list,
+    leading_token_of_statement, report_missing_padding_before_jest_block,
+};
 
 mod padding_around_block;
 mod parse_jest_fn;
