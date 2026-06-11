@@ -228,6 +228,7 @@ export type FileFrom = "file";
 export type NameSpecifier = string | string[];
 export type LibFrom = "lib";
 export type PackageFrom = "package";
+export type AllowInGenericTypeArguments = boolean | string[];
 export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
 /**
  * Represents the different ways `allowConstantLoopConditions` can be specified in JSON.
@@ -1321,7 +1322,7 @@ export interface DummyRuleMap {
   "typescript/no-implied-eval"?: RuleNoConfig;
   "typescript/no-import-type-side-effects"?: RuleNoConfig;
   "typescript/no-inferrable-types"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoInferrableTypes];
-  "typescript/no-invalid-void-type"?: DummyRule;
+  "typescript/no-invalid-void-type"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoInvalidVoidTypeConfig];
   "typescript/no-meaningless-void-operator"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
@@ -4762,6 +4763,17 @@ export interface NoInferrableTypes {
    * When set to `true`, ignores type annotations on class properties.
    */
   ignoreProperties?: boolean;
+}
+export interface NoInvalidVoidTypeConfig {
+  /**
+   * Whether a `this` parameter of a function may be `void`.
+   */
+  allowAsThisParameter?: boolean;
+  /**
+   * Whether `void` can be used as generic type arguments.
+   * Can be `true` / `false`, or an allowlist of generic type names.
+   */
+  allowInGenericTypeArguments?: AllowInGenericTypeArguments;
 }
 export interface NoMeaninglessVoidOperatorConfig {
   /**

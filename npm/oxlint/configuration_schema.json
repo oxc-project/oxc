@@ -311,6 +311,19 @@
         "only-allowed-literals"
       ]
     },
+    "AllowInGenericTypeArguments": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
     "AllowKind": {
       "description": "Kinds of functions that can be allowed to be empty.",
       "oneOf": [
@@ -6510,7 +6523,24 @@
           ]
         },
         "typescript/no-invalid-void-type": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoInvalidVoidTypeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/no-meaningless-void-operator": {
           "anyOf": [
@@ -11904,6 +11934,28 @@
             "minLength": 1
           },
           "markdownDescription": "Case-sensitive array of flags that will be allowed."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoInvalidVoidTypeConfig": {
+      "type": "object",
+      "properties": {
+        "allowAsThisParameter": {
+          "description": "Whether a `this` parameter of a function may be `void`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether a `this` parameter of a function may be `void`."
+        },
+        "allowInGenericTypeArguments": {
+          "description": "Whether `void` can be used as generic type arguments.\nCan be `true` / `false`, or an allowlist of generic type names.",
+          "default": true,
+          "allOf": [
+            {
+              "$ref": "#/definitions/AllowInGenericTypeArguments"
+            }
+          ],
+          "markdownDescription": "Whether `void` can be used as generic type arguments.\nCan be `true` / `false`, or an allowlist of generic type names."
         }
       },
       "additionalProperties": false
