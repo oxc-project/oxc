@@ -4108,7 +4108,6 @@ export interface JsxNoLiteralsConfig {
    * An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.
    */
   restrictedAttributes?: string[];
-  [k: string]: unknown;
 }
 /**
  * One entry in `elementOverrides`: the base options plus override-only fields.
@@ -4142,7 +4141,6 @@ export interface ElementOverrideOptions {
    * An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.
    */
   restrictedAttributes?: string[];
-  [k: string]: unknown;
 }
 export interface JsxNoUselessFragment {
   /**

@@ -8544,6 +8544,7 @@ expression: json
           "markdownDescription": "An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level."
         }
       },
+      "additionalProperties": false,
       "markdownDescription": "One entry in `elementOverrides`: the base options plus override-only fields."
     },
     "EmptyTagsConfig": {
@@ -9743,6 +9744,7 @@ expression: json
           "markdownDescription": "An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level."
         }
       },
+      "additionalProperties": false,
       "markdownDescription": "The options shared between the top-level config and each `elementOverrides` entry."
     },
     "JsxNoUselessFragment": {

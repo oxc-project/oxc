@@ -45,7 +45,7 @@ fn restricted_attribute_diagnostic(span: Span) -> OxcDiagnostic {
 
 /// The options shared between the top-level config and each `elementOverrides` entry.
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxNoLiteralsOptions {
     /// (default: false) - Enforces no string literals used as children, wrapped or unwrapped.
     no_strings: bool,
@@ -61,7 +61,7 @@ pub struct JsxNoLiteralsOptions {
 
 /// One entry in `elementOverrides`: the base options plus override-only fields.
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ElementOverrideOptions {
     #[serde(flatten)]
     options: JsxNoLiteralsOptions,
@@ -91,7 +91,7 @@ impl Default for ElementOverrideOptions {
 pub struct JsxNoLiterals(Box<JsxNoLiteralsConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxNoLiteralsConfig {
     #[serde(flatten)]
     options: JsxNoLiteralsOptions,
