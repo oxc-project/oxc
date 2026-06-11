@@ -1576,7 +1576,7 @@ export interface DummyRuleMap {
   "vitest/prefer-expect-type-of"?: RuleNoConfig;
   "vitest/prefer-hooks-in-order"?: RuleNoConfig;
   "vitest/prefer-hooks-on-top"?: RuleNoConfig;
-  "vitest/prefer-import-in-mock"?: DummyRule;
+  "vitest/prefer-import-in-mock"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferImportInMockConfig];
   "vitest/prefer-importing-vitest-globals"?: RuleNoConfig;
   "vitest/prefer-lowercase-title"?: DummyRule;
   "vitest/prefer-mock-promise-shorthand"?: RuleNoConfig;
@@ -5303,6 +5303,12 @@ export interface ValidTypeof {
    * ```
    */
   requireStringLiterals?: boolean;
+}
+export interface PreferImportInMockConfig {
+  /**
+   * Whether the rule should generate fixes or not.
+   */
+  fixable: boolean;
 }
 export interface RequireMockTypeParametersConfig {
   /**

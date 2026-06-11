@@ -7985,7 +7985,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/prefer-import-in-mock": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferImportInMockConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/prefer-importing-vitest-globals": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -13557,6 +13574,20 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "If `true`, classes that contain JSX but do not extend `Component` or\n`PureComponent` are allowed."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferImportInMockConfig": {
+      "type": "object",
+      "required": [
+        "fixable"
+      ],
+      "properties": {
+        "fixable": {
+          "description": "Whether the rule should generate fixes or not.",
+          "type": "boolean",
+          "markdownDescription": "Whether the rule should generate fixes or not."
         }
       },
       "additionalProperties": false
