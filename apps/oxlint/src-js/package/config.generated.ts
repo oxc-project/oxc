@@ -236,6 +236,7 @@ export type SwitchCaseBracesConfig = "always" | "avoid";
 export type CaseType = "PascalCase" | "kebab-case";
 export type DeclarationStyle = "type-based" | "type-literal" | "runtime";
 export type DeclarationStyle2 = "type-based" | "runtime";
+export type Destructure = "only-when-assigned" | "always" | "never";
 export type NextTickOption = "promise" | "callback";
 export type CaseType2 = "camelCase" | "snake_case";
 export type AllowYoda = "never" | "always";
@@ -797,8 +798,8 @@ export interface DummyRuleMap {
   "jest/no-jasmine-globals"?: RuleNoConfig;
   "jest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "jest/no-mocks-import"?: RuleNoConfig;
-  "jest/no-restricted-jest-methods"?: DummyRule;
-  "jest/no-restricted-matchers"?: DummyRule;
+  "jest/no-restricted-jest-methods"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedTestMethodsConfig];
+  "jest/no-restricted-matchers"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedMatchersConfig];
   "jest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "jest/no-test-prefixes"?: RuleNoConfig;
   "jest/no-test-return-statement"?: RuleNoConfig;
@@ -1099,7 +1100,7 @@ export interface DummyRuleMap {
   "oxc/missing-throw"?: RuleNoConfig;
   "oxc/no-accumulating-spread"?: RuleNoConfig;
   "oxc/no-async-await"?: RuleNoConfig;
-  "oxc/no-async-endpoint-handlers"?: DummyRule;
+  "oxc/no-async-endpoint-handlers"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoAsyncEndpointHandlersConfig];
   "oxc/no-barrel-file"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoBarrelFile];
   "oxc/no-const-enum"?: RuleNoConfig;
   "oxc/no-map-spread"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoMapSpreadConfig];
@@ -1488,7 +1489,10 @@ export interface DummyRuleMap {
   "unicorn/prefer-negative-index"?: RuleNoConfig;
   "unicorn/prefer-node-protocol"?: RuleNoConfig;
   "unicorn/prefer-number-properties"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferNumberPropertiesConfig];
-  "unicorn/prefer-object-from-entries"?: DummyRule;
+  "unicorn/prefer-object-from-entries"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, PreferObjectFromEntriesConfig];
   "unicorn/prefer-optional-catch-binding"?: RuleNoConfig;
   "unicorn/prefer-prototype-methods"?: RuleNoConfig;
   "unicorn/prefer-query-selector"?: RuleNoConfig;
@@ -1497,6 +1501,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-response-static-json"?: RuleNoConfig;
   "unicorn/prefer-set-has"?: RuleNoConfig;
   "unicorn/prefer-set-size"?: RuleNoConfig;
+  "unicorn/prefer-single-call"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferSingleCallConfig];
   "unicorn/prefer-spread"?: RuleNoConfig;
   "unicorn/prefer-string-raw"?: RuleNoConfig;
   "unicorn/prefer-string-replace-all"?: RuleNoConfig;
@@ -1546,8 +1551,8 @@ export interface DummyRuleMap {
   "vitest/no-interpolation-in-snapshots"?: RuleNoConfig;
   "vitest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "vitest/no-mocks-import"?: RuleNoConfig;
-  "vitest/no-restricted-matchers"?: DummyRule;
-  "vitest/no-restricted-vi-methods"?: DummyRule;
+  "vitest/no-restricted-matchers"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedMatchersConfig];
+  "vitest/no-restricted-vi-methods"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedTestMethodsConfig];
   "vitest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "vitest/no-test-prefixes"?: RuleNoConfig;
   "vitest/no-test-return-statement"?: RuleNoConfig;
@@ -1604,7 +1609,7 @@ export interface DummyRuleMap {
   "vue/component-definition-name-casing"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, CaseType];
   "vue/define-emits-declaration"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DeclarationStyle];
   "vue/define-props-declaration"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DeclarationStyle2];
-  "vue/define-props-destructuring"?: DummyRule;
+  "vue/define-props-destructuring"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DefinePropsDestructuring];
   "vue/max-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxProps];
   "vue/next-tick-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NextTickOption];
   "vue/no-arrow-functions-in-watch"?: RuleNoConfig;
@@ -2219,6 +2224,12 @@ export interface NoLargeSnapshotsConfig {
    * Maximum number of lines allowed for external snapshot files.
    */
   maxSize?: number;
+}
+export interface NoRestrictedTestMethodsConfig {
+  [k: string]: string | null;
+}
+export interface NoRestrictedMatchersConfig {
+  [k: string]: string | null;
 }
 export interface NoStandaloneExpectConfig {
   /**
@@ -3612,6 +3623,12 @@ export interface ObjectShorthandOptions {
   avoidQuotes?: boolean;
   ignoreConstructors?: boolean;
   methodsIgnorePattern?: string;
+}
+export interface NoAsyncEndpointHandlersConfig {
+  /**
+   * An array of names that are allowed to be async.
+   */
+  allowedNames?: string[];
 }
 export interface NoBarrelFile {
   /**
@@ -5117,6 +5134,18 @@ export interface PreferNumberPropertiesConfig {
    */
   checkNaN?: boolean;
 }
+export interface PreferObjectFromEntriesConfig {
+  /**
+   * Additional functions to treat as equivalents to `Object.fromEntries`.
+   */
+  functions?: string[];
+}
+export interface PreferSingleCallConfig {
+  /**
+   * Methods to ignore.
+   */
+  ignore?: string[];
+}
 export interface PreferStructuredCloneConfig {
   /**
    * List of functions that are allowed to be used for deep cloning instead of structuredClone.
@@ -5170,6 +5199,12 @@ export interface RequireMockTypeParametersConfig {
    * Also require type parameters for `importActual` and `importMock`.
    */
   checkImportFunctions?: boolean;
+}
+export interface DefinePropsDestructuring {
+  /**
+   * Require or prohibit destructuring.
+   */
+  destructure?: Destructure;
 }
 export interface MaxProps {
   /**

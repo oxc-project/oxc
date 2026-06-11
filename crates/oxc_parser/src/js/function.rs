@@ -202,15 +202,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         };
 
-        if (modifiers.contains_accessibility()
+        let is_parameter_property = modifiers.contains_accessibility()
             || modifiers.contains_readonly()
-            || modifiers.contains_override())
-            && !pattern.is_binding_identifier()
-        {
-            self.error(diagnostics::parameter_property_cannot_be_binding_pattern(Span::new(
-                span,
-                self.prev_token_end,
-            )));
+            || modifiers.contains_override();
+        if is_parameter_property {
+            if let Some(ident) = pattern.get_binding_identifier() {
+                if func_kind == FunctionKind::Constructor && ident.name == "constructor" {
+                    self.error(diagnostics::constructor_cannot_be_parameter_property_name(
+                        ident.span,
+                    ));
+                }
+            } else {
+                self.error(diagnostics::parameter_property_cannot_be_binding_pattern(Span::new(
+                    span,
+                    self.prev_token_end,
+                )));
+            }
         }
 
         let are_decorators_allowed =

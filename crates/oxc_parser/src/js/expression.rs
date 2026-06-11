@@ -1217,20 +1217,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// A leading `<` in a file where JSX is disabled and which is not TypeScript (so it is not a
-    /// type assertion either) is always an error. Speculatively parse the JSX so the diagnostic can
-    /// span the whole element (e.g. `<Foo />`), and so well-formed JSX gets the "enable JSX" help
-    /// while anything that is not valid JSX rewinds and falls back to a generic "unexpected token".
-    /// The parsed expression is intentionally discarded.
+    /// type assertion either) is always an error. Report it against the `<` token with a help to
+    /// enable JSX in the parser options.
     fn parse_jsx_in_non_jsx_error(&mut self) -> Expression<'a> {
-        let checkpoint = self.checkpoint_with_error_recovery();
-        let start = self.start_span();
-        self.parse_jsx_expression();
-        if self.fatal_error.is_none() {
-            self.fatal_error(diagnostics::jsx_in_non_jsx(self.end_span(start)))
-        } else {
-            self.rewind(checkpoint);
-            self.unexpected()
-        }
+        self.fatal_error(diagnostics::jsx_in_non_jsx(self.cur_token().span()))
     }
 
     fn parse_unary_expression(&mut self) -> Expression<'a> {

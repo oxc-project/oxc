@@ -48,6 +48,19 @@ where
         .map_err(D::Error::custom)
 }
 
+pub fn deserialize_regex_vec<'de, D>(deserializer: D) -> Result<Vec<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Vec::<String>::deserialize(deserializer)?
+        .into_iter()
+        .map(|pattern| RegexBuilder::new(&pattern).build())
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(D::Error::custom)
+}
+
 pub fn deserialize_required_regex_option<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
 where
     D: serde::Deserializer<'de>,

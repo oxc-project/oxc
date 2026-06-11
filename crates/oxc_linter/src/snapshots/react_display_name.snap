@@ -369,3 +369,11 @@ source: crates/oxc_linter/src/tester.rs
  6 │                   
    ╰────
   help: Add a `displayName` property to the context.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:16]
+ 1 │ ╭─▶ export default function Hello() {
+ 2 │ │     return <div>Hello {this.props.name}</div>;
+ 3 │ ╰─▶ }
+   ╰────
+  help: Add a `displayName` property to the component.

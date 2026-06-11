@@ -593,6 +593,7 @@ pub(crate) mod unicorn {
     pub mod prefer_response_static_json;
     pub mod prefer_set_has;
     pub mod prefer_set_size;
+    pub mod prefer_single_call;
     pub mod prefer_spread;
     pub mod prefer_string_raw;
     pub mod prefer_string_replace_all;

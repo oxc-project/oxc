@@ -19,7 +19,7 @@ fn memoizes_component_through_transformer() {
         TransformOptions { react_compiler: Some(default_plugin_options()), ..Default::default() };
     let ret = Transformer::new(&allocator, Path::new("greeting.jsx"), &options)
         .build_with_scoping(scoping, &mut program);
-    assert!(ret.errors.is_empty(), "{:?}", ret.errors);
+    assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
 
     let code = Codegen::new().build(&program).code;
     assert!(code.contains("react/compiler-runtime"), "missing runtime import:\n{code}");

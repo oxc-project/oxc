@@ -66,6 +66,107 @@ pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 use miette::{Diagnostic, SourceCode};
 pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, Labels, NamedSource};
 
+/// A collection of [`OxcDiagnostic`]s.
+///
+/// A drop-in replacement for `Vec<OxcDiagnostic>` that can additionally report
+/// whether it holds any [errors](Severity::Error) or [warnings](Severity::Warning).
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct Diagnostics(Vec<OxcDiagnostic>);
+
+impl Diagnostics {
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    /// `true` if any diagnostic has [error](Severity::Error) severity.
+    pub fn has_errors(&self) -> bool {
+        self.0.iter().any(|diagnostic| diagnostic.severity == Severity::Error)
+    }
+
+    /// `true` if any diagnostic has [warning](Severity::Warning) severity.
+    pub fn has_warnings(&self) -> bool {
+        self.0.iter().any(|diagnostic| diagnostic.severity == Severity::Warning)
+    }
+
+    /// Iterate over the [error](Severity::Error)-severity diagnostics.
+    pub fn errors(&self) -> impl Iterator<Item = &OxcDiagnostic> {
+        self.0.iter().filter(|diagnostic| diagnostic.severity == Severity::Error)
+    }
+
+    /// Iterate over the [warning](Severity::Warning)-severity diagnostics.
+    pub fn warnings(&self) -> impl Iterator<Item = &OxcDiagnostic> {
+        self.0.iter().filter(|diagnostic| diagnostic.severity == Severity::Warning)
+    }
+
+    pub fn into_vec(self) -> Vec<OxcDiagnostic> {
+        self.0
+    }
+
+    pub fn push(&mut self, diagnostic: OxcDiagnostic) {
+        self.0.push(diagnostic);
+    }
+
+    pub fn extend(&mut self, diagnostics: impl IntoIterator<Item = OxcDiagnostic>) {
+        self.0.extend(diagnostics);
+    }
+}
+
+impl Deref for Diagnostics {
+    type Target = Vec<OxcDiagnostic>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Diagnostics {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl From<Vec<OxcDiagnostic>> for Diagnostics {
+    fn from(diagnostics: Vec<OxcDiagnostic>) -> Self {
+        Self(diagnostics)
+    }
+}
+
+impl From<OxcDiagnostic> for Diagnostics {
+    fn from(diagnostic: OxcDiagnostic) -> Self {
+        Self(vec![diagnostic])
+    }
+}
+
+impl From<Diagnostics> for Vec<OxcDiagnostic> {
+    fn from(diagnostics: Diagnostics) -> Self {
+        diagnostics.0
+    }
+}
+
+impl FromIterator<OxcDiagnostic> for Diagnostics {
+    fn from_iter<T: IntoIterator<Item = OxcDiagnostic>>(iter: T) -> Self {
+        Self(iter.into_iter().collect())
+    }
+}
+
+impl IntoIterator for Diagnostics {
+    type Item = OxcDiagnostic;
+    type IntoIter = std::vec::IntoIter<OxcDiagnostic>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Diagnostics {
+    type Item = &'a OxcDiagnostic;
+    type IntoIter = std::slice::Iter<'a, OxcDiagnostic>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
 /// Describes an error or warning that occurred.
 ///
 /// Used by all oxc tools.

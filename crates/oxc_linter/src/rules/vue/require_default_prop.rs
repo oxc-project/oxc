@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpressionElement, BindingPattern, CallExpression, Expression, ObjectExpression,
-        ObjectPattern, ObjectPropertyKind, PropertyKey, TSSignature, TSType, TSTypeName,
+        ObjectPattern, ObjectPropertyKind, PropertyKey, TSSignature, TSType,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -11,11 +11,13 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    ast_util::get_declaration_from_reference_id,
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::Rule,
-    utils::{find_property, is_vue_component_options_object_excluding_instance},
+    utils::{
+        find_property, for_each_define_props_type_signature,
+        is_vue_component_options_object_excluding_instance,
+    },
 };
 
 const NATIVE_TYPES: [&str; 7] =
@@ -154,7 +156,9 @@ fn handle_define_props<'a>(
     if let Some(type_args) = call.type_arguments.as_ref()
         && let Some(first) = type_args.params.first()
     {
-        check_type_props(first, ctx, pc);
+        for_each_define_props_type_signature(first, ctx, &mut |sig| {
+            check_type_signature(sig, ctx, pc);
+        });
     }
 }
 
@@ -230,53 +234,6 @@ fn object_has_key(obj: &ObjectExpression, name: &str) -> bool {
         matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
             if prop.key.static_name().as_deref() == Some(name))
     })
-}
-
-/// Mirrors upstream `flattenTypeNodes`: a `defineProps<T>()` type is walked
-/// recursively so unions, intersections and `interface`/`type` references are
-/// all resolved down to their property signatures.
-fn check_type_props<'a>(ts_type: &TSType<'a>, ctx: &LintContext<'a>, pc: &PropsContext<'a>) {
-    match ts_type {
-        TSType::TSTypeLiteral(literal) => {
-            for signature in &literal.members {
-                check_type_signature(signature, ctx, pc);
-            }
-        }
-        TSType::TSUnionType(union) => {
-            for member in &union.types {
-                check_type_props(member, ctx, pc);
-            }
-        }
-        TSType::TSIntersectionType(intersection) => {
-            for member in &intersection.types {
-                check_type_props(member, ctx, pc);
-            }
-        }
-        TSType::TSTypeReference(type_ref) => {
-            let TSTypeName::IdentifierReference(ident) = &type_ref.type_name else { return };
-            let reference = ctx.scoping().get_reference(ident.reference_id());
-            if !reference.is_type() {
-                return;
-            }
-            let Some(declaration) =
-                get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
-            else {
-                return;
-            };
-            match declaration.kind() {
-                AstKind::TSInterfaceDeclaration(interface) => {
-                    for signature in &interface.body.body {
-                        check_type_signature(signature, ctx, pc);
-                    }
-                }
-                AstKind::TSTypeAliasDeclaration(alias) => {
-                    check_type_props(&alias.type_annotation, ctx, pc);
-                }
-                _ => {}
-            }
-        }
-        _ => {}
-    }
 }
 
 fn check_type_signature<'a>(

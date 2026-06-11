@@ -291,10 +291,10 @@ mod tests {
         source_type: SourceType,
     ) -> Semantic<'s> {
         let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
-        assert!(parse.errors.is_empty());
+        assert!(parse.diagnostics.is_empty());
         let semantic =
             SemanticBuilder::new().with_build_nodes(true).build(allocator.alloc(parse.program));
-        assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
+        assert!(semantic.diagnostics.is_empty(), "Parse error: {}", semantic.diagnostics[0]);
         semantic.semantic
     }
 
@@ -343,13 +343,13 @@ mod tests {
         let source_type = SourceType::ts();
         let parse = oxc_parser::Parser::new(&allocator, source, source_type).parse();
 
-        assert!(parse.errors.is_empty());
+        assert!(parse.diagnostics.is_empty());
 
         let first = SemanticBuilder::new_compiler().build(&parse.program);
-        assert!(first.errors.is_empty());
+        assert!(first.diagnostics.is_empty());
 
         let second = SemanticBuilder::new_compiler().build(&parse.program);
-        assert!(second.errors.is_empty());
+        assert!(second.diagnostics.is_empty());
     }
 
     #[test]

@@ -924,7 +924,7 @@ expression: json
           "description": "Maximum amount of cyclomatic complexity",
           "default": 20,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum amount of cyclomatic complexity"
         },
@@ -1249,6 +1249,50 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "DefinePropsDestructuring": {
+      "type": "object",
+      "properties": {
+        "destructure": {
+          "description": "Require or prohibit destructuring.",
+          "default": "only-when-assigned",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Destructure"
+            }
+          ],
+          "markdownDescription": "Require or prohibit destructuring."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Destructure": {
+      "oneOf": [
+        {
+          "description": "Requires destructuring when `defineProps` is assigned to a variable and warns against using `withDefaults` with destructuring",
+          "type": "string",
+          "enum": [
+            "only-when-assigned"
+          ],
+          "markdownDescription": "Requires destructuring when `defineProps` is assigned to a variable and warns against using `withDefaults` with destructuring"
+        },
+        {
+          "description": "Requires destructuring when using `defineProps` and warns against using `withDefaults` with destructuring",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Requires destructuring when using `defineProps` and warns against using `withDefaults` with destructuring"
+        },
+        {
+          "description": "Requires using a variable to store props and prohibits destructuring",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Requires using a variable to store props and prohibits destructuring"
+        }
+      ]
     },
     "Destructuring": {
       "oneOf": [
@@ -2257,10 +2301,44 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/no-restricted-jest-methods": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedTestMethodsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-restricted-matchers": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedMatchersConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-standalone-expect": {
           "anyOf": [
@@ -4517,7 +4595,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "oxc/no-async-endpoint-handlers": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoAsyncEndpointHandlersConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "oxc/no-barrel-file": {
           "anyOf": [
@@ -7272,7 +7367,24 @@ expression: json
           ]
         },
         "unicorn/prefer-object-from-entries": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferObjectFromEntriesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/prefer-optional-catch-binding": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7297,6 +7409,26 @@ expression: json
         },
         "unicorn/prefer-set-size": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/prefer-single-call": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferSingleCallConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/prefer-spread": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7658,10 +7790,44 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/no-restricted-matchers": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedMatchersConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-restricted-vi-methods": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedTestMethodsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-standalone-expect": {
           "anyOf": [
@@ -7984,7 +8150,24 @@ expression: json
           ]
         },
         "vue/define-props-destructuring": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/DefinePropsDestructuring"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vue/max-props": {
           "anyOf": [
@@ -9429,7 +9612,7 @@ expression: json
           "description": "The maximum allowed depth of nested JSX elements and fragments.",
           "default": 2,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum allowed depth of nested JSX elements and fragments."
         }
@@ -9592,7 +9775,7 @@ expression: json
           "description": "The maximum number of classes allowed per file.",
           "default": 1,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum number of classes allowed per file."
         }
@@ -9612,7 +9795,7 @@ expression: json
           "description": "Maximum number of dependencies allowed in a file.",
           "default": 10,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of dependencies allowed in a file."
         }
@@ -9623,7 +9806,7 @@ expression: json
       "anyOf": [
         {
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0
         },
         {
@@ -9638,7 +9821,7 @@ expression: json
           "description": "The `max` enforces a maximum depth that blocks can be nested",
           "default": 4,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The `max` enforces a maximum depth that blocks can be nested"
         }
@@ -9652,7 +9835,7 @@ expression: json
           "description": "Maximum number of `expect()` assertion calls allowed within a single test.",
           "default": 5,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of `expect()` assertion calls allowed within a single test."
         }
@@ -9666,7 +9849,7 @@ expression: json
           "description": "Maximum number of lines allowed per file.",
           "default": 300,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of lines allowed per file."
         },
@@ -9698,7 +9881,7 @@ expression: json
           "description": "Maximum number of lines allowed in a function.",
           "default": 50,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of lines allowed in a function."
         },
@@ -9724,7 +9907,7 @@ expression: json
           "description": "The `max` enforces a maximum depth that callbacks can be nested.",
           "default": 10,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The `max` enforces a maximum depth that callbacks can be nested."
         }
@@ -9738,7 +9921,7 @@ expression: json
           "description": "Maximum allowed depth of nested describe calls.",
           "default": 5,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum allowed depth of nested describe calls."
         }
@@ -9767,7 +9950,7 @@ expression: json
           "description": "Maximum number of parameters allowed in function definitions.",
           "default": 3,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of parameters allowed in function definitions."
         }
@@ -9781,7 +9964,7 @@ expression: json
           "description": "The maximum number of props allowed in a Vue SFC.",
           "default": 1,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum number of props allowed in a Vue SFC."
         }
@@ -9801,7 +9984,7 @@ expression: json
           "description": "Maximum number of statements allowed per function.",
           "default": 10,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of statements allowed per function."
         }
@@ -10171,6 +10354,21 @@ expression: json
       },
       "additionalProperties": false
     },
+    "NoAsyncEndpointHandlersConfig": {
+      "type": "object",
+      "properties": {
+        "allowedNames": {
+          "description": "An array of names that are allowed to be async.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of names that are allowed to be async."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoAutofocus": {
       "type": "object",
       "properties": {
@@ -10190,7 +10388,7 @@ expression: json
           "description": "The maximum number of modules that can be re-exported via `export *`\nbefore the rule is triggered.",
           "default": 100,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum number of modules that can be re-exported via `export *`\nbefore the rule is triggered."
         }
@@ -11046,7 +11244,7 @@ expression: json
           "description": "Maximum number of lines allowed for inline snapshots.",
           "default": 50,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of lines allowed for inline snapshots."
         },
@@ -11054,7 +11252,7 @@ expression: json
           "description": "Maximum number of lines allowed for external snapshot files.",
           "default": 50,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of lines allowed for external snapshot files."
         }
@@ -11539,6 +11737,32 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "NoRestrictedMatchersConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "NoRestrictedTestMethodsConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
     },
     "NoReturnAssignMode": {
       "oneOf": [
@@ -13123,6 +13347,24 @@ expression: json
       },
       "additionalProperties": false
     },
+    "PreferObjectFromEntriesConfig": {
+      "type": "object",
+      "properties": {
+        "functions": {
+          "description": "Additional functions to treat as equivalents to `Object.fromEntries`.",
+          "default": [
+            "_.fromPairs",
+            "lodash.fromPairs"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional functions to treat as equivalents to `Object.fromEntries`."
+        }
+      },
+      "additionalProperties": false
+    },
     "PreferOptionalChainConfig": {
       "type": "object",
       "properties": {
@@ -13278,6 +13520,21 @@ expression: json
           "default": false,
           "type": "boolean",
           "markdownDescription": "By default, this rule doesn’t check when a regex literal is unnecessarily wrapped in a `RegExp` constructor call.\nWhen the option `disallowRedundantWrapping` is set to `true`, the rule will also disallow such unnecessary patterns.\n\nExamples of **incorrect** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\nnew RegExp(/abc/);\nnew RegExp(/abc/, 'u');\n```\n\nExamples of **correct** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\n/abc/;\n/abc/u;\nnew RegExp(/abc/, flags);\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferSingleCallConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "description": "Methods to ignore.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Methods to ignore."
         }
       },
       "additionalProperties": false
@@ -14001,7 +14258,7 @@ expression: json
           "description": "Minimum number of properties required in an object before sorting is enforced.",
           "default": 2,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Minimum number of properties required in an object before sorting is enforced."
         },
@@ -14374,7 +14631,7 @@ expression: json
           "description": "Maximum number of arguments `expect` should be called with.",
           "default": 1,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of arguments `expect` should be called with."
         },
@@ -14382,7 +14639,7 @@ expression: json
           "description": "Minimum number of arguments `expect` should be called with.",
           "default": 1,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Minimum number of arguments `expect` should be called with."
         }

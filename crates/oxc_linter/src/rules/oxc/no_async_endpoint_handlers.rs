@@ -26,7 +26,7 @@ impl Deref for NoAsyncEndpointHandlers {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoAsyncEndpointHandlersConfig {
     /// An array of names that are allowed to be async.
     allowed_names: Vec<CompactStr>,

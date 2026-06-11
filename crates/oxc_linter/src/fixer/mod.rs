@@ -451,9 +451,9 @@ impl<'a> Fixer<'a> {
                 })
                 .parse();
             debug_assert!(
-                parse_result.errors.is_empty() && !parse_result.panicked,
+                parse_result.diagnostics.is_empty() && !parse_result.panicked,
                 "Linter fixer produced invalid syntax.\n\nInput code: \n```\n{source_text}\n```\n\nFixed code: \n```\n{output}\n```\n\nParse errors: {:?}",
-                parse_result.errors
+                parse_result.diagnostics
             );
         }
 

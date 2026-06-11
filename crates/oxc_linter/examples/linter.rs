@@ -35,8 +35,8 @@ fn main() -> std::io::Result<()> {
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     // Handle parser errors
-    if !ret.errors.is_empty() {
-        print_errors(&source_text, ret.errors);
+    if !ret.diagnostics.is_empty() {
+        print_errors(&source_text, ret.diagnostics.into());
         return Ok(());
     }
 

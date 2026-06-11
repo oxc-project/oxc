@@ -67,7 +67,7 @@ impl SpecParser {
         }
 
         let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         self.visit_program(&mut ret.program);
     }
 }

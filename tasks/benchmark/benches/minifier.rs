@@ -41,7 +41,7 @@ fn bench_minifier(criterion: &mut Criterion) {
                 let transformer_ret =
                     Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
                         .build_with_scoping(scoping, &mut program);
-                assert!(transformer_ret.errors.is_empty());
+                assert!(transformer_ret.diagnostics.is_empty());
                 let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
 
                 let options = CompressOptions::smallest();
@@ -71,7 +71,7 @@ fn transform_to_js<'a>(
     let transform_options = TransformOptions::from_target("esnext").unwrap();
     let transformer_ret = Transformer::new(allocator, path, &transform_options)
         .build_with_scoping(scoping, &mut program);
-    assert!(transformer_ret.errors.is_empty());
+    assert!(transformer_ret.diagnostics.is_empty());
     program
 }
 

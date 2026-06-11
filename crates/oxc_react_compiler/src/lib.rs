@@ -48,23 +48,19 @@ pub fn default_plugin_options() -> PluginOptions {
 pub struct TransformResult<'a> {
     /// Compiled, ready-to-codegen OXC AST; `None` if the compiler made no changes.
     pub program: Option<oxc_ast::ast::Program<'a>>,
-    /// `Error`-severity diagnostics (e.g. Rules of Hooks violations). These are
-    /// hard problems in the source; the program is still left valid.
-    pub errors: Vec<oxc_diagnostics::OxcDiagnostic>,
-    /// `Warning`/`Hint`-severity diagnostics, including bail-outs where the
-    /// compiler declined to optimize a function (e.g. unsupported syntax).
-    pub warnings: Vec<oxc_diagnostics::OxcDiagnostic>,
+    /// Errors and warnings produced by the compile. Errors (e.g. Rules of Hooks
+    /// violations) are hard problems in the source; the program is still left
+    /// valid. Warnings include bail-outs where the compiler declined to optimize.
+    pub diagnostics: oxc_diagnostics::Diagnostics,
     /// Raw structured logger events from the upstream compiler (compile
     /// success/skip/error with memoization stats), for tooling and profiling.
-    /// Unlike `errors`/`warnings`, these are not meant for user-facing reporting.
+    /// Unlike `diagnostics`, these are not meant for user-facing reporting.
     pub events: Vec<LoggerEvent>,
 }
 
 pub struct LintResult {
-    /// `Error`-severity diagnostics (e.g. Rules of Hooks violations).
-    pub errors: Vec<oxc_diagnostics::OxcDiagnostic>,
-    /// `Warning`/`Hint`-severity diagnostics, including compiler bail-outs.
-    pub warnings: Vec<oxc_diagnostics::OxcDiagnostic>,
+    /// Errors and warnings produced by the compile.
+    pub diagnostics: oxc_diagnostics::Diagnostics,
 }
 
 /// Run the React Compiler on a pre-parsed program, building the semantic model
@@ -102,7 +98,7 @@ pub fn transform<'a>(
     let result =
         react_compiler::entrypoint::program::compile_program(file, scope_info.clone(), options);
 
-    let diagnostics::Diagnostics { errors, warnings } = compile_result_to_diagnostics(&result);
+    let diagnostics = compile_result_to_diagnostics(&result);
     let (program_ast, events, renames) = match result {
         react_compiler::entrypoint::compile_result::CompileResult::Success {
             ast,
@@ -127,7 +123,7 @@ pub fn transform<'a>(
         compiled
     });
 
-    TransformResult { program: compiled_program, errors, warnings, events }
+    TransformResult { program: compiled_program, diagnostics, events }
 }
 
 /// Carry over the comments attached to top-level statements of the compiled
@@ -184,7 +180,7 @@ pub fn lint(program: &oxc_ast::ast::Program, options: PluginOptions) -> LintResu
     // `no_emit` yields `program: None`; a local arena for the conversion suffices.
     let allocator = oxc_allocator::Allocator::default();
     let result = transform(program, &allocator, opts);
-    LintResult { errors: result.errors, warnings: result.warnings }
+    LintResult { diagnostics: result.diagnostics }
 }
 
 /// Convenience wrapper — parses source text, runs semantic analysis, then lints.
@@ -225,8 +221,12 @@ mod tests {
         let allocator = oxc_allocator::Allocator::default();
         let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
 
-        assert!(result.errors.is_empty(), "unexpected errors: {:?}", result.errors);
-        assert!(result.warnings.is_empty(), "unexpected warnings: {:?}", result.warnings);
+        assert!(!result.diagnostics.has_errors(), "unexpected errors: {:?}", result.diagnostics);
+        assert!(
+            !result.diagnostics.has_warnings(),
+            "unexpected warnings: {:?}",
+            result.diagnostics
+        );
         let program = result.program.expect("React Compiler should have transformed the component");
 
         let output = oxc_codegen::Codegen::new().build(&program).code;
@@ -267,9 +267,9 @@ export = legacy;\n";
 
         let allocator = oxc_allocator::Allocator::default();
         let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result
-            .program
-            .unwrap_or_else(|| panic!("component should be compiled; errors: {:?}", result.errors));
+        let program = result.program.unwrap_or_else(|| {
+            panic!("component should be compiled; diagnostics: {:?}", result.diagnostics)
+        });
         let output = oxc_codegen::Codegen::new().build(&program).code;
         assert!(
             output.contains("react/compiler-runtime"),
@@ -393,9 +393,9 @@ function Component(props: Props): JSX.Element {\n\
 
         let allocator = oxc_allocator::Allocator::default();
         let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
-        let program = result
-            .program
-            .unwrap_or_else(|| panic!("component should compile; errors: {:?}", result.errors));
+        let program = result.program.unwrap_or_else(|| {
+            panic!("component should compile; diagnostics: {:?}", result.diagnostics)
+        });
         let output = oxc_codegen::Codegen::new().build(&program).code;
 
         assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
@@ -544,10 +544,9 @@ async function Component(props) {\n  await using x = sideEffect();\n  return <di
 
             assert!(result.program.is_none(), "resource management should skip React Compiler");
             assert!(
-                result.errors.is_empty() && result.warnings.is_empty(),
-                "unexpected diagnostics: {:?} {:?}",
-                result.errors,
-                result.warnings
+                result.diagnostics.is_empty(),
+                "unexpected diagnostics: {:?}",
+                result.diagnostics
             );
         }
     }
@@ -637,9 +636,9 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
         let allocator = oxc_allocator::Allocator::default();
         let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
         assert!(
-            !result.errors.is_empty(),
+            result.diagnostics.has_errors(),
             "Rules of Hooks violation should be reported as an error: {:?}",
-            result.errors
+            result.diagnostics
         );
 
         // A local named `fbt` is an unsupported-syntax bail-out — a warning, not an error.
@@ -647,14 +646,14 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
         let allocator = oxc_allocator::Allocator::default();
         let result = transform_source(source, oxc_span::SourceType::tsx(), &allocator, options());
         assert!(
-            !result.warnings.is_empty(),
+            result.diagnostics.has_warnings(),
             "fbt bail-out should be reported as a warning: {:?}",
-            result.warnings
+            result.diagnostics
         );
         assert!(
-            result.errors.is_empty(),
+            !result.diagnostics.has_errors(),
             "fbt warning must not be reported as an error: {:?}",
-            result.errors
+            result.diagnostics
         );
     }
 

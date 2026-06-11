@@ -6,7 +6,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, TSSignature, TSType, TSTypeName, TSTypeReference,
+        ObjectPropertyKind, PropertyKey, TSSignature,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -15,11 +15,13 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    ast_util::get_declaration_from_reference_id,
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{Rule, TupleRuleConfig},
-    utils::{find_property, is_vue_component_options_object_excluding_instance, vue_casing},
+    utils::{
+        find_property, for_each_define_props_type_signature,
+        is_vue_component_options_object_excluding_instance, vue_casing,
+    },
 };
 
 fn prop_name_casing_diagnostic(span: Span, name: &str, case_type: &str) -> OxcDiagnostic {
@@ -134,12 +136,15 @@ impl PropNameCasing {
             self.check_props_value(arg, ctx);
             return;
         }
-        // `defineProps<T>()` — only the same-file `interface Props { ... }` shape is checked.
-        // The `import { Props } from './x'` shape requires cross-file TS type resolution and
-        // is handled by tsgolint (see the test() comment for details).
+        // `defineProps<T>()` — only same-file type shapes are checked. The
+        // `import { Props } from './x'` shape requires cross-file TS type
+        // resolution and is handled by tsgolint (see the test() comment for
+        // details).
         let Some(type_arguments) = call.type_arguments.as_deref() else { return };
         let Some(first_type) = type_arguments.params.first() else { return };
-        self.check_type_argument(first_type, ctx);
+        for_each_define_props_type_signature(first_type, ctx, &mut |signature| {
+            self.check_signature(signature, ctx);
+        });
     }
 
     fn check_props_value<'a>(&self, expr: &Expression<'a>, ctx: &LintContext<'a>) {
@@ -165,41 +170,14 @@ impl PropNameCasing {
         }
     }
 
-    fn check_type_argument<'a>(&self, ts_type: &TSType<'a>, ctx: &LintContext<'a>) {
-        match ts_type {
-            TSType::TSTypeReference(type_ref) => self.check_type_reference(type_ref, ctx),
-            TSType::TSTypeLiteral(type_literal) => {
-                self.check_signatures(&type_literal.members, ctx);
-            }
-            _ => {}
-        }
-    }
-
-    fn check_type_reference<'a>(&self, type_ref: &TSTypeReference<'a>, ctx: &LintContext<'a>) {
-        let TSTypeName::IdentifierReference(ident_ref) = &type_ref.type_name else { return };
-        let reference = ctx.scoping().get_reference(ident_ref.reference_id());
-        if !reference.is_type() {
-            return;
-        }
-        let Some(declaration) =
-            get_declaration_from_reference_id(ident_ref.reference_id(), ctx.semantic())
-        else {
-            return;
+    fn check_signature<'a>(&self, signature: &TSSignature<'a>, ctx: &LintContext<'a>) {
+        let (key_opt, span) = match signature {
+            TSSignature::TSPropertySignature(sig) => (sig.key.static_name(), sig.key.span()),
+            TSSignature::TSMethodSignature(sig) => (sig.key.static_name(), sig.key.span()),
+            _ => return,
         };
-        let AstKind::TSInterfaceDeclaration(interface_decl) = declaration.kind() else { return };
-        self.check_signatures(&interface_decl.body.body, ctx);
-    }
-
-    fn check_signatures<'a>(&self, signatures: &[TSSignature<'a>], ctx: &LintContext<'a>) {
-        for signature in signatures {
-            let (key_opt, span) = match signature {
-                TSSignature::TSPropertySignature(sig) => (sig.key.static_name(), sig.key.span()),
-                TSSignature::TSMethodSignature(sig) => (sig.key.static_name(), sig.key.span()),
-                _ => continue,
-            };
-            let Some(name) = key_opt else { continue };
-            self.report_if_invalid(name.as_ref(), span, ctx);
-        }
+        let Some(name) = key_opt else { return };
+        self.report_if_invalid(name.as_ref(), span, ctx);
     }
 
     fn report_if_invalid(&self, name: &str, span: Span, ctx: &LintContext<'_>) {
@@ -970,6 +948,29 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ), // languageOptions,
+        (
+            r#"
+                  <script setup lang="ts">
+                  type Props = {
+                    greeting_text: number
+                  }
+                  defineProps<Props>()
+                  </script>
+                  "#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } },
+        (
+            r#"
+                  <script setup lang="ts">
+                  defineProps<{ greeting_text: number } | { another_text: string }>()
+                  </script>
+                  "#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } },
            // NOTE: upstream `prop-name-casing` invalid test using `getTypeScriptFixtureTestOptions`
            // (`import {Props3 as Props} from './test01' ; defineProps<Props>()`) is skipped here —
            // cross-file TypeScript type resolution is the `tsgolint` domain in oxc (59 typescript/* rules
