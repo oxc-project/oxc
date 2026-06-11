@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, Expression, IdentifierReference, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -351,7 +351,7 @@ fn find_mutation_span(
 
             // Delete: `delete this.xxx`
             AstKind::UnaryExpression(unary)
-                if unary.operator == oxc_ast::ast::UnaryOperator::Delete
+                if unary.operator == UnaryOperator::Delete
                     && unary.argument.span() == current.span() =>
             {
                 return Some(unary.span());
@@ -400,7 +400,7 @@ fn is_object_assign_first_arg(call: &CallExpression<'_>, first_arg_span: Span) -
 /// 3. The declaration IS within the setup function body OR is a top-level binding
 ///    in a `<script setup>` file (FrameworkOptions::VueSetup).
 fn is_setup_variable(
-    ident: &oxc_ast::ast::IdentifierReference<'_>,
+    ident: &IdentifierReference<'_>,
     getter_fn_span: Span,
     ctx: &LintContext<'_>,
 ) -> bool {
@@ -1089,7 +1089,6 @@ fn test() {
                         A.name = ''
                       })
                       const test10 = computed(() => (foo.a = '', true))
-
                       const test100 = computed(() => {
                         const a = foo
                         a.count++ // false negative
@@ -1109,7 +1108,6 @@ fn test() {
                   export default {
                     setup() {
                       const arr = reactive([])
-
                       const test1 = computed(() => arr.reverse())
                     }
                   }
@@ -1126,7 +1124,6 @@ fn test() {
                   export default {
                     setup() {
                       const foo = useFoo()
-
                       const test1 = computed(() => foo.something.reverse())
                     }
                   }
@@ -1177,7 +1174,6 @@ fn test() {
                     A.name = ''
                   })
                   const test10 = computed(() => (foo.a = '', true))
-
                   const test100 = computed(() => {
                     const a = foo
                     a.count++ // false negative
@@ -1193,7 +1189,6 @@ fn test() {
                   <script setup>
                   import {reactive, computed} from 'vue'
                   const arr = reactive([])
-
                   const test1 = computed(() => arr.reverse())
                   </script>
                   ",
@@ -1206,7 +1201,6 @@ fn test() {
                   <script lang="ts" setup>
                   import {ref, computed} from 'vue'
                   const foo = useFoo()
-
                   const test1 = computed(() => foo.something.reverse())
                   </script>
                   "#,
@@ -1221,7 +1215,6 @@ fn test() {
                   export default {
                     setup() {
                       const foo = useFoo()
-
                       const test1 = computed(() => Object.assign(foo.data, { extra: 'value' }))
                       const test2 = computed(() => {
                         return Object.assign(foo.user, foo.updates)

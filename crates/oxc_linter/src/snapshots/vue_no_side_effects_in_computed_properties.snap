@@ -247,23 +247,23 @@ source: crates/oxc_linter/src/tester.rs
  41 │                       })
  42 │                       const test10 = computed(() => (foo.a = '', true))
     ·                                                      ──────────
- 43 │ 
+ 43 │                       const test100 = computed(() => {
     ╰────
 
   ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
-   ╭─[no_side_effects_in_computed_properties.tsx:8:52]
- 7 │ 
- 8 │                       const test1 = computed(() => arr.reverse())
+   ╭─[no_side_effects_in_computed_properties.tsx:7:52]
+ 6 │                       const arr = reactive([])
+ 7 │                       const test1 = computed(() => arr.reverse())
    ·                                                    ─────────────
- 9 │                     }
+ 8 │                     }
    ╰────
 
   ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
-   ╭─[no_side_effects_in_computed_properties.tsx:8:52]
- 7 │ 
- 8 │                       const test1 = computed(() => foo.something.reverse())
+   ╭─[no_side_effects_in_computed_properties.tsx:7:52]
+ 6 │                       const foo = useFoo()
+ 7 │                       const test1 = computed(() => foo.something.reverse())
    ·                                                    ───────────────────────
- 9 │                     }
+ 8 │                     }
    ╰────
 
   ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
@@ -359,47 +359,47 @@ source: crates/oxc_linter/src/tester.rs
  39 │                   })
  40 │                   const test10 = computed(() => (foo.a = '', true))
     ·                                                  ──────────
- 41 │ 
+ 41 │                   const test100 = computed(() => {
     ╰────
 
   ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
-   ╭─[no_side_effects_in_computed_properties.tsx:6:48]
- 5 │ 
- 6 │                   const test1 = computed(() => arr.reverse())
+   ╭─[no_side_effects_in_computed_properties.tsx:5:48]
+ 4 │                   const arr = reactive([])
+ 5 │                   const test1 = computed(() => arr.reverse())
    ·                                                ─────────────
- 7 │                   </script>
+ 6 │                   </script>
    ╰────
 
   ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
-   ╭─[no_side_effects_in_computed_properties.tsx:6:48]
- 5 │ 
- 6 │                   const test1 = computed(() => foo.something.reverse())
+   ╭─[no_side_effects_in_computed_properties.tsx:5:48]
+ 4 │                   const foo = useFoo()
+ 5 │                   const test1 = computed(() => foo.something.reverse())
    ·                                                ───────────────────────
- 7 │                   </script>
+ 6 │                   </script>
    ╰────
 
   ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
-   ╭─[no_side_effects_in_computed_properties.tsx:8:52]
- 7 │ 
- 8 │                       const test1 = computed(() => Object.assign(foo.data, { extra: 'value' }))
+   ╭─[no_side_effects_in_computed_properties.tsx:7:52]
+ 6 │                       const foo = useFoo()
+ 7 │                       const test1 = computed(() => Object.assign(foo.data, { extra: 'value' }))
    ·                                                    ───────────────────────────────────────────
- 9 │                       const test2 = computed(() => {
+ 8 │                       const test2 = computed(() => {
    ╰────
 
   ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
-    ╭─[no_side_effects_in_computed_properties.tsx:10:32]
-  9 │                       const test2 = computed(() => {
- 10 │                         return Object.assign(foo.user, foo.updates)
+    ╭─[no_side_effects_in_computed_properties.tsx:9:32]
+  8 │                       const test2 = computed(() => {
+  9 │                         return Object.assign(foo.user, foo.updates)
     ·                                ────────────────────────────────────
- 11 │                       })
+ 10 │                       })
     ╰────
 
   ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in computed function.
-    ╭─[no_side_effects_in_computed_properties.tsx:14:27]
- 13 │                         get() {
- 14 │                           Object.assign(foo.settings, { theme: 'dark' })
+    ╭─[no_side_effects_in_computed_properties.tsx:13:27]
+ 12 │                         get() {
+ 13 │                           Object.assign(foo.settings, { theme: 'dark' })
     ·                           ──────────────────────────────────────────────
- 15 │                           return foo.settings
+ 14 │                           return foo.settings
     ╰────
 
   ⚠ vue(no-side-effects-in-computed-properties): Unexpected side effect in "set" computed property.
