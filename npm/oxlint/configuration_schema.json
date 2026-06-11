@@ -7386,6 +7386,26 @@
         "unicorn/prefer-set-size": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-single-call": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferSingleCallConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
+        },
         "unicorn/prefer-spread": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -13464,6 +13484,21 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "By default, this rule doesn’t check when a regex literal is unnecessarily wrapped in a `RegExp` constructor call.\nWhen the option `disallowRedundantWrapping` is set to `true`, the rule will also disallow such unnecessary patterns.\n\nExamples of **incorrect** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\nnew RegExp(/abc/);\nnew RegExp(/abc/, 'u');\n```\n\nExamples of **correct** code for `{ \"disallowRedundantWrapping\": true }`:\n```js\n/abc/;\n/abc/u;\nnew RegExp(/abc/, flags);\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferSingleCallConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "description": "Methods to ignore.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Methods to ignore."
         }
       },
       "additionalProperties": false

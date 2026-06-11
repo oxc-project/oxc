@@ -1500,6 +1500,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-response-static-json"?: RuleNoConfig;
   "unicorn/prefer-set-has"?: RuleNoConfig;
   "unicorn/prefer-set-size"?: RuleNoConfig;
+  "unicorn/prefer-single-call"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferSingleCallConfig];
   "unicorn/prefer-spread"?: RuleNoConfig;
   "unicorn/prefer-string-raw"?: RuleNoConfig;
   "unicorn/prefer-string-replace-all"?: RuleNoConfig;
@@ -5131,6 +5132,12 @@ export interface PreferObjectFromEntriesConfig {
    * Additional functions to treat as equivalents to `Object.fromEntries`.
    */
   functions?: string[];
+}
+export interface PreferSingleCallConfig {
+  /**
+   * Methods to ignore.
+   */
+  ignore?: string[];
 }
 export interface PreferStructuredCloneConfig {
   /**
