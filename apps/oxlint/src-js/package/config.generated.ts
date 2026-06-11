@@ -1193,7 +1193,7 @@ export interface DummyRuleMap {
   "react/no-is-mounted"?: RuleNoConfig;
   "react/no-multi-comp"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoMultiCompConfig];
   "react/no-namespace"?: RuleNoConfig;
-  "react/no-object-type-as-default-prop"?: DummyRule;
+  "react/no-object-type-as-default-prop"?: RuleNoConfig;
   "react/no-react-children"?: RuleNoConfig;
   "react/no-redundant-should-component-update"?: RuleNoConfig;
   "react/no-render-return-value"?: RuleNoConfig;

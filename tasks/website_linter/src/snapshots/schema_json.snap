@@ -5482,7 +5482,7 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/no-object-type-as-default-prop": {
-          "$ref": "#/definitions/DummyRule"
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/no-react-children": {
           "$ref": "#/definitions/RuleNoConfig"
