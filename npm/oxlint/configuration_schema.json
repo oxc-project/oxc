@@ -950,6 +950,48 @@
       "maxItems": 2,
       "minItems": 2
     },
+    "ConsistentEachForJson": {
+      "type": "object",
+      "properties": {
+        "describe": {
+          "description": "Preferred method to create parameterized tests for `describe` blocks.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MemberNames"
+            }
+          ],
+          "markdownDescription": "Preferred method to create parameterized tests for `describe` blocks."
+        },
+        "it": {
+          "description": "Preferred method to create parameterized tests for `it` blocks.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MemberNames"
+            }
+          ],
+          "markdownDescription": "Preferred method to create parameterized tests for `it` blocks."
+        },
+        "suite": {
+          "description": "Preferred method to create parameterized tests for `suite` blocks.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MemberNames"
+            }
+          ],
+          "markdownDescription": "Preferred method to create parameterized tests for `suite` blocks."
+        },
+        "test": {
+          "description": "Preferred method to create parameterized tests for `test` blocks.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MemberNames"
+            }
+          ],
+          "markdownDescription": "Preferred method to create parameterized tests for `test` blocks."
+        }
+      },
+      "additionalProperties": false
+    },
     "ConsistentFunctionScoping": {
       "type": "object",
       "properties": {
@@ -7735,7 +7777,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/consistent-each-for": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentEachForJson"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/consistent-test-filename": {
           "anyOf": [
@@ -10320,6 +10379,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "MemberNames": {
+      "oneOf": [
+        {
+          "description": "Prefer using `.for` to create parameterized tests.",
+          "type": "string",
+          "enum": [
+            "for"
+          ],
+          "markdownDescription": "Prefer using `.for` to create parameterized tests."
+        },
+        {
+          "description": "Prefer using `.each` to create parameterized tests.",
+          "type": "string",
+          "enum": [
+            "each"
+          ],
+          "markdownDescription": "Prefer using `.each` to create parameterized tests."
+        }
+      ]
     },
     "MethodSignatureStyleConfig": {
       "oneOf": [

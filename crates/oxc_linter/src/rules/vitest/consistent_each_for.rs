@@ -90,7 +90,7 @@ pub struct ConsistentEachForConfig {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct ConsistentEachForJson {
     /// Preferred method to create parameterized tests for `describe` blocks.
     describe: Option<MemberNames>,

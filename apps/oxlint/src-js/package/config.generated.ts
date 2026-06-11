@@ -234,6 +234,7 @@ export type NoInstanceofBuiltinsStrategy = "strict" | "loose";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
 export type SwitchCaseBracesConfig = "always" | "avoid";
+export type MemberNames = "for" | "each";
 export type VitestFnName = "vi" | "vitest";
 export type CaseType = "PascalCase" | "kebab-case";
 export type DeclarationStyle = "type-based" | "type-literal" | "runtime";
@@ -1537,7 +1538,7 @@ export interface DummyRuleMap {
   "use-isnan"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, UseIsnan];
   "valid-typeof"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ValidTypeof];
   "vars-on-top"?: RuleNoConfig;
-  "vitest/consistent-each-for"?: DummyRule;
+  "vitest/consistent-each-for"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentEachForJson];
   "vitest/consistent-test-filename"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestFilenameConfig];
   "vitest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
   "vitest/consistent-vitest-vi"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentVitestConfig];
@@ -5314,6 +5315,24 @@ export interface ValidTypeof {
    * ```
    */
   requireStringLiterals?: boolean;
+}
+export interface ConsistentEachForJson {
+  /**
+   * Preferred method to create parameterized tests for `describe` blocks.
+   */
+  describe?: MemberNames;
+  /**
+   * Preferred method to create parameterized tests for `it` blocks.
+   */
+  it?: MemberNames;
+  /**
+   * Preferred method to create parameterized tests for `suite` blocks.
+   */
+  suite?: MemberNames;
+  /**
+   * Preferred method to create parameterized tests for `test` blocks.
+   */
+  test?: MemberNames;
 }
 export interface ConsistentTestFilenameConfig {
   /**
