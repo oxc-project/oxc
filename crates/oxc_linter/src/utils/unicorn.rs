@@ -276,6 +276,9 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
         (Expression::NumericLiteral(left_num), Expression::NumericLiteral(right_num)) => {
             return left_num.raw == right_num.raw;
         }
+        (Expression::BigIntLiteral(left_big), Expression::BigIntLiteral(right_big)) => {
+            return left_big.raw == right_big.raw;
+        }
         (Expression::RegExpLiteral(left_regexp), Expression::RegExpLiteral(right_regexp)) => {
             return left_regexp.regex.pattern.text == right_regexp.regex.pattern.text
                 && left_regexp.regex.flags == right_regexp.regex.flags;
@@ -350,7 +353,24 @@ pub fn is_same_member_expression(
             }
         }
         (Some(_), None) | (None, Some(_)) => {
-            return false;
+            // Special case: a[null] and a['null'] are equivalent in JS
+            // (null is coerced to the string "null" as a property key).
+            let is_null_string_equiv = |none_side: &MemberExpression, some_name: &str| {
+                some_name == "null"
+                    && matches!(
+                        none_side,
+                        MemberExpression::ComputedMemberExpression(c)
+                            if matches!(c.expression, Expression::NullLiteral(_))
+                    )
+            };
+            let equiv = match (left_static_property_name, right_static_property_name) {
+                (None, Some(name)) => is_null_string_equiv(left, name),
+                (Some(name), None) => is_null_string_equiv(right, name),
+                _ => false,
+            };
+            if !equiv {
+                return false;
+            }
         }
         (None, None) => {
             if let (
@@ -390,6 +410,10 @@ pub fn is_same_member_expression(
                     return false;
                 }
             }
+            // x[null] === x['null']  (JS coerces null to "null" as a property key)
+            (Expression::NullLiteral(_), Expression::StringLiteral(s))
+            | (Expression::StringLiteral(s), Expression::NullLiteral(_))
+                if s.value == "null" => {}
             _ => {
                 if !is_same_expression(
                     left.expression.get_inner_expression(),
