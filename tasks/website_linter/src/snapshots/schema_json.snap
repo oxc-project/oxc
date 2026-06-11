@@ -7287,6 +7287,26 @@ expression: json
         "unicorn/prefer-event-target": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-export-from": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferExportFrom"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
+        },
         "unicorn/prefer-global-this": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -13241,6 +13261,18 @@ expression: json
         "onlyFunctionsWithExpectInLoop": {
           "default": false,
           "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferExportFrom": {
+      "type": "object",
+      "properties": {
+        "checkUsedVariables": {
+          "description": "When false, if any import binding is used somewhere other than a re-export, all variables in the import declaration are ignored.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "When false, if any import binding is used somewhere other than a re-export, all variables in the import declaration are ignored."
         }
       },
       "additionalProperties": false
