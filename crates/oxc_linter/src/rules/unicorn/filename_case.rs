@@ -5,7 +5,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, ser::Error};
 use serde_json::Value;
 
 use crate::{
@@ -34,7 +34,7 @@ pub struct FilenameCaseConfig {
     camel_case: bool,
     snake_case: bool,
     pascal_case: bool,
-    ignore: Option<Regex>,
+    ignore: Vec<Regex>,
     multiple_file_extensions: bool,
 }
 
@@ -45,7 +45,7 @@ impl Default for FilenameCaseConfig {
             camel_case: false,
             snake_case: false,
             pascal_case: false,
-            ignore: None,
+            ignore: vec![],
             multiple_file_extensions: true,
         }
     }
@@ -87,7 +87,7 @@ pub struct FilenameCaseConfigJson {
     /// }
     /// ```
     case: FilenameCaseJsonOptions,
-    /// A regular expression pattern for filenames to ignore.
+    /// An array of regular expression patterns for filenames to ignore.
     ///
     /// You can set the `ignore` option like this:
     /// ```json
@@ -95,7 +95,7 @@ pub struct FilenameCaseConfigJson {
     ///   "unicorn/filename-case": [
     ///     "error",
     ///     {
-    ///       "ignore": "^foo.*$"
+    ///       "ignore": ["^foo.*$"]
     ///     }
     ///   ]
     /// }
@@ -203,8 +203,12 @@ impl Rule for FilenameCase {
 
         if let Some(value) = value.get(0) {
             config.kebab_case = false;
-            if let Some(Value::String(val)) = value.get("ignore") {
-                config.ignore = RegexBuilder::new(val).build().ok();
+            if let Some(Value::Array(arr)) = value.get("ignore") {
+                config.ignore = arr
+                    .iter()
+                    .filter_map(|item| item.as_str())
+                    .map(|s| RegexBuilder::new(s).build().map_err(serde_json::Error::custom))
+                    .collect::<Result<Vec<_>, _>>()?;
             }
 
             if let Some(Value::Bool(val)) = value.get("multipleFileExtensions") {
@@ -244,9 +248,7 @@ impl Rule for FilenameCase {
             return;
         };
 
-        if raw_filename.starts_with('.')
-            || self.ignore.as_ref().is_some_and(|r| r.is_match(raw_filename))
-        {
+        if raw_filename.starts_with('.') || self.ignore.iter().any(|r| r.is_match(raw_filename)) {
             return;
         }
 
@@ -440,17 +442,128 @@ fn test() {
         test_cases("src/foo/fooBar.js", ["camelCase"]),
         test_cases("src/foo/FooBar.js", ["kebabCase", "pascalCase"]),
         test_cases("src/foo/___foo_bar.js", ["snakeCase", "pascalCase"]),
+        // `ignore` option (array of regular expression patterns).
+        // An undefined/empty filename should not crash.
+        test_case_with_options(
+            "",
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"FOOBAR\.js"] }]),
+        ),
         test_case_with_options(
             "src/foo/index.js",
-            serde_json::json!([{ "case": "kebabCase", "ignore": r"FOOBAR.js" }]),
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"FOOBAR\.js"] }]),
         ),
         test_case_with_options(
             "src/foo/FOOBAR.js",
-            serde_json::json!([{ "case": "kebabCase", "ignore": r"FOOBAR\.js" }]),
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"FOOBAR\.js"] }]),
         ),
         test_case_with_options(
-            "src/foo/BAR.js",
-            serde_json::json!([{ "case": "kebabCase", "ignore": r"FOO.js|BAR.js" }]),
+            "src/foo/FOOBAR.js",
+            serde_json::json!([{ "case": "camelCase", "ignore": [r"FOOBAR\.js"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/FOOBAR.js",
+            serde_json::json!([{ "case": "snakeCase", "ignore": [r"FOOBAR\.js"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/FOOBAR.js",
+            serde_json::json!([{ "case": "pascalCase", "ignore": [r"FOOBAR\.js"] }]),
+        ),
+        // Multiple patterns in the `ignore` array.
+        test_case_with_options(
+            "src/foo/BARBAZ.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["FOOBAR.js", r"BARBAZ\.js"] }]),
+        ),
+        // Patterns containing special characters that must be escaped.
+        test_case_with_options(
+            "src/foo/[FOOBAR].js",
+            serde_json::json!([{ "case": "camelCase", "ignore": [r"\[FOOBAR\]\.js"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/[FOOBAR].js",
+            serde_json::json!([{ "case": "camelCase", "ignore": [r"\[FOOBAR]\.js"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/{FOOBAR}.js",
+            serde_json::json!([{ "case": "snakeCase", "ignore": [r"\{FOOBAR\}\.js"] }]),
+        ),
+        // Patterns that match a prefix.
+        test_case_with_options(
+            "src/foo/foo.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["^(F|f)oo"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/foo-bar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["^(F|f)oo"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/fooBar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["^(F|f)oo"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/foo_bar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["^(F|f)oo"] }]),
+        ),
+        // Case-insensitive pattern (the JS `/foo/iu` flag maps to the `(?i)` inline flag).
+        test_case_with_options(
+            "src/foo/foo_bar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["(?i)foo"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/FOO_bar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["(?i)foo"] }]),
+        ),
+        // Pattern matching a (multi-)extension suffix.
+        test_case_with_options(
+            "src/foo/foo-bar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"\.(web|android|ios)\.js$"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/FooBar.web.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"\.(web|android|ios)\.js$"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/FooBar.android.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"\.(web|android|ios)\.js$"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/FooBar.ios.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"\.(web|android|ios)\.js$"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/FooBar.something.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"\.(?:web|android|ios|something)\.js$"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/FooBar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["^(F|f)oo"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/FooBar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["^[Ff]oo"] }]),
+        ),
+        // Multiple patterns, only one of which matches.
+        test_case_with_options(
+            "src/foo/FOOBAR.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["^FOO", r"BAZ\.js$"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/BARBAZ.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["^FOO", r"BAZ\.js$"] }]),
+        ),
+        // `ignore` combined with the `cases` option.
+        test_case_with_options(
+            "src/foo/FOOBAR.js",
+            serde_json::json!([{
+                "cases": { "kebabCase": true, "camelCase": true, "snakeCase": true, "pascalCase": true },
+                "ignore": [r"FOOBAR\.js"]
+            }]),
+        ),
+        test_case_with_options(
+            "src/foo/BaRbAz.js", // spellchecker:disable-line
+            serde_json::json!([{
+                "cases": { "kebabCase": true, "camelCase": true, "snakeCase": true, "pascalCase": true },
+                "ignore": [r"FOOBAR\.js", r"BaRbAz\.js"] // spellchecker:disable-line
+            }]),
         ),
         test_case_with_options(
             "src/foo/fooBar.testUtils.js",
@@ -524,9 +637,56 @@ fn test() {
         test_case("src/foo/$foo_bar.js", ""),
         test_case("src/foo/$fooBar.js", ""),
         test_cases("src/foo/{foo_bar}.js", ["camelCase", "pascalCase", "kebabCase"]),
+        // `ignore` patterns that do not match the filename.
         test_case_with_options(
             "src/foo/FOOBAR.js",
-            serde_json::json!([{ "case": "kebabCase", "ignore": r"foobar.js" }]),
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"foobar\.js"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/barBaz.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"FOOBAR\.js"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/barBaz.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"/FOOBAR\.js/"] }]),
+        ),
+        test_case_with_options(
+            "src/foo/fooBar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"FOOBAR\.js"] }]),
+        ),
+        // Multiple `ignore` patterns, none of which match.
+        test_case_with_options(
+            "src/foo/fooBar.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": [r"FOOBAR\.js", r"foobar\.js"] }]),
+        ),
+        // `ignore` combined with the `cases` option, no pattern matches.
+        test_case_with_options(
+            "src/qux/FooBar.js",
+            serde_json::json!([{
+                "cases": { "camelCase": true, "snakeCase": true },
+                "ignore": [r"FOOBAR\.js"]
+            }]),
+        ),
+        test_case_with_options(
+            "src/qux/FooBar.js",
+            serde_json::json!([{
+                "cases": { "camelCase": true, "snakeCase": true },
+                "ignore": [r"BaRbAz\.js"] // spellchecker:disable-line
+            }]),
+        ),
+        test_case_with_options(
+            "src/qux/FooBar.js",
+            serde_json::json!([{
+                "cases": { "camelCase": true, "snakeCase": true },
+                "ignore": ["^foo"]
+            }]),
+        ),
+        test_case_with_options(
+            "src/qux/FooBar.js",
+            serde_json::json!([{
+                "cases": { "camelCase": true, "snakeCase": true },
+                "ignore": ["^foo", "^bar"]
+            }]),
         ),
         test_case_with_options(
             "src/foo/fooBar.TestUtils.js",
