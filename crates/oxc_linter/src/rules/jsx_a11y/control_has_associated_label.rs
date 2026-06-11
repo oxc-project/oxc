@@ -3757,11 +3757,26 @@ fn test_no_config() {
     // Generated from jsx-eslint/eslint-plugin-jsx-a11y __tests__/src/rules/control-has-associated-label-test.js.
     let pass = vec![
         (r#"<label>Name <input type="text" /></label>"#, None, None),
+        (r#"<input />"#, None, None),
         (r#"<input type="text" />"#, None, None),
-        (r#"<textarea />"#, None, None),
-        (r#"<div role="grid" />"#, None, None),
         (r#"<input type="hidden" />"#, None, None),
         (r#"<input type="text" aria-hidden="true" />"#, None, None),
+        (r#"<audio />"#, None, None),
+        (r#"<canvas />"#, None, None),
+        (r#"<embed />"#, None, None),
+        (r#"<textarea />"#, None, None),
+        (r#"<tr />"#, None, None),
+        (r#"<video />"#, None, None),
+        (r#"<div role="grid" />"#, None, None),
+        (r#"<div role="listbox" />"#, None, None),
+        (r#"<div role="menu" />"#, None, None),
+        (r#"<div role="menubar" />"#, None, None),
+        (r#"<div role="radiogroup" />"#, None, None),
+        (r#"<div role="row" />"#, None, None),
+        (r#"<div role="tablist" />"#, None, None),
+        (r#"<div role="toolbar" />"#, None, None),
+        (r#"<div role="tree" />"#, None, None),
+        (r#"<div role="treegrid" />"#, None, None),
     ];
 
     let fail = vec![
