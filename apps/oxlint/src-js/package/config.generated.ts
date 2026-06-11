@@ -234,6 +234,7 @@ export type NoInstanceofBuiltinsStrategy = "strict" | "loose";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
 export type SwitchCaseBracesConfig = "always" | "avoid";
+export type VitestFnName = "vi" | "vitest";
 export type CaseType = "PascalCase" | "kebab-case";
 export type DeclarationStyle = "type-based" | "type-literal" | "runtime";
 export type DeclarationStyle2 = "type-based" | "runtime";
@@ -1536,7 +1537,7 @@ export interface DummyRuleMap {
   "vitest/consistent-each-for"?: DummyRule;
   "vitest/consistent-test-filename"?: DummyRule;
   "vitest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
-  "vitest/consistent-vitest-vi"?: DummyRule;
+  "vitest/consistent-vitest-vi"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentVitestConfig];
   "vitest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
   "vitest/hoisted-apis-on-top"?: RuleNoConfig;
   "vitest/max-expects"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxExpectsConfig];
@@ -5303,6 +5304,12 @@ export interface ValidTypeof {
    * ```
    */
   requireStringLiterals?: boolean;
+}
+export interface ConsistentVitestConfig {
+  /**
+   * Decides whether to prefer vitest function accessor
+   */
+  fn?: VitestFnName;
 }
 export interface PreferImportInMockConfig {
   /**

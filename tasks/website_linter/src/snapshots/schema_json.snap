@@ -1056,6 +1056,22 @@ expression: json
       },
       "additionalProperties": false
     },
+    "ConsistentVitestConfig": {
+      "type": "object",
+      "properties": {
+        "fn": {
+          "description": "Decides whether to prefer vitest function accessor",
+          "default": "vi",
+          "allOf": [
+            {
+              "$ref": "#/definitions/VitestFnName"
+            }
+          ],
+          "markdownDescription": "Decides whether to prefer vitest function accessor"
+        }
+      },
+      "additionalProperties": false
+    },
     "CountThis": {
       "oneOf": [
         {
@@ -7716,7 +7732,24 @@ expression: json
           ]
         },
         "vitest/consistent-vitest-vi": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentVitestConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/expect-expect": {
           "anyOf": [
@@ -14997,6 +15030,13 @@ expression: json
           ],
           "markdownDescription": "Checks only that locally-declared variables are used but will allow\nglobal variables to be unused."
         }
+      ]
+    },
+    "VitestFnName": {
+      "type": "string",
+      "enum": [
+        "vi",
+        "vitest"
       ]
     },
     "VitestPluginSettings": {
