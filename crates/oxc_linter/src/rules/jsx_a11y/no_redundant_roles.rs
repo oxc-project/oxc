@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue},
+    ast::{Expression, JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -15,7 +15,10 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{get_element_implicit_roles, get_element_type, has_jsx_prop_ignore_case},
+    utils::{
+        get_element_implicit_roles, get_element_type, get_prop_value,
+        get_string_literal_prop_value, has_jsx_prop_ignore_case, parse_jsx_value,
+    },
 };
 
 fn no_redundant_roles_diagnostic(span: Span, element: &str, role: &str) -> OxcDiagnostic {
@@ -107,18 +110,15 @@ impl Rule for NoRedundantRoles {
         };
 
         let component = get_element_type(ctx, jsx_el);
-        let implicit_roles = get_element_implicit_roles(&component);
-
         if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(jsx_el, "role")
             && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
         {
-            let roles = role_values.value.split_whitespace().collect::<Vec<_>>();
-            for role in &roles {
-                if implicit_roles.contains(role)
-                    && !self.is_allowed_redundant_role(&component, role)
+            for role in role_values.value.split_whitespace() {
+                if let Some(implicit_role) = get_redundant_implicit_role(&component, jsx_el, role)
+                    && !self.is_allowed_redundant_role(&component, implicit_role)
                 {
                     ctx.diagnostic_with_fix(
-                        no_redundant_roles_diagnostic(attr.span, &component, role),
+                        no_redundant_roles_diagnostic(attr.span, &component, implicit_role),
                         |fixer| fixer.delete_range(attr.span),
                     );
                 }
@@ -136,6 +136,90 @@ impl NoRedundantRoles {
             Some(roles) => roles.iter().any(|r| r == role),
             None => DEFAULT_ROLE_EXCEPTIONS.iter().any(|&(el, r)| el == element && r == role),
         }
+    }
+}
+
+fn get_redundant_implicit_role(
+    element: &str,
+    jsx_el: &JSXOpeningElement,
+    explicit_role: &str,
+) -> Option<&'static str> {
+    match element {
+        "body" => explicit_role.eq_ignore_ascii_case("document").then_some("document"),
+        "img" => get_img_implicit_role(jsx_el)
+            .filter(|implicit_role| explicit_role.eq_ignore_ascii_case(implicit_role)),
+        "select" => {
+            let implicit_role = get_select_implicit_role(jsx_el);
+            explicit_role.eq_ignore_ascii_case(implicit_role).then_some(implicit_role)
+        }
+        _ => get_element_implicit_roles(element)
+            .into_iter()
+            .find(|implicit_role| explicit_role.eq_ignore_ascii_case(implicit_role)),
+    }
+}
+
+fn get_img_implicit_role(jsx_el: &JSXOpeningElement) -> Option<&'static str> {
+    if has_jsx_prop_ignore_case(jsx_el, "alt")
+        .and_then(get_string_literal_prop_value)
+        .is_some_and(|alt| alt.is_empty())
+    {
+        return None;
+    }
+
+    if has_jsx_prop_ignore_case(jsx_el, "src")
+        .and_then(get_static_string_prop_value)
+        .is_some_and(|src| src.contains(".svg"))
+    {
+        return None;
+    }
+
+    Some("img")
+}
+
+fn get_select_implicit_role(jsx_el: &JSXOpeningElement) -> &'static str {
+    if has_jsx_prop_ignore_case(jsx_el, "multiple").is_some_and(jsx_prop_value_is_truthy)
+        || has_jsx_prop_ignore_case(jsx_el, "size")
+            .and_then(get_prop_value)
+            .is_some_and(|value| parse_jsx_value(value).is_ok_and(|size| size > 1.0))
+    {
+        "listbox"
+    } else {
+        "combobox"
+    }
+}
+
+fn get_static_string_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
+    match get_prop_value(item)? {
+        JSXAttributeValue::StringLiteral(lit) => Some(lit.value.as_str()),
+        JSXAttributeValue::ExpressionContainer(container) => {
+            let Expression::StringLiteral(lit) = container.expression.as_expression()? else {
+                return None;
+            };
+            Some(lit.value.as_str())
+        }
+        _ => None,
+    }
+}
+
+fn jsx_prop_value_is_truthy(item: &JSXAttributeItem) -> bool {
+    match get_prop_value(item) {
+        None => true,
+        Some(JSXAttributeValue::StringLiteral(lit)) => !lit.value.is_empty(),
+        Some(JSXAttributeValue::ExpressionContainer(container)) => {
+            let Some(expression) = container.expression.as_expression() else {
+                return false;
+            };
+
+            match expression {
+                Expression::BooleanLiteral(lit) => lit.value,
+                Expression::StringLiteral(lit) => !lit.value.is_empty(),
+                Expression::NumericLiteral(lit) => lit.value != 0.0,
+                Expression::NullLiteral(_) => false,
+                Expression::Identifier(_) => false,
+                _ => false,
+            }
+        }
+        _ => false,
     }
 }
 
@@ -166,15 +250,51 @@ fn test() {
         ("<button role={`${foo}button`} />", None, None),
         ("<Button role={`${foo}button`} />", None, Some(settings())),
         (r#"<select role="menu"><option>1</option><option>2</option></select>"#, None, None),
+        (
+            r#"<select role="menu" size={2}><option>1</option><option>2</option></select>"#,
+            None,
+            None,
+        ),
+        (
+            r#"<select role="menu" multiple><option>1</option><option>2</option></select>"#,
+            None,
+            None,
+        ),
         // `nav` / `navigation` is allowed by default.
         (r#"<nav role="navigation" />"#, None, None),
+        (r#"<select role="listbox" />"#, None, None),
+        (r#"<img alt="" role="img" />"#, None, None),
         // Explicitly allowed redundant roles via the option.
-        (r#"<ul role="list" />"#, Some(serde_json::json!([{ "ul": ["list"] }])), None),
-        (r#"<ol role="list" />"#, Some(serde_json::json!([{ "ol": ["list"] }])), None),
+        (
+            r#"<ul role="list" />"#,
+            Some(serde_json::json!([{ "ul": ["list"], "ol": ["list"] }])),
+            None,
+        ),
+        (
+            r#"<ol role="list" />"#,
+            Some(serde_json::json!([{ "ul": ["list"], "ol": ["list"] }])),
+            None,
+        ),
+        (
+            r#"<dl role="list" />"#,
+            Some(serde_json::json!([{ "ul": ["list"], "ol": ["list"] }])),
+            None,
+        ),
+        (
+            r#"<img src="example.svg" role="img" />"#,
+            Some(serde_json::json!([{ "ul": ["list"], "ol": ["list"] }])),
+            None,
+        ),
+        (
+            r#"<svg role="img" />"#,
+            Some(serde_json::json!([{ "ul": ["list"], "ol": ["list"] }])),
+            None,
+        ),
         (r#"<li role="listitem" />"#, Some(serde_json::json!([{ "li": ["listitem"] }])), None),
     ];
 
     let fail = vec![
+        (r#"<body role="DOCUMENT" />"#, None, None),
         ("<button role='button' />", None, None),
         ("<button role='button' data-foo='bar' />", None, None),
         ("<button role='button' data-role='bar' />", None, None),
@@ -198,7 +318,22 @@ fn test() {
         (r#"<ol role="list" />"#, None, None),
         (r#"<ul role="list" />"#, None, None),
         (r#"<select role="combobox" />"#, None, None),
-        (r#"<select role="listbox" />"#, None, None),
+        (r#"<select role="combobox" size="" />"#, None, None),
+        (r#"<select role="combobox" size={1} />"#, None, None),
+        (r#"<select role="combobox" size="1" />"#, None, None),
+        (r#"<select role="combobox" size={null}></select>"#, None, None),
+        (r#"<select role="combobox" size={undefined}></select>"#, None, None),
+        (r#"<select role="combobox" multiple={undefined}></select>"#, None, None),
+        (r#"<select role="combobox" multiple={false}></select>"#, None, None),
+        (r#"<select role="combobox" multiple=""></select>"#, None, None),
+        (r#"<select role="listbox" size="3" />"#, None, None),
+        (r#"<select role="listbox" size={2} />"#, None, None),
+        (
+            r#"<select role="listbox" multiple><option>1</option><option>2</option></select>"#,
+            None,
+            None,
+        ),
+        (r#"<select role="listbox" multiple={true}></select>"#, None, None),
         (r#"<table role="table" />"#, None, None),
         (r#"<tbody role="rowgroup" />"#, None, None),
         (r#"<td role="cell" />"#, None, None),
