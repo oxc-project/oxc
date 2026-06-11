@@ -1538,7 +1538,7 @@ export interface DummyRuleMap {
   "valid-typeof"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ValidTypeof];
   "vars-on-top"?: RuleNoConfig;
   "vitest/consistent-each-for"?: DummyRule;
-  "vitest/consistent-test-filename"?: DummyRule;
+  "vitest/consistent-test-filename"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestFilenameConfig];
   "vitest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
   "vitest/consistent-vitest-vi"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentVitestConfig];
   "vitest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
@@ -5314,6 +5314,18 @@ export interface ValidTypeof {
    * ```
    */
   requireStringLiterals?: boolean;
+}
+export interface ConsistentTestFilenameConfig {
+  /**
+   * Regex pattern to ensure we are linting only test filenames.
+   * Decides whether a file is a testing file.
+   */
+  allTestPattern?: string;
+  /**
+   * Required regex to check if a test filename have a valid formart.
+   * Pattern doesn't have a default value, you must provide one.
+   */
+  pattern?: string;
 }
 export interface ConsistentVitestConfig {
   /**

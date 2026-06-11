@@ -56,13 +56,15 @@ impl std::ops::Deref for CompiledTestPatternName {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ConsistentTestFilenameConfig {
     /// Regex pattern to ensure we are linting only test filenames.
     /// Decides whether a file is a testing file.
+    #[schemars(with = "Option<String>")]
     all_test_pattern: CompiledAllTestPattern,
     /// Required regex to check if a test filename have a valid formart.
     /// Pattern doesn't have a default value, you must provide one.
+    #[schemars(with = "Option<String>")]
     pattern: CompiledTestPatternName,
 }
 

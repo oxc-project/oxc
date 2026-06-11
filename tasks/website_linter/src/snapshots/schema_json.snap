@@ -998,6 +998,22 @@ expression: json
       },
       "additionalProperties": false
     },
+    "ConsistentTestFilenameConfig": {
+      "type": "object",
+      "properties": {
+        "allTestPattern": {
+          "description": "Regex pattern to ensure we are linting only test filenames.\nDecides whether a file is a testing file.",
+          "type": "string",
+          "markdownDescription": "Regex pattern to ensure we are linting only test filenames.\nDecides whether a file is a testing file."
+        },
+        "pattern": {
+          "description": "Required regex to check if a test filename have a valid formart.\nPattern doesn't have a default value, you must provide one.",
+          "type": "string",
+          "markdownDescription": "Required regex to check if a test filename have a valid formart.\nPattern doesn't have a default value, you must provide one."
+        }
+      },
+      "additionalProperties": false
+    },
     "ConsistentTestItConfig": {
       "type": "object",
       "properties": {
@@ -7726,7 +7742,24 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/consistent-test-filename": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentTestFilenameConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/consistent-test-it": {
           "anyOf": [
