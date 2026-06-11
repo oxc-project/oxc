@@ -228,6 +228,7 @@ export type FileFrom = "file";
 export type NameSpecifier = string | string[];
 export type LibFrom = "lib";
 export type PackageFrom = "package";
+export type AllowSingleElementEquality = "always" | "never";
 export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-correctness-only" | "never";
 export type PathOption = "always" | "never";
 export type TypesOption = "always" | "never" | "prefer-import";
@@ -1367,7 +1368,10 @@ export interface DummyRuleMap {
   "typescript/prefer-reduce-type-parameter"?: RuleNoConfig;
   "typescript/prefer-regexp-exec"?: RuleNoConfig;
   "typescript/prefer-return-this-type"?: RuleNoConfig;
-  "typescript/prefer-string-starts-ends-with"?: DummyRule;
+  "typescript/prefer-string-starts-ends-with"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, PreferStringStartsEndsWithConfig];
   "typescript/prefer-ts-expect-error"?: RuleNoConfig;
   "typescript/promise-function-async"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PromiseFunctionAsyncConfig];
   "typescript/related-getter-setter-pairs"?: RuleNoConfig;
@@ -4985,6 +4989,12 @@ export interface PreferReadonlyParameterTypesConfig {
    * Whether mutable methods should be treated as readonly members.
    */
   treatMethodsAsReadonly?: boolean;
+}
+export interface PreferStringStartsEndsWithConfig {
+  /**
+   * Whether equality checks against the first/last character are allowed.
+   */
+  allowSingleElementEquality?: AllowSingleElementEquality;
 }
 export interface PromiseFunctionAsyncConfig {
   /**

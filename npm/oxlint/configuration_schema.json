@@ -409,6 +409,26 @@
       ],
       "markdownDescription": "Kinds of functions that can be allowed to be empty."
     },
+    "AllowSingleElementEquality": {
+      "oneOf": [
+        {
+          "description": "Always allow equality checks against the first or last character.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always allow equality checks against the first or last character."
+        },
+        {
+          "description": "Never allow equality checks against the first or last character.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Never allow equality checks against the first or last character."
+        }
+      ]
+    },
     "AllowWarnDeny": {
       "oneOf": [
         {
@@ -6827,7 +6847,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/prefer-string-starts-ends-with": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferStringStartsEndsWithConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/prefer-ts-expect-error": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -14164,6 +14201,22 @@
             "type": "string"
           },
           "markdownDescription": "Methods to ignore."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferStringStartsEndsWithConfig": {
+      "type": "object",
+      "properties": {
+        "allowSingleElementEquality": {
+          "description": "Whether equality checks against the first/last character are allowed.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AllowSingleElementEquality"
+            }
+          ],
+          "markdownDescription": "Whether equality checks against the first/last character are allowed."
         }
       },
       "additionalProperties": false
