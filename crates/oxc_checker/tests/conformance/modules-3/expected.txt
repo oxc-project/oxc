@@ -1,0 +1,3 @@
+main.ts(15,35): error TS2339: Property 'bad_missingValue' does not exist on type 'typeof import("/Users/boshen/github/oxc-project/oxc3/crates/oxc_checker/tests/conformance/modules-3/reexport")'.
+main.ts(17,29): error TS2694: Namespace '"/Users/boshen/github/oxc-project/oxc3/crates/oxc_checker/tests/conformance/modules-3/reexport"' has no exported member 'MissingType'.
+main.ts(5,10): error TS2305: Module '"./reexport"' has no exported member 'bad_ghost'.

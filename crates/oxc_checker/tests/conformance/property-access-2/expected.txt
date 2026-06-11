@@ -1,0 +1,5 @@
+main.ts(10,38): error TS2339: Property 'protocol' does not exist on type '{ host: string; port: number; retries: number; }'.
+main.ts(11,29): error TS2339: Property 'volume' does not exist on type '{ text: string; loud: boolean; }'.
+main.ts(14,20): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+main.ts(15,19): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+main.ts(16,22): error TS2363: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.

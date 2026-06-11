@@ -1,0 +1,3 @@
+main.ts(15,3): error TS2741: Property 'spacing' is missing in type '{ primary: string; mode: "light"; }' but required in type 'Theme'.
+main.ts(20,3): error TS2322: Type 'string' is not assignable to type 'number'.
+main.ts(26,3): error TS2353: Object literal may only specify known properties, and 'z' does not exist in type 'Point'.

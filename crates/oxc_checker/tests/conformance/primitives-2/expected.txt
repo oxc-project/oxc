@@ -1,0 +1,10 @@
+strictness.ts(13,7): error TS2322: Type 'null' is not assignable to type 'void'.
+strictness.ts(17,7): error TS2322: Type 'void' is not assignable to type 'undefined'.
+strictness.ts(4,7): error TS2322: Type 'null' is not assignable to type 'string'.
+strictness.ts(5,7): error TS2322: Type 'undefined' is not assignable to type 'number'.
+templates.ts(19,7): error TS2322: Type 'string' is not assignable to type '"hello world"'.
+templates.ts(24,7): error TS2322: Type '"hello there"' is not assignable to type '"hello world"'.
+templates.ts(9,7): error TS2322: Type 'string' is not assignable to type '"beta"'.
+top_bottom.ts(10,7): error TS2322: Type 'any' is not assignable to type 'never'.
+top_bottom.ts(15,7): error TS2322: Type 'unknown' is not assignable to type 'string'.
+top_bottom.ts(23,7): error TS2322: Type '1' is not assignable to type 'never'.

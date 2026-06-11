@@ -1,0 +1,6 @@
+arrows.ts(1,56): error TS2322: Type 'string' is not assignable to type 'number'.
+arrows.ts(7,5): error TS2322: Type 'string' is not assignable to type 'boolean'.
+declarations.ts(10,3): error TS2322: Type 'undefined' is not assignable to type 'number'.
+declarations.ts(17,41): error TS2355: A function whose declared type is neither 'undefined', 'void', nor 'any' must return a value.
+declarations.ts(2,3): error TS2322: Type 'number' is not assignable to type 'string'.
+declarations.ts(20,57): error TS2366: Function lacks ending return statement and return type does not include 'undefined'.

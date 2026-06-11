@@ -1,0 +1,5 @@
+assertions.ts(15,30): error TS2352: Conversion of type 'number' to type 'string' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+assertions.ts(22,14): error TS2322: Type 'number' is not assignable to type 'string'.
+satisfies_union.ts(10,35): error TS2322: Type '"triangle"' is not assignable to type '"circle" | "square"'.
+satisfies_union.ts(13,49): error TS2353: Object literal may only specify known properties, and 'side' does not exist in type '{ kind: "circle"; radius: number; }'.
+satisfies_union.ts(17,33): error TS1360: Type 'boolean' does not satisfy the expected type 'Id'.

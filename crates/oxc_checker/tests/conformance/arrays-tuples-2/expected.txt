@@ -1,0 +1,11 @@
+tuple_assign.ts(13,7): error TS2322: Type 'number[]' is not assignable to type '[number, number]'.
+tuple_assign.ts(20,56): error TS2322: Type '[string]' is not assignable to type '[string, number]'.
+tuple_assign.ts(5,7): error TS2322: Type '[number, number, number]' is not assignable to type 'readonly [number, number]'.
+tuple_assign.ts(7,7): error TS4104: The type 'readonly [string, number]' is 'readonly' and cannot be assigned to the mutable type '[string, number]'.
+tuples.ts(11,59): error TS2322: Type 'number' is not assignable to type 'string'.
+tuples.ts(16,50): error TS2322: Type 'number' is not assignable to type 'string'.
+tuples.ts(21,7): error TS2322: Type '[string, number, string]' is not assignable to type '[string, ...number[]]'.
+tuples.ts(5,7): error TS2322: Type '[string]' is not assignable to type '[string, number]'.
+tuples.ts(6,7): error TS2322: Type '[string, number, boolean]' is not assignable to type '[string, number]'.
+tuples.ts(9,46): error TS2322: Type 'number' is not assignable to type 'string'.
+tuples.ts(9,49): error TS2322: Type 'string' is not assignable to type 'number'.

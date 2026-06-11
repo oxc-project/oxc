@@ -1,0 +1,7 @@
+bad_default.ts(6,16): error TS9037: Default exports can't be inferred with --isolatedDeclarations.
+destructure.ts(5,19): error TS9019: Binding elements can't be exported directly with --isolatedDeclarations.
+destructure.ts(5,29): error TS9019: Binding elements can't be exported directly with --isolatedDeclarations.
+destructure.ts(6,15): error TS9019: Binding elements can't be exported directly with --isolatedDeclarations.
+destructure.ts(6,25): error TS9019: Binding elements can't be exported directly with --isolatedDeclarations.
+objects.ts(11,32): error TS9016: Objects that contain shorthand properties can't be inferred with --isolatedDeclarations.
+objects.ts(14,29): error TS9015: Objects that contain spread assignments can't be inferred with --isolatedDeclarations.

@@ -1,0 +1,6 @@
+funcs.ts(18,10): error TS9013: Expression type can't be inferred with --isolatedDeclarations.
+funcs.ts(22,41): error TS9013: Expression type can't be inferred with --isolatedDeclarations.
+funcs.ts(25,43): error TS9011: Parameter must have an explicit type annotation with --isolatedDeclarations.
+vars.ts(16,14): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+vars.ts(17,14): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+vars.ts(18,14): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.

@@ -2013,6 +2013,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_checker"
+version = "0.0.0"
+dependencies = [
+ "insta",
+ "json-strip-comments",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_isolated_declarations",
+ "oxc_parser",
+ "oxc_resolver",
+ "oxc_span",
+ "rayon",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "walkdir",
+]
+
+[[package]]
 name = "oxc_codegen"
 version = "0.135.0"
 dependencies = [

@@ -1,0 +1,2 @@
+switch.ts(31,16): error TS2339: Property 'radius' does not exist on type 'Shape'.
+switch.ts(37,20): error TS2339: Property 'side' does not exist on type 'Circle'.

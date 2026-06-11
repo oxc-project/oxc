@@ -1,0 +1,4 @@
+main.ts(10,32): error TS2307: Cannot find module './no-such-module' or its corresponding type declarations.
+main.ts(4,10): error TS2305: Module '"./shapes"' has no exported member 'bad_missingHelper'.
+main.ts(6,8): error TS2613: Module '"/Users/boshen/github/oxc-project/oxc3/crates/oxc_checker/tests/conformance/modules-1/shapes"' has no default export. Did you mean to use 'import { ok_makePoint } from "/Users/boshen/github/oxc-project/oxc3/crates/oxc_checker/tests/conformance/modules-1/shapes"' instead?
+main.ts(8,8): error TS1192: Module '"/Users/boshen/github/oxc-project/oxc3/crates/oxc_checker/tests/conformance/modules-1/shapes"' has no default export.

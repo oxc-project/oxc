@@ -1,0 +1,8 @@
+literal_targets.ts(10,7): error TS2322: Type '2' is not assignable to type 'Bit'.
+literal_targets.ts(14,7): error TS2322: Type 'false' is not assignable to type 'Flag'.
+literal_targets.ts(19,7): error TS2322: Type 'string' is not assignable to type 'Direction'.
+literal_targets.ts(7,7): error TS2322: Type '"up"' is not assignable to type 'Direction'.
+union_sources.ts(15,7): error TS2322: Type 'string | number' is not assignable to type 'string'.
+union_sources.ts(16,7): error TS2322: Type 'string | number' is not assignable to type 'number'.
+union_sources.ts(20,7): error TS2322: Type 'boolean' is not assignable to type 'string | number'.
+union_sources.ts(9,7): error TS2322: Type 'BigNum' is not assignable to type 'SmallNum'.

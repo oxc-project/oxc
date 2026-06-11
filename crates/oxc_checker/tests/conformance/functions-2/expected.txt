@@ -1,0 +1,4 @@
+loops.ts(12,62): error TS2366: Function lacks ending return statement and return type does not include 'undefined'.
+loops.ts(20,5): error TS2322: Type 'Point' is not assignable to type 'string'.
+loops.ts(30,3): error TS2322: Type 'void' is not assignable to type 'number'.
+shapes.ts(11,3): error TS2741: Property 'y' is missing in type '{ x: number; }' but required in type 'Point'.

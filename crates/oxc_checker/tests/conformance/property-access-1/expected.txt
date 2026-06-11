@@ -1,0 +1,4 @@
+main.ts(10,26): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+main.ts(11,41): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+main.ts(12,33): error TS2741: Property 'label' is missing in type '{ id: number; }' but required in type 'Order'.
+main.ts(13,28): error TS2345: Argument of type 'boolean' is not assignable to parameter of type 'number'.

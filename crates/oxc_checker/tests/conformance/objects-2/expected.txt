@@ -1,0 +1,4 @@
+consume.ts(13,54): error TS2741: Property 'area' is missing in type '{ kind: string; }' but required in type 'Shape'.
+consume.ts(4,63): error TS2353: Object literal may only specify known properties, and 'color' does not exist in type 'Shape'.
+shapes.ts(15,14): error TS2741: Property 'area' is missing in type '{ kind: string; radius: number; }' but required in type 'Circle'.
+shapes.ts(17,14): error TS2741: Property 'radius' is missing in type '{ kind: string; area: number; }' but required in type 'Circle'.

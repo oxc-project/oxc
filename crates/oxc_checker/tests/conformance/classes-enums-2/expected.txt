@@ -1,0 +1,6 @@
+flags.ts(13,7): error TS2322: Type 'LocalFlag' is not assignable to type 'string'.
+flags.ts(14,7): error TS2322: Type 'LocalMode' is not assignable to type 'number'.
+main.ts(13,7): error TS2322: Type '99' is not assignable to type 'Status'.
+main.ts(14,7): error TS2322: Type '"UP"' is not assignable to type 'Direction'.
+main.ts(15,7): error TS2322: Type 'Status.Inactive' is not assignable to type 'Status.Active'.
+main.ts(26,51): error TS2345: Argument of type 'Status.Active' is not assignable to parameter of type 'Level'.

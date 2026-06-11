@@ -1,0 +1,6 @@
+main.ts(10,18): error TS2314: Generic type 'Pair' requires 2 type argument(s).
+main.ts(11,19): error TS2314: Generic type 'Boxed' requires 1 type argument(s).
+main.ts(14,48): error TS2322: Type 'string' is not assignable to type 'number'.
+main.ts(15,7): error TS2741: Property 'value' is missing in type '{}' but required in type 'Boxed<number>'.
+main.ts(16,41): error TS2322: Type 'number' is not assignable to type 'string'.
+main.ts(19,32): error TS2344: Type 'number' does not satisfy the constraint 'string'.

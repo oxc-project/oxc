@@ -1,0 +1,9 @@
+{
+  // The checker forces isolatedDeclarations regardless; strict enables
+  // strictNullChecks in relations.
+  "compilerOptions": {
+    "strict": true,
+    "declaration": true,
+    "isolatedDeclarations": true
+  }
+}

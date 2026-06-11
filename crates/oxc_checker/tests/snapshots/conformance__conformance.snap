@@ -1,0 +1,5 @@
+---
+source: crates/oxc_checker/tests/conformance.rs
+expression: header + &report
+---
+conformance: 154/154 expected diagnostics matched, 0 extra, 37/37 cases perfect

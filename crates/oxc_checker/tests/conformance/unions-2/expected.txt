@@ -1,0 +1,9 @@
+nested.ts(11,7): error TS2322: Type '"e"' is not assignable to type 'ABCD'.
+nested.ts(12,7): error TS2322: Type 'ABCD' is not assignable to type '"c" | AB'.
+nested.ts(17,7): error TS2322: Type 'true' is not assignable to type 'DeepNullable'.
+nullable.ts(11,7): error TS2322: Type 'null' is not assignable to type 'OptCount'.
+nullable.ts(14,7): error TS2322: Type 'MaybeName' is not assignable to type 'string'.
+nullable.ts(7,7): error TS2322: Type 'undefined' is not assignable to type 'MaybeName'.
+objects.ts(14,27): error TS2322: Type '"oval"' is not assignable to type '"circle" | "square"'.
+objects.ts(15,7): error TS2322: Type '{ kind: "square"; }' is not assignable to type 'Shape'.
+objects.ts(27,44): error TS2353: Object literal may only specify known properties, and 'label' does not exist in type 'Aged | Named'.

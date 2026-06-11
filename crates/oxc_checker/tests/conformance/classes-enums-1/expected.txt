@@ -1,0 +1,7 @@
+main.ts(10,7): error TS2741: Property 'size' is missing in type 'Square' but required in type 'Sized'.
+main.ts(13,7): error TS2322: Type 'number' is not assignable to type 'string'.
+main.ts(20,38): error TS2741: Property 'size' is missing in type 'Named' but required in type 'Sized'.
+main.ts(8,7): error TS2739: Type 'Square' is missing the following properties from type 'Circle': radius, size
+main.ts(9,7): error TS2322: Type 'Circle' is not assignable to type 'string'.
+shapes.ts(22,14): error TS2420: Class 'BadShape' incorrectly implements interface 'Sized'.
+shapes.ts(27,3): error TS2416: Property 'name' in type 'WrongName' is not assignable to the same property in base type 'Named'.
