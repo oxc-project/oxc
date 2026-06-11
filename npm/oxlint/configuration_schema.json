@@ -891,6 +891,58 @@
       },
       "additionalProperties": false
     },
+    "ChecksVoidReturn": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/ChecksVoidReturnOptions"
+        }
+      ]
+    },
+    "ChecksVoidReturnOptions": {
+      "type": "object",
+      "properties": {
+        "arguments": {
+          "description": "Whether to check Promise-returning functions passed as arguments to void-returning functions.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check Promise-returning functions passed as arguments to void-returning functions."
+        },
+        "attributes": {
+          "description": "Whether to check Promise-returning functions in JSX attributes expecting void.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check Promise-returning functions in JSX attributes expecting void."
+        },
+        "inheritedMethods": {
+          "description": "Whether to check Promise-returning methods that override void-returning inherited methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check Promise-returning methods that override void-returning inherited methods."
+        },
+        "properties": {
+          "description": "Whether to check Promise-returning functions assigned to object properties expecting void.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check Promise-returning functions assigned to object properties expecting void."
+        },
+        "returns": {
+          "description": "Whether to check Promise values returned from void-returning functions.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check Promise values returned from void-returning functions."
+        },
+        "variables": {
+          "description": "Whether to check Promise-returning functions assigned to variables typed as void-returning.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check Promise-returning functions assigned to variables typed as void-returning."
+        }
+      },
+      "additionalProperties": false
+    },
     "ClassLiteralPropertyStyleOption": {
       "oneOf": [
         {
@@ -6484,7 +6536,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/no-misused-promises": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoMisusedPromisesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/no-misused-spread": {
           "anyOf": [
@@ -12045,6 +12114,34 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true`, the rule allows any grouping of code points\ninside a character class as long as they are written using escape sequences.\n\nExamples of **incorrect** code for this rule with `{ \"allowEscape\": true }`:\n```javascript\n/[\\uD83D]/; // backslash can be omitted\nnew RegExp(\"[\\ud83d\" + \"\\udc4d]\");\n```\n\nExamples of **correct** code for this rule with `{ \"allowEscape\": true }`:\n```javascript\n/[\\ud83d\\udc4d]/;\n/[\\u00B7\\u0300-\\u036F]/u;\n/[👨\\u200d👩]/u;\nnew RegExp(\"[\\x41\\u0301]\");\nnew RegExp(`[\\u{1F1EF}\\u{1F1F5}]`, \"u\");\nnew RegExp(\"[\\\\u{1F1EF}\\\\u{1F1F5}]\", \"u\");\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoMisusedPromisesConfig": {
+      "type": "object",
+      "properties": {
+        "checksConditionals": {
+          "description": "Whether to check if Promises are used in conditionals.\nWhen true, disallows using Promises in conditions where a boolean is expected.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check if Promises are used in conditionals.\nWhen true, disallows using Promises in conditions where a boolean is expected."
+        },
+        "checksSpreads": {
+          "description": "Whether to check if Promises are used in spread syntax.\nWhen true, disallows spreading Promise values.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check if Promises are used in spread syntax.\nWhen true, disallows spreading Promise values."
+        },
+        "checksVoidReturn": {
+          "description": "Configuration for checking if Promises are returned in contexts expecting void.\nCan be a boolean to enable/disable all checks, or an object for granular control.",
+          "default": true,
+          "allOf": [
+            {
+              "$ref": "#/definitions/ChecksVoidReturn"
+            }
+          ],
+          "markdownDescription": "Configuration for checking if Promises are returned in contexts expecting void.\nCan be a boolean to enable/disable all checks, or an object for granular control."
         }
       },
       "additionalProperties": false

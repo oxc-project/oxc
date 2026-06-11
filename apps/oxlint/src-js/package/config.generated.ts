@@ -228,6 +228,7 @@ export type FileFrom = "file";
 export type NameSpecifier = string | string[];
 export type LibFrom = "lib";
 export type PackageFrom = "package";
+export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
 /**
  * Represents the different ways `allowConstantLoopConditions` can be specified in JSON.
  * Can be:
@@ -1326,7 +1327,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, NoMeaninglessVoidOperatorConfig];
   "typescript/no-misused-new"?: RuleNoConfig;
-  "typescript/no-misused-promises"?: DummyRule;
+  "typescript/no-misused-promises"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoMisusedPromisesConfig];
   "typescript/no-misused-spread"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoMisusedSpreadConfig];
   "typescript/no-mixed-enums"?: RuleNoConfig;
   "typescript/no-namespace"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoNamespace];
@@ -4767,6 +4768,49 @@ export interface NoMeaninglessVoidOperatorConfig {
    * Whether to check `void` applied to expressions of type `never`.
    */
   checkNever?: boolean;
+}
+export interface NoMisusedPromisesConfig {
+  /**
+   * Whether to check if Promises are used in conditionals.
+   * When true, disallows using Promises in conditions where a boolean is expected.
+   */
+  checksConditionals?: boolean;
+  /**
+   * Whether to check if Promises are used in spread syntax.
+   * When true, disallows spreading Promise values.
+   */
+  checksSpreads?: boolean;
+  /**
+   * Configuration for checking if Promises are returned in contexts expecting void.
+   * Can be a boolean to enable/disable all checks, or an object for granular control.
+   */
+  checksVoidReturn?: ChecksVoidReturn;
+}
+export interface ChecksVoidReturnOptions {
+  /**
+   * Whether to check Promise-returning functions passed as arguments to void-returning functions.
+   */
+  arguments?: boolean;
+  /**
+   * Whether to check Promise-returning functions in JSX attributes expecting void.
+   */
+  attributes?: boolean;
+  /**
+   * Whether to check Promise-returning methods that override void-returning inherited methods.
+   */
+  inheritedMethods?: boolean;
+  /**
+   * Whether to check Promise-returning functions assigned to object properties expecting void.
+   */
+  properties?: boolean;
+  /**
+   * Whether to check Promise values returned from void-returning functions.
+   */
+  returns?: boolean;
+  /**
+   * Whether to check Promise-returning functions assigned to variables typed as void-returning.
+   */
+  variables?: boolean;
 }
 export interface NoMisusedSpreadConfig {
   /**
