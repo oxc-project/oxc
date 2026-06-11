@@ -113,7 +113,8 @@ use oxc_data_structures::assert_unchecked;
 ///
 /// If workload is completely uniform, it reaches stable state on the 3rd round.
 ///
-/// ```
+/// ```no_run
+/// # // This isn't run as a doctest. It's much too slow.
 /// # use oxc_allocator::Allocator;
 /// let mut allocator = Allocator::new();
 ///

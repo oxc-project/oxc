@@ -6,7 +6,13 @@
 //!
 //! All addresses are derived from `isize::MAX` so the same tests work on both 32-bit and 64-bit.
 
-use std::{alloc::Layout, cell::Cell, cmp, mem::ManuallyDrop, ptr::NonNull};
+use std::{
+    alloc::Layout,
+    cell::Cell,
+    cmp,
+    mem::ManuallyDrop,
+    ptr::{self, NonNull},
+};
 
 use super::{Arena, CHUNK_ALIGN, ChunkFooter};
 
@@ -26,9 +32,14 @@ impl<const MIN_ALIGN: usize> TestArena<MIN_ALIGN> {
     /// The footer pointer is never dereferenced in `try_alloc_layout_fast`.
     fn new(start: usize, cursor: usize) -> Self {
         // Check input is valid
+        assert!(start != 0, "start must not be 0");
         assert!(
             start.is_multiple_of(CHUNK_ALIGN),
             "start {start:#x} must be a multiple of CHUNK_ALIGN ({CHUNK_ALIGN})"
+        );
+        assert!(
+            cursor.is_multiple_of(MIN_ALIGN),
+            "cursor {cursor:#x} must be a multiple of MIN_ALIGN ({MIN_ALIGN})"
         );
         assert!(cursor >= start, "cursor {cursor:#x} must be >= start {start:#x}");
 
@@ -40,8 +51,8 @@ impl<const MIN_ALIGN: usize> TestArena<MIN_ALIGN> {
         );
 
         // Construct arena
-        let cursor_ptr = NonNull::new(cursor as *mut u8).unwrap();
-        let start_ptr = NonNull::new(start as *mut u8).unwrap();
+        let cursor_ptr = NonNull::new(ptr::without_provenance_mut(cursor)).unwrap();
+        let start_ptr = NonNull::new(ptr::without_provenance_mut(start)).unwrap();
         let arena = Arena {
             cursor_ptr: Cell::new(cursor_ptr),
             current_chunk_footer_ptr: Cell::new(Some(cursor_ptr.cast::<ChunkFooter>())),

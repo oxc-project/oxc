@@ -1085,6 +1085,11 @@ pub fn parameter_property_cannot_be_binding_pattern(span: Span) -> OxcDiagnostic
         .with_label(span)
 }
 
+#[cold]
+pub fn constructor_cannot_be_parameter_property_name(span: Span) -> OxcDiagnostic {
+    ts_error("2398", "'constructor' cannot be used as a parameter property name.").with_label(span)
+}
+
 pub fn cannot_appear_on_an_index_signature(
     modifier: &Modifier,
     allowed: Option<ModifierKinds>,
