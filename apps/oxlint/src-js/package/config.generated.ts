@@ -899,7 +899,10 @@ export interface DummyRuleMap {
   "jsx-a11y/no-autofocus"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoAutofocus];
   "jsx-a11y/no-distracting-elements"?: DummyRule;
   "jsx-a11y/no-interactive-element-to-noninteractive-role"?: DummyRule;
-  "jsx-a11y/no-noninteractive-element-interactions"?: DummyRule;
+  "jsx-a11y/no-noninteractive-element-interactions"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoNoninteractiveElementInteractionsConfig];
   "jsx-a11y/no-noninteractive-element-to-interactive-role"?: DummyRule;
   "jsx-a11y/no-noninteractive-tabindex"?: DummyRule;
   "jsx-a11y/no-redundant-roles"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRedundantRolesConfig];
@@ -2413,6 +2416,13 @@ export interface NoAutofocus {
    * Determines if developer-created components are checked.
    */
   ignoreNonDOM?: boolean;
+}
+export interface NoNoninteractiveElementInteractionsConfig {
+  /**
+   * An array of event handler names that should trigger this rule.
+   */
+  handlers?: string[];
+  [k: string]: string[];
 }
 export interface NoRedundantRolesConfig {
   [k: string]: string[];
