@@ -176,6 +176,7 @@ export type ForbidItem2 =
     };
 export type EnforceBooleanAttribute = "always" | "never";
 export type FragmentMode = "syntax" | "element";
+export type IgnoreEnforceOption = "ignore" | "enforce";
 export type NoDidMountSetStateConfig = "allowed" | "disallow-in-func";
 export type NoWillUpdateSetStateConfig = "allowed" | "disallow-in-func";
 export type RequireFlag = "u" | "v";
@@ -1179,7 +1180,7 @@ export interface DummyRuleMap {
   "react/jsx-no-useless-fragment"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxNoUselessFragment];
   "react/jsx-pascal-case"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxPascalCaseConfig];
   "react/jsx-props-no-spread-multi"?: RuleNoConfig;
-  "react/jsx-props-no-spreading"?: DummyRule;
+  "react/jsx-props-no-spreading"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxPropsNoSpreadingConfig];
   "react/no-array-index-key"?: RuleNoConfig;
   "react/no-children-prop"?: RuleNoConfig;
   "react/no-clone-element"?: RuleNoConfig;
@@ -4165,6 +4166,29 @@ export interface JsxPascalCaseConfig {
    * List of component names to ignore.
    */
   ignore?: string[];
+}
+export interface JsxPropsNoSpreadingConfig {
+  /**
+   * `custom` set to `ignore` will ignore all custom jsx tags like `App`, `MyCustomComponent` etc. Default is set to `enforce`.
+   */
+  custom?: IgnoreEnforceOption;
+  /**
+   * Exceptions flip the enforcement behavior for specific components.
+   * For example:
+   * - If `html` is set to `ignore`, an exception for `div` will enforce the rule on `<div>` elements.
+   * - If `custom` is set to `enforce`, an exception for `Foo` will ignore the rule on `<Foo>` components.
+   *
+   * This allows you to override the general setting for individual components.
+   */
+  exceptions?: string[];
+  /**
+   * `explicitSpread` set to `ignore` will ignore spread operators that are explicitly listing all object properties within that spread. Default is set to `enforce`.
+   */
+  explicitSpread?: IgnoreEnforceOption;
+  /**
+   * `html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`.
+   */
+  html?: IgnoreEnforceOption;
 }
 export interface NoMultiCompConfig {
   /**

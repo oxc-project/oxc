@@ -5388,7 +5388,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/jsx-props-no-spreading": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxPropsNoSpreadingConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/no-array-index-key": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9398,6 +9415,13 @@
         }
       ]
     },
+    "IgnoreEnforceOption": {
+      "type": "string",
+      "enum": [
+        "ignore",
+        "enforce"
+      ]
+    },
     "IgnorePattern_for_String": {
       "anyOf": [
         {
@@ -9784,6 +9808,51 @@
             "type": "string"
           },
           "markdownDescription": "List of component names to ignore."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxPropsNoSpreadingConfig": {
+      "type": "object",
+      "properties": {
+        "custom": {
+          "description": "`custom` set to `ignore` will ignore all custom jsx tags like `App`, `MyCustomComponent` etc. Default is set to `enforce`.",
+          "default": "enforce",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnoreEnforceOption"
+            }
+          ],
+          "markdownDescription": "`custom` set to `ignore` will ignore all custom jsx tags like `App`, `MyCustomComponent` etc. Default is set to `enforce`."
+        },
+        "exceptions": {
+          "description": "Exceptions flip the enforcement behavior for specific components.\nFor example:\n- If `html` is set to `ignore`, an exception for `div` will enforce the rule on `<div>` elements.\n- If `custom` is set to `enforce`, an exception for `Foo` will ignore the rule on `<Foo>` components.\n\nThis allows you to override the general setting for individual components.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Exceptions flip the enforcement behavior for specific components.\nFor example:\n- If `html` is set to `ignore`, an exception for `div` will enforce the rule on `<div>` elements.\n- If `custom` is set to `enforce`, an exception for `Foo` will ignore the rule on `<Foo>` components.\n\nThis allows you to override the general setting for individual components."
+        },
+        "explicitSpread": {
+          "description": "`explicitSpread` set to `ignore` will ignore spread operators that are explicitly listing all object properties within that spread. Default is set to `enforce`.",
+          "default": "enforce",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnoreEnforceOption"
+            }
+          ],
+          "markdownDescription": "`explicitSpread` set to `ignore` will ignore spread operators that are explicitly listing all object properties within that spread. Default is set to `enforce`."
+        },
+        "html": {
+          "description": "`html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`.",
+          "default": "enforce",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnoreEnforceOption"
+            }
+          ],
+          "markdownDescription": "`html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`."
         }
       },
       "additionalProperties": false
