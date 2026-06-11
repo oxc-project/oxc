@@ -64,6 +64,37 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
     ));
 }
 
+pub fn check_ts_type_predicate(predicate: &TSTypePredicate<'_>, ctx: &SemanticBuilder<'_>) {
+    if !is_allowed_type_predicate_position(ctx) {
+        ctx.error(diagnostics::type_predicate_only_in_return_type(predicate.span));
+    }
+}
+
+fn is_allowed_type_predicate_position(ctx: &SemanticBuilder<'_>) -> bool {
+    let mut ancestors = ctx.ancestry().ancestor_kinds();
+
+    let Some(AstKind::TSTypeAnnotation(_)) = ancestors.next() else {
+        return false;
+    };
+
+    match ancestors.next() {
+        Some(AstKind::Function(_)) => match ancestors.next() {
+            Some(AstKind::MethodDefinition(method)) => method.kind.is_method(),
+            Some(AstKind::ObjectProperty(property)) => !property.kind.is_accessor(),
+            _ => true,
+        },
+        Some(
+            AstKind::ArrowFunctionExpression(_)
+            | AstKind::TSFunctionType(_)
+            | AstKind::TSCallSignatureDeclaration(_),
+        ) => true,
+        Some(AstKind::TSMethodSignature(signature)) => {
+            signature.kind == TSMethodSignatureKind::Method
+        }
+        _ => false,
+    }
+}
+
 pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuilder<'a>) {
     let is_in_conditional_extends_clause = ctx.ancestry().ancestor_kinds().any(|kind| {
         kind.as_ts_conditional_type().is_some_and(|conditional| {

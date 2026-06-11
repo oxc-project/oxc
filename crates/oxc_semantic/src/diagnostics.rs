@@ -242,6 +242,15 @@ pub fn require_class_name(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn type_predicate_only_in_return_type(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1228",
+        "A type predicate is only allowed in return type position for functions and methods.",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn super_without_derived_class(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be referenced in a derived class.")
         .with_help("either remove this super, or extend the class")
