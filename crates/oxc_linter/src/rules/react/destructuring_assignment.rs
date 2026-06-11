@@ -314,21 +314,13 @@ impl DestructuringAssignment {
             return None;
         }
 
-        let Some(id_ref) = init.get_identifier_reference() else {
-            return None;
-        };
-        let Some(parent) =
-            get_parent_stateless_component_cached(node, ctx, stateless_component_cache)
-        else {
-            return None;
-        };
+        let id_ref = init.get_identifier_reference()?;
+        let parent = get_parent_stateless_component_cached(node, ctx, stateless_component_cache)?;
         let obj_name = id_ref.name.as_str();
         let params = parent.params();
-        let Some(param) = params.items.iter().find(|p| {
+        let param = params.items.iter().find(|p| {
             p.pattern.get_binding_identifier().is_some_and(|id| id.name.as_str() == obj_name)
-        }) else {
-            return None;
-        };
+        })?;
 
         if self.apply_never() {
             ctx.diagnostic(no_destruct_assignment_diagnostic(decl.span, obj_name));
