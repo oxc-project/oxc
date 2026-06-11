@@ -62,8 +62,11 @@ jobs:
 
       # `--lib --bins --tests` omits doctests, which Miri can't run
       # https://github.com/oxc-project/oxc/pull/11092
+      # `-Zmiri-strict-provenance` enables strict provenance checks
       - name: Test with Miri
         if: steps.filter.outputs.changed == 'true'
+        env:
+          MIRIFLAGS: -Zmiri-strict-provenance
         run: |
           cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
           cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests -p oxc_parser -p oxc_transformer
