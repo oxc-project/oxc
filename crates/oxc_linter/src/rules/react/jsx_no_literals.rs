@@ -140,7 +140,6 @@ impl Rule for JsxNoLiterals {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Deliberately chose to structure the code like this so it can be optimized by linter codegen
         match node.kind() {
             AstKind::JSXElement(jsx_el) => {
                 if Self::has_parent_jsx_element(node, ctx) {
