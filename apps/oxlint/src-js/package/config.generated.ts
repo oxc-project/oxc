@@ -1203,7 +1203,10 @@ export interface DummyRuleMap {
   "react/no-unescaped-entities"?: RuleNoConfig;
   "react/no-unknown-property"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnknownPropertyConfig];
   "react/no-unsafe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnsafeConfig];
-  "react/no-unstable-nested-components"?: DummyRule;
+  "react/no-unstable-nested-components"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoUnstableNestedComponentsConfig];
   "react/no-will-update-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoWillUpdateSetStateConfig];
   "react/only-export-components"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, OnlyExportComponentsConfig];
   "react/prefer-es6-class"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AlwaysNever];
@@ -4230,6 +4233,20 @@ export interface NoUnsafeConfig {
    * avoid unsafe lifecycle methods.
    */
   checkAliases?: boolean;
+}
+export interface NoUnstableNestedComponentsConfig {
+  /**
+   * Allow component definitions in props.
+   */
+  allowAsProps?: boolean;
+  /**
+   * Optional custom propTypes validators accepted for eslint-plugin-react compatibility.
+   */
+  customValidators?: string[];
+  /**
+   * Glob pattern for render-prop names that may receive inline component definitions.
+   */
+  propNamePattern?: string;
 }
 export interface OnlyExportComponentsConfig {
   /**

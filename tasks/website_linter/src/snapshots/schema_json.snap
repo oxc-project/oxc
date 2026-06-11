@@ -5580,7 +5580,24 @@ expression: json
           ]
         },
         "react/no-unstable-nested-components": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUnstableNestedComponentsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/no-will-update-set-state": {
           "anyOf": [
@@ -12405,6 +12422,33 @@ expression: json
           "default": false,
           "type": "boolean",
           "markdownDescription": "Disallow arithmetic operations on optional chaining expressions.\nIf this is true, this rule warns arithmetic operations on optional chaining expressions, which possibly result in NaN."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoUnstableNestedComponentsConfig": {
+      "type": "object",
+      "properties": {
+        "allowAsProps": {
+          "description": "Allow component definitions in props.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Allow component definitions in props."
+        },
+        "customValidators": {
+          "description": "Optional custom propTypes validators accepted for eslint-plugin-react compatibility.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Optional custom propTypes validators accepted for eslint-plugin-react compatibility."
+        },
+        "propNamePattern": {
+          "description": "Glob pattern for render-prop names that may receive inline component definitions.",
+          "default": "render*",
+          "type": "string",
+          "markdownDescription": "Glob pattern for render-prop names that may receive inline component definitions."
         }
       },
       "additionalProperties": false
