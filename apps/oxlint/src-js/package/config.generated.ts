@@ -228,6 +228,14 @@ export type FileFrom = "file";
 export type NameSpecifier = string | string[];
 export type LibFrom = "lib";
 export type PackageFrom = "package";
+/**
+ * Represents the different ways `allowConstantLoopConditions` can be specified in JSON.
+ * Can be:
+ * - `true` or `false`
+ * - A string enum (`"never"`, `"always"`, `"only-allowed-literals"`)
+ */
+export type AllowConstantLoopConditions = boolean | AllowConstantLoopConditionsMode;
+export type AllowConstantLoopConditionsMode = "never" | "always" | "only-allowed-literals";
 export type Modifier =
   | "private"
   | "private readonly"
@@ -1333,7 +1341,10 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, NoUnnecessaryBooleanLiteralCompareConfig];
-  "typescript/no-unnecessary-condition"?: DummyRule;
+  "typescript/no-unnecessary-condition"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoUnnecessaryConditionConfig];
   "typescript/no-unnecessary-parameter-property-assignment"?: RuleNoConfig;
   "typescript/no-unnecessary-qualifier"?: RuleNoConfig;
   "typescript/no-unnecessary-template-expression"?: RuleNoConfig;
@@ -4881,6 +4892,17 @@ export interface NoUnnecessaryBooleanLiteralCompareConfig {
    * When false, `x === true` where x is `boolean | null` will be flagged.
    */
   allowComparingNullableBooleansToTrue?: boolean;
+}
+export interface NoUnnecessaryConditionConfig {
+  /**
+   * Whether to allow constant loop conditions.
+   * `true` is treated as `"always"`, `false` as `"never"`.
+   */
+  allowConstantLoopConditions?: AllowConstantLoopConditions;
+  /**
+   * Whether to check type predicate functions.
+   */
+  checkTypePredicates?: boolean;
 }
 export interface NoUnnecessaryTypeAssertionConfig {
   /**

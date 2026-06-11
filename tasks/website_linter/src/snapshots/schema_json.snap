@@ -295,6 +295,26 @@ expression: json
         "all"
       ]
     },
+    "AllowConstantLoopConditions": {
+      "description": "Represents the different ways `allowConstantLoopConditions` can be specified in JSON.\nCan be:\n- `true` or `false`\n- A string enum (`\"never\"`, `\"always\"`, `\"only-allowed-literals\"`)",
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/AllowConstantLoopConditionsMode"
+        }
+      ],
+      "markdownDescription": "Represents the different ways `allowConstantLoopConditions` can be specified in JSON.\nCan be:\n- `true` or `false`\n- A string enum (`\"never\"`, `\"always\"`, `\"only-allowed-literals\"`)"
+    },
+    "AllowConstantLoopConditionsMode": {
+      "type": "string",
+      "enum": [
+        "never",
+        "always",
+        "only-allowed-literals"
+      ]
+    },
     "AllowKind": {
       "description": "Kinds of functions that can be allowed to be empty.",
       "oneOf": [
@@ -6589,7 +6609,24 @@ expression: json
           ]
         },
         "typescript/no-unnecessary-condition": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUnnecessaryConditionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/no-unnecessary-parameter-property-assignment": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -12789,6 +12826,28 @@ expression: json
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to allow comparing nullable boolean expressions to `true`.\nWhen false, `x === true` where x is `boolean | null` will be flagged."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoUnnecessaryConditionConfig": {
+      "type": "object",
+      "properties": {
+        "allowConstantLoopConditions": {
+          "description": "Whether to allow constant loop conditions.\n`true` is treated as `\"always\"`, `false` as `\"never\"`.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AllowConstantLoopConditions"
+            }
+          ],
+          "markdownDescription": "Whether to allow constant loop conditions.\n`true` is treated as `\"always\"`, `false` as `\"never\"`."
+        },
+        "checkTypePredicates": {
+          "description": "Whether to check type predicate functions.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check type predicate functions."
         }
       },
       "additionalProperties": false
