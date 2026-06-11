@@ -429,6 +429,7 @@ pub(crate) mod react {
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_constructed_context_values;
     pub mod jsx_no_duplicate_props;
+    pub mod jsx_no_literals;
     pub mod jsx_no_script_url;
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
@@ -570,6 +571,7 @@ pub(crate) mod unicorn {
     pub mod prefer_dom_node_remove;
     pub mod prefer_dom_node_text_content;
     pub mod prefer_event_target;
+    pub mod prefer_export_from;
     pub mod prefer_global_this;
     pub mod prefer_import_meta_properties;
     pub mod prefer_includes;
@@ -593,6 +595,7 @@ pub(crate) mod unicorn {
     pub mod prefer_response_static_json;
     pub mod prefer_set_has;
     pub mod prefer_set_size;
+    pub mod prefer_single_call;
     pub mod prefer_spread;
     pub mod prefer_string_raw;
     pub mod prefer_string_replace_all;
@@ -875,6 +878,7 @@ pub(crate) mod vue {
     pub mod prefer_import_from_vue;
     pub mod prop_name_casing;
     pub mod require_default_export;
+    pub mod require_default_prop;
     pub mod require_direct_export;
     pub mod require_prop_type_constructor;
     pub mod require_prop_types;

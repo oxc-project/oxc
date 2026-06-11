@@ -79,10 +79,10 @@ fn main() -> Result<(), String> {
     }
 
     // Report parsing results
-    if ret.errors.is_empty() {
+    if ret.diagnostics.is_empty() {
         println!("Parsed Successfully.");
     } else {
-        for error in ret.errors {
+        for error in ret.diagnostics {
             let error = error.with_source_code(source_text.clone());
             println!("{error:?}");
         }

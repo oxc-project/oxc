@@ -1,0 +1,35 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[
+  Infinity, -Infinity, NaN, -NaN, undefined,
+  { Infinity: NaN, NaN: -Infinity, undefined: undefined }
+]
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+[
+  Infinity,
+  -Infinity,
+  NaN,
+  -NaN,
+  undefined,
+  { "Infinity": NaN, "NaN": -Infinity, "undefined": undefined }
+]
+
+-------------------
+{ printWidth: 100 }
+-------------------
+[
+  Infinity,
+  -Infinity,
+  NaN,
+  -NaN,
+  undefined,
+  { "Infinity": NaN, "NaN": -Infinity, "undefined": undefined }
+]
+
+===================== End =====================

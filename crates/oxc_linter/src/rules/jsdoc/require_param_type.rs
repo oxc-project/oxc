@@ -237,7 +237,9 @@ fn test() {
 
 			          }
 			      ",
-            Some(serde_json::json!([ { "setDefaultDestructuredRootType": true } ])),
+            // TODO: support configurations for this rule
+            // Some(serde_json::json!([ { "setDefaultDestructuredRootType": true } ])),
+            None,
             None,
         ),
         (
@@ -251,7 +253,9 @@ fn test() {
 
 			          }
 			      ",
-            Some(serde_json::json!([ { "setDefaultDestructuredRootType": false } ])),
+            // TODO: support configurations for this rule
+            // Some(serde_json::json!([ { "setDefaultDestructuredRootType": false } ])),
+            None,
             None,
         ),
     ];

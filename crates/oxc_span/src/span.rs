@@ -563,7 +563,7 @@ impl From<Range<u32>> for Span {
 
 impl From<Span> for SourceSpan {
     fn from(val: Span) -> Self {
-        Self::new(SourceOffset::from(val.start as usize), val.size() as usize)
+        Self::new(SourceOffset::from(val.start), val.size())
     }
 }
 

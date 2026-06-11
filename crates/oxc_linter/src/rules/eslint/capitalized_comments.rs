@@ -67,31 +67,6 @@ impl std::ops::Deref for CapitalizedComments {
     }
 }
 
-#[cfg(feature = "ruledocs")]
-impl CapitalizedComments {
-    #[expect(clippy::unnecessary_wraps, unused)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        #[derive(Deserialize, JsonSchema)]
-        #[serde(rename_all = "camelCase", untagged, deny_unknown_fields)]
-        enum OptionsJsonDoc {
-            Base(CommentConfigJson),
-            Difference { line: Option<CommentConfigJson>, block: Option<CommentConfigJson> },
-        }
-
-        /// Configuration for the capitalized-comments rule.
-        ///
-        /// The first element specifies whether comments should `"always"` or `"never"`
-        /// begin with a capital letter. The second element is an optional object
-        /// containing additional options.
-        #[derive(JsonSchema, Deserialize)]
-        struct CapitalizedCommentsOptionsDocs(AlwaysNever, Option<OptionsJsonDoc>);
-
-        Some(r#gen.subschema_for::<CapitalizedCommentsOptionsDocs>())
-    }
-}
-
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[expect(clippy::struct_field_names)]
@@ -122,6 +97,14 @@ impl CommentConfigJson {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", untagged, deny_unknown_fields)]
+#[expect(unused)] // Only for schemars docs, not used in actual config parsing
+enum OptionsJsonEnum {
+    Base(CommentConfigJson),
+    Difference { line: Option<CommentConfigJson>, block: Option<CommentConfigJson> },
+}
+
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 struct OptionsJson {
@@ -132,6 +115,15 @@ struct OptionsJson {
     /// Configuration options specific to block comments.
     block: Option<CommentConfigJson>,
 }
+
+/// Configuration for the capitalized-comments rule.
+///
+/// The first element specifies whether comments should `"always"` or `"never"`
+/// begin with a capital letter. The second element is an optional object
+/// containing additional options.
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
+#[expect(dead_code)]
+struct CapitalizedCommentsOptions(AlwaysNever, Option<OptionsJsonEnum>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -161,6 +153,7 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
+    config = CapitalizedCommentsOptions,
     version = "1.34.0",
 );
 

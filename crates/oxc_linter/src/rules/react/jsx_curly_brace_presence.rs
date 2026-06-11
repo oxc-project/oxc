@@ -461,6 +461,10 @@ impl JsxCurlyBracePresence {
         parent_is_attribute: bool,
     ) {
         let Some(inner) = container.expression.as_expression() else { return };
+        if ctx.has_comments_between(container.span) {
+            return;
+        }
+
         let allowed = if parent_is_attribute { self.props } else { self.children };
         match inner {
             Expression::JSXFragment(_)
@@ -1072,6 +1076,19 @@ fn test() {
         ("<App>{`${label}`}</App>", Some(json!(["never"]))),
         (r#"<div>{`Nobody's "here"`}</div>"#, None),
         (r#"<Foo bar={`a "x" 'y'`} />;"#, Some(json!(["never"]))),
+        ("<App>{<Component>{/* keep */}</Component>}</App>", None),
+        (r"<Component name={/* This is a comment */ 'test'} />", None),
+        (
+            r"
+                    <ComponentA>
+                        {
+                            // This is another comment
+                            <ComponentB />
+                        }
+                    </ComponentA>;
+                  ",
+            None,
+        ),
     ];
 
     let fail = vec![

@@ -323,14 +323,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.at(Kind::Extends) {
             return None;
         }
+        // When conditional types are already disallowed by the enclosing context — the normal case,
+        // since `infer` lives in a conditional's `extends` clause which is parsed with
+        // `DisallowConditionalTypes` — a trailing `?` cannot reinterpret `extends` as a conditional.
+        // The constraint is then unambiguous, so parse it without a checkpoint/rewind.
+        if self.ctx.has_disallow_conditional_types() {
+            self.bump_any();
+            return Some(self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type));
+        }
         let checkpoint = self.checkpoint();
         self.bump_any();
         let constraint = self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
-        if self.ctx.has_disallow_conditional_types() || !self.at(Kind::Question) {
-            Some(constraint)
-        } else {
+        if self.at(Kind::Question) {
             self.rewind(checkpoint);
             None
+        } else {
+            Some(constraint)
         }
     }
 
@@ -879,6 +887,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        // A type-argument list can only open with `<`, or `<<` for nested generics like
+        // `f<<T>() => U>()`. This mirrors TypeScript's `reScanLessThanToken`, which re-scans only
+        // `<`/`<<`. `<=`/`<<=` can never open one — splitting off the leading `<` leaves a `=`, and
+        // no type starts with `=` — so although `re_lex_ts_l_angle` would accept them (it is shared
+        // with type-context callers), speculating here can only fail and rewind to `None`. Bail
+        // before the checkpoint for any non-`<`-opening token (the common `a?.(`, `a?.b` paths),
+        // avoiding a checkpoint/rewind round-trip that returns `None` anyway.
+        if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
+            return None;
+        }
         let checkpoint = self.checkpoint();
         let span = self.start_span();
         if !self.re_lex_ts_l_angle() {

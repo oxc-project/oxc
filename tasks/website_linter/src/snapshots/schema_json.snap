@@ -289,6 +289,12 @@ expression: json
       },
       "additionalProperties": false
     },
+    "AllKeyword": {
+      "type": "string",
+      "enum": [
+        "all"
+      ]
+    },
     "AllowKind": {
       "description": "Kinds of functions that can be allowed to be empty.",
       "oneOf": [
@@ -681,7 +687,7 @@ expression: json
       },
       "additionalProperties": false
     },
-    "CapitalizedCommentsOptionsDocs": {
+    "CapitalizedCommentsOptions": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
       "type": "array",
       "items": [
@@ -689,7 +695,7 @@ expression: json
           "$ref": "#/definitions/AlwaysNever"
         },
         {
-          "$ref": "#/definitions/OptionsJsonDoc"
+          "$ref": "#/definitions/OptionsJsonEnum"
         }
       ],
       "maxItems": 2,
@@ -709,6 +715,26 @@ expression: json
         "camelCase",
         "snake_case"
       ]
+    },
+    "CatchErrorNameConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "description": "A list of patterns to ignore when checking `catch` variable names. The pattern\ncan be a string or regular expression.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of patterns to ignore when checking `catch` variable names. The pattern\ncan be a string or regular expression."
+        },
+        "name": {
+          "description": "The name to use for error variables in `catch` blocks. You can customize it\nto something other than `'error'` (e.g., `'exception'`).",
+          "default": "error",
+          "type": "string",
+          "markdownDescription": "The name to use for error variables in `catch` blocks. You can customize it\nto something other than `'error'` (e.g., `'exception'`)."
+        }
+      },
+      "additionalProperties": false
     },
     "CaughtErrorsJson": {
       "oneOf": [
@@ -898,7 +924,7 @@ expression: json
           "description": "Maximum amount of cyclomatic complexity",
           "default": 20,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum amount of cyclomatic complexity"
         },
@@ -1224,6 +1250,50 @@ expression: json
       },
       "additionalProperties": false
     },
+    "DefinePropsDestructuring": {
+      "type": "object",
+      "properties": {
+        "destructure": {
+          "description": "Require or prohibit destructuring.",
+          "default": "only-when-assigned",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Destructure"
+            }
+          ],
+          "markdownDescription": "Require or prohibit destructuring."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Destructure": {
+      "oneOf": [
+        {
+          "description": "Requires destructuring when `defineProps` is assigned to a variable and warns against using `withDefaults` with destructuring",
+          "type": "string",
+          "enum": [
+            "only-when-assigned"
+          ],
+          "markdownDescription": "Requires destructuring when `defineProps` is assigned to a variable and warns against using `withDefaults` with destructuring"
+        },
+        {
+          "description": "Requires destructuring when using `defineProps` and warns against using `withDefaults` with destructuring",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Requires destructuring when using `defineProps` and warns against using `withDefaults` with destructuring"
+        },
+        {
+          "description": "Requires using a variable to store props and prohibits destructuring",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Requires using a variable to store props and prohibits destructuring"
+        }
+      ]
+    },
     "Destructuring": {
       "oneOf": [
         {
@@ -1400,7 +1470,7 @@ expression: json
                   "$ref": "#/definitions/AlwaysNever"
                 },
                 {
-                  "$ref": "#/definitions/OptionsJsonDoc"
+                  "$ref": "#/definitions/OptionsJsonEnum"
                 }
               ],
               "maxItems": 3,
@@ -2109,7 +2179,24 @@ expression: json
           ]
         },
         "jest/max-nested-describe": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MaxNestedDescribeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-alias-methods": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -2127,7 +2214,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/no-deprecated-functions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoDeprecatedFunctionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-disabled-tests": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -2145,7 +2249,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/no-hooks": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoHooksConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-identical-title": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -2157,19 +2278,87 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/no-large-snapshots": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoLargeSnapshotsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-mocks-import": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/no-restricted-jest-methods": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedTestMethodsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-restricted-matchers": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedMatchersConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-standalone-expect": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoStandaloneExpectConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/no-test-prefixes": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -2202,13 +2391,47 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/prefer-ending-with-an-expect": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferEndingWithAnExpectConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/prefer-equality-matcher": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/prefer-expect-assertions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferExpectAssertionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/prefer-expect-resolves": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -2252,7 +2475,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/prefer-snapshot-hint": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/SnapshotHintMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/prefer-spy-on": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -2302,13 +2542,47 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/require-top-level-describe": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireTopLevelDescribeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/valid-describe-callback": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/valid-expect": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ValidExpectConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jest/valid-expect-in-promise": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -4031,7 +4305,24 @@ expression: json
           ]
         },
         "no-use-before-define": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUseBeforeDefineConfigJson"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "no-useless-assignment": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -4307,7 +4598,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "oxc/no-async-endpoint-handlers": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoAsyncEndpointHandlersConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "oxc/no-barrel-file": {
           "anyOf": [
@@ -4558,7 +4866,24 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "promise/no-callback-in-promise": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoCallbackInPromiseConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "promise/no-multiple-resolved": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -4685,13 +5010,64 @@ expression: json
           ]
         },
         "react-perf/jsx-no-jsx-as-prop": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactPerfConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react-perf/jsx-no-new-array-as-prop": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactPerfConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react-perf/jsx-no-new-function-as-prop": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactPerfConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react-perf/jsx-no-new-object-as-prop": {
           "$ref": "#/definitions/DummyRule"
@@ -4946,6 +5322,26 @@ expression: json
         "react/jsx-no-duplicate-props": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "react/jsx-no-literals": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxNoLiteralsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
+        },
         "react/jsx-no-script-url": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -4999,7 +5395,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/jsx-props-no-spreading": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxPropsNoSpreadingConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/no-array-index-key": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -5072,7 +5485,7 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/no-object-type-as-default-prop": {
-          "$ref": "#/definitions/DummyRule"
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/no-react-children": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -6464,7 +6877,24 @@ expression: json
           ]
         },
         "unicorn/catch-error-name": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CatchErrorNameConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/consistent-assert": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -6514,7 +6944,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/explicit-length-check": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExplicitLengthCheck"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/filename-case": {
           "$ref": "#/definitions/DummyRule"
@@ -6628,7 +7075,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/no-instanceof-builtins": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoInstanceofBuiltinsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/no-invalid-fetch-options": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -6863,6 +7327,26 @@ expression: json
         "unicorn/prefer-event-target": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-export-from": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferExportFrom"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
+        },
         "unicorn/prefer-global-this": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -6923,7 +7407,24 @@ expression: json
           ]
         },
         "unicorn/prefer-object-from-entries": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferObjectFromEntriesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/prefer-optional-catch-binding": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -6948,6 +7449,26 @@ expression: json
         },
         "unicorn/prefer-set-size": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "unicorn/prefer-single-call": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferSingleCallConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/prefer-spread": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7210,7 +7731,24 @@ expression: json
           ]
         },
         "vitest/max-nested-describe": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MaxNestedDescribeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-alias-methods": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7237,7 +7775,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/no-hooks": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoHooksConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-identical-title": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7252,19 +7807,87 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/no-large-snapshots": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoLargeSnapshotsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-mocks-import": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/no-restricted-matchers": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedMatchersConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-restricted-vi-methods": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedTestMethodsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-standalone-expect": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoStandaloneExpectConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/no-test-prefixes": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7306,7 +7929,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/prefer-expect-assertions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferExpectAssertionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/prefer-expect-resolves": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7336,7 +7976,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/prefer-snapshot-hint": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/SnapshotHintMode"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/prefer-spy-on": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7424,13 +8081,47 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/require-top-level-describe": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireTopLevelDescribeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/valid-describe-callback": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/valid-expect": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ValidExpectConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vitest/valid-expect-in-promise": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7502,7 +8193,24 @@ expression: json
           ]
         },
         "vue/define-props-destructuring": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/DefinePropsDestructuring"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "vue/max-props": {
           "anyOf": [
@@ -7704,6 +8412,9 @@ expression: json
         "vue/require-default-export": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/require-default-prop": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vue/require-direct-export": {
           "anyOf": [
             {
@@ -7802,6 +8513,62 @@ expression: json
         "$ref": "#/definitions/DummyRule"
       },
       "markdownDescription": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
+    },
+    "ElementOverrideOptions": {
+      "description": "One entry in `elementOverrides`: the base options plus override-only fields.",
+      "type": "object",
+      "properties": {
+        "allowElement": {
+          "description": "(default: false) - When true the rule will allow the specified element to have string literals as children, wrapped or unwrapped without warning.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - When true the rule will allow the specified element to have string literals as children, wrapped or unwrapped without warning."
+        },
+        "allowedStrings": {
+          "description": "An array of unique string values that would otherwise warn, but will be ignored.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of unique string values that would otherwise warn, but will be ignored."
+        },
+        "applyToNestedElements": {
+          "description": "(default: true) - When false the rule will not apply the current options set to nested elements. This is useful when you want to apply the rule to a specific element, but not to its children.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "(default: true) - When false the rule will not apply the current options set to nested elements. This is useful when you want to apply the rule to a specific element, but not to its children."
+        },
+        "ignoreProps": {
+          "description": "(default: false) - When true the rule ignores literals used in props, wrapped or unwrapped.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - When true the rule ignores literals used in props, wrapped or unwrapped."
+        },
+        "noAttributeStrings": {
+          "description": "(default: false) - Enforces no string literals used in attributes when set to true.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - Enforces no string literals used in attributes when set to true."
+        },
+        "noStrings": {
+          "description": "(default: false) - Enforces no string literals used as children, wrapped or unwrapped.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - Enforces no string literals used as children, wrapped or unwrapped."
+        },
+        "restrictedAttributes": {
+          "description": "An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "One entry in `elementOverrides`: the base options plus override-only fields."
     },
     "EmptyTagsConfig": {
       "type": "object",
@@ -7946,6 +8713,22 @@ expression: json
           },
           "uniqueItems": true,
           "markdownDescription": "Array of function names that are exempt from requiring return type annotations."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExplicitLengthCheck": {
+      "type": "object",
+      "properties": {
+        "non-zero": {
+          "description": "Configuration option to specify how non-zero length checks should be enforced.",
+          "default": "greater-than",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NonZero"
+            }
+          ],
+          "markdownDescription": "Configuration option to specify how non-zero length checks should be enforced."
         }
       },
       "additionalProperties": false
@@ -8642,6 +9425,13 @@ expression: json
         }
       ]
     },
+    "IgnoreEnforceOption": {
+      "type": "string",
+      "enum": [
+        "ignore",
+        "enforce"
+      ]
+    },
     "IgnorePattern_for_String": {
       "anyOf": [
         {
@@ -8800,6 +9590,18 @@ expression: json
       },
       "markdownDescription": "Configure JSX A11y plugin rules.\n\nSee\n[eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s\nconfiguration for a full reference."
     },
+    "JestConfigJson": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "description": "The version of Jest being used.",
+          "default": "29",
+          "type": "string",
+          "markdownDescription": "The version of Jest being used."
+        }
+      },
+      "additionalProperties": false
+    },
     "JestFnType": {
       "type": "string",
       "enum": [
@@ -8916,12 +9718,64 @@ expression: json
           "description": "The maximum allowed depth of nested JSX elements and fragments.",
           "default": 2,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum allowed depth of nested JSX elements and fragments."
         }
       },
       "additionalProperties": false
+    },
+    "JsxNoLiteralsConfig": {
+      "description": "The options shared between the top-level config and each `elementOverrides` entry.",
+      "type": "object",
+      "properties": {
+        "allowedStrings": {
+          "description": "An array of unique string values that would otherwise warn, but will be ignored.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of unique string values that would otherwise warn, but will be ignored."
+        },
+        "elementOverrides": {
+          "description": "An object where the keys are the element names and the values are objects with the same options as above. This allows you to specify different options for different elements.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ElementOverrideOptions"
+          },
+          "markdownDescription": "An object where the keys are the element names and the values are objects with the same options as above. This allows you to specify different options for different elements."
+        },
+        "ignoreProps": {
+          "description": "(default: false) - When true the rule ignores literals used in props, wrapped or unwrapped.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - When true the rule ignores literals used in props, wrapped or unwrapped."
+        },
+        "noAttributeStrings": {
+          "description": "(default: false) - Enforces no string literals used in attributes when set to true.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - Enforces no string literals used in attributes when set to true."
+        },
+        "noStrings": {
+          "description": "(default: false) - Enforces no string literals used as children, wrapped or unwrapped.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "(default: false) - Enforces no string literals used as children, wrapped or unwrapped."
+        },
+        "restrictedAttributes": {
+          "description": "An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "The options shared between the top-level config and each `elementOverrides` entry."
     },
     "JsxNoUselessFragment": {
       "type": "object",
@@ -8964,6 +9818,51 @@ expression: json
             "type": "string"
           },
           "markdownDescription": "List of component names to ignore."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxPropsNoSpreadingConfig": {
+      "type": "object",
+      "properties": {
+        "custom": {
+          "description": "`custom` set to `ignore` will ignore all custom jsx tags like `App`, `MyCustomComponent` etc. Default is set to `enforce`.",
+          "default": "enforce",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnoreEnforceOption"
+            }
+          ],
+          "markdownDescription": "`custom` set to `ignore` will ignore all custom jsx tags like `App`, `MyCustomComponent` etc. Default is set to `enforce`."
+        },
+        "exceptions": {
+          "description": "Exceptions flip the enforcement behavior for specific components.\nFor example:\n- If `html` is set to `ignore`, an exception for `div` will enforce the rule on `<div>` elements.\n- If `custom` is set to `enforce`, an exception for `Foo` will ignore the rule on `<Foo>` components.\n\nThis allows you to override the general setting for individual components.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Exceptions flip the enforcement behavior for specific components.\nFor example:\n- If `html` is set to `ignore`, an exception for `div` will enforce the rule on `<div>` elements.\n- If `custom` is set to `enforce`, an exception for `Foo` will ignore the rule on `<Foo>` components.\n\nThis allows you to override the general setting for individual components."
+        },
+        "explicitSpread": {
+          "description": "`explicitSpread` set to `ignore` will ignore spread operators that are explicitly listing all object properties within that spread. Default is set to `enforce`.",
+          "default": "enforce",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnoreEnforceOption"
+            }
+          ],
+          "markdownDescription": "`explicitSpread` set to `ignore` will ignore spread operators that are explicitly listing all object properties within that spread. Default is set to `enforce`."
+        },
+        "html": {
+          "description": "`html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`.",
+          "default": "enforce",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IgnoreEnforceOption"
+            }
+          ],
+          "markdownDescription": "`html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`."
         }
       },
       "additionalProperties": false
@@ -9079,7 +9978,7 @@ expression: json
           "description": "The maximum number of classes allowed per file.",
           "default": 1,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum number of classes allowed per file."
         }
@@ -9099,7 +9998,7 @@ expression: json
           "description": "Maximum number of dependencies allowed in a file.",
           "default": 10,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of dependencies allowed in a file."
         }
@@ -9110,7 +10009,7 @@ expression: json
       "anyOf": [
         {
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0
         },
         {
@@ -9125,7 +10024,7 @@ expression: json
           "description": "The `max` enforces a maximum depth that blocks can be nested",
           "default": 4,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The `max` enforces a maximum depth that blocks can be nested"
         }
@@ -9139,7 +10038,7 @@ expression: json
           "description": "Maximum number of `expect()` assertion calls allowed within a single test.",
           "default": 5,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of `expect()` assertion calls allowed within a single test."
         }
@@ -9153,7 +10052,7 @@ expression: json
           "description": "Maximum number of lines allowed per file.",
           "default": 300,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of lines allowed per file."
         },
@@ -9185,7 +10084,7 @@ expression: json
           "description": "Maximum number of lines allowed in a function.",
           "default": 50,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of lines allowed in a function."
         },
@@ -9211,9 +10110,23 @@ expression: json
           "description": "The `max` enforces a maximum depth that callbacks can be nested.",
           "default": 10,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The `max` enforces a maximum depth that callbacks can be nested."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxNestedDescribeConfig": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "Maximum allowed depth of nested describe calls.",
+          "default": 5,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum allowed depth of nested describe calls."
         }
       },
       "additionalProperties": false
@@ -9240,7 +10153,7 @@ expression: json
           "description": "Maximum number of parameters allowed in function definitions.",
           "default": 3,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of parameters allowed in function definitions."
         }
@@ -9254,7 +10167,7 @@ expression: json
           "description": "The maximum number of props allowed in a Vue SFC.",
           "default": 1,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum number of props allowed in a Vue SFC."
         }
@@ -9274,7 +10187,7 @@ expression: json
           "description": "Maximum number of statements allowed per function.",
           "default": 10,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of statements allowed per function."
         }
@@ -9395,6 +10308,19 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "NativeAllowList": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AllKeyword"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
     },
     "NewCapConfig": {
       "type": "object",
@@ -9631,6 +10557,21 @@ expression: json
       },
       "additionalProperties": false
     },
+    "NoAsyncEndpointHandlersConfig": {
+      "type": "object",
+      "properties": {
+        "allowedNames": {
+          "description": "An array of names that are allowed to be async.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of names that are allowed to be async."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoAutofocus": {
       "type": "object",
       "properties": {
@@ -9650,7 +10591,7 @@ expression: json
           "description": "The maximum number of modules that can be re-exported via `export *`\nbefore the rule is triggered.",
           "default": 100,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum number of modules that can be re-exported via `export *`\nbefore the rule is triggered."
         }
@@ -9700,6 +10641,27 @@ expression: json
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true` the `int32Hint` option allows the use of bitwise OR in |0\npattern for type casting.\n\nFor example with `{ \"int32Hint\": true }` the following is permitted:\n\n```javascript\nconst b = a|0;\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoCallbackInPromiseConfig": {
+      "type": "object",
+      "properties": {
+        "exceptions": {
+          "description": "List of callback function names to allow within Promise `then` and `catch` methods.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of callback function names to allow within Promise `then` and `catch` methods."
+        },
+        "timeoutsErr": {
+          "description": "Boolean as to whether callbacks in timeout functions like `setTimeout` will err.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Boolean as to whether callbacks in timeout functions like `setTimeout` will err."
         }
       },
       "additionalProperties": false
@@ -9858,6 +10820,21 @@ expression: json
             "$ref": "#/definitions/TypeOrValueSpecifier"
           },
           "markdownDescription": "An array of type or value specifiers that are allowed to be used even if deprecated.\nUse this to allow specific deprecated APIs that you intentionally want to continue using."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoDeprecatedFunctionsConfig": {
+      "type": "object",
+      "properties": {
+        "jest": {
+          "description": "Jest configuration options.\nDeprecated config, it will be removed in future versions.\nUse please instead { \"settings\": { \"jest\": {\"version\": 29 } } } in `Oxlint config file`.\nBeware the value from the config have higher priority than the rule config.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JestConfigJson"
+            }
+          ],
+          "markdownDescription": "Jest configuration options.\nDeprecated config, it will be removed in future versions.\nUse please instead { \"settings\": { \"jest\": {\"version\": 29 } } } in `Oxlint config file`.\nBeware the value from the config have higher priority than the rule config."
         }
       },
       "additionalProperties": false
@@ -10174,6 +11151,21 @@ expression: json
       },
       "additionalProperties": false
     },
+    "NoHooksConfig": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "An array of hook function names that are permitted for use.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of hook function names that are permitted for use."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoImplicitCoercionConfig": {
       "type": "object",
       "properties": {
@@ -10305,6 +11297,66 @@ expression: json
       },
       "additionalProperties": false
     },
+    "NoInstanceofBuiltinsConfig": {
+      "type": "object",
+      "properties": {
+        "exclude": {
+          "description": "Constructor names to exclude from checking.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Constructor names to exclude from checking."
+        },
+        "include": {
+          "description": "Additional constructor names to check beyond the default set.\nUse this to extend the rule with additional constructors.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional constructor names to check beyond the default set.\nUse this to extend the rule with additional constructors."
+        },
+        "strategy": {
+          "description": "Controls which built-in constructors are checked.",
+          "default": "loose",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NoInstanceofBuiltinsStrategy"
+            }
+          ],
+          "markdownDescription": "Controls which built-in constructors are checked."
+        },
+        "useErrorIsError": {
+          "description": "When `true`, checks `instanceof Error` and suggests using `Error.isError()` instead.\nRequires [the `Error.isError()` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/isError)\nto be available.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When `true`, checks `instanceof Error` and suggests using `Error.isError()` instead.\nRequires [the `Error.isError()` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/isError)\nto be available."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoInstanceofBuiltinsStrategy": {
+      "oneOf": [
+        {
+          "description": "Additionally checks Error types, collections, typed arrays, and other built-in constructors.",
+          "type": "string",
+          "enum": [
+            "strict"
+          ],
+          "markdownDescription": "Additionally checks Error types, collections, typed arrays, and other built-in constructors."
+        },
+        {
+          "description": "Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers.",
+          "type": "string",
+          "enum": [
+            "loose"
+          ],
+          "markdownDescription": "Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers."
+        }
+      ]
+    },
     "NoInvalidRegexpConfig": {
       "type": "object",
       "properties": {
@@ -10372,6 +11424,40 @@ expression: json
           "default": false,
           "type": "boolean",
           "markdownDescription": "If set to `true`, this rule ignores labels which are sticking to switch statements.\nExamples of **correct** code with this option set to `true`:\n```js\nlabel:\nswitch (a) {\ncase 0:\nbreak label;\n}\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoLargeSnapshotsConfig": {
+      "type": "object",
+      "properties": {
+        "allowedSnapshots": {
+          "description": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions.",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "markdownDescription": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions."
+        },
+        "inlineMaxSize": {
+          "description": "Maximum number of lines allowed for inline snapshots.",
+          "default": 50,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of lines allowed for inline snapshots."
+        },
+        "maxSize": {
+          "description": "Maximum number of lines allowed for external snapshot files.",
+          "default": 50,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of lines allowed for external snapshot files."
         }
       },
       "additionalProperties": false
@@ -10855,6 +11941,32 @@ expression: json
       },
       "additionalProperties": false
     },
+    "NoRestrictedMatchersConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "NoRestrictedTestMethodsConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
     "NoReturnAssignMode": {
       "oneOf": [
         {
@@ -10968,6 +12080,21 @@ expression: json
           "default": true,
           "type": "boolean",
           "markdownDescription": "If true, also report shadowing of `globalThis`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoStandaloneExpectConfig": {
+      "type": "object",
+      "properties": {
+        "additionalTestBlockFunctions": {
+          "description": "An array of function names that should also be treated as test blocks.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of function names that should also be treated as test blocks."
         }
       },
       "additionalProperties": false
@@ -11483,6 +12610,64 @@ expression: json
       },
       "additionalProperties": false
     },
+    "NoUseBeforeDefineConfig": {
+      "type": "object",
+      "properties": {
+        "allowNamedExports": {
+          "description": "Allow named exports that appear before declaration.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Allow named exports that appear before declaration."
+        },
+        "classes": {
+          "description": "Check class declarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Check class declarations."
+        },
+        "enums": {
+          "description": "Check enum declarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Check enum declarations."
+        },
+        "functions": {
+          "description": "Check function declarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Check function declarations."
+        },
+        "ignoreTypeReferences": {
+          "description": "Ignore usages that are type-only references.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Ignore usages that are type-only references."
+        },
+        "typedefs": {
+          "description": "Check type aliases, interfaces, and type parameters.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Check type aliases, interfaces, and type parameters."
+        },
+        "variables": {
+          "description": "Check variable declarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Check variable declarations."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoUseBeforeDefineConfigJson": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Nofunc"
+        },
+        {
+          "$ref": "#/definitions/NoUseBeforeDefineConfig"
+        }
+      ]
+    },
     "NoUselessComputedKey": {
       "type": "object",
       "properties": {
@@ -11616,6 +12801,32 @@ expression: json
             "disallow-in-func"
           ],
           "markdownDescription": "Makes this rule more strict by disallowing calls to `this.setState`` even within functions."
+        }
+      ]
+    },
+    "Nofunc": {
+      "type": "string",
+      "enum": [
+        "nofunc"
+      ]
+    },
+    "NonZero": {
+      "oneOf": [
+        {
+          "description": "Enforces non-zero to be checked with `foo.length > 0`.",
+          "type": "string",
+          "enum": [
+            "greater-than"
+          ],
+          "markdownDescription": "Enforces non-zero to be checked with `foo.length > 0`."
+        },
+        {
+          "description": "Enforces non-zero to be checked with `foo.length !== 0`.",
+          "type": "string",
+          "enum": [
+            "not-equal"
+          ],
+          "markdownDescription": "Enforces non-zero to be checked with `foo.length !== 0`."
         }
       ]
     },
@@ -11777,7 +12988,7 @@ expression: json
       },
       "additionalProperties": false
     },
-    "OptionsJsonDoc": {
+    "OptionsJsonEnum": {
       "anyOf": [
         {
           "$ref": "#/definitions/CommentConfigJson"
@@ -12213,6 +13424,62 @@ expression: json
       },
       "additionalProperties": false
     },
+    "PreferEndingWithAnExpectConfig": {
+      "type": "object",
+      "properties": {
+        "additionalTestBlockFunctions": {
+          "description": "An array of function names that should also be treated as test blocks.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of function names that should also be treated as test blocks."
+        },
+        "assertFunctionNames": {
+          "description": "A list of function names that should be treated as assertion functions.",
+          "default": [
+            "expect"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of function names that should be treated as assertion functions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferExpectAssertionsConfig": {
+      "type": "object",
+      "properties": {
+        "onlyFunctionsWithAsyncKeyword": {
+          "default": false,
+          "type": "boolean"
+        },
+        "onlyFunctionsWithExpectInCallback": {
+          "default": false,
+          "type": "boolean"
+        },
+        "onlyFunctionsWithExpectInLoop": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferExportFrom": {
+      "type": "object",
+      "properties": {
+        "checkUsedVariables": {
+          "description": "When false, if any import binding is used somewhere other than a re-export, all variables in the import declaration are ignored.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "When false, if any import binding is used somewhere other than a re-export, all variables in the import declaration are ignored."
+        }
+      },
+      "additionalProperties": false
+    },
     "PreferFunctionComponent": {
       "type": "object",
       "properties": {
@@ -12279,6 +13546,24 @@ expression: json
           "default": true,
           "type": "boolean",
           "markdownDescription": "If set to `true`, checks for usage of `NaN` as a global variable."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferObjectFromEntriesConfig": {
+      "type": "object",
+      "properties": {
+        "functions": {
+          "description": "Additional functions to treat as equivalents to `Object.fromEntries`.",
+          "default": [
+            "_.fromPairs",
+            "lodash.fromPairs"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional functions to treat as equivalents to `Object.fromEntries`."
         }
       },
       "additionalProperties": false
@@ -12442,6 +13727,21 @@ expression: json
       },
       "additionalProperties": false
     },
+    "PreferSingleCallConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "description": "Methods to ignore.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Methods to ignore."
+        }
+      },
+      "additionalProperties": false
+    },
     "PreferStructuredCloneConfig": {
       "type": "object",
       "properties": {
@@ -12585,6 +13885,21 @@ expression: json
           "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
+    },
+    "ReactPerfConfig": {
+      "type": "object",
+      "properties": {
+        "nativeAllowList": {
+          "description": "Controls whether native elements (lowercase-first-letter tags such as `div`)\nare ignored by the rule. Set to `\"all\"` to ignore every attribute on native\nelements, or to an array of attribute names to ignore only those attributes\non native elements.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NativeAllowList"
+            }
+          ],
+          "markdownDescription": "Controls whether native elements (lowercase-first-letter tags such as `div`)\nare ignored by the rule. Set to `\"all\"` to ignore every attribute on native\nelements, or to an array of attribute names to ignore only those attributes\non native elements."
+        }
+      },
+      "additionalProperties": false
     },
     "ReactPluginSettings": {
       "description": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)",
@@ -12742,6 +14057,20 @@ expression: json
           "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to require a `@returns` tag for async functions."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireTopLevelDescribeConfig": {
+      "type": "object",
+      "properties": {
+        "maxNumberOfTopLevelDescribes": {
+          "description": "The maximum number of top-level `describe` blocks allowed in a test file.",
+          "default": 4294967295,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The maximum number of top-level `describe` blocks allowed in a test file."
         }
       },
       "additionalProperties": false
@@ -13036,6 +14365,26 @@ expression: json
         "never"
       ]
     },
+    "SnapshotHintMode": {
+      "oneOf": [
+        {
+          "description": "Require a hint to always be provided when using external snapshot matchers.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Require a hint to always be provided when using external snapshot matchers."
+        },
+        {
+          "description": "Require a hint to be provided when there are multiple external snapshot matchers within the scope (meaning it includes nested calls).",
+          "type": "string",
+          "enum": [
+            "multi"
+          ],
+          "markdownDescription": "Require a hint to be provided when there are multiple external snapshot matchers within the scope (meaning it includes nested calls)."
+        }
+      ]
+    },
     "SortImportsOptions": {
       "type": "object",
       "properties": {
@@ -13112,7 +14461,7 @@ expression: json
           "description": "Minimum number of properties required in an object before sorting is enforced.",
           "default": 2,
           "type": "integer",
-          "format": "uint",
+          "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Minimum number of properties required in an object before sorting is enforced."
         },
@@ -13456,6 +14805,46 @@ expression: json
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to disallow NaN in switch cases and discriminants"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ValidExpectConfig": {
+      "type": "object",
+      "properties": {
+        "alwaysAwait": {
+          "description": "When `true`, async assertions must be awaited in all contexts (not just return statements).",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When `true`, async assertions must be awaited in all contexts (not just return statements)."
+        },
+        "asyncMatchers": {
+          "description": "List of matchers that are considered async and therefore require awaiting (e.g. `toResolve`, `toReject`).",
+          "default": [
+            "toResolve",
+            "toReject"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of matchers that are considered async and therefore require awaiting (e.g. `toResolve`, `toReject`)."
+        },
+        "maxArgs": {
+          "description": "Maximum number of arguments `expect` should be called with.",
+          "default": 1,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum number of arguments `expect` should be called with."
+        },
+        "minArgs": {
+          "description": "Minimum number of arguments `expect` should be called with.",
+          "default": 1,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "Minimum number of arguments `expect` should be called with."
         }
       },
       "additionalProperties": false

@@ -94,7 +94,7 @@ pub struct ManglerReturn {
 /// let allocator = Allocator::default();
 /// let source = "const result = 1 + 2;";
 /// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
-/// assert!(parsed.errors.is_empty());
+/// assert!(parsed.diagnostics.is_empty());
 ///
 /// let mangled_symbols = Mangler::new()
 ///     .with_options(MangleOptions { top_level: true, debug: true })
@@ -281,7 +281,11 @@ impl<'t> Mangler<'t> {
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
-        let mut semantic = SemanticBuilder::new().with_class_table(true).build(program).semantic;
+        let mut semantic = SemanticBuilder::new()
+            .with_build_nodes(true)
+            .with_class_table(true)
+            .build(program)
+            .semantic;
         let class_private_mappings = self.build_with_semantic(&mut semantic, program);
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }

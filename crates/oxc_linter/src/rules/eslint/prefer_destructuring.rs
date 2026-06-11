@@ -26,7 +26,7 @@ fn prefer_array_destructuring(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct Config {
     array: bool,
     object: bool,
@@ -39,7 +39,7 @@ impl Default for Config {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferDestructuring {
     /// Configuration for destructuring in variable declarations, configured for arrays and objects independently.
     #[serde(rename = "VariableDeclarator")]

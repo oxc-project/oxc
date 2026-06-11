@@ -1366,9 +1366,9 @@ mod test {
             message.error.code,
             OxcCode { scope: Some("typescript".into()), number: Some("some_rule".into()) }
         );
-        assert!(message.error.labels.as_ref().is_some());
-        assert_eq!(message.error.labels.as_ref().unwrap().len(), 1);
-        assert_eq!(message.error.labels.as_ref().unwrap()[0], LabeledSpan::new(None, 0, 10));
+        assert!(!message.error.labels.is_empty());
+        assert_eq!(message.error.labels.len(), 1);
+        assert_eq!(message.error.labels[0], LabeledSpan::new(None, 0, 10));
         assert_eq!(message.error.help, Some("Some help".into()));
         assert!(message.fixes.is_empty());
     }
@@ -1529,8 +1529,8 @@ mod test {
 
         let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
 
-        assert!(message.error.labels.is_some());
-        let labels = message.error.labels.as_ref().unwrap();
+        assert!(!message.error.labels.is_empty());
+        let labels = &message.error.labels;
         assert_eq!(labels.len(), 3);
         assert_eq!(labels[0], LabeledSpan::new(Some("Label 1".into()), 0, 5));
         assert_eq!(labels[1], LabeledSpan::new(Some("Label 2".into()), 5, 5));

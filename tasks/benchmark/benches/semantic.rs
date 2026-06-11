@@ -31,7 +31,7 @@ fn bench_semantic(criterion: &mut Criterion) {
                     // we don't want to include it in benchmark time.
                     let ret = SemanticBuilder::new_compiler().build(&program);
                     let ret = black_box(ret);
-                    ret.errors
+                    ret.diagnostics
                 });
             });
         });

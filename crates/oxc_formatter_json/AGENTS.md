@@ -2,7 +2,7 @@
 
 ## Overview
 
-Prettier compatible JSON/JSONC/JSON5 formatter (`oxfmt`'s Tier 1 backend), using the `oxc_formatter_core` APIs.
+Prettier compatible JSON/JSONC/JSON5/JSON.stringify formatter (`oxfmt`'s Tier 1 backend), using the `oxc_formatter_core` APIs.
 
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
@@ -48,8 +48,9 @@ Run `clippy` and resolve all warnings.
 
 ### Fixtures tests
 
-Snapshot tests driven by fixture files under `tests/fixtures/json/`.
+Snapshot tests driven by fixture files under `tests/fixtures/{json,jsonc,json5,json-stringify}/` (one directory per variant).
 `build.rs` auto-generates a test case from every `.{json,jsonc,json5}` file using the core `test_support` harness.
+Each directory's `options.json` sets the `variant` (and any per-case options); `json-stringify` fixtures use the `.json` extension.
 
 ```sh
 cargo test -p oxc_formatter_json
@@ -57,7 +58,7 @@ cargo test -p oxc_formatter_json
 cargo insta review -p oxc_formatter_json
 ```
 
-Add a case by dropping a new file into `tests/fixtures/json/`, the build script picks it up.
+Add a case by dropping a new file into the matching variant directory, the build script picks it up.
 
 ### Prettier conformance
 

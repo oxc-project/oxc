@@ -1,9 +1,9 @@
-commit: e5509e21
+commit: 7539c04d
 
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1635/2640 (61.93%)
+Negative Passed: 1638/2640 (62.05%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -217,8 +217,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/defaultValue
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/defaultValueInFunctionOverload1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/defaultValueInFunctionTypes.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/definiteAssignmentWithErrorStillStripped.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/deleteOperator1.ts
 
@@ -739,8 +737,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadsInD
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overshifts.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterDecoratorsEmitCrash.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_aliasWithRoot_realRootFile.ts
 
@@ -1987,8 +1983,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typ
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/propertyAccessOnTypeParameterWithConstraints4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/propertyAccessOnTypeParameterWithConstraints5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typesWithDuplicateTypeParameters.ts
 
@@ -5932,6 +5926,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ 
    ╰────
 
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[typescript/tests/cases/compiler/definiteAssignmentWithErrorStillStripped.ts:2:6]
+ 1 │ class C {
+ 2 │     p!;
+   ·      ─
+ 3 │ }
+   ╰────
+
   × Delete of an unqualified identifier in strict mode.
    ╭─[typescript/tests/cases/compiler/deleteOperatorInStrictMode.ts:3:8]
  2 │ var a;
@@ -8376,12 +8378,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ var v = <string>undefined;
    ╰────
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:2:9]
  1 │ 0 as number;
  2 │ var v = <string>undefined;
    ·         ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Expected `,` or `)` but found `:`
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeOfParameter.ts:1:13]
@@ -10332,6 +10335,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │     constructor(public names: string, public ages: number) {
    ╰────
 
+  × TS(2398): 'constructor' cannot be used as a parameter property name.
+   ╭─[typescript/tests/cases/compiler/parameterPropertyInConstructor3.ts:2:22]
+ 1 │ class Foo {
+ 2 │   constructor(public constructor: string) {}
+   ·                      ───────────
+ 3 │ }
+   ╰────
+
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/parameterPropertyOutsideConstructor.ts:2:9]
  1 │ class C {
@@ -10638,45 +10649,50 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Did you mean to write 'undefined | null | undefined'?
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:2]
  1 │ ~< <
    ·  ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash2.ts:1:2]
  1 │ ~<></> <
-   ·  ─────
+   ·  ─
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash3.ts:1:2]
  1 │ !< {:>
    ·  ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <number> x;
    ·             ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <> x;
    ·             ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx3.ts:2:13]
  1 │ const x = "oops";
  2 │ const y = + <1234> x;
    ·             ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx4.ts:5:14]
@@ -11627,7 +11643,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Remove this `?`. The default value is an empty array
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/restParamAsOptional.ts:2:16]
  1 │ function f(...x?) { }
  2 │ function f2(...x = []) { }
@@ -17471,10 +17487,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
 
   × TS(1255): A definite assignment assertion '!' is not permitted in this context.
-    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:12:5]
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:12:21]
  11 │ class BDBang extends A {
  12 │     declare property!: any; // ! is not allowed, this is an ambient declaration
-    ·     ───────────────────────
+    ·                     ─
  13 │ }
     ╰────
 
@@ -17823,19 +17839,51 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Only 'readonly' modifier is allowed here.
 
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:20:6]
+ 19 │ class C3 {
+ 20 │     a! = 1;
+    ·      ─
+ 21 │     b!: number = 1;
+    ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:21:6]
+ 20 │     a! = 1;
+ 21 │     b!: number = 1;
+    ·      ─
+ 22 │     static c!: number;
+    ╰────
+
   × TS(1255): A definite assignment assertion '!' is not permitted in this context.
-    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:29:5]
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:22:13]
+ 21 │     b!: number = 1;
+ 22 │     static c!: number;
+    ·             ─
+ 23 │     d!;
+    ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:23:6]
+ 22 │     static c!: number;
+ 23 │     d!;
+    ·      ─
+ 24 │ }
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:29:6]
  28 │ declare class C4 {
  29 │     a!: number;
-    ·     ───────────
+    ·      ─
  30 │ }
     ╰────
 
   × TS(1255): A definite assignment assertion '!' is not permitted in this context.
-    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:35:5]
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:35:15]
  34 │ abstract class C5 {
  35 │     abstract a!: number;
-    ·     ────────────────────
+    ·               ─
  36 │ }
     ╰────
 
@@ -17861,6 +17909,30 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  71 │     let c!: number = 1;
     ·          ─
  72 │ }
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:76:15]
+ 75 │ 
+ 76 │ declare let v1!: number;
+    ·               ─
+ 77 │ declare var v2!: number;
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:77:15]
+ 76 │ declare let v1!: number;
+ 77 │ declare var v2!: number;
+    ·               ─
+ 78 │ 
+    ╰────
+
+  × TS(1255): A definite assignment assertion '!' is not permitted in this context.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:80:7]
+ 79 │ declare namespace foo {
+ 80 │     var v!: number;
+    ·          ─
+ 81 │ }
     ╰────
 
   × Expected `,` or `}` but found `!`
@@ -18924,7 +18996,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Remove this `?`. The default value is an empty array
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration4.ts:15:16]
  14 │ function a3(...b?) { }            // Error, can't be optional
  15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
@@ -26242,7 +26314,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ }
    ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList10.ts:2:11]
  1 │ class C {
  2 │    foo(...bar = 0) { }
@@ -30472,6 +30544,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  23 │ type T20 = typeof Array<>;  // Error
     ·                        ──
  24 │ type T21 = typeof Array<string>;  // new (...) => string[]
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts:49:14]
+ 48 │ 
+ 49 │ interface I1<const T> { x: T }  // Error
+    ·              ───────
+ 50 │ 
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts:55:9]
+ 54 │ 
+ 55 │ type T1<const T> = T;  // Error
+    ·         ───────
+ 56 │ 
     ╰────
 
   × TS(1273): 'public' modifier cannot be used on a type parameter.

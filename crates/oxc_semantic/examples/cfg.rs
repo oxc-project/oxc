@@ -60,9 +60,9 @@ fn main() -> std::io::Result<()> {
     let source_type = SourceType::from_path(test_file_path).unwrap();
     let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
 
-    if !parser_ret.errors.is_empty() {
+    if !parser_ret.diagnostics.is_empty() {
         let error_message: String = parser_ret
-            .errors
+            .diagnostics
             .into_iter()
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
@@ -75,11 +75,12 @@ fn main() -> std::io::Result<()> {
     std::fs::write(ast_file_path, format!("{:#?}", &program))?;
     println!("Wrote AST to: {}", &ast_file_name);
 
-    let semantic = SemanticBuilder::new_compiler().with_cfg(true).build(&program);
+    let semantic =
+        SemanticBuilder::new_compiler().with_build_nodes(true).with_cfg(true).build(&program);
 
-    if !semantic.errors.is_empty() {
+    if !semantic.diagnostics.is_empty() {
         let error_message: String = semantic
-            .errors
+            .diagnostics
             .into_iter()
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");

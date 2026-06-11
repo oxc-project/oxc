@@ -2054,11 +2054,12 @@ impl Gen for AssignmentTarget<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             match_simple_assignment_target!(Self) => {
-                self.to_simple_assignment_target().print_expr(
-                    p,
-                    Precedence::Comma,
-                    Context::empty(),
-                );
+                let precedence = match self {
+                    Self::TSAsExpression(_) | Self::TSSatisfiesExpression(_) => Precedence::Compare,
+                    Self::TSTypeAssertion(_) => Precedence::Prefix,
+                    _ => Precedence::Comma,
+                };
+                self.to_simple_assignment_target().print_expr(p, precedence, Context::empty());
             }
             match_assignment_target_pattern!(Self) => {
                 self.to_assignment_target_pattern().print(p, ctx);
@@ -4015,6 +4016,42 @@ impl Gen for TSModuleBlock<'_> {
     }
 }
 
+/// At the top of a type alias body, a bare `intrinsic` reference is parsed as the
+/// `intrinsic` keyword (e.g. `type T = intrinsic`), whereas `(intrinsic)` is a reference to a
+/// type named `intrinsic` (per TypeScript, the two differ). With `preserve_parens: false` the
+/// parser drops the `TSParenthesizedType` wrapper, so codegen must re-add parentheses around the
+/// whole alias body whenever its leftmost-printed type is a bare `intrinsic` reference. Otherwise
+/// the output re-parses as the keyword, or fails to parse before `|`, `&`, `extends`, or `[]`.
+///
+/// The leftmost type is followed through the wrapper nodes that print a child type first, so e.g.
+/// `(intrinsic)[]`, `(intrinsic)["x"]`, `(intrinsic) | T`, `(intrinsic) & T`, and
+/// `(intrinsic) extends T ? ...` are all handled.
+///
+/// See <https://github.com/oxc-project/oxc/issues/22216>.
+fn is_leftmost_intrinsic_reference(ty: &TSType) -> bool {
+    match ty {
+        TSType::TSTypeReference(reference) => {
+            reference.type_arguments.is_none()
+                && matches!(
+                    &reference.type_name,
+                    TSTypeName::IdentifierReference(ident) if ident.name == "intrinsic"
+                )
+        }
+        TSType::TSArrayType(array) => is_leftmost_intrinsic_reference(&array.element_type),
+        TSType::TSIndexedAccessType(access) => is_leftmost_intrinsic_reference(&access.object_type),
+        TSType::TSUnionType(union) => {
+            union.types.first().is_some_and(is_leftmost_intrinsic_reference)
+        }
+        TSType::TSIntersectionType(intersection) => {
+            intersection.types.first().is_some_and(is_leftmost_intrinsic_reference)
+        }
+        TSType::TSConditionalType(conditional) => {
+            is_leftmost_intrinsic_reference(&conditional.check_type)
+        }
+        _ => false,
+    }
+}
+
 impl Gen for TSTypeAliasDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.declare {
@@ -4029,7 +4066,12 @@ impl Gen for TSTypeAliasDeclaration<'_> {
         p.print_soft_space();
         p.print_ascii_byte(b'=');
         p.print_soft_space();
-        self.type_annotation.print(p, ctx);
+        // A leftmost bare `intrinsic` reference in the alias body must keep parentheses,
+        // otherwise it re-parses as the `intrinsic` keyword. See `is_leftmost_intrinsic_reference`.
+        let needs_parens = is_leftmost_intrinsic_reference(&self.type_annotation);
+        p.wrap(needs_parens, |p| {
+            self.type_annotation.print(p, ctx);
+        });
     }
 }
 

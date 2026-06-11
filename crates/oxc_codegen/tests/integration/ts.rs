@@ -440,4 +440,57 @@ fn type_codegen_with_preserve_parens_off() {
         "type T = ({ [K in keyof Obj]: Obj[K] } & {\n\ta: 1;\n}) & {\n\tb: 2;\n};\n",
         parse_options,
     );
+    // `type t = (intrinsic)` is a reference to a type named `intrinsic`, but `type t = intrinsic`
+    // is the `intrinsic` keyword, so the parentheses must be kept to preserve the meaning.
+    test_with_parse_options("type t = (intrinsic);", "type t = (intrinsic);\n", parse_options);
+    test_with_parse_options(
+        "type t = (intrinsic.foo);",
+        "type t = intrinsic.foo;\n",
+        parse_options,
+    );
+    // A leftmost bare `intrinsic` reference inside a compound type must also keep parentheses,
+    // otherwise the body re-parses as the `intrinsic` keyword and then fails before `[]`/`|`/`&`/`extends`.
+    test_with_parse_options("type t = (intrinsic)[];", "type t = (intrinsic[]);\n", parse_options);
+    test_with_parse_options(
+        "type t = (intrinsic)[\"x\"];",
+        "type t = (intrinsic[\"x\"]);\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type t = (intrinsic) | string;",
+        "type t = (intrinsic | string);\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type t = (intrinsic) & string;",
+        "type t = (intrinsic & string);\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type t = (intrinsic) extends string ? 1 : 2;",
+        "type t = (intrinsic extends string ? 1 : 2);\n",
+        parse_options,
+    );
+    // `intrinsic` is not the leftmost type here, so no parentheses are needed.
+    test_with_parse_options(
+        "type t = string | (intrinsic);",
+        "type t = string | intrinsic;\n",
+        parse_options,
+    );
+}
+
+#[test]
+fn ts_cast_assignment_target_is_parenthesized() {
+    test_same("(foo as Bar) = baz;\n");
+    test_same("(foo satisfies Bar) = baz;\n");
+    test_same("(foo.bar as Bar) = baz;\n");
+    test_same("(foo[key] as Bar) = baz;\n");
+    test_options_with_source_type(
+        "(<Bar>foo) = baz;\n",
+        "(<Bar>foo) = baz;\n",
+        SourceType::ts(),
+        default_options(),
+    );
+    test_idempotency("(foo as Bar) = baz");
+    test_idempotency("(foo satisfies Bar) = baz");
 }

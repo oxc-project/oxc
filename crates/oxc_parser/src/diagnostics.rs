@@ -327,6 +327,15 @@ pub fn declaration_single_statement(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn const_type_parameter(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1277",
+        "'const' modifier can only appear on a type parameter of a function, method or class",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn async_function_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Async functions can only be declared at the top level or inside a block")
         .with_label(span)
@@ -933,6 +942,11 @@ pub fn a_rest_element_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn a_rest_parameter_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A rest parameter cannot have an initializer.").with_label(span)
+}
+
+#[cold]
 pub fn import_requires_a_specifier(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("import() requires a specifier.").with_label(span)
 }
@@ -1069,6 +1083,11 @@ pub fn cannot_appear_on_a_parameter(
 pub fn parameter_property_cannot_be_binding_pattern(span: Span) -> OxcDiagnostic {
     ts_error("1187", "A parameter property may not be declared using a binding pattern.")
         .with_label(span)
+}
+
+#[cold]
+pub fn constructor_cannot_be_parameter_property_name(span: Span) -> OxcDiagnostic {
+    ts_error("2398", "'constructor' cannot be used as a parameter property name.").with_label(span)
 }
 
 pub fn cannot_appear_on_an_index_signature(

@@ -173,12 +173,8 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentEachFor {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<ConsistentEachForJson>>(value)
-                .unwrap_or_default()
-                .into_inner()
-                .into_consistent_each_for_config(),
-        )))
+        serde_json::from_value::<DefaultRuleConfig<ConsistentEachForJson>>(value)
+            .map(|config| Self(Box::new(config.into_inner().into_consistent_each_for_config())))
     }
 
     fn run_on_jest_node<'a, 'c>(

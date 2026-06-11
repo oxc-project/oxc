@@ -14,7 +14,7 @@ use oxc::{
     CompilerInterface,
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions, CodegenReturn},
-    diagnostics::OxcDiagnostic,
+    diagnostics::{Diagnostics, OxcDiagnostic},
     parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
@@ -30,7 +30,7 @@ use oxc::{
 use oxc_napi::{OxcError, get_source_type};
 use oxc_sourcemap::napi::SourceMap;
 
-use crate::IsolatedDeclarationsOptions;
+use crate::{IsolatedDeclarationsOptions, react_compiler::ReactCompilerOptions};
 
 #[derive(Default)]
 #[napi(object)]
@@ -149,6 +149,14 @@ pub struct TransformOptions {
     /// Decorator plugin
     pub decorator: Option<DecoratorOptions>,
 
+    /// Enable the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
+    ///
+    /// `true` enables it with default options; an object enables it with the
+    /// given options; `false` or omitted disables it. When enabled, the compiler
+    /// runs as the first transform and memoizes React components and hooks.
+    #[napi(ts_type = "boolean | ReactCompilerOptions")]
+    pub react_compiler: Option<Either<bool, ReactCompilerOptions>>,
+
     /// Third-party plugins to use.
     /// @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins}
     pub plugins: Option<PluginsOptions>,
@@ -194,6 +202,7 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 .plugins
                 .map(oxc::transformer::PluginsOptions::from)
                 .unwrap_or_default(),
+            react_compiler: crate::react_compiler::resolve(options.react_compiler),
         })
     }
 }
@@ -454,7 +463,10 @@ pub struct StyledComponentsOptions {
     /// Transpiles styled-components tagged template literals to a smaller representation
     /// than what Babel normally creates, helping to reduce bundle size.
     ///
-    /// @default true
+    /// Disabled by default because Oxc does not down-level template literals, so this
+    /// transform only increases output size.
+    ///
+    /// @default false
     pub transpile_template_literals: Option<bool>,
 
     /// Minifies CSS content by removing all whitespace and comments from your CSS,
@@ -744,7 +756,7 @@ struct Compiler {
     inject: Option<InjectGlobalVariablesConfig>,
 
     helpers_used: FxHashMap<String, String>,
-    errors: Vec<OxcDiagnostic>,
+    errors: Diagnostics,
 }
 
 impl Compiler {
@@ -811,13 +823,13 @@ impl Compiler {
             define,
             inject,
             helpers_used: FxHashMap::default(),
-            errors: vec![],
+            errors: Diagnostics::new(),
         })
     }
 }
 
 impl CompilerInterface for Compiler {
-    fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {
+    fn handle_errors(&mut self, errors: Diagnostics) {
         self.errors.extend(errors);
     }
 
@@ -1057,9 +1069,9 @@ fn module_runner_transform_impl(
     let mut parser_ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parser_ret.program;
 
-    let SemanticBuilderReturn { semantic, errors } =
+    let SemanticBuilderReturn { semantic, diagnostics } =
         SemanticBuilder::new_compiler().build(&program);
-    parser_ret.errors.extend(errors);
+    parser_ret.diagnostics.extend(diagnostics);
 
     let scoping = semantic.into_scoping();
     let (deps, dynamic_deps) =
@@ -1079,7 +1091,7 @@ fn module_runner_transform_impl(
         map: map.map(Into::into),
         deps: deps.into_iter().collect::<Vec<String>>(),
         dynamic_deps: dynamic_deps.into_iter().collect::<Vec<String>>(),
-        errors: OxcError::from_diagnostics(filename, source_text, parser_ret.errors),
+        errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
     }
 }
 

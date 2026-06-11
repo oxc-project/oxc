@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- ee4dc73 ast: [**BREAKING**] Add `#[non_exhaustive]` to AST nodes (#23046) (overlookmotel)
+
 ## [0.128.0] - 2026-04-27
 
 ### 💥 BREAKING CHANGES

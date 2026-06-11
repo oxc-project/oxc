@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
 ---
 
   ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
@@ -121,6 +122,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+   ╭─[prefer_dom_node_dataset.mjs:1:19]
+ 1 │ element.optional?.setAttribute("data-unicorn", "🦄");
+   ·                   ────────────
+   ╰────
+
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:21]
  1 │ console.log(element.setAttribute("data-unicorn", "🦄"))
    ·                     ────────────
@@ -232,6 +239,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `optional?.element.removeAttribute("data-unicorn")` with `delete optional?.element.dataset.unicorn`.
 
   ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+   ╭─[prefer_dom_node_dataset.mjs:1:35]
+ 1 │ element.optional?.removeAttribute("data-unicorn");
+   ·                                   ──────────────
+   ╰────
+  help: Replace `element.optional?.removeAttribute("data-unicorn")` with `delete element.optional?.dataset.unicorn`.
+
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:25]
  1 │ element.removeAttribute("data-unicorn")?.property
    ·                         ──────────────
@@ -331,6 +345,12 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:19]
  1 │ optional?.element.hasAttribute("data-unicorn");
+   ·                   ────────────
+   ╰────
+
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+   ╭─[prefer_dom_node_dataset.mjs:1:19]
+ 1 │ element.optional?.hasAttribute("data-unicorn");
    ·                   ────────────
    ╰────
 
@@ -438,6 +458,20 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────
    ╰────
   help: Replace `optional?.element.getAttribute("data-unicorn")` with `optional?.element.dataset.unicorn`.
+
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+   ╭─[prefer_dom_node_dataset.mjs:1:19]
+ 1 │ element.optional?.getAttribute("data-unicorn");
+   ·                   ────────────
+   ╰────
+  help: Replace `element.optional?.getAttribute("data-unicorn")` with `element.optional?.dataset.unicorn`.
+
+  ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+   ╭─[prefer_dom_node_dataset.mjs:1:19]
+ 1 │ element.optional?.getAttribute("data-unicorn")?.length;
+   ·                   ────────────
+   ╰────
+  help: Replace `element.optional?.getAttribute("data-unicorn")` with `element.optional?.dataset.unicorn`.
 
   ⚠ unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]

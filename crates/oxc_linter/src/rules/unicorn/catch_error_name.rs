@@ -28,7 +28,7 @@ fn catch_error_name_diagnostic(
 pub struct CatchErrorName(Box<CatchErrorNameConfig>);
 
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CatchErrorNameConfig {
     /// A list of patterns to ignore when checking `catch` variable names. The pattern
     /// can be a string or regular expression.

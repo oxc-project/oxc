@@ -18,8 +18,8 @@ use crate::{context::LintContext, rule::Rule};
 
 fn max_statements_diagnostic(
     name: Option<&str>,
-    count: usize,
-    max: usize,
+    count: u32,
+    max: u32,
     span: Span,
 ) -> OxcDiagnostic {
     let message = if let Some(name) = name {
@@ -33,13 +33,13 @@ fn max_statements_diagnostic(
         .with_label(span)
 }
 
-const DEFAULT_MAX_STATEMENTS: usize = 10;
+const DEFAULT_MAX_STATEMENTS: u32 = 10;
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxStatementsConfig {
     /// Maximum number of statements allowed per function.
-    max: usize,
+    max: u32,
     /// Whether to ignore top-level functions.
     ignore_top_level_functions: bool,
 }
@@ -218,7 +218,7 @@ impl Rule for MaxStatements {
         let max = if let Some(max) = config
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
         {
             max
         } else {
@@ -227,7 +227,7 @@ impl Rule for MaxStatements {
                 .and_then(Value::as_number)
                 .and_then(serde_json::Number::as_u64)
                 .map_or(DEFAULT_MAX_STATEMENTS, |v| {
-                    usize::try_from(v).unwrap_or(DEFAULT_MAX_STATEMENTS)
+                    u32::try_from(v).unwrap_or(DEFAULT_MAX_STATEMENTS)
                 })
         };
 
@@ -263,14 +263,14 @@ impl Rule for MaxStatements {
 }
 
 struct StatementCounter<'a> {
-    max: usize,
+    max: u32,
     ignore_top_level_functions: bool,
     /// Stack of statement counts for each function we're currently inside
-    function_stack: Vec<usize>,
+    function_stack: Vec<u32>,
     /// Top-level functions that exceed the limit (reported only if > 1)
-    top_level_functions: Vec<(Option<&'a str>, usize, Span)>,
+    top_level_functions: Vec<(Option<&'a str>, u32, Span)>,
     /// Diagnostics for non-top-level functions
-    diagnostics: Vec<(Option<&'a str>, usize, Span)>,
+    diagnostics: Vec<(Option<&'a str>, u32, Span)>,
 }
 
 impl<'a> StatementCounter<'a> {
@@ -294,7 +294,7 @@ impl<'a> StatementCounter<'a> {
         }
     }
 
-    fn count_statements(&mut self, count: usize) {
+    fn count_statements(&mut self, count: u32) {
         if let Some(current) = self.function_stack.last_mut() {
             *current += count;
         }
@@ -326,13 +326,15 @@ impl<'a> Visit<'a> for StatementCounter<'a> {
         self.function_stack.pop();
     }
 
+    #[expect(clippy::cast_possible_truncation)] // the length of body statements can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn visit_function_body(&mut self, body: &FunctionBody<'a>) {
-        self.count_statements(body.statements.len());
+        self.count_statements(body.statements.len() as u32);
         walk_function_body(self, body);
     }
 
+    #[expect(clippy::cast_possible_truncation)] // the length of the body can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn visit_block_statement(&mut self, block: &BlockStatement<'a>) {
-        self.count_statements(block.body.len());
+        self.count_statements(block.body.len() as u32);
         for stmt in &block.body {
             self.visit_statement(stmt);
         }

@@ -406,7 +406,7 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 

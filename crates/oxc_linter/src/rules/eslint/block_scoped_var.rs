@@ -223,16 +223,8 @@ fn check_if_has_reference_outside_scope(
     reference_scope_id: ScopeId,
     scoping: &Scoping,
 ) -> bool {
-    // Walk up the scope chain from the reference scope to see if we reach the declaration scope,
-    // if we do, then the reference is inside the scope, otherwise it's outside
-    for ancestor_scope_id in scoping.scope_ancestors(reference_scope_id) {
-        // Already reached the declaration scope, so the reference is inside the scope
-        if ancestor_scope_id == declare_scope_id {
-            return false;
-        }
-    }
-
-    true
+    reference_scope_id != declare_scope_id
+        && !scoping.scope_is_descendant_of(reference_scope_id, declare_scope_id)
 }
 
 #[test]

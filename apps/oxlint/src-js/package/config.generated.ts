@@ -61,7 +61,7 @@ export type LintPlugins = LintPluginOptionsSchema[];
 export type Mode2 = "as-needed" | "always" | "never";
 export type RuleNoConfig = AllowWarnDeny | [AllowWarnDeny];
 export type AlwaysNever = "always" | "never";
-export type OptionsJsonDoc =
+export type OptionsJsonEnum =
   | CommentConfigJson
   | {
       block?: CommentConfigJson;
@@ -91,6 +91,7 @@ export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
+export type SnapshotHintMode = "always" | "multi";
 export type CountThis = "always" | "never" | "except-void";
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
@@ -130,6 +131,8 @@ export type ArgsOption = "after-used" | "all" | "none";
 export type IgnorePatternFor_String = null | string;
 export type CaughtErrorsJson = "all" | "none";
 export type NoUnusedVarsFixMode = "off" | "suggestion" | "fix" | "safe-fix";
+export type NoUseBeforeDefineConfigJson = Nofunc | NoUseBeforeDefineConfig;
+export type Nofunc = "nofunc";
 export type Location = "start" | "anywhere";
 /**
  * The rule takes a single string option: the name of the error parameter.
@@ -146,6 +149,8 @@ export type HandleCallbackErrConfig = string;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 export type Destructuring = "any" | "all";
 export type RadixType = "always" | "as-needed";
+export type NativeAllowList = AllKeyword | string[];
+export type AllKeyword = "all";
 /**
  * A forbidden prop, either as a plain prop name string or with options.
  */
@@ -171,6 +176,7 @@ export type ForbidItem2 =
     };
 export type EnforceBooleanAttribute = "always" | "never";
 export type FragmentMode = "syntax" | "element";
+export type IgnoreEnforceOption = "ignore" | "enforce";
 export type NoDidMountSetStateConfig = "allowed" | "disallow-in-func";
 export type NoWillUpdateSetStateConfig = "allowed" | "disallow-in-func";
 export type RequireFlag = "u" | "v";
@@ -223,12 +229,15 @@ export type LibFrom = "lib";
 export type PackageFrom = "package";
 export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-correctness-only" | "never";
 export type BomOptionType = "always" | "never";
+export type NonZero = "greater-than" | "not-equal";
+export type NoInstanceofBuiltinsStrategy = "strict" | "loose";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
 export type SwitchCaseBracesConfig = "always" | "avoid";
 export type CaseType = "PascalCase" | "kebab-case";
 export type DeclarationStyle = "type-based" | "type-literal" | "runtime";
 export type DeclarationStyle2 = "type-based" | "runtime";
+export type Destructure = "only-when-assigned" | "always" | "never";
 export type NextTickOption = "promise" | "callback";
 export type CaseType2 = "camelCase" | "snake_case";
 export type AllowYoda = "never" | "always";
@@ -705,7 +714,7 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, AlwaysNever]
-    | [AllowWarnDeny, AlwaysNever, OptionsJsonDoc];
+    | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ClassMethodsUseThisConfig];
   complexity?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, number | ComplexityConfig];
   "constructor-super"?: RuleNoConfig;
@@ -772,27 +781,27 @@ export interface DummyRuleMap {
   "jest/consistent-test-it"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTestItConfig];
   "jest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
   "jest/max-expects"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxExpectsConfig];
-  "jest/max-nested-describe"?: DummyRule;
+  "jest/max-nested-describe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxNestedDescribeConfig];
   "jest/no-alias-methods"?: RuleNoConfig;
   "jest/no-commented-out-tests"?: RuleNoConfig;
   "jest/no-conditional-expect"?: RuleNoConfig;
   "jest/no-conditional-in-test"?: RuleNoConfig;
   "jest/no-confusing-set-timeout"?: RuleNoConfig;
-  "jest/no-deprecated-functions"?: DummyRule;
+  "jest/no-deprecated-functions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDeprecatedFunctionsConfig];
   "jest/no-disabled-tests"?: RuleNoConfig;
   "jest/no-done-callback"?: RuleNoConfig;
   "jest/no-duplicate-hooks"?: RuleNoConfig;
   "jest/no-export"?: RuleNoConfig;
   "jest/no-focused-tests"?: RuleNoConfig;
-  "jest/no-hooks"?: DummyRule;
+  "jest/no-hooks"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoHooksConfig];
   "jest/no-identical-title"?: RuleNoConfig;
   "jest/no-interpolation-in-snapshots"?: RuleNoConfig;
   "jest/no-jasmine-globals"?: RuleNoConfig;
-  "jest/no-large-snapshots"?: DummyRule;
+  "jest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "jest/no-mocks-import"?: RuleNoConfig;
-  "jest/no-restricted-jest-methods"?: DummyRule;
-  "jest/no-restricted-matchers"?: DummyRule;
-  "jest/no-standalone-expect"?: DummyRule;
+  "jest/no-restricted-jest-methods"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedTestMethodsConfig];
+  "jest/no-restricted-matchers"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedMatchersConfig];
+  "jest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "jest/no-test-prefixes"?: RuleNoConfig;
   "jest/no-test-return-statement"?: RuleNoConfig;
   "jest/no-unneeded-async-expect-function"?: RuleNoConfig;
@@ -803,9 +812,12 @@ export interface DummyRuleMap {
   "jest/prefer-called-with"?: RuleNoConfig;
   "jest/prefer-comparison-matcher"?: RuleNoConfig;
   "jest/prefer-each"?: RuleNoConfig;
-  "jest/prefer-ending-with-an-expect"?: DummyRule;
+  "jest/prefer-ending-with-an-expect"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, PreferEndingWithAnExpectConfig];
   "jest/prefer-equality-matcher"?: RuleNoConfig;
-  "jest/prefer-expect-assertions"?: DummyRule;
+  "jest/prefer-expect-assertions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferExpectAssertionsConfig];
   "jest/prefer-expect-resolves"?: RuleNoConfig;
   "jest/prefer-hooks-in-order"?: RuleNoConfig;
   "jest/prefer-hooks-on-top"?: RuleNoConfig;
@@ -817,7 +829,7 @@ export interface DummyRuleMap {
   "jest/prefer-lowercase-title"?: DummyRule;
   "jest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "jest/prefer-mock-return-shorthand"?: RuleNoConfig;
-  "jest/prefer-snapshot-hint"?: DummyRule;
+  "jest/prefer-snapshot-hint"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SnapshotHintMode];
   "jest/prefer-spy-on"?: RuleNoConfig;
   "jest/prefer-strict-equal"?: RuleNoConfig;
   "jest/prefer-to-be"?: RuleNoConfig;
@@ -828,9 +840,9 @@ export interface DummyRuleMap {
   "jest/prefer-todo"?: RuleNoConfig;
   "jest/require-hook"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireHookConfig];
   "jest/require-to-throw-message"?: RuleNoConfig;
-  "jest/require-top-level-describe"?: DummyRule;
+  "jest/require-top-level-describe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireTopLevelDescribeConfig];
   "jest/valid-describe-callback"?: RuleNoConfig;
-  "jest/valid-expect"?: DummyRule;
+  "jest/valid-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ValidExpectConfig];
   "jest/valid-expect-in-promise"?: RuleNoConfig;
   "jest/valid-title"?: DummyRule;
   "jsdoc/check-access"?: RuleNoConfig;
@@ -1046,7 +1058,7 @@ export interface DummyRuleMap {
   "no-unused-labels"?: RuleNoConfig;
   "no-unused-private-class-members"?: RuleNoConfig;
   "no-unused-vars"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUnusedVarsConfig];
-  "no-use-before-define"?: DummyRule;
+  "no-use-before-define"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoUseBeforeDefineConfigJson];
   "no-useless-assignment"?: RuleNoConfig;
   "no-useless-backreference"?: RuleNoConfig;
   "no-useless-call"?: RuleNoConfig;
@@ -1090,7 +1102,7 @@ export interface DummyRuleMap {
   "oxc/missing-throw"?: RuleNoConfig;
   "oxc/no-accumulating-spread"?: RuleNoConfig;
   "oxc/no-async-await"?: RuleNoConfig;
-  "oxc/no-async-endpoint-handlers"?: DummyRule;
+  "oxc/no-async-endpoint-handlers"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoAsyncEndpointHandlersConfig];
   "oxc/no-barrel-file"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoBarrelFile];
   "oxc/no-const-enum"?: RuleNoConfig;
   "oxc/no-map-spread"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoMapSpreadConfig];
@@ -1117,7 +1129,7 @@ export interface DummyRuleMap {
   "promise/always-return"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AlwaysReturnConfig];
   "promise/avoid-new"?: RuleNoConfig;
   "promise/catch-or-return"?: DummyRule;
-  "promise/no-callback-in-promise"?: DummyRule;
+  "promise/no-callback-in-promise"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoCallbackInPromiseConfig];
   "promise/no-multiple-resolved"?: RuleNoConfig;
   "promise/no-nesting"?: RuleNoConfig;
   "promise/no-new-statics"?: RuleNoConfig;
@@ -1131,9 +1143,9 @@ export interface DummyRuleMap {
   "promise/spec-only"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SpecOnlyConfig];
   "promise/valid-params"?: RuleNoConfig;
   radix?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RadixType];
-  "react-perf/jsx-no-jsx-as-prop"?: RuleNoConfig;
-  "react-perf/jsx-no-new-array-as-prop"?: RuleNoConfig;
-  "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig;
+  "react-perf/jsx-no-jsx-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
+  "react-perf/jsx-no-new-array-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
+  "react-perf/jsx-no-new-function-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-object-as-prop"?: DummyRule;
   "react/button-has-type"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ButtonHasType];
   "react/checked-requires-onchange-or-readonly"?:
@@ -1162,13 +1174,14 @@ export interface DummyRuleMap {
   "react/jsx-no-comment-textnodes"?: RuleNoConfig;
   "react/jsx-no-constructed-context-values"?: RuleNoConfig;
   "react/jsx-no-duplicate-props"?: RuleNoConfig;
+  "react/jsx-no-literals"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxNoLiteralsConfig];
   "react/jsx-no-script-url"?: DummyRule;
   "react/jsx-no-target-blank"?: DummyRule;
   "react/jsx-no-undef"?: RuleNoConfig;
   "react/jsx-no-useless-fragment"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxNoUselessFragment];
   "react/jsx-pascal-case"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxPascalCaseConfig];
   "react/jsx-props-no-spread-multi"?: RuleNoConfig;
-  "react/jsx-props-no-spreading"?: DummyRule;
+  "react/jsx-props-no-spreading"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxPropsNoSpreadingConfig];
   "react/no-array-index-key"?: RuleNoConfig;
   "react/no-children-prop"?: RuleNoConfig;
   "react/no-clone-element"?: RuleNoConfig;
@@ -1181,7 +1194,7 @@ export interface DummyRuleMap {
   "react/no-is-mounted"?: RuleNoConfig;
   "react/no-multi-comp"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoMultiCompConfig];
   "react/no-namespace"?: RuleNoConfig;
-  "react/no-object-type-as-default-prop"?: DummyRule;
+  "react/no-object-type-as-default-prop"?: RuleNoConfig;
   "react/no-react-children"?: RuleNoConfig;
   "react/no-redundant-should-component-update"?: RuleNoConfig;
   "react/no-render-return-value"?: RuleNoConfig;
@@ -1373,7 +1386,7 @@ export interface DummyRuleMap {
   "typescript/unified-signatures"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, UnifiedSignaturesOptions];
   "typescript/use-unknown-in-catch-callback-variable"?: RuleNoConfig;
   "unicode-bom"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, BomOptionType];
-  "unicorn/catch-error-name"?: DummyRule;
+  "unicorn/catch-error-name"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, CatchErrorNameConfig];
   "unicorn/consistent-assert"?: RuleNoConfig;
   "unicorn/consistent-date-clone"?: RuleNoConfig;
   "unicorn/consistent-empty-array-spread"?: RuleNoConfig;
@@ -1384,7 +1397,7 @@ export interface DummyRuleMap {
   "unicorn/empty-brace-spaces"?: RuleNoConfig;
   "unicorn/error-message"?: RuleNoConfig;
   "unicorn/escape-case"?: RuleNoConfig;
-  "unicorn/explicit-length-check"?: DummyRule;
+  "unicorn/explicit-length-check"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExplicitLengthCheck];
   "unicorn/filename-case"?: DummyRule;
   "unicorn/import-style"?: DummyRule;
   "unicorn/new-for-builtins"?: RuleNoConfig;
@@ -1405,7 +1418,7 @@ export interface DummyRuleMap {
   "unicorn/no-hex-escape"?: RuleNoConfig;
   "unicorn/no-immediate-mutation"?: RuleNoConfig;
   "unicorn/no-instanceof-array"?: RuleNoConfig;
-  "unicorn/no-instanceof-builtins"?: DummyRule;
+  "unicorn/no-instanceof-builtins"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoInstanceofBuiltinsConfig];
   "unicorn/no-invalid-fetch-options"?: RuleNoConfig;
   "unicorn/no-invalid-remove-event-listener"?: RuleNoConfig;
   "unicorn/no-length-as-slice-end"?: RuleNoConfig;
@@ -1464,6 +1477,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-dom-node-remove"?: RuleNoConfig;
   "unicorn/prefer-dom-node-text-content"?: RuleNoConfig;
   "unicorn/prefer-event-target"?: RuleNoConfig;
+  "unicorn/prefer-export-from"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferExportFrom];
   "unicorn/prefer-global-this"?: RuleNoConfig;
   "unicorn/prefer-import-meta-properties"?: RuleNoConfig;
   "unicorn/prefer-includes"?: RuleNoConfig;
@@ -1478,7 +1492,10 @@ export interface DummyRuleMap {
   "unicorn/prefer-negative-index"?: RuleNoConfig;
   "unicorn/prefer-node-protocol"?: RuleNoConfig;
   "unicorn/prefer-number-properties"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferNumberPropertiesConfig];
-  "unicorn/prefer-object-from-entries"?: DummyRule;
+  "unicorn/prefer-object-from-entries"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, PreferObjectFromEntriesConfig];
   "unicorn/prefer-optional-catch-binding"?: RuleNoConfig;
   "unicorn/prefer-prototype-methods"?: RuleNoConfig;
   "unicorn/prefer-query-selector"?: RuleNoConfig;
@@ -1487,6 +1504,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-response-static-json"?: RuleNoConfig;
   "unicorn/prefer-set-has"?: RuleNoConfig;
   "unicorn/prefer-set-size"?: RuleNoConfig;
+  "unicorn/prefer-single-call"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferSingleCallConfig];
   "unicorn/prefer-spread"?: RuleNoConfig;
   "unicorn/prefer-string-raw"?: RuleNoConfig;
   "unicorn/prefer-string-replace-all"?: RuleNoConfig;
@@ -1520,7 +1538,7 @@ export interface DummyRuleMap {
   "vitest/expect-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExpectExpectConfig];
   "vitest/hoisted-apis-on-top"?: RuleNoConfig;
   "vitest/max-expects"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxExpectsConfig];
-  "vitest/max-nested-describe"?: DummyRule;
+  "vitest/max-nested-describe"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxNestedDescribeConfig];
   "vitest/no-alias-methods"?: RuleNoConfig;
   "vitest/no-commented-out-tests"?: RuleNoConfig;
   "vitest/no-conditional-expect"?: RuleNoConfig;
@@ -1529,16 +1547,16 @@ export interface DummyRuleMap {
   "vitest/no-disabled-tests"?: RuleNoConfig;
   "vitest/no-duplicate-hooks"?: RuleNoConfig;
   "vitest/no-focused-tests"?: RuleNoConfig;
-  "vitest/no-hooks"?: DummyRule;
+  "vitest/no-hooks"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoHooksConfig];
   "vitest/no-identical-title"?: RuleNoConfig;
   "vitest/no-import-node-test"?: RuleNoConfig;
   "vitest/no-importing-vitest-globals"?: RuleNoConfig;
   "vitest/no-interpolation-in-snapshots"?: RuleNoConfig;
-  "vitest/no-large-snapshots"?: DummyRule;
+  "vitest/no-large-snapshots"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoLargeSnapshotsConfig];
   "vitest/no-mocks-import"?: RuleNoConfig;
-  "vitest/no-restricted-matchers"?: DummyRule;
-  "vitest/no-restricted-vi-methods"?: DummyRule;
-  "vitest/no-standalone-expect"?: DummyRule;
+  "vitest/no-restricted-matchers"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedMatchersConfig];
+  "vitest/no-restricted-vi-methods"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedTestMethodsConfig];
+  "vitest/no-standalone-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoStandaloneExpectConfig];
   "vitest/no-test-prefixes"?: RuleNoConfig;
   "vitest/no-test-return-statement"?: RuleNoConfig;
   "vitest/no-unneeded-async-expect-function"?: RuleNoConfig;
@@ -1552,7 +1570,7 @@ export interface DummyRuleMap {
   "vitest/prefer-describe-function-title"?: RuleNoConfig;
   "vitest/prefer-each"?: RuleNoConfig;
   "vitest/prefer-equality-matcher"?: RuleNoConfig;
-  "vitest/prefer-expect-assertions"?: DummyRule;
+  "vitest/prefer-expect-assertions"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferExpectAssertionsConfig];
   "vitest/prefer-expect-resolves"?: RuleNoConfig;
   "vitest/prefer-expect-type-of"?: RuleNoConfig;
   "vitest/prefer-hooks-in-order"?: RuleNoConfig;
@@ -1562,7 +1580,7 @@ export interface DummyRuleMap {
   "vitest/prefer-lowercase-title"?: DummyRule;
   "vitest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "vitest/prefer-mock-return-shorthand"?: RuleNoConfig;
-  "vitest/prefer-snapshot-hint"?: DummyRule;
+  "vitest/prefer-snapshot-hint"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SnapshotHintMode];
   "vitest/prefer-spy-on"?: RuleNoConfig;
   "vitest/prefer-strict-boolean-matchers"?: RuleNoConfig;
   "vitest/prefer-strict-equal"?: RuleNoConfig;
@@ -1583,16 +1601,19 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, RequireMockTypeParametersConfig];
   "vitest/require-test-timeout"?: RuleNoConfig;
   "vitest/require-to-throw-message"?: RuleNoConfig;
-  "vitest/require-top-level-describe"?: DummyRule;
+  "vitest/require-top-level-describe"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, RequireTopLevelDescribeConfig];
   "vitest/valid-describe-callback"?: RuleNoConfig;
-  "vitest/valid-expect"?: DummyRule;
+  "vitest/valid-expect"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ValidExpectConfig];
   "vitest/valid-expect-in-promise"?: RuleNoConfig;
   "vitest/valid-title"?: DummyRule;
   "vitest/warn-todo"?: RuleNoConfig;
   "vue/component-definition-name-casing"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, CaseType];
   "vue/define-emits-declaration"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DeclarationStyle];
   "vue/define-props-declaration"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DeclarationStyle2];
-  "vue/define-props-destructuring"?: DummyRule;
+  "vue/define-props-destructuring"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DefinePropsDestructuring];
   "vue/max-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MaxProps];
   "vue/next-tick-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NextTickOption];
   "vue/no-arrow-functions-in-watch"?: RuleNoConfig;
@@ -1626,6 +1647,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, CaseType2]
     | [AllowWarnDeny, CaseType2, Options];
   "vue/require-default-export"?: RuleNoConfig;
+  "vue/require-default-prop"?: RuleNoConfig;
   "vue/require-direct-export"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireDirectExport];
   "vue/require-prop-type-constructor"?: RuleNoConfig;
   "vue/require-prop-types"?: RuleNoConfig;
@@ -2163,6 +2185,77 @@ export interface MaxExpectsConfig {
    */
   max?: number;
 }
+export interface MaxNestedDescribeConfig {
+  /**
+   * Maximum allowed depth of nested describe calls.
+   */
+  max?: number;
+}
+export interface NoDeprecatedFunctionsConfig {
+  /**
+   * Jest configuration options.
+   * Deprecated config, it will be removed in future versions.
+   * Use please instead { "settings": { "jest": {"version": 29 } } } in `Oxlint config file`.
+   * Beware the value from the config have higher priority than the rule config.
+   */
+  jest?: JestConfigJson;
+}
+export interface JestConfigJson {
+  /**
+   * The version of Jest being used.
+   */
+  version?: string;
+}
+export interface NoHooksConfig {
+  /**
+   * An array of hook function names that are permitted for use.
+   */
+  allow?: string[];
+}
+export interface NoLargeSnapshotsConfig {
+  /**
+   * A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.
+   * Snapshot names can be specified as regular expressions.
+   */
+  allowedSnapshots?: {
+    [k: string]: string[];
+  };
+  /**
+   * Maximum number of lines allowed for inline snapshots.
+   */
+  inlineMaxSize?: number;
+  /**
+   * Maximum number of lines allowed for external snapshot files.
+   */
+  maxSize?: number;
+}
+export interface NoRestrictedTestMethodsConfig {
+  [k: string]: string | null;
+}
+export interface NoRestrictedMatchersConfig {
+  [k: string]: string | null;
+}
+export interface NoStandaloneExpectConfig {
+  /**
+   * An array of function names that should also be treated as test blocks.
+   */
+  additionalTestBlockFunctions?: string[];
+}
+export interface PreferEndingWithAnExpectConfig {
+  /**
+   * An array of function names that should also be treated as test blocks.
+   */
+  additionalTestBlockFunctions?: string[];
+  /**
+   * A list of function names that should be treated as assertion functions.
+   */
+  assertFunctionNames?: string[];
+}
+export interface PreferExpectAssertionsConfig {
+  onlyFunctionsWithAsyncKeyword?: boolean;
+  onlyFunctionsWithExpectInCallback?: boolean;
+  onlyFunctionsWithExpectInLoop?: boolean;
+}
 export interface PreferImportingJestGlobalsConfig {
   /**
    * Jest function types to enforce importing for.
@@ -2174,6 +2267,30 @@ export interface RequireHookConfig {
    * An array of function names that are allowed to be called outside of hooks.
    */
   allowedFunctionCalls?: string[];
+}
+export interface RequireTopLevelDescribeConfig {
+  /**
+   * The maximum number of top-level `describe` blocks allowed in a test file.
+   */
+  maxNumberOfTopLevelDescribes?: number;
+}
+export interface ValidExpectConfig {
+  /**
+   * When `true`, async assertions must be awaited in all contexts (not just return statements).
+   */
+  alwaysAwait?: boolean;
+  /**
+   * List of matchers that are considered async and therefore require awaiting (e.g. `toResolve`, `toReject`).
+   */
+  asyncMatchers?: string[];
+  /**
+   * Maximum number of arguments `expect` should be called with.
+   */
+  maxArgs?: number;
+  /**
+   * Minimum number of arguments `expect` should be called with.
+   */
+  minArgs?: number;
 }
 export interface CheckTagNamesConfig {
   /**
@@ -3417,6 +3534,36 @@ export interface NoUnusedVarsFixOptions {
    */
   variables?: NoUnusedVarsFixMode;
 }
+export interface NoUseBeforeDefineConfig {
+  /**
+   * Allow named exports that appear before declaration.
+   */
+  allowNamedExports?: boolean;
+  /**
+   * Check class declarations.
+   */
+  classes?: boolean;
+  /**
+   * Check enum declarations.
+   */
+  enums?: boolean;
+  /**
+   * Check function declarations.
+   */
+  functions?: boolean;
+  /**
+   * Ignore usages that are type-only references.
+   */
+  ignoreTypeReferences?: boolean;
+  /**
+   * Check type aliases, interfaces, and type parameters.
+   */
+  typedefs?: boolean;
+  /**
+   * Check variable declarations.
+   */
+  variables?: boolean;
+}
 export interface NoUselessComputedKey {
   /**
    * The `enforceForClassMembers` option controls whether the rule applies to
@@ -3480,6 +3627,12 @@ export interface ObjectShorthandOptions {
   avoidQuotes?: boolean;
   ignoreConstructors?: boolean;
   methodsIgnorePattern?: string;
+}
+export interface NoAsyncEndpointHandlersConfig {
+  /**
+   * An array of names that are allowed to be async.
+   */
+  allowedNames?: string[];
 }
 export interface NoBarrelFile {
   /**
@@ -3677,6 +3830,16 @@ export interface AlwaysReturnConfig {
    */
   ignoreLastCallback?: boolean;
 }
+export interface NoCallbackInPromiseConfig {
+  /**
+   * List of callback function names to allow within Promise `then` and `catch` methods.
+   */
+  exceptions?: string[];
+  /**
+   * Boolean as to whether callbacks in timeout functions like `setTimeout` will err.
+   */
+  timeoutsErr?: boolean;
+}
 export interface NoPromiseInCallbackConfig {
   /**
    * Whether or not to exempt function declarations. Defaults to `false`.
@@ -3713,6 +3876,15 @@ export interface SpecOnlyConfig {
    * List of Promise static methods that are allowed to be used.
    */
   allowedMethods?: string[];
+}
+export interface ReactPerfConfig {
+  /**
+   * Controls whether native elements (lowercase-first-letter tags such as `div`)
+   * are ignored by the rule. Set to `"all"` to ignore every attribute on native
+   * elements, or to an array of attribute names to ignore only those attributes
+   * on native elements.
+   */
+  nativeAllowList?: NativeAllowList;
 }
 export interface ButtonHasType {
   /**
@@ -3909,6 +4081,70 @@ export interface JsxMaxDepthConfig {
    */
   max?: number;
 }
+/**
+ * The options shared between the top-level config and each `elementOverrides` entry.
+ */
+export interface JsxNoLiteralsConfig {
+  /**
+   * An array of unique string values that would otherwise warn, but will be ignored.
+   */
+  allowedStrings?: string[];
+  /**
+   * An object where the keys are the element names and the values are objects with the same options as above. This allows you to specify different options for different elements.
+   */
+  elementOverrides?: {
+    [k: string]: ElementOverrideOptions;
+  };
+  /**
+   * (default: false) - When true the rule ignores literals used in props, wrapped or unwrapped.
+   */
+  ignoreProps?: boolean;
+  /**
+   * (default: false) - Enforces no string literals used in attributes when set to true.
+   */
+  noAttributeStrings?: boolean;
+  /**
+   * (default: false) - Enforces no string literals used as children, wrapped or unwrapped.
+   */
+  noStrings?: boolean;
+  /**
+   * An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.
+   */
+  restrictedAttributes?: string[];
+}
+/**
+ * One entry in `elementOverrides`: the base options plus override-only fields.
+ */
+export interface ElementOverrideOptions {
+  /**
+   * (default: false) - When true the rule will allow the specified element to have string literals as children, wrapped or unwrapped without warning.
+   */
+  allowElement?: boolean;
+  /**
+   * An array of unique string values that would otherwise warn, but will be ignored.
+   */
+  allowedStrings?: string[];
+  /**
+   * (default: true) - When false the rule will not apply the current options set to nested elements. This is useful when you want to apply the rule to a specific element, but not to its children.
+   */
+  applyToNestedElements?: boolean;
+  /**
+   * (default: false) - When true the rule ignores literals used in props, wrapped or unwrapped.
+   */
+  ignoreProps?: boolean;
+  /**
+   * (default: false) - Enforces no string literals used in attributes when set to true.
+   */
+  noAttributeStrings?: boolean;
+  /**
+   * (default: false) - Enforces no string literals used as children, wrapped or unwrapped.
+   */
+  noStrings?: boolean;
+  /**
+   * An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.
+   */
+  restrictedAttributes?: string[];
+}
 export interface JsxNoUselessFragment {
   /**
    * Allow fragments with a single expression child.
@@ -3932,6 +4168,29 @@ export interface JsxPascalCaseConfig {
    * List of component names to ignore.
    */
   ignore?: string[];
+}
+export interface JsxPropsNoSpreadingConfig {
+  /**
+   * `custom` set to `ignore` will ignore all custom jsx tags like `App`, `MyCustomComponent` etc. Default is set to `enforce`.
+   */
+  custom?: IgnoreEnforceOption;
+  /**
+   * Exceptions flip the enforcement behavior for specific components.
+   * For example:
+   * - If `html` is set to `ignore`, an exception for `div` will enforce the rule on `<div>` elements.
+   * - If `custom` is set to `enforce`, an exception for `Foo` will ignore the rule on `<Foo>` components.
+   *
+   * This allows you to override the general setting for individual components.
+   */
+  exceptions?: string[];
+  /**
+   * `explicitSpread` set to `ignore` will ignore spread operators that are explicitly listing all object properties within that spread. Default is set to `enforce`.
+   */
+  explicitSpread?: IgnoreEnforceOption;
+  /**
+   * `html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`.
+   */
+  html?: IgnoreEnforceOption;
 }
 export interface NoMultiCompConfig {
   /**
@@ -4842,11 +5101,29 @@ export interface UnifiedSignaturesOptions {
    */
   ignoreOverloadsWithDifferentJSDoc?: boolean;
 }
+export interface CatchErrorNameConfig {
+  /**
+   * A list of patterns to ignore when checking `catch` variable names. The pattern
+   * can be a string or regular expression.
+   */
+  ignore?: string[];
+  /**
+   * The name to use for error variables in `catch` blocks. You can customize it
+   * to something other than `'error'` (e.g., `'exception'`).
+   */
+  name?: string;
+}
 export interface ConsistentFunctionScoping {
   /**
    * Whether to check scoping with arrow functions.
    */
   checkArrowFunctions?: boolean;
+}
+export interface ExplicitLengthCheck {
+  /**
+   * Configuration option to specify how non-zero length checks should be enforced.
+   */
+  "non-zero"?: NonZero;
 }
 export interface NoArrayReduce {
   /**
@@ -4877,6 +5154,27 @@ export interface NoArraySort {
    * ```
    */
   allowExpressionStatement?: boolean;
+}
+export interface NoInstanceofBuiltinsConfig {
+  /**
+   * Constructor names to exclude from checking.
+   */
+  exclude?: string[];
+  /**
+   * Additional constructor names to check beyond the default set.
+   * Use this to extend the rule with additional constructors.
+   */
+  include?: string[];
+  /**
+   * Controls which built-in constructors are checked.
+   */
+  strategy?: NoInstanceofBuiltinsStrategy;
+  /**
+   * When `true`, checks `instanceof Error` and suggests using `Error.isError()` instead.
+   * Requires [the `Error.isError()` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/isError)
+   * to be available.
+   */
+  useErrorIsError?: boolean;
 }
 export interface NoNull {
   /**
@@ -4911,6 +5209,12 @@ export interface NoUselessUndefined {
    */
   checkArrowFunctionBody?: boolean;
 }
+export interface PreferExportFrom {
+  /**
+   * When false, if any import binding is used somewhere other than a re-export, all variables in the import declaration are ignored.
+   */
+  checkUsedVariables?: boolean;
+}
 export interface PreferNumberPropertiesConfig {
   /**
    * If set to `true`, checks for usage of `Infinity` and `-Infinity` as global variables.
@@ -4920,6 +5224,18 @@ export interface PreferNumberPropertiesConfig {
    * If set to `true`, checks for usage of `NaN` as a global variable.
    */
   checkNaN?: boolean;
+}
+export interface PreferObjectFromEntriesConfig {
+  /**
+   * Additional functions to treat as equivalents to `Object.fromEntries`.
+   */
+  functions?: string[];
+}
+export interface PreferSingleCallConfig {
+  /**
+   * Methods to ignore.
+   */
+  ignore?: string[];
 }
 export interface PreferStructuredCloneConfig {
   /**
@@ -4974,6 +5290,12 @@ export interface RequireMockTypeParametersConfig {
    * Also require type parameters for `importActual` and `importMock`.
    */
   checkImportFunctions?: boolean;
+}
+export interface DefinePropsDestructuring {
+  /**
+   * Require or prohibit destructuring.
+   */
+  destructure?: Destructure;
 }
 export interface MaxProps {
   /**

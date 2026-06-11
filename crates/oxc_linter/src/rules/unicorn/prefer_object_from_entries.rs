@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -12,7 +13,7 @@ use crate::{
     AstNode,
     ast_util::is_method_call,
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{call_expr_member_expr_property_span, does_expr_match_any_path},
 };
 
@@ -22,19 +23,19 @@ fn prefer_object_from_entries_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferObjectFromEntries(Box<PreferObjectFromEntriesConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferObjectFromEntriesConfig {
     /// Additional functions to treat as equivalents to `Object.fromEntries`.
-    functions: Vec<String>,
+    functions: Vec<CompactStr>,
 }
 
 impl Default for PreferObjectFromEntriesConfig {
     fn default() -> Self {
-        Self { functions: vec!["_.fromPairs".to_string(), "lodash.fromPairs".to_string()] }
+        Self { functions: vec!["_.fromPairs".into(), "lodash.fromPairs".into()] }
     }
 }
 
@@ -86,6 +87,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferObjectFromEntries {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
@@ -231,18 +236,6 @@ impl Rule for PreferObjectFromEntries {
                 call_expr_member_expr_property_span(call_expr),
             ));
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config: PreferObjectFromEntriesConfig = value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .map(|config| {
-                serde_json::from_value(config.clone()).expect("Failed to deserialize config")
-            })
-            .unwrap_or_default();
-
-        Ok(Self(Box::new(config)))
     }
 }
 

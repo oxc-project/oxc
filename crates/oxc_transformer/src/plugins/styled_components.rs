@@ -110,13 +110,17 @@ pub struct StyledComponentsOptions {
     pub ssr: bool,
 
     /// Transpiles styled-components tagged template literals to a smaller representation
-    /// than what Babel normally creates, helping to reduce bundle size.
+    /// than what Babel normally creates.
     ///
-    /// Converts `` styled.div`width: 100%;` `` to `styled.div(['width: 100%;'])`, which is
-    /// more compact than the standard Babel template literal transformation.
+    /// Converts `` styled.div`width: 100%;` `` to `styled.div(['width: 100%;'])`.
     ///
-    /// Default: `true`
-    #[serde(default = "default_as_true")]
+    /// This is only beneficial when template literals are down-levelled to ES5 (as Babel
+    /// does), where the array form is more compact than the transpiled tagged template.
+    /// Oxc does not down-level template literals, so this transform only makes the output
+    /// larger than leaving the template literal as-is. It is therefore disabled by default.
+    ///
+    /// Default: `false`
+    #[serde(default)]
     pub transpile_template_literals: bool,
 
     /// Minifies CSS content by removing all whitespace and comments from your CSS,
@@ -209,13 +213,15 @@ impl Default for StyledComponentsOptions {
     /// are set but not yet implemented.
     ///
     /// The `pure` option is disabled by default to avoid potential issues with
-    /// tree-shaking in some bundlers.
+    /// tree-shaking in some bundlers. `transpileTemplateLiterals` is disabled by default
+    /// because Oxc does not down-level template literals, so transpiling them to the array
+    /// form only increases output size.
     fn default() -> Self {
         Self {
             display_name: true,
             file_name: true,
             ssr: true,
-            transpile_template_literals: true,
+            transpile_template_literals: false,
             pure: false,
             minify: true,
             namespace: None,

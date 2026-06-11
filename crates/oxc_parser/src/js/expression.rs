@@ -796,6 +796,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.expression_super(span)
     }
 
+    /// An instantiation expression (`MemberExpression TypeArguments`) directly followed by a
+    /// member access is TS1477; a parenthesized one is allowed:
+    ///
+    /// ```text
+    /// a<b>.c      // error
+    /// a<b>?.[c]   // error
+    /// (a<b>).c    // ok
+    /// ```
+    fn error_if_unparenthesized_instantiation_expression(
+        &mut self,
+        lhs: &Expression<'a>,
+        lhs_span: u32,
+    ) {
+        if matches!(lhs, Expression::TSInstantiationExpression(e) if e.span.start == lhs_span) {
+            self.error(
+                diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
+                    self.end_span(lhs_span),
+                ),
+            );
+        }
+    }
+
     /// parse rhs of a member expression, starting from lhs
     fn parse_member_expression_rest(
         &mut self,
@@ -840,25 +862,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
 
             if is_property_access {
-                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
-                    self.error(
-                        diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
-                            self.end_span(lhs_span),
-                        ),
-                    );
-                }
+                self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_span);
                 lhs = self.parse_static_member_expression(lhs_span, lhs, question_dot);
                 continue;
             }
 
             if (question_dot || !self.ctx.has_decorator()) && self.at(Kind::LBrack) {
-                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
-                    self.error(
-                        diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
-                            self.end_span(lhs_span),
-                        ),
-                    );
-                }
+                self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_span);
                 lhs = self.parse_computed_member_expression(lhs_span, lhs, question_dot);
                 continue;
             }
@@ -1029,13 +1039,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         in_optional_chain: &mut bool,
     ) -> Expression<'a> {
         let mut lhs = lhs;
+        // The caller only enters here with the current token being `(` or `?.`. For `(`,
+        // `parse_member_expression_rest` is a no-op (`(` ∉ its FIRST set: `?.`, `.`, `[`,
+        // template, TS `!`/`<`), so skip the redundant re-scan on entry; entering on `?.`, and
+        // every later iteration (after `Arguments`), still needs it.
+        debug_assert!(
+            matches!(self.cur_kind(), Kind::LParen | Kind::QuestionDot),
+            "parse_call_expression_rest is only entered on `(` or `?.`",
+        );
+        let mut rescan_members = !self.at(Kind::LParen);
         while self.fatal_error.is_none() {
-            lhs = self.parse_member_expression_rest(
-                lhs_span,
-                lhs,
-                in_optional_chain,
-                /* allow_optional_chain */ true,
-            );
+            if rescan_members {
+                lhs = self.parse_member_expression_rest(
+                    lhs_span,
+                    lhs,
+                    in_optional_chain,
+                    /* allow_optional_chain */ true,
+                );
+            }
+            rescan_members = true;
             let question_dot_span = self.at(Kind::QuestionDot).then(|| self.cur_token().span());
             let question_dot = question_dot_span.is_some();
             if question_dot {
@@ -1153,11 +1175,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.5 Unary Expression
     pub(crate) fn parse_unary_expression_or_higher(&mut self, lhs_span: u32) -> Expression<'a> {
-        // ++ -- prefix update expressions
-        if self.is_update_expression() {
-            return self.parse_update_expression(lhs_span);
+        match self.cur_kind() {
+            // `UnaryExpression : (delete | void | typeof | + | - | ~ | !) UnaryExpression`
+            // e.g. `!x`, `-1`, `typeof y`, `void 0`, `delete a.b`
+            kind if kind.is_unary_operator() => self.parse_unary_expression(),
+            // TS type assertion, a modified `UnaryExpression`: `< Type > UnaryExpression`, e.g. `<T>x`.
+            // In a non-JSX, non-TS file a leading `<` is instead a JSX-in-non-JSX error, e.g. `<div/>`.
+            // (`<` in a JSX file is not matched here; it falls through to the `UpdateExpression` arm,
+            // which parses the JSX element.)
+            Kind::LAngle if !self.source_type.is_jsx() => {
+                if self.is_ts {
+                    self.parse_ts_type_assertion()
+                } else {
+                    self.parse_jsx_in_non_jsx_error()
+                }
+            }
+            // `UnaryExpression : [+Await] AwaitExpression`, with `AwaitExpression : await UnaryExpression`
+            // e.g. `await foo`
+            Kind::Await => self.parse_await_expression(lhs_span),
+            // `UnaryExpression : UpdateExpression` — a `LeftHandSideExpression` with an optional
+            // prefix or postfix `++`/`--`. e.g. `a`, `f()`, `a++`, `++a`
+            _ => self.parse_update_expression(lhs_span),
         }
-        self.parse_simple_unary_expression(lhs_span)
     }
 
     pub(crate) fn parse_simple_unary_expression(&mut self, lhs_span: u32) -> Expression<'a> {
@@ -1170,20 +1209,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if self.is_ts {
                     return self.parse_ts_type_assertion();
                 }
-
-                let checkpoint = self.checkpoint_with_error_recovery();
-                let start = self.start_span();
-                self.parse_jsx_expression();
-                if self.fatal_error.is_none() {
-                    self.fatal_error(diagnostics::jsx_in_non_jsx(self.end_span(start)))
-                } else {
-                    self.rewind(checkpoint);
-                    self.unexpected()
-                }
+                self.parse_jsx_in_non_jsx_error()
             }
             Kind::Await => self.parse_await_expression(lhs_span),
             _ => self.parse_update_expression(lhs_span),
         }
+    }
+
+    /// A leading `<` in a file where JSX is disabled and which is not TypeScript (so it is not a
+    /// type assertion either) is always an error. Report it against the `<` token with a help to
+    /// enable JSX in the parser options.
+    fn parse_jsx_in_non_jsx_error(&mut self) -> Expression<'a> {
+        self.fatal_error(diagnostics::jsx_in_non_jsx(self.cur_token().span()))
     }
 
     fn parse_unary_expression(&mut self) -> Expression<'a> {
@@ -1682,57 +1719,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.decorator(self.end_span(span), expr)
     }
 
-    fn is_update_expression(&self) -> bool {
-        match self.cur_kind() {
-            kind if kind.is_unary_operator() => false,
-            Kind::Await => false,
-            Kind::LAngle => {
-                if !self.source_type.is_jsx() {
-                    return false;
-                }
-                true
-            }
-            _ => true,
-        }
-    }
-
     fn is_yield_expression(&mut self) -> bool {
         if self.at(Kind::Yield) {
             if self.ctx.has_yield() {
                 return true;
             }
-            return self.lookahead(|p| {
-                Self::next_token_is_identifier_or_keyword_or_literal_on_same_line(p, false)
-            });
+            // Outside a generator, `yield` is an `IdentifierReference` unless the next token (on the
+            // same line) can start the operand of a `YieldExpression`. That is a single-token
+            // decision, so peek instead of running a full `lookahead` checkpoint/rewind. With
+            // `is_await = false` the worker reduces to exactly this (mirrors `is_unambiguous_await`).
+            let token = self.lexer.peek_token();
+            return !token.is_on_new_line() && token.kind().is_after_await_or_yield();
         }
         false
-    }
-
-    fn next_token_is_identifier_or_keyword_or_literal_on_same_line(
-        &mut self,
-        is_await: bool,
-    ) -> bool {
-        self.bump_any();
-
-        // NOTE: This check implementation is based on TypeScript parser.
-        // But TS does not have this exception.
-        // This is needed to pass parser_babel test to parse:
-        // `for (await of [])` with `sourceType: script`
-        if !self.is_ts && is_await && self.at(Kind::Of) {
-            return false;
-        }
-
-        let token = self.cur_token();
-        let kind = token.kind();
-
-        // For `await /regex/`, treat `/` as regex start (not division).
-        // In `await` context, `/` should always start a regex since `await` expects an expression.
-        // EXCEPTION: In unambiguous mode, don't do this. TypeScript initially parses `await` as
-        // identifier when `/` follows (treating `/` as division), then reparses if ESM is detected.
-        if is_await && kind == Kind::Slash && !self.source_type.is_unambiguous() {
-            return !token.is_on_new_line();
-        }
-
-        !token.is_on_new_line() && kind.is_after_await_or_yield()
     }
 }
