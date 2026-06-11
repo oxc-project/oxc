@@ -1636,6 +1636,7 @@ export interface DummyRuleMap {
   "vue/no-reserved-keys"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoReservedKeysConfig];
   "vue/no-reserved-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoReservedPropsConfig];
   "vue/no-shared-component-data"?: RuleNoConfig;
+  "vue/no-side-effects-in-computed-properties"?: RuleNoConfig;
   "vue/no-this-in-before-route-enter"?: RuleNoConfig;
   "vue/no-watch-after-await"?: RuleNoConfig;
   "vue/prefer-import-from-vue"?: RuleNoConfig;

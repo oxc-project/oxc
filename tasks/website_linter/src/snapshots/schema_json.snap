@@ -8371,6 +8371,9 @@ expression: json
         "vue/no-shared-component-data": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/no-side-effects-in-computed-properties": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vue/no-this-in-before-route-enter": {
           "$ref": "#/definitions/RuleNoConfig"
         },
