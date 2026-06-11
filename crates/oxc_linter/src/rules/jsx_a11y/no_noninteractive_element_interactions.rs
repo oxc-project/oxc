@@ -19,10 +19,9 @@ use crate::{
     globals::HTML_TAG,
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        KEYBOARD_EVENT_HANDLERS, MOUSE_EVENT_HANDLERS, get_element_type, get_prop_value,
-        get_string_literal_prop_value, has_jsx_prop, has_jsx_prop_ignore_case,
-        is_hidden_from_screen_reader, is_interactive_element, is_interactive_role,
-        is_non_interactive_element, is_non_interactive_role, parse_jsx_value,
+        get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop,
+        has_jsx_prop_ignore_case, is_hidden_from_screen_reader, is_interactive_element,
+        is_interactive_role, is_non_interactive_element, is_non_interactive_role, parse_jsx_value,
     },
 };
 
@@ -36,20 +35,37 @@ fn no_noninteractive_element_interactions_diagnostic(span: Span) -> OxcDiagnosti
     .with_label(span)
 }
 
-const FOCUS_EVENT_HANDLERS: &[&str] = &["onFocus", "onBlur"];
-const IMAGE_EVENT_HANDLERS: &[&str] = &["onLoad", "onError"];
-const DEFAULT_HANDLER_GROUPS: &[&[&str]] =
-    &[FOCUS_EVENT_HANDLERS, IMAGE_EVENT_HANDLERS, KEYBOARD_EVENT_HANDLERS, MOUSE_EVENT_HANDLERS];
-
 const RECOMMENDED_HANDLERS: &[&str] = &[
-    "onClick",
+    // image
     "onError",
     "onLoad",
-    "onMouseDown",
-    "onMouseUp",
+    // keyboard
     "onKeyPress",
     "onKeyDown",
     "onKeyUp",
+    // focus
+    "onFocus",
+    "onBlur",
+    // mouse
+    "onClick",
+    "onContextMenu",
+    "onDblClick",
+    "onDoubleClick",
+    "onDrag",
+    "onDragEnd",
+    "onDragEnter",
+    "onDragExit",
+    "onDragLeave",
+    "onDragOver",
+    "onDragStart",
+    "onDrop",
+    "onMouseDown",
+    "onMouseEnter",
+    "onMouseLeave",
+    "onMouseMove",
+    "onMouseOut",
+    "onMouseOver",
+    "onMouseUp",
 ];
 
 const KEYBOARD_HANDLER_EXCEPTIONS: &[&str] = &["onKeyUp", "onKeyDown", "onKeyPress"];
@@ -69,19 +85,10 @@ fn recommended_handler_exceptions() -> FxHashMap<CompactStr, Vec<CompactStr>> {
     exceptions
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoNoninteractiveElementInteractions(Box<NoNoninteractiveElementInteractionsConfig>);
 
-impl Default for NoNoninteractiveElementInteractions {
-    fn default() -> Self {
-        Self(Box::new(NoNoninteractiveElementInteractionsConfig {
-            handlers: Some(compact_handlers(RECOMMENDED_HANDLERS)),
-            handler_exceptions: recommended_handler_exceptions(),
-        }))
-    }
-}
-
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoNoninteractiveElementInteractionsConfig {
     /// An array of event handler names that should trigger this rule.
@@ -89,6 +96,15 @@ pub struct NoNoninteractiveElementInteractionsConfig {
     /// A mapping of HTML element names to handler names that should be ignored for that element.
     #[serde(flatten)]
     handler_exceptions: FxHashMap<CompactStr, Vec<CompactStr>>,
+}
+
+impl Default for NoNoninteractiveElementInteractionsConfig {
+    fn default() -> Self {
+        Self {
+            handlers: Some(compact_handlers(RECOMMENDED_HANDLERS)),
+            handler_exceptions: recommended_handler_exceptions(),
+        }
+    }
 }
 
 declare_oxc_lint!(
@@ -197,15 +213,12 @@ impl NoNoninteractiveElementInteractions {
         let ignored_handlers =
             self.0.handler_exceptions.get(element_type).map_or([].as_slice(), Vec::as_slice);
 
-        match &self.0.handlers {
-            Some(handlers) => handlers
-                .iter()
-                .any(|handler| has_active_handler(jsx_el, handler.as_str(), ignored_handlers)),
-            None => DEFAULT_HANDLER_GROUPS
-                .iter()
-                .flat_map(|handlers| handlers.iter())
-                .any(|handler| has_active_handler(jsx_el, handler, ignored_handlers)),
-        }
+        self.0
+            .handlers
+            .as_ref()
+            .unwrap_or(&compact_handlers(RECOMMENDED_HANDLERS))
+            .iter()
+            .any(|handler| has_active_handler(jsx_el, handler.as_str(), ignored_handlers))
     }
 }
 
@@ -217,7 +230,6 @@ fn has_active_handler(
     if ignored_handlers.iter().any(|ignored| ignored.as_str() == handler) {
         return false;
     }
-
     let Some(prop) = has_jsx_prop(jsx_el, handler) else {
         return false;
     };
@@ -549,40 +561,22 @@ fn test() {
         "onAnimationEnd",
         "onAnimationIteration",
         "onAnimationStart",
-        "onBlur",
         "onCanPlay",
         "onCanPlayThrough",
         "onChange",
         "onCompositionEnd",
         "onCompositionStart",
         "onCompositionUpdate",
-        "onContextMenu",
         "onCopy",
         "onCut",
-        "onDblClick",
-        "onDoubleClick",
-        "onDrag",
-        "onDragEnd",
-        "onDragEnter",
-        "onDragExit",
-        "onDragLeave",
-        "onDragOver",
-        "onDragStart",
-        "onDrop",
         "onDurationChange",
         "onEmptied",
         "onEncrypted",
         "onEnded",
-        "onFocus",
         "onInput",
         "onLoadStart",
         "onLoadedData",
         "onLoadedMetadata",
-        "onMouseEnter",
-        "onMouseLeave",
-        "onMouseMove",
-        "onMouseOut",
-        "onMouseOver",
         "onPaste",
         "onPause",
         "onPlay",
