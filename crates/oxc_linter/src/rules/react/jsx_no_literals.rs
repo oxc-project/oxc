@@ -22,7 +22,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_react_component_name,
+    utils::{default_true, is_react_component_name},
 };
 
 fn literal_text_diagnostic(span: Span) -> OxcDiagnostic {
@@ -70,6 +70,7 @@ pub struct ElementOverrideOptions {
     allow_element: bool,
 
     /// (default: true) - When false the rule will not apply the current options set to nested elements. This is useful when you want to apply the rule to a specific element, but not to its children.
+    #[serde(default = "default_true")]
     apply_to_nested_elements: bool,
 }
 
