@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 68/68 (100.00%)
-Positive Passed: 68/68 (100.00%)
-Negative Passed: 146/146 (100.00%)
+AST Parsed     : 69/69 (100.00%)
+Positive Passed: 69/69 (100.00%)
+Negative Passed: 147/147 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3849,6 +3849,20 @@ Negative Passed: 146/146 (100.00%)
  3 │ }
    ╰────
   help: Add an identifier after '?.'
+
+  × TS(2398): 'constructor' cannot be used as a parameter property name.
+   ╭─[misc/fail/oxc-ts-2398.ts:1:29]
+ 1 │ class A {constructor(public constructor){}}
+   ·                             ───────────
+ 2 │ class B {constructor(readonly constructor){}}
+   ╰────
+
+  × TS(2398): 'constructor' cannot be used as a parameter property name.
+   ╭─[misc/fail/oxc-ts-2398.ts:2:31]
+ 1 │ class A {constructor(public constructor){}}
+ 2 │ class B {constructor(readonly constructor){}}
+   ·                               ───────────
+   ╰────
 
   × Invalid rest element target in destructuring assignment
    ╭─[misc/fail/rest-assignment-target.js:1:6]
