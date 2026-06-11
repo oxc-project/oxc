@@ -732,6 +732,42 @@
       },
       "additionalProperties": false
     },
+    "CatchOrReturnConfig": {
+      "type": "object",
+      "properties": {
+        "allowFinally": {
+          "description": "Whether to allow `finally()` as a termination method.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to allow `finally()` as a termination method."
+        },
+        "allowThen": {
+          "description": "Whether to allow `then()` with two arguments as a termination method.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to allow `then()` with two arguments as a termination method."
+        },
+        "allowThenStrict": {
+          "description": "Whether to allow `then(null, handler)` as a termination method.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to allow `then(null, handler)` as a termination method."
+        },
+        "terminationMethod": {
+          "description": "List of allowed termination methods (e.g., `catch`, `done`).",
+          "default": [
+            "catch"
+          ],
+          "allOf": [
+            {
+              "$ref": "#/definitions/TerminationMethod"
+            }
+          ],
+          "markdownDescription": "List of allowed termination methods (e.g., `catch`, `done`)."
+        }
+      },
+      "additionalProperties": false
+    },
     "CaughtErrorsJson": {
       "oneOf": [
         {
@@ -4964,7 +5000,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "promise/catch-or-return": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CatchOrReturnConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "promise/no-callback-in-promise": {
           "anyOf": [
@@ -15004,6 +15057,19 @@
             "any"
           ],
           "markdownDescription": "Prefer default export in any module that has exports."
+        }
+      ]
+    },
+    "TerminationMethod": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       ]
     },

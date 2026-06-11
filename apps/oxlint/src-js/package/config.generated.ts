@@ -148,6 +148,7 @@ export type Location = "start" | "anywhere";
 export type HandleCallbackErrConfig = string;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
 export type Destructuring = "any" | "all";
+export type TerminationMethod = string | string[];
 export type RadixType = "always" | "as-needed";
 export type NativeAllowList = AllKeyword | string[];
 export type AllKeyword = "all";
@@ -1132,7 +1133,7 @@ export interface DummyRuleMap {
   "preserve-caught-error"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreserveCaughtErrorOptions];
   "promise/always-return"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AlwaysReturnConfig];
   "promise/avoid-new"?: RuleNoConfig;
-  "promise/catch-or-return"?: DummyRule;
+  "promise/catch-or-return"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, CatchOrReturnConfig];
   "promise/no-callback-in-promise"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoCallbackInPromiseConfig];
   "promise/no-multiple-resolved"?: RuleNoConfig;
   "promise/no-nesting"?: RuleNoConfig;
@@ -3846,6 +3847,24 @@ export interface AlwaysReturnConfig {
    * ```
    */
   ignoreLastCallback?: boolean;
+}
+export interface CatchOrReturnConfig {
+  /**
+   * Whether to allow `finally()` as a termination method.
+   */
+  allowFinally?: boolean;
+  /**
+   * Whether to allow `then()` with two arguments as a termination method.
+   */
+  allowThen?: boolean;
+  /**
+   * Whether to allow `then(null, handler)` as a termination method.
+   */
+  allowThenStrict?: boolean;
+  /**
+   * List of allowed termination methods (e.g., `catch`, `done`).
+   */
+  terminationMethod?: TerminationMethod;
 }
 export interface NoCallbackInPromiseConfig {
   /**
