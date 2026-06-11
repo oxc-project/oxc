@@ -184,6 +184,8 @@ export type ImportKind = "none" | "all" | "multiple" | "single";
  * Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
  */
 export type SortOrder = "desc" | "asc";
+export type ArrayOption = "array" | "array-simple" | "generic";
+export type ReadonlyArrayOption = "array" | "array-simple" | "generic";
 export type ClassLiteralPropertyStyleOption = "fields" | "getters";
 export type ConsistentIndexedObjectStyleConfig = "record" | "index-signature";
 export type ConsistentTypeDefinitionsConfig = "interface" | "type";
@@ -1225,7 +1227,7 @@ export interface DummyRuleMap {
   "sort-vars"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SortVars];
   "symbol-description"?: RuleNoConfig;
   "typescript/adjacent-overload-signatures"?: RuleNoConfig;
-  "typescript/array-type"?: DummyRule;
+  "typescript/array-type"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ArrayTypeConfig];
   "typescript/await-thenable"?: RuleNoConfig;
   "typescript/ban-ts-comment"?: DummyRule;
   "typescript/ban-tslint-comment"?: RuleNoConfig;
@@ -4281,6 +4283,16 @@ export interface SortVars {
    * When `true`, the rule ignores case-sensitivity when sorting variables.
    */
   ignoreCase?: boolean;
+}
+export interface ArrayTypeConfig {
+  /**
+   * The array type expected for mutable cases.
+   */
+  default?: ArrayOption;
+  /**
+   * The array type expected for readonly cases. If omitted, the value for `default` will be used.
+   */
+  readonly?: ReadonlyArrayOption;
 }
 export interface ConsistentReturnConfig {
   /**

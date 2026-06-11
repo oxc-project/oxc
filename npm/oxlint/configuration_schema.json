@@ -578,6 +578,60 @@
       },
       "additionalProperties": false
     },
+    "ArrayOption": {
+      "oneOf": [
+        {
+          "description": "Enforce using `T[]` for all array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: Array<number> = new Array<number>();\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: number[] = new Array<number>();\n```",
+          "type": "string",
+          "enum": [
+            "array"
+          ],
+          "markdownDescription": "Enforce using `T[]` for all array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: Array<number> = new Array<number>();\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: number[] = new Array<number>();\n```"
+        },
+        {
+          "description": "Enforce using `T[]` for simple types, and `Array<T>` for complex types.\n\nExample of **incorrect** code for this option:\n```ts\nconst a: (string | number)[] = ['a', 'b'];\nconst b: { prop: string }[] = [{ prop: 'a' }];\nconst c: Array<MyType> = ['a', 'b'];\nconst d: Array<string> = ['a', 'b'];\n```\n\nExample of **correct** code for this option:\n```ts\nconst a: Array<string | number> = ['a', 'b'];\nconst b: Array<{ prop: string }> = [{ prop: 'a' }];\nconst c: string[] = ['a', 'b'];\nconst d: MyType[] = ['a', 'b'];\n```",
+          "type": "string",
+          "enum": [
+            "array-simple"
+          ],
+          "markdownDescription": "Enforce using `T[]` for simple types, and `Array<T>` for complex types.\n\nExample of **incorrect** code for this option:\n```ts\nconst a: (string | number)[] = ['a', 'b'];\nconst b: { prop: string }[] = [{ prop: 'a' }];\nconst c: Array<MyType> = ['a', 'b'];\nconst d: Array<string> = ['a', 'b'];\n```\n\nExample of **correct** code for this option:\n```ts\nconst a: Array<string | number> = ['a', 'b'];\nconst b: Array<{ prop: string }> = [{ prop: 'a' }];\nconst c: string[] = ['a', 'b'];\nconst d: MyType[] = ['a', 'b'];\n```"
+        },
+        {
+          "description": "Enforce using `Array<T>` for all array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: number[] = new Array<number>();\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: Array<number> = new Array<number>();\n```",
+          "type": "string",
+          "enum": [
+            "generic"
+          ],
+          "markdownDescription": "Enforce using `Array<T>` for all array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: number[] = new Array<number>();\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: Array<number> = new Array<number>();\n```"
+        }
+      ]
+    },
+    "ArrayTypeConfig": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "description": "The array type expected for mutable cases.",
+          "default": "array",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArrayOption"
+            }
+          ],
+          "markdownDescription": "The array type expected for mutable cases."
+        },
+        "readonly": {
+          "description": "The array type expected for readonly cases. If omitted, the value for `default` will be used.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/ReadonlyArrayOption"
+            }
+          ],
+          "markdownDescription": "The array type expected for readonly cases. If omitted, the value for `default` will be used."
+        }
+      },
+      "additionalProperties": false
+    },
     "ArrowBodyStyle": {
       "type": "array",
       "items": [
@@ -5772,7 +5826,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/array-type": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ArrayTypeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/await-thenable": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -13667,6 +13738,34 @@
         }
       },
       "markdownDescription": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)"
+    },
+    "ReadonlyArrayOption": {
+      "oneOf": [
+        {
+          "description": "Enforce using `readonly T[]` for all readonly array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: ReadonlyArray<number> = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: readonly number[] = [];\n```",
+          "type": "string",
+          "enum": [
+            "array"
+          ],
+          "markdownDescription": "Enforce using `readonly T[]` for all readonly array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: ReadonlyArray<number> = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: readonly number[] = [];\n```"
+        },
+        {
+          "description": "Enforce using `readonly T[]` for simple types, and `ReadonlyArray<T>` for complex types.\n\nExample of **incorrect** code for this option:\n```ts\nconst a: readonly (string | number)[] = [];\nconst b: ReadonlyArray<number> = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst a: ReadonlyArray<string | number> = [];\nconst b: readonly number[] = [];\n```",
+          "type": "string",
+          "enum": [
+            "array-simple"
+          ],
+          "markdownDescription": "Enforce using `readonly T[]` for simple types, and `ReadonlyArray<T>` for complex types.\n\nExample of **incorrect** code for this option:\n```ts\nconst a: readonly (string | number)[] = [];\nconst b: ReadonlyArray<number> = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst a: ReadonlyArray<string | number> = [];\nconst b: readonly number[] = [];\n```"
+        },
+        {
+          "description": "Enforce using `ReadonlyArray<T>` for all readonly array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: readonly number[] = [];\nconst arr2: readonly (string | number)[] = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: ReadonlyArray<number> = [];\nconst arr2: ReadonlyArray<string | number> = [];\n```",
+          "type": "string",
+          "enum": [
+            "generic"
+          ],
+          "markdownDescription": "Enforce using `ReadonlyArray<T>` for all readonly array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: readonly number[] = [];\nconst arr2: readonly (string | number)[] = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: ReadonlyArray<number> = [];\nconst arr2: ReadonlyArray<string | number> = [];\n```"
+        }
+      ]
     },
     "RelativeUrlStyleConfig": {
       "oneOf": [
