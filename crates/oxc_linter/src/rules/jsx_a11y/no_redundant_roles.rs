@@ -238,11 +238,17 @@ fn get_input_implicit_role(
     explicit_role: &str,
 ) -> Option<&'static str> {
     let input_type = has_jsx_prop_ignore_case(jsx_el, "type")
-        .and_then(get_string_literal_prop_value)
+        .and_then(get_static_string_prop_value)
         .unwrap_or("text");
     let has_list = has_jsx_prop_ignore_case(jsx_el, "list").is_some();
 
-    if input_type.eq_ignore_ascii_case("checkbox") {
+    if input_type.eq_ignore_ascii_case("button")
+        || input_type.eq_ignore_ascii_case("image")
+        || input_type.eq_ignore_ascii_case("reset")
+        || input_type.eq_ignore_ascii_case("submit")
+    {
+        explicit_role.eq_ignore_ascii_case("button").then_some("button")
+    } else if input_type.eq_ignore_ascii_case("checkbox") {
         explicit_role.eq_ignore_ascii_case("checkbox").then_some("checkbox")
     } else if input_type.eq_ignore_ascii_case("radio") {
         explicit_role.eq_ignore_ascii_case("radio").then_some("radio")
@@ -423,12 +429,18 @@ fn test() {
         (r#"<input list="opts" role="combobox" />"#, None, None),
         (r#"<input type="search" list="opts" role="combobox" />"#, None, None),
         (r#"<input type="checkbox" role="checkbox" />"#, None, None),
+        (r#"<input type={"checkbox"} role="checkbox" />"#, None, None),
         (r#"<input type="radio" role="radio" />"#, None, None),
         (r#"<input type="range" role="slider" />"#, None, None),
         (r#"<input type="number" role="spinbutton" />"#, None, None),
         (r#"<input type="search" role="searchbox" />"#, None, None),
         (r#"<input type="text" role="textbox" />"#, None, None),
         (r#"<input role="textbox" />"#, None, None),
+        (r#"<input type="email" list="opts" role="combobox" />"#, None, None),
+        (r#"<input type="button" role="button" />"#, None, None),
+        (r#"<input type="image" role="button" />"#, None, None),
+        (r#"<input type="reset" role="button" />"#, None, None),
+        (r#"<input type="submit" role="button" />"#, None, None),
     ];
 
     let fix = vec![
@@ -449,6 +461,7 @@ fn test() {
         // ancestor-dependent and no longer flagged. See #22743.
         (r#"<input type="checkbox" role="checkbox" />"#, r#"<input type="checkbox"  />"#),
         (r#"<input list="opts" role="combobox" />"#, r#"<input list="opts"  />"#),
+        (r#"<input type="submit" role="button" />"#, r#"<input type="submit"  />"#),
     ];
 
     Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::PLUGIN, pass, fail)

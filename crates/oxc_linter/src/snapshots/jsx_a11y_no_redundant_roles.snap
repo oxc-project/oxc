@@ -359,6 +359,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the redundant role `checkbox` from the element `input`.
 
+  ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `checkbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:26]
+ 1 │ <input type={"checkbox"} role="checkbox" />
+   ·                          ───────────────
+   ╰────
+  help: Remove the redundant role `checkbox` from the element `input`.
+
   ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `radio`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:21]
  1 │ <input type="radio" role="radio" />
@@ -400,3 +407,38 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────
    ╰────
   help: Remove the redundant role `textbox` from the element `input`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:33]
+ 1 │ <input type="email" list="opts" role="combobox" />
+   ·                                 ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `input`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:22]
+ 1 │ <input type="button" role="button" />
+   ·                      ─────────────
+   ╰────
+  help: Remove the redundant role `button` from the element `input`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:21]
+ 1 │ <input type="image" role="button" />
+   ·                     ─────────────
+   ╰────
+  help: Remove the redundant role `button` from the element `input`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:21]
+ 1 │ <input type="reset" role="button" />
+   ·                     ─────────────
+   ╰────
+  help: Remove the redundant role `button` from the element `input`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `input` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:22]
+ 1 │ <input type="submit" role="button" />
+   ·                      ─────────────
+   ╰────
+  help: Remove the redundant role `button` from the element `input`.
