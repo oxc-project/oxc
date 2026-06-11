@@ -1,16 +1,17 @@
 use convert_case::{Boundary, Case, Converter};
 use cow_utils::CowUtils;
-use lazy_regex::{Regex, RegexBuilder};
+use lazy_regex::Regex;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize, ser::Error};
-use serde_json::Value;
 
 use crate::{
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
+    utils::{default_true, deserialize_regex_vec},
 };
 
 fn filename_case_diagnostic(message: String, help_message: String) -> OxcDiagnostic {
@@ -53,8 +54,8 @@ impl Default for FilenameCaseConfig {
 
 // Use a separate struct for configuration docs, as the main config struct is
 // too different from the format of the end-user configuration options' shape.
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct FilenameCaseConfigJson {
     /// The case style(s) to allow/enforce for filenames. `true` means the case style is allowed, `false` means it is banned.
     ///
@@ -72,7 +73,7 @@ pub struct FilenameCaseConfigJson {
     ///   ]
     /// }
     /// ```
-    cases: FilenameCaseConfigJsonCases,
+    cases: Option<FilenameCaseConfigJsonCases>,
     /// The case style to enforce for filenames.
     ///
     /// You can set the `case` option like this:
@@ -86,7 +87,7 @@ pub struct FilenameCaseConfigJson {
     ///   ]
     /// }
     /// ```
-    case: FilenameCaseJsonOptions,
+    case: Option<FilenameCaseJsonOptions>,
     /// An array of regular expression patterns for filenames to ignore.
     ///
     /// You can set the `ignore` option like this:
@@ -100,25 +101,22 @@ pub struct FilenameCaseConfigJson {
     ///   ]
     /// }
     /// ```
-    ignore: Option<Regex>,
+    #[serde(default, deserialize_with = "deserialize_regex_vec")]
+    ignore: Vec<Regex>,
     /// Whether to treat additional, `.`-separated parts of a filename as
     /// parts of the extension rather than parts of the filename.
+    #[serde(default = "default_true")]
     multiple_file_extensions: bool,
 }
 
 impl Default for FilenameCaseConfigJson {
     fn default() -> Self {
-        Self {
-            cases: FilenameCaseConfigJsonCases::default(),
-            case: FilenameCaseJsonOptions::KebabCase,
-            ignore: None,
-            multiple_file_extensions: true,
-        }
+        Self { cases: None, case: None, ignore: vec![], multiple_file_extensions: true }
     }
 }
 
-#[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, Default, JsonSchema, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct FilenameCaseConfigJsonCases {
     /// Whether kebab case is allowed, e.g. `some-file-name.js`.
     kebab_case: bool,
@@ -128,12 +126,6 @@ struct FilenameCaseConfigJsonCases {
     snake_case: bool,
     /// Whether pascal case is allowed, e.g. `SomeFileName.js`.
     pascal_case: bool,
-}
-
-impl Default for FilenameCaseConfigJsonCases {
-    fn default() -> Self {
-        Self { kebab_case: true, camel_case: false, snake_case: false, pascal_case: false }
-    }
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Serialize, Deserialize)]
@@ -198,48 +190,26 @@ declare_oxc_lint!(
 
 impl Rule for FilenameCase {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let mut config =
-            FilenameCaseConfig { multiple_file_extensions: true, ..Default::default() };
+        let json = serde_json::from_value::<DefaultRuleConfig<FilenameCaseConfigJson>>(value)?
+            .into_inner();
+        let mut config = FilenameCaseConfig {
+            ignore: json.ignore,
+            multiple_file_extensions: json.multiple_file_extensions,
+            ..Default::default()
+        };
 
-        if let Some(value) = value.get(0) {
-            config.kebab_case = false;
-            if let Some(Value::Array(arr)) = value.get("ignore") {
-                config.ignore = arr
-                    .iter()
-                    .filter_map(|item| item.as_str())
-                    .map(|s| RegexBuilder::new(s).build().map_err(serde_json::Error::custom))
-                    .collect::<Result<Vec<_>, _>>()?;
-            }
-
-            if let Some(Value::Bool(val)) = value.get("multipleFileExtensions") {
-                config.multiple_file_extensions = *val;
-            }
-
-            if let Some(Value::String(s)) = value.get("case") {
-                match s.as_str() {
-                    "camelCase" => config.camel_case = true,
-                    "snakeCase" => config.snake_case = true,
-                    "pascalCase" => config.pascal_case = true,
-                    _ => config.kebab_case = true,
-                }
-                return Ok(Self(Box::new(config)));
-            }
-
-            if let Some(Value::Object(map)) = value.get("cases") {
-                for (key, value) in map {
-                    match (key.as_str(), value) {
-                        ("kebabCase", Value::Bool(b)) => config.kebab_case = *b,
-                        ("camelCase", Value::Bool(b)) => config.camel_case = *b,
-                        ("snakeCase", Value::Bool(b)) => config.snake_case = *b,
-                        ("pascalCase", Value::Bool(b)) => config.pascal_case = *b,
-                        _ => (),
-                    }
-                }
-                return Ok(Self(Box::new(config)));
-            }
+        if let Some(case) = json.case {
+            config.kebab_case = matches!(case, FilenameCaseJsonOptions::KebabCase);
+            config.camel_case = matches!(case, FilenameCaseJsonOptions::CamelCase);
+            config.snake_case = matches!(case, FilenameCaseJsonOptions::SnakeCase);
+            config.pascal_case = matches!(case, FilenameCaseJsonOptions::PascalCase);
+        } else if let Some(cases) = json.cases {
+            config.kebab_case = cases.kebab_case;
+            config.camel_case = cases.camel_case;
+            config.snake_case = cases.snake_case;
+            config.pascal_case = cases.pascal_case;
         }
 
-        config.kebab_case = true;
         Ok(Self(Box::new(config)))
     }
 
@@ -325,6 +295,8 @@ impl Rule for FilenameCase {
 #[test]
 fn test() {
     use std::path::PathBuf;
+
+    use serde_json::Value;
 
     use crate::tester::Tester;
 
