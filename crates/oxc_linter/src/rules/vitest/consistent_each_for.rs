@@ -166,7 +166,7 @@ declare_oxc_lint!(
     /// ```
     ConsistentEachFor,
     vitest,
-    correctness,
+    style,
     config = ConsistentEachForJson,
     version = "1.39.0",
 );
