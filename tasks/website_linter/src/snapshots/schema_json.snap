@@ -2945,7 +2945,24 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "jsx-a11y/no-redundant-roles": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRedundantRolesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/no-static-element-interactions": {
           "anyOf": [
@@ -11797,6 +11814,15 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "NoRedundantRolesConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
     },
     "NoRequireImportsConfig": {
       "type": "object",
