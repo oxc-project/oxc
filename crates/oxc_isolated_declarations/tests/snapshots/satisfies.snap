@@ -5,31 +5,10 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/satisfies.ts
 ```
 ==================== .D.TS ====================
 
-export declare const object: unknown;
-export declare const number: unknown;
+export declare const object: {
+	a: number;
+};
+export declare const number: number;
 export declare const annotated: {
 	a: number;
 };
-
-
-==================== Errors ====================
-
-  x TS9010: Variable must have an explicit type annotation with
-  | --isolatedDeclarations.
-   ,-[1:14]
- 1 | export const object = { a: 1 } satisfies { a: number };
-   :              ^^^^^^
- 2 | export const number = 1 satisfies number;
-   `----
-
-  x TS9010: Variable must have an explicit type annotation with
-  | --isolatedDeclarations.
-   ,-[2:14]
- 1 | export const object = { a: 1 } satisfies { a: number };
- 2 | export const number = 1 satisfies number;
-   :              ^^^^^^
- 3 | export const annotated: { a: number } = { a: 1 } satisfies { a: number };
-   `----
-
-
-```

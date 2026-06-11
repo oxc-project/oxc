@@ -78,7 +78,13 @@ impl<'a> IsolatedDeclarations<'a> {
                     let is_elided_private_param = in_private_constructor
                         && param.accessibility.is_some_and(TSAccessibility::is_private);
                     if new_type.is_none() && !is_elided_private_param {
-                        self.error(parameter_must_have_explicit_type(param.span));
+                        // tsc reports an uninferable default at the
+                        // initializer expression, not the whole parameter.
+                        let span = param
+                            .initializer
+                            .as_ref()
+                            .map_or(param.span, |init| oxc_span::GetSpan::span(&**init));
+                        self.error(parameter_must_have_explicit_type(span));
                     }
                     new_type
                 })

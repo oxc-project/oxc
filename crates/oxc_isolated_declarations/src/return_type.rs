@@ -13,7 +13,10 @@ use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-use crate::{IsolatedDeclarations, diagnostics::type_containing_private_name};
+use crate::{
+    IsolatedDeclarations,
+    diagnostics::{inferred_type_of_expression, type_containing_private_name},
+};
 
 /// Infer return type from return statement.
 /// ```ts
@@ -66,11 +69,14 @@ impl<'a> FunctionReturnType<'a> {
 
         let expr = visitor.return_expression??;
         let Some(mut expr_type) = transformer.infer_type_from_expression(&expr) else {
-            // Avoid report error in parent function
             return if expr.is_function() {
+                // Avoid report error in parent function
                 Some(transformer.ast.ts_type_unknown_keyword(SPAN))
             } else {
-                None
+                // tsc reports TS9013 at the uninferable return expression
+                // rather than TS9007 at the function.
+                transformer.error(inferred_type_of_expression(expr.span()));
+                Some(transformer.ast.ts_type_unknown_keyword(SPAN))
             };
         };
 

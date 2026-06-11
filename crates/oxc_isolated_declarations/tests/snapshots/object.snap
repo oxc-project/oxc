@@ -17,7 +17,9 @@ declare const C: {
 declare const D: {
 	state: number;
 };
-declare const E: {};
+declare const E: {
+	state: unknown;
+};
 declare const ObjectMethods: {
 	a(): number;
 	b(): number;
@@ -70,19 +72,11 @@ declare const exoticKeys: {
 ==================== Errors ====================
 
   x TS9013: Expression type can't be inferred with --isolatedDeclarations.
-    ,-[32:6]
- 31 | const E = {
+    ,-[33:10]
  32 |     get state() {
-    :         ^^^^^
  33 |         return A;
-    `----
-
-  x TS9013: Expression type can't be inferred with --isolatedDeclarations.
-    ,-[35:11]
+    :                ^
  34 |     },
- 35 |     set state(v) {
-    :              ^^^
- 36 |         // do something
     `----
 
   x TS9008: Method must have an explicit return type annotation with

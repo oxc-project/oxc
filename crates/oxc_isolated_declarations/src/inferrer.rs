@@ -3,7 +3,7 @@ use oxc_ast::ast::{
     ArrowFunctionExpression, Expression, FormalParameter, Function, Statement, TSType,
     TSTypeAnnotation, UnaryExpression,
 };
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 
 use crate::{
     IsolatedDeclarations,
@@ -53,6 +53,11 @@ impl<'a> IsolatedDeclarations<'a> {
                 } else {
                     Some(expr.type_annotation.clone_in(self.ast.allocator))
                 }
+            }
+            // `expr satisfies T` has the type of `expr` (tsc accepts these
+            // under isolated declarations whenever `expr` itself is inferable).
+            Expression::TSSatisfiesExpression(expr) => {
+                self.infer_type_from_expression(&expr.expression)
             }
             Expression::ClassExpression(expr) => {
                 self.error(inferred_type_of_class_expression(expr.span));
@@ -119,8 +124,20 @@ impl<'a> IsolatedDeclarations<'a> {
         if function.expression
             && let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first()
         {
-            return self
-                .infer_type_from_expression(&stmt.expression)
+            let ty = self.infer_type_from_expression(&stmt.expression).or_else(|| {
+                if stmt.expression.is_function() {
+                    // The nested function reports its own errors.
+                    Some(self.ast.ts_type_unknown_keyword(SPAN))
+                } else {
+                    // tsc reports TS9013 at the uninferable body expression
+                    // rather than TS9007 at the arrow.
+                    self.error(crate::diagnostics::inferred_type_of_expression(
+                        stmt.expression.span(),
+                    ));
+                    Some(self.ast.ts_type_unknown_keyword(SPAN))
+                }
+            });
+            return ty
                 .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation));
         }
 

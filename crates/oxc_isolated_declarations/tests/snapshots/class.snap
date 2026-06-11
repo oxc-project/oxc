@@ -165,19 +165,19 @@ export declare class ProtectedConstructorWithPrivateParamPropertyInferredDefault
 
   x TS9011: Parameter must have an explicit type annotation with
   | --isolatedDeclarations.
-     ,-[192:3]
+     ,-[192:23]
  191 |     private constructor(
  192 |         public readonly a = new InferredDefault(),
-     :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     :                             ^^^^^^^^^^^^^^^^^^^^^
  193 |     ) {}
      `----
 
   x TS9011: Parameter must have an explicit type annotation with
   | --isolatedDeclarations.
-     ,-[201:3]
+     ,-[201:24]
  200 |     protected constructor(
  201 |         private readonly a = new InferredDefault(),
-     :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     :                              ^^^^^^^^^^^^^^^^^^^^^
  202 |     ) {}
      `----
 

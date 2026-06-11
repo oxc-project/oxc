@@ -36,8 +36,8 @@ declare class GlobalSymbol3 {
 	get [Symbol.toStringTag](): string;
 }
 declare class GlobalSymbol4 {
-	set [Symbol.toStringTag](v);
-	get [Symbol.toStringTag]();
+	set [Symbol.toStringTag](v: unknown);
+	get [Symbol.toStringTag](): unknown;
 }
 
 
@@ -52,13 +52,20 @@ declare class GlobalSymbol4 {
  29 |     return;
     `----
 
-  x TS9009: At least one accessor must have an explicit return type annotation
-  | with --isolatedDeclarations.
-    ,-[67:8]
- 66 |   }
+  x TS9013: Expression type can't be inferred with --isolatedDeclarations.
+    ,-[50:12]
+ 49 |   get [Symbol.toStringTag]() {
+ 50 |     return GlobalSymbol2
+    :            ^^^^^^^^^^^^^
+ 51 |   }
+    `----
+
+  x TS9013: Expression type can't be inferred with --isolatedDeclarations.
+    ,-[68:12]
  67 |   get [Symbol.toStringTag]() {
-    :        ^^^^^^^^^^^^^^^^^^
  68 |     return GlobalSymbol4;
+    :            ^^^^^^^^^^^^^
+ 69 |   }
     `----
 
 
