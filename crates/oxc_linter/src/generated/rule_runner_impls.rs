@@ -2620,6 +2620,12 @@ impl RuleRunner for crate::rules::react::jsx_no_duplicate_props::JsxNoDuplicateP
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::react::jsx_no_literals::JsxNoLiterals {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::JSXElement, AstType::JSXFragment]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::react::jsx_no_script_url::JsxNoScriptUrl {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::JSXOpeningElement]));
