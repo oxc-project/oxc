@@ -5096,7 +5096,24 @@ expression: json
           ]
         },
         "promise/param-names": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ParamNamesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "promise/prefer-await-to-callbacks": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -13699,6 +13716,22 @@ expression: json
           "markdownDescription": "Setters must come before getters."
         }
       ]
+    },
+    "ParamNamesConfig": {
+      "type": "object",
+      "properties": {
+        "rejectPattern": {
+          "description": "Regex pattern used to validate the `reject` parameter name. If provided, this pattern\nis used instead of the default `^_?reject$` check.",
+          "type": "string",
+          "markdownDescription": "Regex pattern used to validate the `reject` parameter name. If provided, this pattern\nis used instead of the default `^_?reject$` check."
+        },
+        "resolvePattern": {
+          "description": "Regex pattern used to validate the `resolve` parameter name. If provided, this pattern\nis used instead of the default `^_?resolve$` check.",
+          "type": "string",
+          "markdownDescription": "Regex pattern used to validate the `resolve` parameter name. If provided, this pattern\nis used instead of the default `^_?resolve$` check."
+        }
+      },
+      "additionalProperties": false
     },
     "PreferArrowCallback": {
       "$ref": "#/definitions/PreferArrowCallbackConfig"

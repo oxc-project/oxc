@@ -1141,7 +1141,7 @@ export interface DummyRuleMap {
   "promise/no-promise-in-callback"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoPromiseInCallbackConfig];
   "promise/no-return-in-finally"?: RuleNoConfig;
   "promise/no-return-wrap"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoReturnWrap];
-  "promise/param-names"?: DummyRule;
+  "promise/param-names"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ParamNamesConfig];
   "promise/prefer-await-to-callbacks"?: RuleNoConfig;
   "promise/prefer-await-to-then"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferAwaitToThenConfig];
   "promise/prefer-catch"?: RuleNoConfig;
@@ -3900,6 +3900,18 @@ export interface NoReturnWrap {
    * ```
    */
   allowReject?: boolean;
+}
+export interface ParamNamesConfig {
+  /**
+   * Regex pattern used to validate the `reject` parameter name. If provided, this pattern
+   * is used instead of the default `^_?reject$` check.
+   */
+  rejectPattern?: string;
+  /**
+   * Regex pattern used to validate the `resolve` parameter name. If provided, this pattern
+   * is used instead of the default `^_?resolve$` check.
+   */
+  resolvePattern?: string;
 }
 export interface PreferAwaitToThenConfig {
   /**
