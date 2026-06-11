@@ -257,9 +257,9 @@ mod test {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
         assert!(!ret.panicked, "{source_text}");
-        assert!(ret.errors.is_empty(), "{source_text}");
+        assert!(ret.diagnostics.is_empty(), "{source_text}");
         let ret = SemanticBuilder::new().with_build_nodes(true).build(&ret.program);
-        assert!(ret.errors.is_empty(), "{source_text}");
+        assert!(ret.diagnostics.is_empty(), "{source_text}");
         let semantic = ret.semantic;
         let symbols = collect_name_symbols(opts, &allocator, semantic.scoping(), semantic.nodes());
         symbols

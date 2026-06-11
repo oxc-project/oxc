@@ -1,8 +1,8 @@
 //! # React Compiler Example
 //!
-//! Runs the Rust port of React Compiler ([facebook/react#36173]) over a file
-//! through the oxc frontend (parse + semantic -> convert -> compile -> convert
-//! back -> codegen) and prints the memoized output.
+//! Runs the Rust port of the [React Compiler] over a file through the oxc
+//! frontend (parse + semantic -> convert -> compile -> convert back -> codegen)
+//! and prints the memoized output.
 //!
 //! ## Usage
 //!
@@ -10,14 +10,13 @@
 //! just example react_compiler MyFile.jsx
 //! ```
 //!
-//! [facebook/react#36173]: https://github.com/facebook/react/pull/36173
+//! [React Compiler]: https://github.com/react/react/tree/main/compiler
 
 use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 use oxc_react_compiler::{default_plugin_options, transform};
@@ -38,10 +37,8 @@ fn main() {
 
     let allocator = Allocator::default();
     let program = Parser::new(&allocator, &source_text, source_type).parse().program;
-    let semantic =
-        SemanticBuilder::new().with_build_nodes(true).with_enum_eval(true).build(&program).semantic;
 
-    let result = transform(&program, &semantic, &allocator, default_plugin_options());
+    let result = transform(&program, &allocator, default_plugin_options());
 
     if !result.diagnostics.is_empty() {
         println!("Diagnostics:\n");

@@ -303,6 +303,18 @@ pub trait RuleMeta {
     ///
     /// Set via `version = "x.y.z"` or `version = "next"` in `declare_oxc_lint!`.
     const VERSION: &'static str;
+
+    /// Additional information about the rule.
+    ///
+    /// Set via `short_description = "..."` in `declare_oxc_lint!`.
+    const INFO: RuleInfo = RuleInfo { short_description: "" };
+}
+
+/// Additional information describing a lint rule.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct RuleInfo {
+    /// A short, one-line summary of what the rule does.
+    pub short_description: &'static str,
 }
 
 /// Rule categories defined by rust-clippy

@@ -57,7 +57,7 @@ test('plays video', () => {
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-pub struct NoRestrictedJestMethodsConfig {
+pub struct NoRestrictedTestMethodsConfig {
     /// A mapping of restricted Jest method names to custom messages - or
     /// `null`, for a generic message.
     #[schemars(schema_with = "object_with_nullable_string_schema")]
@@ -65,7 +65,7 @@ pub struct NoRestrictedJestMethodsConfig {
     pub restricted_methods: FxHashMap<String, Option<CompactStr>>,
 }
 
-impl NoRestrictedJestMethodsConfig {
+impl NoRestrictedTestMethodsConfig {
     #[expect(clippy::unnecessary_wraps)]
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let restricted_methods = value
@@ -74,7 +74,7 @@ impl NoRestrictedJestMethodsConfig {
             .map(Self::compile_restricted_methods)
             .unwrap_or_default();
 
-        Ok(NoRestrictedJestMethodsConfig { restricted_methods })
+        Ok(NoRestrictedTestMethodsConfig { restricted_methods })
     }
     pub fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;

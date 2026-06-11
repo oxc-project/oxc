@@ -772,9 +772,11 @@ fn run_estree_test262_impl(
                 .with_config(parser_config)
                 .parse();
 
-            if ret.panicked || !ret.errors.is_empty() {
-                let error =
-                    ret.errors.first().map_or_else(|| "Panicked".to_string(), ToString::to_string);
+            if ret.panicked || !ret.diagnostics.is_empty() {
+                let error = ret
+                    .diagnostics
+                    .first()
+                    .map_or_else(|| "Panicked".to_string(), ToString::to_string);
                 return CoverageResult {
                     path: test_file.path.clone(),
                     should_fail: false,
@@ -844,9 +846,11 @@ fn run_estree_acorn_jsx_impl(
                 .with_config(parser_config)
                 .parse();
 
-            if ret.panicked || !ret.errors.is_empty() {
-                let error =
-                    ret.errors.first().map_or_else(|| "Panicked".to_string(), ToString::to_string);
+            if ret.panicked || !ret.diagnostics.is_empty() {
+                let error = ret
+                    .diagnostics
+                    .first()
+                    .map_or_else(|| "Panicked".to_string(), ToString::to_string);
                 let result = if test_file.should_fail {
                     TestResult::CorrectError(error, ret.panicked)
                 } else {
@@ -982,9 +986,9 @@ fn run_estree_typescript_impl(
                     .with_config(parser_config)
                     .parse();
 
-                if ret.panicked || !ret.errors.is_empty() {
+                if ret.panicked || !ret.diagnostics.is_empty() {
                     let error = ret
-                        .errors
+                        .diagnostics
                         .first()
                         .map_or_else(|| "Panicked".to_string(), ToString::to_string);
                     return CoverageResult {

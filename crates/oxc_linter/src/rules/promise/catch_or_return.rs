@@ -1,34 +1,95 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 use schemars::JsonSchema;
+use serde::Deserialize;
+use std::fmt::Write as _;
 
 use crate::{
-    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_promise,
+    AstNode,
+    ast_util::is_method_call,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_promise,
 };
 
-fn catch_or_return_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Expected `{method_name}` or `return`."))
-        .with_help(format!("Return the promise or chain a `{method_name}()`."))
-        .with_label(span)
+fn format_termination_method(method: &CompactStr, as_call: bool) -> String {
+    if as_call { format!("`{method}()`") } else { format!("`{method}`") }
 }
 
-#[derive(Debug, Default, Clone)]
+fn join_termination_methods(methods: &[CompactStr], as_call: bool) -> String {
+    match methods {
+        [] => String::new(),
+        [method] => format_termination_method(method, as_call),
+        [first, second] => {
+            format!(
+                "{} or {}",
+                format_termination_method(first, as_call),
+                format_termination_method(second, as_call)
+            )
+        }
+        [methods @ .., last] => {
+            let mut message = methods
+                .iter()
+                .map(|method| format_termination_method(method, as_call))
+                .collect::<Vec<_>>()
+                .join(", ");
+            let _ = write!(message, ", or {}", format_termination_method(last, as_call));
+            message
+        }
+    }
+}
+
+fn catch_or_return_diagnostic(methods: &[CompactStr], span: Span) -> OxcDiagnostic {
+    let expected_methods = match methods {
+        [] => "`return`".to_string(),
+        [method] => format!("`{method}` or `return`"),
+        [first, second] => format!("`{first}`, `{second}`, or `return`"),
+        [methods @ .., last] => {
+            let mut message =
+                methods.iter().map(|method| format!("`{method}`")).collect::<Vec<_>>().join(", ");
+            let _ = write!(message, ", `{last}`, or `return`");
+            message
+        }
+    };
+
+    let diagnostic = OxcDiagnostic::warn(format!("Expected {expected_methods}.")).with_label(span);
+
+    match methods {
+        [] => diagnostic.with_help("Return the promise."),
+        [_] => {
+            let chain_methods = join_termination_methods(methods, true);
+            diagnostic.with_help(format!("Return the promise or chain a {chain_methods}."))
+        }
+        [_, ..] => {
+            let chain_methods = join_termination_methods(methods, true);
+            diagnostic.with_help(format!("Return the promise or chain {chain_methods}."))
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct CatchOrReturn(Box<CatchOrReturnConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CatchOrReturnConfig {
     /// Whether to allow `finally()` as a termination method.
     allow_finally: bool,
     /// Whether to allow `then()` with two arguments as a termination method.
     allow_then: bool,
+    /// Whether to allow `then(null, handler)` as a termination method.
+    allow_then_strict: bool,
     /// List of allowed termination methods (e.g., `catch`, `done`).
+    #[serde(
+        default = "default_termination_method",
+        deserialize_with = "deserialize_termination_method"
+    )]
     termination_method: Vec<CompactStr>,
 }
 
@@ -37,9 +98,31 @@ impl Default for CatchOrReturnConfig {
         Self {
             allow_finally: false,
             allow_then: false,
-            termination_method: vec![CompactStr::new("catch")],
+            allow_then_strict: false,
+            termination_method: default_termination_method(),
         }
     }
+}
+
+fn default_termination_method() -> Vec<CompactStr> {
+    vec![CompactStr::new("catch")]
+}
+
+fn deserialize_termination_method<'de, D>(deserializer: D) -> Result<Vec<CompactStr>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum TerminationMethod {
+        Single(CompactStr),
+        Multiple(Vec<CompactStr>),
+    }
+
+    Ok(match TerminationMethod::deserialize(deserializer)? {
+        TerminationMethod::Single(method) => vec![method],
+        TerminationMethod::Multiple(methods) => methods,
+    })
 }
 
 impl std::ops::Deref for CatchOrReturn {
@@ -88,41 +171,7 @@ declare_oxc_lint!(
 
 impl Rule for CatchOrReturn {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let mut config = CatchOrReturnConfig::default();
-
-        if let Some(termination_array_config) = value
-            .get(0)
-            .and_then(|v| v.get("terminationMethod"))
-            .and_then(serde_json::Value::as_array)
-        {
-            config.termination_method = termination_array_config
-                .iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(CompactStr::from)
-                .collect();
-        }
-
-        if let Some(termination_string_config) = value
-            .get(0)
-            .and_then(|v| v.get("terminationMethod"))
-            .and_then(serde_json::Value::as_str)
-        {
-            config.termination_method = vec![CompactStr::new(termination_string_config)];
-        }
-
-        if let Some(allow_finally_config) =
-            value.get(0).and_then(|v| v.get("allowFinally")).and_then(serde_json::Value::as_bool)
-        {
-            config.allow_finally = allow_finally_config;
-        }
-
-        if let Some(allow_then_config) =
-            value.get(0).and_then(|v| v.get("allowThen")).and_then(serde_json::Value::as_bool)
-        {
-            config.allow_then = allow_then_config;
-        }
-
-        Ok(Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -148,8 +197,7 @@ impl Rule for CatchOrReturn {
             return;
         }
 
-        let termination_method = &self.termination_method[0];
-        ctx.diagnostic(catch_or_return_diagnostic(termination_method, call_expr.span));
+        ctx.diagnostic(catch_or_return_diagnostic(&self.termination_method, call_expr.span));
     }
 }
 
@@ -164,7 +212,12 @@ impl CatchOrReturn {
         };
 
         // somePromise.then(a, b)
-        if self.allow_then && prop_name == "then" && call_expr.arguments.len() == 2 {
+        if prop_name == "then"
+            && call_expr.arguments.len() == 2
+            && (self.allow_then
+                || (self.allow_then_strict
+                    && matches!(call_expr.arguments.first(), Some(Argument::NullLiteral(_)))))
+        {
             return true;
         }
 
@@ -182,7 +235,7 @@ impl CatchOrReturn {
         }
 
         // somePromise.catch()
-        if self.termination_method.contains(&CompactStr::from(prop_name)) {
+        if self.termination_method.iter().any(|method| method == prop_name) {
             return true;
         }
 
@@ -304,6 +357,34 @@ fn test() {
             Some(serde_json::json!([{ "allowThen": true }])),
         ),
         (
+            "frank().then(go).then(null, doIt)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(go).then().then().then().then(null, doIt)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(go).then().then(null, function() { /* why bother */ })",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank.then(go).then(to).then(null, jail)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(a).then(b).then(null, c)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(a).then(b).then().then().then(null, doIt)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(a).then(b).then(null, function() { /* why bother */ })",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
             "frank().then(go).catch(doIt).finally(fn)",
             Some(serde_json::json!([{ "allowFinally": true }])),
         ),
@@ -373,8 +454,40 @@ fn test() {
         ),
         ("frank().then(go)", Some(serde_json::json!([{ "terminationMethod": "done" }]))),
         ("frank().catch(go)", Some(serde_json::json!([{ "terminationMethod": "done" }]))),
+        ("frank().then(go)", Some(serde_json::json!([{ "terminationMethod": ["catch", "done"] }]))),
+        ("frank().then(go)", Some(serde_json::json!([{ "terminationMethod": [] }]))),
         ("frank().catch(go).someOtherMethod()", None),
         ("frank()['catch'](go).someOtherMethod()", None),
+        ("frank().then(a).then(b).then(null, c)", None),
+        ("frank().then(a).then(b).then().then().then(null, doIt)", None),
+        ("frank().then(a).then(b).then(null, function() { /* why bother */ })", None),
+        ("frank().then(a, b)", None),
+        ("frank().then(go).then(zam, doIt)", None),
+        ("frank().then(a).then(b).then(c, d)", None),
+        ("frank().then(go).then().then().then().then(wham, doIt)", None),
+        ("frank().then(go).then().then(function() {}, function() { /* why bother */ })", None),
+        ("frank.then(go).then(to).then(pewPew, jail)", None),
+        ("frank().then(a, b)", Some(serde_json::json!([{ "allowThenStrict": true }]))),
+        (
+            "frank().then(go).then(zam, doIt)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(a).then(b).then(c, d)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(go).then().then().then().then(wham, doIt)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank().then(go).then().then(function() {}, function() { /* why bother */ })",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
+        (
+            "frank.then(go).then(to).then(pewPew, jail)",
+            Some(serde_json::json!([{ "allowThenStrict": true }])),
+        ),
         ("const a = () => { Promise.resolve(null); }", None),
         ("function a() { const b = () => { Promise.resolve(null); }; return b; }", None),
     ];

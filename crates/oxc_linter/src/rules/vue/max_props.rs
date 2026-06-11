@@ -24,7 +24,7 @@ use crate::{
     utils::find_property,
 };
 
-fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
+fn max_props_diagnostic(span: Span, cur: u32, limit: u32) -> OxcDiagnostic {
     let msg = format!("This component has too many props ({cur}). Maximum allowed is {limit}.");
     OxcDiagnostic::warn(msg)
         .with_help(
@@ -37,7 +37,7 @@ fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxProps {
     /// The maximum number of props allowed in a Vue SFC.
-    max_props: usize,
+    max_props: u32,
 }
 
 impl Default for MaxProps {
@@ -106,6 +106,7 @@ impl Rule for MaxProps {
 }
 
 impl MaxProps {
+    #[expect(clippy::cast_possible_truncation)] // the length of properties/arrays can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run_on_setup<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -119,20 +120,20 @@ impl MaxProps {
         if let Some(first_arg) = call_expr.arguments.first() {
             match first_arg.as_expression() {
                 Some(Expression::ObjectExpression(obj_expr))
-                    if obj_expr.properties.len() > self.max_props =>
+                    if obj_expr.properties.len() as u32 > self.max_props =>
                 {
                     ctx.diagnostic(max_props_diagnostic(
                         call_expr.span,
-                        obj_expr.properties.len(),
+                        obj_expr.properties.len() as u32,
                         self.max_props,
                     ));
                 }
                 Some(Expression::ArrayExpression(arr_expr))
-                    if arr_expr.elements.len() > self.max_props =>
+                    if arr_expr.elements.len() as u32 > self.max_props =>
                 {
                     ctx.diagnostic(max_props_diagnostic(
                         call_expr.span,
-                        arr_expr.elements.len(),
+                        arr_expr.elements.len() as u32,
                         self.max_props,
                     ));
                 }
@@ -147,13 +148,14 @@ impl MaxProps {
                 return;
             };
 
-            let all_key_len = get_type_argument_keys(ctx, first_type_argument).len();
+            let all_key_len = get_type_argument_keys(ctx, first_type_argument).len() as u32;
             if all_key_len > self.max_props {
                 ctx.diagnostic(max_props_diagnostic(call_expr.span, all_key_len, self.max_props));
             }
         }
     }
 
+    #[expect(clippy::cast_possible_truncation)] // the length of properties can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run_on_options<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else {
             return;
@@ -172,10 +174,10 @@ impl MaxProps {
             return;
         };
 
-        if props_obj_expr.properties.len() > self.max_props {
+        if props_obj_expr.properties.len() as u32 > self.max_props {
             ctx.diagnostic(max_props_diagnostic(
                 props_obj_expr.span,
-                props_obj_expr.properties.len(),
+                props_obj_expr.properties.len() as u32,
                 self.max_props,
             ));
         }

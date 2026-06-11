@@ -2,7 +2,7 @@ commit: 2688fbd1
 
 parser_babel Summary:
 AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2222/2236 (99.37%)
+Positive Passed: 2221/2236 (99.33%)
 Negative Passed: 1709/1723 (99.19%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -178,7 +178,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │         // Also works on AssignmentPattern
    ╰────
 
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts:5:5]
+ 4 │   #c?: number;
+ 5 │   #d!;
+   ·     ─
+ 6 │   #e!: boolean;
+   ╰────
+
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:6:6]
+ 5 │     x: number = 1;
+ 6 │     x!;
+   ·      ─
+ 7 │     x!: number;
+   ╰────
 
   × Identifier `x` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:2:5]
@@ -259,6 +277,46 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:22:13]
+ 21 │ 
+ 22 │ interface I<const T> {}
+    ·             ───────
+ 23 │ interface J<const T extends U> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:23:13]
+ 22 │ interface I<const T> {}
+ 23 │ interface J<const T extends U> {}
+    ·             ─────────────────
+ 24 │ interface K<T, const U> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:24:16]
+ 23 │ interface J<const T extends U> {}
+ 24 │ interface K<T, const U> {}
+    ·                ───────
+ 25 │ interface L<in const T> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:25:13]
+ 24 │ interface K<T, const U> {}
+ 25 │ interface L<in const T> {}
+    ·             ──────────
+ 26 │ interface M<const in T> {}
+    ╰────
+
+  × TS(1277): 'const' modifier can only appear on a type parameter of a function, method or class
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:26:13]
+ 25 │ interface L<in const T> {}
+ 26 │ interface M<const in T> {}
+    ·             ──────────
+ 27 │ 
+    ╰────
 
   × Identifier `method` has already been declared
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts:29:3]
@@ -4128,7 +4186,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ────
    ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/278/input.js:1:18]
  1 │ function f(a, ...b = 0)
    ·                  ─────
@@ -11921,7 +11979,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ────
    ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0260/input.js:1:15]
  1 │ function x(...a = 1){}
    ·               ─────
@@ -12151,7 +12209,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-fragment/input.js:3:5]
  2 │   return (
  3 │     <>Hello</>
-   ·     ──────────
+   ·     ─
  4 │   );
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
@@ -12159,30 +12217,29 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-jsx-expression/input.js:1:1]
  1 │ <div>{name}</div>
-   · ─────────────────
+   · ─
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
+  × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:1]
  1 │ <div>() => {}
    · ─
    ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin/input.js:1:1]
  1 │ <div></div>
-   · ───────────
+   · ─
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 
   × Unexpected JSX expression
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin-non-BMP-identifier/input.js:1:1]
- 1 │ ╭─▶ <
- 2 │ │     𠮷
- 3 │ │   ></
- 4 │ │     𠮷
- 5 │ ╰─▶ >
+ 1 │ <
+   · ─
+ 2 │   𠮷
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 

@@ -20,6 +20,7 @@ fn main() {
         TestLanguage::Json,
         TestLanguage::Jsonc,
         TestLanguage::Json5,
+        TestLanguage::JsonStringify,
     ] {
         TestRunner::new(TestRunnerOptions { language, debug, filter: filter.clone() }).run();
     }

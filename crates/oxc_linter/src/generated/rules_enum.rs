@@ -8,6 +8,8 @@
     clippy::missing_errors_doc,
     clippy::match_same_arms
 )]
+#[cfg(feature = "ruledocs")]
+use crate::rule::RuleInfo;
 pub use crate::rules::eslint::accessor_pairs::AccessorPairs as EslintAccessorPairs;
 pub use crate::rules::eslint::array_callback_return::ArrayCallbackReturn as EslintArrayCallbackReturn;
 pub use crate::rules::eslint::arrow_body_style::ArrowBodyStyle as EslintArrowBodyStyle;
@@ -821,6 +823,7 @@ pub use crate::rules::vue::no_watch_after_await::NoWatchAfterAwait as VueNoWatch
 pub use crate::rules::vue::prefer_import_from_vue::PreferImportFromVue as VuePreferImportFromVue;
 pub use crate::rules::vue::prop_name_casing::PropNameCasing as VuePropNameCasing;
 pub use crate::rules::vue::require_default_export::RequireDefaultExport as VueRequireDefaultExport;
+pub use crate::rules::vue::require_default_prop::RequireDefaultProp as VueRequireDefaultProp;
 pub use crate::rules::vue::require_direct_export::RequireDirectExport as VueRequireDirectExport;
 pub use crate::rules::vue::require_prop_type_constructor::RequirePropTypeConstructor as VueRequirePropTypeConstructor;
 pub use crate::rules::vue::require_prop_types::RequirePropTypes as VueRequirePropTypes;
@@ -1664,6 +1667,7 @@ pub enum RuleEnum {
     VuePreferImportFromVue(VuePreferImportFromVue),
     VuePropNameCasing(VuePropNameCasing),
     VueRequireDefaultExport(VueRequireDefaultExport),
+    VueRequireDefaultProp(VueRequireDefaultProp),
     VueRequireDirectExport(VueRequireDirectExport),
     VueRequirePropTypeConstructor(VueRequirePropTypeConstructor),
     VueRequirePropTypes(VueRequirePropTypes),
@@ -2594,7 +2598,8 @@ const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID 
 const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = VUE_NO_WATCH_AFTER_AWAIT_ID + 1usize;
 const VUE_PROP_NAME_CASING_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1usize;
 const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PROP_NAME_CASING_ID + 1usize;
-const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
+const VUE_REQUIRE_DEFAULT_PROP_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
+const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = VUE_REQUIRE_DEFAULT_PROP_ID + 1usize;
 const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = VUE_REQUIRE_DIRECT_EXPORT_ID + 1usize;
 const VUE_REQUIRE_PROP_TYPES_ID: usize = VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID + 1usize;
 const VUE_REQUIRE_RENDER_RETURN_ID: usize = VUE_REQUIRE_PROP_TYPES_ID + 1usize;
@@ -3548,6 +3553,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VUE_PREFER_IMPORT_FROM_VUE_ID,
             Self::VuePropNameCasing(_) => VUE_PROP_NAME_CASING_ID,
             Self::VueRequireDefaultExport(_) => VUE_REQUIRE_DEFAULT_EXPORT_ID,
+            Self::VueRequireDefaultProp(_) => VUE_REQUIRE_DEFAULT_PROP_ID,
             Self::VueRequireDirectExport(_) => VUE_REQUIRE_DIRECT_EXPORT_ID,
             Self::VueRequirePropTypeConstructor(_) => VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID,
             Self::VueRequirePropTypes(_) => VUE_REQUIRE_PROP_TYPES_ID,
@@ -4487,6 +4493,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::NAME,
             Self::VuePropNameCasing(_) => VuePropNameCasing::NAME,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::NAME,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::NAME,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::NAME,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::NAME,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::NAME,
@@ -5484,6 +5491,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::CATEGORY,
             Self::VuePropNameCasing(_) => VuePropNameCasing::CATEGORY,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::CATEGORY,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::CATEGORY,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::CATEGORY,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::CATEGORY,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::CATEGORY,
@@ -6424,6 +6432,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FIX,
             Self::VuePropNameCasing(_) => VuePropNameCasing::FIX,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::FIX,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::FIX,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::FIX,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::FIX,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::FIX,
@@ -7624,6 +7633,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::documentation(),
             Self::VuePropNameCasing(_) => VuePropNameCasing::documentation(),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::documentation(),
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::documentation(),
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::documentation(),
             Self::VueRequirePropTypeConstructor(_) => {
                 VueRequirePropTypeConstructor::documentation()
@@ -9983,6 +9993,8 @@ impl RuleEnum {
                 .or_else(|| VuePropNameCasing::schema(generator)),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::config_schema(generator)
                 .or_else(|| VueRequireDefaultExport::schema(generator)),
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::config_schema(generator)
+                .or_else(|| VueRequireDefaultProp::schema(generator)),
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::config_schema(generator)
                 .or_else(|| VueRequireDirectExport::schema(generator)),
             Self::VueRequirePropTypeConstructor(_) => {
@@ -10832,6 +10844,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => "vue",
             Self::VuePropNameCasing(_) => "vue",
             Self::VueRequireDefaultExport(_) => "vue",
+            Self::VueRequireDefaultProp(_) => "vue",
             Self::VueRequireDirectExport(_) => "vue",
             Self::VueRequirePropTypeConstructor(_) => "vue",
             Self::VueRequirePropTypes(_) => "vue",
@@ -13472,6 +13485,9 @@ impl RuleEnum {
             Self::VueRequireDefaultExport(_) => Ok(Self::VueRequireDefaultExport(
                 VueRequireDefaultExport::from_configuration(value)?,
             )),
+            Self::VueRequireDefaultProp(_) => {
+                Ok(Self::VueRequireDefaultProp(VueRequireDefaultProp::from_configuration(value)?))
+            }
             Self::VueRequireDirectExport(_) => {
                 Ok(Self::VueRequireDirectExport(VueRequireDirectExport::from_configuration(value)?))
             }
@@ -14329,6 +14345,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
             Self::VuePropNameCasing(rule) => rule.to_configuration(),
             Self::VueRequireDefaultExport(rule) => rule.to_configuration(),
+            Self::VueRequireDefaultProp(rule) => rule.to_configuration(),
             Self::VueRequireDirectExport(rule) => rule.to_configuration(),
             Self::VueRequirePropTypeConstructor(rule) => rule.to_configuration(),
             Self::VueRequirePropTypes(rule) => rule.to_configuration(),
@@ -15168,6 +15185,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
                 Self::VuePropNameCasing(rule) => rule.run(node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run(node, ctx),
                 Self::VueRequireDirectExport(rule) => rule.run(node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run(node, ctx),
                 Self::VueRequirePropTypes(rule) => rule.run(node, ctx),
@@ -16000,6 +16018,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
                 Self::VuePropNameCasing(rule) => rule.run(node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run(node, ctx),
                 Self::VueRequireDirectExport(rule) => rule.run(node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run(node, ctx),
                 Self::VueRequirePropTypes(rule) => rule.run(node, ctx),
@@ -16839,6 +16858,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
                 Self::VuePropNameCasing(rule) => rule.run_once(ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run_once(ctx),
                 Self::VueRequireDirectExport(rule) => rule.run_once(ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_once(ctx),
                 Self::VueRequirePropTypes(rule) => rule.run_once(ctx),
@@ -17671,6 +17691,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
                 Self::VuePropNameCasing(rule) => rule.run_once(ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run_once(ctx),
                 Self::VueRequireDirectExport(rule) => rule.run_once(ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_once(ctx),
                 Self::VueRequirePropTypes(rule) => rule.run_once(ctx),
@@ -18767,6 +18788,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePropNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDirectExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequirePropTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19855,6 +19877,7 @@ impl RuleEnum {
                 Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VuePropNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::VueRequireDefaultProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequireDirectExport(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequirePropTypeConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueRequirePropTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20685,6 +20708,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.should_run(ctx),
             Self::VuePropNameCasing(rule) => rule.should_run(ctx),
             Self::VueRequireDefaultExport(rule) => rule.should_run(ctx),
+            Self::VueRequireDefaultProp(rule) => rule.should_run(ctx),
             Self::VueRequireDirectExport(rule) => rule.should_run(ctx),
             Self::VueRequirePropTypeConstructor(rule) => rule.should_run(ctx),
             Self::VueRequirePropTypes(rule) => rule.should_run(ctx),
@@ -21884,6 +21908,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
             Self::VuePropNameCasing(_) => VuePropNameCasing::IS_TSGOLINT_RULE,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::IS_TSGOLINT_RULE,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::IS_TSGOLINT_RULE,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::IS_TSGOLINT_RULE,
             Self::VueRequirePropTypeConstructor(_) => {
                 VueRequirePropTypeConstructor::IS_TSGOLINT_RULE
@@ -22885,6 +22910,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::VERSION,
             Self::VuePropNameCasing(_) => VuePropNameCasing::VERSION,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::VERSION,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::VERSION,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::VERSION,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::VERSION,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::VERSION,
@@ -23921,6 +23947,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
             Self::VuePropNameCasing(_) => VuePropNameCasing::HAS_CONFIG,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::HAS_CONFIG,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::HAS_CONFIG,
             Self::VueRequireDirectExport(_) => VueRequireDirectExport::HAS_CONFIG,
             Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::HAS_CONFIG,
             Self::VueRequirePropTypes(_) => VueRequirePropTypes::HAS_CONFIG,
@@ -23934,6 +23961,953 @@ impl RuleEnum {
             Self::VueValidDefineProps(_) => VueValidDefineProps::HAS_CONFIG,
             Self::VueValidNextTick(_) => VueValidNextTick::HAS_CONFIG,
         }
+    }
+    #[doc = r" Additional information about this rule."]
+    #[cfg(feature = "ruledocs")]
+    pub fn info(&self) -> RuleInfo {
+        match self {
+            Self::ImportConsistentTypeSpecifierStyle(_) => ImportConsistentTypeSpecifierStyle::INFO,
+            Self::ImportDefault(_) => ImportDefault::INFO,
+            Self::ImportExport(_) => ImportExport::INFO,
+            Self::ImportExportsLast(_) => ImportExportsLast::INFO,
+            Self::ImportExtensions(_) => ImportExtensions::INFO,
+            Self::ImportFirst(_) => ImportFirst::INFO,
+            Self::ImportGroupExports(_) => ImportGroupExports::INFO,
+            Self::ImportMaxDependencies(_) => ImportMaxDependencies::INFO,
+            Self::ImportNamed(_) => ImportNamed::INFO,
+            Self::ImportNamespace(_) => ImportNamespace::INFO,
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::INFO,
+            Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::INFO,
+            Self::ImportNoAmd(_) => ImportNoAmd::INFO,
+            Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::INFO,
+            Self::ImportNoCommonjs(_) => ImportNoCommonjs::INFO,
+            Self::ImportNoCycle(_) => ImportNoCycle::INFO,
+            Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::INFO,
+            Self::ImportNoDuplicates(_) => ImportNoDuplicates::INFO,
+            Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::INFO,
+            Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::INFO,
+            Self::ImportNoMutableExports(_) => ImportNoMutableExports::INFO,
+            Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::INFO,
+            Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::INFO,
+            Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::INFO,
+            Self::ImportNoNamedExport(_) => ImportNoNamedExport::INFO,
+            Self::ImportNoNamespace(_) => ImportNoNamespace::INFO,
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::INFO,
+            Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::INFO,
+            Self::ImportNoSelfImport(_) => ImportNoSelfImport::INFO,
+            Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::INFO,
+            Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::INFO,
+            Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::INFO,
+            Self::ImportUnambiguous(_) => ImportUnambiguous::INFO,
+            Self::EslintAccessorPairs(_) => EslintAccessorPairs::INFO,
+            Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::INFO,
+            Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::INFO,
+            Self::EslintBlockScopedVar(_) => EslintBlockScopedVar::INFO,
+            Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::INFO,
+            Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::INFO,
+            Self::EslintComplexity(_) => EslintComplexity::INFO,
+            Self::EslintConstructorSuper(_) => EslintConstructorSuper::INFO,
+            Self::EslintCurly(_) => EslintCurly::INFO,
+            Self::EslintDefaultCase(_) => EslintDefaultCase::INFO,
+            Self::EslintDefaultCaseLast(_) => EslintDefaultCaseLast::INFO,
+            Self::EslintDefaultParamLast(_) => EslintDefaultParamLast::INFO,
+            Self::EslintEqeqeq(_) => EslintEqeqeq::INFO,
+            Self::EslintForDirection(_) => EslintForDirection::INFO,
+            Self::EslintFuncNameMatching(_) => EslintFuncNameMatching::INFO,
+            Self::EslintFuncNames(_) => EslintFuncNames::INFO,
+            Self::EslintFuncStyle(_) => EslintFuncStyle::INFO,
+            Self::EslintGetterReturn(_) => EslintGetterReturn::INFO,
+            Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::INFO,
+            Self::EslintGuardForIn(_) => EslintGuardForIn::INFO,
+            Self::EslintIdLength(_) => EslintIdLength::INFO,
+            Self::EslintIdMatch(_) => EslintIdMatch::INFO,
+            Self::EslintInitDeclarations(_) => EslintInitDeclarations::INFO,
+            Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::INFO,
+            Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::INFO,
+            Self::EslintMaxDepth(_) => EslintMaxDepth::INFO,
+            Self::EslintMaxLines(_) => EslintMaxLines::INFO,
+            Self::EslintMaxLinesPerFunction(_) => EslintMaxLinesPerFunction::INFO,
+            Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::INFO,
+            Self::EslintMaxParams(_) => EslintMaxParams::INFO,
+            Self::EslintMaxStatements(_) => EslintMaxStatements::INFO,
+            Self::EslintNewCap(_) => EslintNewCap::INFO,
+            Self::EslintNoAlert(_) => EslintNoAlert::INFO,
+            Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::INFO,
+            Self::EslintNoAsyncPromiseExecutor(_) => EslintNoAsyncPromiseExecutor::INFO,
+            Self::EslintNoAwaitInLoop(_) => EslintNoAwaitInLoop::INFO,
+            Self::EslintNoBitwise(_) => EslintNoBitwise::INFO,
+            Self::EslintNoCaller(_) => EslintNoCaller::INFO,
+            Self::EslintNoCaseDeclarations(_) => EslintNoCaseDeclarations::INFO,
+            Self::EslintNoClassAssign(_) => EslintNoClassAssign::INFO,
+            Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::INFO,
+            Self::EslintNoCondAssign(_) => EslintNoCondAssign::INFO,
+            Self::EslintNoConsole(_) => EslintNoConsole::INFO,
+            Self::EslintNoConstAssign(_) => EslintNoConstAssign::INFO,
+            Self::EslintNoConstantBinaryExpression(_) => EslintNoConstantBinaryExpression::INFO,
+            Self::EslintNoConstantCondition(_) => EslintNoConstantCondition::INFO,
+            Self::EslintNoConstructorReturn(_) => EslintNoConstructorReturn::INFO,
+            Self::EslintNoContinue(_) => EslintNoContinue::INFO,
+            Self::EslintNoControlRegex(_) => EslintNoControlRegex::INFO,
+            Self::EslintNoDebugger(_) => EslintNoDebugger::INFO,
+            Self::EslintNoDeleteVar(_) => EslintNoDeleteVar::INFO,
+            Self::EslintNoDivRegex(_) => EslintNoDivRegex::INFO,
+            Self::EslintNoDupeClassMembers(_) => EslintNoDupeClassMembers::INFO,
+            Self::EslintNoDupeElseIf(_) => EslintNoDupeElseIf::INFO,
+            Self::EslintNoDupeKeys(_) => EslintNoDupeKeys::INFO,
+            Self::EslintNoDuplicateCase(_) => EslintNoDuplicateCase::INFO,
+            Self::EslintNoDuplicateImports(_) => EslintNoDuplicateImports::INFO,
+            Self::EslintNoElseReturn(_) => EslintNoElseReturn::INFO,
+            Self::EslintNoEmpty(_) => EslintNoEmpty::INFO,
+            Self::EslintNoEmptyCharacterClass(_) => EslintNoEmptyCharacterClass::INFO,
+            Self::EslintNoEmptyFunction(_) => EslintNoEmptyFunction::INFO,
+            Self::EslintNoEmptyPattern(_) => EslintNoEmptyPattern::INFO,
+            Self::EslintNoEmptyStaticBlock(_) => EslintNoEmptyStaticBlock::INFO,
+            Self::EslintNoEqNull(_) => EslintNoEqNull::INFO,
+            Self::EslintNoEval(_) => EslintNoEval::INFO,
+            Self::EslintNoExAssign(_) => EslintNoExAssign::INFO,
+            Self::EslintNoExtendNative(_) => EslintNoExtendNative::INFO,
+            Self::EslintNoExtraBind(_) => EslintNoExtraBind::INFO,
+            Self::EslintNoExtraBooleanCast(_) => EslintNoExtraBooleanCast::INFO,
+            Self::EslintNoExtraLabel(_) => EslintNoExtraLabel::INFO,
+            Self::EslintNoFallthrough(_) => EslintNoFallthrough::INFO,
+            Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::INFO,
+            Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::INFO,
+            Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::INFO,
+            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::INFO,
+            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::INFO,
+            Self::EslintNoImportAssign(_) => EslintNoImportAssign::INFO,
+            Self::EslintNoInlineComments(_) => EslintNoInlineComments::INFO,
+            Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::INFO,
+            Self::EslintNoInvalidRegexp(_) => EslintNoInvalidRegexp::INFO,
+            Self::EslintNoIrregularWhitespace(_) => EslintNoIrregularWhitespace::INFO,
+            Self::EslintNoIterator(_) => EslintNoIterator::INFO,
+            Self::EslintNoLabelVar(_) => EslintNoLabelVar::INFO,
+            Self::EslintNoLabels(_) => EslintNoLabels::INFO,
+            Self::EslintNoLoneBlocks(_) => EslintNoLoneBlocks::INFO,
+            Self::EslintNoLonelyIf(_) => EslintNoLonelyIf::INFO,
+            Self::EslintNoLoopFunc(_) => EslintNoLoopFunc::INFO,
+            Self::EslintNoLossOfPrecision(_) => EslintNoLossOfPrecision::INFO,
+            Self::EslintNoMagicNumbers(_) => EslintNoMagicNumbers::INFO,
+            Self::EslintNoMisleadingCharacterClass(_) => EslintNoMisleadingCharacterClass::INFO,
+            Self::EslintNoMultiAssign(_) => EslintNoMultiAssign::INFO,
+            Self::EslintNoMultiStr(_) => EslintNoMultiStr::INFO,
+            Self::EslintNoNegatedCondition(_) => EslintNoNegatedCondition::INFO,
+            Self::EslintNoNestedTernary(_) => EslintNoNestedTernary::INFO,
+            Self::EslintNoNew(_) => EslintNoNew::INFO,
+            Self::EslintNoNewFunc(_) => EslintNoNewFunc::INFO,
+            Self::EslintNoNewNativeNonconstructor(_) => EslintNoNewNativeNonconstructor::INFO,
+            Self::EslintNoNewWrappers(_) => EslintNoNewWrappers::INFO,
+            Self::EslintNoNonoctalDecimalEscape(_) => EslintNoNonoctalDecimalEscape::INFO,
+            Self::EslintNoObjCalls(_) => EslintNoObjCalls::INFO,
+            Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::INFO,
+            Self::EslintNoParamReassign(_) => EslintNoParamReassign::INFO,
+            Self::EslintNoPlusplus(_) => EslintNoPlusplus::INFO,
+            Self::EslintNoPromiseExecutorReturn(_) => EslintNoPromiseExecutorReturn::INFO,
+            Self::EslintNoProto(_) => EslintNoProto::INFO,
+            Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::INFO,
+            Self::EslintNoRedeclare(_) => EslintNoRedeclare::INFO,
+            Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::INFO,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::INFO,
+            Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::INFO,
+            Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::INFO,
+            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::INFO,
+            Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::INFO,
+            Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::INFO,
+            Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::INFO,
+            Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::INFO,
+            Self::EslintNoSequences(_) => EslintNoSequences::INFO,
+            Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::INFO,
+            Self::EslintNoShadow(_) => EslintNoShadow::INFO,
+            Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::INFO,
+            Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::INFO,
+            Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::INFO,
+            Self::EslintNoTernary(_) => EslintNoTernary::INFO,
+            Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::INFO,
+            Self::EslintNoThrowLiteral(_) => EslintNoThrowLiteral::INFO,
+            Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::INFO,
+            Self::EslintNoUndef(_) => EslintNoUndef::INFO,
+            Self::EslintNoUndefined(_) => EslintNoUndefined::INFO,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::INFO,
+            Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::INFO,
+            Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::INFO,
+            Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::INFO,
+            Self::EslintNoUnreachable(_) => EslintNoUnreachable::INFO,
+            Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::INFO,
+            Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::INFO,
+            Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::INFO,
+            Self::EslintNoUnusedExpressions(_) => EslintNoUnusedExpressions::INFO,
+            Self::EslintNoUnusedLabels(_) => EslintNoUnusedLabels::INFO,
+            Self::EslintNoUnusedPrivateClassMembers(_) => EslintNoUnusedPrivateClassMembers::INFO,
+            Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::INFO,
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::INFO,
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::INFO,
+            Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::INFO,
+            Self::EslintNoUselessCall(_) => EslintNoUselessCall::INFO,
+            Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::INFO,
+            Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::INFO,
+            Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::INFO,
+            Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::INFO,
+            Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::INFO,
+            Self::EslintNoUselessRename(_) => EslintNoUselessRename::INFO,
+            Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::INFO,
+            Self::EslintNoVar(_) => EslintNoVar::INFO,
+            Self::EslintNoVoid(_) => EslintNoVoid::INFO,
+            Self::EslintNoWarningComments(_) => EslintNoWarningComments::INFO,
+            Self::EslintNoWith(_) => EslintNoWith::INFO,
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::INFO,
+            Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::INFO,
+            Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::INFO,
+            Self::EslintPreferConst(_) => EslintPreferConst::INFO,
+            Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::INFO,
+            Self::EslintPreferExponentiationOperator(_) => EslintPreferExponentiationOperator::INFO,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::INFO,
+            Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::INFO,
+            Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::INFO,
+            Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::INFO,
+            Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::INFO,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::INFO,
+            Self::EslintPreferRestParams(_) => EslintPreferRestParams::INFO,
+            Self::EslintPreferSpread(_) => EslintPreferSpread::INFO,
+            Self::EslintPreferTemplate(_) => EslintPreferTemplate::INFO,
+            Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::INFO,
+            Self::EslintRadix(_) => EslintRadix::INFO,
+            Self::EslintRequireAwait(_) => EslintRequireAwait::INFO,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::INFO,
+            Self::EslintRequireYield(_) => EslintRequireYield::INFO,
+            Self::EslintSortImports(_) => EslintSortImports::INFO,
+            Self::EslintSortKeys(_) => EslintSortKeys::INFO,
+            Self::EslintSortVars(_) => EslintSortVars::INFO,
+            Self::EslintSymbolDescription(_) => EslintSymbolDescription::INFO,
+            Self::EslintUnicodeBom(_) => EslintUnicodeBom::INFO,
+            Self::EslintUseIsnan(_) => EslintUseIsnan::INFO,
+            Self::EslintValidTypeof(_) => EslintValidTypeof::INFO,
+            Self::EslintVarsOnTop(_) => EslintVarsOnTop::INFO,
+            Self::EslintYoda(_) => EslintYoda::INFO,
+            Self::TypescriptAdjacentOverloadSignatures(_) => {
+                TypescriptAdjacentOverloadSignatures::INFO
+            }
+            Self::TypescriptArrayType(_) => TypescriptArrayType::INFO,
+            Self::TypescriptAwaitThenable(_) => TypescriptAwaitThenable::INFO,
+            Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::INFO,
+            Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::INFO,
+            Self::TypescriptBanTypes(_) => TypescriptBanTypes::INFO,
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::INFO
+            }
+            Self::TypescriptConsistentGenericConstructors(_) => {
+                TypescriptConsistentGenericConstructors::INFO
+            }
+            Self::TypescriptConsistentIndexedObjectStyle(_) => {
+                TypescriptConsistentIndexedObjectStyle::INFO
+            }
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::INFO,
+            Self::TypescriptConsistentTypeAssertions(_) => TypescriptConsistentTypeAssertions::INFO,
+            Self::TypescriptConsistentTypeDefinitions(_) => {
+                TypescriptConsistentTypeDefinitions::INFO
+            }
+            Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::INFO,
+            Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::INFO,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::INFO,
+            Self::TypescriptExplicitFunctionReturnType(_) => {
+                TypescriptExplicitFunctionReturnType::INFO
+            }
+            Self::TypescriptExplicitMemberAccessibility(_) => {
+                TypescriptExplicitMemberAccessibility::INFO
+            }
+            Self::TypescriptExplicitModuleBoundaryTypes(_) => {
+                TypescriptExplicitModuleBoundaryTypes::INFO
+            }
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::INFO,
+            Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::INFO,
+            Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::INFO,
+            Self::TypescriptNoConfusingNonNullAssertion(_) => {
+                TypescriptNoConfusingNonNullAssertion::INFO
+            }
+            Self::TypescriptNoConfusingVoidExpression(_) => {
+                TypescriptNoConfusingVoidExpression::INFO
+            }
+            Self::TypescriptNoDeprecated(_) => TypescriptNoDeprecated::INFO,
+            Self::TypescriptNoDuplicateEnumValues(_) => TypescriptNoDuplicateEnumValues::INFO,
+            Self::TypescriptNoDuplicateTypeConstituents(_) => {
+                TypescriptNoDuplicateTypeConstituents::INFO
+            }
+            Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::INFO,
+            Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::INFO,
+            Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::INFO,
+            Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::INFO,
+            Self::TypescriptNoExtraNonNullAssertion(_) => TypescriptNoExtraNonNullAssertion::INFO,
+            Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::INFO,
+            Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::INFO,
+            Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::INFO,
+            Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::INFO,
+            Self::TypescriptNoImportTypeSideEffects(_) => TypescriptNoImportTypeSideEffects::INFO,
+            Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::INFO,
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::INFO,
+            Self::TypescriptNoMeaninglessVoidOperator(_) => {
+                TypescriptNoMeaninglessVoidOperator::INFO
+            }
+            Self::TypescriptNoMisusedNew(_) => TypescriptNoMisusedNew::INFO,
+            Self::TypescriptNoMisusedPromises(_) => TypescriptNoMisusedPromises::INFO,
+            Self::TypescriptNoMisusedSpread(_) => TypescriptNoMisusedSpread::INFO,
+            Self::TypescriptNoMixedEnums(_) => TypescriptNoMixedEnums::INFO,
+            Self::TypescriptNoNamespace(_) => TypescriptNoNamespace::INFO,
+            Self::TypescriptNoNonNullAssertedNullishCoalescing(_) => {
+                TypescriptNoNonNullAssertedNullishCoalescing::INFO
+            }
+            Self::TypescriptNoNonNullAssertedOptionalChain(_) => {
+                TypescriptNoNonNullAssertedOptionalChain::INFO
+            }
+            Self::TypescriptNoNonNullAssertion(_) => TypescriptNoNonNullAssertion::INFO,
+            Self::TypescriptNoRedundantTypeConstituents(_) => {
+                TypescriptNoRedundantTypeConstituents::INFO
+            }
+            Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::INFO,
+            Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::INFO,
+            Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::INFO,
+            Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
+                TypescriptNoUnnecessaryBooleanLiteralCompare::INFO
+            }
+            Self::TypescriptNoUnnecessaryCondition(_) => TypescriptNoUnnecessaryCondition::INFO,
+            Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
+                TypescriptNoUnnecessaryParameterPropertyAssignment::INFO
+            }
+            Self::TypescriptNoUnnecessaryQualifier(_) => TypescriptNoUnnecessaryQualifier::INFO,
+            Self::TypescriptNoUnnecessaryTemplateExpression(_) => {
+                TypescriptNoUnnecessaryTemplateExpression::INFO
+            }
+            Self::TypescriptNoUnnecessaryTypeArguments(_) => {
+                TypescriptNoUnnecessaryTypeArguments::INFO
+            }
+            Self::TypescriptNoUnnecessaryTypeAssertion(_) => {
+                TypescriptNoUnnecessaryTypeAssertion::INFO
+            }
+            Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
+                TypescriptNoUnnecessaryTypeConstraint::INFO
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::INFO
+            }
+            Self::TypescriptNoUnnecessaryTypeParameters(_) => {
+                TypescriptNoUnnecessaryTypeParameters::INFO
+            }
+            Self::TypescriptNoUnsafeArgument(_) => TypescriptNoUnsafeArgument::INFO,
+            Self::TypescriptNoUnsafeAssignment(_) => TypescriptNoUnsafeAssignment::INFO,
+            Self::TypescriptNoUnsafeCall(_) => TypescriptNoUnsafeCall::INFO,
+            Self::TypescriptNoUnsafeDeclarationMerging(_) => {
+                TypescriptNoUnsafeDeclarationMerging::INFO
+            }
+            Self::TypescriptNoUnsafeEnumComparison(_) => TypescriptNoUnsafeEnumComparison::INFO,
+            Self::TypescriptNoUnsafeFunctionType(_) => TypescriptNoUnsafeFunctionType::INFO,
+            Self::TypescriptNoUnsafeMemberAccess(_) => TypescriptNoUnsafeMemberAccess::INFO,
+            Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::INFO,
+            Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::INFO,
+            Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::INFO,
+            Self::TypescriptNoUselessDefaultAssignment(_) => {
+                TypescriptNoUselessDefaultAssignment::INFO
+            }
+            Self::TypescriptNoUselessEmptyExport(_) => TypescriptNoUselessEmptyExport::INFO,
+            Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::INFO,
+            Self::TypescriptNoWrapperObjectTypes(_) => TypescriptNoWrapperObjectTypes::INFO,
+            Self::TypescriptNonNullableTypeAssertionStyle(_) => {
+                TypescriptNonNullableTypeAssertionStyle::INFO
+            }
+            Self::TypescriptOnlyThrowError(_) => TypescriptOnlyThrowError::INFO,
+            Self::TypescriptParameterProperties(_) => TypescriptParameterProperties::INFO,
+            Self::TypescriptPreferAsConst(_) => TypescriptPreferAsConst::INFO,
+            Self::TypescriptPreferEnumInitializers(_) => TypescriptPreferEnumInitializers::INFO,
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::INFO,
+            Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::INFO,
+            Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::INFO,
+            Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::INFO,
+            Self::TypescriptPreferLiteralEnumMember(_) => TypescriptPreferLiteralEnumMember::INFO,
+            Self::TypescriptPreferNamespaceKeyword(_) => TypescriptPreferNamespaceKeyword::INFO,
+            Self::TypescriptPreferNullishCoalescing(_) => TypescriptPreferNullishCoalescing::INFO,
+            Self::TypescriptPreferOptionalChain(_) => TypescriptPreferOptionalChain::INFO,
+            Self::TypescriptPreferPromiseRejectErrors(_) => {
+                TypescriptPreferPromiseRejectErrors::INFO
+            }
+            Self::TypescriptPreferReadonly(_) => TypescriptPreferReadonly::INFO,
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::INFO
+            }
+            Self::TypescriptPreferReduceTypeParameter(_) => {
+                TypescriptPreferReduceTypeParameter::INFO
+            }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::INFO,
+            Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::INFO,
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::INFO
+            }
+            Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::INFO,
+            Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::INFO,
+            Self::TypescriptRelatedGetterSetterPairs(_) => TypescriptRelatedGetterSetterPairs::INFO,
+            Self::TypescriptRequireArraySortCompare(_) => TypescriptRequireArraySortCompare::INFO,
+            Self::TypescriptRequireAwait(_) => TypescriptRequireAwait::INFO,
+            Self::TypescriptRestrictPlusOperands(_) => TypescriptRestrictPlusOperands::INFO,
+            Self::TypescriptRestrictTemplateExpressions(_) => {
+                TypescriptRestrictTemplateExpressions::INFO
+            }
+            Self::TypescriptReturnAwait(_) => TypescriptReturnAwait::INFO,
+            Self::TypescriptStrictBooleanExpressions(_) => TypescriptStrictBooleanExpressions::INFO,
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::INFO,
+            Self::TypescriptSwitchExhaustivenessCheck(_) => {
+                TypescriptSwitchExhaustivenessCheck::INFO
+            }
+            Self::TypescriptTripleSlashReference(_) => TypescriptTripleSlashReference::INFO,
+            Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::INFO,
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::INFO,
+            Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
+                TypescriptUseUnknownInCatchCallbackVariable::INFO
+            }
+            Self::JestConsistentTestIt(_) => JestConsistentTestIt::INFO,
+            Self::JestExpectExpect(_) => JestExpectExpect::INFO,
+            Self::JestMaxExpects(_) => JestMaxExpects::INFO,
+            Self::JestMaxNestedDescribe(_) => JestMaxNestedDescribe::INFO,
+            Self::JestNoAliasMethods(_) => JestNoAliasMethods::INFO,
+            Self::JestNoCommentedOutTests(_) => JestNoCommentedOutTests::INFO,
+            Self::JestNoConditionalExpect(_) => JestNoConditionalExpect::INFO,
+            Self::JestNoConditionalInTest(_) => JestNoConditionalInTest::INFO,
+            Self::JestNoConfusingSetTimeout(_) => JestNoConfusingSetTimeout::INFO,
+            Self::JestNoDeprecatedFunctions(_) => JestNoDeprecatedFunctions::INFO,
+            Self::JestNoDisabledTests(_) => JestNoDisabledTests::INFO,
+            Self::JestNoDoneCallback(_) => JestNoDoneCallback::INFO,
+            Self::JestNoDuplicateHooks(_) => JestNoDuplicateHooks::INFO,
+            Self::JestNoExport(_) => JestNoExport::INFO,
+            Self::JestNoFocusedTests(_) => JestNoFocusedTests::INFO,
+            Self::JestNoHooks(_) => JestNoHooks::INFO,
+            Self::JestNoIdenticalTitle(_) => JestNoIdenticalTitle::INFO,
+            Self::JestNoInterpolationInSnapshots(_) => JestNoInterpolationInSnapshots::INFO,
+            Self::JestNoJasmineGlobals(_) => JestNoJasmineGlobals::INFO,
+            Self::JestNoLargeSnapshots(_) => JestNoLargeSnapshots::INFO,
+            Self::JestNoMocksImport(_) => JestNoMocksImport::INFO,
+            Self::JestNoRestrictedJestMethods(_) => JestNoRestrictedJestMethods::INFO,
+            Self::JestNoRestrictedMatchers(_) => JestNoRestrictedMatchers::INFO,
+            Self::JestNoStandaloneExpect(_) => JestNoStandaloneExpect::INFO,
+            Self::JestNoTestPrefixes(_) => JestNoTestPrefixes::INFO,
+            Self::JestNoTestReturnStatement(_) => JestNoTestReturnStatement::INFO,
+            Self::JestNoUnneededAsyncExpectFunction(_) => JestNoUnneededAsyncExpectFunction::INFO,
+            Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::INFO,
+            Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::INFO,
+            Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::INFO,
+            Self::JestPreferCalledWith(_) => JestPreferCalledWith::INFO,
+            Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::INFO,
+            Self::JestPreferEach(_) => JestPreferEach::INFO,
+            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::INFO,
+            Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::INFO,
+            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::INFO,
+            Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::INFO,
+            Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::INFO,
+            Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::INFO,
+            Self::JestPreferImportingJestGlobals(_) => JestPreferImportingJestGlobals::INFO,
+            Self::JestPreferJestMocked(_) => JestPreferJestMocked::INFO,
+            Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::INFO,
+            Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::INFO,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::INFO,
+            Self::JestPreferSnapshotHint(_) => JestPreferSnapshotHint::INFO,
+            Self::JestPreferSpyOn(_) => JestPreferSpyOn::INFO,
+            Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::INFO,
+            Self::JestPreferToBe(_) => JestPreferToBe::INFO,
+            Self::JestPreferToContain(_) => JestPreferToContain::INFO,
+            Self::JestPreferToHaveBeenCalled(_) => JestPreferToHaveBeenCalled::INFO,
+            Self::JestPreferToHaveBeenCalledTimes(_) => JestPreferToHaveBeenCalledTimes::INFO,
+            Self::JestPreferToHaveLength(_) => JestPreferToHaveLength::INFO,
+            Self::JestPreferTodo(_) => JestPreferTodo::INFO,
+            Self::JestRequireHook(_) => JestRequireHook::INFO,
+            Self::JestRequireToThrowMessage(_) => JestRequireToThrowMessage::INFO,
+            Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::INFO,
+            Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::INFO,
+            Self::JestValidExpect(_) => JestValidExpect::INFO,
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::INFO,
+            Self::JestValidTitle(_) => JestValidTitle::INFO,
+            Self::ReactButtonHasType(_) => ReactButtonHasType::INFO,
+            Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
+                ReactCheckedRequiresOnchangeOrReadonly::INFO
+            }
+            Self::ReactDisplayName(_) => ReactDisplayName::INFO,
+            Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::INFO,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::INFO,
+            Self::ReactForbidDomProps(_) => ReactForbidDomProps::INFO,
+            Self::ReactForbidElements(_) => ReactForbidElements::INFO,
+            Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::INFO,
+            Self::ReactHookUseState(_) => ReactHookUseState::INFO,
+            Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::INFO,
+            Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::INFO,
+            Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::INFO,
+            Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::INFO,
+            Self::ReactJsxFragments(_) => ReactJsxFragments::INFO,
+            Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::INFO,
+            Self::ReactJsxKey(_) => ReactJsxKey::INFO,
+            Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::INFO,
+            Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::INFO,
+            Self::ReactJsxNoConstructedContextValues(_) => ReactJsxNoConstructedContextValues::INFO,
+            Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::INFO,
+            Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::INFO,
+            Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::INFO,
+            Self::ReactJsxNoUndef(_) => ReactJsxNoUndef::INFO,
+            Self::ReactJsxNoUselessFragment(_) => ReactJsxNoUselessFragment::INFO,
+            Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::INFO,
+            Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::INFO,
+            Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::INFO,
+            Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::INFO,
+            Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::INFO,
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::INFO,
+            Self::ReactNoDanger(_) => ReactNoDanger::INFO,
+            Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::INFO,
+            Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::INFO,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::INFO,
+            Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::INFO,
+            Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::INFO,
+            Self::ReactNoIsMounted(_) => ReactNoIsMounted::INFO,
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::INFO,
+            Self::ReactNoNamespace(_) => ReactNoNamespace::INFO,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::INFO,
+            Self::ReactNoReactChildren(_) => ReactNoReactChildren::INFO,
+            Self::ReactNoRedundantShouldComponentUpdate(_) => {
+                ReactNoRedundantShouldComponentUpdate::INFO
+            }
+            Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::INFO,
+            Self::ReactNoSetState(_) => ReactNoSetState::INFO,
+            Self::ReactNoStringRefs(_) => ReactNoStringRefs::INFO,
+            Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::INFO,
+            Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::INFO,
+            Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::INFO,
+            Self::ReactNoUnsafe(_) => ReactNoUnsafe::INFO,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::INFO,
+            Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::INFO,
+            Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::INFO,
+            Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::INFO,
+            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::INFO,
+            Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::INFO,
+            Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::INFO,
+            Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::INFO,
+            Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::INFO,
+            Self::ReactStateInConstructor(_) => ReactStateInConstructor::INFO,
+            Self::ReactStylePropObject(_) => ReactStylePropObject::INFO,
+            Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::INFO,
+            Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::INFO,
+            Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::INFO,
+            Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::INFO,
+            Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::INFO,
+            Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::INFO,
+            Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::INFO,
+            Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::INFO,
+            Self::UnicornConsistentEmptyArraySpread(_) => UnicornConsistentEmptyArraySpread::INFO,
+            Self::UnicornConsistentExistenceIndexCheck(_) => {
+                UnicornConsistentExistenceIndexCheck::INFO
+            }
+            Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::INFO,
+            Self::UnicornConsistentTemplateLiteralEscape(_) => {
+                UnicornConsistentTemplateLiteralEscape::INFO
+            }
+            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::INFO,
+            Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::INFO,
+            Self::UnicornErrorMessage(_) => UnicornErrorMessage::INFO,
+            Self::UnicornEscapeCase(_) => UnicornEscapeCase::INFO,
+            Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::INFO,
+            Self::UnicornFilenameCase(_) => UnicornFilenameCase::INFO,
+            Self::UnicornImportStyle(_) => UnicornImportStyle::INFO,
+            Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::INFO,
+            Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::INFO,
+            Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::INFO,
+            Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::INFO,
+            Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::INFO,
+            Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::INFO,
+            Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::INFO,
+            Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::INFO,
+            Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::INFO,
+            Self::UnicornNoArraySort(_) => UnicornNoArraySort::INFO,
+            Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::INFO,
+            Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::INFO,
+            Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::INFO,
+            Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::INFO,
+            Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::INFO,
+            Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::INFO,
+            Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::INFO,
+            Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::INFO,
+            Self::UnicornNoInstanceofBuiltins(_) => UnicornNoInstanceofBuiltins::INFO,
+            Self::UnicornNoInvalidFetchOptions(_) => UnicornNoInvalidFetchOptions::INFO,
+            Self::UnicornNoInvalidRemoveEventListener(_) => {
+                UnicornNoInvalidRemoveEventListener::INFO
+            }
+            Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::INFO,
+            Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::INFO,
+            Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::INFO,
+            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::INFO,
+            Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::INFO,
+            Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::INFO,
+            Self::UnicornNoNewArray(_) => UnicornNoNewArray::INFO,
+            Self::UnicornNoNewBuffer(_) => UnicornNoNewBuffer::INFO,
+            Self::UnicornNoNull(_) => UnicornNoNull::INFO,
+            Self::UnicornNoObjectAsDefaultParameter(_) => UnicornNoObjectAsDefaultParameter::INFO,
+            Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::INFO,
+            Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
+                UnicornNoSinglePromiseInPromiseMethods::INFO
+            }
+            Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::INFO,
+            Self::UnicornNoThenable(_) => UnicornNoThenable::INFO,
+            Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::INFO,
+            Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::INFO,
+            Self::UnicornNoUnnecessaryArrayFlatDepth(_) => UnicornNoUnnecessaryArrayFlatDepth::INFO,
+            Self::UnicornNoUnnecessaryArraySpliceCount(_) => {
+                UnicornNoUnnecessaryArraySpliceCount::INFO
+            }
+            Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::INFO,
+            Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::INFO,
+            Self::UnicornNoUnreadableArrayDestructuring(_) => {
+                UnicornNoUnreadableArrayDestructuring::INFO
+            }
+            Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::INFO,
+            Self::UnicornNoUselessCollectionArgument(_) => UnicornNoUselessCollectionArgument::INFO,
+            Self::UnicornNoUselessErrorCaptureStackTrace(_) => {
+                UnicornNoUselessErrorCaptureStackTrace::INFO
+            }
+            Self::UnicornNoUselessFallbackInSpread(_) => UnicornNoUselessFallbackInSpread::INFO,
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::INFO,
+            Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::INFO,
+            Self::UnicornNoUselessPromiseResolveReject(_) => {
+                UnicornNoUselessPromiseResolveReject::INFO
+            }
+            Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::INFO,
+            Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::INFO,
+            Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::INFO,
+            Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::INFO,
+            Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::INFO,
+            Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::INFO,
+            Self::UnicornPreferAddEventListener(_) => UnicornPreferAddEventListener::INFO,
+            Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::INFO,
+            Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::INFO,
+            Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::INFO,
+            Self::UnicornPreferArrayIndexOf(_) => UnicornPreferArrayIndexOf::INFO,
+            Self::UnicornPreferArraySome(_) => UnicornPreferArraySome::INFO,
+            Self::UnicornPreferAt(_) => UnicornPreferAt::INFO,
+            Self::UnicornPreferBigintLiterals(_) => UnicornPreferBigintLiterals::INFO,
+            Self::UnicornPreferBlobReadingMethods(_) => UnicornPreferBlobReadingMethods::INFO,
+            Self::UnicornPreferClassFields(_) => UnicornPreferClassFields::INFO,
+            Self::UnicornPreferClasslistToggle(_) => UnicornPreferClasslistToggle::INFO,
+            Self::UnicornPreferCodePoint(_) => UnicornPreferCodePoint::INFO,
+            Self::UnicornPreferDateNow(_) => UnicornPreferDateNow::INFO,
+            Self::UnicornPreferDefaultParameters(_) => UnicornPreferDefaultParameters::INFO,
+            Self::UnicornPreferDomNodeAppend(_) => UnicornPreferDomNodeAppend::INFO,
+            Self::UnicornPreferDomNodeDataset(_) => UnicornPreferDomNodeDataset::INFO,
+            Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::INFO,
+            Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::INFO,
+            Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::INFO,
+            Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::INFO,
+            Self::UnicornPreferImportMetaProperties(_) => UnicornPreferImportMetaProperties::INFO,
+            Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::INFO,
+            Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::INFO,
+            Self::UnicornPreferLogicalOperatorOverTernary(_) => {
+                UnicornPreferLogicalOperatorOverTernary::INFO
+            }
+            Self::UnicornPreferMathMinMax(_) => UnicornPreferMathMinMax::INFO,
+            Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::INFO,
+            Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::INFO,
+            Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::INFO,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::INFO,
+            Self::UnicornPreferNativeCoercionFunctions(_) => {
+                UnicornPreferNativeCoercionFunctions::INFO
+            }
+            Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::INFO,
+            Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::INFO,
+            Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::INFO,
+            Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::INFO,
+            Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::INFO,
+            Self::UnicornPreferPrototypeMethods(_) => UnicornPreferPrototypeMethods::INFO,
+            Self::UnicornPreferQuerySelector(_) => UnicornPreferQuerySelector::INFO,
+            Self::UnicornPreferReflectApply(_) => UnicornPreferReflectApply::INFO,
+            Self::UnicornPreferRegexpTest(_) => UnicornPreferRegexpTest::INFO,
+            Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::INFO,
+            Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::INFO,
+            Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::INFO,
+            Self::UnicornPreferSpread(_) => UnicornPreferSpread::INFO,
+            Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::INFO,
+            Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::INFO,
+            Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::INFO,
+            Self::UnicornPreferStringStartsEndsWith(_) => UnicornPreferStringStartsEndsWith::INFO,
+            Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::INFO,
+            Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::INFO,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::INFO,
+            Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::INFO,
+            Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::INFO,
+            Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::INFO,
+            Self::UnicornRequireArrayJoinSeparator(_) => UnicornRequireArrayJoinSeparator::INFO,
+            Self::UnicornRequireModuleAttributes(_) => UnicornRequireModuleAttributes::INFO,
+            Self::UnicornRequireModuleSpecifiers(_) => UnicornRequireModuleSpecifiers::INFO,
+            Self::UnicornRequireNumberToFixedDigitsArgument(_) => {
+                UnicornRequireNumberToFixedDigitsArgument::INFO
+            }
+            Self::UnicornRequirePostMessageTargetOrigin(_) => {
+                UnicornRequirePostMessageTargetOrigin::INFO
+            }
+            Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::INFO,
+            Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::INFO,
+            Self::UnicornTextEncodingIdentifierCase(_) => UnicornTextEncodingIdentifierCase::INFO,
+            Self::UnicornThrowNewError(_) => UnicornThrowNewError::INFO,
+            Self::JsxA11YAltText(_) => JsxA11YAltText::INFO,
+            Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::INFO,
+            Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::INFO,
+            Self::JsxA11YAnchorIsValid(_) => JsxA11YAnchorIsValid::INFO,
+            Self::JsxA11YAriaActivedescendantHasTabindex(_) => {
+                JsxA11YAriaActivedescendantHasTabindex::INFO
+            }
+            Self::JsxA11YAriaProps(_) => JsxA11YAriaProps::INFO,
+            Self::JsxA11YAriaProptypes(_) => JsxA11YAriaProptypes::INFO,
+            Self::JsxA11YAriaRole(_) => JsxA11YAriaRole::INFO,
+            Self::JsxA11YAriaUnsupportedElements(_) => JsxA11YAriaUnsupportedElements::INFO,
+            Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::INFO,
+            Self::JsxA11YClickEventsHaveKeyEvents(_) => JsxA11YClickEventsHaveKeyEvents::INFO,
+            Self::JsxA11YControlHasAssociatedLabel(_) => JsxA11YControlHasAssociatedLabel::INFO,
+            Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::INFO,
+            Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::INFO,
+            Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::INFO,
+            Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::INFO,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::INFO,
+            Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::INFO,
+            Self::JsxA11YLang(_) => JsxA11YLang::INFO,
+            Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::INFO,
+            Self::JsxA11YMouseEventsHaveKeyEvents(_) => JsxA11YMouseEventsHaveKeyEvents::INFO,
+            Self::JsxA11YNoAccessKey(_) => JsxA11YNoAccessKey::INFO,
+            Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::INFO,
+            Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::INFO,
+            Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::INFO,
+            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
+                JsxA11YNoInteractiveElementToNoninteractiveRole::INFO
+            }
+            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
+                JsxA11YNoNoninteractiveElementInteractions::INFO
+            }
+            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
+                JsxA11YNoNoninteractiveElementToInteractiveRole::INFO
+            }
+            Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::INFO,
+            Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::INFO,
+            Self::JsxA11YNoStaticElementInteractions(_) => JsxA11YNoStaticElementInteractions::INFO,
+            Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::INFO,
+            Self::JsxA11YRoleHasRequiredAriaProps(_) => JsxA11YRoleHasRequiredAriaProps::INFO,
+            Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::INFO,
+            Self::JsxA11YScope(_) => JsxA11YScope::INFO,
+            Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::INFO,
+            Self::OxcApproxConstant(_) => OxcApproxConstant::INFO,
+            Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::INFO,
+            Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::INFO,
+            Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::INFO,
+            Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::INFO,
+            Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::INFO,
+            Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::INFO,
+            Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::INFO,
+            Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::INFO,
+            Self::OxcConstComparisons(_) => OxcConstComparisons::INFO,
+            Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::INFO,
+            Self::OxcErasingOp(_) => OxcErasingOp::INFO,
+            Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::INFO,
+            Self::OxcMissingThrow(_) => OxcMissingThrow::INFO,
+            Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::INFO,
+            Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::INFO,
+            Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::INFO,
+            Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::INFO,
+            Self::OxcNoConstEnum(_) => OxcNoConstEnum::INFO,
+            Self::OxcNoMapSpread(_) => OxcNoMapSpread::INFO,
+            Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::INFO,
+            Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::INFO,
+            Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::INFO,
+            Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::INFO,
+            Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::INFO,
+            Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::INFO,
+            Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::INFO,
+            Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::INFO,
+            Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::INFO,
+            Self::NextjsNextScriptForGa(_) => NextjsNextScriptForGa::INFO,
+            Self::NextjsNoAssignModuleVariable(_) => NextjsNoAssignModuleVariable::INFO,
+            Self::NextjsNoAsyncClientComponent(_) => NextjsNoAsyncClientComponent::INFO,
+            Self::NextjsNoBeforeInteractiveScriptOutsideDocument(_) => {
+                NextjsNoBeforeInteractiveScriptOutsideDocument::INFO
+            }
+            Self::NextjsNoCssTags(_) => NextjsNoCssTags::INFO,
+            Self::NextjsNoDocumentImportInPage(_) => NextjsNoDocumentImportInPage::INFO,
+            Self::NextjsNoDuplicateHead(_) => NextjsNoDuplicateHead::INFO,
+            Self::NextjsNoHeadElement(_) => NextjsNoHeadElement::INFO,
+            Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::INFO,
+            Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::INFO,
+            Self::NextjsNoImgElement(_) => NextjsNoImgElement::INFO,
+            Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::INFO,
+            Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::INFO,
+            Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::INFO,
+            Self::NextjsNoSyncScripts(_) => NextjsNoSyncScripts::INFO,
+            Self::NextjsNoTitleInDocumentHead(_) => NextjsNoTitleInDocumentHead::INFO,
+            Self::NextjsNoTypos(_) => NextjsNoTypos::INFO,
+            Self::NextjsNoUnwantedPolyfillio(_) => NextjsNoUnwantedPolyfillio::INFO,
+            Self::JsdocCheckAccess(_) => JsdocCheckAccess::INFO,
+            Self::JsdocCheckPropertyNames(_) => JsdocCheckPropertyNames::INFO,
+            Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::INFO,
+            Self::JsdocEmptyTags(_) => JsdocEmptyTags::INFO,
+            Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::INFO,
+            Self::JsdocNoDefaults(_) => JsdocNoDefaults::INFO,
+            Self::JsdocRequireParam(_) => JsdocRequireParam::INFO,
+            Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::INFO,
+            Self::JsdocRequireParamName(_) => JsdocRequireParamName::INFO,
+            Self::JsdocRequireParamType(_) => JsdocRequireParamType::INFO,
+            Self::JsdocRequireProperty(_) => JsdocRequireProperty::INFO,
+            Self::JsdocRequirePropertyDescription(_) => JsdocRequirePropertyDescription::INFO,
+            Self::JsdocRequirePropertyName(_) => JsdocRequirePropertyName::INFO,
+            Self::JsdocRequirePropertyType(_) => JsdocRequirePropertyType::INFO,
+            Self::JsdocRequireReturns(_) => JsdocRequireReturns::INFO,
+            Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::INFO,
+            Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::INFO,
+            Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::INFO,
+            Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::INFO,
+            Self::JsdocRequireYields(_) => JsdocRequireYields::INFO,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::INFO,
+            Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::INFO,
+            Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::INFO,
+            Self::PromiseAvoidNew(_) => PromiseAvoidNew::INFO,
+            Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::INFO,
+            Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::INFO,
+            Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::INFO,
+            Self::PromiseNoNesting(_) => PromiseNoNesting::INFO,
+            Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::INFO,
+            Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::INFO,
+            Self::PromiseNoReturnInFinally(_) => PromiseNoReturnInFinally::INFO,
+            Self::PromiseNoReturnWrap(_) => PromiseNoReturnWrap::INFO,
+            Self::PromiseParamNames(_) => PromiseParamNames::INFO,
+            Self::PromisePreferAwaitToCallbacks(_) => PromisePreferAwaitToCallbacks::INFO,
+            Self::PromisePreferAwaitToThen(_) => PromisePreferAwaitToThen::INFO,
+            Self::PromisePreferCatch(_) => PromisePreferCatch::INFO,
+            Self::PromiseSpecOnly(_) => PromiseSpecOnly::INFO,
+            Self::PromiseValidParams(_) => PromiseValidParams::INFO,
+            Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::INFO,
+            Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::INFO,
+            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::INFO,
+            Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::INFO,
+            Self::VitestExpectExpect(_) => VitestExpectExpect::INFO,
+            Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::INFO,
+            Self::VitestMaxExpects(_) => VitestMaxExpects::INFO,
+            Self::VitestMaxNestedDescribe(_) => VitestMaxNestedDescribe::INFO,
+            Self::VitestNoAliasMethods(_) => VitestNoAliasMethods::INFO,
+            Self::VitestNoCommentedOutTests(_) => VitestNoCommentedOutTests::INFO,
+            Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::INFO,
+            Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::INFO,
+            Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::INFO,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::INFO,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::INFO,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::INFO,
+            Self::VitestNoHooks(_) => VitestNoHooks::INFO,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::INFO,
+            Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::INFO,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::INFO,
+            Self::VitestNoInterpolationInSnapshots(_) => VitestNoInterpolationInSnapshots::INFO,
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::INFO,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::INFO,
+            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::INFO,
+            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::INFO,
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::INFO,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::INFO,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::INFO,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => {
+                VitestNoUnneededAsyncExpectFunction::INFO
+            }
+            Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::INFO,
+            Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::INFO,
+            Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::INFO,
+            Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::INFO,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::INFO,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::INFO,
+            Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::INFO,
+            Self::VitestPreferEach(_) => VitestPreferEach::INFO,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::INFO,
+            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::INFO,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::INFO,
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::INFO,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::INFO,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::INFO,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::INFO,
+            Self::VitestPreferImportingVitestGlobals(_) => VitestPreferImportingVitestGlobals::INFO,
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::INFO,
+            Self::VitestPreferMockPromiseShorthand(_) => VitestPreferMockPromiseShorthand::INFO,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::INFO,
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::INFO,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::INFO,
+            Self::VitestPreferStrictBooleanMatchers(_) => VitestPreferStrictBooleanMatchers::INFO,
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::INFO,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::INFO,
+            Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::INFO,
+            Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::INFO,
+            Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::INFO,
+            Self::VitestPreferToContain(_) => VitestPreferToContain::INFO,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::INFO,
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::INFO,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::INFO,
+            Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::INFO,
+            Self::VitestRequireHook(_) => VitestRequireHook::INFO,
+            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
+                VitestRequireLocalTestContextForConcurrentSnapshots::INFO
+            }
+            Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::INFO,
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::INFO,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::INFO,
+            Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::INFO,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::INFO,
+            Self::VitestValidExpect(_) => VitestValidExpect::INFO,
+            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::INFO,
+            Self::VitestValidTitle(_) => VitestValidTitle::INFO,
+            Self::VitestWarnTodo(_) => VitestWarnTodo::INFO,
+            Self::NodeCallbackReturn(_) => NodeCallbackReturn::INFO,
+            Self::NodeGlobalRequire(_) => NodeGlobalRequire::INFO,
+            Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::INFO,
+            Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::INFO,
+            Self::NodeNoNewRequire(_) => NodeNoNewRequire::INFO,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::INFO,
+            Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::INFO,
+            Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::INFO,
+            Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::INFO,
+            Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::INFO,
+            Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::INFO,
+            Self::VueMaxProps(_) => VueMaxProps::INFO,
+            Self::VueNextTickStyle(_) => VueNextTickStyle::INFO,
+            Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::INFO,
+            Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::INFO,
+            Self::VueNoDeprecatedDataObjectDeclaration(_) => {
+                VueNoDeprecatedDataObjectDeclaration::INFO
+            }
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::INFO,
+            Self::VueNoDeprecatedDestroyedLifecycle(_) => VueNoDeprecatedDestroyedLifecycle::INFO,
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::INFO,
+            Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::INFO,
+            Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::INFO,
+            Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::INFO,
+            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::INFO,
+            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::INFO,
+            Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::INFO,
+            Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::INFO,
+            Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::INFO,
+            Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::INFO,
+            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::INFO,
+            Self::VueNoReservedKeys(_) => VueNoReservedKeys::INFO,
+            Self::VueNoReservedProps(_) => VueNoReservedProps::INFO,
+            Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::INFO,
+            Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::INFO,
+            Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::INFO,
+            Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::INFO,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::INFO,
+            Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::INFO,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::INFO,
+            Self::VueRequireDirectExport(_) => VueRequireDirectExport::INFO,
+            Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::INFO,
+            Self::VueRequirePropTypes(_) => VueRequirePropTypes::INFO,
+            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::INFO,
+            Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::INFO,
+            Self::VueRequireTypedRef(_) => VueRequireTypedRef::INFO,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::INFO,
+            Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::INFO,
+            Self::VueValidDefineEmits(_) => VueValidDefineEmits::INFO,
+            Self::VueValidDefineOptions(_) => VueValidDefineOptions::INFO,
+            Self::VueValidDefineProps(_) => VueValidDefineProps::INFO,
+            Self::VueValidNextTick(_) => VueValidNextTick::INFO,
+        }
+    }
+    #[doc = r" A short, one-line summary of what this rule does."]
+    #[cfg(feature = "ruledocs")]
+    pub fn short_description(&self) -> &'static str {
+        self.info().short_description
     }
     pub fn types_info(&self) -> Option<&'static AstTypesBitset> {
         match self {
@@ -24750,6 +25724,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.types_info(),
             Self::VuePropNameCasing(rule) => rule.types_info(),
             Self::VueRequireDefaultExport(rule) => rule.types_info(),
+            Self::VueRequireDefaultProp(rule) => rule.types_info(),
             Self::VueRequireDirectExport(rule) => rule.types_info(),
             Self::VueRequirePropTypeConstructor(rule) => rule.types_info(),
             Self::VueRequirePropTypes(rule) => rule.types_info(),
@@ -25579,6 +26554,7 @@ impl RuleEnum {
             Self::VuePreferImportFromVue(rule) => rule.run_info(),
             Self::VuePropNameCasing(rule) => rule.run_info(),
             Self::VueRequireDefaultExport(rule) => rule.run_info(),
+            Self::VueRequireDefaultProp(rule) => rule.run_info(),
             Self::VueRequireDirectExport(rule) => rule.run_info(),
             Self::VueRequirePropTypeConstructor(rule) => rule.run_info(),
             Self::VueRequirePropTypes(rule) => rule.run_info(),
@@ -26540,6 +27516,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VuePreferImportFromVue(VuePreferImportFromVue::default()),
         RuleEnum::VuePropNameCasing(VuePropNameCasing::default()),
         RuleEnum::VueRequireDefaultExport(VueRequireDefaultExport::default()),
+        RuleEnum::VueRequireDefaultProp(VueRequireDefaultProp::default()),
         RuleEnum::VueRequireDirectExport(VueRequireDirectExport::default()),
         RuleEnum::VueRequirePropTypeConstructor(VueRequirePropTypeConstructor::default()),
         RuleEnum::VueRequirePropTypes(VueRequirePropTypes::default()),

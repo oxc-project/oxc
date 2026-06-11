@@ -56,10 +56,8 @@ impl JsonFormatOptions {
     /// per the active variant and [`Self::trailing_commas`].
     ///
     /// `json` and `json-stringify` never emit one, but Prettier achieves this differently:
-    /// - `json`: the option is force-normalized to `trailingComma: "none"`.
-    /// - `json-stringify`: a separate `estree-json` printer is used
-    ///   - Always hard-breaks entries and never emits a trailing comma (the option is irrelevant)
-    ///   - So full `json-stringify` parity will also need always-expand + no concise arrays, not just this flag
+    /// - `json`: the option is force-normalized to `trailingComma: "none"`
+    /// - `json-stringify`: a separate `estree-json` printer is used and never emits a trailing comma
     ///
     /// `jsonc` and `json5` follow the user option (`Always` emits, `Never` does not).
     /// Both go through Prettier's shared `estree` printer with `shouldPrintTrailingComma` fixed at the `es5` level,

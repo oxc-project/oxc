@@ -12,7 +12,7 @@ use oxc_span::SourceType;
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
+    assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
     let program = &mut ret.program;
     if let Some(options) = options {
         Compressor::new(&allocator).dead_code_elimination(program, options);

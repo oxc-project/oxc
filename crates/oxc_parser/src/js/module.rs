@@ -1337,7 +1337,11 @@ mod test {
         let source_type = SourceType::default().with_typescript(false);
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, src, source_type).parse();
-        assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
+        assert!(
+            ret.diagnostics.is_empty(),
+            "Failed to parse source: {src:?}, error: {:?}",
+            ret.diagnostics
+        );
         let declarations = ret.program.body.iter().collect::<Vec<_>>();
         assert_eq!(declarations.len(), 1);
         let Statement::ImportDeclaration(decl) = declarations[0] else {
@@ -1357,7 +1361,11 @@ mod test {
         let source_type = SourceType::default().with_typescript(true);
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, src, source_type).parse();
-        assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
+        assert!(
+            ret.diagnostics.is_empty(),
+            "Failed to parse source: {src:?}, error: {:?}",
+            ret.diagnostics
+        );
         f(ret.program.body.iter().collect::<Vec<_>>());
     }
 
@@ -1370,7 +1378,7 @@ mod test {
         let source_type = SourceType::default().with_typescript(true);
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, src, source_type).parse();
-        assert!(!ret.errors.is_empty(), "Expected a parse error for source: {src:?}");
+        assert!(!ret.diagnostics.is_empty(), "Expected a parse error for source: {src:?}");
         f(ret.program.body.iter().collect::<Vec<_>>());
     }
 
@@ -1382,7 +1390,11 @@ mod test {
         let source_type = SourceType::default().with_typescript(true);
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, src, source_type).parse();
-        assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
+        assert!(
+            ret.diagnostics.is_empty(),
+            "Failed to parse source: {src:?}, error: {:?}",
+            ret.diagnostics
+        );
         let statements =
             ret.program
                 .body

@@ -37,7 +37,7 @@ pub struct SortKeysOptions {
     /// Use natural sort order so that, for example, "a2" comes before "a10".
     natural: bool,
     /// Minimum number of properties required in an object before sorting is enforced.
-    min_keys: usize,
+    min_keys: u32,
     /// When true, groups of properties separated by a blank line are sorted independently.
     allow_line_separated_groups: bool,
 }
@@ -102,11 +102,12 @@ impl Rule for SortKeys {
         serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
+    #[expect(clippy::cast_possible_truncation)] // the length of properties can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ObjectExpression(dec) = node.kind() {
             let SortKeysConfig(sort_order, options) = &*self.0;
 
-            if dec.properties.len() < options.min_keys {
+            if (dec.properties.len() as u32) < options.min_keys {
                 return;
             }
 

@@ -1133,16 +1133,16 @@ impl Runtime {
             .with_config(RuntimeParserConfig::new(collect_tokens))
             .parse();
 
-        if !ret.errors.is_empty() {
-            return Err(if ret.is_flow_language { vec![] } else { ret.errors });
+        if !ret.diagnostics.is_empty() {
+            return Err(if ret.is_flow_language { vec![] } else { ret.diagnostics.into() });
         }
 
         let semantic_ret = SemanticBuilder::new_linter()
             .with_check_syntax_error(check_syntax_errors)
             .build(allocator.alloc(ret.program));
 
-        if !semantic_ret.errors.is_empty() {
-            return Err(semantic_ret.errors);
+        if !semantic_ret.diagnostics.is_empty() {
+            return Err(semantic_ret.diagnostics.into());
         }
 
         let mut semantic = semantic_ret.semantic;

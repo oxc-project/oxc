@@ -13,7 +13,7 @@ fn mangle_with_source_type(
 ) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
+    assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
     let program = ret.program;
     let mangler_return = Mangler::new().with_options(options).build(&program);
     Codegen::new()
@@ -37,7 +37,7 @@ fn test(source_text: &str, expected: &str, options: MangleOptions) {
         let allocator = Allocator::default();
         let source_type = SourceType::mjs().with_unambiguous(true);
         let ret = Parser::new(&allocator, expected, source_type).parse();
-        assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
+        assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
         Codegen::new().build(&ret.program).code
     };
     assert_eq!(
