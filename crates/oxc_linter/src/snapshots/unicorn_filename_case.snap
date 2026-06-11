@@ -157,6 +157,46 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Rename the file to 'foobar.js'
 
+  ⚠ unicorn(filename-case): Filename should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'bar-baz.js'
+
+  ⚠ unicorn(filename-case): Filename should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'bar-baz.js'
+
+  ⚠ unicorn(filename-case): Filename should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo-bar.js'
+
+  ⚠ unicorn(filename-case): Filename should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo-bar.js'
+
+  ⚠ unicorn(filename-case): Filename should be in camelCase, or snake_case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'fooBar.js', or 'foo_bar.js'
+
+  ⚠ unicorn(filename-case): Filename should be in camelCase, or snake_case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'fooBar.js', or 'foo_bar.js'
+
+  ⚠ unicorn(filename-case): Filename should be in camelCase, or snake_case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'fooBar.js', or 'foo_bar.js'
+
+  ⚠ unicorn(filename-case): Filename should be in camelCase, or snake_case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'fooBar.js', or 'foo_bar.js'
+
   ⚠ unicorn(filename-case): Filename should be in camelCase
    ╭─[filename_case.tsx:1:1]
    ╰────

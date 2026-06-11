@@ -1,9 +1,6 @@
-use oxc_allocator::Vec;
 use oxc_ast::{
     AstKind,
-    ast::{
-        ExportDefaultDeclarationKind, Expression, TSSignature, TSType, TSTypeName, TSTypeReference,
-    },
+    ast::{ExportDefaultDeclarationKind, Expression, TSSignature, TSType},
 };
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -17,11 +14,10 @@ use serde_json::Value;
 
 use crate::{
     AstNode,
-    ast_util::get_declaration_from_reference_id,
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
-    utils::find_property,
+    utils::{find_property, for_each_define_props_type_signature},
 };
 
 fn max_props_diagnostic(span: Span, cur: u32, limit: u32) -> OxcDiagnostic {
@@ -184,69 +180,22 @@ impl MaxProps {
     }
 }
 
-fn get_type_argument_keys(ctx: &LintContext, type_argument: &TSType) -> FxHashSet<CompactStr> {
-    match type_argument {
-        // e.g defineProps<A | B>();
-        TSType::TSUnionType(union_type) => {
-            union_type.types.iter().fold(FxHashSet::default(), |mut all_keys, args| {
-                let type_arg_keys = get_type_argument_keys(ctx, args);
-                all_keys.extend(type_arg_keys);
-                all_keys
-            })
-        }
-        // e.g defineProps<A & B>();
-        TSType::TSIntersectionType(intersection_type) => {
-            intersection_type.types.iter().fold(FxHashSet::default(), |mut all_keys, args| {
-                let type_arg_keys = get_type_argument_keys(ctx, args);
-                all_keys.extend(type_arg_keys);
-                all_keys
-            })
-        }
-        // e.g defineProps<A>();
-        TSType::TSTypeReference(type_ref) => collect_key_from_type_reference(ctx, type_ref),
-        // e.g defineProps<{ a: string }>();
-        TSType::TSTypeLiteral(type_literal) => collect_keys_from_signatures(&type_literal.members),
-        _ => FxHashSet::default(),
-    }
-}
-
-fn collect_key_from_type_reference(
-    ctx: &LintContext,
-    type_ref: &TSTypeReference,
+fn get_type_argument_keys<'a>(
+    ctx: &LintContext<'a>,
+    type_argument: &TSType<'a>,
 ) -> FxHashSet<CompactStr> {
-    let TSTypeName::IdentifierReference(ident_ref) = &type_ref.type_name else {
-        return FxHashSet::default();
-    };
-    // we need to find the reference of type_ref
-    let reference = ctx.scoping().get_reference(ident_ref.reference_id());
-    if !reference.is_type() {
-        return FxHashSet::default();
-    }
-    let Some(reference_node) =
-        get_declaration_from_reference_id(ident_ref.reference_id(), ctx.semantic())
-    else {
-        return FxHashSet::default();
-    };
-    let AstKind::TSInterfaceDeclaration(interface_decl) = reference_node.kind() else {
-        return FxHashSet::default();
-    };
-    let interface_body = &interface_decl.body;
-    collect_keys_from_signatures(&interface_body.body)
-}
-
-fn collect_keys_from_signatures(signatures: &Vec<TSSignature<'_>>) -> FxHashSet<CompactStr> {
-    signatures
-        .iter()
-        .filter_map(|member| match member {
-            TSSignature::TSPropertySignature(prop_signature) => {
-                prop_signature.key.static_name().map(CompactStr::from)
-            }
-            TSSignature::TSMethodSignature(method_signature) => {
-                method_signature.key.static_name().map(CompactStr::from)
-            }
-            _ => None,
-        })
-        .collect()
+    let mut keys = FxHashSet::default();
+    for_each_define_props_type_signature(type_argument, ctx, &mut |signature| {
+        let name = match signature {
+            TSSignature::TSPropertySignature(prop) => prop.key.static_name(),
+            TSSignature::TSMethodSignature(method) => method.key.static_name(),
+            _ => return,
+        };
+        if let Some(name) = name {
+            keys.insert(CompactStr::from(name));
+        }
+    });
+    keys
 }
 
 #[test]
@@ -419,6 +368,17 @@ fn test() {
 			        prop2?: false;
 			        prop3?: boolean;
 			      }>()
+			      </script>
+			      "#,
+            Some(serde_json::json!([{ "maxProps": 2 }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // { "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") } }
+        (
+            r#"
+			      <script setup lang="ts">
+			      type Props = { prop1: string, prop2: string, prop3: string };
+			      defineProps<Props>();
 			      </script>
 			      "#,
             Some(serde_json::json!([{ "maxProps": 2 }])),

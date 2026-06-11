@@ -7,7 +7,7 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_parser::Parser;
-use oxc_semantic::{IsGlobalReference, ReferenceFlags, ScopeFlags, Scoping};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping};
 use oxc_span::{SPAN, SourceType};
 use oxc_str::CompactStr;
 use oxc_syntax::identifier::is_identifier_name;
@@ -399,18 +399,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
         &mut self,
         ident: &oxc_allocator::Box<'_, IdentifierReference<'_>>,
     ) -> Option<Expression<'a>> {
-        let scoping = self.scoping();
-        if let Some(symbol_id) = ident
-            .reference_id
-            .get()
-            .and_then(|reference_id| scoping.get_reference(reference_id).symbol_id())
-        {
-            // Ignore `declare const IS_PROD: boolean;`
-            if !scoping.symbol_flags(symbol_id).is_ambient() {
-                return None;
-            }
+        if !Self::is_global_or_ambient_reference(self.scoping(), ident) {
+            return None;
         }
-        // This is a global variable, including ambient variants such as `declare const`.
         for (key, value) in &self.config.0.identifier.identifier_defines {
             if ident.name.as_str() == key {
                 let value = value.clone();
@@ -789,7 +780,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         })
                     }
                     Expression::Identifier(ident) => {
-                        if !ident.is_global_reference(scoping) {
+                        if !Self::is_global_or_ambient_reference(scoping, ident) {
                             return false;
                         }
                         cur_part_name = &ident.name;
@@ -862,6 +853,30 @@ impl<'a> ReplaceGlobalDefines<'a> {
         let mut iter = should_preserved_keys.iter();
         obj.properties.retain(|_| *iter.next().unwrap());
         expr
+    }
+
+    /// Return whether an identifier reference should be treated like a global define root.
+    ///
+    /// Unresolved references are globals, so `foo.bar` can be replaced by a `foo.bar` define.
+    /// Ambient declarations are also replaceable because they are TypeScript-only and do not
+    /// create runtime bindings:
+    ///
+    /// ```ts
+    /// declare let self: ServiceWorkerGlobalScope;
+    /// precacheAndRoute(self.__WB_MANIFEST); // replace `self.__WB_MANIFEST`
+    /// ```
+    ///
+    /// Runtime bindings still shadow define roots:
+    ///
+    /// ```ts
+    /// let self;
+    /// precacheAndRoute(self.__WB_MANIFEST); // do not replace
+    /// ```
+    fn is_global_or_ambient_reference(scoping: &Scoping, ident: &IdentifierReference<'_>) -> bool {
+        scoping
+            .get_reference(ident.reference_id())
+            .symbol_id()
+            .is_none_or(|symbol_id| scoping.symbol_flags(symbol_id).is_ambient())
     }
 }
 
