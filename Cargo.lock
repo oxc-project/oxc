@@ -2021,6 +2021,7 @@ dependencies = [
  "dragonbox_ecma",
  "insta",
  "itoa",
+ "memchr",
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",

@@ -321,7 +321,21 @@ impl<'a> SourcemapBuilder<'a> {
     }
 
     fn generate_line_offset_tables(content: &str) -> LineOffsetTables {
-        let mut lines = vec![];
+        let content_bytes = content.as_bytes();
+        let lines_capacity = memchr::memchr3_iter(b'\n', b'\r', LS_OR_PS_FIRST_BYTE, content_bytes)
+            .filter(|&index| match content_bytes[index] {
+                b'\n' => index == 0 || content_bytes[index - 1] != b'\r',
+                b'\r' => true,
+                LS_OR_PS_FIRST_BYTE => {
+                    let next_two_bytes = content_bytes.get(index + 1..index + 3);
+                    next_two_bytes == Some(&LS_LAST_2_BYTES[..])
+                        || next_two_bytes == Some(&PS_LAST_2_BYTES[..])
+                }
+                _ => unreachable!(),
+            })
+            .count()
+            + 1;
+        let mut lines = Vec::with_capacity(lines_capacity);
         let mut column_offsets = IndexVec::new();
 
         // Used as a buffer to reduce memory reallocations.
