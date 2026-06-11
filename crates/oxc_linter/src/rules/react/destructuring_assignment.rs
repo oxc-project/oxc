@@ -1,9 +1,11 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{
-    AstKind,
-    ast::{Expression, StaticMemberExpression},
+    AstKind, AstType,
+    ast::{Expression, StaticMemberExpression, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -16,7 +18,10 @@ use crate::{
     fixer::expand_span_to_statement_boundaries,
     rule::{Rule, TupleRuleConfig},
     rules::ContextHost,
-    utils::{AlwaysNever, FunctionLike, get_parent_component, get_parent_stateless_component},
+    utils::{
+        AlwaysNever, FunctionLike, function_like_returns_jsx, get_parent_component,
+        is_react_component_name,
+    },
 };
 
 fn no_destruct_props_in_sfc_arg_diagnostic(span: Span) -> OxcDiagnostic {
@@ -64,6 +69,14 @@ struct DestructuringAssignmentOptions {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(default)]
 pub struct DestructuringAssignment(AlwaysNever, DestructuringAssignmentOptions);
+
+const NEEDED_NODE_TYPES: &oxc_semantic::AstTypesBitset =
+    &oxc_semantic::AstTypesBitset::from_types(&[
+        AstType::ArrowFunctionExpression,
+        AstType::Function,
+        AstType::StaticMemberExpression,
+        AstType::VariableDeclarator,
+    ]);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -202,123 +215,138 @@ impl Rule for DestructuringAssignment {
         serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::StaticMemberExpression(member) => {
-                if self.should_skip_member(node, ctx) || self.apply_never() {
-                    return;
-                }
+    fn run_once(&self, ctx: &LintContext) {
+        let apply_never = self.apply_never();
+        let apply_to_signature = self.apply_to_signature();
+        let mut stateless_component_cache = FxHashMap::default();
 
-                if is_parameter_member_object(member, ctx) {
-                    if let Some(parent) = get_parent_stateless_component(node, ctx) {
+        for node in ctx.nodes() {
+            match node.kind() {
+                AstKind::StaticMemberExpression(member) => {
+                    if self.should_skip_member(node, ctx) || apply_never {
+                        continue;
+                    }
+
+                    if let Some(parent) = get_parent_stateless_component_cached(
+                        node,
+                        ctx,
+                        &mut stateless_component_cache,
+                    ) {
                         handle_function_component_usage(member, ctx, &parent);
-                    }
-                } else if let Some(prop_name) = get_this_member_name(&member.object)
-                    && get_parent_component(node, ctx).is_some()
-                {
-                    ctx.diagnostic(use_destruct_assignment_diagnostic(member.span, prop_name));
-                }
-            }
-            AstKind::FormalParameter(param)
-                if param.pattern.is_object_pattern() && self.apply_never() =>
-            {
-                if let Some(parent) = get_parent_stateless_component(node, ctx) {
-                    let params = parent.params();
-                    if params.items[0].span == param.span {
-                        ctx.diagnostic(no_destruct_props_in_sfc_arg_diagnostic(param.span));
-                    } else if params.items[1].span == param.span {
-                        ctx.diagnostic(no_destruct_context_in_sfc_arg_diagnostic(param.span));
+                    } else if let Some(prop_name) = get_this_member_name(&member.object)
+                        && get_parent_component(node, ctx).is_some()
+                    {
+                        ctx.diagnostic(use_destruct_assignment_diagnostic(member.span, prop_name));
                     }
                 }
-            }
-            AstKind::ObjectPattern(_) if self.apply_never() || self.apply_to_signature() => {
-                let Some((object_pattern_span, decl_span, param_span)) =
-                    self.handle_object_pattern(node.id(), node.span(), ctx)
-                else {
-                    return;
-                };
-                ctx.diagnostic_with_fix(destructure_in_signature_diagnostic(decl_span), |fixer| {
-                    let mut fix = fixer.new_fix_with_capacity(2);
-                    fix.push(
-                        fixer.replace(
-                            param_span,
-                            fixer.source_range(object_pattern_span).to_string(),
-                        ),
+                AstKind::Function(func) if apply_never => {
+                    handle_function_component_parameters(
+                        FunctionLike::Function(func),
+                        node,
+                        ctx,
+                        &mut stateless_component_cache,
                     );
-                    let expanded_decl_span =
-                        expand_span_to_statement_boundaries(fixer.source_text(), decl_span);
-                    fix.push(fixer.delete_range(expanded_decl_span));
-                    fix.with_message("Replace object pattern with destructuring in signature")
-                });
+                }
+                AstKind::ArrowFunctionExpression(arrow) if apply_never => {
+                    handle_function_component_parameters(
+                        FunctionLike::Arrow(arrow),
+                        node,
+                        ctx,
+                        &mut stateless_component_cache,
+                    );
+                }
+                AstKind::VariableDeclarator(decl)
+                    if decl.id.is_object_pattern() && (apply_never || apply_to_signature) =>
+                {
+                    let Some((object_pattern_span, decl_span, param_span)) = self
+                        .handle_variable_declarator(
+                            decl,
+                            node,
+                            ctx,
+                            &mut stateless_component_cache,
+                        )
+                    else {
+                        continue;
+                    };
+                    ctx.diagnostic_with_fix(
+                        destructure_in_signature_diagnostic(decl_span),
+                        |fixer| {
+                            let mut fix = fixer.new_fix_with_capacity(2);
+                            fix.push(fixer.replace(
+                                param_span,
+                                fixer.source_range(object_pattern_span).to_string(),
+                            ));
+                            let expanded_decl_span =
+                                expand_span_to_statement_boundaries(fixer.source_text(), decl_span);
+                            fix.push(fixer.delete_range(expanded_decl_span));
+                            fix.with_message(
+                                "Replace object pattern with destructuring in signature",
+                            )
+                        },
+                    );
+                }
+                _ => {}
             }
-            _ => {}
         }
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
+        ctx.source_type().is_jsx() && ctx.semantic().nodes().contains_any(NEEDED_NODE_TYPES)
     }
 }
 
 impl DestructuringAssignment {
-    fn handle_object_pattern(
+    fn handle_variable_declarator<'a>(
         &self,
-        node_id: NodeId,
-        object_pattern_span: Span,
-        ctx: &LintContext,
+        decl: &VariableDeclarator<'a>,
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+        stateless_component_cache: &mut FxHashMap<NodeId, bool>,
     ) -> Option<(Span, Span, Span)> {
-        for ancestor in ctx.nodes().ancestors(node_id) {
-            match ancestor.kind() {
-                AstKind::VariableDeclarator(decl) => {
-                    let Some(init) = &decl.init else {
-                        break;
-                    };
+        let Some(init) = &decl.init else {
+            return None;
+        };
 
-                    if let Some(prop_name) = get_this_member_name(init) {
-                        if get_parent_component(ancestor, ctx).is_some() {
-                            ctx.diagnostic(no_destruct_assignment_diagnostic(decl.span, prop_name));
-                        }
-                        break;
-                    }
+        if let Some(prop_name) = get_this_member_name(init) {
+            if get_parent_component(node, ctx).is_some() {
+                ctx.diagnostic(no_destruct_assignment_diagnostic(decl.span, prop_name));
+            }
+            return None;
+        }
 
-                    let Some(id_ref) = init.get_identifier_reference() else {
-                        break;
-                    };
-                    let Some(parent) = get_parent_stateless_component(ancestor, ctx) else {
-                        break;
-                    };
-                    let obj_name = id_ref.name.as_str();
-                    let params = parent.params();
-                    let Some(param) = params.items.iter().find(|p| {
-                        p.pattern
-                            .get_binding_identifier()
-                            .is_some_and(|id| id.name.as_str() == obj_name)
-                    }) else {
-                        break;
-                    };
+        let Some(id_ref) = init.get_identifier_reference() else {
+            return None;
+        };
+        let Some(parent) =
+            get_parent_stateless_component_cached(node, ctx, stateless_component_cache)
+        else {
+            return None;
+        };
+        let obj_name = id_ref.name.as_str();
+        let params = parent.params();
+        let Some(param) = params.items.iter().find(|p| {
+            p.pattern.get_binding_identifier().is_some_and(|id| id.name.as_str() == obj_name)
+        }) else {
+            return None;
+        };
 
-                    if self.apply_never() {
-                        ctx.diagnostic(no_destruct_assignment_diagnostic(decl.span, obj_name));
-                    } else if self.apply_to_signature() {
-                        let binding = param.pattern.get_binding_identifier().unwrap();
-                        let used_more_than_once = ctx
-                            .scoping()
-                            .get_resolved_references(binding.symbol_id())
-                            .filter(|reference| !reference.is_type())
-                            .count()
-                            > 1;
-                        if !used_more_than_once {
-                            let declaration_span = ctx.nodes().parent_node(decl.node_id()).span();
-                            let param_span = param.pattern.span();
-                            return Some((object_pattern_span, declaration_span, param_span));
-                        }
-                    }
-                    break;
-                }
-                AstKind::FormalParameter(_) | AstKind::FormalParameters(_) => break,
-                _ => {}
+        if self.apply_never() {
+            ctx.diagnostic(no_destruct_assignment_diagnostic(decl.span, obj_name));
+        } else if self.apply_to_signature() {
+            let binding = param.pattern.get_binding_identifier().unwrap();
+            let used_more_than_once = ctx
+                .scoping()
+                .get_resolved_references(binding.symbol_id())
+                .filter(|reference| !reference.is_type())
+                .count()
+                > 1;
+            if !used_more_than_once {
+                let declaration_span = ctx.nodes().parent_node(decl.node_id()).span();
+                let param_span = param.pattern.span();
+                return Some((decl.id.span(), declaration_span, param_span));
             }
         }
+
         None
     }
 
@@ -350,6 +378,21 @@ impl DestructuringAssignment {
     }
 }
 
+fn get_parent_stateless_component_cached<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    cache: &mut FxHashMap<NodeId, bool>,
+) -> Option<FunctionLike<'a>> {
+    ctx.nodes().ancestors(node.id()).find_map(|ancestor_node| {
+        let function = FunctionLike::from_ast_kind(ancestor_node.kind())?;
+        let is_stateless_component = cache
+            .entry(ancestor_node.id())
+            .or_insert_with(|| is_stateless_component_function(function, ancestor_node, ctx));
+
+        (*is_stateless_component).then_some(function)
+    })
+}
+
 fn handle_function_component_usage<'a>(
     node: &StaticMemberExpression<'a>,
     ctx: &LintContext<'a>,
@@ -370,11 +413,50 @@ fn handle_function_component_usage<'a>(
     }
 }
 
-fn is_parameter_member_object(node: &StaticMemberExpression, ctx: &LintContext) -> bool {
-    let Some(id_ref) = node.object.get_identifier_reference() else { return false };
-    let reference = ctx.scoping().get_reference(id_ref.reference_id());
-    let Some(symbol_id) = reference.symbol_id() else { return false };
-    matches!(ctx.semantic().symbol_declaration(symbol_id).kind(), AstKind::FormalParameter(_))
+fn handle_function_component_parameters<'a>(
+    function: FunctionLike<'a>,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    cache: &mut FxHashMap<NodeId, bool>,
+) {
+    let is_stateless_component = cache
+        .entry(node.id())
+        .or_insert_with(|| is_stateless_component_function(function, node, ctx));
+    if !*is_stateless_component {
+        return;
+    }
+
+    let params = function.params();
+    if let Some(param) = params.items.first()
+        && param.pattern.is_object_pattern()
+    {
+        ctx.diagnostic(no_destruct_props_in_sfc_arg_diagnostic(param.span));
+    }
+
+    if let Some(param) = params.items.get(1)
+        && param.pattern.is_object_pattern()
+    {
+        ctx.diagnostic(no_destruct_context_in_sfc_arg_diagnostic(param.span));
+    }
+}
+
+fn is_stateless_component_function<'a>(
+    function: FunctionLike<'a>,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    if !function_like_returns_jsx(function) {
+        return false;
+    }
+
+    match ctx.nodes().parent_kind(node.id()) {
+        AstKind::ObjectProperty(prop) => {
+            let name = prop.key.name();
+            name.is_none_or(|n| is_react_component_name(&n))
+        }
+        AstKind::ArrayExpression(_) | AstKind::MethodDefinition(_) => false,
+        _ => true,
+    }
 }
 
 fn get_this_member_name<'a>(expr: &Expression<'a>) -> Option<&'a str> {

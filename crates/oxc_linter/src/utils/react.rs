@@ -644,32 +644,6 @@ pub fn function_like_returns_jsx(f: FunctionLike) -> bool {
     }
 }
 
-pub fn get_parent_stateless_component<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> Option<FunctionLike<'a>> {
-    ctx.nodes().ancestors(node.id()).find_map(|ancestor_node| {
-        let f = FunctionLike::from_ast_kind(ancestor_node.kind())?;
-        if !function_like_returns_jsx(f) {
-            return None;
-        }
-
-        let parent_kind = ctx.nodes().parent_kind(ancestor_node.id());
-        match parent_kind {
-            AstKind::ObjectProperty(prop) => {
-                let name = prop.key.name();
-                if name.is_some_and(|n| !is_react_component_name(&n)) {
-                    return None; // lowercase → not a component, skip
-                }
-            }
-            AstKind::ArrayExpression(_) | AstKind::MethodDefinition(_) => return None,
-            _ => {}
-        }
-
-        Some(f)
-    })
-}
-
 fn get_jsx_mem_expr_name<'a>(jsx_mem_expr: &JSXMemberExpression) -> Cow<'a, str> {
     let prefix = match &jsx_mem_expr.object {
         JSXMemberExpressionObject::IdentifierReference(id) => Cow::Borrowed(id.name.as_str()),
