@@ -161,7 +161,7 @@ fn get_redundant_implicit_role(
 fn get_img_implicit_role(jsx_el: &JSXOpeningElement) -> Option<&'static str> {
     if has_jsx_prop_ignore_case(jsx_el, "alt")
         .and_then(get_string_literal_prop_value)
-        .is_some_and(|alt| alt.is_empty())
+        .is_some_and(str::is_empty)
     {
         return None;
     }
@@ -214,8 +214,6 @@ fn jsx_prop_value_is_truthy(item: &JSXAttributeItem) -> bool {
                 Expression::BooleanLiteral(lit) => lit.value,
                 Expression::StringLiteral(lit) => !lit.value.is_empty(),
                 Expression::NumericLiteral(lit) => lit.value != 0.0,
-                Expression::NullLiteral(_) => false,
-                Expression::Identifier(_) => false,
                 _ => false,
             }
         }
