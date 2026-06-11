@@ -901,7 +901,7 @@ export interface DummyRuleMap {
   "jsx-a11y/no-noninteractive-element-interactions"?: DummyRule;
   "jsx-a11y/no-noninteractive-element-to-interactive-role"?: DummyRule;
   "jsx-a11y/no-noninteractive-tabindex"?: DummyRule;
-  "jsx-a11y/no-redundant-roles"?: RuleNoConfig;
+  "jsx-a11y/no-redundant-roles"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRedundantRolesConfig];
   "jsx-a11y/no-static-element-interactions"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
@@ -2409,6 +2409,9 @@ export interface NoAutofocus {
    * Determines if developer-created components are checked.
    */
   ignoreNonDOM?: boolean;
+}
+export interface NoRedundantRolesConfig {
+  [k: string]: string[];
 }
 export interface NoStaticElementInteractionsConfig {
   /**

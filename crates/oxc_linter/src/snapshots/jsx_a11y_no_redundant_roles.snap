@@ -2,6 +2,13 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ jsx-a11y(no-redundant-roles): The `body` element has an implicit role of `document`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:7]
+ 1 │ <body role="DOCUMENT" />
+   ·       ───────────────
+   ╰────
+  help: Remove the redundant role `document` from the element `body`.
+
   ⚠ jsx-a11y(no-redundant-roles): The `button` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:9]
  1 │ <button role='button' />
@@ -57,13 +64,6 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
   help: Remove the redundant role `button` from the element `button`.
-
-  ⚠ jsx-a11y(no-redundant-roles): The `nav` element has an implicit role of `navigation`. Defining this explicitly is redundant and should be avoided.
-   ╭─[no_redundant_roles.tsx:1:6]
- 1 │ <nav role='navigation' />
-   ·      ─────────────────
-   ╰────
-  help: Remove the redundant role `navigation` from the element `nav`.
 
   ⚠ jsx-a11y(no-redundant-roles): The `button` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:9]
@@ -170,9 +170,86 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the redundant role `combobox` from the element `select`.
 
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="combobox" size="" />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="combobox" size={1} />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="combobox" size="1" />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="combobox" size={null}></select>
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="combobox" size={undefined}></select>
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="combobox" multiple={undefined}></select>
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="combobox" multiple={false}></select>
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="combobox" multiple=""></select>
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
   ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `listbox`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:9]
- 1 │ <select role="listbox" />
+ 1 │ <select role="listbox" size="3" />
+   ·         ──────────────
+   ╰────
+  help: Remove the redundant role `listbox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `listbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="listbox" size={2} />
+   ·         ──────────────
+   ╰────
+  help: Remove the redundant role `listbox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `listbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="listbox" multiple><option>1</option><option>2</option></select>
+   ·         ──────────────
+   ╰────
+  help: Remove the redundant role `listbox` from the element `select`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `listbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role="listbox" multiple={true}></select>
    ·         ──────────────
    ╰────
   help: Remove the redundant role `listbox` from the element `select`.
@@ -267,3 +344,17 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the redundant role `row` from the element `tr`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `ul` element has an implicit role of `list`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <ul role="list" />
+   ·     ───────────
+   ╰────
+  help: Remove the redundant role `list` from the element `ul`.
+
+  ⚠ jsx-a11y(no-redundant-roles): The `nav` element has an implicit role of `navigation`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:6]
+ 1 │ <nav role="navigation" />
+   ·      ─────────────────
+   ╰────
+  help: Remove the redundant role `navigation` from the element `nav`.
