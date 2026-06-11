@@ -229,6 +229,8 @@ export type NameSpecifier = string | string[];
 export type LibFrom = "lib";
 export type PackageFrom = "package";
 export type ReturnAwaitOption = "in-try-catch" | "always" | "error-handling-correctness-only" | "never";
+export type PathOption = "always" | "never";
+export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
 export type NoInstanceofBuiltinsStrategy = "strict" | "loose";
@@ -1389,7 +1391,7 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, SwitchExhaustivenessCheckConfig];
-  "typescript/triple-slash-reference"?: DummyRule;
+  "typescript/triple-slash-reference"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, TripleSlashReferenceConfig];
   "typescript/unbound-method"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, UnboundMethodConfig];
   "typescript/unified-signatures"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, UnifiedSignaturesOptions];
   "typescript/use-unknown-in-catch-callback-variable"?: RuleNoConfig;
@@ -5141,6 +5143,20 @@ export interface SwitchExhaustivenessCheckConfig {
    * When true, switches with non-exhaustive union types must have a default case.
    */
   requireDefaultForNonUnion?: boolean;
+}
+export interface TripleSlashReferenceConfig {
+  /**
+   * What to enforce for `/// <reference lib="..." />` references.
+   */
+  lib?: AlwaysNever;
+  /**
+   * What to enforce for `/// <reference path="..." />` references.
+   */
+  path?: PathOption;
+  /**
+   * What to enforce for `/// <reference types="..." />` references.
+   */
+  types?: TypesOption;
 }
 export interface UnboundMethodConfig {
   /**

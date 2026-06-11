@@ -7003,7 +7003,24 @@ expression: json
           ]
         },
         "typescript/triple-slash-reference": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/TripleSlashReferenceConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/unbound-method": {
           "anyOf": [
@@ -13733,6 +13750,26 @@ expression: json
       },
       "additionalProperties": false
     },
+    "PathOption": {
+      "oneOf": [
+        {
+          "description": "Allow triple-slash `path` references.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Allow triple-slash `path` references."
+        },
+        {
+          "description": "Disallow triple-slash `path` references.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow triple-slash `path` references."
+        }
+      ]
+    },
     "PreferArrowCallback": {
       "$ref": "#/definitions/PreferArrowCallbackConfig"
     },
@@ -15129,6 +15166,42 @@ expression: json
       },
       "additionalProperties": false
     },
+    "TripleSlashReferenceConfig": {
+      "type": "object",
+      "properties": {
+        "lib": {
+          "description": "What to enforce for `/// <reference lib=\"...\" />` references.",
+          "default": "always",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AlwaysNever"
+            }
+          ],
+          "markdownDescription": "What to enforce for `/// <reference lib=\"...\" />` references."
+        },
+        "path": {
+          "description": "What to enforce for `/// <reference path=\"...\" />` references.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PathOption"
+            }
+          ],
+          "markdownDescription": "What to enforce for `/// <reference path=\"...\" />` references."
+        },
+        "types": {
+          "description": "What to enforce for `/// <reference types=\"...\" />` references.",
+          "default": "prefer-import",
+          "allOf": [
+            {
+              "$ref": "#/definitions/TypesOption"
+            }
+          ],
+          "markdownDescription": "What to enforce for `/// <reference types=\"...\" />` references."
+        }
+      },
+      "additionalProperties": false
+    },
     "TypeOrValueSpecifier": {
       "description": "Type or value specifier for matching specific declarations\n\nSupports four types of specifiers:\n\n1. **String specifier** (deprecated): Universal match by name\n```json\n\"Promise\"\n```\n\n2. **File specifier**: Match types/values declared in local files\n```json\n{ \"from\": \"file\", \"name\": \"MyType\" }\n{ \"from\": \"file\", \"name\": [\"Type1\", \"Type2\"] }\n{ \"from\": \"file\", \"name\": \"MyType\", \"path\": \"./types.ts\" }\n```\n\n3. **Lib specifier**: Match TypeScript built-in lib types\n```json\n{ \"from\": \"lib\", \"name\": \"Promise\" }\n{ \"from\": \"lib\", \"name\": [\"Promise\", \"PromiseLike\"] }\n```\n\n4. **Package specifier**: Match types/values from npm packages\n```json\n{ \"from\": \"package\", \"name\": \"Observable\", \"package\": \"rxjs\" }\n{ \"from\": \"package\", \"name\": [\"Observable\", \"Subject\"], \"package\": \"rxjs\" }\n```",
       "anyOf": [
@@ -15166,6 +15239,34 @@ expression: json
         }
       ],
       "markdownDescription": "Type or value specifier for matching specific declarations\n\nSupports four types of specifiers:\n\n1. **String specifier** (deprecated): Universal match by name\n```json\n\"Promise\"\n```\n\n2. **File specifier**: Match types/values declared in local files\n```json\n{ \"from\": \"file\", \"name\": \"MyType\" }\n{ \"from\": \"file\", \"name\": [\"Type1\", \"Type2\"] }\n{ \"from\": \"file\", \"name\": \"MyType\", \"path\": \"./types.ts\" }\n```\n\n3. **Lib specifier**: Match TypeScript built-in lib types\n```json\n{ \"from\": \"lib\", \"name\": \"Promise\" }\n{ \"from\": \"lib\", \"name\": [\"Promise\", \"PromiseLike\"] }\n```\n\n4. **Package specifier**: Match types/values from npm packages\n```json\n{ \"from\": \"package\", \"name\": \"Observable\", \"package\": \"rxjs\" }\n{ \"from\": \"package\", \"name\": [\"Observable\", \"Subject\"], \"package\": \"rxjs\" }\n```"
+    },
+    "TypesOption": {
+      "oneOf": [
+        {
+          "description": "Allow triple-slash `types` references.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Allow triple-slash `types` references."
+        },
+        {
+          "description": "Disallow triple-slash `types` references.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow triple-slash `types` references."
+        },
+        {
+          "description": "Prefer ES module import declarations over triple-slash `types` references.\nThis option only reports when there is an existing `import` declaration for the same module.\n\nFor example, this would be reported as a lint violation with `prefer-import`:\n```ts\n/// <reference types=\"foo\" />\nimport { bar } from 'foo';\n```",
+          "type": "string",
+          "enum": [
+            "prefer-import"
+          ],
+          "markdownDescription": "Prefer ES module import declarations over triple-slash `types` references.\nThis option only reports when there is an existing `import` declaration for the same module.\n\nFor example, this would be reported as a lint violation with `prefer-import`:\n```ts\n/// <reference types=\"foo\" />\nimport { bar } from 'foo';\n```"
+        }
+      ]
     },
     "UnboundMethodConfig": {
       "type": "object",
