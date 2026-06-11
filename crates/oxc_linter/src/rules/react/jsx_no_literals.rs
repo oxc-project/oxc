@@ -186,6 +186,21 @@ impl JsxNoLiterals {
         None
     }
 
+    fn is_require_statement(expr: &Expression) -> bool {
+        match expr.without_parentheses() {
+            Expression::CallExpression(call_expr) => {
+                matches!(call_expr.callee.without_parentheses(), Expression::Identifier(ident) if ident.name == "require")
+            }
+            Expression::StaticMemberExpression(member_expr) => {
+                Self::is_require_statement(&member_expr.object)
+            }
+            Expression::ComputedMemberExpression(member_expr) => {
+                Self::is_require_statement(&member_expr.object)
+            }
+            _ => false,
+        }
+    }
+
     fn resolve_element_name(id_ref: &IdentifierReference, ctx: &LintContext) -> CompactStr {
         let local_name = id_ref.name.to_compact_str();
 
@@ -204,7 +219,9 @@ impl JsxNoLiterals {
                     return imported.name.to_compact_str();
                 }
             }
-            AstKind::VariableDeclarator(declarator) => {
+            AstKind::VariableDeclarator(declarator)
+                if declarator.init.as_ref().is_some_and(Self::is_require_statement) =>
+            {
                 if let Some(name) = Self::resolve_from_object_pattern(&declarator.id, symbol_id) {
                     return name;
                 }
@@ -253,7 +270,9 @@ impl JsxNoLiterals {
                 JSXChild::ExpressionContainer(container) if options.no_strings => {
                     match &container.expression {
                         JSXExpression::StringLiteral(literal) => {
-                            ctx.diagnostic(literal_text_diagnostic(literal.span));
+                            if !Self::is_allowed_string(literal.value.as_str(), options) {
+                                ctx.diagnostic(literal_text_diagnostic(literal.span));
+                            }
                         }
                         JSXExpression::TemplateLiteral(literal) => {
                             ctx.diagnostic(literal_text_diagnostic(literal.span));
@@ -266,14 +285,24 @@ impl JsxNoLiterals {
         }
     }
 
-    fn inspect_jsx_expression(expr: &Expression, attr: &JSXAttribute, ctx: &LintContext) {
+    fn inspect_jsx_expression(
+        expr: &Expression,
+        options: &JsxNoLiteralsOptions,
+        attr: &JSXAttribute,
+        ctx: &LintContext,
+    ) {
         match &expr {
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
+            Expression::StringLiteral(literal) => {
+                if !Self::is_allowed_string(literal.value.as_str(), options) {
+                    ctx.diagnostic(literal_attribute_diagnostic(attr.span));
+                }
+            }
+            Expression::TemplateLiteral(_) => {
                 ctx.diagnostic(literal_attribute_diagnostic(attr.span));
             }
             Expression::BinaryExpression(expression) => {
-                Self::inspect_jsx_expression(&expression.left, attr, ctx);
-                Self::inspect_jsx_expression(&expression.right, attr, ctx);
+                Self::inspect_jsx_expression(&expression.left, options, attr, ctx);
+                Self::inspect_jsx_expression(&expression.right, options, attr, ctx);
             }
             _ => {}
         }
@@ -327,9 +356,10 @@ impl JsxNoLiterals {
                 }
                 JSXAttributeValue::ExpressionContainer(container) => {
                     if options.no_strings
+                        && !options.ignore_props
                         && let Some(expr) = container.expression.as_expression()
                     {
-                        Self::inspect_jsx_expression(expr, attr, ctx);
+                        Self::inspect_jsx_expression(expr, options, attr, ctx);
                     }
                 }
                 _ => {}
@@ -576,6 +606,10 @@ fn test() {
                   "#,
             Some(serde_json::json!([{ "noStrings": true, "ignoreProps": true }])),
         ),
+        (
+            "<Foo bar={'test'} />",
+            Some(serde_json::json!([{ "noStrings": true, "ignoreProps": true }])),
+        ),
         ("<Foo bar={true} />", Some(serde_json::json!([{ "noStrings": true }]))),
         ("<Foo bar={false} />", Some(serde_json::json!([{ "noStrings": true }]))),
         ("<Foo bar={100} />", Some(serde_json::json!([{ "noStrings": true }]))),
@@ -665,6 +699,14 @@ fn test() {
                       }
                     }
                   ",
+            Some(serde_json::json!([{ "noStrings": true, "allowedStrings": [" foo "] }])),
+        ),
+        (
+            "<div>{'foo'}</div>",
+            Some(serde_json::json!([{ "noStrings": true, "allowedStrings": [" foo "] }])),
+        ),
+        (
+            "<Foo bar={'foo'} />",
             Some(serde_json::json!([{ "noStrings": true, "allowedStrings": [" foo "] }])),
         ),
         (
@@ -1463,6 +1505,12 @@ fn test() {
             Some(
                 serde_json::json!([{ "elementOverrides": { "T": {}, "U": { "allowedStrings": ["foo"] } } }]),
             ),
+        ),
+        (
+            "const props = { T: 'value' };
+const { T: U } = props;
+<U>foo</U>",
+            Some(serde_json::json!([{ "elementOverrides": { "T": { "allowElement": true } } }])),
         ),
         (
             "

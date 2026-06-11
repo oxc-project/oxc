@@ -453,15 +453,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap this text in a JSX expression container, such as a call to a translation function.
 
   ⚠ react(jsx-no-literals): Disallow literal text as JSX children
-   ╭─[jsx_no_literals.tsx:4:27]
- 3 │                       <div>{'foo'}</div>
- 4 │                       <T>{'foo'}</T>
-   ·                           ─────
- 5 │                     </div>
-   ╰────
-  help: Wrap this text in a JSX expression container, such as a call to a translation function.
-
-  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
    ╭─[jsx_no_literals.tsx:3:29]
  2 │                     <div>
  3 │                       <div>{'foo'}</div>
@@ -471,38 +462,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap this text in a JSX expression container, such as a call to a translation function.
 
   ⚠ react(jsx-no-literals): Disallow literal text as JSX children
-   ╭─[jsx_no_literals.tsx:4:27]
- 3 │                       <div>{'foo'}</div>
- 4 │                       <T>{'foo'}<div>{'foo'}</div></T>
-   ·                           ─────
- 5 │                     </div>
-   ╰────
-  help: Wrap this text in a JSX expression container, such as a call to a translation function.
-
-  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
-   ╭─[jsx_no_literals.tsx:4:39]
- 3 │                       <div>{'foo'}</div>
- 4 │                       <T>{'foo'}<div>{'foo'}</div></T>
-   ·                                       ─────
- 5 │                     </div>
-   ╰────
-  help: Wrap this text in a JSX expression container, such as a call to a translation function.
-
-  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
    ╭─[jsx_no_literals.tsx:3:29]
  2 │                     <div>
  3 │                       <div>{'foo'}</div>
    ·                             ─────
  4 │                       <T>{'foo'}<div>{'foo'}</div></T>
-   ╰────
-  help: Wrap this text in a JSX expression container, such as a call to a translation function.
-
-  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
-   ╭─[jsx_no_literals.tsx:4:27]
- 3 │                       <div>{'foo'}</div>
- 4 │                       <T>{'foo'}<div>{'foo'}</div></T>
-   ·                           ─────
- 5 │                     </div>
    ╰────
   help: Wrap this text in a JSX expression container, such as a call to a translation function.
 
@@ -701,6 +665,14 @@ source: crates/oxc_linter/src/tester.rs
  2 │                     <T>foo<U>foo</U></T>
    ·                        ───
  3 │                   
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:4]
+ 2 │ const { T: U } = props;
+ 3 │ <U>foo</U>
+   ·    ───
    ╰────
   help: Wrap this text in a JSX expression container, such as a call to a translation function.
 
