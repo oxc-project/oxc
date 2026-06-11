@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::identifier::is_identifier_part;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -81,7 +82,6 @@ declare_oxc_lint!(
     config = PreferSingleCallConfig,
     version = "next"
 );
-
 
 impl Rule for PreferSingleCall {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
@@ -222,7 +222,6 @@ impl Rule for PreferSingleCall {
         });
     }
 }
-
 
 /// Callee source-text patterns to ignore for `Array#{push,unshift}`.
 const DEFAULT_ARRAY_MUTATION_IGNORE: &[&str] = &[
@@ -379,9 +378,15 @@ fn arg_references_receiver(arg_src: &str, receiver: &str) -> bool {
     let mut i = 0;
     while i + rbytes.len() <= abytes.len() {
         if abytes[i..].starts_with(rbytes) {
-            let before_ok = i == 0 || !is_js_ident_continue(abytes[i - 1] as char);
-            let after_ok = i + rbytes.len() >= abytes.len()
-                || !is_js_ident_continue(abytes[i + rbytes.len()] as char);
+            let end = i + rbytes.len();
+            if !arg_src.is_char_boundary(i) || !arg_src.is_char_boundary(end) {
+                i += 1;
+                continue;
+            }
+            let before_ok =
+                i == 0 || !arg_src[..i].chars().next_back().is_some_and(is_identifier_part);
+            let after_ok = end >= abytes.len()
+                || !arg_src[end..].chars().next().is_some_and(is_identifier_part);
             if before_ok && after_ok {
                 return true;
             }
@@ -389,11 +394,6 @@ fn arg_references_receiver(arg_src: &str, receiver: &str) -> bool {
         i += 1;
     }
     false
-}
-
-#[inline]
-fn is_js_ident_continue(c: char) -> bool {
-    c.is_alphanumeric() || c == '_' || c == '$'
 }
 
 #[cfg(test)]
