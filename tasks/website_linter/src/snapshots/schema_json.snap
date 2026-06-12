@@ -5691,7 +5691,24 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "react/jsx-no-target-blank": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxNoTargetBlank"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/jsx-no-undef": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9188,6 +9205,26 @@ expression: json
         }
       ]
     },
+    "EnforceDynamicLinksEnum": {
+      "oneOf": [
+        {
+          "description": "Always enforce dynamic links.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always enforce dynamic links."
+        },
+        {
+          "description": "Always enforce static links.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Always enforce static links."
+        }
+      ]
+    },
     "Eqeqeq": {
       "type": "array",
       "items": [
@@ -10464,6 +10501,46 @@ expression: json
       },
       "additionalProperties": false,
       "markdownDescription": "The options shared between the top-level config and each `elementOverrides` entry."
+    },
+    "JsxNoTargetBlank": {
+      "type": "object",
+      "properties": {
+        "allowReferrer": {
+          "description": "Whether to allow referrers.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to allow referrers."
+        },
+        "enforceDynamicLinks": {
+          "description": "Whether to enforce dynamic links or enforce static links.",
+          "default": "always",
+          "allOf": [
+            {
+              "$ref": "#/definitions/EnforceDynamicLinksEnum"
+            }
+          ],
+          "markdownDescription": "Whether to enforce dynamic links or enforce static links."
+        },
+        "forms": {
+          "description": "Whether to check form elements.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check form elements."
+        },
+        "links": {
+          "description": "Whether to check link elements.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check link elements."
+        },
+        "warnOnSpreadAttributes": {
+          "description": "Whether to warn when spread attributes are used.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to warn when spread attributes are used."
+        }
+      },
+      "additionalProperties": false
     },
     "JsxNoUselessFragment": {
       "type": "object",

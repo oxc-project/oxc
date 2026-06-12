@@ -178,6 +178,7 @@ export type ForbidItem2 =
 export type EnforceBooleanAttribute = "always" | "never";
 export type JsxFilenameExtensionAllowMode = "always" | "as-needed";
 export type FragmentMode = "syntax" | "element";
+export type EnforceDynamicLinksEnum = "always" | "never";
 export type IgnoreEnforceOption = "ignore" | "enforce";
 export type NoDidMountSetStateConfig = "allowed" | "disallow-in-func";
 export type NoWillUpdateSetStateConfig = "allowed" | "disallow-in-func";
@@ -1213,7 +1214,7 @@ export interface DummyRuleMap {
   "react/jsx-no-duplicate-props"?: RuleNoConfig;
   "react/jsx-no-literals"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxNoLiteralsConfig];
   "react/jsx-no-script-url"?: DummyRule;
-  "react/jsx-no-target-blank"?: DummyRule;
+  "react/jsx-no-target-blank"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxNoTargetBlank];
   "react/jsx-no-undef"?: RuleNoConfig;
   "react/jsx-no-useless-fragment"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxNoUselessFragment];
   "react/jsx-pascal-case"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxPascalCaseConfig];
@@ -4252,6 +4253,28 @@ export interface ElementOverrideOptions {
    * An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.
    */
   restrictedAttributes?: string[];
+}
+export interface JsxNoTargetBlank {
+  /**
+   * Whether to allow referrers.
+   */
+  allowReferrer?: boolean;
+  /**
+   * Whether to enforce dynamic links or enforce static links.
+   */
+  enforceDynamicLinks?: EnforceDynamicLinksEnum;
+  /**
+   * Whether to check form elements.
+   */
+  forms?: boolean;
+  /**
+   * Whether to check link elements.
+   */
+  links?: boolean;
+  /**
+   * Whether to warn when spread attributes are used.
+   */
+  warnOnSpreadAttributes?: boolean;
 }
 export interface JsxNoUselessFragment {
   /**
