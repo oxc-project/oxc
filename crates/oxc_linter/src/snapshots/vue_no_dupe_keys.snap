@@ -418,3 +418,19 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                              ──────
  4 │ </script>
    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'null'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:46]
+ 2 │ <script>
+ 3 │ export default { data () { return { null: 1, null: 2 } } }
+   ·                                              ────
+ 4 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'true'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:64]
+ 2 │ <script>
+ 3 │ export default { props: { [true]: String }, data () { return { 'true': 1 } } }
+   ·                                                                ──────
+ 4 │ </script>
+   ╰────

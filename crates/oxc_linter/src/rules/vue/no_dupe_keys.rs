@@ -297,11 +297,18 @@ fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
     }
 }
 
-/// `PropertyKey::static_name`, except numeric keys are formatted like JS `String(n)`
-/// (`1e-7` → "1e-7", not "0.0000001") to match upstream `getStaticPropertyName`.
+/// `PropertyKey::static_name` adjusted to upstream `getStaticPropertyName` semantics:
+/// numeric keys are formatted like JS `String(n)` (`1e-7` → "1e-7", not "0.0000001"),
+/// a computed `[true]` key is named "true", and a computed `[null]` key has no name
+/// (upstream's `getStringLiteralValue` bails on `value == null`; a plain `null` key
+/// is an identifier, not this variant).
 fn static_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
     match key {
         PropertyKey::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
+        PropertyKey::BooleanLiteral(b) => {
+            Some(Cow::Borrowed(if b.value { "true" } else { "false" }))
+        }
+        PropertyKey::NullLiteral(_) => None,
         _ => key.static_name(),
     }
 }
@@ -1160,6 +1167,17 @@ const foo = reactive(defineProps(['foo']))
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        // a computed `[null]` key has no static name upstream
+        (
+            r"
+<script>
+export default { props: { [null]: String }, data () { return { 'null': 1 } } }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
@@ -1785,6 +1803,28 @@ export default { props: [1, true], data () { return { 1: 'x', true: 'y' } } }
             r"
 <script>
 export default { props: { 1e-7: String }, data () { return { '1e-7': 1 } } }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // a plain `null` key is an identifier and is a real key name
+        (
+            r"
+<script>
+export default { data () { return { null: 1, null: 2 } } }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // a computed `[true]` key is stringified like JS String(value)
+        (
+            r"
+<script>
+export default { props: { [true]: String }, data () { return { 'true': 1 } } }
 </script>
 ",
             None,
