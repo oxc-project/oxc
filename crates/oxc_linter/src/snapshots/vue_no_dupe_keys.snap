@@ -338,3 +338,27 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─
  6 │ }
    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:43]
+ 2 │ <script>
+ 3 │ export default { props: ['foo'], data: ({ foo: null }) }
+   ·                                           ───
+ 4 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:52]
+ 2 │ <script>
+ 3 │ export default { props: [`foo`], data() { return { foo: 1 } } }
+   ·                                                    ───
+ 4 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:4:7]
+ 3 │ defineProps([`foo`])
+ 4 │ const foo = 1
+   ·       ───
+ 5 │ </script>
+   ╰────

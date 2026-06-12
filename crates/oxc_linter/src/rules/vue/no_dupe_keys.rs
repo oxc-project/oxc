@@ -128,11 +128,11 @@ impl Rule for NoDupeKeys {
             return;
         }
         let renamed = collect_renamed_props(define_props_call, ctx);
-        // Obtain the symbol bound to `const xxx = defineProps(...)` once for O(1) span checks
-        let props_symbol_id = find_props_symbol_id(define_props_call, ctx);
+        // Collect all symbols bound by defineProps (simple binding + destructured) for span checks
+        let props_symbol_ids = find_props_symbol_ids(define_props_call, ctx);
         let root_scope_id = ctx.scoping().root_scope_id();
 
-        for (prop_name, _) in &props {
+        for prop_name in &props {
             if renamed.contains(prop_name.as_str()) {
                 continue;
             }
@@ -148,10 +148,8 @@ impl Rule for NoDupeKeys {
                     if d.init.as_ref().is_some_and(|init| {
                         // Initialised directly from defineProps / withDefaults(defineProps(...))
                         is_define_props_initializer(init, define_props_call)
-                            // Initialiser references the props object (e.g. computed(() => props.foo))
-                            || props_symbol_id.is_some_and(|sid| {
-                                is_inside_props_reference(init, sid, ctx)
-                            })
+                            // Initialiser references the props object or any destructured binding
+                            || is_inside_props_reference(init, &props_symbol_ids, ctx)
                     }) {
                         continue;
                     }
@@ -159,7 +157,7 @@ impl Rule for NoDupeKeys {
                 }
                 _ => decl.kind().span(),
             };
-            ctx.diagnostic(duplicate_key_diagnostic(span, prop_name));
+            ctx.diagnostic(duplicate_key_diagnostic(span, prop_name.as_ref()));
         }
     }
 }
@@ -171,11 +169,20 @@ fn collect_group_keys<'a>(
     seen: &mut FxHashSet<String>,
     ctx: &LintContext<'a>,
 ) {
-    match value {
+    match value.get_inner_expression() {
         Expression::ArrayExpression(arr) => {
             for el in &arr.elements {
-                if let ArrayExpressionElement::StringLiteral(s) = el {
-                    report_or_add(s.value.as_str(), s.span, seen, ctx);
+                match el {
+                    ArrayExpressionElement::StringLiteral(s) => {
+                        report_or_add(s.value.as_str(), s.span, seen, ctx);
+                    }
+                    ArrayExpressionElement::TemplateLiteral(t) if t.expressions.is_empty() => {
+                        if let Some(cooked) = t.quasis.first().and_then(|q| q.value.cooked.as_ref())
+                        {
+                            report_or_add(cooked.as_str(), t.span, seen, ctx);
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
@@ -277,39 +284,73 @@ fn find_define_props_call<'a>(
     None
 }
 
-/// Find the `SymbolId` of the variable bound to `const xxx = defineProps(...)`.
-fn find_props_symbol_id(
-    call: &oxc_ast::ast::CallExpression,
-    ctx: &LintContext,
-) -> Option<SymbolId> {
+/// Collect all `SymbolId`s bound by a defineProps assignment, including destructured bindings.
+/// Handles `const props = defineProps(...)`, `const { foo } = defineProps(...)`, etc.
+fn find_props_symbol_ids(call: &oxc_ast::ast::CallExpression, ctx: &LintContext) -> Vec<SymbolId> {
+    let mut ids = Vec::new();
     for node in ctx.nodes() {
         let AstKind::VariableDeclarator(decl) = node.kind() else { continue };
         if !decl.init.as_ref().is_some_and(|init| is_define_props_initializer(init, call)) {
             continue;
         }
-        if let oxc_ast::ast::BindingPattern::BindingIdentifier(id) = &decl.id {
-            return id.symbol_id.get();
-        }
+        collect_binding_symbol_ids(&decl.id, &mut ids);
     }
-    None
+    ids
 }
 
-/// True if any reference to `symbol_id` falls within `init`'s span.
-fn is_inside_props_reference(init: &Expression, symbol_id: SymbolId, ctx: &LintContext) -> bool {
+fn collect_binding_symbol_ids(pattern: &oxc_ast::ast::BindingPattern, ids: &mut Vec<SymbolId>) {
+    use oxc_ast::ast::BindingPattern;
+    match pattern {
+        BindingPattern::BindingIdentifier(id) => {
+            if let Some(sym) = id.symbol_id.get() {
+                ids.push(sym);
+            }
+        }
+        BindingPattern::ObjectPattern(obj) => {
+            for prop in &obj.properties {
+                collect_binding_symbol_ids(&prop.value, ids);
+            }
+            if let Some(rest) = &obj.rest {
+                collect_binding_symbol_ids(&rest.argument, ids);
+            }
+        }
+        BindingPattern::ArrayPattern(arr) => {
+            for el in arr.elements.iter().flatten() {
+                collect_binding_symbol_ids(el, ids);
+            }
+            if let Some(rest) = &arr.rest {
+                collect_binding_symbol_ids(&rest.argument, ids);
+            }
+        }
+        BindingPattern::AssignmentPattern(assign) => {
+            collect_binding_symbol_ids(&assign.left, ids);
+        }
+    }
+}
+
+/// True if any reference to one of `symbol_ids` falls within `init`'s span.
+fn is_inside_props_reference(
+    init: &Expression,
+    symbol_ids: &[SymbolId],
+    ctx: &LintContext,
+) -> bool {
+    if symbol_ids.is_empty() {
+        return false;
+    }
     let init_span = init.span();
-    ctx.semantic().symbol_references(symbol_id).any(|reference| {
-        let ref_span = ctx.nodes().get_node(reference.node_id()).kind().span();
-        init_span.start <= ref_span.start && ref_span.end <= init_span.end
+    symbol_ids.iter().any(|&symbol_id| {
+        ctx.semantic().symbol_references(symbol_id).any(|reference| {
+            let ref_span = ctx.nodes().get_node(reference.node_id()).kind().span();
+            init_span.start <= ref_span.start && ref_span.end <= init_span.end
+        })
     })
 }
 
-/// Collects (prop_name, span) pairs from a `defineProps(...)` call.
-/// Returns owned Strings to avoid lifetime issues with `static_name()` → `Cow`.
 fn collect_prop_names_from_call<'a>(
     call: &'a oxc_ast::ast::CallExpression<'a>,
     ctx: &LintContext<'a>,
-) -> Vec<(String, Span)> {
-    let mut props: Vec<(String, Span)> = Vec::new();
+) -> Vec<String> {
+    let mut props: Vec<String> = Vec::new();
     if let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) {
         match arg {
             Expression::ObjectExpression(obj) => {
@@ -317,14 +358,24 @@ fn collect_prop_names_from_call<'a>(
                     if let ObjectPropertyKind::ObjectProperty(p) = prop_kind
                         && let Some(name) = p.key.static_name()
                     {
-                        props.push((name.into_owned(), p.key.span()));
+                        props.push(name.into_owned());
                     }
                 }
             }
             Expression::ArrayExpression(arr) => {
                 for el in &arr.elements {
-                    if let ArrayExpressionElement::StringLiteral(s) = el {
-                        props.push((s.value.to_string(), s.span));
+                    match el {
+                        ArrayExpressionElement::StringLiteral(s) => {
+                            props.push(s.value.to_string());
+                        }
+                        ArrayExpressionElement::TemplateLiteral(t) if t.expressions.is_empty() => {
+                            if let Some(cooked) =
+                                t.quasis.first().and_then(|q| q.value.cooked.as_ref())
+                            {
+                                props.push(cooked.to_string());
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }
@@ -339,7 +390,7 @@ fn collect_prop_names_from_call<'a>(
 fn collect_ts_type_prop_names<'a>(
     call: &'a oxc_ast::ast::CallExpression<'a>,
     ctx: &LintContext<'a>,
-    out: &mut Vec<(String, Span)>,
+    out: &mut Vec<String>,
 ) {
     let Some(type_params) = &call.type_arguments else { return };
     let Some(first_type) = type_params.params.first() else { return };
@@ -350,7 +401,7 @@ fn collect_ts_type_prop_names<'a>(
             _ => return,
         };
         if let Some(name) = key.static_name() {
-            out.push((name.into_owned(), key.span()));
+            out.push(name.into_owned());
         }
     });
 }
@@ -1033,6 +1084,18 @@ const foo = 1
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        // new-1: destructured prop binding referenced in initializer must be exempted
+        (
+            r"
+<script setup>
+const { foo } = defineProps(['foo', 'bar'])
+const bar = computed(() => foo + 1)
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
@@ -1554,6 +1617,40 @@ export default {
   props: { 1: String },
   data () { return { 1: 'x' } }
 }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // fix-8c: group value itself wrapped in parens
+        (
+            r"
+<script>
+export default { props: ['foo'], data: ({ foo: null }) }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // new-2a: template literal in array prop list (Options API)
+        (
+            r"
+<script>
+export default { props: [`foo`], data() { return { foo: 1 } } }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // new-2b: template literal in defineProps array (script setup)
+        (
+            r"
+<script setup>
+defineProps([`foo`])
+const foo = 1
 </script>
 ",
             None,
