@@ -4,12 +4,12 @@ use std::{
 };
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
+use tower_lsp_server::ls_types::{Pattern, Range, ServerCapabilities, TextEdit, Uri};
 use tracing::{debug, error, warn};
 
-use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{
     Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
+    offset_to_position,
 };
 
 use crate::core::{
@@ -249,15 +249,11 @@ impl Tool for ServerFormatter {
                 }
 
                 let (start, end, replacement) = compute_minimal_text_edit(source_text, &code);
-                let rope = Rope::from(source_text);
-                let (start_line, start_character) = get_line_column(&rope, start, source_text);
-                let (end_line, end_character) = get_line_column(&rope, end, source_text);
+                let start_position = offset_to_position(source_text, start);
+                let end_position = offset_to_position(source_text, end);
 
                 Ok(vec![TextEdit::new(
-                    Range::new(
-                        Position::new(start_line, start_character),
-                        Position::new(end_line, end_character),
-                    ),
+                    Range::new(start_position, end_position),
                     replacement.to_string(),
                 )])
             }
@@ -515,6 +511,7 @@ mod tests_builder {
 #[cfg(test)]
 mod tests {
     use super::compute_minimal_text_edit;
+    use oxc_language_server::offset_to_position;
 
     #[test]
     #[should_panic(expected = "assertion failed")]
@@ -575,6 +572,20 @@ mod tests {
         let (start, end, replacement) = compute_minimal_text_edit(src, formatted);
         // Replace 😀 with 😃
         assert_eq!((start, end, replacement), (1, 5, "😃"));
+    }
+
+    #[test]
+    fn test_lsp_edit_range_ignores_unicode_line_separators() {
+        let src = "a\u{2028}b\u{2029}c \nnext";
+        let formatted = "a\u{2028}b\u{2029}c\nnext";
+        let (start, end, replacement) = compute_minimal_text_edit(src, formatted);
+
+        let start_position = offset_to_position(src, start);
+        let end_position = offset_to_position(src, end);
+
+        assert_eq!((start_position.line, start_position.character), (0, 5));
+        assert_eq!((end_position.line, end_position.character), (0, 6));
+        assert_eq!(replacement, "");
     }
 
     #[test]

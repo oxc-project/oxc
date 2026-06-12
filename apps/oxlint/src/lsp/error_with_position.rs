@@ -6,8 +6,9 @@ use tower_lsp_server::ls_types::{
     NumberOrString, Position, Range, Uri,
 };
 
-use oxc_data_structures::rope::{Rope, get_line_column};
+use oxc_data_structures::rope::Rope;
 use oxc_diagnostics::{OxcCode, Severity};
+use oxc_language_server::offset_to_position as lsp_offset_to_position;
 use oxc_linter::{
     AllowWarnDeny, DisableDirectives, Fix, FixKind, Message, PossibleFixes, RuleCommentType,
 };
@@ -404,9 +405,8 @@ fn build_unused_disable_diagnostic_report(
     }
 }
 
-pub fn offset_to_position(rope: &Rope, offset: u32, source_text: &str) -> Position {
-    let (line, column) = get_line_column(rope, offset, source_text);
-    Position::new(line, column)
+pub fn offset_to_position(_rope: &Rope, offset: u32, source_text: &str) -> Position {
+    lsp_offset_to_position(source_text, offset)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -833,6 +833,14 @@ mod test {
         assert_position(source, 14, (1, 3));
         assert_position(source, 18, (1, 5));
         assert_position(source, 19, (1, 6));
+    }
+
+    #[test]
+    fn unicode_line_and_paragraph_separators_are_not_lsp_line_breaks() {
+        let source = "a\u{2028}b\nc\u{2029}d";
+        assert_position(source, source.find('b').unwrap() as u32, (0, 2));
+        assert_position(source, source.find('c').unwrap() as u32, (1, 0));
+        assert_position(source, source.find('d').unwrap() as u32, (1, 2));
     }
 
     #[test]
