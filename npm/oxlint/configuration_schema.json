@@ -7288,6 +7288,9 @@
             }
           ]
         },
+        "unicorn/better-dom-traversing": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/catch-error-name": {
           "anyOf": [
             {
