@@ -6368,7 +6368,24 @@ expression: json
           ]
         },
         "typescript/consistent-generic-constructors": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferGenericType"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/consistent-indexed-object-style": {
           "anyOf": [
@@ -14838,6 +14855,26 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "PreferGenericType": {
+      "oneOf": [
+        {
+          "description": "Type arguments that only appear on the type annotation are disallowed.",
+          "type": "string",
+          "enum": [
+            "constructor"
+          ],
+          "markdownDescription": "Type arguments that only appear on the type annotation are disallowed."
+        },
+        {
+          "description": "Type arguments that only appear on the constructor are disallowed.",
+          "type": "string",
+          "enum": [
+            "type-annotation"
+          ],
+          "markdownDescription": "Type arguments that only appear on the constructor are disallowed."
+        }
+      ]
     },
     "PreferImportInMockConfig": {
       "type": "object",

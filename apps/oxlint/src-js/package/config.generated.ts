@@ -189,6 +189,7 @@ export type ImportKind = "none" | "all" | "multiple" | "single";
  */
 export type SortOrder = "desc" | "asc";
 export type ClassLiteralPropertyStyleOption = "fields" | "getters";
+export type PreferGenericType = "constructor" | "type-annotation";
 export type ConsistentIndexedObjectStyleConfig = "record" | "index-signature";
 export type ArrayLiteralTypeAssertions = "allow" | "allow-as-parameter" | "never";
 export type AssertionStyle = "as" | "angle-bracket" | "never";
@@ -1286,7 +1287,7 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, ClassLiteralPropertyStyleOption];
-  "typescript/consistent-generic-constructors"?: DummyRule;
+  "typescript/consistent-generic-constructors"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferGenericType];
   "typescript/consistent-indexed-object-style"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
