@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -5,20 +7,21 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpressionElement, Expression, ObjectExpression, ObjectPropertyKind, PropertyKind,
-        Statement, TSSignature,
+        BindingPattern, CallExpression, Expression, ObjectExpression, ObjectPropertyKind,
+        PropertyKey, PropertyKind, Statement, TSSignature,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::number::ToJsString;
 
 use crate::{
     AstNode,
     context::LintContext,
     frameworks::FrameworkOptions,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{for_each_define_props_type_signature, is_vue_component_options_object},
 };
 
@@ -83,18 +86,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDupeKeys {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config: NoDupeKeysConfig = if value.is_null() {
-            NoDupeKeysConfig::default()
-        } else if let Some(arr) = value.as_array() {
-            if arr.is_empty() {
-                NoDupeKeysConfig::default()
-            } else {
-                serde_json::from_value(arr[0].clone())?
-            }
-        } else {
-            serde_json::from_value(value)?
-        };
-        Ok(Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -106,11 +98,11 @@ impl Rule for NoDupeKeys {
         // dedup: user-supplied group names may overlap with built-in names
         let groups: FxHashSet<&str> =
             GROUP_NAMES.iter().copied().chain(extra_groups.iter().map(String::as_str)).collect();
-        let mut seen: FxHashSet<String> = FxHashSet::default();
+        let mut seen: FxHashSet<Cow<'a, str>> = FxHashSet::default();
         // Walk all properties in source order so duplicate group names are both visited
         for prop_kind in &obj.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
-            let Some(group_name) = prop.key.static_name() else { continue };
+            let Some(group_name) = static_key_name(&prop.key) else { continue };
             if !groups.contains(group_name.as_ref()) {
                 continue;
             }
@@ -127,18 +119,16 @@ impl Rule for NoDupeKeys {
         if props.is_empty() {
             return;
         }
-        let renamed = collect_renamed_props(define_props_call, ctx);
-        // Collect all symbols bound by defineProps (simple binding + destructured) for span checks
-        let props_symbol_ids = find_props_symbol_ids(define_props_call, ctx);
+        let (props_symbol_ids, renamed) = collect_props_bindings(define_props_call, ctx);
         let root_scope_id = ctx.scoping().root_scope_id();
 
         for prop_name in &props {
-            if renamed.contains(prop_name.as_str()) {
+            if renamed.contains(prop_name.as_ref()) {
                 continue;
             }
             // Only look in the module (root) scope — nested function/block bindings are invisible
             let Some(symbol_id) =
-                ctx.scoping().get_binding(root_scope_id, prop_name.as_str().into())
+                ctx.scoping().get_binding(root_scope_id, prop_name.as_ref().into())
             else {
                 continue;
             };
@@ -166,23 +156,20 @@ const GROUP_NAMES: &[&str] = &["props", "computed", "data", "methods", "setup"];
 
 fn collect_group_keys<'a>(
     value: &'a Expression<'a>,
-    seen: &mut FxHashSet<String>,
+    seen: &mut FxHashSet<Cow<'a, str>>,
     ctx: &LintContext<'a>,
 ) {
-    match value.get_inner_expression() {
+    // Only unwrap parens: espree has no paren nodes, so upstream sees through them,
+    // but a TS `as`-wrapped value is skipped by upstream and must stay skipped here.
+    match value.without_parentheses() {
         Expression::ArrayExpression(arr) => {
             for el in &arr.elements {
-                match el {
-                    ArrayExpressionElement::StringLiteral(s) => {
-                        report_or_add(s.value.as_str(), s.span, seen, ctx);
-                    }
-                    ArrayExpressionElement::TemplateLiteral(t) if t.expressions.is_empty() => {
-                        if let Some(cooked) = t.quasis.first().and_then(|q| q.value.cooked.as_ref())
-                        {
-                            report_or_add(cooked.as_str(), t.span, seen, ctx);
-                        }
-                    }
-                    _ => {}
+                let Some(expr) = el.as_expression() else { continue };
+                let expr = expr.without_parentheses();
+                if let Some(name) = literal_element_name(expr)
+                    && !name.is_empty()
+                {
+                    report_or_add(name, expr.span(), seen, ctx);
                 }
             }
         }
@@ -191,88 +178,116 @@ fn collect_group_keys<'a>(
         }
         Expression::FunctionExpression(func) => {
             if let Some(body) = &func.body {
-                for stmt in &body.statements {
-                    if let Statement::ReturnStatement(ret) = stmt
-                        && let Some(ret_expr) = &ret.argument
-                        && let Expression::ObjectExpression(ret_obj) =
-                            ret_expr.get_inner_expression()
-                    {
-                        collect_object_keys(ret_obj, seen, ctx);
-                    }
-                }
+                collect_returned_object_keys(&body.statements, seen, ctx);
             }
         }
         Expression::ArrowFunctionExpression(arrow) => {
             if arrow.expression {
                 if let Some(Statement::ExpressionStatement(es)) = arrow.body.statements.first()
-                    && let Expression::ObjectExpression(obj) = es.expression.get_inner_expression()
+                    && let Expression::ObjectExpression(obj) = es.expression.without_parentheses()
                 {
                     collect_object_keys(obj, seen, ctx);
                 }
             } else {
-                for stmt in &arrow.body.statements {
-                    if let Statement::ReturnStatement(ret) = stmt
-                        && let Some(ret_expr) = &ret.argument
-                        && let Expression::ObjectExpression(ret_obj) =
-                            ret_expr.get_inner_expression()
-                    {
-                        collect_object_keys(ret_obj, seen, ctx);
-                    }
-                }
+                collect_returned_object_keys(&arrow.body.statements, seen, ctx);
             }
         }
         _ => {}
     }
 }
 
-fn collect_object_keys<'a>(
-    obj: &'a ObjectExpression<'a>,
-    seen: &mut FxHashSet<String>,
+fn collect_returned_object_keys<'a>(
+    statements: &'a [Statement<'a>],
+    seen: &mut FxHashSet<Cow<'a, str>>,
     ctx: &LintContext<'a>,
 ) {
-    let getter_names: FxHashSet<String> = obj
-        .properties
-        .iter()
-        .filter_map(|p| {
-            let ObjectPropertyKind::ObjectProperty(prop) = p else { return None };
-            if prop.kind == PropertyKind::Get {
-                prop.key.static_name().map(std::borrow::Cow::into_owned)
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    let mut used_getters: FxHashSet<String> = FxHashSet::default();
-
-    for prop_kind in &obj.properties {
-        let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
-        let Some(name) = prop.key.static_name() else { continue };
-        let name_str = name.as_ref();
-
-        if prop.kind == PropertyKind::Set
-            && getter_names.contains(name_str)
-            && !used_getters.contains(name_str)
+    for stmt in statements {
+        if let Statement::ReturnStatement(ret) = stmt
+            && let Some(ret_expr) = &ret.argument
+            && let Expression::ObjectExpression(ret_obj) = ret_expr.without_parentheses()
         {
-            used_getters.insert(name_str.to_string());
-            continue;
+            collect_object_keys(ret_obj, seen, ctx);
         }
-
-        report_or_add(name_str, prop.key.span(), seen, ctx);
     }
 }
 
-fn report_or_add(name: &str, span: Span, seen: &mut FxHashSet<String>, ctx: &LintContext) {
-    if !seen.insert(name.to_string()) {
-        ctx.diagnostic(duplicate_key_diagnostic(span, name));
+fn collect_object_keys<'a>(
+    obj: &'a ObjectExpression<'a>,
+    seen: &mut FxHashSet<Cow<'a, str>>,
+    ctx: &LintContext<'a>,
+) {
+    let getter_names: FxHashSet<Cow<'a, str>> = obj
+        .properties
+        .iter()
+        .filter_map(|p| {
+            let prop = p.as_property()?;
+            if prop.kind == PropertyKind::Get { static_key_name(&prop.key) } else { None }
+        })
+        .collect();
+
+    let mut used_getters: FxHashSet<Cow<'a, str>> = FxHashSet::default();
+
+    for prop_kind in &obj.properties {
+        let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
+        let Some(name) = static_key_name(&prop.key) else { continue };
+        // upstream skips empty names (`if (name)`)
+        if name.is_empty() {
+            continue;
+        }
+
+        if prop.kind == PropertyKind::Set
+            && getter_names.contains(name.as_ref())
+            && !used_getters.contains(name.as_ref())
+        {
+            used_getters.insert(name);
+            continue;
+        }
+
+        report_or_add(name, prop.key.span(), seen, ctx);
+    }
+}
+
+fn report_or_add<'a>(
+    name: Cow<'a, str>,
+    span: Span,
+    seen: &mut FxHashSet<Cow<'a, str>>,
+    ctx: &LintContext<'a>,
+) {
+    if seen.contains(name.as_ref()) {
+        ctx.diagnostic(duplicate_key_diagnostic(span, &name));
+    } else {
+        seen.insert(name);
+    }
+}
+
+/// Mirrors upstream `getStringLiteralValue`: the prop-name string of a literal array element.
+/// Non-string literals are stringified like JS `String(value)`; `null` has no name.
+fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
+    match expr {
+        Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
+        Expression::TemplateLiteral(t) => t.single_quasi().map(Into::into),
+        Expression::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
+        Expression::BooleanLiteral(b) => {
+            Some(Cow::Borrowed(if b.value { "true" } else { "false" }))
+        }
+        Expression::BigIntLiteral(b) => Some(Cow::Borrowed(b.value.as_str())),
+        Expression::RegExpLiteral(r) => Some(Cow::Owned(r.regex.to_string())),
+        _ => None,
+    }
+}
+
+/// `PropertyKey::static_name`, except numeric keys are formatted like JS `String(n)`
+/// (`1e-7` → "1e-7", not "0.0000001") to match upstream `getStaticPropertyName`.
+fn static_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
+    match key {
+        PropertyKey::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
+        _ => key.static_name(),
     }
 }
 
 // ---- script setup helpers ----
 
-fn find_define_props_call<'a>(
-    ctx: &LintContext<'a>,
-) -> Option<&'a oxc_ast::ast::CallExpression<'a>> {
+fn find_define_props_call<'a>(ctx: &LintContext<'a>) -> Option<&'a CallExpression<'a>> {
     for node in ctx.nodes() {
         if let AstKind::CallExpression(call) = node.kind()
             && matches!(call.callee, Expression::Identifier(_))
@@ -284,22 +299,36 @@ fn find_define_props_call<'a>(
     None
 }
 
-/// Collect all `SymbolId`s bound by a defineProps assignment, including destructured bindings.
-/// Handles `const props = defineProps(...)`, `const { foo } = defineProps(...)`, etc.
-fn find_props_symbol_ids(call: &oxc_ast::ast::CallExpression, ctx: &LintContext) -> Vec<SymbolId> {
+/// Collect everything bound by `const ... = defineProps(...)` declarators in one pass:
+/// every bound `SymbolId` (for initializer reference checks) and the prop names renamed
+/// via `const { foo: bar } = defineProps(...)`.
+fn collect_props_bindings<'a>(
+    call: &CallExpression<'a>,
+    ctx: &LintContext<'a>,
+) -> (Vec<SymbolId>, FxHashSet<Cow<'a, str>>) {
     let mut ids = Vec::new();
+    let mut renamed = FxHashSet::default();
     for node in ctx.nodes() {
         let AstKind::VariableDeclarator(decl) = node.kind() else { continue };
         if !decl.init.as_ref().is_some_and(|init| is_define_props_initializer(init, call)) {
             continue;
         }
         collect_binding_symbol_ids(&decl.id, &mut ids);
+        if let BindingPattern::ObjectPattern(pat) = &decl.id {
+            for prop in &pat.properties {
+                if let Some(key_name) = static_key_name(&prop.key)
+                    && let BindingPattern::BindingIdentifier(val) = &prop.value
+                    && key_name.as_ref() != val.name.as_str()
+                {
+                    renamed.insert(key_name);
+                }
+            }
+        }
     }
-    ids
+    (ids, renamed)
 }
 
-fn collect_binding_symbol_ids(pattern: &oxc_ast::ast::BindingPattern, ids: &mut Vec<SymbolId>) {
-    use oxc_ast::ast::BindingPattern;
+fn collect_binding_symbol_ids(pattern: &BindingPattern, ids: &mut Vec<SymbolId>) {
     match pattern {
         BindingPattern::BindingIdentifier(id) => {
             if let Some(sym) = id.symbol_id.get() {
@@ -314,14 +343,8 @@ fn collect_binding_symbol_ids(pattern: &oxc_ast::ast::BindingPattern, ids: &mut 
                 collect_binding_symbol_ids(&rest.argument, ids);
             }
         }
-        BindingPattern::ArrayPattern(arr) => {
-            for el in arr.elements.iter().flatten() {
-                collect_binding_symbol_ids(el, ids);
-            }
-            if let Some(rest) = &arr.rest {
-                collect_binding_symbol_ids(&rest.argument, ids);
-            }
-        }
+        // upstream's extractReferences does not descend into array patterns
+        BindingPattern::ArrayPattern(_) => {}
         BindingPattern::AssignmentPattern(assign) => {
             collect_binding_symbol_ids(&assign.left, ids);
         }
@@ -347,35 +370,26 @@ fn is_inside_props_reference(
 }
 
 fn collect_prop_names_from_call<'a>(
-    call: &'a oxc_ast::ast::CallExpression<'a>,
+    call: &'a CallExpression<'a>,
     ctx: &LintContext<'a>,
-) -> Vec<String> {
-    let mut props: Vec<String> = Vec::new();
+) -> Vec<Cow<'a, str>> {
+    let mut props: Vec<Cow<'a, str>> = Vec::new();
     if let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) {
-        match arg {
+        match arg.without_parentheses() {
             Expression::ObjectExpression(obj) => {
                 for prop_kind in &obj.properties {
                     if let ObjectPropertyKind::ObjectProperty(p) = prop_kind
-                        && let Some(name) = p.key.static_name()
+                        && let Some(name) = static_key_name(&p.key)
                     {
-                        props.push(name.into_owned());
+                        props.push(name);
                     }
                 }
             }
             Expression::ArrayExpression(arr) => {
                 for el in &arr.elements {
-                    match el {
-                        ArrayExpressionElement::StringLiteral(s) => {
-                            props.push(s.value.to_string());
-                        }
-                        ArrayExpressionElement::TemplateLiteral(t) if t.expressions.is_empty() => {
-                            if let Some(cooked) =
-                                t.quasis.first().and_then(|q| q.value.cooked.as_ref())
-                            {
-                                props.push(cooked.to_string());
-                            }
-                        }
-                        _ => {}
+                    let Some(expr) = el.as_expression() else { continue };
+                    if let Some(name) = literal_element_name(expr.without_parentheses()) {
+                        props.push(name);
                     }
                 }
             }
@@ -388,9 +402,9 @@ fn collect_prop_names_from_call<'a>(
 }
 
 fn collect_ts_type_prop_names<'a>(
-    call: &'a oxc_ast::ast::CallExpression<'a>,
+    call: &'a CallExpression<'a>,
     ctx: &LintContext<'a>,
-    out: &mut Vec<String>,
+    out: &mut Vec<Cow<'a, str>>,
 ) {
     let Some(type_params) = &call.type_arguments else { return };
     let Some(first_type) = type_params.params.first() else { return };
@@ -400,42 +414,13 @@ fn collect_ts_type_prop_names<'a>(
             TSSignature::TSMethodSignature(s) => &s.key,
             _ => return,
         };
-        if let Some(name) = key.static_name() {
-            out.push(name.into_owned());
+        if let Some(name) = static_key_name(key) {
+            out.push(name);
         }
     });
 }
 
-/// Prop names that are renamed in `const { foo: bar } = defineProps(...)` — `foo` is renamed.
-/// withDefaults wrapping is also handled so `const { foo: bar } = withDefaults(defineProps<...>(), ...)` works.
-fn collect_renamed_props(
-    call: &oxc_ast::ast::CallExpression,
-    ctx: &LintContext,
-) -> FxHashSet<String> {
-    let mut renamed = FxHashSet::default();
-    for node in ctx.nodes() {
-        let AstKind::VariableDeclarator(decl) = node.kind() else { continue };
-        if !decl.init.as_ref().is_some_and(|init| is_define_props_initializer(init, call)) {
-            continue;
-        }
-        if let oxc_ast::ast::BindingPattern::ObjectPattern(pat) = &decl.id {
-            for prop in &pat.properties {
-                if let Some(key_name) = prop.key.static_name()
-                    && let oxc_ast::ast::BindingPattern::BindingIdentifier(val) = &prop.value
-                    && key_name.as_ref() != val.name.as_str()
-                {
-                    renamed.insert(key_name.into_owned());
-                }
-            }
-        }
-    }
-    renamed
-}
-
-fn is_define_props_initializer<'a>(
-    init: &'a Expression<'a>,
-    call: &'a oxc_ast::ast::CallExpression<'a>,
-) -> bool {
+fn is_define_props_initializer<'a>(init: &'a Expression<'a>, call: &'a CallExpression<'a>) -> bool {
     match init {
         Expression::CallExpression(c) => {
             std::ptr::eq(c.as_ref(), call)
@@ -1096,6 +1081,61 @@ const bar = computed(() => foo + 1)
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        // empty template literal names are ignored (upstream `if (name)` guard)
+        (
+            r"
+<script>
+export default { props: [``, ``] }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // empty string keys are ignored (upstream `if (name)` guard)
+        (
+            r"
+<script>
+export default { data () { return { '': 1, '': 2 } } }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // TS as-expression group value is skipped — only parentheses are transparent
+        (
+            r#"
+<script lang="ts">
+export default { props: ['foo'], data: ({ foo: null } as any) }
+</script>
+"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // TS as-expression return argument is skipped
+        (
+            r#"
+<script lang="ts">
+export default { props: ['foo'], data () { return { foo: 1 } as any } }
+</script>
+"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // numeric keys compare using JS number formatting ('1e-7', not '0.0000001')
+        (
+            r"
+<script>
+export default { props: { '0.0000001': String }, data () { return { 1e-7: 1 } } }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
@@ -1651,6 +1691,76 @@ export default { props: [`foo`], data() { return { foo: 1 } } }
 <script setup>
 defineProps([`foo`])
 const foo = 1
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // array-destructured defineProps binding does not exempt initializers
+        // (upstream extractReferences ignores array patterns)
+        (
+            r"
+<script setup>
+const [a] = defineProps(['foo', 'bar'])
+const foo = computed(() => a)
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // parenthesized defineProps argument
+        (
+            r"
+<script setup>
+defineProps((['foo']))
+const foo = 1
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // parenthesized array element in a group
+        (
+            r"
+<script>
+export default { props: [('foo')], data () { return { foo: 1 } } }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // parenthesized element in defineProps array
+        (
+            r"
+<script setup>
+defineProps([('foo')])
+const foo = 1
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // non-string literal array elements are stringified like JS String(value)
+        (
+            r"
+<script>
+export default { props: [1, true], data () { return { 1: 'x', true: 'y' } } }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // numeric keys use JS exponent formatting ('1e-7', not '0.0000001')
+        (
+            r"
+<script>
+export default { props: { 1e-7: String }, data () { return { '1e-7': 1 } } }
 </script>
 ",
             None,

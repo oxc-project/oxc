@@ -362,3 +362,59 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───
  5 │ </script>
    ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:4:7]
+ 3 │ const [a] = defineProps(['foo', 'bar'])
+ 4 │ const foo = computed(() => a)
+   ·       ───
+ 5 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:4:7]
+ 3 │ defineProps((['foo']))
+ 4 │ const foo = 1
+   ·       ───
+ 5 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:55]
+ 2 │ <script>
+ 3 │ export default { props: [('foo')], data () { return { foo: 1 } } }
+   ·                                                       ───
+ 4 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:4:7]
+ 3 │ defineProps([('foo')])
+ 4 │ const foo = 1
+   ·       ───
+ 5 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key '1'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:55]
+ 2 │ <script>
+ 3 │ export default { props: [1, true], data () { return { 1: 'x', true: 'y' } } }
+   ·                                                       ─
+ 4 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'true'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:63]
+ 2 │ <script>
+ 3 │ export default { props: [1, true], data () { return { 1: 'x', true: 'y' } } }
+   ·                                                               ────
+ 4 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key '1e-7'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:62]
+ 2 │ <script>
+ 3 │ export default { props: { 1e-7: String }, data () { return { '1e-7': 1 } } }
+   ·                                                              ──────
+ 4 │ </script>
+   ╰────
