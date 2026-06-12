@@ -1310,7 +1310,10 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, NoConfusingVoidExpressionConfig];
   "typescript/no-deprecated"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDeprecatedConfig];
   "typescript/no-duplicate-enum-values"?: RuleNoConfig;
-  "typescript/no-duplicate-type-constituents"?: DummyRule;
+  "typescript/no-duplicate-type-constituents"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoDuplicateTypeConstituentsConfig];
   "typescript/no-dynamic-delete"?: RuleNoConfig;
   "typescript/no-empty-interface"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoEmptyInterface];
   "typescript/no-empty-object-type"?: DummyRule;
@@ -4697,6 +4700,18 @@ export interface PackageSpecifier {
    * The package name to match
    */
   package: string;
+}
+export interface NoDuplicateTypeConstituentsConfig {
+  /**
+   * Whether to ignore duplicate types in intersection types.
+   * When true, allows `type T = A & A`.
+   */
+  ignoreIntersections?: boolean;
+  /**
+   * Whether to ignore duplicate types in union types.
+   * When true, allows `type T = A | A`.
+   */
+  ignoreUnions?: boolean;
 }
 export interface NoEmptyInterface {
   /**

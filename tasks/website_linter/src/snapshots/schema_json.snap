@@ -6406,7 +6406,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/no-duplicate-type-constituents": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoDuplicateTypeConstituentsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/no-dynamic-delete": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -11456,6 +11473,24 @@ expression: json
           "default": false,
           "type": "boolean",
           "markdownDescription": "When `true` this rule will also look at exports to see if there is both a re-export of a\nmodule as in `export ... from 'module'` and also a standard import statement for the same\nmodule. This would count as a rule violation because there are in a sense two statements\nimporting from the same module.\n\nExamples of **incorrect** code when `includeExports` is set to `true`:\n```js\nimport { merge } from 'module';\n\nexport { find } from 'module'; // re-export which is an import and an export.\n```\n\nExamples of **correct** code when `includeExports` is set to `true`:\n\nIf re-exporting from an imported module, you should add the imports to the\n`import` statement, and export that directly, not use `export ... from`.\n```js\nimport { merge } from \"lodash-es\";\nexport { merge as lodashMerge }\n```\n\n```js\nimport { merge, find } from 'module';\n\n// cannot be merged with the above import\nexport * as something from 'module';\n\n// cannot be written differently\nexport * from 'module';\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoDuplicateTypeConstituentsConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreIntersections": {
+          "description": "Whether to ignore duplicate types in intersection types.\nWhen true, allows `type T = A & A`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore duplicate types in intersection types.\nWhen true, allows `type T = A & A`."
+        },
+        "ignoreUnions": {
+          "description": "Whether to ignore duplicate types in union types.\nWhen true, allows `type T = A | A`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore duplicate types in union types.\nWhen true, allows `type T = A | A`."
         }
       },
       "additionalProperties": false
