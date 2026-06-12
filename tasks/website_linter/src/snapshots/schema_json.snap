@@ -9156,7 +9156,7 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vue/one-component-per-file": {
-          "$ref": "#/definitions/DummyRule"
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "vue/prefer-import-from-vue": {
           "$ref": "#/definitions/RuleNoConfig"
