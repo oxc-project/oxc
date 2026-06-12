@@ -1,7 +1,5 @@
 {
-  "jsPlugins": [
-    { "name": "alias-settings", "specifier": "./plugin.ts" }
-  ],
+  "jsPlugins": [{ "name": "alias-settings", "specifier": "./plugin.ts" }],
   "settings": {
     "alias-settings": {
       "value": "configured through alias"

@@ -363,7 +363,7 @@ function getPluginName(
 
   throw new Error(
     "Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, " +
-    "or be given an alias in config",
+      "or be given an alias in config",
   );
 }
 
