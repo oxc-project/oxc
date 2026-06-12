@@ -6441,6 +6441,12 @@ export interface OxlintPluginSettings {
  */
 export interface JestPluginSettings {
   /**
+   * Package to treat as the source of Jest globals.
+   *
+   * This matches `eslint-plugin-jest`'s `settings.jest.globalPackage` option.
+   */
+  globalPackage?: string;
+  /**
    * Jest version — accepts a number (`29`) or a semver string (`"29.1.0"` or `"v29.1.0"`),
    * storing only the major version.
    * ::: warning

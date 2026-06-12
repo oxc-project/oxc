@@ -164,13 +164,24 @@ pub struct PossibleJestNode<'a, 'b> {
 pub fn collect_possible_jest_call_node<'a, 'c>(
     ctx: &'c LintContext<'a>,
 ) -> Vec<PossibleJestNode<'a, 'c>> {
-    iter_possible_jest_call_node(ctx.semantic()).collect()
+    iter_possible_jest_call_node(ctx).collect()
 }
 
 /// Iterate over all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be an iter over node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn iter_possible_jest_call_node<'a, 'c>(
+    ctx: &'c LintContext<'a>,
+) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
+    iter_possible_jest_call_node_with_global_package(
+        ctx.semantic(),
+        ctx.settings().jest.global_package(),
+    )
+}
+
+/// Iterate over all possible Jest fn Call Expression for a pre-resolved Jest globals package.
+pub fn iter_possible_jest_call_node_with_global_package<'a, 'c>(
     semantic: &'c Semantic<'a>,
+    jest_global_package: &'c str,
 ) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
@@ -180,11 +191,12 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
     //     expect(1 + 2).toEqual(3);
     // });
     // ```
-    let reference_id_with_original_list = collect_ids_referenced_to_import(semantic).chain(
-        collect_ids_referenced_to_global(semantic)
-            // set the original of global test function to None
-            .map(|id| (id, None)),
-    );
+    let reference_id_with_original_list =
+        collect_ids_referenced_to_import(semantic, jest_global_package).chain(
+            collect_ids_referenced_to_global(semantic)
+                // set the original of global test function to None
+                .map(|id| (id, None)),
+        );
 
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.flat_map(move |(reference_id, original)| {
@@ -215,6 +227,7 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
 
 fn collect_ids_referenced_to_import<'a, 'c>(
     semantic: &'c Semantic<'a>,
+    jest_global_package: &'c str,
 ) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
     semantic
         .scoping()
@@ -230,10 +243,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(
-                    import_decl.source.value.as_str(),
-                    "@jest/globals" | "vitest" | "vite-plus/test"
-                ) {
+                if is_jest_import_source(import_decl.source.value.as_str(), jest_global_package) {
                     let original = find_original_name(import_decl, name);
                     let ret = reference_ids
                         .iter()
@@ -246,6 +256,10 @@ fn collect_ids_referenced_to_import<'a, 'c>(
             None
         })
         .flatten()
+}
+
+fn is_jest_import_source(source: &str, jest_global_package: &str) -> bool {
+    source == jest_global_package || matches!(source, "vitest" | "vite-plus/test")
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.

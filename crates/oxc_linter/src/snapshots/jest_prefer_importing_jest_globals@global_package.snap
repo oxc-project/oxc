@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ jest(prefer-importing-jest-globals): Import the following Jest functions from `bun:test`: expect, test
+   ╭─[prefer_importing_jest_globals.tsx:1:1]
+ 1 │ test('foo', () => { expect(true).toBeDefined(); });
+   · ────
+   ╰────
+  help: Insert `const { expect, test } = require('bun:test');
+        `

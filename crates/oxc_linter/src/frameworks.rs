@@ -100,8 +100,8 @@ pub fn has_vitest_imports(module_record: &ModuleRecord) -> bool {
 }
 
 #[cfg(not(test))]
-pub fn has_jest_imports(module_record: &ModuleRecord) -> bool {
-    module_record.import_entries.iter().any(|entry| entry.module_request.name() == "@jest/globals")
+pub fn has_jest_imports(module_record: &ModuleRecord, global_package: &str) -> bool {
+    module_record.import_entries.iter().any(|entry| entry.module_request.name() == global_package)
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

@@ -169,7 +169,7 @@ impl NoLargeSnapshotsConfig {
                 }
             }
         } else {
-            for possible_jest_node in iter_possible_jest_call_node(ctx.semantic()) {
+            for possible_jest_node in iter_possible_jest_call_node(ctx) {
                 self.run(&possible_jest_node, ctx);
             }
         }

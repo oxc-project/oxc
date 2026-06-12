@@ -481,8 +481,8 @@ impl<'a> ContextHost<'a> {
             // let mut test_flags = FrameworkFlags::empty();
 
             let vitest_like = has_vitest_imports(self.module_record());
-            let jest_like =
-                is_jestlike_file(&self.file_path) || has_jest_imports(self.module_record());
+            let jest_like = is_jestlike_file(&self.file_path)
+                || has_jest_imports(self.module_record(), self.settings().jest.global_package());
 
             self.frameworks.set(FrameworkFlags::Vitest, vitest_like);
             self.frameworks.set(FrameworkFlags::Jest, jest_like);

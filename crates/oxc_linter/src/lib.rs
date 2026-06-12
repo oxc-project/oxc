@@ -103,7 +103,7 @@ use crate::{
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
     timing::{RuleTimingRecorder, RuleTimingStat},
-    utils::iter_possible_jest_call_node,
+    utils::iter_possible_jest_call_node_with_global_package,
 };
 
 #[cfg(target_pointer_width = "64")]
@@ -189,6 +189,7 @@ fn execute_rules<'a, const TIMINGS: bool>(
     rules: &[(&RuleEnum, LintContext<'a>)],
     semantic: &Semantic<'a>,
     should_run_on_jest_node: bool,
+    jest_global_package: &str,
     with_runtime_optimization: bool,
     mut timing_recorder: Option<&mut RuleTimingRecorder>,
 ) {
@@ -235,7 +236,9 @@ fn execute_rules<'a, const TIMINGS: bool>(
             }
 
             if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
+                for jest_node in
+                    iter_possible_jest_call_node_with_global_package(semantic, jest_global_package)
+                {
                     for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
                         if rule.run_info().is_run_on_jest_node_implemented() {
                             let timing_stat =
@@ -259,7 +262,10 @@ fn execute_rules<'a, const TIMINGS: bool>(
             }
 
             if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
+                for jest_node in iter_possible_jest_call_node_with_global_package(
+                    semantic,
+                    jest_global_package,
+                ) {
                     let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
                     rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
                 }
@@ -401,11 +407,13 @@ impl Linter {
 
             let should_run_on_jest_node =
                 ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
+            let jest_global_package = ctx_host.settings().jest.global_package();
 
             execute_rules::<TIMINGS>(
                 &rules,
                 semantic,
                 should_run_on_jest_node,
+                jest_global_package,
                 true,
                 timing_recorder.as_mut(),
             );
@@ -413,7 +421,14 @@ impl Linter {
             #[cfg(debug_assertions)]
             {
                 let diagnostics_after_optimized = ctx_host.diagnostic_count();
-                execute_rules::<false>(&rules, semantic, should_run_on_jest_node, false, None);
+                execute_rules::<false>(
+                    &rules,
+                    semantic,
+                    should_run_on_jest_node,
+                    jest_global_package,
+                    false,
+                    None,
+                );
                 let diagnostics_after_unoptimized = ctx_host.diagnostic_count();
                 ctx_host.get_diagnostics(|diagnostics| {
                     let optimized_diagnostics = &diagnostics[current_diagnostic_index..diagnostics_after_optimized];

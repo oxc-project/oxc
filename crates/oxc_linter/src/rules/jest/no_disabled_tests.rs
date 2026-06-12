@@ -98,3 +98,21 @@ fn test() {
         .with_jest_plugin(true)
         .test_and_snapshot();
 }
+
+#[test]
+fn test_global_package_setting() {
+    use crate::tester::Tester;
+
+    fn settings() -> serde_json::Value {
+        serde_json::json!({ "settings": { "jest": { "globalPackage": "bun:test" } } })
+    }
+
+    let pass = vec![("import { test } from 'bun:test'; test.skip('something');", None, None)];
+    let fail =
+        vec![("import { test } from 'bun:test'; test.skip('something');", None, Some(settings()))];
+
+    Tester::new(NoDisabledTests::NAME, NoDisabledTests::PLUGIN, pass, fail)
+        .with_jest_plugin(true)
+        .with_snapshot_suffix("global_package")
+        .test_and_snapshot();
+}

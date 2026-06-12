@@ -1,0 +1,13 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │     import { expect as e, test } from 'bun:test';
+ 2 │ ╭─▶             test("fails", () => {
+ 3 │ │                 e(true).toBe(true);
+ 4 │ ╰─▶             });
+   ╰────
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in the test.

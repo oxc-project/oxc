@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ jest(no-disabled-tests): Test is missing function argument
+   ╭─[no_disabled_tests.tsx:1:34]
+ 1 │ import { test } from 'bun:test'; test.skip('something');
+   ·                                  ──────────────────────
+   ╰────
+  help: Add function argument

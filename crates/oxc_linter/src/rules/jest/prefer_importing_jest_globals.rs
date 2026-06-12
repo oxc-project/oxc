@@ -21,9 +21,13 @@ use crate::{
     },
 };
 
-fn prefer_importing_jest_globals_diagnostic(span: Span, globals: &str) -> OxcDiagnostic {
+fn prefer_importing_jest_globals_diagnostic(
+    span: Span,
+    globals: &str,
+    import_source: &str,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Import the following Jest functions from `@jest/globals`: {globals}"
+        "Import the following Jest functions from `{import_source}`: {globals}"
     ))
     .with_label(span)
 }
@@ -88,8 +92,6 @@ impl JestFnType {
     }
 }
 
-const IMPORT_SOURCE: &str = "@jest/globals";
-
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -135,6 +137,7 @@ impl Rule for PreferImportingJestGlobals {
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        let import_source = ctx.settings().jest.global_package();
         let mut functions_to_import: FxHashSet<String> = FxHashSet::default();
         let mut reporting_span: Option<Span> = None;
 
@@ -174,8 +177,9 @@ impl Rule for PreferImportingJestGlobals {
             prefer_importing_jest_globals_diagnostic(
                 span,
                 &functions_to_import.iter().sorted().join(", "),
+                import_source,
             ),
-            |fixer| build_fix(ctx, &fixer, &mut functions_to_import),
+            |fixer| build_fix(ctx, &fixer, &mut functions_to_import, import_source),
         );
     }
 }
@@ -184,22 +188,23 @@ fn build_fix<'a>(
     ctx: &LintContext<'a>,
     fixer: &RuleFixer<'_, 'a>,
     functions_to_import: &mut FxHashSet<String>,
+    import_source: &str,
 ) -> RuleFix {
     let program = ctx.nodes().program();
     let is_module = ctx.source_type().is_module();
 
-    // 1. Merge with existing `import ... from '@jest/globals'`
-    if let Some(fix) = try_merge_esm_import(ctx, fixer, functions_to_import) {
+    // 1. Merge with existing `import ...` from the configured globals package.
+    if let Some(fix) = try_merge_esm_import(ctx, fixer, functions_to_import, import_source) {
         return fix;
     }
 
-    // 2. Merge with existing `const { ... } = require('@jest/globals')`
-    if let Some(fix) = try_merge_cjs_require(ctx, fixer, functions_to_import) {
+    // 2. Merge with existing `require(...)` from the configured globals package.
+    if let Some(fix) = try_merge_cjs_require(ctx, fixer, functions_to_import, import_source) {
         return fix;
     }
 
     // 3. Create a new import/require
-    let text = create_import_text(is_module, functions_to_import);
+    let text = create_import_text(is_module, functions_to_import, import_source);
 
     if let Some(directive) = program.directives.last() {
         return fixer.insert_text_after_range(directive.span, format!("\n{text}"));
@@ -210,29 +215,34 @@ fn build_fix<'a>(
     fixer.insert_text_before_range(Span::empty(0), format!("{text}\n"))
 }
 
-fn create_import_text(is_module: bool, functions: &FxHashSet<String>) -> String {
+fn create_import_text(
+    is_module: bool,
+    functions: &FxHashSet<String>,
+    import_source: &str,
+) -> String {
     let sorted = functions.iter().sorted().join(", ");
     if is_module {
-        format!("import {{ {sorted} }} from '{IMPORT_SOURCE}';")
+        format!("import {{ {sorted} }} from '{import_source}';")
     } else {
-        format!("const {{ {sorted} }} = require('{IMPORT_SOURCE}');")
+        format!("const {{ {sorted} }} = require('{import_source}');")
     }
 }
 
-/// Merge with existing `import ... from '@jest/globals'` and replace it entirely.
+/// Merge with an existing import from the configured globals package and replace it entirely.
 /// Uses `module_record` to find import entries and their statement span.
 fn try_merge_esm_import<'a>(
     ctx: &LintContext<'a>,
     fixer: &RuleFixer<'_, 'a>,
     functions_to_import: &mut FxHashSet<String>,
+    import_source: &str,
 ) -> Option<RuleFix> {
     let module_record = ctx.module_record();
 
-    // Find the first `@jest/globals` import statement span
+    // Find the first matching import statement span.
     let first_span = module_record
         .import_entries
         .iter()
-        .find(|e| e.module_request.name() == IMPORT_SOURCE && !e.is_type)?
+        .find(|e| e.module_request.name() == import_source && !e.is_type)?
         .statement_span;
 
     // Merge only entries belonging to that same import statement
@@ -258,15 +268,16 @@ fn try_merge_esm_import<'a>(
         }
     }
 
-    Some(fixer.replace(first_span, create_import_text(true, functions_to_import)))
+    Some(fixer.replace(first_span, create_import_text(true, functions_to_import, import_source)))
 }
 
-/// Merge with existing `const { ... } = require('@jest/globals')` and replace it entirely.
+/// Merge with an existing require from the configured globals package and replace it entirely.
 /// Uses semantic analysis to find `require` references instead of iterating the AST.
 fn try_merge_cjs_require<'a>(
     ctx: &LintContext<'a>,
     fixer: &RuleFixer<'_, 'a>,
     functions_to_import: &mut FxHashSet<String>,
+    import_source: &str,
 ) -> Option<RuleFix> {
     let is_module = ctx.source_type().is_module();
     let alias_sep = if is_module { " as " } else { ": " };
@@ -279,7 +290,7 @@ fn try_merge_cjs_require<'a>(
         let AstKind::CallExpression(call) = call_node.kind() else { continue };
 
         let is_jest_require =
-            call.arguments.len() == 1 && is_string_arg_matching(&call.arguments[0], IMPORT_SOURCE);
+            call.arguments.len() == 1 && is_string_arg_matching(&call.arguments[0], import_source);
 
         if !is_jest_require {
             continue;
@@ -320,9 +331,10 @@ fn try_merge_cjs_require<'a>(
         // VariableDeclaration is the direct parent of VariableDeclarator
         let var_decl_node = ctx.nodes().parent_node(var_declarator_node.id());
 
-        return Some(
-            fixer.replace(var_decl_node.span(), create_import_text(is_module, functions_to_import)),
-        );
+        return Some(fixer.replace(
+            var_decl_node.span(),
+            create_import_text(is_module, functions_to_import, import_source),
+        ));
     }
 
     None
@@ -1064,5 +1076,37 @@ fn test() {
     Tester::new(PreferImportingJestGlobals::NAME, PreferImportingJestGlobals::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_jest_plugin(true)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_global_package_setting() {
+    use std::path::PathBuf;
+
+    use crate::tester::Tester;
+
+    fn settings() -> serde_json::Value {
+        serde_json::json!({ "settings": { "jest": { "globalPackage": "bun:test" } } })
+    }
+
+    let pass = vec![(
+        "import { expect, test } from 'bun:test'; test('foo', () => { expect(true).toBeDefined(); });",
+        None,
+        Some(settings()),
+    )];
+    let fail =
+        vec![("test('foo', () => { expect(true).toBeDefined(); });", None, Some(settings()))];
+    let fix = vec![(
+        "test('foo', () => { expect(true).toBeDefined(); });",
+        "import { expect, test } from 'bun:test';\ntest('foo', () => { expect(true).toBeDefined(); });",
+        None,
+        Some(PathBuf::from("test.mjs")),
+        Some(settings()),
+    )];
+
+    Tester::new(PreferImportingJestGlobals::NAME, PreferImportingJestGlobals::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .with_jest_plugin(true)
+        .with_snapshot_suffix("global_package")
         .test_and_snapshot();
 }

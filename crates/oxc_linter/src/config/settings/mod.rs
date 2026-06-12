@@ -323,6 +323,22 @@ mod test {
     }
 
     #[test]
+    fn test_jest_global_package_settings() {
+        let json_value = serde_json::json!({
+            "jest": {
+                "globalPackage": "bun:test"
+            }
+        });
+
+        let settings = OxlintSettings::deserialize(&json_value).unwrap();
+
+        assert_eq!(settings.jest.global_package(), "bun:test");
+
+        let raw_json = settings.json.unwrap();
+        assert_eq!(raw_json["jest"]["globalPackage"], "bun:test");
+    }
+
+    #[test]
     fn test_major_version_jest_as_string_settings() {
         let json_value = serde_json::json!({
             "jest": {

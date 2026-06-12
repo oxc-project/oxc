@@ -10,6 +10,12 @@ use serde::{Deserialize, Deserializer, Serialize};
 /// configuration for a full reference.
 #[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema, PartialEq, Eq)]
 pub struct JestPluginSettings {
+    /// Package to treat as the source of Jest globals.
+    ///
+    /// This matches `eslint-plugin-jest`'s `settings.jest.globalPackage` option.
+    #[serde(default, rename = "globalPackage")]
+    pub global_package: Option<String>,
+
     /// Jest version — accepts a number (`29`) or a semver string (`"29.1.0"` or `"v29.1.0"`),
     /// storing only the major version.
     /// ::: warning
@@ -18,6 +24,16 @@ pub struct JestPluginSettings {
     #[serde(default, deserialize_with = "jest_version_deserialize")]
     #[schemars(with = "Option<JestVersionSchema>")]
     pub version: Option<usize>,
+}
+
+impl JestPluginSettings {
+    /// The default package providing Jest globals.
+    pub const DEFAULT_GLOBAL_PACKAGE: &'static str = "@jest/globals";
+
+    /// Return the configured package to treat as the source of Jest globals.
+    pub fn global_package(&self) -> &str {
+        self.global_package.as_deref().unwrap_or(Self::DEFAULT_GLOBAL_PACKAGE)
+    }
 }
 
 #[derive(JsonSchema)]

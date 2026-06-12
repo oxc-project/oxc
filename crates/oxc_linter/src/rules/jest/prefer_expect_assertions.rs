@@ -60,7 +60,8 @@ impl Rule for PreferExpectAssertions {
         // Resolve the file-level expect local name once (e.g. `"expect"` or `"e"`
         // for `import { expect as e }`). Per-callback vitest fixture overrides
         // are handled in `resolve_expect_source`.
-        let file_expect_prefix = resolve_expect_local_name(ctx, &["@jest/globals"]);
+        let file_expect_prefix =
+            resolve_expect_local_name(ctx, &[ctx.settings().jest.global_package()]);
 
         let mut covered_describe_ids: Vec<NodeId> = Vec::new();
 
@@ -1602,5 +1603,50 @@ fn test() {
         .expect_fix(fix_multi_statement)
         .expect_fix(fix_has_assertions_callback_arg)
         .expect_fix(fix_remove_args)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_global_package_setting() {
+    use crate::tester::Tester;
+
+    fn settings() -> serde_json::Value {
+        serde_json::json!({ "settings": { "jest": { "globalPackage": "bun:test" } } })
+    }
+
+    let pass = vec![(
+        r#"import { expect as e, test } from 'bun:test';
+            test("passes", () => {
+              e.assertions(1);
+              e(true).toBe(true);
+            });"#,
+        None,
+        Some(settings()),
+    )];
+    let fail = vec![(
+        r#"import { expect as e, test } from 'bun:test';
+            test("fails", () => {
+              e(true).toBe(true);
+            });"#,
+        None,
+        Some(settings()),
+    )];
+    let fix = vec![(
+        r#"import { expect as e, test } from 'bun:test';
+            test("fails", () => {
+              e(true).toBe(true);
+            });"#,
+        r#"import { expect as e, test } from 'bun:test';
+            test("fails", () => {e.hasAssertions();
+              e(true).toBe(true);
+            });"#,
+        None,
+        Some(settings()),
+    )];
+
+    Tester::new(PreferExpectAssertions::NAME, PreferExpectAssertions::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .with_jest_plugin(true)
+        .with_snapshot_suffix("global_package")
         .test_and_snapshot();
 }
