@@ -328,10 +328,9 @@ export function replacePlaceholders(message: string, data: DiagnosticData): stri
  * produce `column: -1` in some cases.
  *
  * @param lineCol - A line/column location.
- * @returns The character index of the location in the file.
- * @throws {TypeError} If `lineCol` is not an object with a integer `line` and `column`.
+ * @returns The character index of the location in the file, clamped to the source bounds.
+ * @throws {TypeError} If `lineCol` is not an object with an integer `line` and `column`.
  * @throws {RangeError} If `line` is less than or equal to 0, or greater than the number of lines in the source text.
- * @throws {RangeError} If computed offset is out of range of the source text.
  */
 function getOffsetFromLineColumn(lineCol: LineColumn): number {
   const { line, column } = lineCol;
