@@ -723,6 +723,17 @@ See [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s
 configuration for a full reference.
 
 
+#### settings.jest.globalPackage
+
+type: `string`
+
+default: `null`
+
+Package to treat as the source of Jest globals.
+
+This matches `eslint-plugin-jest`'s `settings.jest.globalPackage` option.
+
+
 #### settings.jest.version
 
 type: `integer | string`
