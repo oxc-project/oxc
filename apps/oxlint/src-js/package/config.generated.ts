@@ -1704,7 +1704,7 @@ export interface DummyRuleMap {
   "vue/no-side-effects-in-computed-properties"?: RuleNoConfig;
   "vue/no-this-in-before-route-enter"?: RuleNoConfig;
   "vue/no-watch-after-await"?: RuleNoConfig;
-  "vue/one-component-per-file"?: DummyRule;
+  "vue/one-component-per-file"?: RuleNoConfig;
   "vue/prefer-import-from-vue"?: RuleNoConfig;
   "vue/prop-name-casing"?:
     | AllowWarnDeny
