@@ -6,7 +6,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpressionElement, Expression, ImportDeclarationSpecifier, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, PropertyKind, Statement,
+        ObjectPropertyKind, PropertyKey, PropertyKind, Statement, TSSignature,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -18,7 +18,7 @@ use crate::{
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::Rule,
-    utils::{find_property, is_vue_component_options_object},
+    utils::{find_property, for_each_define_props_type_signature, is_vue_component_options_object},
 };
 
 fn duplicate_key_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
@@ -320,9 +320,9 @@ fn find_define_props_call<'a>(
 
 /// Collects (prop_name, span) pairs from a `defineProps(...)` call.
 /// Returns owned Strings to avoid lifetime issues with `static_name()` → `Cow`.
-fn collect_prop_names_from_call(
-    call: &oxc_ast::ast::CallExpression,
-    ctx: &LintContext,
+fn collect_prop_names_from_call<'a>(
+    call: &'a oxc_ast::ast::CallExpression<'a>,
+    ctx: &LintContext<'a>,
 ) -> Vec<(String, Span)> {
     let mut props: Vec<(String, Span)> = Vec::new();
     if let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) {
@@ -351,73 +351,23 @@ fn collect_prop_names_from_call(
     props
 }
 
-fn collect_ts_type_prop_names(
-    call: &oxc_ast::ast::CallExpression,
-    ctx: &LintContext,
+fn collect_ts_type_prop_names<'a>(
+    call: &'a oxc_ast::ast::CallExpression<'a>,
+    ctx: &LintContext<'a>,
     out: &mut Vec<(String, Span)>,
 ) {
     let Some(type_params) = &call.type_arguments else { return };
     let Some(first_type) = type_params.params.first() else { return };
-    collect_ts_type_keys(first_type, ctx, out);
-}
-
-fn collect_ts_type_keys(
-    ts_type: &oxc_ast::ast::TSType,
-    ctx: &LintContext,
-    out: &mut Vec<(String, Span)>,
-) {
-    use oxc_ast::ast::{TSSignature, TSType, TSTypeName};
-    match ts_type {
-        TSType::TSTypeLiteral(lit) => {
-            for member in &lit.members {
-                let key = match member {
-                    TSSignature::TSPropertySignature(s) => &s.key,
-                    TSSignature::TSMethodSignature(s) => &s.key,
-                    _ => continue,
-                };
-                if let Some(name) = key.static_name() {
-                    out.push((name.into_owned(), key.span()));
-                }
-            }
+    for_each_define_props_type_signature(first_type, ctx, &mut |sig| {
+        let key = match sig {
+            TSSignature::TSPropertySignature(s) => &s.key,
+            TSSignature::TSMethodSignature(s) => &s.key,
+            _ => return,
+        };
+        if let Some(name) = key.static_name() {
+            out.push((name.into_owned(), key.span()));
         }
-        TSType::TSTypeReference(r) => {
-            let TSTypeName::IdentifierReference(id) = &r.type_name else { return };
-            let Some(reference_id) = id.reference_id.get() else { return };
-            let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
-                return;
-            };
-            let decl_node = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
-            match decl_node.kind() {
-                AstKind::TSInterfaceDeclaration(iface) => {
-                    for member in &iface.body.body {
-                        let key = match member {
-                            TSSignature::TSPropertySignature(s) => &s.key,
-                            TSSignature::TSMethodSignature(s) => &s.key,
-                            _ => continue,
-                        };
-                        if let Some(name) = key.static_name() {
-                            out.push((name.into_owned(), key.span()));
-                        }
-                    }
-                }
-                AstKind::TSTypeAliasDeclaration(alias) => {
-                    collect_ts_type_keys(&alias.type_annotation, ctx, out);
-                }
-                _ => {}
-            }
-        }
-        TSType::TSIntersectionType(t) => {
-            for ty in &t.types {
-                collect_ts_type_keys(ty, ctx, out);
-            }
-        }
-        TSType::TSUnionType(t) => {
-            for ty in &t.types {
-                collect_ts_type_keys(ty, ctx, out);
-            }
-        }
-        _ => {}
-    }
+    });
 }
 
 /// Prop names that are renamed in `const { foo: bar } = defineProps(...)` — `foo` is renamed.
