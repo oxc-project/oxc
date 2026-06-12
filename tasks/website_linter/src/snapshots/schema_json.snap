@@ -3222,7 +3222,24 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "jsx-a11y/no-noninteractive-tabindex": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoNoninteractiveTabindexConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/no-redundant-roles": {
           "anyOf": [
@@ -12619,6 +12636,38 @@ expression: json
           "type": "string"
         }
       }
+    },
+    "NoNoninteractiveTabindexConfig": {
+      "type": "object",
+      "properties": {
+        "allowExpressionValues": {
+          "description": "If `true`, allows tabIndex values to be expression values (e.g., variables, ternaries). If `false`, only string literal values are allowed.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "If `true`, allows tabIndex values to be expression values (e.g., variables, ternaries). If `false`, only string literal values are allowed."
+        },
+        "roles": {
+          "description": "An array of ARIA roles that should be considered interactive.",
+          "default": [
+            "tabpanel"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of ARIA roles that should be considered interactive."
+        },
+        "tags": {
+          "description": "An array of custom HTML elements that should be considered interactive.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of custom HTML elements that should be considered interactive."
+        }
+      },
+      "additionalProperties": false
     },
     "NoNull": {
       "type": "object",

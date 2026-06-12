@@ -939,7 +939,10 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, NoNoninteractiveElementInteractionsConfig];
   "jsx-a11y/no-noninteractive-element-to-interactive-role"?: DummyRule;
-  "jsx-a11y/no-noninteractive-tabindex"?: DummyRule;
+  "jsx-a11y/no-noninteractive-tabindex"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoNoninteractiveTabindexConfig];
   "jsx-a11y/no-redundant-roles"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRedundantRolesConfig];
   "jsx-a11y/no-static-element-interactions"?:
     | AllowWarnDeny
@@ -2470,6 +2473,20 @@ export interface NoNoninteractiveElementInteractionsConfig {
    */
   handlers?: string[];
   [k: string]: string[];
+}
+export interface NoNoninteractiveTabindexConfig {
+  /**
+   * If `true`, allows tabIndex values to be expression values (e.g., variables, ternaries). If `false`, only string literal values are allowed.
+   */
+  allowExpressionValues?: boolean;
+  /**
+   * An array of ARIA roles that should be considered interactive.
+   */
+  roles?: string[];
+  /**
+   * An array of custom HTML elements that should be considered interactive.
+   */
+  tags?: string[];
 }
 export interface NoRedundantRolesConfig {
   [k: string]: string[];
