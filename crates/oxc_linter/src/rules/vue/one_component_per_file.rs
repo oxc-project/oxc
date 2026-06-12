@@ -1,9 +1,14 @@
-use oxc_ast::ast::{
-    CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression,
+use oxc_ast::{
+    AstKind,
+    ast::{
+        CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression,
+        Statement,
+    },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::{AstNodes, NodeId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -50,21 +55,144 @@ declare_oxc_lint!(
     version = "next",
 );
 
+/// Identifiers that component-definition calls are reachable from without an AST walk:
+/// either as the bare callee (`defineComponent({})`) or as the member object (`Vue.extend({})`).
+const COMPONENT_FACTORY_NAMES: [&str; 5] =
+    ["Vue", "component", "createApp", "defineComponent", "defineNuxtComponent"];
+
 impl Rule for OneComponentPerFile {
     fn run_once(&self, ctx: &LintContext) {
-        let mut visitor = ComponentCollector {
-            component_spans: Vec::new(),
-            is_vue_file: ctx.file_extension().is_some_and(|ext| ext == "vue"),
-            is_script_setup: ctx.frameworks_options() == FrameworkOptions::VueSetup,
-        };
-        visitor.visit_program(ctx.nodes().program());
+        let is_vue_file = ctx.file_extension().is_some_and(|ext| ext == "vue");
+        let is_script_setup = ctx.frameworks_options() == FrameworkOptions::VueSetup;
 
-        if visitor.component_spans.len() > 1 {
-            for span in &visitor.component_spans {
+        // `<anyIdentifier>.component(...)` (and the `*.mixin(...)` exclusion) cannot be
+        // reached from named references, but they cannot exist unless the property name
+        // appears as a word in the source text. Only such files pay for a full AST walk.
+        let component_spans = if contains_word(ctx.source_text(), "component")
+            || contains_word(ctx.source_text(), "mixin")
+        {
+            let mut visitor =
+                ComponentCollector { component_spans: Vec::new(), is_vue_file, is_script_setup };
+            visitor.visit_program(ctx.nodes().program());
+            visitor.component_spans
+        } else {
+            let mut spans = Vec::new();
+            collect_from_references(ctx, is_vue_file, is_script_setup, &mut spans);
+            spans.sort_unstable_by_key(|span| span.start);
+            spans
+        };
+
+        if component_spans.len() > 1 {
+            for span in &component_spans {
                 ctx.diagnostic(one_component_per_file_diagnostic(*span));
             }
         }
     }
+}
+
+/// Whether `word` appears in `text` outside of any larger identifier
+/// (e.g. `components:` does not count as `component`).
+fn contains_word(text: &str, word: &str) -> bool {
+    let bytes = text.as_bytes();
+    let mut start = 0;
+    while let Some(pos) = text[start..].find(word) {
+        let begin = start + pos;
+        let end = begin + word.len();
+        let before_ok = begin == 0 || !is_identifier_byte(bytes[begin - 1]);
+        let after_ok = end == bytes.len() || !is_identifier_byte(bytes[end]);
+        if before_ok && after_ok {
+            return true;
+        }
+        start = begin + 1;
+    }
+    false
+}
+
+fn is_identifier_byte(byte: u8) -> bool {
+    byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'$' || !byte.is_ascii()
+}
+
+/// Mirrors [`ComponentCollector`] without walking the AST: `export default {...}` can only
+/// appear in `program.body`, and every other component definition has one of
+/// [`COMPONENT_FACTORY_NAMES`] as its callee or member object, so all definition sites are
+/// reachable through the references to those names.
+fn collect_from_references(
+    ctx: &LintContext,
+    is_vue_file: bool,
+    is_script_setup: bool,
+    spans: &mut Vec<Span>,
+) {
+    if is_vue_file && !is_script_setup {
+        for stmt in &ctx.nodes().program().body {
+            if let Statement::ExportDefaultDeclaration(export) = stmt
+                && let ExportDefaultDeclarationKind::ObjectExpression(obj) = &export.declaration
+            {
+                spans.push(obj.span);
+            }
+        }
+    }
+
+    let scoping = ctx.scoping();
+    let nodes = ctx.nodes();
+    for name in COMPONENT_FACTORY_NAMES {
+        if let Some(ref_ids) = scoping.root_unresolved_references().get(name) {
+            for &ref_id in ref_ids {
+                check_reference(nodes, scoping.get_reference(ref_id).node_id(), spans);
+            }
+        }
+    }
+    for symbol_id in scoping.symbol_ids() {
+        if COMPONENT_FACTORY_NAMES.contains(&scoping.symbol_name(symbol_id)) {
+            for reference in scoping.get_resolved_references(symbol_id) {
+                check_reference(nodes, reference.node_id(), spans);
+            }
+        }
+    }
+}
+
+fn check_reference(nodes: &AstNodes, ident_node_id: NodeId, spans: &mut Vec<Span>) {
+    let ident_span = nodes.get_node(ident_node_id).kind().span();
+    for ancestor in nodes.ancestors(ident_node_id) {
+        match ancestor.kind() {
+            AstKind::ParenthesizedExpression(_)
+            | AstKind::ChainExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::StaticMemberExpression(_)
+            | AstKind::ComputedMemberExpression(_) => {}
+            AstKind::CallExpression(call) => {
+                // The span check ensures this reference is the identifier that
+                // `is_vue_component_options_call` matches on, not e.g. an argument,
+                // keeping the collected set identical to the AST-walk path.
+                if callee_identifier_span(call) == Some(ident_span)
+                    && is_vue_component_options_call(call)
+                    && !is_mixin_call(call)
+                    && let Some(last_arg) =
+                        call.arguments.last().and_then(|arg| arg.as_expression())
+                    && matches!(last_arg, Expression::ObjectExpression(_))
+                {
+                    spans.push(last_arg.span());
+                }
+                return;
+            }
+            _ => return,
+        }
+    }
+}
+
+/// The span of the identifier that drives [`is_vue_component_options_call`]:
+/// the bare callee, or the object of the callee member expression.
+fn callee_identifier_span(call: &CallExpression) -> Option<Span> {
+    if let Some(ident) = call.callee.get_identifier_reference() {
+        return Some(ident.span);
+    }
+    let member = call.callee.get_member_expr()?;
+    if let Expression::Identifier(obj) = member.object().get_inner_expression() {
+        return Some(obj.span);
+    }
+    None
 }
 
 struct ComponentCollector {
@@ -156,6 +284,25 @@ fn test() {
             None,
             Some(PathBuf::from("test.js")),
         ),
+        ("defineComponent({ name: 'A' })", None, None, Some(PathBuf::from("test.js"))),
+        (
+            "
+                    import { defineComponent } from 'vue'
+                    export const a = defineComponent({ name: 'A' })
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "
+                    import { createApp } from 'vue'
+                    createApp({ name: 'A' })
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
     ];
 
     let fail = vec![
@@ -191,6 +338,65 @@ fn test() {
             None,
             None,
             Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                    defineComponent({ name: 'A' })
+                    defineComponent({ name: 'B' })
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "
+                    import { defineComponent } from 'vue'
+                    export const a = defineComponent({ name: 'A' })
+                    export const b = defineComponent({ name: 'B' })
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "
+                    import Vue from 'vue'
+                    Vue.extend({ name: 'A' })
+                    Vue.extend({ name: 'B' })
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "<script>
+                  import { defineNuxtComponent } from '#imports'
+                  defineNuxtComponent({ name: 'A' })
+                  export default {}
+                  </script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                    function setup() {
+                      defineComponent({ name: 'A' })
+                    }
+                    defineComponent({ name: 'B' })
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "
+                    app['component']('a', { name: 'A' })
+                    app['component']('b', { name: 'B' })
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.js")),
         ),
     ];
 

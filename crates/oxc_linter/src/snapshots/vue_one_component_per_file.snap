@@ -51,3 +51,99 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ──
  4 │                   </script>
    ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:2:37]
+ 1 │ 
+ 2 │                     defineComponent({ name: 'A' })
+   ·                                     ─────────────
+ 3 │                     defineComponent({ name: 'B' })
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:3:37]
+ 2 │                     defineComponent({ name: 'A' })
+ 3 │                     defineComponent({ name: 'B' })
+   ·                                     ─────────────
+ 4 │                   
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:3:54]
+ 2 │                     import { defineComponent } from 'vue'
+ 3 │                     export const a = defineComponent({ name: 'A' })
+   ·                                                      ─────────────
+ 4 │                     export const b = defineComponent({ name: 'B' })
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:4:54]
+ 3 │                     export const a = defineComponent({ name: 'A' })
+ 4 │                     export const b = defineComponent({ name: 'B' })
+   ·                                                      ─────────────
+ 5 │                   
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:3:32]
+ 2 │                     import Vue from 'vue'
+ 3 │                     Vue.extend({ name: 'A' })
+   ·                                ─────────────
+ 4 │                     Vue.extend({ name: 'B' })
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:4:32]
+ 3 │                     Vue.extend({ name: 'A' })
+ 4 │                     Vue.extend({ name: 'B' })
+   ·                                ─────────────
+ 5 │                   
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:3:39]
+ 2 │                   import { defineNuxtComponent } from '#imports'
+ 3 │                   defineNuxtComponent({ name: 'A' })
+   ·                                       ─────────────
+ 4 │                   export default {}
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:4:34]
+ 3 │                   defineNuxtComponent({ name: 'A' })
+ 4 │                   export default {}
+   ·                                  ──
+ 5 │                   </script>
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:3:39]
+ 2 │                     function setup() {
+ 3 │                       defineComponent({ name: 'A' })
+   ·                                       ─────────────
+ 4 │                     }
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:5:37]
+ 4 │                     }
+ 5 │                     defineComponent({ name: 'B' })
+   ·                                     ─────────────
+ 6 │                   
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:2:43]
+ 1 │ 
+ 2 │                     app['component']('a', { name: 'A' })
+   ·                                           ─────────────
+ 3 │                     app['component']('b', { name: 'B' })
+   ╰────
+
+  ⚠ vue(one-component-per-file): There is more than one component in this file.
+   ╭─[one_component_per_file.tsx:3:43]
+ 2 │                     app['component']('a', { name: 'A' })
+ 3 │                     app['component']('b', { name: 'B' })
+   ·                                           ─────────────
+ 4 │                   
+   ╰────
