@@ -53,6 +53,9 @@ pub type ExternalLinterLintFileCb = Arc<
                 String,
                 // Globals JSON
                 String,
+                // CWD for the file being linted.
+                // `None` preserves the CWD set during rule config setup.
+                Option<String>,
                 // Workspace URI (e.g. `file:///path/to/workspace`).
                 // `None` in CLI mode (single workspace), `Some` in LSP mode.
                 Option<String>,

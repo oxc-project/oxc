@@ -168,6 +168,26 @@ let pi = 3.141592
 --------------------"
 `;
 
+exports[`LSP code actions > nested JS plugin config > should handle fix all from a nested config when workspace root is an ancestor 1`] = `
+"--- FILE -----------
+nested-js-plugin-fix/packages/my-package/src/pages/components/test.js
+--- Original Content ---------
+import { Foo } from "../../core/types";
+
+Foo;
+
+--- Code Actions ---------
+
+Title : fix all safe fixable oxlint issues
+Preferred: Yes
+Resulting Content:
+import { Foo } from "@/core/types";
+
+Foo;
+
+--------------------"
+`;
+
 exports[`LSP code actions > rulesCustomization > should hide rule fix in \`source.fixAll.oxc\` when rulesCustomization disables this rule 1`] = `
 "--- FILE -----------
 rules_customization/test.ts

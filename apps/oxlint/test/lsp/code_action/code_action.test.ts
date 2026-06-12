@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { fixFixture } from "../utils";
+import { fixFixture, fixFixtureWithWorkspaceRoot } from "../utils";
 
 const FIXTURES_DIR = join(import.meta.dirname, "fixtures");
 
@@ -48,6 +48,24 @@ describe("LSP code actions", () => {
           {
             diagnostics: [],
             only: [kind],
+          },
+        ),
+      ).toMatchSnapshot();
+    });
+  });
+
+  describe("nested JS plugin config", () => {
+    it("should handle fix all from a nested config when workspace root is an ancestor", async () => {
+      expect(
+        await fixFixtureWithWorkspaceRoot(
+          FIXTURES_DIR,
+          "nested-js-plugin-fix",
+          "nested-js-plugin-fix/packages/my-package/src/pages/components/test.js",
+          "javascript",
+          undefined,
+          {
+            diagnostics: [],
+            only: ["source.fixAll.oxc"],
           },
         ),
       ).toMatchSnapshot();

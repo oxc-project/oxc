@@ -377,6 +377,32 @@ export async function fixFixture(
   );
 }
 
+export async function fixFixtureWithWorkspaceRoot(
+  fixturesDir: string,
+  workspaceRoot: string,
+  fixturePath: string,
+  languageId: string,
+  initializationOptions?: OxlintLSPConfig,
+  context?: CodeActionContext,
+): Promise<string> {
+  const workspaceUri = pathToFileURL(join(fixturesDir, workspaceRoot)).href;
+  await using client = createLspConnection();
+
+  await client.initialize(
+    [{ uri: workspaceUri, name: "workspace-0" }],
+    PULL_DIAGNOSTICS_CAPABILITY,
+    [{ workspaceUri, options: initializationOptions ?? null }],
+  );
+
+  return await getCodeActionSnapshot(
+    fixturePath,
+    join(fixturesDir, fixturePath),
+    languageId,
+    client,
+    context,
+  );
+}
+
 export async function fixMultiWorkspaceFixture(
   fixturesDir: string,
   fixturePaths: {

@@ -54,12 +54,23 @@ pub type JsLintFileCb = ThreadsafeFunction<
         Vec<u32>,           // Array of options IDs
         String,             // Settings for the file, as JSON string
         String,             // Globals for the file, as JSON string
+        Option<String>,     // CWD for this file (`None` preserves configured cwd)
         Option<String>,     // Workspace URI (`None` in CLI mode, `Some` in LSP mode)
     )>,
     // Return value
     Option<String>, // `Vec<LintFileResult>`, serialized to JSON, or `None` if no diagnostics
     // Arguments (repeated)
-    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, Vec<u32>, String, String, Option<String>)>,
+    FnArgs<(
+        String,
+        u32,
+        Option<Uint8Array>,
+        Vec<u32>,
+        Vec<u32>,
+        String,
+        String,
+        Option<String>,
+        Option<String>,
+    )>,
     // Error status
     Status,
     // CalleeHandled

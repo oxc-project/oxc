@@ -348,6 +348,14 @@ impl Linter {
         rule_timing_store: Option<&RuleTimingStore>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
+        let external_linter_cwd = self.workspace_uri.as_ref().and_then(|_| {
+            config
+                .path
+                .as_ref()
+                .and_then(|config_path| config_path.parent())
+                .filter(|config_dir| !config_dir.as_os_str().is_empty())
+                .map(|config_dir| config_dir.to_string_lossy().into_owned())
+        });
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
         let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
@@ -449,6 +457,7 @@ impl Linter {
                 &mut ctx_host,
                 allocator,
                 js_allocator_pool,
+                external_linter_cwd.as_deref(),
             );
 
             // Report unused directives is now handled differently with type-aware linting
@@ -495,6 +504,7 @@ impl Linter {
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
+        external_linter_cwd: Option<&str>,
     ) {
         if external_rules.is_empty() {
             return;
@@ -542,6 +552,7 @@ impl Linter {
                 ctx_host,
                 program,
                 js_allocator_pool,
+                external_linter_cwd,
             );
             return;
         }
@@ -564,6 +575,7 @@ impl Linter {
             program,
             tokens,
             allocator,
+            external_linter_cwd,
         );
     }
 
@@ -575,6 +587,7 @@ impl Linter {
         _ctx_host: &mut Rc<ContextHost<'a>>,
         _allocator: &'a Allocator,
         _js_allocator_pool: Option<&AllocatorPool>,
+        _external_linter_cwd: Option<&str>,
     ) {
         // External rules (JS plugins) are not supported on non-64-bit or big-endian platforms
     }
@@ -592,6 +605,7 @@ impl Linter {
         ctx_host: &ContextHost<'_>,
         original_program: &mut Program<'_>,
         js_allocator_pool: &AllocatorPool,
+        external_linter_cwd: Option<&str>,
     ) {
         let js_allocator = js_allocator_pool.get();
 
@@ -649,6 +663,7 @@ impl Linter {
             program,
             tokens,
             &js_allocator,
+            external_linter_cwd,
         );
 
         // The `AllocatorGuard` (`js_allocator`) is dropped here, returning the allocator to the pool.
@@ -668,6 +683,7 @@ impl Linter {
         program: &mut Program<'_>,
         tokens: &mut [Token],
         allocator: &Allocator,
+        external_linter_cwd: Option<&str>,
     ) {
         // If has BOM, remove it
         const BOM: &str = "\u{feff}";
@@ -793,6 +809,7 @@ impl Linter {
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
             globals_json,
+            external_linter_cwd.map(ToString::to_string),
             self.workspace_uri.as_ref().map(ToString::to_string),
             allocator,
         );

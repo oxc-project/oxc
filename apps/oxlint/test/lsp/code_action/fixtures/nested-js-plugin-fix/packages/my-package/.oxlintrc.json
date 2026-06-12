@@ -1,0 +1,10 @@
+{
+  "jsPlugins": ["./plugin.js"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "nested-imports/no-relative-import-paths": [
+      "error",
+      { "allowedDepth": 1, "rootDir": "src", "prefix": "@" }
+    ]
+  }
+}

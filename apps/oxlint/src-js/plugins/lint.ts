@@ -1,5 +1,5 @@
 import { walkProgramWithCfg, resetCfgWalk } from "./cfg.ts";
-import { setupFileContext, resetFileContext } from "./context.ts";
+import { setupFileContext, resetFileContext, setCwd } from "./context.ts";
 import { registeredRules } from "./load.ts";
 import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
 import { diagnostics } from "./report.ts";
@@ -51,6 +51,7 @@ const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
+ * @param cwd - CWD for this file, or `null` to keep configured CWD
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns Diagnostics or error serialized to JSON string
  */
@@ -62,6 +63,7 @@ export function lintFile(
   optionsIds: number[],
   settingsJSON: string,
   globalsJSON: string,
+  cwd: string | null,
   workspaceUri: string | null,
 ): string | null {
   try {
@@ -73,6 +75,7 @@ export function lintFile(
       optionsIds,
       settingsJSON,
       globalsJSON,
+      cwd,
       workspaceUri,
     );
 
@@ -108,6 +111,7 @@ export function lintFile(
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
+ * @param cwd - CWD for this file, or `null` to keep configured CWD
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
@@ -120,6 +124,7 @@ export function lintFileImpl(
   optionsIds: number[],
   settingsJSON: string,
   globalsJSON: string,
+  cwd: string | null,
   workspaceUri: string | null,
 ) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
@@ -170,6 +175,7 @@ export function lintFileImpl(
   // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
   // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
   if (workspaceUri !== null) switchWorkspace(workspaceUri);
+  if (cwd !== null) setCwd(cwd);
   debugAssertIsNonNull(allOptions, "`allOptions` should be initialized");
 
   // Pass file path to context module, so `Context`s know what file is being linted
