@@ -42,6 +42,7 @@ working directory: fixtures
       "typecheck": false
     },
     "jest": {
+      "globalPackage": null,
       "version": null
     }
   },
