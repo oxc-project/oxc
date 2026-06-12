@@ -2,9 +2,10 @@ use std::{cell::RefCell, rc::Rc};
 
 use oxc_str::CompactStr;
 
-use miette::JSONReportHandler;
+use miette::{Diagnostic, JSONReportHandler, SourceCode, SourceSpan, SpanContents};
 use rustc_hash::FxHashSet;
 use serde::Serialize;
+use serde_json::Value;
 
 use oxc_diagnostics::{
     Error,
@@ -141,14 +142,65 @@ fn format_json(diagnostics: &mut Vec<Error>) -> String {
     let handler = JSONReportHandler::new();
     let messages = diagnostics
         .drain(..)
-        .map(|error| {
-            let mut output = String::new();
-            handler.render_report(&mut output, error.as_ref()).unwrap();
-            output
-        })
+        .map(|error| format_diagnostic_json(&handler, error.as_ref()))
         .collect::<Vec<_>>()
         .join(",\n");
     format!("[{messages}]")
+}
+
+fn format_diagnostic_json(handler: &JSONReportHandler, diagnostic: &dyn Diagnostic) -> String {
+    let mut output = String::new();
+    handler.render_report(&mut output, diagnostic).unwrap();
+
+    let Ok(mut output_json) = serde_json::from_str::<Value>(&output) else {
+        return output;
+    };
+
+    add_label_end_positions(&mut output_json, diagnostic, None);
+    serde_json::to_string(&output_json).unwrap_or(output)
+}
+
+fn add_label_end_positions(
+    output_json: &mut Value,
+    diagnostic: &dyn Diagnostic,
+    parent_src: Option<&dyn SourceCode>,
+) {
+    let src = diagnostic.source_code().or(parent_src);
+
+    if let Some(src) = src
+        && let Some(labels_json) = output_json.get_mut("labels").and_then(Value::as_array_mut)
+    {
+        let labels = diagnostic.labels();
+
+        for (label_json, label) in labels_json.iter_mut().zip(labels.iter()) {
+            let Some(span_json) = label_json.get_mut("span").and_then(Value::as_object_mut) else {
+                continue;
+            };
+            if span_json.get("line").is_none_or(Value::is_null)
+                || span_json.get("column").is_none_or(Value::is_null)
+            {
+                continue;
+            }
+
+            let end_offset = label.inner().offset() + label.inner().len();
+            let end_span = SourceSpan::from((end_offset, 0));
+            let Ok(end) = src.read_span(&end_span, 0, 0) else {
+                continue;
+            };
+
+            span_json.insert("endLine".to_string(), Value::from(end.line() + 1));
+            span_json.insert("endColumn".to_string(), Value::from(end.column() + 1));
+        }
+    }
+
+    let related = diagnostic.related();
+    let Some(related_json) = output_json.get_mut("related").and_then(Value::as_array_mut) else {
+        return;
+    };
+
+    for (related_json, related_diagnostic) in related_json.iter_mut().zip(related.iter()) {
+        add_label_end_positions(related_json, *related_diagnostic, src);
+    }
 }
 
 #[cfg(test)]
@@ -190,9 +242,21 @@ mod test {
                 rule_timings: None,
             })
             .unwrap();
-        assert_eq!(
-            &output,
-            "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}],\"related\": []}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
-        );
+        let json: serde_json::Value = serde_json::from_str(&output).unwrap();
+        let span = &json["diagnostics"][0]["labels"][0]["span"];
+
+        assert_eq!(json["number_of_files"], 0);
+        assert_eq!(json["number_of_rules"], 0);
+        assert_eq!(json["threads_count"], 1);
+        assert_eq!(json["start_time"], 0);
+        assert_eq!(json["diagnostics"][0]["message"], "error message");
+        assert_eq!(json["diagnostics"][0]["severity"], "warning");
+        assert_eq!(json["diagnostics"][0]["filename"], "file://test.ts");
+        assert_eq!(span["offset"], 0);
+        assert_eq!(span["length"], 8);
+        assert_eq!(span["line"], 1);
+        assert_eq!(span["column"], 1);
+        assert_eq!(span["endLine"], 1);
+        assert_eq!(span["endColumn"], 9);
     }
 }
