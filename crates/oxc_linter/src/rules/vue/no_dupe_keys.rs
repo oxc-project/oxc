@@ -90,7 +90,21 @@ impl Rule for NoDupeKeys {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ObjectExpression(obj) = node.kind() else { return };
+        match node.kind() {
+            AstKind::ObjectExpression(obj) => self.check_component_options(node, obj, ctx),
+            AstKind::CallExpression(call) => check_define_props(node, call, ctx),
+            _ => {}
+        }
+    }
+}
+
+impl NoDupeKeys {
+    fn check_component_options<'a>(
+        &self,
+        node: &AstNode<'a>,
+        obj: &'a ObjectExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) {
         if !is_vue_component_options_object(node, ctx) {
             return;
         }
@@ -109,48 +123,51 @@ impl Rule for NoDupeKeys {
             collect_group_keys(&prop.value, &mut seen, ctx);
         }
     }
+}
 
-    fn run_once(&self, ctx: &LintContext) {
-        if ctx.frameworks_options() != FrameworkOptions::VueSetup {
-            return;
-        }
-        let Some(define_props_call) = find_define_props_call(ctx) else { return };
-        let props = collect_prop_names_from_call(define_props_call, ctx);
-        if props.is_empty() {
-            return;
-        }
-        let (props_symbol_ids, renamed) = collect_props_bindings(define_props_call, ctx);
-        let root_scope_id = ctx.scoping().root_scope_id();
+fn check_define_props<'a>(node: &AstNode<'a>, call: &'a CallExpression<'a>, ctx: &LintContext<'a>) {
+    if ctx.frameworks_options() != FrameworkOptions::VueSetup {
+        return;
+    }
+    if !matches!(call.callee, Expression::Identifier(_))
+        || call.callee_name() != Some("defineProps")
+    {
+        return;
+    }
+    let props = collect_prop_names_from_call(call, ctx);
+    if props.is_empty() {
+        return;
+    }
+    let (props_symbol_ids, renamed) = collect_props_bindings(node, call, ctx);
+    let root_scope_id = ctx.scoping().root_scope_id();
 
-        for prop_name in &props {
-            if renamed.contains(prop_name.as_ref()) {
-                continue;
-            }
-            // Only look in the module (root) scope — nested function/block bindings are invisible
-            let Some(symbol_id) =
-                ctx.scoping().get_binding(root_scope_id, prop_name.as_ref().into())
-            else {
-                continue;
-            };
-            let decl = ctx.semantic().symbol_declaration(symbol_id);
-            let span = match decl.kind() {
-                AstKind::VariableDeclarator(d) => {
-                    if d.init.as_ref().is_some_and(|init| {
-                        // The defineProps call itself counts as a props reference upstream,
-                        // so any initializer containing it (e.g. `reactive(defineProps(...))`)
-                        // is exempt, as is one referencing the props object or any
-                        // destructured binding.
-                        init.span().contains_inclusive(define_props_call.span)
-                            || is_inside_props_reference(init, &props_symbol_ids, ctx)
-                    }) {
-                        continue;
-                    }
-                    d.id.span()
+    for prop_name in &props {
+        if renamed.contains(prop_name.as_ref()) {
+            continue;
+        }
+        // Only look in the module (root) scope — nested function/block bindings are invisible
+        let Some(symbol_id) = ctx.scoping().get_binding(root_scope_id, prop_name.as_ref().into())
+        else {
+            continue;
+        };
+        let decl = ctx.semantic().symbol_declaration(symbol_id);
+        let span = match decl.kind() {
+            AstKind::VariableDeclarator(d) => {
+                if d.init.as_ref().is_some_and(|init| {
+                    // The defineProps call itself counts as a props reference upstream,
+                    // so any initializer containing it (e.g. `reactive(defineProps(...))`)
+                    // is exempt, as is one referencing the props object or any
+                    // destructured binding.
+                    init.span().contains_inclusive(call.span)
+                        || is_inside_props_reference(init, &props_symbol_ids, ctx)
+                }) {
+                    continue;
                 }
-                _ => decl.kind().span(),
-            };
-            ctx.diagnostic(duplicate_key_diagnostic(span, prop_name.as_ref()));
-        }
+                d.id.span()
+            }
+            _ => decl.kind().span(),
+        };
+        ctx.diagnostic(duplicate_key_diagnostic(span, prop_name.as_ref()));
     }
 }
 
@@ -289,41 +306,32 @@ fn static_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
 
 // ---- script setup helpers ----
 
-fn find_define_props_call<'a>(ctx: &LintContext<'a>) -> Option<&'a CallExpression<'a>> {
-    for node in ctx.nodes() {
-        if let AstKind::CallExpression(call) = node.kind()
-            && matches!(call.callee, Expression::Identifier(_))
-            && call.callee_name() == Some("defineProps")
-        {
-            return Some(call);
-        }
-    }
-    None
-}
-
-/// Collect everything bound by `const ... = defineProps(...)` declarators in one pass:
-/// every bound `SymbolId` (for initializer reference checks) and the prop names renamed
-/// via `const { foo: bar } = defineProps(...)`.
+/// Resolve the declarator binding the defineProps result (directly or via `withDefaults`),
+/// mirroring upstream `getPropsPattern`, and collect every bound `SymbolId` (for
+/// initializer reference checks) plus the prop names renamed via
+/// `const { foo: bar } = defineProps(...)`.
 fn collect_props_bindings<'a>(
+    node: &AstNode<'a>,
     call: &CallExpression<'a>,
     ctx: &LintContext<'a>,
 ) -> (Vec<SymbolId>, FxHashSet<Cow<'a, str>>) {
     let mut ids = Vec::new();
     let mut renamed = FxHashSet::default();
-    for node in ctx.nodes() {
-        let AstKind::VariableDeclarator(decl) = node.kind() else { continue };
-        if !decl.init.as_ref().is_some_and(|init| is_define_props_initializer(init, call)) {
-            continue;
-        }
-        collect_binding_symbol_ids(&decl.id, &mut ids);
-        if let BindingPattern::ObjectPattern(pat) = &decl.id {
-            for prop in &pat.properties {
-                if let Some(key_name) = static_key_name(&prop.key)
-                    && let BindingPattern::BindingIdentifier(val) = &prop.value
-                    && key_name.as_ref() != val.name.as_str()
-                {
-                    renamed.insert(key_name);
-                }
+    let declarator = ctx.nodes().ancestors(node.id()).find_map(|ancestor| {
+        if let AstKind::VariableDeclarator(decl) = ancestor.kind() { Some(decl) } else { None }
+    });
+    let Some(decl) = declarator else { return (ids, renamed) };
+    if !decl.init.as_ref().is_some_and(|init| is_define_props_initializer(init, call)) {
+        return (ids, renamed);
+    }
+    collect_binding_symbol_ids(&decl.id, &mut ids);
+    if let BindingPattern::ObjectPattern(pat) = &decl.id {
+        for prop in &pat.properties {
+            if let Some(key_name) = static_key_name(&prop.key)
+                && let BindingPattern::BindingIdentifier(val) = &prop.value
+                && key_name.as_ref() != val.name.as_str()
+            {
+                renamed.insert(key_name);
             }
         }
     }
