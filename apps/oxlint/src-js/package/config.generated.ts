@@ -228,6 +228,8 @@ export type FileFrom = "file";
 export type NameSpecifier = string | string[];
 export type LibFrom = "lib";
 export type PackageFrom = "package";
+export type AllowInterfaces = "never" | "always" | "with-single-extends";
+export type AllowObjectTypes = "never" | "always";
 export type AllowInGenericTypeArguments = boolean | string[];
 export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
 /**
@@ -1316,7 +1318,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, NoDuplicateTypeConstituentsConfig];
   "typescript/no-dynamic-delete"?: RuleNoConfig;
   "typescript/no-empty-interface"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoEmptyInterface];
-  "typescript/no-empty-object-type"?: DummyRule;
+  "typescript/no-empty-object-type"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoEmptyObjectTypeConfig];
   "typescript/no-explicit-any"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoExplicitAny];
   "typescript/no-extra-non-null-assertion"?: RuleNoConfig;
   "typescript/no-extraneous-class"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoExtraneousClass];
@@ -4718,6 +4720,34 @@ export interface NoEmptyInterface {
    * When set to `true`, allows empty interfaces that extend a single interface.
    */
   allowSingleExtends?: boolean;
+}
+export interface NoEmptyObjectTypeConfig {
+  /**
+   * Whether to allow empty interfaces.
+   */
+  allowInterfaces?: AllowInterfaces;
+  /**
+   * Whether to allow empty object type literals.
+   */
+  allowObjectTypes?: AllowObjectTypes;
+  /**
+   * A stringified regular expression to allow interfaces and object type aliases with the configured name.
+   *
+   * This can be useful if your existing code style includes a pattern of declaring empty types with `{}` instead of `object`.
+   *
+   * Example of **incorrect** code for this rule with `{ allowWithName: 'Props$' }`:
+   * ```ts
+   * interface InterfaceValue {}
+   * type TypeValue = {};
+   * ```
+   *
+   * Example of **correct** code for this rule with `{ allowWithName: 'Props$' }`:
+   * ```ts
+   * interface InterfaceProps {}
+   * type TypeProps = {};
+   * ```
+   */
+  allowWithName?: string;
 }
 export interface NoExplicitAny {
   /**

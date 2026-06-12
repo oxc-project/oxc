@@ -324,6 +324,34 @@
         }
       ]
     },
+    "AllowInterfaces": {
+      "oneOf": [
+        {
+          "description": "Never allow interfaces with no fields.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Never allow interfaces with no fields."
+        },
+        {
+          "description": "Always allow interfaces with no fields.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always allow interfaces with no fields."
+        },
+        {
+          "description": "Allow empty interfaces that `extend` from a single base interface.\n\nExamples of **correct** code for this rule with `{ allowInterfaces: 'with-single-extends' }`:\n```ts\ninterface Base {\nvalue: boolean;\n}\ninterface Derived extends Base {}\n```",
+          "type": "string",
+          "enum": [
+            "with-single-extends"
+          ],
+          "markdownDescription": "Allow empty interfaces that `extend` from a single base interface.\n\nExamples of **correct** code for this rule with `{ allowInterfaces: 'with-single-extends' }`:\n```ts\ninterface Base {\nvalue: boolean;\n}\ninterface Derived extends Base {}\n```"
+        }
+      ]
+    },
     "AllowKind": {
       "description": "Kinds of functions that can be allowed to be empty.",
       "oneOf": [
@@ -441,6 +469,26 @@
         }
       ],
       "markdownDescription": "Kinds of functions that can be allowed to be empty."
+    },
+    "AllowObjectTypes": {
+      "oneOf": [
+        {
+          "description": "Never allow object type literals with no fields.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Never allow object type literals with no fields."
+        },
+        {
+          "description": "Always allow object type literals with no fields.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always allow object type literals with no fields."
+        }
+      ]
     },
     "AllowSingleElementEquality": {
       "oneOf": [
@@ -6445,7 +6493,24 @@
           ]
         },
         "typescript/no-empty-object-type": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoEmptyObjectTypeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/no-explicit-any": {
           "anyOf": [
@@ -11567,6 +11632,37 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true`, allows empty interfaces that extend a single interface."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoEmptyObjectTypeConfig": {
+      "type": "object",
+      "properties": {
+        "allowInterfaces": {
+          "description": "Whether to allow empty interfaces.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AllowInterfaces"
+            }
+          ],
+          "markdownDescription": "Whether to allow empty interfaces."
+        },
+        "allowObjectTypes": {
+          "description": "Whether to allow empty object type literals.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AllowObjectTypes"
+            }
+          ],
+          "markdownDescription": "Whether to allow empty object type literals."
+        },
+        "allowWithName": {
+          "description": "A stringified regular expression to allow interfaces and object type aliases with the configured name.\n\nThis can be useful if your existing code style includes a pattern of declaring empty types with `{}` instead of `object`.\n\nExample of **incorrect** code for this rule with `{ allowWithName: 'Props$' }`:\n```ts\ninterface InterfaceValue {}\ntype TypeValue = {};\n```\n\nExample of **correct** code for this rule with `{ allowWithName: 'Props$' }`:\n```ts\ninterface InterfaceProps {}\ntype TypeProps = {};\n```",
+          "type": "string",
+          "markdownDescription": "A stringified regular expression to allow interfaces and object type aliases with the configured name.\n\nThis can be useful if your existing code style includes a pattern of declaring empty types with `{}` instead of `object`.\n\nExample of **incorrect** code for this rule with `{ allowWithName: 'Props$' }`:\n```ts\ninterface InterfaceValue {}\ntype TypeValue = {};\n```\n\nExample of **correct** code for this rule with `{ allowWithName: 'Props$' }`:\n```ts\ninterface InterfaceProps {}\ntype TypeProps = {};\n```"
         }
       },
       "additionalProperties": false
