@@ -136,9 +136,11 @@ impl Rule for NoDupeKeys {
             let span = match decl.kind() {
                 AstKind::VariableDeclarator(d) => {
                     if d.init.as_ref().is_some_and(|init| {
-                        // Initialised directly from defineProps / withDefaults(defineProps(...))
-                        is_define_props_initializer(init, define_props_call)
-                            // Initialiser references the props object or any destructured binding
+                        // The defineProps call itself counts as a props reference upstream,
+                        // so any initializer containing it (e.g. `reactive(defineProps(...))`)
+                        // is exempt, as is one referencing the props object or any
+                        // destructured binding.
+                        init.span().contains_inclusive(define_props_call.span)
                             || is_inside_props_reference(init, &props_symbol_ids, ctx)
                     }) {
                         continue;
@@ -1130,6 +1132,18 @@ export default { props: ['foo'], data () { return { foo: 1 } as any } }
             r"
 <script>
 export default { props: { '0.0000001': String }, data () { return { 1e-7: 1 } } }
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // an initializer containing the defineProps call itself is exempt
+        // (upstream includes the call node in propReferences)
+        (
+            r"
+<script setup>
+const foo = reactive(defineProps(['foo']))
 </script>
 ",
             None,
