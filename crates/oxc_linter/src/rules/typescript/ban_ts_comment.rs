@@ -49,7 +49,7 @@ fn comment_description_not_match_pattern(
 pub struct BanTsComment(Box<BanTsCommentConfig>);
 
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "kebab-case", default)]
+#[serde(rename_all = "kebab-case", default, deny_unknown_fields)]
 /// This rule allows you to specify how different TypeScript directive comments
 /// should be handled.
 ///
@@ -71,12 +71,16 @@ pub struct BanTsComment(Box<BanTsCommentConfig>);
 /// ```
 pub struct BanTsCommentConfig {
     /// How to handle the `@ts-expect-error` directive.
+    #[schemars(with = "DirectiveConfigSchema")]
     ts_expect_error: DirectiveConfig,
     /// How to handle the `@ts-ignore` directive.
+    #[schemars(with = "DirectiveConfigSchema")]
     ts_ignore: DirectiveConfig,
     /// How to handle the `@ts-nocheck` directive.
+    #[schemars(with = "DirectiveConfigSchema")]
     ts_nocheck: DirectiveConfig,
     /// How to handle the `@ts-check` directive.
+    #[schemars(with = "DirectiveConfigSchema")]
     ts_check: DirectiveConfig,
     /// Minimum description length required when using directives with `allow-with-description`.
     #[serde(rename = "minimumDescriptionLength")]
@@ -110,6 +114,25 @@ pub enum DirectiveConfig {
     #[serde(rename = "allow-with-description")]
     RequireDescription,
     DescriptionFormat(Option<Regex>),
+}
+
+#[derive(Debug, JsonSchema)]
+#[serde(untagged, deny_unknown_fields)]
+#[expect(unused)]
+enum DirectiveConfigSchema {
+    Boolean(bool),
+    RequireDescription(RequireDescription),
+    DescriptionFormat {
+        #[serde(rename = "descriptionFormat")]
+        description_format: Option<Regex>,
+    },
+}
+
+#[derive(Debug, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+#[expect(unused)]
+enum RequireDescription {
+    AllowWithDescription,
 }
 
 impl DirectiveConfig {

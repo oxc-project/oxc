@@ -783,6 +783,58 @@
       },
       "additionalProperties": false
     },
+    "BanTsCommentConfig": {
+      "description": "This rule allows you to specify how different TypeScript directive comments\nshould be handled.\n\nFor each directive (`@ts-expect-error`, `@ts-ignore`, `@ts-nocheck`, `@ts-check`), you can choose one of the following options:\n- `true`: Disallow the directive entirely, preventing its use in the entire codebase.\n- `false`: Allow the directive without any restrictions.\n- `\"allow-with-description\"`: Allow the directive only if it is followed by a description explaining its use. The description must meet the minimum length specified by `minimumDescriptionLength`.\n- `{ \"descriptionFormat\": \"<regex>\" }`: Allow the directive only if the description matches the specified regex pattern.\n\nFor example:\n```json\n{\n\"ts-expect-error\": \"allow-with-description\",\n\"ts-ignore\": true,\n\"ts-nocheck\": { \"descriptionFormat\": \"^: TS\\\\d+ because .+$\" },\n\"ts-check\": false,\n\"minimumDescriptionLength\": 3\n}\n```",
+      "type": "object",
+      "properties": {
+        "minimumDescriptionLength": {
+          "description": "Minimum description length required when using directives with `allow-with-description`.",
+          "default": 3,
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0,
+          "markdownDescription": "Minimum description length required when using directives with `allow-with-description`."
+        },
+        "ts-check": {
+          "description": "How to handle the `@ts-check` directive.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DirectiveConfigSchema"
+            }
+          ],
+          "markdownDescription": "How to handle the `@ts-check` directive."
+        },
+        "ts-expect-error": {
+          "description": "How to handle the `@ts-expect-error` directive.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DirectiveConfigSchema"
+            }
+          ],
+          "markdownDescription": "How to handle the `@ts-expect-error` directive."
+        },
+        "ts-ignore": {
+          "description": "How to handle the `@ts-ignore` directive.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DirectiveConfigSchema"
+            }
+          ],
+          "markdownDescription": "How to handle the `@ts-ignore` directive."
+        },
+        "ts-nocheck": {
+          "description": "How to handle the `@ts-nocheck` directive.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DirectiveConfigSchema"
+            }
+          ],
+          "markdownDescription": "How to handle the `@ts-nocheck` directive."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "This rule allows you to specify how different TypeScript directive comments\nshould be handled.\n\nFor each directive (`@ts-expect-error`, `@ts-ignore`, `@ts-nocheck`, `@ts-check`), you can choose one of the following options:\n- `true`: Disallow the directive entirely, preventing its use in the entire codebase.\n- `false`: Allow the directive without any restrictions.\n- `\"allow-with-description\"`: Allow the directive only if it is followed by a description explaining its use. The description must meet the minimum length specified by `minimumDescriptionLength`.\n- `{ \"descriptionFormat\": \"<regex>\" }`: Allow the directive only if the description matches the specified regex pattern.\n\nFor example:\n```json\n{\n\"ts-expect-error\": \"allow-with-description\",\n\"ts-ignore\": true,\n\"ts-nocheck\": { \"descriptionFormat\": \"^: TS\\\\d+ because .+$\" },\n\"ts-check\": false,\n\"minimumDescriptionLength\": 3\n}\n```"
+    },
     "BlockScopedFunctions": {
       "oneOf": [
         {
@@ -1698,6 +1750,25 @@
             "all"
           ],
           "markdownDescription": "Only warn if all variables in a destructuring assignment should be `const`. Otherwise, ignore them."
+        }
+      ]
+    },
+    "DirectiveConfigSchema": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/RequireDescription"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "descriptionFormat": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -6359,7 +6430,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/ban-ts-comment": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/BanTsCommentConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/ban-tslint-comment": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -15407,6 +15495,12 @@
         }
       },
       "additionalProperties": false
+    },
+    "RequireDescription": {
+      "type": "string",
+      "enum": [
+        "allow-with-description"
+      ]
     },
     "RequireDirectExport": {
       "type": "object",

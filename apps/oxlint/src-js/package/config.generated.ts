@@ -187,6 +187,13 @@ export type ImportKind = "none" | "all" | "multiple" | "single";
  * Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
  */
 export type SortOrder = "desc" | "asc";
+export type DirectiveConfigSchema =
+  | boolean
+  | RequireDescription
+  | {
+      descriptionFormat?: string;
+    };
+export type RequireDescription = "allow-with-description";
 export type ClassLiteralPropertyStyleOption = "fields" | "getters";
 export type PreferGenericType = "constructor" | "type-annotation";
 export type ConsistentIndexedObjectStyleConfig = "record" | "index-signature";
@@ -1279,7 +1286,7 @@ export interface DummyRuleMap {
   "typescript/adjacent-overload-signatures"?: RuleNoConfig;
   "typescript/array-type"?: DummyRule;
   "typescript/await-thenable"?: RuleNoConfig;
-  "typescript/ban-ts-comment"?: DummyRule;
+  "typescript/ban-ts-comment"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, BanTsCommentConfig];
   "typescript/ban-tslint-comment"?: RuleNoConfig;
   "typescript/ban-types"?: RuleNoConfig;
   "typescript/class-literal-property-style"?:
@@ -4544,6 +4551,51 @@ export interface SortVars {
    * When `true`, the rule ignores case-sensitivity when sorting variables.
    */
   ignoreCase?: boolean;
+}
+/**
+ * This rule allows you to specify how different TypeScript directive comments
+ * should be handled.
+ *
+ * For each directive (`@ts-expect-error`, `@ts-ignore`, `@ts-nocheck`, `@ts-check`), you can choose one of the following options:
+ * - `true`: Disallow the directive entirely, preventing its use in the entire codebase.
+ * - `false`: Allow the directive without any restrictions.
+ * - `"allow-with-description"`: Allow the directive only if it is followed by a description explaining its use. The description must meet the minimum length specified by `minimumDescriptionLength`.
+ * - `{ "descriptionFormat": "<regex>" }`: Allow the directive only if the description matches the specified regex pattern.
+ *
+ * For example:
+ * ```json
+ * {
+ *   "ts-expect-error": "allow-with-description",
+ *   "ts-ignore": true,
+ *   "ts-nocheck": {
+ *     "descriptionFormat": "^: TS\\d+ because .+$"
+ *   },
+ *   "ts-check": false,
+ *   "minimumDescriptionLength": 3
+ * }
+ * ```
+ */
+export interface BanTsCommentConfig {
+  /**
+   * Minimum description length required when using directives with `allow-with-description`.
+   */
+  minimumDescriptionLength?: number;
+  /**
+   * How to handle the `@ts-check` directive.
+   */
+  "ts-check"?: DirectiveConfigSchema;
+  /**
+   * How to handle the `@ts-expect-error` directive.
+   */
+  "ts-expect-error"?: DirectiveConfigSchema;
+  /**
+   * How to handle the `@ts-ignore` directive.
+   */
+  "ts-ignore"?: DirectiveConfigSchema;
+  /**
+   * How to handle the `@ts-nocheck` directive.
+   */
+  "ts-nocheck"?: DirectiveConfigSchema;
 }
 export interface ConsistentReturnConfig {
   /**
