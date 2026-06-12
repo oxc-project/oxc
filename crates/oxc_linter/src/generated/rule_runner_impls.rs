@@ -2905,7 +2905,11 @@ impl RuleRunner for crate::rules::react_perf::jsx_no_new_object_as_prop::JsxNoNe
 }
 
 impl RuleRunner for crate::rules::unicorn::better_dom_traversing::BetterDomTraversing {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ComputedMemberExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
