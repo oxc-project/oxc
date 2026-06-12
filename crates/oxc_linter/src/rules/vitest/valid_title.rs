@@ -1,10 +1,12 @@
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
-    rules::{PossibleJestNode, shared::valid_title as SharedValidTitle},
+    rule::{DefaultRuleConfig, Rule},
+    rules::{
+        PossibleJestNode,
+        shared::valid_title::{self as SharedValidTitle, VitestValidTitleConfig},
+    },
 };
 
 #[derive(Debug, Default, Clone)]
@@ -15,16 +17,16 @@ declare_oxc_lint!(
     vitest,
     correctness,
     conditional_fix,
-    // TODO: Replace this with an actual config struct. This is a dummy value to
-    // indicate that this rule has configuration and avoid errors.
-    config = Value,
-    docs = SharedValidTitle::DOCUMENTATION,
+    config = VitestValidTitleConfig,
+    docs = SharedValidTitle::VITEST_DOCUMENTATION,
     version = "0.0.14",
 );
 
 impl Rule for ValidTitle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        SharedValidTitle::ValidTitleConfig::from_configuration(&value)
+        serde_json::from_value::<DefaultRuleConfig<VitestValidTitleConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(SharedValidTitle::ValidTitleConfig::from)
             .map(|config| Self(Box::new(config)))
     }
 
@@ -156,11 +158,6 @@ fn test() {
             ",
             None,
         ),
-        (
-            "it(`GIVEN...
-            `, () => {});",
-            Some(serde_json::json!([{ "ignoreSpaces": true }])),
-        ),
         ("describe('foo', function () {})", None),
         ("describe('foo', function () {})", None),
         ("describe('foo', function () {})", None),
@@ -192,7 +189,6 @@ fn test() {
             ",
             None,
         ),
-        ("it(abc, function () {})", Some(serde_json::json!([{ "ignoreTypeOfTestName": true }]))),
         // Vitest-specific tests with allowArguments option
         ("it(foo, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
         ("describe(bar, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
@@ -710,4 +706,13 @@ fn test() {
         .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    assert!(ValidTitle::from_configuration(serde_json::json!([{ "ignoreSpaces": true }])).is_err());
+    assert!(
+        ValidTitle::from_configuration(serde_json::json!([{ "ignoreTypeOfTestName": true }]))
+            .is_err()
+    );
 }

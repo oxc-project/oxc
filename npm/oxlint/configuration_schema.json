@@ -3347,7 +3347,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/prefer-lowercase-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JestPreferLowercaseTitleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jest/prefer-mock-promise-shorthand": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -3469,7 +3486,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/valid-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JestValidTitleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/check-access": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9843,7 +9877,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/prefer-lowercase-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/VitestPreferLowercaseTitleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "vitest/prefer-mock-promise-shorthand": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10003,7 +10054,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/valid-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/VitestValidTitleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "vitest/warn-todo": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -11809,6 +11877,95 @@
       },
       "markdownDescription": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference."
     },
+    "JestPreferLowercaseTitleConfig": {
+      "type": "object",
+      "properties": {
+        "allowedPrefixes": {
+          "description": "This array option allows specifying prefixes, which contain capitals that titles\ncan start with.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "This array option allows specifying prefixes, which contain capitals that titles\ncan start with."
+        },
+        "ignore": {
+          "description": "This array option controls which Jest functions are checked by this rule.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "This array option controls which Jest functions are checked by this rule."
+        },
+        "ignoreTodos": {
+          "description": "Whether to ignore `test.todo` and `it.todo` titles.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore `test.todo` and `it.todo` titles."
+        },
+        "ignoreTopLevelDescribe": {
+          "description": "This option can be set to allow only the top-level `describe` blocks to have a\ntitle starting with an upper-case letter.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "This option can be set to allow only the top-level `describe` blocks to have a\ntitle starting with an upper-case letter."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JestValidTitleConfig": {
+      "type": "object",
+      "properties": {
+        "disallowedWords": {
+          "description": "A list of disallowed words, which will not be allowed in titles.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of disallowed words, which will not be allowed in titles."
+        },
+        "ignoreSpaces": {
+          "description": "Whether to ignore leading and trailing spaces in titles.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore leading and trailing spaces in titles."
+        },
+        "ignoreTypeOfDescribeName": {
+          "description": "Whether to ignore the type of the name passed to `describe`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore the type of the name passed to `describe`."
+        },
+        "ignoreTypeOfTestName": {
+          "description": "Whether to ignore the type of the name passed to `test`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore the type of the name passed to `test`."
+        },
+        "mustMatch": {
+          "description": "Patterns for titles that must be matched for the title to be valid.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/MatcherPatternConfig"
+            }
+          ],
+          "markdownDescription": "Patterns for titles that must be matched for the title to be valid."
+        },
+        "mustNotMatch": {
+          "description": "Patterns for titles that must not match.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/MatcherPatternConfig"
+            }
+          ],
+          "markdownDescription": "Patterns for titles that must not match."
+        }
+      },
+      "additionalProperties": false
+    },
     "JestVersionSchema": {
       "anyOf": [
         {
@@ -12437,6 +12594,40 @@
         }
       },
       "additionalProperties": false
+    },
+    "MatcherPatternByKindConfig": {
+      "type": "object",
+      "properties": {
+        "describe": {
+          "default": null,
+          "type": "string"
+        },
+        "it": {
+          "default": null,
+          "type": "string"
+        },
+        "test": {
+          "default": null,
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "MatcherPatternConfig": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/definitions/MatcherPatternByKindConfig"
+        }
+      ]
     },
     "MaxClassesPerFileConfig": {
       "type": "object",
@@ -18491,6 +18682,89 @@
         }
       },
       "markdownDescription": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference."
+    },
+    "VitestPreferLowercaseTitleConfig": {
+      "type": "object",
+      "properties": {
+        "allowedPrefixes": {
+          "description": "This array option allows specifying prefixes, which contain capitals that titles\ncan start with.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "This array option allows specifying prefixes, which contain capitals that titles\ncan start with."
+        },
+        "ignore": {
+          "description": "This array option controls which Vitest functions are checked by this rule.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "This array option controls which Vitest functions are checked by this rule."
+        },
+        "ignoreTopLevelDescribe": {
+          "description": "This option can be set to allow only the top-level `describe` blocks to have a\ntitle starting with an upper-case letter.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "This option can be set to allow only the top-level `describe` blocks to have a\ntitle starting with an upper-case letter."
+        },
+        "lowercaseFirstCharacterOnly": {
+          "description": "This option can be set to only validate that the first character of a test name is lowercased.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "This option can be set to only validate that the first character of a test name is lowercased."
+        }
+      },
+      "additionalProperties": false
+    },
+    "VitestValidTitleConfig": {
+      "type": "object",
+      "properties": {
+        "allowArguments": {
+          "description": "Whether to allow arguments as titles.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to allow arguments as titles."
+        },
+        "disallowedWords": {
+          "description": "A list of disallowed words, which will not be allowed in titles.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of disallowed words, which will not be allowed in titles."
+        },
+        "ignoreTypeOfDescribeName": {
+          "description": "Whether to ignore the type of the name passed to `describe`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore the type of the name passed to `describe`."
+        },
+        "mustMatch": {
+          "description": "Patterns for titles that must be matched for the title to be valid.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/MatcherPatternConfig"
+            }
+          ],
+          "markdownDescription": "Patterns for titles that must be matched for the title to be valid."
+        },
+        "mustNotMatch": {
+          "description": "Patterns for titles that must not match.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/MatcherPatternConfig"
+            }
+          ],
+          "markdownDescription": "Patterns for titles that must not match."
+        }
+      },
+      "additionalProperties": false
     },
     "Yoda": {
       "type": "array",

@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
 ---
 
   ⚠ jest(valid-title): Title must be a string
@@ -580,12 +581,5 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[valid_title.tsx:1:4]
  1 │ it(abc, function () {})
    ·    ───
-   ╰────
-  help: Replace your title with a string
-
-  ⚠ jest(valid-title): Title must be a string
-   ╭─[valid_title.tsx:1:6]
- 1 │ test(bar, () => {});
-   ·      ───
    ╰────
   help: Replace your title with a string

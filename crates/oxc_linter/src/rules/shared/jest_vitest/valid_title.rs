@@ -3,6 +3,8 @@ use std::hash::Hash;
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
@@ -62,10 +64,10 @@ pub fn must_not_match_diagnostic(message: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub const DOCUMENTATION: &str = r"
+pub const JEST_DOCUMENTATION: &str = r"
 ### What it does
 
-Checks that the titles of Jest and Vitest blocks are valid.
+Checks that the titles of Jest blocks are valid.
 
 Titles must be:
 - not empty,
@@ -104,13 +106,105 @@ interface Options {
     ignoreSpaces?: boolean;
     ignoreTypeOfTestName?: boolean;
     ignoreTypeOfDescribeName?: boolean;
-    allowArguments?: boolean;
     disallowedWords?: string[];
-    mustNotMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
-    mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
+    mustNotMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string | string[];
+    mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string | string[];
 }
 ```
 ";
+
+pub const VITEST_DOCUMENTATION: &str = r"
+### What it does
+
+Checks that the titles of Vitest blocks are valid.
+
+Titles must be:
+- not empty,
+- strings,
+- not prefixed with their block name,
+- have no leading or trailing spaces.
+
+### Why is this bad?
+
+Titles that are not valid can be misleading and make it harder to understand the purpose of the test.
+
+### Examples
+
+Examples of **incorrect** code for this rule:
+```javascript
+describe('', () => {});
+describe('foo', () => {
+  it('', () => {});
+});
+it('', () => {});
+test('', () => {});
+```
+Examples of **correct** code for this rule:
+```javascript
+describe('foo', () => {});
+it('bar', () => {});
+test('baz', () => {});
+```
+
+### Options
+```typescript
+interface Options {
+    allowArguments?: boolean;
+    ignoreTypeOfDescribeName?: boolean;
+    disallowedWords?: string[];
+    mustNotMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string | string[];
+    mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string | string[];
+}
+```
+";
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum MatcherPatternConfig {
+    String(CompactStr),
+    Vec(Vec<CompactStr>),
+    ByKind(MatcherPatternByKindConfig),
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(default, deny_unknown_fields)]
+pub struct MatcherPatternByKindConfig {
+    describe: Option<CompactStr>,
+    it: Option<CompactStr>,
+    test: Option<CompactStr>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct JestValidTitleConfig {
+    /// Whether to ignore leading and trailing spaces in titles.
+    ignore_spaces: bool,
+    /// Whether to ignore the type of the name passed to `test`.
+    ignore_type_of_test_name: bool,
+    /// Whether to ignore the type of the name passed to `describe`.
+    ignore_type_of_describe_name: bool,
+    /// A list of disallowed words, which will not be allowed in titles.
+    disallowed_words: Vec<CompactStr>,
+    /// Patterns for titles that must not match.
+    must_not_match: Option<MatcherPatternConfig>,
+    /// Patterns for titles that must be matched for the title to be valid.
+    must_match: Option<MatcherPatternConfig>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct VitestValidTitleConfig {
+    /// Whether to ignore the type of the name passed to `describe`.
+    ignore_type_of_describe_name: bool,
+    /// Whether to allow arguments as titles.
+    allow_arguments: bool,
+    /// A list of disallowed words, which will not be allowed in titles.
+    disallowed_words: Vec<CompactStr>,
+    /// Patterns for titles that must not match.
+    must_not_match: Option<MatcherPatternConfig>,
+    /// Patterns for titles that must be matched for the title to be valid.
+    must_match: Option<MatcherPatternConfig>,
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitleConfig {
@@ -130,48 +224,35 @@ pub struct ValidTitleConfig {
     must_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
 }
 
-impl ValidTitleConfig {
-    #[expect(clippy::unnecessary_wraps)] // TODO: handle error
-    pub fn from_configuration(
-        value: &serde_json::Value,
-    ) -> Result<ValidTitleConfig, serde_json::error::Error> {
-        let config = value.get(0);
-        let get_as_bool = |name: &str| -> bool {
-            config
-                .and_then(|v| v.get(name))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default()
-        };
-
-        let ignore_type_of_test_name = get_as_bool("ignoreTypeOfTestName");
-        let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
-        let allow_arguments = get_as_bool("allowArguments");
-        let ignore_spaces = get_as_bool("ignoreSpaces");
-        let disallowed_words = config
-            .and_then(|v| v.get("disallowedWords"))
-            .and_then(|v| v.as_array())
-            .map(|v| v.iter().filter_map(|v| v.as_str().map(CompactStr::from)).collect())
-            .unwrap_or_default();
-        let must_not_match_patterns = config
-            .and_then(|v| v.get("mustNotMatch"))
-            .and_then(compile_matcher_patterns)
-            .unwrap_or_default();
-        let must_match_patterns = config
-            .and_then(|v| v.get("mustMatch"))
-            .and_then(compile_matcher_patterns)
-            .unwrap_or_default();
-
-        Ok(ValidTitleConfig {
-            ignore_type_of_test_name,
-            ignore_type_of_describe_name,
-            allow_arguments,
-            disallowed_words,
-            ignore_spaces,
-            must_not_match_patterns,
-            must_match_patterns,
-        })
+impl From<JestValidTitleConfig> for ValidTitleConfig {
+    fn from(config: JestValidTitleConfig) -> Self {
+        Self {
+            ignore_type_of_test_name: config.ignore_type_of_test_name,
+            ignore_type_of_describe_name: config.ignore_type_of_describe_name,
+            allow_arguments: false,
+            disallowed_words: config.disallowed_words,
+            ignore_spaces: config.ignore_spaces,
+            must_not_match_patterns: compile_matcher_patterns_config(config.must_not_match),
+            must_match_patterns: compile_matcher_patterns_config(config.must_match),
+        }
     }
+}
 
+impl From<VitestValidTitleConfig> for ValidTitleConfig {
+    fn from(config: VitestValidTitleConfig) -> Self {
+        Self {
+            ignore_type_of_test_name: false,
+            ignore_type_of_describe_name: config.ignore_type_of_describe_name,
+            allow_arguments: config.allow_arguments,
+            disallowed_words: config.disallowed_words,
+            ignore_spaces: false,
+            must_not_match_patterns: compile_matcher_patterns_config(config.must_not_match),
+            must_match_patterns: compile_matcher_patterns_config(config.must_match),
+        }
+    }
+}
+
+impl ValidTitleConfig {
     pub fn run_rule<'a>(
         config: &ValidTitleConfig,
         possible_jest_fn_node: &PossibleJestNode<'a, '_>,
@@ -353,6 +434,15 @@ fn compile_matcher_patterns(
             },
             Some,
         )
+}
+
+fn compile_matcher_patterns_config(
+    matcher_patterns: Option<MatcherPatternConfig>,
+) -> FxHashMap<MatchKind, CompiledMatcherAndMessage> {
+    matcher_patterns
+        .and_then(|matcher_patterns| serde_json::to_value(matcher_patterns).ok())
+        .and_then(|matcher_patterns| compile_matcher_patterns(&matcher_patterns))
+        .unwrap_or_default()
 }
 
 fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAndMessage> {

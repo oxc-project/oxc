@@ -2,8 +2,10 @@ use oxc_macros::declare_oxc_lint;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
-    rules::shared::prefer_lowercase_title::{DOCUMENTATION, PreferLowercaseTitleConfig},
+    rule::{DefaultRuleConfig, Rule},
+    rules::shared::prefer_lowercase_title::{
+        JEST_DOCUMENTATION, JestPreferLowercaseTitleConfig, PreferLowercaseTitleConfig,
+    },
     utils::PossibleJestNode,
 };
 
@@ -15,14 +17,17 @@ declare_oxc_lint!(
     jest,
     style,
     fix,
-    config = PreferLowercaseTitleConfig,
-    docs = DOCUMENTATION,
+    config = JestPreferLowercaseTitleConfig,
+    docs = JEST_DOCUMENTATION,
     version = "0.15.9",
 );
 
 impl Rule for PreferLowercaseTitle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        PreferLowercaseTitleConfig::from_configuration(value).map(|config| Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<JestPreferLowercaseTitleConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(PreferLowercaseTitleConfig::from)
+            .map(|config| Self(Box::new(config)))
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -68,6 +73,7 @@ fn test() {
         ("test(``)", None),
         ("test(\"\")", None),
         ("test(42)", None),
+        ("test.todo('Uppercase description')", Some(serde_json::json!([{ "ignoreTodos": true }]))),
         ("describe()", None),
         ("describe('foo', function () {})", None),
         ("describe(\"foo\", function () {})", None),
@@ -164,6 +170,7 @@ fn test() {
 
     let fail = vec![
         ("it('Foo', function () {})", None),
+        ("test.todo('Uppercase description')", None),
         ("xit('Foo', function () {})", None),
         ("it(\"Foo\", function () {})", None),
         ("it(`Foo`, function () {})", None),
@@ -395,4 +402,14 @@ fn test() {
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    assert!(
+        PreferLowercaseTitle::from_configuration(serde_json::json!([
+            { "lowercaseFirstCharacterOnly": false }
+        ]))
+        .is_err()
+    );
 }

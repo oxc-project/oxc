@@ -1,10 +1,12 @@
 use oxc_macros::declare_oxc_lint;
-use serde_json::Value;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
-    rules::{PossibleJestNode, shared::valid_title as SharedValidTitle},
+    rule::{DefaultRuleConfig, Rule},
+    rules::{
+        PossibleJestNode,
+        shared::valid_title::{self as SharedValidTitle, JestValidTitleConfig},
+    },
 };
 
 #[derive(Debug, Default, Clone)]
@@ -15,16 +17,16 @@ declare_oxc_lint!(
     jest,
     correctness,
     conditional_fix,
-    // TODO: Replace this with an actual config struct. This is a dummy value to
-    // indicate that this rule has configuration and avoid errors.
-    config = Value,
-    docs = SharedValidTitle::DOCUMENTATION,
+    config = JestValidTitleConfig,
+    docs = SharedValidTitle::JEST_DOCUMENTATION,
     version = "0.0.14",
 );
 
 impl Rule for ValidTitle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        SharedValidTitle::ValidTitleConfig::from_configuration(&value)
+        serde_json::from_value::<DefaultRuleConfig<JestValidTitleConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(SharedValidTitle::ValidTitleConfig::from)
             .map(|config| Self(Box::new(config)))
     }
 
@@ -193,10 +195,6 @@ fn test() {
             None,
         ),
         ("it(abc, function () {})", Some(serde_json::json!([{ "ignoreTypeOfTestName": true }]))),
-        // Vitest-specific tests with allowArguments option
-        ("it(foo, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
-        ("describe(bar, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
-        ("test(baz, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
         // Vitest-specific tests with .extend()
         (
             "export const myTest = test.extend({
@@ -566,8 +564,6 @@ fn test() {
             None,
         ),
         ("it(abc, function () {})", None),
-        // Vitest-specific fail test with allowArguments: false
-        ("test(bar, () => {});", Some(serde_json::json!([{ "allowArguments": false }]))),
     ];
 
     let fix = vec![
@@ -706,4 +702,11 @@ fn test() {
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    assert!(
+        ValidTitle::from_configuration(serde_json::json!([{ "allowArguments": true }])).is_err()
+    );
 }

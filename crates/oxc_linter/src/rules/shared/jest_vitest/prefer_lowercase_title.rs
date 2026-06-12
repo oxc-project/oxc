@@ -7,7 +7,6 @@ use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::DefaultRuleConfig,
     utils::{
         JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode, parse_jest_fn_call,
     },
@@ -19,10 +18,10 @@ fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub const DOCUMENTATION: &str = r"### What it does
+pub const JEST_DOCUMENTATION: &str = r"### What it does
 
-Enforce `it`, `test`, `describe`, and `bench` to have descriptions that begin with a
-lowercase letter. This provides more readable test failures.
+Enforce Jest `it`, `test`, and `describe` blocks to have descriptions that begin
+with a lowercase letter. This provides more readable test failures.
 
 ### Why is this bad?
 
@@ -43,6 +42,53 @@ Examples of **correct** code for this rule:
 it('adds 1 + 2 to equal 3', () => {
     expect(sum(1, 2)).toBe(3);
 });
+```
+
+### Options
+```typescript
+interface Options {
+    allowedPrefixes?: string[];
+    ignore?: Array<'describe' | 'test' | 'it'>;
+    ignoreTopLevelDescribe?: boolean;
+    ignoreTodos?: boolean;
+}
+```
+";
+
+pub const VITEST_DOCUMENTATION: &str = r"### What it does
+
+Enforce Vitest `it`, `test`, `describe`, and `bench` blocks to have descriptions
+that begin with a lowercase letter. This provides more readable test failures.
+
+### Why is this bad?
+
+Lowercase messages for test failures generally result in more grammatically correct
+failure messages when you have a test failure.
+
+### Examples
+
+Examples of **incorrect** code for this rule:
+```javascript
+it('Adds 1 + 2 to equal 3', () => {
+    expect(sum(1, 2)).toBe(3);
+});
+```
+
+Examples of **correct** code for this rule:
+```javascript
+it('adds 1 + 2 to equal 3', () => {
+    expect(sum(1, 2)).toBe(3);
+});
+```
+
+### Options
+```typescript
+interface Options {
+    allowedPrefixes?: string[];
+    ignore?: Array<'describe' | 'test' | 'it' | 'bench'>;
+    ignoreTopLevelDescribe?: boolean;
+    lowercaseFirstCharacterOnly?: boolean;
+}
 ```
 ";
 
@@ -129,9 +175,53 @@ pub struct PreferLowercaseTitleConfig {
     /// });
     /// ```
     lowercase_first_character_only: bool,
+    /// Whether to ignore `test.todo` and `it.todo` titles.
+    ignore_todos: bool,
 }
 
 impl Default for PreferLowercaseTitleConfig {
+    fn default() -> Self {
+        Self {
+            allowed_prefixes: Vec::new(),
+            ignore: Vec::new(),
+            ignore_top_level_describe: false,
+            lowercase_first_character_only: true,
+            ignore_todos: false,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct JestPreferLowercaseTitleConfig {
+    /// This array option allows specifying prefixes, which contain capitals that titles
+    /// can start with.
+    allowed_prefixes: Vec<CompactStr>,
+    /// This array option controls which Jest functions are checked by this rule.
+    ignore: Vec<CompactStr>,
+    /// This option can be set to allow only the top-level `describe` blocks to have a
+    /// title starting with an upper-case letter.
+    ignore_top_level_describe: bool,
+    /// Whether to ignore `test.todo` and `it.todo` titles.
+    ignore_todos: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct VitestPreferLowercaseTitleConfig {
+    /// This array option allows specifying prefixes, which contain capitals that titles
+    /// can start with.
+    allowed_prefixes: Vec<CompactStr>,
+    /// This array option controls which Vitest functions are checked by this rule.
+    ignore: Vec<CompactStr>,
+    /// This option can be set to allow only the top-level `describe` blocks to have a
+    /// title starting with an upper-case letter.
+    ignore_top_level_describe: bool,
+    /// This option can be set to only validate that the first character of a test name is lowercased.
+    lowercase_first_character_only: bool,
+}
+
+impl Default for VitestPreferLowercaseTitleConfig {
     fn default() -> Self {
         Self {
             allowed_prefixes: Vec::new(),
@@ -142,11 +232,31 @@ impl Default for PreferLowercaseTitleConfig {
     }
 }
 
-impl PreferLowercaseTitleConfig {
-    pub fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+impl From<JestPreferLowercaseTitleConfig> for PreferLowercaseTitleConfig {
+    fn from(config: JestPreferLowercaseTitleConfig) -> Self {
+        Self {
+            allowed_prefixes: config.allowed_prefixes,
+            ignore: config.ignore,
+            ignore_top_level_describe: config.ignore_top_level_describe,
+            lowercase_first_character_only: true,
+            ignore_todos: config.ignore_todos,
+        }
     }
+}
 
+impl From<VitestPreferLowercaseTitleConfig> for PreferLowercaseTitleConfig {
+    fn from(config: VitestPreferLowercaseTitleConfig) -> Self {
+        Self {
+            allowed_prefixes: config.allowed_prefixes,
+            ignore: config.ignore,
+            ignore_top_level_describe: config.ignore_top_level_describe,
+            lowercase_first_character_only: config.lowercase_first_character_only,
+            ignore_todos: false,
+        }
+    }
+}
+
+impl PreferLowercaseTitleConfig {
     pub fn run_on_jest_node<'a, 'c>(
         &self,
         possible_jest_node: &PossibleJestNode<'a, 'c>,
@@ -167,6 +277,12 @@ impl PreferLowercaseTitleConfig {
         let ignores = Self::populate_ignores(&self.ignore);
 
         if ignores.contains(&jest_fn_call.name.as_ref()) {
+            return;
+        }
+
+        if self.ignore_todos
+            && jest_fn_call.members.iter().any(|member| member.is_name_equal("todo"))
+        {
             return;
         }
 

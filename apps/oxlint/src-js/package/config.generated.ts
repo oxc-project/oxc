@@ -106,8 +106,9 @@ export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type SnapshotHintMode = "always" | "multi";
+export type MatcherPatternConfig = string | string[] | MatcherPatternByKindConfig;
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
@@ -970,7 +971,7 @@ export interface DummyRuleMap {
   "jest/prefer-hooks-on-top"?: RuleNoConfig;
   "jest/prefer-importing-jest-globals"?: RuleNoConfig | [AllowWarnDeny, PreferImportingJestGlobalsConfig];
   "jest/prefer-jest-mocked"?: RuleNoConfig;
-  "jest/prefer-lowercase-title"?: DummyRule;
+  "jest/prefer-lowercase-title"?: RuleNoConfig | [AllowWarnDeny, JestPreferLowercaseTitleConfig];
   "jest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "jest/prefer-mock-return-shorthand"?: RuleNoConfig;
   "jest/prefer-snapshot-hint"?: RuleNoConfig | [AllowWarnDeny, SnapshotHintMode];
@@ -988,7 +989,7 @@ export interface DummyRuleMap {
   "jest/valid-describe-callback"?: RuleNoConfig;
   "jest/valid-expect"?: RuleNoConfig | [AllowWarnDeny, ValidExpectConfig];
   "jest/valid-expect-in-promise"?: RuleNoConfig;
-  "jest/valid-title"?: DummyRule;
+  "jest/valid-title"?: RuleNoConfig | [AllowWarnDeny, JestValidTitleConfig];
   "jsdoc/check-access"?: RuleNoConfig;
   "jsdoc/check-property-names"?: RuleNoConfig;
   "jsdoc/check-tag-names"?: RuleNoConfig | [AllowWarnDeny, CheckTagNamesConfig];
@@ -1666,7 +1667,7 @@ export interface DummyRuleMap {
   "vitest/prefer-hooks-on-top"?: RuleNoConfig;
   "vitest/prefer-import-in-mock"?: RuleNoConfig | [AllowWarnDeny, PreferImportInMockConfig];
   "vitest/prefer-importing-vitest-globals"?: RuleNoConfig;
-  "vitest/prefer-lowercase-title"?: DummyRule;
+  "vitest/prefer-lowercase-title"?: RuleNoConfig | [AllowWarnDeny, VitestPreferLowercaseTitleConfig];
   "vitest/prefer-mock-promise-shorthand"?: RuleNoConfig;
   "vitest/prefer-mock-return-shorthand"?: RuleNoConfig;
   "vitest/prefer-snapshot-hint"?: RuleNoConfig | [AllowWarnDeny, SnapshotHintMode];
@@ -1691,7 +1692,7 @@ export interface DummyRuleMap {
   "vitest/valid-describe-callback"?: RuleNoConfig;
   "vitest/valid-expect"?: RuleNoConfig | [AllowWarnDeny, ValidExpectConfig];
   "vitest/valid-expect-in-promise"?: RuleNoConfig;
-  "vitest/valid-title"?: DummyRule;
+  "vitest/valid-title"?: RuleNoConfig | [AllowWarnDeny, VitestValidTitleConfig];
   "vitest/warn-todo"?: RuleNoConfig;
   "vue/component-definition-name-casing"?: RuleNoConfig | [AllowWarnDeny, CaseType];
   "vue/define-emits-declaration"?: RuleNoConfig | [AllowWarnDeny, DeclarationStyle];
@@ -2385,6 +2386,26 @@ export interface PreferImportingJestGlobalsConfig {
    */
   types?: JestFnType[];
 }
+export interface JestPreferLowercaseTitleConfig {
+  /**
+   * This array option allows specifying prefixes, which contain capitals that titles
+   * can start with.
+   */
+  allowedPrefixes?: string[];
+  /**
+   * This array option controls which Jest functions are checked by this rule.
+   */
+  ignore?: string[];
+  /**
+   * Whether to ignore `test.todo` and `it.todo` titles.
+   */
+  ignoreTodos?: boolean;
+  /**
+   * This option can be set to allow only the top-level `describe` blocks to have a
+   * title starting with an upper-case letter.
+   */
+  ignoreTopLevelDescribe?: boolean;
+}
 export interface RequireHookConfig {
   /**
    * An array of function names that are allowed to be called outside of hooks.
@@ -2414,6 +2435,37 @@ export interface ValidExpectConfig {
    * Minimum number of arguments `expect` should be called with.
    */
   minArgs?: number;
+}
+export interface JestValidTitleConfig {
+  /**
+   * A list of disallowed words, which will not be allowed in titles.
+   */
+  disallowedWords?: string[];
+  /**
+   * Whether to ignore leading and trailing spaces in titles.
+   */
+  ignoreSpaces?: boolean;
+  /**
+   * Whether to ignore the type of the name passed to `describe`.
+   */
+  ignoreTypeOfDescribeName?: boolean;
+  /**
+   * Whether to ignore the type of the name passed to `test`.
+   */
+  ignoreTypeOfTestName?: boolean;
+  /**
+   * Patterns for titles that must be matched for the title to be valid.
+   */
+  mustMatch?: MatcherPatternConfig;
+  /**
+   * Patterns for titles that must not match.
+   */
+  mustNotMatch?: MatcherPatternConfig;
+}
+export interface MatcherPatternByKindConfig {
+  describe?: string;
+  it?: string;
+  test?: string;
 }
 export interface CheckTagNamesConfig {
   /**
@@ -6287,11 +6339,53 @@ export interface PreferImportInMockConfig {
    */
   fixable: boolean;
 }
+export interface VitestPreferLowercaseTitleConfig {
+  /**
+   * This array option allows specifying prefixes, which contain capitals that titles
+   * can start with.
+   */
+  allowedPrefixes?: string[];
+  /**
+   * This array option controls which Vitest functions are checked by this rule.
+   */
+  ignore?: string[];
+  /**
+   * This option can be set to allow only the top-level `describe` blocks to have a
+   * title starting with an upper-case letter.
+   */
+  ignoreTopLevelDescribe?: boolean;
+  /**
+   * This option can be set to only validate that the first character of a test name is lowercased.
+   */
+  lowercaseFirstCharacterOnly?: boolean;
+}
 export interface RequireMockTypeParametersConfig {
   /**
    * Also require type parameters for `importActual` and `importMock`.
    */
   checkImportFunctions?: boolean;
+}
+export interface VitestValidTitleConfig {
+  /**
+   * Whether to allow arguments as titles.
+   */
+  allowArguments?: boolean;
+  /**
+   * A list of disallowed words, which will not be allowed in titles.
+   */
+  disallowedWords?: string[];
+  /**
+   * Whether to ignore the type of the name passed to `describe`.
+   */
+  ignoreTypeOfDescribeName?: boolean;
+  /**
+   * Patterns for titles that must be matched for the title to be valid.
+   */
+  mustMatch?: MatcherPatternConfig;
+  /**
+   * Patterns for titles that must not match.
+   */
+  mustNotMatch?: MatcherPatternConfig;
 }
 export interface DefinePropsDestructuring {
   /**

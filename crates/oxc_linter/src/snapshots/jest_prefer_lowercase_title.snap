@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
 ---
 
   ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
@@ -8,6 +9,13 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+
+  ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:11]
+ 1 │ test.todo('Uppercase description')
+   ·           ───────────────────────
+   ╰────
+  help: `"Uppercase description"`s should begin with lowercase
 
   ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:5]

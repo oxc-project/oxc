@@ -2,8 +2,10 @@ use oxc_macros::declare_oxc_lint;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
-    rules::shared::prefer_lowercase_title::{DOCUMENTATION, PreferLowercaseTitleConfig},
+    rule::{DefaultRuleConfig, Rule},
+    rules::shared::prefer_lowercase_title::{
+        PreferLowercaseTitleConfig, VITEST_DOCUMENTATION, VitestPreferLowercaseTitleConfig,
+    },
     utils::PossibleJestNode,
 };
 
@@ -15,14 +17,17 @@ declare_oxc_lint!(
     vitest,
     style,
     fix,
-    config = PreferLowercaseTitleConfig,
-    docs = DOCUMENTATION,
+    config = VitestPreferLowercaseTitleConfig,
+    docs = VITEST_DOCUMENTATION,
     version = "0.15.9",
 );
 
 impl Rule for PreferLowercaseTitle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        PreferLowercaseTitleConfig::from_configuration(value).map(|config| Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<VitestPreferLowercaseTitleConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(PreferLowercaseTitleConfig::from)
+            .map(|config| Self(Box::new(config)))
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -426,4 +431,12 @@ fn test() {
         .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    assert!(
+        PreferLowercaseTitle::from_configuration(serde_json::json!([{ "ignoreTodos": true }]))
+            .is_err()
+    );
 }
