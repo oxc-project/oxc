@@ -39,7 +39,6 @@ const NO_VERIFIED_VALID_SCHEMA: [&str; 34] = [
     "react/jsx-curly-brace-presence",
     "react/jsx-handler-names",
     "react/jsx-no-script-url",
-    "react/no-did-update-set-state",
     "react_perf/jsx-no-new-object-as-prop",
     "typescript/array-type",
     "typescript/ban-ts-comment",

@@ -1039,20 +1039,23 @@ var Hello = createReactClass({
 
 ## Configuration
 
+Configures whether React `setState` calls are allowed in nested functions inside the lifecycle
+method checked by the rule.
+
 This rule accepts one of the following string values:
 
 ### `"allowed"`
 
 
 
-Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.
+Allow `setState` calls in nested functions, the default behavior.
 
 
 ### `"disallow-in-func"`
 
 
 
-Makes this rule more strict by disallowing calls to `this.setState`` even within functions.
+Disallow `setState` calls even when they are inside nested functions.
 
 
 

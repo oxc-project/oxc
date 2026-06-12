@@ -36,6 +36,18 @@ pub enum AlwaysNever {
     Never,
 }
 
+/// Configures whether React `setState` calls are allowed in nested functions inside the lifecycle
+/// method checked by the rule.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum SetStateInFunctionConfig {
+    /// Allow `setState` calls in nested functions, the default behavior.
+    #[default]
+    Allowed,
+    /// Disallow `setState` calls even when they are inside nested functions.
+    DisallowInFunc,
+}
+
 pub fn deserialize_regex_option<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
 where
     D: serde::Deserializer<'de>,

@@ -180,8 +180,11 @@ export type JsxFilenameExtensionAllowMode = "always" | "as-needed";
 export type FragmentMode = "syntax" | "element";
 export type EnforceDynamicLinksEnum = "always" | "never";
 export type IgnoreEnforceOption = "ignore" | "enforce";
-export type NoDidMountSetStateConfig = "allowed" | "disallow-in-func";
-export type NoWillUpdateSetStateConfig = "allowed" | "disallow-in-func";
+/**
+ * Configures whether React `setState` calls are allowed in nested functions inside the lifecycle
+ * method checked by the rule.
+ */
+export type SetStateInFunctionConfig = "allowed" | "disallow-in-func";
 export type RequireFlag = "u" | "v";
 export type ImportKind = "none" | "all" | "multiple" | "single";
 /**
@@ -1234,8 +1237,8 @@ export interface DummyRuleMap {
   "react/no-clone-element"?: RuleNoConfig;
   "react/no-danger"?: RuleNoConfig;
   "react/no-danger-with-children"?: RuleNoConfig;
-  "react/no-did-mount-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDidMountSetStateConfig];
-  "react/no-did-update-set-state"?: DummyRule;
+  "react/no-did-mount-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SetStateInFunctionConfig];
+  "react/no-did-update-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SetStateInFunctionConfig];
   "react/no-direct-mutation-state"?: RuleNoConfig;
   "react/no-find-dom-node"?: RuleNoConfig;
   "react/no-is-mounted"?: RuleNoConfig;
@@ -1255,7 +1258,7 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, NoUnstableNestedComponentsConfig];
-  "react/no-will-update-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoWillUpdateSetStateConfig];
+  "react/no-will-update-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SetStateInFunctionConfig];
   "react/only-export-components"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, OnlyExportComponentsConfig];
   "react/prefer-es6-class"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AlwaysNever];
   "react/prefer-function-component"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferFunctionComponent];

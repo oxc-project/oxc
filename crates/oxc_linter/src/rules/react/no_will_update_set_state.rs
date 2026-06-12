@@ -2,8 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -11,7 +10,7 @@ use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     rules::ContextHost,
-    utils::{is_es5_component, is_es6_component},
+    utils::{SetStateInFunctionConfig, is_es5_component, is_es6_component},
 };
 
 fn no_will_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -20,18 +19,8 @@ fn no_will_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-pub enum NoWillUpdateSetStateConfig {
-    /// Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.
-    #[default]
-    Allowed,
-    /// Makes this rule more strict by disallowing calls to `this.setState`` even within functions.
-    DisallowInFunc,
-}
-
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct NoWillUpdateSetState(NoWillUpdateSetStateConfig);
+pub struct NoWillUpdateSetState(SetStateInFunctionConfig);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -73,7 +62,7 @@ declare_oxc_lint!(
     NoWillUpdateSetState,
     react,
     correctness,
-    config = NoWillUpdateSetStateConfig,
+    config = SetStateInFunctionConfig,
     version = "1.37.0",
 );
 
@@ -156,7 +145,7 @@ impl Rule for NoWillUpdateSetState {
 
         let in_nested_function = function_count > 1;
 
-        if in_nested_function && !matches!(self.0, NoWillUpdateSetStateConfig::DisallowInFunc) {
+        if in_nested_function && !matches!(self.0, SetStateInFunctionConfig::DisallowInFunc) {
             return;
         }
 

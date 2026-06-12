@@ -5941,7 +5941,7 @@ expression: json
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoDidMountSetStateConfig"
+                  "$ref": "#/definitions/SetStateInFunctionConfig"
                 }
               ],
               "maxItems": 2,
@@ -5950,7 +5950,24 @@ expression: json
           ]
         },
         "react/no-did-update-set-state": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/SetStateInFunctionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/no-direct-mutation-state": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -6097,7 +6114,7 @@ expression: json
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoWillUpdateSetStateConfig"
+                  "$ref": "#/definitions/SetStateInFunctionConfig"
                 }
               ],
               "maxItems": 2,
@@ -11860,26 +11877,6 @@ expression: json
       },
       "additionalProperties": false
     },
-    "NoDidMountSetStateConfig": {
-      "oneOf": [
-        {
-          "description": "Allow `setState` calls in nested functions within `componentDidMount`, the default behavior.",
-          "type": "string",
-          "enum": [
-            "allowed"
-          ],
-          "markdownDescription": "Allow `setState` calls in nested functions within `componentDidMount`, the default behavior."
-        },
-        {
-          "description": "When set, also disallows `setState` calls in nested functions within `componentDidMount`.",
-          "type": "string",
-          "enum": [
-            "disallow-in-func"
-          ],
-          "markdownDescription": "When set, also disallows `setState` calls in nested functions within `componentDidMount`."
-        }
-      ]
-    },
     "NoDuplicateImports": {
       "type": "object",
       "properties": {
@@ -14026,26 +14023,6 @@ expression: json
       },
       "additionalProperties": false
     },
-    "NoWillUpdateSetStateConfig": {
-      "oneOf": [
-        {
-          "description": "Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.",
-          "type": "string",
-          "enum": [
-            "allowed"
-          ],
-          "markdownDescription": "Forbids any call to `this.setState` in `componentWillUpdate` outside of functions."
-        },
-        {
-          "description": "Makes this rule more strict by disallowing calls to `this.setState`` even within functions.",
-          "type": "string",
-          "enum": [
-            "disallow-in-func"
-          ],
-          "markdownDescription": "Makes this rule more strict by disallowing calls to `this.setState`` even within functions."
-        }
-      ]
-    },
     "Nofunc": {
       "type": "string",
       "enum": [
@@ -15807,6 +15784,28 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "SetStateInFunctionConfig": {
+      "description": "Configures whether React `setState` calls are allowed in nested functions inside the lifecycle\nmethod checked by the rule.",
+      "oneOf": [
+        {
+          "description": "Allow `setState` calls in nested functions, the default behavior.",
+          "type": "string",
+          "enum": [
+            "allowed"
+          ],
+          "markdownDescription": "Allow `setState` calls in nested functions, the default behavior."
+        },
+        {
+          "description": "Disallow `setState` calls even when they are inside nested functions.",
+          "type": "string",
+          "enum": [
+            "disallow-in-func"
+          ],
+          "markdownDescription": "Disallow `setState` calls even when they are inside nested functions."
+        }
+      ],
+      "markdownDescription": "Configures whether React `setState` calls are allowed in nested functions inside the lifecycle\nmethod checked by the rule."
     },
     "ShorthandType": {
       "type": "string",
