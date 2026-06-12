@@ -3,7 +3,7 @@ use std::ops::Deref;
 use icu_segmenter::GraphemeClusterSegmenter;
 use lazy_regex::Regex;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 
 use oxc_ast::AstKind;
@@ -18,6 +18,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::AlwaysNever,
 };
 
 fn id_length_is_too_short_diagnostic(span: Span, config_min: u64) -> OxcDiagnostic {
@@ -30,16 +31,6 @@ fn id_length_is_too_long_diagnostic(span: Span, config_max: u64) -> OxcDiagnosti
 
 const DEFAULT_MAX_LENGTH: u64 = u64::MAX;
 const DEFAULT_MIN_LENGTH: u64 = 2;
-
-#[derive(Debug, Default, Clone, PartialEq, JsonSchema, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-enum PropertyKind {
-    /// Property names are checked just like other identifiers
-    #[default]
-    Always,
-    /// Property names are not checked for length.
-    Never,
-}
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct IdLength(Box<IdLengthConfig>);
@@ -71,7 +62,7 @@ pub struct IdLengthConfig {
     /// Defaults to `true`.
     check_generic: bool,
     /// Whether to check property names for length.
-    properties: PropertyKind,
+    properties: AlwaysNever,
 }
 
 impl Default for IdLengthConfig {
@@ -82,7 +73,7 @@ impl Default for IdLengthConfig {
             max: DEFAULT_MAX_LENGTH,
             min: DEFAULT_MIN_LENGTH,
             check_generic: true,
-            properties: PropertyKind::default(),
+            properties: AlwaysNever::default(),
         }
     }
 }
@@ -253,7 +244,7 @@ impl IdLength {
                         object_pattern.properties.iter().find(|x| x.span == ident.span);
 
                     if IdLength::is_binding_identifier_or_object_pattern(binding_property_option)
-                        && self.properties == PropertyKind::Never
+                        && self.properties == AlwaysNever::Never
                     {
                         return;
                     }
@@ -309,7 +300,7 @@ impl IdLength {
                 }
             property_key if property_key.is_property_key() => {
                 let property_key = property_key.as_property_key_kind().unwrap();
-                if self.properties == PropertyKind::Never {
+                if self.properties == AlwaysNever::Never {
                     return;
                 }
 
@@ -340,7 +331,7 @@ impl IdLength {
                 }
             }
             AstKind::BindingProperty(binding_prop) => {
-                if self.properties == PropertyKind::Never {
+                if self.properties == AlwaysNever::Never {
                     return;
                 }
                 // If this node is the original identifier in a binding property, we can skip it
@@ -352,7 +343,7 @@ impl IdLength {
                 }
             }
             AstKind::ObjectProperty(_)
-                if self.properties == PropertyKind::Never => {
+                if self.properties == AlwaysNever::Never => {
                     return;
                 }
             AstKind::AssignmentTargetPropertyProperty(assignment_target)
@@ -437,7 +428,7 @@ impl IdLength {
 
     fn should_check_member_expression_property(&self, node: &AstNode, ctx: &LintContext) -> bool {
         // Only check property names in member expressions if properties == Always
-        if self.properties != PropertyKind::Always {
+        if self.properties != AlwaysNever::Always {
             return false;
         }
 

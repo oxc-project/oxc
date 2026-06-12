@@ -2,14 +2,13 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
-    utils::{is_es5_component, is_es6_component},
+    utils::{AlwaysNever, is_es5_component, is_es6_component},
 };
 
 fn unexpected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
@@ -22,18 +21,8 @@ fn expected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-enum PreferES6ClassOptionType {
-    /// Always prefer ES2015 class-style components.
-    #[default]
-    Always,
-    /// Do not allow ES2015 class-style, prefer `createReactClass`.
-    Never,
-}
-
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct PreferEs6Class(PreferES6ClassOptionType);
+pub struct PreferEs6Class(AlwaysNever);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -61,7 +50,7 @@ declare_oxc_lint!(
     PreferEs6Class,
     react,
     style,
-    config = PreferES6ClassOptionType,
+    config = AlwaysNever,
     version = "0.5.0",
 );
 
@@ -73,13 +62,12 @@ impl Rule for PreferEs6Class {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr)
-                if matches!(self.0, PreferES6ClassOptionType::Always) && is_es5_component(node) =>
+                if matches!(self.0, AlwaysNever::Always) && is_es5_component(node) =>
             {
                 ctx.diagnostic(expected_es6_class_diagnostic(call_expr.callee.span()));
             }
             AstKind::Class(class_expr)
-                if !matches!(self.0, PreferES6ClassOptionType::Always)
-                    && is_es6_component(node) =>
+                if !matches!(self.0, AlwaysNever::Always) && is_es6_component(node) =>
             {
                 ctx.diagnostic(unexpected_es6_class_diagnostic(
                     class_expr.id.as_ref().map_or(class_expr.span, |id| id.span),

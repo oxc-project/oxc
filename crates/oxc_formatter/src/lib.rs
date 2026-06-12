@@ -10,6 +10,7 @@ mod ir_transform;
 mod options;
 mod parentheses;
 mod print;
+mod source_text;
 mod utils;
 
 use oxc_allocator::Allocator;
@@ -221,7 +222,7 @@ fn parse<'a>(
     source_type: SourceType,
 ) -> Result<&'a Program<'a>, OxcDiagnostic> {
     let ret = parse_for_format(allocator, source_text, source_type);
-    if let Some(err) = ret.errors.into_iter().next() {
+    if let Some(err) = ret.diagnostics.into_iter().next() {
         return Err(err);
     }
     Ok(allocator.alloc(ret.program))

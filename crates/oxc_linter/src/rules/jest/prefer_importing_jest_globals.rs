@@ -39,7 +39,7 @@ impl std::ops::Deref for PreferImportingJestGlobals {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferImportingJestGlobalsConfig {
     /// Jest function types to enforce importing for.
     types: Vec<JestFnType>,

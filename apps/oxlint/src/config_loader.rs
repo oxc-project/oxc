@@ -237,6 +237,9 @@ impl ConfigLoadError {
 ///
 /// This groups together failures related to the root configuration file
 /// and to any nested configuration files discovered during loading.
+// `OxcDiagnostic` is intentionally inlined (~176 bytes) to keep its construction
+// allocation-free, so the variant size difference is a deliberate trade-off.
+#[expect(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub enum CliConfigLoadError {
     /// An error that occurred while loading or parsing the root configuration.

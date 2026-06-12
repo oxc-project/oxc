@@ -2,10 +2,12 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter_core::{
-    BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth,
+    IndentStyle, IndentWidth, LineEnding, LineWidth,
     test_support::{FixtureFormatter, OptionSet, build_fixture_snapshot},
 };
-use oxc_formatter_json::{JsonFormatOptions, JsonVariant, format};
+use oxc_formatter_json::{
+    BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas, format,
+};
 
 struct JsonHarness;
 
@@ -58,9 +60,34 @@ impl FixtureFormatter for JsonHarness {
                         };
                     }
                 }
+                "trailingComma" => {
+                    if let Some(s) = value.as_str() {
+                        // Translate Prettier's vocabulary into JSON's neutral two states here,
+                        // in the harness — the JSON type itself knows no "es5".
+                        options.trailing_commas = match s {
+                            "all" | "es5" => TrailingCommas::Always,
+                            "none" => TrailingCommas::Never,
+                            _ => options.trailing_commas,
+                        };
+                    }
+                }
                 "bracketSpacing" => {
                     if let Some(b) = value.as_bool() {
                         options.bracket_spacing = BracketSpacing::from(b);
+                    }
+                }
+                "singleQuote" => {
+                    if let Some(b) = value.as_bool() {
+                        options.single_quote = b.into();
+                    }
+                }
+                "quoteProps" => {
+                    if let Some(s) = value.as_str() {
+                        options.quote_props = match s {
+                            "preserve" => QuoteProps::Preserve,
+                            "consistent" => QuoteProps::Consistent,
+                            _ => QuoteProps::AsNeeded,
+                        };
                     }
                 }
                 "objectWrap" => {

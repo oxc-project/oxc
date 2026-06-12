@@ -84,7 +84,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     config = NoReservedComponentNames,
-    version = "next",
+    version = "1.68.0",
 );
 
 impl Rule for NoReservedComponentNames {

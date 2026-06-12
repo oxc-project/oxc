@@ -90,7 +90,7 @@ pub struct ConsistentEachForConfig {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct ConsistentEachForJson {
     /// Preferred method to create parameterized tests for `describe` blocks.
     describe: Option<MemberNames>,
@@ -166,19 +166,15 @@ declare_oxc_lint!(
     /// ```
     ConsistentEachFor,
     vitest,
-    correctness,
+    style,
     config = ConsistentEachForJson,
     version = "1.39.0",
 );
 
 impl Rule for ConsistentEachFor {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<ConsistentEachForJson>>(value)
-                .unwrap_or_default()
-                .into_inner()
-                .into_consistent_each_for_config(),
-        )))
+        serde_json::from_value::<DefaultRuleConfig<ConsistentEachForJson>>(value)
+            .map(|config| Self(Box::new(config.into_inner().into_consistent_each_for_config())))
     }
 
     fn run_on_jest_node<'a, 'c>(

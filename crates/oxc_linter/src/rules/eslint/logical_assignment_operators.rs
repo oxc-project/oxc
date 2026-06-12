@@ -19,7 +19,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
-    utils::is_same_member_expression,
+    utils::{AlwaysNever, is_same_member_expression},
 };
 
 fn logical_assignment_operators_diagnostic(
@@ -55,19 +55,6 @@ enum LogicalAssignmentOperatorsDiagnosticKind {
     Unexpected,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-enum LogicalAssignmentOperatorsMode {
-    #[default]
-    /// This option checks for expressions that can be shortened using logical assignment operator.
-    /// For example, `a = a || b` can be shortened to `a ||= b`.
-    /// Expressions with associativity such as `a = a || b || c` are reported as being able to be shortened to `a ||= b || c` unless the evaluation order is explicitly defined using parentheses, such as `a = (a || b) || c`.
-    Always,
-    /// This option disallows logical assignment operator shorthand.
-    /// For example, `a ||= b` should be written as `a = a || b`.
-    Never,
-}
-
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct LogicalAssignmentOperatorsConfig {
@@ -92,10 +79,7 @@ struct LogicalAssignmentOperatorsConfig {
 }
 
 #[derive(Debug, Default, Clone, Serialize, JsonSchema)]
-pub struct LogicalAssignmentOperators(
-    LogicalAssignmentOperatorsMode,
-    LogicalAssignmentOperatorsConfig,
-);
+pub struct LogicalAssignmentOperators(AlwaysNever, LogicalAssignmentOperatorsConfig);
 
 impl<'de> Deserialize<'de> for LogicalAssignmentOperators {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -103,7 +87,7 @@ impl<'de> Deserialize<'de> for LogicalAssignmentOperators {
         D: serde::Deserializer<'de>,
     {
         let values = Vec::<Value>::deserialize(deserializer)?;
-        let mut mode = LogicalAssignmentOperatorsMode::Always;
+        let mut mode = AlwaysNever::Always;
         let mut options = LogicalAssignmentOperatorsConfig::default();
 
         match values.as_slice() {
@@ -113,7 +97,7 @@ impl<'de> Deserialize<'de> for LogicalAssignmentOperators {
             }
             [first, second] if first.is_string() && second.is_object() => {
                 mode = serde_json::from_value(first.clone()).map_err(de::Error::custom)?;
-                if mode == LogicalAssignmentOperatorsMode::Never {
+                if mode == AlwaysNever::Never {
                     return Err(de::Error::custom(r#"options object is only valid with "always""#));
                 }
                 options = serde_json::from_value(second.clone()).map_err(de::Error::custom)?;
@@ -196,17 +180,14 @@ impl Rule for LogicalAssignmentOperators {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::AssignmentExpression(assignment) => match self.0 {
-                LogicalAssignmentOperatorsMode::Never => check_never(assignment, ctx),
-                LogicalAssignmentOperatorsMode::Always => check_assignment(assignment, ctx),
+                AlwaysNever::Never => check_never(assignment, ctx),
+                AlwaysNever::Always => check_assignment(assignment, ctx),
             },
-            AstKind::LogicalExpression(logical)
-                if self.0 == LogicalAssignmentOperatorsMode::Always =>
-            {
+            AstKind::LogicalExpression(logical) if self.0 == AlwaysNever::Always => {
                 check_logical(logical, ctx);
             }
             AstKind::IfStatement(if_statement)
-                if self.0 == LogicalAssignmentOperatorsMode::Always
-                    && self.1.enforce_for_if_statements =>
+                if self.0 == AlwaysNever::Always && self.1.enforce_for_if_statements =>
             {
                 check_if_statement(if_statement, ctx);
             }

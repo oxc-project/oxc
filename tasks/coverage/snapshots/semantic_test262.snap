@@ -1,8 +1,8 @@
-commit: 7e115f46
+commit: 05bb0329
 
 semantic_test262 Summary:
-AST Parsed     : 47210/47210 (100.00%)
-Positive Passed: 46990/47210 (99.53%)
+AST Parsed     : 47240/47240 (100.00%)
+Positive Passed: 47020/47240 (99.53%)
 semantic Error: tasks/coverage/test262/test/language/eval-code/direct/async-func-decl-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(Function)

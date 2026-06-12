@@ -54,6 +54,14 @@ const FORMAT_TEST_SPEC_NAME: &str = "format.test.js";
 const SNAPSHOT_DIR_NAME: &str = "__snapshots__";
 const SNAPSHOT_FILE_NAME: &str = "format.test.js.snap";
 
+#[derive(Default)]
+struct SnapshotResults {
+    /// `(path, (failed_count, passed_count, diff_ratio))` per file with at least one mismatch
+    failed_files: Vec<(PathBuf, (usize, usize, f32))>,
+    /// Files the formatter failed to parse for at least one options combination
+    skipped_files: Vec<PathBuf>,
+}
+
 pub struct TestRunner {
     options: TestRunnerOptions,
 }
@@ -76,7 +84,7 @@ impl TestRunner {
                 // If filter is set, many of the tests can be skipped
                 if !inputs.is_empty() {
                     // This will print the diff
-                    let _failed_test_files = self.test_snapshots(dir, &inputs, true);
+                    let _results = self.test_snapshots(dir, &inputs, true);
                 }
             }
 
@@ -86,6 +94,7 @@ impl TestRunner {
         // Otherwise, run all tests and generate coverage reports
         let mut total_tested_file_count = 0;
         let mut total_failed_file_count = 0;
+        let mut total_skipped_files = vec![];
         let mut failed_reports = String::new();
         failed_reports.push_str("# Failed\n");
         failed_reports.push('\n');
@@ -93,12 +102,13 @@ impl TestRunner {
         failed_reports.push_str("| :-------- | :--------------: | :---------: |\n");
         for dir in &test_dirs {
             let inputs = Self::collect_test_files(dir, None);
-            let failed_test_files = self.test_snapshots(dir, &inputs, false);
+            let results = self.test_snapshots(dir, &inputs, false);
 
             total_tested_file_count += inputs.len();
-            total_failed_file_count += failed_test_files.len();
+            total_failed_file_count += results.failed_files.len();
+            total_skipped_files.extend(results.skipped_files);
 
-            for (path, (failed, passed, ratio)) in failed_test_files {
+            for (path, (failed, passed, ratio)) in results.failed_files {
                 writeln!(
                     failed_reports,
                     "| {} | {}{} | {:.2}% |",
@@ -114,14 +124,29 @@ impl TestRunner {
         let passed = total_tested_file_count - total_failed_file_count;
         #[expect(clippy::cast_precision_loss)]
         let percentage = (passed as f64 / total_tested_file_count as f64) * 100.0;
+        // Files our formatter cannot parse are counted as passed above
+        // (they have no diff to report); surface them so the gap is visible.
         let summary = format!(
-            "{test_lang} compatibility: {passed}/{total_tested_file_count} ({percentage:.2}%)"
+            "{test_lang} compatibility: {passed}/{total_tested_file_count} ({percentage:.2}%), {} files skipped",
+            total_skipped_files.len()
         );
 
         // Print summary
         println!("{summary}");
         // And generate coverage reports
-        let snapshot = format!("{summary}\n\n{failed_reports}");
+        let mut snapshot = format!("{summary}\n\n{failed_reports}");
+        if !total_skipped_files.is_empty() {
+            snapshot
+                .push_str("\n# Skipped (parse error, TODO: should be ignored or supported)\n\n");
+            for path in &total_skipped_files {
+                writeln!(
+                    snapshot,
+                    "- {}",
+                    path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
+                )
+                .unwrap();
+            }
+        }
         std::fs::write(snap_root().join(format!("prettier.{test_lang}.snap.md")), snapshot)
             .unwrap();
     }
@@ -203,7 +228,7 @@ impl TestRunner {
         dir: &Path,
         test_files: &Vec<PathBuf>,
         has_debug_filter: bool,
-    ) -> Vec<(PathBuf, (usize, usize, f32))> {
+    ) -> SnapshotResults {
         // Parse all `runFormatTest()` calls and collect format options
         let spec_path = &dir.join(FORMAT_TEST_SPEC_NAME);
         let spec_calls = parse_spec(spec_path, self.options.language);
@@ -228,7 +253,7 @@ impl TestRunner {
         let snapshots =
             std::fs::read_to_string(dir.join(SNAPSHOT_DIR_NAME).join(SNAPSHOT_FILE_NAME)).unwrap();
 
-        let mut failed_test_files = vec![];
+        let mut results = SnapshotResults::default();
         for path in test_files {
             if self.options.debug || has_debug_filter {
                 println!("Test: {}", path.to_string_lossy());
@@ -237,6 +262,7 @@ impl TestRunner {
             let source_text = std::fs::read_to_string(path).unwrap();
 
             let mut failed_count = 0;
+            let mut skipped_count = 0;
             let mut total_diff_ratio = 0.0;
             // Check every combination of options!
             for (format_options, snapshot_options) in &spec_calls {
@@ -252,6 +278,7 @@ impl TestRunner {
                 let Some(actual) = Self::run_formatter(path, &source_text, format_options.clone())
                 else {
                     // Skip the test if parsing failed
+                    skipped_count += 1;
                     if self.options.debug {
                         println!("  => Skipped (parsing failed)");
                     }
@@ -297,14 +324,17 @@ impl TestRunner {
                 let passed_count = total_count - failed_count;
                 #[expect(clippy::cast_precision_loss)]
                 let max_diff_ratio = total_count as f32;
-                failed_test_files.push((
+                results.failed_files.push((
                     path.clone(),
                     (failed_count, passed_count, total_diff_ratio / max_diff_ratio),
                 ));
             }
+            if skipped_count != 0 {
+                results.skipped_files.push(path.clone());
+            }
         }
 
-        failed_test_files
+        results
     }
 
     /// Extract single output section from snapshot file which contains multiple test cases.

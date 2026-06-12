@@ -1,0 +1,6 @@
+{
+  ident: 1,
+  "alsoIdent": 2,
+  "1.5": 3,
+  nested: { inner: 4, "needs-quote": 5 }
+}

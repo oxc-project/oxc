@@ -878,7 +878,7 @@ mod test {
 
     use oxc_allocator::Allocator;
     use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
-    use oxc_diagnostics::OxcDiagnostic;
+    use oxc_diagnostics::Diagnostics;
     use oxc_parser::Parser;
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
@@ -893,7 +893,7 @@ mod test {
         dynamic_deps: FxHashSet<String>,
     }
 
-    fn transform(source_text: &str, is_jsx: bool) -> Result<TransformReturn, Vec<OxcDiagnostic>> {
+    fn transform(source_text: &str, is_jsx: bool) -> Result<TransformReturn, Diagnostics> {
         let source_type = SourceType::default().with_jsx(is_jsx);
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
@@ -909,8 +909,8 @@ mod test {
         let (deps, dynamic_deps) =
             ModuleRunnerTransform::new().transform(&allocator, &mut program, scoping);
 
-        if !ret.errors.is_empty() {
-            return Err(ret.errors);
+        if !ret.diagnostics.is_empty() {
+            return Err(ret.diagnostics);
         }
         let code = Codegen::new()
             .with_options(CodegenOptions {
@@ -928,7 +928,7 @@ mod test {
         let source_type = SourceType::default();
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
 
         Codegen::new()
             .with_options(CodegenOptions {

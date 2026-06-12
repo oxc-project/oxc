@@ -106,11 +106,11 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
 
     let mut program = ret.program;
     let mut module_record = ret.module_record;
-    let mut diagnostics = ret.errors;
+    let mut diagnostics = ret.diagnostics;
 
     if options.show_semantic_errors == Some(true) {
-        let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
-        diagnostics.extend(semantic_ret.errors);
+        let semantic_ret = SemanticBuilder::new_compiler().build(&program);
+        diagnostics.extend(semantic_ret.diagnostics);
     }
 
     let mut errors = OxcError::from_diagnostics(filename, source_text, diagnostics);

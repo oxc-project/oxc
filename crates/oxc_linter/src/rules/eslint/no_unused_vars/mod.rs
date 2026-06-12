@@ -19,12 +19,22 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use symbol::Symbol;
 
 use crate::{
     context::{ContextHost, LintContext},
     rule::Rule,
+    rules::eslint::no_unused_vars::options::VarsOption,
 };
+
+#[derive(JsonSchema, Debug)]
+#[serde(untagged)]
+#[expect(unused)] // only for schemars generation, not actually used in code
+pub enum NoUnusedVarsConfig {
+    Vars(VarsOption),
+    Options(NoUnusedVarsOptions),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedVars(Box<NoUnusedVarsOptions>);
@@ -193,7 +203,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     fix = conditional_dangerous_fix_or_suggestion,
-    config = NoUnusedVarsOptions,
+    config = NoUnusedVarsConfig,
     version = "0.7.0",
 );
 

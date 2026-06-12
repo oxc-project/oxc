@@ -91,6 +91,10 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
 }
 
 impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignmentTarget<'a> {
+    // Destructuring-target conversion is comparatively rare and large. Keeping it out of line
+    // stops it being inlined into `AssignmentTarget::cover`, whose common arm (simple targets)
+    // would otherwise carry this body's large stack frame + callee-saved spills on every call.
+    #[inline(never)]
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
         let mut elements = p.ast.vec();
         let mut rest = None;
@@ -165,6 +169,9 @@ impl<'a, C: Config> CoverGrammar<'a, AssignmentExpression<'a>, C>
 }
 
 impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignmentTarget<'a> {
+    // Kept out of line for the same reason as `ArrayAssignmentTarget::cover` above: avoid
+    // inlining this large body into the hot `AssignmentTarget::cover` dispatcher.
+    #[inline(never)]
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
         let mut properties = p.ast.vec();
         let mut rest = None;

@@ -1,12 +1,22 @@
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
-use crate::utils::ReactPerfRule;
+use crate::utils::{NativeAllowList, ReactPerfConfig, ReactPerfRule};
 
-#[derive(Debug, Default, Clone)]
-pub struct JsxNoJsxAsProp;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct JsxNoJsxAsProp(Box<ReactPerfConfig>);
+
+impl std::ops::Deref for JsxNoJsxAsProp {
+    type Target = ReactPerfConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -38,11 +48,16 @@ declare_oxc_lint!(
     JsxNoJsxAsProp,
     react_perf,
     perf,
+    config = ReactPerfConfig,
     version = "0.2.3",
 );
 
 impl ReactPerfRule for JsxNoJsxAsProp {
     const MESSAGE: &'static str = "JSX attribute values should not contain other JSX.";
+
+    fn native_allow_list(&self) -> &NativeAllowList {
+        self.0.native_allow_list()
+    }
 
     fn check_for_violation_on_expr(&self, expr: &Expression<'_>) -> Option<Span> {
         check_expression(expr)
@@ -74,24 +89,49 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 
 #[test]
 fn test() {
+    use serde_json::json;
+
     use crate::tester::Tester;
 
     let pass = vec![
-        r"<Item callback={this.props.jsx} />",
-        r"const Foo = () => <Item callback={this.props.jsx} />",
-        r"<Item jsx={<SubItem />} />",
-        r"<Item jsx={this.props.jsx || <SubItem />} />",
-        r"<Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />",
-        r"<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />",
-        r"const Icon = <svg />; const Foo = () => (<IconButton icon={Icon} />)",
+        (r"<Item callback={this.props.jsx} />", None),
+        (r"const Foo = () => <Item callback={this.props.jsx} />", None),
+        (r"<Item jsx={<SubItem />} />", None),
+        (r"<Item jsx={this.props.jsx || <SubItem />} />", None),
+        (r"<Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />", None),
+        (
+            r"<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />",
+            None,
+        ),
+        (r"const Icon = <svg />; const Foo = () => (<IconButton icon={Icon} />)", None),
+        (
+            r"const Foo = () => <div jsx={<SubItem />} />",
+            Some(json!([{ "nativeAllowList": "all" }])),
+        ),
+        (
+            r"const Foo = () => <div jsx={<SubItem />} />",
+            Some(json!([{ "nativeAllowList": ["jsx"] }])),
+        ),
     ];
 
     let fail = vec![
-        r"const Foo = () => (<Item jsx={<SubItem />} />)",
-        r"const Foo = () => (<Item jsx={this.props.jsx || <SubItem />} />)",
-        r"const Foo = () => (<Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />)",
-        r"const Foo = () => (<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />)",
-        r"const Foo = () => { const Icon = <svg />; return (<IconButton icon={Icon} />) }",
+        (r"const Foo = () => (<Item jsx={<SubItem />} />)", None),
+        (r"const Foo = () => (<Item jsx={this.props.jsx || <SubItem />} />)", None),
+        (r"const Foo = () => (<Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />)", None),
+        (
+            r"const Foo = () => (<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />)",
+            None,
+        ),
+        (r"const Foo = () => { const Icon = <svg />; return (<IconButton icon={Icon} />) }", None),
+        (
+            r"const Foo = () => <div jsx={<SubItem />} />",
+            Some(json!([{ "nativeAllowList": ["icon"] }])),
+        ),
+        // components are never exempt, even with `"all"`
+        (
+            r"const Foo = () => <Item jsx={<SubItem />} />",
+            Some(json!([{ "nativeAllowList": "all" }])),
+        ),
     ];
 
     Tester::new(JsxNoJsxAsProp::NAME, JsxNoJsxAsProp::PLUGIN, pass, fail).test_and_snapshot();

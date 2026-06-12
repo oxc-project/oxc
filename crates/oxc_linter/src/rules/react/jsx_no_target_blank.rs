@@ -18,6 +18,7 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
+    utils::is_same_expression,
 };
 
 fn target_blank_without_noreferrer(span: Span) -> OxcDiagnostic {
@@ -159,8 +160,8 @@ impl Rule for JsxNoTargetBlank {
                 return;
             };
             if self.check_is_link(tag_name, ctx) || self.check_is_forms(tag_name, ctx) {
-                let mut target_blank_tuple = (false, "", false, false);
-                let mut rel_valid_tuple = (false, "", false, false);
+                let mut target_blank_tuple = (false, None, false, false);
+                let mut rel_valid_tuple = (false, None, false, false);
                 let mut is_href_valid = true;
                 let mut has_href_value = false;
                 let mut is_warn_on_spread_attributes = false;
@@ -208,8 +209,8 @@ impl Rule for JsxNoTargetBlank {
                         if self.warn_on_spread_attributes {
                             is_warn_on_spread_attributes = true;
                             spread_span = attribute.span();
-                            target_blank_tuple = (false, "", false, false);
-                            rel_valid_tuple = (false, "", false, false);
+                            target_blank_tuple = (false, None, false, false);
+                            rel_valid_tuple = (false, None, false, false);
                             is_href_valid = false;
                             has_href_value = true;
                         }
@@ -226,7 +227,9 @@ impl Rule for JsxNoTargetBlank {
 
                 let span = target_span.unwrap_or(jsx_ele.span);
                 if !is_href_valid {
-                    if !target_blank_tuple.1.is_empty() && target_blank_tuple.1 == rel_valid_tuple.1
+                    if let (Some(target_test), Some(rel_test)) =
+                        (target_blank_tuple.1, rel_valid_tuple.1)
+                        && is_same_expression(target_test, rel_test, ctx)
                     {
                         if (target_blank_tuple.2 && !rel_valid_tuple.2)
                             || (target_blank_tuple.3 && !rel_valid_tuple.3)
@@ -323,22 +326,14 @@ fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
 fn match_rel_expression<'a>(
     expr: &'a Expression<'a>,
     allow_referrer: bool,
-) -> (bool, &'a str, bool, bool) {
-    let default = (false, "", false, false);
+) -> (bool, Option<&'a Expression<'a>>, bool, bool) {
+    let default = (false, None, false, false);
     match expr {
-        Expression::StringLiteral(str) => (check_rel_val(str, allow_referrer), "", false, false),
+        Expression::StringLiteral(str) => (check_rel_val(str, allow_referrer), None, false, false),
         Expression::ConditionalExpression(expr) => {
             let consequent = match_rel_expression(&expr.consequent, allow_referrer);
             let alternate = match_rel_expression(&expr.alternate, allow_referrer);
-            if let Expression::Identifier(identifier) = &expr.test {
-                return (
-                    consequent.0 && alternate.0,
-                    identifier.name.as_str(),
-                    consequent.0,
-                    alternate.0,
-                );
-            }
-            (consequent.0 && alternate.0, "", consequent.0, alternate.0)
+            (consequent.0 && alternate.0, Some(&expr.test), consequent.0, alternate.0)
         }
         _ => default,
     }
@@ -347,11 +342,11 @@ fn match_rel_expression<'a>(
 fn check_rel<'a>(
     attribute_value: &'a JSXAttributeValue<'a>,
     allow_referrer: bool,
-) -> (bool, &'a str, bool, bool) {
-    let default = (false, "", false, false);
+) -> (bool, Option<&'a Expression<'a>>, bool, bool) {
+    let default = (false, None, false, false);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            (check_rel_val(str, allow_referrer), "", false, false)
+            (check_rel_val(str, allow_referrer), None, false, false)
         }
         JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
             JSXExpression::EmptyExpression(_) => default,
@@ -363,34 +358,30 @@ fn check_rel<'a>(
     }
 }
 
-fn match_target_expression<'a>(expr: &'a Expression<'a>) -> (bool, &'a str, bool, bool) {
-    let default = (false, "", false, false);
+fn match_target_expression<'a>(
+    expr: &'a Expression<'a>,
+) -> (bool, Option<&'a Expression<'a>>, bool, bool) {
+    let default = (false, None, false, false);
     match expr {
         Expression::StringLiteral(str) => {
-            (str.value.eq_ignore_ascii_case("_blank"), "", false, false)
+            (str.value.eq_ignore_ascii_case("_blank"), None, false, false)
         }
         Expression::ConditionalExpression(expr) => {
             let consequent = match_target_expression(&expr.consequent);
             let alternate = match_target_expression(&expr.alternate);
-            if let Expression::Identifier(identifier) = &expr.test {
-                return (
-                    consequent.0 || alternate.0,
-                    identifier.name.as_str(),
-                    consequent.0,
-                    alternate.0,
-                );
-            }
-            (consequent.0 || alternate.0, "", consequent.0, alternate.0)
+            (consequent.0 || alternate.0, Some(&expr.test), consequent.0, alternate.0)
         }
         _ => default,
     }
 }
 
-fn check_target<'a>(attribute_value: &'a JSXAttributeValue<'a>) -> (bool, &'a str, bool, bool) {
-    let default = (false, "", false, false);
+fn check_target<'a>(
+    attribute_value: &'a JSXAttributeValue<'a>,
+) -> (bool, Option<&'a Expression<'a>>, bool, bool) {
+    let default = (false, None, false, false);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            (str.value.eq_ignore_ascii_case("_blank"), "", false, false)
+            (str.value.eq_ignore_ascii_case("_blank"), None, false, false)
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {
@@ -586,6 +577,11 @@ fn test() {
         ),
         (
             r#"<a href={href} target={isExternal ? "_blank" : undefined} rel={isExternal ? "noopener noreferrer" : undefined} />"#,
+            None,
+            None,
+        ),
+        (
+            r#"<a href={href} target={isEnabledA && isEnabledB ? "_blank" : undefined} rel={isEnabledA && isEnabledB ? "noreferrer" : undefined} />"#,
             None,
             None,
         ),

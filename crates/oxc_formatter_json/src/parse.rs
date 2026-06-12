@@ -49,6 +49,10 @@ pub fn parse_json<'a>(
     // from being swallowed by a trailing line comment in `source`.
     let wrapped_source: &'a str = allocator.alloc_concat_strs_array(["(", source, "\n)"]);
 
+    // NOTE: We use `oxc_parser` which parses according to JavaScript rules, not JSON.
+    // So the JS lexer rules apply uniformly regardless of `variant`.
+    // e.g. line terminators (incl. U+2028 / U+2029), trailing commas, single quotes
+    // Downstream newline scans must therefore be LS/PS-aware for all variants, not just JSON5.
     let options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
     let ret =
         Parser::new(allocator, wrapped_source, SourceType::default()).with_options(options).parse();
@@ -57,13 +61,13 @@ pub fn parse_json<'a>(
     // we retry without the wrap and accept the result only when it contains no statements.
     // i.e. `source` is comments / whitespace only.
     // This lets comment-only JSON files round-trip without changing the normal path's cost.
-    if !ret.errors.is_empty() || ret.panicked {
+    if !ret.diagnostics.is_empty() || ret.panicked {
         if let Some(parsed) = try_parse_comments_only(allocator, source, options) {
             validate_comments_for_variant(variant, parsed.comments, false)?;
             return Ok(parsed);
         }
 
-        if let Some(err) = ret.errors.into_iter().next() {
+        if let Some(err) = ret.diagnostics.into_iter().next() {
             return Err(err);
         }
         return Err(OxcDiagnostic::error("Failed to parse JSON source"));
@@ -110,7 +114,7 @@ fn try_parse_comments_only<'a>(
 
     let ret =
         Parser::new(allocator, bare_source, SourceType::default()).with_options(options).parse();
-    if !ret.errors.is_empty() || ret.panicked || !ret.program.body.is_empty() {
+    if !ret.diagnostics.is_empty() || ret.panicked || !ret.program.body.is_empty() {
         return None;
     }
 

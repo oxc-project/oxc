@@ -102,7 +102,7 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
         .with_options(ParseOptions { allow_return_outside_function: true, ..Default::default() })
         .parse();
     assert!(!ret.panicked, "{source_text}");
-    assert!(ret.errors.is_empty(), "{source_text}");
+    assert!(ret.diagnostics.is_empty(), "{source_text}");
     let mut program = ret.program;
     if let Some(options) = options {
         Compressor::new(&allocator).build(&mut program, options);

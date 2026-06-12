@@ -99,7 +99,7 @@ export { Foo, type Bar } from 'foo';
 ########## 15
 type A<T> = { [K in keyof T as K extends string ? B<K> : K ]: T[K] }
 ----------
-type A<T> = { [K in keyof T as K extends string ? B<K> : K] : T[K] };
+type A<T> = { [K in keyof T as K extends string ? B<K> : K]: T[K] };
 
 ########## 16
 class A {readonly type = 'frame'}

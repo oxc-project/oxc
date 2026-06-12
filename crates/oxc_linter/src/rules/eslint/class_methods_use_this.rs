@@ -25,7 +25,7 @@ fn class_methods_use_this_diagnostic(span: Span, name: Option<Cow<'_, str>>) -> 
 }
 
 #[derive(Debug, Clone, JsonSchema, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ClassMethodsUseThisConfig {
     /// List of method names to exempt from this rule. Names can include the hash for private methods.
     /// Example: `save`, `#rerender`
@@ -36,7 +36,6 @@ pub struct ClassMethodsUseThisConfig {
     /// Whether to ignore methods that are overridden.
     ignore_override_methods: bool,
     /// Whether to ignore classes that implement interfaces.
-    #[schemars(with = "IgnoreClassWithImplements")]
     ignore_classes_with_implements: Option<IgnoreClassWithImplements>,
 }
 

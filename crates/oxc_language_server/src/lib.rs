@@ -9,6 +9,7 @@ mod capabilities;
 mod file_system;
 mod language_id;
 mod options;
+mod position;
 #[cfg(test)]
 mod tests;
 mod tool;
@@ -17,6 +18,7 @@ mod worker_manager;
 
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::language_id::LanguageId;
+pub use crate::position::offset_to_position;
 pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
 pub use crate::worker::WorkspaceWorker;
 pub use crate::worker_manager::WorkerManager;

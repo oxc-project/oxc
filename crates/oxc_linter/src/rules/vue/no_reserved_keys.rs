@@ -1,0 +1,738 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+use oxc_ast::{
+    AstKind,
+    ast::{
+        CallExpression, Expression, ObjectExpression, ObjectPropertyKind, Statement, TSSignature,
+    },
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::{GetSpan, Span};
+use oxc_str::CompactStr;
+
+use crate::{
+    AstNode,
+    context::LintContext,
+    frameworks::FrameworkOptions,
+    rule::{DefaultRuleConfig, Rule},
+    utils::{for_each_define_props_type_signature, is_vue_component_options_object},
+};
+
+/// Reserved instance properties of the Vue instance (Vue 2/3 common).
+/// Source: <https://github.com/vuejs/eslint-plugin-vue/blob/master/lib/utils/vue-reserved.json>
+pub(super) const RESERVED_KEYS: &[&str] = &[
+    "$data",
+    "$props",
+    "$el",
+    "$options",
+    "$parent",
+    "$root",
+    "$children",
+    "$slots",
+    "$scopedSlots",
+    "$refs",
+    "$isServer",
+    "$attrs",
+    "$listeners",
+    "$watch",
+    "$set",
+    "$delete",
+    "$on",
+    "$once",
+    "$off",
+    "$emit",
+    "$mount",
+    "$forceUpdate",
+    "$nextTick",
+    "$destroy",
+];
+
+fn reserved_key_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Key `{name}` is reserved.")).with_label(span)
+}
+
+fn starts_with_underscore_diagnostic(key: &str, group: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Key `{key}` is reserved in `{group}` group.")).with_label(span)
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct NoReservedKeysConfig {
+    /// Extra reserved key names to disallow, on top of the built-in list.
+    reserved: Vec<CompactStr>,
+    /// Extra component option groups to inspect, on top of the built-in
+    /// `props` / `computed` / `data` / `asyncData` / `methods` / `setup`.
+    groups: Vec<CompactStr>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct NoReservedKeys(Box<NoReservedKeysConfig>);
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Disallow overwriting reserved Vue instance keys (e.g. `$data`, `$emit`)
+    /// or using `_`-prefixed keys inside `data` / `asyncData`.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Vue exposes a number of instance properties (`$emit`, `$data`, `$props`,
+    /// etc.). Defining a prop, computed, data, method or setup return key with
+    /// the same name overwrites the underlying Vue API and silently breaks the
+    /// component (e.g. `methods: { $emit() {} }` clobbers event emission).
+    /// Vue also reserves `_`-prefixed names inside its reactivity system, so
+    /// `data() { return { _foo: 1 } }` may collide with internal state.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```vue
+    /// <script>
+    /// export default {
+    ///   props: ['$data'],
+    ///   methods: {
+    ///     $emit() {}
+    ///   }
+    /// }
+    /// </script>
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```vue
+    /// <script>
+    /// export default {
+    ///   props: ['fooData'],
+    ///   methods: {
+    ///     send() {}
+    ///   }
+    /// }
+    /// </script>
+    /// ```
+    ///
+    NoReservedKeys,
+    vue,
+    correctness,
+    config = NoReservedKeys,
+    version = "1.69.0",
+);
+
+impl Rule for NoReservedKeys {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::CallExpression(call) => self.check_define_props(call, ctx),
+            AstKind::ObjectProperty(prop) => {
+                let Some(group_name) = prop.key.static_name() else { return };
+                let group = group_name.as_ref();
+                if !self.is_target_group(group) {
+                    return;
+                }
+
+                let Some(parent) = ctx.nodes().ancestors(node.id()).next() else { return };
+                if !is_vue_component_options_object(parent, ctx) {
+                    return;
+                }
+
+                match prop.value.get_inner_expression() {
+                    Expression::ArrayExpression(arr) => {
+                        for elem in &arr.elements {
+                            let Some(Expression::StringLiteral(lit)) = elem.as_expression() else {
+                                continue;
+                            };
+                            if self.is_reserved(lit.value.as_str()) {
+                                ctx.diagnostic(reserved_key_diagnostic(
+                                    lit.value.as_str(),
+                                    lit.span,
+                                ));
+                            }
+                        }
+                    }
+                    Expression::ObjectExpression(obj) => {
+                        self.check_keys(group, obj, ctx);
+                    }
+                    Expression::FunctionExpression(func) => {
+                        let Some(body) = &func.body else { return };
+                        for stmt in &body.statements {
+                            if let Statement::ReturnStatement(ret) = stmt
+                                && let Some(arg) = &ret.argument
+                                && let Expression::ObjectExpression(obj) =
+                                    arg.get_inner_expression()
+                            {
+                                self.check_keys(group, obj, ctx);
+                            }
+                        }
+                    }
+                    Expression::ArrowFunctionExpression(arrow) => {
+                        if arrow.expression {
+                            // `() => ({foo})` expression body
+                            if let Some(Statement::ExpressionStatement(es)) =
+                                arrow.body.statements.first()
+                                && let Expression::ObjectExpression(obj) =
+                                    es.expression.get_inner_expression()
+                            {
+                                self.check_keys(group, obj, ctx);
+                            }
+                        } else {
+                            // `() => { return {foo} }` block body
+                            for stmt in &arrow.body.statements {
+                                if let Statement::ReturnStatement(ret) = stmt
+                                    && let Some(arg) = &ret.argument
+                                    && let Expression::ObjectExpression(obj) =
+                                        arg.get_inner_expression()
+                                {
+                                    self.check_keys(group, obj, ctx);
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.file_extension().is_some_and(|ext| ext == "vue")
+    }
+}
+
+impl NoReservedKeys {
+    /// Built-in groups plus any added via the `groups` option.
+    fn is_target_group(&self, group: &str) -> bool {
+        matches!(group, "props" | "data" | "asyncData" | "computed" | "methods" | "setup")
+            || self.0.groups.iter().any(|g| g.as_str() == group)
+    }
+
+    /// Built-in reserved keys plus any added via the `reserved` option.
+    fn is_reserved(&self, name: &str) -> bool {
+        RESERVED_KEYS.contains(&name) || self.0.reserved.iter().any(|r| r.as_str() == name)
+    }
+
+    fn check_keys<'a>(&self, group: &str, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
+        for prop_kind in &obj.properties {
+            let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
+            let Some(name) = p.key.static_name() else { continue };
+            let span = p.key.span();
+            let n = name.as_ref();
+            if self.is_reserved(n) {
+                ctx.diagnostic(reserved_key_diagnostic(n, span));
+            } else if matches!(group, "data" | "asyncData") && n.starts_with('_') {
+                ctx.diagnostic(starts_with_underscore_diagnostic(n, group, span));
+            }
+        }
+    }
+
+    /// `<script setup>` `defineProps(...)` — counterpart of upstream `onDefinePropsEnter`.
+    fn check_define_props<'a>(&self, call: &CallExpression<'a>, ctx: &LintContext<'a>) {
+        if ctx.frameworks_options() != FrameworkOptions::VueSetup {
+            return;
+        }
+        if !call.callee.get_identifier_reference().is_some_and(|id| id.name == "defineProps") {
+            return;
+        }
+
+        // Runtime declaration: `defineProps([...])` / `defineProps({...})`.
+        if let Some(arg) = call.arguments.first().and_then(|arg| arg.as_expression()) {
+            match arg.get_inner_expression() {
+                Expression::ArrayExpression(arr) => {
+                    for elem in &arr.elements {
+                        if let Some(Expression::StringLiteral(lit)) = elem.as_expression()
+                            && self.is_reserved(lit.value.as_str())
+                        {
+                            ctx.diagnostic(reserved_key_diagnostic(lit.value.as_str(), lit.span));
+                        }
+                    }
+                }
+                Expression::ObjectExpression(obj) => {
+                    for prop_kind in &obj.properties {
+                        let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
+                        let Some(name) = p.key.static_name() else { continue };
+                        if self.is_reserved(name.as_ref()) {
+                            ctx.diagnostic(reserved_key_diagnostic(name.as_ref(), p.key.span()));
+                        }
+                    }
+                }
+                _ => {}
+            }
+            return;
+        }
+
+        // Type-only declaration: `defineProps<T>()`.
+        if let Some(type_args) = call.type_arguments.as_ref()
+            && let Some(first) = type_args.params.first()
+        {
+            for_each_define_props_type_signature(first, ctx, &mut |sig| {
+                self.check_signature(sig, ctx);
+            });
+        }
+    }
+
+    fn check_signature<'a>(&self, sig: &TSSignature<'a>, ctx: &LintContext<'a>) {
+        let key = match sig {
+            TSSignature::TSPropertySignature(prop) => &prop.key,
+            TSSignature::TSMethodSignature(method) => &method.key,
+            _ => return,
+        };
+        let Some(name) = key.static_name() else { return };
+        if self.is_reserved(name.as_ref()) {
+            ctx.diagnostic(reserved_key_diagnostic(name.as_ref(), key.span()));
+        }
+    }
+}
+
+#[test]
+fn test() {
+    use crate::tester::Tester;
+    use std::path::PathBuf;
+
+    let pass = vec![
+        (
+            "
+                <script>
+                export default {
+                  props: ['foo'],
+                  computed: { bar() {} },
+                  data() { return { dat: null } },
+                  methods: { test() {} }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                export default {
+                  methods: {
+                    _foo() {},
+                    test() {}
+                  }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                export default {
+                  props: { foo: { type: String } }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                export default {
+                  data: () => ({ dat: 1 })
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                defineComponent({
+                  props: ['foo'],
+                  methods: { test() {} }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `groups` option: a custom group with no reserved key is fine
+        (
+            "
+                <script>
+                new Vue({
+                  foo: { baz: String }
+                })
+                </script>
+            ",
+            Some(serde_json::json!([{ "groups": ["foo"] }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream valid: arrow-function block-body `data`
+        (
+            "
+                <script>
+                export default {
+                  data: () => {
+                    return { dat: null }
+                  }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream valid: `_`-prefixed key in `setup` is allowed
+        (
+            "
+                <script>
+                export default {
+                  setup () {
+                    return { _bar: () => {} }
+                  }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+    ];
+
+    let fail = vec![
+        (
+            "
+                <script>
+                export default {
+                  props: ['$data']
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                export default {
+                  props: { $data: { type: String } }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                export default {
+                  methods: { $emit() {} }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                export default {
+                  computed: { $forceUpdate() {} }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                export default {
+                  data() { return { $el: 1 } }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                export default {
+                  data() { return { _foo: 1 } }
+                }
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                defineComponent({
+                  methods: { $emit() {} }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `new Vue({...})` constructor (Vue 2)
+        (
+            "
+                <script>
+                new Vue({
+                  props: { $el: String }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  setup () { return { $el: '' } }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  asyncData () { return { $el: '' } }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  data: { _foo: String }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  data: () => { return { _foo: String } }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  data: () => ({ _foo: String })
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                new Vue({
+                  asyncData: () => ({ _foo: String })
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `reserved` + `groups` options (eslint-plugin-vue parity)
+        (
+            "
+                <script>
+                new Vue({
+                  foo: { bar: String }
+                })
+                </script>
+            ",
+            Some(serde_json::json!([{ "reserved": ["bar"], "groups": ["foo"] }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `reserved` option: an extra key flagged inside a built-in group
+        (
+            "
+                <script>
+                export default {
+                  methods: { myKey() {} }
+                }
+                </script>
+            ",
+            Some(serde_json::json!([{ "reserved": ["myKey"] }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // `groups` option: an extra group inspected for built-in reserved keys
+        (
+            "
+                <script>
+                export default {
+                  extraGroup: { $emit() {} }
+                }
+                </script>
+            ",
+            Some(serde_json::json!([{ "groups": ["extraGroup"] }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // Component definition forms beyond `export default` / `defineComponent` / `new Vue`
+        (
+            "
+                <script>
+                createApp({
+                  methods: { $emit() {} }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                Vue.component('foo', {
+                  props: ['$data']
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                Vue.extend({
+                  methods: { $emit() {} }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                Vue.mixin({
+                  data() { return { _foo: 1 } }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                app.component('foo', {
+                  computed: { $forceUpdate() {} }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+                <script>
+                defineNuxtComponent({
+                  methods: { $emit() {} }
+                })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream invalid: `<script setup>` defineProps (object form)
+        (
+            "
+                <script setup>
+                defineProps({ $el: String })
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream invalid: `<script setup>` defineProps (inline type literal)
+        (
+            "
+                <script setup lang=\"ts\">
+                defineProps<{ $el: string }>()
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream invalid: `<script setup>` defineProps (interface reference)
+        (
+            "
+                <script setup lang=\"ts\">
+                interface Props { $el: string }
+                defineProps<Props>()
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // upstream invalid: `<script setup>` defineProps (type alias reference)
+        (
+            "
+                <script setup lang=\"ts\">
+                type A = { $el: string }
+                defineProps<A>()
+                </script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+    ];
+
+    Tester::new(NoReservedKeys::NAME, NoReservedKeys::PLUGIN, pass, fail).test_and_snapshot();
+}
