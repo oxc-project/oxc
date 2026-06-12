@@ -191,6 +191,8 @@ export type SortOrder = "desc" | "asc";
 export type ClassLiteralPropertyStyleOption = "fields" | "getters";
 export type ConsistentIndexedObjectStyleConfig = "record" | "index-signature";
 export type ConsistentTypeDefinitionsConfig = "interface" | "type";
+export type FixStyle = "separate-type-imports" | "inline-type-imports";
+export type Prefer = "type-imports" | "no-type-imports";
 export type AccessibilityLevel = "explicit" | "no-public" | "off";
 export type MethodSignatureStyleConfig = "property" | "method";
 /**
@@ -250,7 +252,7 @@ export type Modifier =
   | "public"
   | "public readonly"
   | "readonly";
-export type Prefer = "class-property" | "parameter-property";
+export type Prefer2 = "class-property" | "parameter-property";
 /**
  * Represents the different ways `ignorePrimitives` can be specified in JSON.
  * Can be:
@@ -1293,7 +1295,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, ConsistentTypeDefinitionsConfig];
   "typescript/consistent-type-exports"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTypeExportsConfig];
-  "typescript/consistent-type-imports"?: DummyRule;
+  "typescript/consistent-type-imports"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTypeImportsConfig];
   "typescript/dot-notation"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DotNotationConfig];
   "typescript/explicit-function-return-type"?:
     | AllowWarnDeny
@@ -4549,6 +4551,20 @@ export interface ConsistentTypeExportsConfig {
    */
   fixMixedExportsWithInlineTypeSpecifier?: boolean;
 }
+export interface ConsistentTypeImportsConfig {
+  /**
+   * Disallow using `import()` in type annotations, like `type T = import('foo')`
+   */
+  disallowTypeAnnotations?: boolean;
+  /**
+   * Control how type imports are added when auto-fixing.
+   */
+  fixStyle?: FixStyle;
+  /**
+   * Control whether to enforce type imports or value imports.
+   */
+  prefer?: Prefer;
+}
 export interface DotNotationConfig {
   /**
    * Allow bracket notation for properties covered by an index signature.
@@ -5111,7 +5127,7 @@ export interface ParameterPropertiesConfig {
   /**
    * Whether to prefer parameter properties or class properties.
    */
-  prefer?: Prefer;
+  prefer?: Prefer2;
 }
 export interface PreferLiteralEnumMember {
   /**

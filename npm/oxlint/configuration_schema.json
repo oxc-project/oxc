@@ -1299,6 +1299,38 @@
       },
       "additionalProperties": false
     },
+    "ConsistentTypeImportsConfig": {
+      "type": "object",
+      "properties": {
+        "disallowTypeAnnotations": {
+          "description": "Disallow using `import()` in type annotations, like `type T = import('foo')`",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Disallow using `import()` in type annotations, like `type T = import('foo')`"
+        },
+        "fixStyle": {
+          "description": "Control how type imports are added when auto-fixing.",
+          "default": "separate-type-imports",
+          "allOf": [
+            {
+              "$ref": "#/definitions/FixStyle"
+            }
+          ],
+          "markdownDescription": "Control how type imports are added when auto-fixing."
+        },
+        "prefer": {
+          "description": "Control whether to enforce type imports or value imports.",
+          "default": "type-imports",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Prefer"
+            }
+          ],
+          "markdownDescription": "Control whether to enforce type imports or value imports."
+        }
+      },
+      "additionalProperties": false
+    },
     "ConsistentVitestConfig": {
       "type": "object",
       "properties": {
@@ -6329,7 +6361,24 @@
           ]
         },
         "typescript/consistent-type-imports": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentTypeImportsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/dot-notation": {
           "anyOf": [
@@ -9515,6 +9564,26 @@
       },
       "additionalProperties": false,
       "markdownDescription": "Describes specific types or values declared in local files."
+    },
+    "FixStyle": {
+      "oneOf": [
+        {
+          "description": "Will add the type keyword after the import keyword `import type { A } from '...'`",
+          "type": "string",
+          "enum": [
+            "separate-type-imports"
+          ],
+          "markdownDescription": "Will add the type keyword after the import keyword `import type { A } from '...'`"
+        },
+        {
+          "description": "Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)",
+          "type": "string",
+          "enum": [
+            "inline-type-imports"
+          ],
+          "markdownDescription": "Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)"
+        }
+      ]
     },
     "ForbidComponentPropsConfig": {
       "type": "object",
@@ -14433,7 +14502,7 @@
           "default": "class-property",
           "allOf": [
             {
-              "$ref": "#/definitions/Prefer"
+              "$ref": "#/definitions/Prefer2"
             }
           ],
           "markdownDescription": "Whether to prefer parameter properties or class properties."
@@ -14462,6 +14531,26 @@
       ]
     },
     "Prefer": {
+      "oneOf": [
+        {
+          "description": "Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators.",
+          "type": "string",
+          "enum": [
+            "type-imports"
+          ],
+          "markdownDescription": "Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators."
+        },
+        {
+          "description": "Will enforce that you always use `import Foo from '...'`",
+          "type": "string",
+          "enum": [
+            "no-type-imports"
+          ],
+          "markdownDescription": "Will enforce that you always use `import Foo from '...'`"
+        }
+      ]
+    },
+    "Prefer2": {
       "type": "string",
       "enum": [
         "class-property",
