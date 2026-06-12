@@ -60,12 +60,12 @@ mod tests {
     #[test]
     fn test_line_break() {
         for nl in ["\n", "\r", "\r\n"] {
-            let source = format!("a{}b", nl);
+            let source = format!("a{nl}b");
             assert_position(&source, source.find('b').unwrap(), (1, 0));
         }
 
         for nl in ["\u{2028}", "\u{2029}"] {
-            let source = format!("a{}b", nl);
+            let source = format!("a{nl}b");
             assert_position(&source, source.find('b').unwrap(), (0, 2));
         }
     }
