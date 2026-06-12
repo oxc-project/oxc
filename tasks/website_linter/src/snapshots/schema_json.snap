@@ -5576,7 +5576,24 @@ expression: json
           "$ref": "#/definitions/DummyRule"
         },
         "react/jsx-filename-extension": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxFilenameExtensionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/jsx-fragments": {
           "anyOf": [
@@ -10301,6 +10318,59 @@ expression: json
           },
           "uniqueItems": true,
           "markdownDescription": "List of attribute names that should never have explicit boolean values.\nOnly necessary when main mode is `\"always\"`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxFilenameExtensionAllowMode": {
+      "oneOf": [
+        {
+          "description": "Always allow a JSX filename extension.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always allow a JSX filename extension."
+        },
+        {
+          "description": "Only allow JSX filename extension for files that contain JSX syntax.",
+          "type": "string",
+          "enum": [
+            "as-needed"
+          ],
+          "markdownDescription": "Only allow JSX filename extension for files that contain JSX syntax."
+        }
+      ]
+    },
+    "JsxFilenameExtensionConfig": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "When to allow a JSX filename extension. By default all files may have a JSX extension.\nSet this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.",
+          "default": "always",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsxFilenameExtensionAllowMode"
+            }
+          ],
+          "markdownDescription": "When to allow a JSX filename extension. By default all files may have a JSX extension.\nSet this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax."
+        },
+        "extensions": {
+          "description": "The set of allowed file extensions.\nCan include or exclude the leading dot (e.g., \"jsx\" and \".jsx\" are both valid).",
+          "default": [
+            "jsx"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "The set of allowed file extensions.\nCan include or exclude the leading dot (e.g., \"jsx\" and \".jsx\" are both valid)."
+        },
+        "ignoreFilesWithoutCode": {
+          "description": "If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected."
         }
       },
       "additionalProperties": false
