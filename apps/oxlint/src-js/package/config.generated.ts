@@ -176,7 +176,7 @@ export type ForbidItem2 =
       message?: string;
     };
 export type EnforceBooleanAttribute = "always" | "never";
-export type AllowType = "always" | "as-needed";
+export type JsxFilenameExtensionAllowMode = "always" | "as-needed";
 export type FragmentMode = "syntax" | "element";
 export type IgnoreEnforceOption = "ignore" | "enforce";
 export type NoDidMountSetStateConfig = "allowed" | "disallow-in-func";
@@ -4158,7 +4158,7 @@ export interface JsxFilenameExtensionConfig {
    * When to allow a JSX filename extension. By default all files may have a JSX extension.
    * Set this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.
    */
-  allow?: AllowType;
+  allow?: JsxFilenameExtensionAllowMode;
   /**
    * The set of allowed file extensions.
    * Can include or exclude the leading dot (e.g., "jsx" and ".jsx" are both valid).

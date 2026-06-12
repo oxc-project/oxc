@@ -514,26 +514,6 @@ expression: json
         }
       ]
     },
-    "AllowType": {
-      "oneOf": [
-        {
-          "description": "Always allow a `.jsx` file extension.",
-          "type": "string",
-          "enum": [
-            "always"
-          ],
-          "markdownDescription": "Always allow a `.jsx` file extension."
-        },
-        {
-          "description": "Only allow `.jsx` file extension for files that contain JSX syntax.",
-          "type": "string",
-          "enum": [
-            "as-needed"
-          ],
-          "markdownDescription": "Only allow `.jsx` file extension for files that contain JSX syntax."
-        }
-      ]
-    },
     "AllowWarnDeny": {
       "oneOf": [
         {
@@ -10342,6 +10322,26 @@ expression: json
       },
       "additionalProperties": false
     },
+    "JsxFilenameExtensionAllowMode": {
+      "oneOf": [
+        {
+          "description": "Always allow a JSX filename extension.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always allow a JSX filename extension."
+        },
+        {
+          "description": "Only allow JSX filename extension for files that contain JSX syntax.",
+          "type": "string",
+          "enum": [
+            "as-needed"
+          ],
+          "markdownDescription": "Only allow JSX filename extension for files that contain JSX syntax."
+        }
+      ]
+    },
     "JsxFilenameExtensionConfig": {
       "type": "object",
       "properties": {
@@ -10350,7 +10350,7 @@ expression: json
           "default": "always",
           "allOf": [
             {
-              "$ref": "#/definitions/AllowType"
+              "$ref": "#/definitions/JsxFilenameExtensionAllowMode"
             }
           ],
           "markdownDescription": "When to allow a JSX filename extension. By default all files may have a JSX extension.\nSet this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax."
