@@ -1509,6 +1509,28 @@ expression: json
         }
       ]
     },
+    "DestructureInSignature": {
+      "description": "Controls whether destructuring assignments are required or forbidden in function signatures.",
+      "oneOf": [
+        {
+          "description": "Require destructuring in the function signature when props are only used for destructuring.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Require destructuring in the function signature when props are only used for destructuring."
+        },
+        {
+          "description": "Allow destructuring in either the function signature or function body.",
+          "type": "string",
+          "enum": [
+            "ignore"
+          ],
+          "markdownDescription": "Allow destructuring in either the function signature or function body."
+        }
+      ],
+      "markdownDescription": "Controls whether destructuring assignments are required or forbidden in function signatures."
+    },
     "Destructuring": {
       "oneOf": [
         {
@@ -1528,6 +1550,40 @@ expression: json
           "markdownDescription": "Only warn if all variables in a destructuring assignment should be `const`. Otherwise, ignore them."
         }
       ]
+    },
+    "DestructuringAssignment": {
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/AlwaysNever"
+        },
+        {
+          "$ref": "#/definitions/DestructuringAssignmentOptions"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2
+    },
+    "DestructuringAssignmentOptions": {
+      "type": "object",
+      "properties": {
+        "destructureInSignature": {
+          "description": "Whether to ignore destructuring in function signature.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DestructureInSignature"
+            }
+          ],
+          "markdownDescription": "Whether to ignore destructuring in function signature."
+        },
+        "ignoreClassFields": {
+          "description": "Whether to ignore class fields when destructuring.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore class fields when destructuring."
+        }
+      },
+      "additionalProperties": false
     },
     "DisplayNameConfig": {
       "type": "object",
@@ -5388,6 +5444,29 @@ expression: json
                 }
               ],
               "maxItems": 2,
+              "minItems": 1
+            }
+          ]
+        },
+        "react/destructuring-assignment": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AlwaysNever"
+                },
+                {
+                  "$ref": "#/definitions/DestructuringAssignmentOptions"
+                }
+              ],
+              "maxItems": 3,
               "minItems": 1
             }
           ]

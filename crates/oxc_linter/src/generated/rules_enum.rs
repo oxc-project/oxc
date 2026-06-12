@@ -417,6 +417,7 @@ pub use crate::rules::promise::spec_only::SpecOnly as PromiseSpecOnly;
 pub use crate::rules::promise::valid_params::ValidParams as PromiseValidParams;
 pub use crate::rules::react::button_has_type::ButtonHasType as ReactButtonHasType;
 pub use crate::rules::react::checked_requires_onchange_or_readonly::CheckedRequiresOnchangeOrReadonly as ReactCheckedRequiresOnchangeOrReadonly;
+pub use crate::rules::react::destructuring_assignment::DestructuringAssignment as ReactDestructuringAssignment;
 pub use crate::rules::react::display_name::DisplayName as ReactDisplayName;
 pub use crate::rules::react::exhaustive_deps::ExhaustiveDeps as ReactExhaustiveDeps;
 pub use crate::rules::react::forbid_component_props::ForbidComponentProps as ReactForbidComponentProps;
@@ -1241,6 +1242,7 @@ pub enum RuleEnum {
     JestValidTitle(JestValidTitle),
     ReactButtonHasType(ReactButtonHasType),
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
+    ReactDestructuringAssignment(ReactDestructuringAssignment),
     ReactDisplayName(ReactDisplayName),
     ReactExhaustiveDeps(ReactExhaustiveDeps),
     ReactForbidComponentProps(ReactForbidComponentProps),
@@ -2126,7 +2128,9 @@ const JEST_VALID_EXPECT_IN_PROMISE_ID: usize = JEST_VALID_EXPECT_ID + 1usize;
 const JEST_VALID_TITLE_ID: usize = JEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
 const REACT_BUTTON_HAS_TYPE_ID: usize = JEST_VALID_TITLE_ID + 1usize;
 const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
-const REACT_DISPLAY_NAME_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
+const REACT_DESTRUCTURING_ASSIGNMENT_ID: usize =
+    REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
+const REACT_DISPLAY_NAME_ID: usize = REACT_DESTRUCTURING_ASSIGNMENT_ID + 1usize;
 const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
 const REACT_FORBID_COMPONENT_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
 const REACT_FORBID_DOM_PROPS_ID: usize = REACT_FORBID_COMPONENT_PROPS_ID + 1usize;
@@ -3089,6 +3093,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID
             }
+            Self::ReactDestructuringAssignment(_) => REACT_DESTRUCTURING_ASSIGNMENT_ID,
             Self::ReactDisplayName(_) => REACT_DISPLAY_NAME_ID,
             Self::ReactExhaustiveDeps(_) => REACT_EXHAUSTIVE_DEPS_ID,
             Self::ReactForbidComponentProps(_) => REACT_FORBID_COMPONENT_PROPS_ID,
@@ -4047,6 +4052,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::NAME
             }
+            Self::ReactDestructuringAssignment(_) => ReactDestructuringAssignment::NAME,
             Self::ReactDisplayName(_) => ReactDisplayName::NAME,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::NAME,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::NAME,
@@ -5017,6 +5023,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::CATEGORY
             }
+            Self::ReactDestructuringAssignment(_) => ReactDestructuringAssignment::CATEGORY,
             Self::ReactDisplayName(_) => ReactDisplayName::CATEGORY,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::CATEGORY,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::CATEGORY,
@@ -5998,6 +6005,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::FIX
             }
+            Self::ReactDestructuringAssignment(_) => ReactDestructuringAssignment::FIX,
             Self::ReactDisplayName(_) => ReactDisplayName::FIX,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::FIX,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::FIX,
@@ -7051,6 +7059,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::documentation()
             }
+            Self::ReactDestructuringAssignment(_) => ReactDestructuringAssignment::documentation(),
             Self::ReactDisplayName(_) => ReactDisplayName::documentation(),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::documentation(),
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::documentation(),
@@ -8809,6 +8818,10 @@ impl RuleEnum {
                 ReactCheckedRequiresOnchangeOrReadonly::config_schema(generator)
                     .or_else(|| ReactCheckedRequiresOnchangeOrReadonly::schema(generator))
             }
+            Self::ReactDestructuringAssignment(_) => {
+                ReactDestructuringAssignment::config_schema(generator)
+                    .or_else(|| ReactDestructuringAssignment::schema(generator))
+            }
             Self::ReactDisplayName(_) => ReactDisplayName::config_schema(generator)
                 .or_else(|| ReactDisplayName::schema(generator)),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::config_schema(generator)
@@ -10474,6 +10487,7 @@ impl RuleEnum {
             Self::JestValidTitle(_) => "jest",
             Self::ReactButtonHasType(_) => "react",
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
+            Self::ReactDestructuringAssignment(_) => "react",
             Self::ReactDisplayName(_) => "react",
             Self::ReactExhaustiveDeps(_) => "react",
             Self::ReactForbidComponentProps(_) => "react",
@@ -12179,6 +12193,9 @@ impl RuleEnum {
                     ReactCheckedRequiresOnchangeOrReadonly::from_configuration(value)?,
                 ))
             }
+            Self::ReactDestructuringAssignment(_) => Ok(Self::ReactDestructuringAssignment(
+                ReactDestructuringAssignment::from_configuration(value)?,
+            )),
             Self::ReactDisplayName(_) => {
                 Ok(Self::ReactDisplayName(ReactDisplayName::from_configuration(value)?))
             }
@@ -13991,6 +14008,7 @@ impl RuleEnum {
             Self::JestValidTitle(rule) => rule.to_configuration(),
             Self::ReactButtonHasType(rule) => rule.to_configuration(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
+            Self::ReactDestructuringAssignment(rule) => rule.to_configuration(),
             Self::ReactDisplayName(rule) => rule.to_configuration(),
             Self::ReactExhaustiveDeps(rule) => rule.to_configuration(),
             Self::ReactForbidComponentProps(rule) => rule.to_configuration(),
@@ -14835,6 +14853,7 @@ impl RuleEnum {
                 Self::JestValidTitle(rule) => rule.run(node, ctx),
                 Self::ReactButtonHasType(rule) => rule.run(node, ctx),
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
+                Self::ReactDestructuringAssignment(rule) => rule.run(node, ctx),
                 Self::ReactDisplayName(rule) => rule.run(node, ctx),
                 Self::ReactExhaustiveDeps(rule) => rule.run(node, ctx),
                 Self::ReactForbidComponentProps(rule) => rule.run(node, ctx),
@@ -15672,6 +15691,7 @@ impl RuleEnum {
                 Self::JestValidTitle(rule) => rule.run(node, ctx),
                 Self::ReactButtonHasType(rule) => rule.run(node, ctx),
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
+                Self::ReactDestructuringAssignment(rule) => rule.run(node, ctx),
                 Self::ReactDisplayName(rule) => rule.run(node, ctx),
                 Self::ReactExhaustiveDeps(rule) => rule.run(node, ctx),
                 Self::ReactForbidComponentProps(rule) => rule.run(node, ctx),
@@ -16516,6 +16536,7 @@ impl RuleEnum {
                 Self::JestValidTitle(rule) => rule.run_once(ctx),
                 Self::ReactButtonHasType(rule) => rule.run_once(ctx),
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
+                Self::ReactDestructuringAssignment(rule) => rule.run_once(ctx),
                 Self::ReactDisplayName(rule) => rule.run_once(ctx),
                 Self::ReactExhaustiveDeps(rule) => rule.run_once(ctx),
                 Self::ReactForbidComponentProps(rule) => rule.run_once(ctx),
@@ -17353,6 +17374,7 @@ impl RuleEnum {
                 Self::JestValidTitle(rule) => rule.run_once(ctx),
                 Self::ReactButtonHasType(rule) => rule.run_once(ctx),
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
+                Self::ReactDestructuringAssignment(rule) => rule.run_once(ctx),
                 Self::ReactDisplayName(rule) => rule.run_once(ctx),
                 Self::ReactExhaustiveDeps(rule) => rule.run_once(ctx),
                 Self::ReactForbidComponentProps(rule) => rule.run_once(ctx),
@@ -18322,6 +18344,7 @@ impl RuleEnum {
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::ReactDestructuringAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactDisplayName(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactExhaustiveDeps(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactForbidComponentProps(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19417,6 +19440,7 @@ impl RuleEnum {
                 Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::ReactDestructuringAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactDisplayName(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactExhaustiveDeps(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactForbidComponentProps(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20388,6 +20412,7 @@ impl RuleEnum {
             Self::JestValidTitle(rule) => rule.should_run(ctx),
             Self::ReactButtonHasType(rule) => rule.should_run(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
+            Self::ReactDestructuringAssignment(rule) => rule.should_run(ctx),
             Self::ReactDisplayName(rule) => rule.should_run(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.should_run(ctx),
             Self::ReactForbidComponentProps(rule) => rule.should_run(ctx),
@@ -21396,6 +21421,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::IS_TSGOLINT_RULE
             }
+            Self::ReactDestructuringAssignment(_) => ReactDestructuringAssignment::IS_TSGOLINT_RULE,
             Self::ReactDisplayName(_) => ReactDisplayName::IS_TSGOLINT_RULE,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::IS_TSGOLINT_RULE,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::IS_TSGOLINT_RULE,
@@ -22524,6 +22550,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::VERSION
             }
+            Self::ReactDestructuringAssignment(_) => ReactDestructuringAssignment::VERSION,
             Self::ReactDisplayName(_) => ReactDisplayName::VERSION,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::VERSION,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::VERSION,
@@ -23545,6 +23572,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::HAS_CONFIG
             }
+            Self::ReactDestructuringAssignment(_) => ReactDestructuringAssignment::HAS_CONFIG,
             Self::ReactDisplayName(_) => ReactDisplayName::HAS_CONFIG,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::HAS_CONFIG,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::HAS_CONFIG,
@@ -24549,6 +24577,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::INFO
             }
+            Self::ReactDestructuringAssignment(_) => ReactDestructuringAssignment::INFO,
             Self::ReactDisplayName(_) => ReactDisplayName::INFO,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::INFO,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::INFO,
@@ -25432,6 +25461,7 @@ impl RuleEnum {
             Self::JestValidTitle(rule) => rule.types_info(),
             Self::ReactButtonHasType(rule) => rule.types_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
+            Self::ReactDestructuringAssignment(rule) => rule.types_info(),
             Self::ReactDisplayName(rule) => rule.types_info(),
             Self::ReactExhaustiveDeps(rule) => rule.types_info(),
             Self::ReactForbidComponentProps(rule) => rule.types_info(),
@@ -26266,6 +26296,7 @@ impl RuleEnum {
             Self::JestValidTitle(rule) => rule.run_info(),
             Self::ReactButtonHasType(rule) => rule.run_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
+            Self::ReactDestructuringAssignment(rule) => rule.run_info(),
             Self::ReactDisplayName(rule) => rule.run_info(),
             Self::ReactExhaustiveDeps(rule) => rule.run_info(),
             Self::ReactForbidComponentProps(rule) => rule.run_info(),
@@ -27190,6 +27221,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactCheckedRequiresOnchangeOrReadonly(
             ReactCheckedRequiresOnchangeOrReadonly::default(),
         ),
+        RuleEnum::ReactDestructuringAssignment(ReactDestructuringAssignment::default()),
         RuleEnum::ReactDisplayName(ReactDisplayName::default()),
         RuleEnum::ReactExhaustiveDeps(ReactExhaustiveDeps::default()),
         RuleEnum::ReactForbidComponentProps(ReactForbidComponentProps::default()),
