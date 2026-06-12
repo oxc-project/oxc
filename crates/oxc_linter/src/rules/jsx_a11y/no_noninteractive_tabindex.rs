@@ -13,7 +13,7 @@ use crate::{
     AstNode,
     context::LintContext,
     globals::HTML_TAG,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_type, has_jsx_prop_ignore_case, is_interactive_element, is_interactive_role,
         parse_jsx_value,
@@ -26,11 +26,11 @@ fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoNoninteractiveTabindex(Box<NoNoninteractiveTabindexConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoNoninteractiveTabindexConfig {
     /// An array of custom HTML elements that should be considered interactive.
     tags: Vec<CompactStr>,
@@ -168,30 +168,7 @@ impl Rule for NoNoninteractiveTabindex {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let default = Self::default();
-
-        let Some(config) = value.get(0) else {
-            return Ok(default);
-        };
-
-        Ok(Self(Box::new(NoNoninteractiveTabindexConfig {
-            roles: config
-                .get("roles")
-                .and_then(serde_json::Value::as_array)
-                .map_or(default.0.roles, |v| {
-                    v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
-                }),
-            tags: config
-                .get("tags")
-                .and_then(serde_json::Value::as_array)
-                .map_or(default.0.tags, |v| {
-                    v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
-                }),
-            allow_expression_values: config
-                .get("allowExpressionValues")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(default.0.allow_expression_values),
-        })))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 }
 
