@@ -10,30 +10,6 @@ use oxc_str::Str;
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
-pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
-    if param.r#in || param.out {
-        let is_allowed_node = matches!(
-            // skip parent TSTypeParameterDeclaration (grandparent is index 1)
-            ctx.ancestry().ancestor_kinds().nth(1).unwrap(),
-            AstKind::TSInterfaceDeclaration(_)
-                | AstKind::Class(_)
-                | AstKind::TSTypeAliasDeclaration(_)
-        );
-        if !is_allowed_node {
-            if param.r#in {
-                ctx.error(diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
-                    "in", param.span,
-                ));
-            }
-            if param.out {
-                ctx.error(diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
-                    "out", param.span,
-                ));
-            }
-        }
-    }
-}
-
 pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
     let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
         TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
