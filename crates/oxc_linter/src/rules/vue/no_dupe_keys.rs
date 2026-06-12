@@ -35,6 +35,8 @@ fn duplicate_key_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDupeKeysConfig {
+    /// Additional group names to search for duplicate keys in, on top of the
+    /// built-in `props`, `computed`, `data`, `methods` and `setup` groups.
     groups: Vec<String>,
 }
 
@@ -179,7 +181,7 @@ fn collect_group_keys<'a>(
     ctx: &LintContext<'a>,
 ) {
     // Only unwrap parens: espree has no paren nodes, so upstream sees through them,
-    // but a TS `as`-wrapped value is skipped by upstream and must stay skipped here.
+    // while a TS `as`-wrapped value is opaque to upstream and must stay opaque here.
     match value.without_parentheses() {
         Expression::ArrayExpression(arr) => {
             for el in &arr.elements {

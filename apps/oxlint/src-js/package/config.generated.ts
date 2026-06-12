@@ -6045,6 +6045,10 @@ export interface NoDeprecatedModelDefinitionConfig {
   allowVue3Compat?: boolean;
 }
 export interface NoDupeKeysConfig {
+  /**
+   * Additional group names to search for duplicate keys in, on top of the
+   * built-in `props`, `computed`, `data`, `methods` and `setup` groups.
+   */
   groups?: string[];
 }
 export interface NoReservedComponentNames {
