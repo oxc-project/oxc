@@ -10344,12 +10344,12 @@
       "type": "object",
       "properties": {
         "forbid": {
-          "description": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, an optional `disallowedFor` array of DOM node names,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`",
+          "description": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, optional `disallowedFor` and `disallowedValues` arrays,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"data-testid\", \"disallowedValues\": [\"legacy\"] }] }]`",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ForbidDomPropsItem"
           },
-          "markdownDescription": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, an optional `disallowedFor` array of DOM node names,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`"
+          "markdownDescription": "An array of prop names or objects that are forbidden on DOM elements.\n\nEach array element can be a string with the property name, or an object\nwith `propName`, optional `disallowedFor` and `disallowedValues` arrays,\nand an optional custom `message`.\n\nExamples:\n\n- `[\"error\", { \"forbid\": [\"id\", \"style\"] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"className\", \"message\": \"Use class instead\" }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"style\", \"disallowedFor\": [\"div\", \"span\"] }] }]`\n- `[\"error\", { \"forbid\": [{ \"propName\": \"data-testid\", \"disallowedValues\": [\"legacy\"] }] }]`"
         }
       },
       "additionalProperties": false,
@@ -10364,13 +10364,13 @@
           "markdownDescription": "A prop name to forbid on all DOM elements."
         },
         {
-          "description": "A prop with optional `disallowedFor` DOM node list and custom `message`.",
+          "description": "A prop with optional `disallowedFor` DOM node list, `disallowedValues` list,\nand custom `message`.",
           "allOf": [
             {
               "$ref": "#/definitions/PropWithOptions"
             }
           ],
-          "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+          "markdownDescription": "A prop with optional `disallowedFor` DOM node list, `disallowedValues` list,\nand custom `message`."
         }
       ],
       "markdownDescription": "A forbidden prop, either as a plain prop name string or with options."
@@ -16097,7 +16097,7 @@
       "additionalProperties": false
     },
     "PropWithOptions": {
-      "description": "A prop with optional `disallowedFor` DOM node list and custom `message`.",
+      "description": "A prop with optional `disallowedFor` DOM node list, `disallowedValues` list, and custom `message`.",
       "type": "object",
       "required": [
         "propName"
@@ -16111,6 +16111,14 @@
           },
           "markdownDescription": "A list of DOM element names (e.g. `[\"div\", \"span\"]`) on which this\nprop is forbidden. If empty or omitted, the prop is forbidden on all\nDOM elements."
         },
+        "disallowedValues": {
+          "description": "A list of prop values for which this prop is forbidden. If omitted,\nthe prop is forbidden for any value.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "A list of prop values for which this prop is forbidden. If omitted,\nthe prop is forbidden for any value."
+        },
         "message": {
           "description": "A custom message to display when this prop is used.",
           "type": "string",
@@ -16123,7 +16131,7 @@
         }
       },
       "additionalProperties": false,
-      "markdownDescription": "A prop with optional `disallowedFor` DOM node list and custom `message`."
+      "markdownDescription": "A prop with optional `disallowedFor` DOM node list, `disallowedValues` list, and custom `message`."
     },
     "RadixType": {
       "oneOf": [

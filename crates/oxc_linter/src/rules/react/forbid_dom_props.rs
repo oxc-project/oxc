@@ -17,10 +17,17 @@ use crate::{
 fn forbid_dom_props_diagnostic(
     span: Span,
     property: &str,
+    property_value: Option<&str>,
     message: Option<&String>,
 ) -> OxcDiagnostic {
     if let Some(message) = message {
         return OxcDiagnostic::warn(message.clone()).with_label(span);
+    }
+    if let Some(property_value) = property_value {
+        return OxcDiagnostic::warn(format!(
+            "Prop \"{property}\" with value \"{property_value}\" is forbidden on DOM Nodes"
+        ))
+        .with_label(span);
     }
     OxcDiagnostic::warn(format!("Prop \"{property}\" is forbidden on DOM Nodes")).with_label(span)
 }
@@ -28,6 +35,7 @@ fn forbid_dom_props_diagnostic(
 #[derive(Debug, Default, Clone)]
 struct ForbidPropOptions {
     disallowed_for: FxHashSet<CompactStr>,
+    disallowed_values: Option<FxHashSet<CompactStr>>,
     message: Option<String>,
 }
 
@@ -49,6 +57,7 @@ impl From<ForbidDomPropsConfig> for ForbidDomProps {
                 ForbidDomPropsItem::PropWithOptions(PropWithOptions {
                     prop_name,
                     disallowed_for,
+                    disallowed_values,
                     message,
                 }) => {
                     forbid.insert(
@@ -58,6 +67,8 @@ impl From<ForbidDomPropsConfig> for ForbidDomProps {
                                 .unwrap_or_default()
                                 .into_iter()
                                 .collect(),
+                            disallowed_values: disallowed_values
+                                .map(|values| values.into_iter().collect()),
                             message,
                         },
                     );
@@ -74,11 +85,12 @@ impl From<ForbidDomPropsConfig> for ForbidDomProps {
 pub enum ForbidDomPropsItem {
     /// A prop name to forbid on all DOM elements.
     PropName(CompactStr),
-    /// A prop with optional `disallowedFor` DOM node list and custom `message`.
+    /// A prop with optional `disallowedFor` DOM node list, `disallowedValues` list,
+    /// and custom `message`.
     PropWithOptions(PropWithOptions),
 }
 
-/// A prop with optional `disallowedFor` DOM node list and custom `message`.
+/// A prop with optional `disallowedFor` DOM node list, `disallowedValues` list, and custom `message`.
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PropWithOptions {
@@ -88,6 +100,9 @@ pub struct PropWithOptions {
     /// prop is forbidden. If empty or omitted, the prop is forbidden on all
     /// DOM elements.
     disallowed_for: Option<Vec<CompactStr>>,
+    /// A list of prop values for which this prop is forbidden. If omitted,
+    /// the prop is forbidden for any value.
+    disallowed_values: Option<Vec<CompactStr>>,
     /// A custom message to display when this prop is used.
     message: Option<String>,
 }
@@ -99,7 +114,7 @@ pub struct ForbidDomPropsConfig {
     /// An array of prop names or objects that are forbidden on DOM elements.
     ///
     /// Each array element can be a string with the property name, or an object
-    /// with `propName`, an optional `disallowedFor` array of DOM node names,
+    /// with `propName`, optional `disallowedFor` and `disallowedValues` arrays,
     /// and an optional custom `message`.
     ///
     /// Examples:
@@ -107,6 +122,7 @@ pub struct ForbidDomPropsConfig {
     /// - `["error", { "forbid": ["id", "style"] }]`
     /// - `["error", { "forbid": [{ "propName": "className", "message": "Use class instead" }] }]`
     /// - `["error", { "forbid": [{ "propName": "style", "disallowedFor": ["div", "span"] }] }]`
+    /// - `["error", { "forbid": [{ "propName": "data-testid", "disallowedValues": ["legacy"] }] }]`
     forbid: Vec<ForbidDomPropsItem>,
 }
 
@@ -176,9 +192,24 @@ impl Rule for ForbidDomProps {
                     {
                         continue;
                     }
+                    let property_value = if let Some(disallowed_values) = &options.disallowed_values
+                    {
+                        let Some(value) =
+                            attr.value.as_ref().and_then(|value| value.as_string_literal())
+                        else {
+                            continue;
+                        };
+                        if !disallowed_values.contains(value.value.as_str()) {
+                            continue;
+                        }
+                        Some(value.value.as_str())
+                    } else {
+                        None
+                    };
                     ctx.diagnostic(forbid_dom_props_diagnostic(
                         attr_ident.span,
                         prop_name,
+                        property_value,
                         options.message.as_ref(),
                     ));
                 }
@@ -280,6 +311,56 @@ fn test() {
                 serde_json::json!([{ "forbid": [{"propName": "otherProp","disallowedFor": ["span"],},],},]),
             ),
         ),
+        (
+            r#"
+                    const First = (props) => (
+                      <div someProp="otherValue" />
+                    );
+                  "#,
+            Some(
+                serde_json::json!([{ "forbid": [{"propName": "someProp", "disallowedValues": ["someValue"]}] }]),
+            ),
+        ),
+        (
+            r#"
+                    const First = (props) => (
+                      <Foo someProp="someValue" />
+                    );
+                  "#,
+            Some(
+                serde_json::json!([{ "forbid": [{"propName": "someProp", "disallowedValues": ["someValue"]}] }]),
+            ),
+        ),
+        (
+            r#"
+                    const First = (props) => (
+                      <div someProp="someValue" />
+                    );
+                  "#,
+            Some(
+                serde_json::json!([{ "forbid": [{"propName": "someProp", "disallowedValues": []}] }]),
+            ),
+        ),
+        (
+            r#"
+                    const First = (props) => (
+                      <div someProp="someValue" />
+                    );
+                  "#,
+            Some(
+                serde_json::json!([{ "forbid": [{"propName": "someProp", "disallowedValues": ["someValue"], "disallowedFor": ["span"]}] }]),
+            ),
+        ),
+        (
+            r"
+                    const First = (props) => (
+                      <div someProp />
+                    );
+                  ",
+            Some(
+                serde_json::json!([{ "forbid": [{"propName": "someProp", "disallowedValues": ["someValue"]}] }]),
+            ),
+        ),
     ];
 
     let fail = vec![
@@ -371,6 +452,36 @@ fn test() {
                   "#,
             Some(
                 serde_json::json!([{"forbid": [{"propName": "className","disallowedFor": ["div", "span"],"message": "Please use class instead of ClassName",},{ "propName": "otherProp", "message": "Avoid using otherProp" },],},]),
+            ),
+        ),
+        (
+            r#"
+                    const First = (props) => (
+                      <div someProp="someValue" />
+                    );
+                  "#,
+            Some(
+                serde_json::json!([{ "forbid": [{"propName": "someProp", "disallowedValues": ["someValue"]}] }]),
+            ),
+        ),
+        (
+            r#"
+                    const First = (props) => (
+                      <span someProp="someValue" />
+                    );
+                  "#,
+            Some(
+                serde_json::json!([{ "forbid": [{"propName": "someProp", "disallowedValues": ["someValue"], "disallowedFor": ["span"]}] }]),
+            ),
+        ),
+        (
+            r#"
+                    const First = (props) => (
+                      <p thirdProp="baz" />
+                    );
+                  "#,
+            Some(
+                serde_json::json!([{ "forbid": [{"propName": "thirdProp", "disallowedValues": ["bar", "baz"], "disallowedFor": ["p"], "message": "Do not use thirdProp with values bar and baz on p"}] }]),
             ),
         ),
     ];

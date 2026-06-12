@@ -105,3 +105,27 @@ source: crates/oxc_linter/src/tester.rs
    ·                                              ─────────
  7 │                       </div>
    ╰────
+
+  ⚠ react(forbid-dom-props): Prop "someProp" with value "someValue" is forbidden on DOM Nodes
+   ╭─[forbid_dom_props.tsx:3:28]
+ 2 │                     const First = (props) => (
+ 3 │                       <div someProp="someValue" />
+   ·                            ────────
+ 4 │                     );
+   ╰────
+
+  ⚠ react(forbid-dom-props): Prop "someProp" with value "someValue" is forbidden on DOM Nodes
+   ╭─[forbid_dom_props.tsx:3:29]
+ 2 │                     const First = (props) => (
+ 3 │                       <span someProp="someValue" />
+   ·                             ────────
+ 4 │                     );
+   ╰────
+
+  ⚠ react(forbid-dom-props): Do not use thirdProp with values bar and baz on p
+   ╭─[forbid_dom_props.tsx:3:26]
+ 2 │                     const First = (props) => (
+ 3 │                       <p thirdProp="baz" />
+   ·                          ─────────
+ 4 │                     );
+   ╰────

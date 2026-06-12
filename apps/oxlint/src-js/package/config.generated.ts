@@ -4297,7 +4297,7 @@ export interface ForbidDomPropsConfig {
    * An array of prop names or objects that are forbidden on DOM elements.
    *
    * Each array element can be a string with the property name, or an object
-   * with `propName`, an optional `disallowedFor` array of DOM node names,
+   * with `propName`, optional `disallowedFor` and `disallowedValues` arrays,
    * and an optional custom `message`.
    *
    * Examples:
@@ -4305,11 +4305,12 @@ export interface ForbidDomPropsConfig {
    * - `["error", { "forbid": ["id", "style"] }]`
    * - `["error", { "forbid": [{ "propName": "className", "message": "Use class instead" }] }]`
    * - `["error", { "forbid": [{ "propName": "style", "disallowedFor": ["div", "span"] }] }]`
+   * - `["error", { "forbid": [{ "propName": "data-testid", "disallowedValues": ["legacy"] }] }]`
    */
   forbid?: ForbidDomPropsItem[];
 }
 /**
- * A prop with optional `disallowedFor` DOM node list and custom `message`.
+ * A prop with optional `disallowedFor` DOM node list, `disallowedValues` list, and custom `message`.
  */
 export interface PropWithOptions {
   /**
@@ -4318,6 +4319,11 @@ export interface PropWithOptions {
    * DOM elements.
    */
   disallowedFor?: string[];
+  /**
+   * A list of prop values for which this prop is forbidden. If omitted,
+   * the prop is forbidden for any value.
+   */
+  disallowedValues?: string[];
   /**
    * A custom message to display when this prop is used.
    */
