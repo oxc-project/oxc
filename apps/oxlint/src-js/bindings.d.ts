@@ -69,7 +69,7 @@ export type JsLoadJsConfigsCb =
 
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
-  ((arg0: string, arg1: string | undefined | null, arg2: boolean, arg3?: string | undefined | null) => Promise<string>)
+  ((arg0: string, arg1: string | undefined | null, arg2: string | undefined | null, arg3: boolean, arg4?: string | undefined | null) => Promise<string>)
 
 /** JS callback to setup configs. */
 export type JsSetupRuleConfigsCb =

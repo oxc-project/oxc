@@ -18,6 +18,7 @@ interface Workspace {
   cwd: string;
   rules: RuleDetails[];
   allOptions: Readonly<Options>[];
+  pluginSettingsAliases: Map<string, string>;
 }
 
 /**
@@ -48,6 +49,7 @@ export function createWorkspace(workspaceUri: string): undefined {
     cwd: "",
     allOptions: [],
     rules: [],
+    pluginSettingsAliases: new Map(),
   });
 
   // Set current workspace to `null` to force switching workspace in the next call to `loadPlugin`.

@@ -26,6 +26,9 @@ pub type JsLoadPluginCb = ThreadsafeFunction<
         // Plugin name (either alias or package name).
         // If is package name, it is pre-normalized.
         Option<String>,
+        // Plugin name to use for compatibility with plugin-specific settings.
+        // This is the normalized package name when the plugin is loaded with an alias.
+        Option<String>,
         // `true` if plugin name is an alias (takes priority over name that plugin defines itself)
         bool,
         // Workspace URI (e.g. `file:///path/to/workspace`).
@@ -35,7 +38,7 @@ pub type JsLoadPluginCb = ThreadsafeFunction<
     // Return value
     Promise<String>, // `PluginLoadResult`, serialized to JSON
     // Arguments (repeated)
-    FnArgs<(String, Option<String>, bool, Option<String>)>,
+    FnArgs<(String, Option<String>, Option<String>, bool, Option<String>)>,
     // Error status
     Status,
     // CalleeHandled

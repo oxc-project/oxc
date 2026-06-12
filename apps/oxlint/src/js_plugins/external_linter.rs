@@ -62,38 +62,45 @@ pub enum LoadPluginReturnValue {
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    Arc::new(Box::new(move |plugin_url, plugin_name, plugin_name_is_alias, workspace_uri| {
-        let cb = &cb;
-        let res = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async move {
-                cb.call_async(FnArgs::from((
-                    plugin_url,
-                    plugin_name,
-                    plugin_name_is_alias,
-                    workspace_uri,
-                )))
-                .await?
-                .into_future()
-                .await
-            })
-        });
+    Arc::new(Box::new(
+        move |plugin_url,
+              plugin_name,
+              plugin_settings_name,
+              plugin_name_is_alias,
+              workspace_uri| {
+            let cb = &cb;
+            let res = tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current().block_on(async move {
+                    cb.call_async(FnArgs::from((
+                        plugin_url,
+                        plugin_name,
+                        plugin_settings_name,
+                        plugin_name_is_alias,
+                        workspace_uri,
+                    )))
+                    .await?
+                    .into_future()
+                    .await
+                })
+            });
 
-        match res {
-            // `loadPlugin` returns JSON string if plugin loaded successfully, or an error occurred
-            Ok(json) => match serde_json::from_str(&json) {
-                // Plugin loaded successfully
-                Ok(LoadPluginReturnValue::Success(result)) => Ok(result),
-                // Error occurred on JS side
-                Ok(LoadPluginReturnValue::Failure(err)) => Err(err),
-                // Invalid JSON - should be impossible, because we control serialization on JS side
-                Err(err) => {
-                    Err(format!("Failed to deserialize JSON returned by `loadPlugin`: {err}"))
-                }
-            },
-            // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
-            Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
-        }
-    }))
+            match res {
+                // `loadPlugin` returns JSON string if plugin loaded successfully, or an error occurred
+                Ok(json) => match serde_json::from_str(&json) {
+                    // Plugin loaded successfully
+                    Ok(LoadPluginReturnValue::Success(result)) => Ok(result),
+                    // Error occurred on JS side
+                    Ok(LoadPluginReturnValue::Failure(err)) => Err(err),
+                    // Invalid JSON - should be impossible, because we control serialization on JS side
+                    Err(err) => {
+                        Err(format!("Failed to deserialize JSON returned by `loadPlugin`: {err}"))
+                    }
+                },
+                // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
+                Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
+            }
+        },
+    ))
 }
 
 /// Wrap `setupRuleConfigs` JS callback as a normal Rust function.

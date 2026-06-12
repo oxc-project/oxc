@@ -619,6 +619,21 @@ impl ConfigStoreBuilder {
         // Get plugin name.
         // Use alias if provided.
         // Otherwise use package name if the specifier is not relative, and normalize it.
+        //
+        // When an alias is provided, also keep the normalized package name separately so JS
+        // plugins that read settings under their package name can still see settings written
+        // under the alias.
+        let plugin_settings_name = if let Some(pkg) = resolved.package_json()
+            && let Some(package_name) = pkg.name()
+            && !matches!(
+                Path::new(plugin_specifier).components().next(),
+                Some(PathComponent::CurDir | PathComponent::ParentDir)
+            ) {
+            Some(normalize_plugin_name(package_name).into_owned())
+        } else {
+            None
+        };
+
         let plugin_name = if let Some(alias_name) = alias {
             // Check that the alias is valid - does not start with common plugin package prefixes.
             if !is_normal_plugin_name(alias_name) {
@@ -631,16 +646,8 @@ impl ConfigStoreBuilder {
                 });
             }
             Some(alias_name.to_string())
-        } else if let Some(pkg) = resolved.package_json()
-            && let Some(package_name) = pkg.name()
-            && !matches!(
-                Path::new(plugin_specifier).components().next(),
-                Some(PathComponent::CurDir | PathComponent::ParentDir)
-            )
-        {
-            Some(normalize_plugin_name(package_name).into_owned())
         } else {
-            None
+            plugin_settings_name.clone()
         };
 
         if let Some(plugin_name) = &plugin_name
@@ -658,6 +665,7 @@ impl ConfigStoreBuilder {
         let result = (external_linter.load_plugin)(
             plugin_url,
             plugin_name,
+            plugin_settings_name,
             alias.is_some(),
             workspace_uri.map(String::from),
         )

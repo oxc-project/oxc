@@ -20,6 +20,25 @@ export type Settings = JsonObject;
 let settingsJSON: string | null = null;
 export let settings: Readonly<Settings> | null = null;
 
+let pluginSettingsAliases = new Map<string, string>();
+
+/**
+ * Set plugin settings aliases. Used when switching workspaces.
+ * @param aliases - Map from configured plugin alias to canonical plugin settings key
+ */
+export function setPluginSettingsAliases(aliases: Map<string, string>): undefined {
+  pluginSettingsAliases = aliases;
+}
+
+/**
+ * Add a plugin settings alias.
+ * @param alias - Configured plugin alias
+ * @param pluginName - Canonical plugin settings key
+ */
+export function addPluginSettingsAlias(alias: string, pluginName: string): undefined {
+  pluginSettingsAliases.set(alias, pluginName);
+}
+
 /**
  * Updates the settings for the file.
  *
@@ -37,7 +56,9 @@ export function setSettingsForFile(settingsJSONInput: string): undefined {
  */
 export function initSettings(): undefined {
   debugAssertIsNonNull(settingsJSON);
-  settings = JSON.parse(settingsJSON);
+  const nextSettings = JSON.parse(settingsJSON) as Settings;
+  applyPluginSettingsAliases(nextSettings);
+  settings = nextSettings;
   // Deep freeze the settings object, to prevent any mutation of the settings from plugins
   deepFreezeJsonValue(settings);
 }
@@ -48,4 +69,12 @@ export function initSettings(): undefined {
 export function resetSettings(): undefined {
   settings = null;
   settingsJSON = null;
+}
+
+function applyPluginSettingsAliases(settings: Settings): undefined {
+  for (const [alias, pluginName] of pluginSettingsAliases) {
+    if (Object.hasOwn(settings, alias) && !Object.hasOwn(settings, pluginName)) {
+      settings[pluginName] = settings[alias]!;
+    }
+  }
 }

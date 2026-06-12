@@ -1,6 +1,7 @@
 import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
 import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
+import { addPluginSettingsAlias } from "./settings.ts";
 import { switchWorkspace } from "./workspace.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
@@ -112,6 +113,7 @@ interface PluginDetails {
  *
  * @param url - Absolute path of plugin file as a `file://...` URL
  * @param pluginName - Plugin name (either alias or package name)
+ * @param pluginSettingsName - Plugin name to use for compatibility with plugin-specific settings
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns Plugin details or error serialized to JSON string
@@ -119,12 +121,19 @@ interface PluginDetails {
 export async function loadPlugin(
   url: string,
   pluginName: string | null,
+  pluginSettingsName: string | null,
   pluginNameIsAlias: boolean,
   workspaceUri: string | null,
 ): Promise<string> {
   try {
     const plugin = (await import(url)).default as Plugin;
-    const res = registerPlugin(plugin, pluginName, pluginNameIsAlias, workspaceUri);
+    const res = registerPlugin(
+      plugin,
+      pluginName,
+      pluginSettingsName,
+      pluginNameIsAlias,
+      workspaceUri,
+    );
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -136,6 +145,7 @@ export async function loadPlugin(
  *
  * @param plugin - Plugin
  * @param pluginName - Plugin name (either alias or package name)
+ * @param pluginSettingsName - Plugin name to use for compatibility with plugin-specific settings
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns - Plugin details
@@ -146,17 +156,28 @@ export async function loadPlugin(
 export function registerPlugin(
   plugin: Plugin,
   pluginName: string | null,
+  pluginSettingsName: string | null,
   pluginNameIsAlias: boolean,
   workspaceUri: string | null,
 ): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
-  pluginName = getPluginName(plugin, pluginName, pluginNameIsAlias);
+  const pluginMetaName = getPluginMetaName(plugin);
+  const resolvedPluginSettingsName = pluginMetaName ?? pluginSettingsName;
+  pluginName = getPluginName(pluginName, pluginNameIsAlias, pluginMetaName);
 
   // Switch to requested workspace.
   // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
   // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
   if (workspaceUri !== null) switchWorkspace(workspaceUri);
+
+  if (
+    pluginNameIsAlias &&
+    resolvedPluginSettingsName !== null &&
+    resolvedPluginSettingsName !== pluginName
+  ) {
+    addPluginSettingsAlias(pluginName, resolvedPluginSettingsName);
+  }
 
   const offset = registeredRules.length;
   const { rules } = plugin;
@@ -318,14 +339,14 @@ export function registerPlugin(
  * @param plugin - Plugin object
  * @param pluginName - Plugin name (either alias or package name)
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+ * @param pluginMetaName - Normalized plugin name from `plugin.meta.name`, if provided
  * @returns Plugin name
- * @throws {TypeError} If `plugin.meta.name` is not a string
  * @throws {Error} If neither `plugin.meta.name` nor `packageName` are defined
  */
 function getPluginName(
-  plugin: Plugin,
   pluginName: string | null,
   pluginNameIsAlias: boolean,
+  pluginMetaName: string | null,
 ): string {
   // If plugin is defined with an alias in config, that takes priority
   if (pluginNameIsAlias) {
@@ -335,21 +356,31 @@ function getPluginName(
 
   // If plugin defines its own name, that takes priority over package name.
   // Normalize plugin name.
-  const pluginMetaName = plugin.meta?.name;
-  if (pluginMetaName != null) {
-    if (typeof pluginMetaName !== "string") {
-      throw new TypeError("`plugin.meta.name` must be a string if defined");
-    }
-    return normalizePluginName(pluginMetaName);
-  }
+  if (pluginMetaName !== null) return pluginMetaName;
 
   // Fallback to package name (which is already normalized on Rust side)
   if (pluginName !== null) return pluginName;
 
   throw new Error(
     "Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, " +
-      "or be given an alias in config",
+    "or be given an alias in config",
   );
+}
+
+/**
+ * Get plugin name from `plugin.meta.name`.
+ *
+ * @param plugin - Plugin object
+ * @returns Normalized plugin name from `plugin.meta.name`, if provided
+ * @throws {TypeError} If `plugin.meta.name` is not a string
+ */
+function getPluginMetaName(plugin: Plugin): string | null {
+  const pluginMetaName = plugin.meta?.name;
+  if (pluginMetaName == null) return null;
+  if (typeof pluginMetaName !== "string") {
+    throw new TypeError("`plugin.meta.name` must be a string if defined");
+  }
+  return normalizePluginName(pluginMetaName);
 }
 
 /**

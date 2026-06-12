@@ -26,6 +26,9 @@ pub type ExternalLinterLoadPluginCb = Arc<
                 // Plugin name (either alias or package name).
                 // If is package name, it is pre-normalized.
                 Option<String>,
+                // Plugin name to use for compatibility with plugin-specific settings.
+                // This is the normalized package name when the plugin is loaded with an alias.
+                Option<String>,
                 // `true` if plugin name is an alias (takes priority over name that plugin defines itself)
                 bool,
                 // Workspace URI (e.g. `file:///path/to/workspace`).
