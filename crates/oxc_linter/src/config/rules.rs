@@ -917,18 +917,25 @@ mod test {
     fn test_normalize_plugin_name_in_rules() {
         use super::super::plugins::normalize_plugin_name;
 
-        // Test eslint-plugin- prefix stripping
+        // Test eslint-plugin- and oxlint-plugin- prefix stripping
         assert_eq!(normalize_plugin_name("eslint-plugin-foo"), "foo");
         assert_eq!(normalize_plugin_name("eslint-plugin-react"), "react");
         assert_eq!(normalize_plugin_name("eslint-plugin-import"), "import");
+        assert_eq!(normalize_plugin_name("oxlint-plugin-foo"), "foo");
+        assert_eq!(normalize_plugin_name("oxlint-plugin-react"), "react");
+        assert_eq!(normalize_plugin_name("oxlint-plugin-import"), "import");
 
-        // Test @scope/eslint-plugin suffix stripping
+        // Test @scope/eslint-plugin and @scope/oxlint-plugin suffix stripping
         assert_eq!(normalize_plugin_name("@foo/eslint-plugin"), "@foo");
         assert_eq!(normalize_plugin_name("@bar/eslint-plugin"), "@bar");
+        assert_eq!(normalize_plugin_name("@foo/oxlint-plugin"), "@foo");
+        assert_eq!(normalize_plugin_name("@bar/oxlint-plugin"), "@bar");
 
-        // Test @scope/eslint-plugin-name normalization
+        // Test @scope/eslint-plugin-name and @scope/oxlint-plugin-name normalization
         assert_eq!(normalize_plugin_name("@foo/eslint-plugin-bar"), "@foo/bar");
         assert_eq!(normalize_plugin_name("@typescript-eslint/eslint-plugin"), "@typescript-eslint");
+        assert_eq!(normalize_plugin_name("@foo/oxlint-plugin-bar"), "@foo/bar");
+        assert_eq!(normalize_plugin_name("@typescript-eslint/oxlint-plugin"), "@typescript-eslint");
 
         // Test no change for already normalized names
         assert_eq!(normalize_plugin_name("react"), "react");
@@ -939,10 +946,11 @@ mod test {
 
     #[test]
     fn test_parse_rules_with_eslint_plugin_prefix() {
-        // Test that eslint-plugin- prefix is properly normalized in various formats
+        // Test that plugin package prefixes are properly normalized in various formats
         let rules = OxlintRules::deserialize(&json!({
             "eslint-plugin-react/jsx-uses-vars": "error",
             "eslint-plugin-unicorn/no-null": "warn",
+            "oxlint-plugin-import/no-cycle": "error",
         }))
         .unwrap();
 
@@ -957,6 +965,11 @@ mod test {
         assert_eq!(r2.rule_name, "no-null");
         assert_eq!(r2.plugin_name, "unicorn");
         assert!(r2.severity.is_warn_deny());
+
+        let r3 = rules_iter.next().unwrap();
+        assert_eq!(r3.rule_name, "no-cycle");
+        assert_eq!(r3.plugin_name, "import");
+        assert!(r3.severity.is_warn_deny());
     }
 
     #[test]
