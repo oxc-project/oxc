@@ -310,7 +310,7 @@ impl CliRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         }
-        .with_filters(&filters);
+        .with_filters_and_external_rules(&filters, &external_plugin_store);
 
         if misc_options.print_config {
             return crate::mode::run_print_config(&config_builder, root_config, stdout);
