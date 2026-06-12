@@ -706,7 +706,7 @@ fn render_config_builder_error(
 mod test {
     use std::fs;
 
-    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use crate::{DEFAULT_OXLINTRC_NAME, cli::CliRunResult, tester::Tester};
     use oxc_linter::rules::RULES;
 
     // lints the full directory of fixtures,
@@ -1811,6 +1811,20 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_in_override".into())
             .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_extglob_in_override() {
+        let (stdout, result) = Tester::new()
+            .with_cwd("fixtures/cli/invalid_config_extglob_in_override".into())
+            .test_output(&[]);
+
+        assert!(
+            matches!(result, CliRunResult::InvalidOptionConfig),
+            "Expected InvalidOptionConfig, got {result:?}. Output:\n{stdout}"
+        );
+        assert!(stdout.contains("unsupported extglob syntax"), "Output:\n{stdout}");
+        assert!(stdout.contains("**/*.stories.@(ts|tsx)"), "Output:\n{stdout}");
     }
 
     #[test]

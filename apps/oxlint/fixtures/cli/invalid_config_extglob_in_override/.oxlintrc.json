@@ -1,0 +1,10 @@
+{
+  "overrides": [
+    {
+      "files": ["**/*.stories.@(ts|tsx)"],
+      "rules": {
+        "no-console": "error"
+      }
+    }
+  ]
+}

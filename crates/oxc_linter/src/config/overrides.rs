@@ -165,6 +165,17 @@ mod test {
     }
 
     #[test]
+    fn test_rejecting_extglob_files() {
+        let error = from_value::<OxlintOverride>(json!({
+            "files": ["**/*.stories.@(ts|tsx)"],
+        }))
+        .unwrap_err();
+
+        assert!(error.to_string().contains("unsupported extglob syntax"));
+        assert!(error.to_string().contains("**/*.stories.@(ts|tsx)"));
+    }
+
+    #[test]
     fn test_parsing_globals() {
         let config: OxlintOverride = from_value(json!({
             "files": ["*.tsx"],

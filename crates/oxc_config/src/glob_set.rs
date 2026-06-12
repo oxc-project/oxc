@@ -1,5 +1,5 @@
 use schemars::JsonSchema;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de};
 
 /// A set of glob patterns.
 /// Patterns are matched against paths relative to the configuration file's directory.
@@ -8,7 +8,11 @@ pub struct GlobSet(Vec<String>);
 
 impl<'de> Deserialize<'de> for GlobSet {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Ok(Self::new(Vec::<String>::deserialize(deserializer)?))
+        let patterns = Vec::<String>::deserialize(deserializer)?;
+        for pattern in &patterns {
+            validate_supported_glob_pattern(pattern).map_err(de::Error::custom)?;
+        }
+        Ok(Self::new(patterns))
     }
 }
 
@@ -50,6 +54,103 @@ impl GlobSet {
     pub fn is_match(&self, path: &str) -> bool {
         self.0.iter().any(|glob| fast_glob::glob_match(glob, path))
     }
+}
+
+fn validate_supported_glob_pattern(pattern: &str) -> Result<(), String> {
+    if let Some(operator) = find_unsupported_extglob_operator(pattern) {
+        return Err(format!(
+            "unsupported extglob syntax in glob pattern `{pattern}`: `{operator}(` with `|` alternatives is not supported; use supported glob syntax such as brace expansion, or split it into multiple patterns"
+        ));
+    }
+
+    Ok(())
+}
+
+fn find_unsupported_extglob_operator(pattern: &str) -> Option<char> {
+    let mut escaped = false;
+    let mut in_brackets = false;
+    let mut chars = pattern.char_indices().peekable();
+
+    while let Some((index, ch)) = chars.next() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+
+        if ch == '\\' {
+            escaped = true;
+            continue;
+        }
+
+        if ch == '[' && !in_brackets {
+            in_brackets = true;
+            continue;
+        }
+
+        if ch == ']' && in_brackets {
+            in_brackets = false;
+            continue;
+        }
+
+        if in_brackets {
+            continue;
+        }
+
+        if matches!(ch, '@' | '?' | '*' | '+' | '!')
+            && matches!(chars.peek(), Some((_, '(')))
+            && has_unescaped_alternation_before_closing_paren(
+                pattern,
+                index + ch.len_utf8() + '('.len_utf8(),
+            )
+        {
+            return Some(ch);
+        }
+    }
+
+    None
+}
+
+fn has_unescaped_alternation_before_closing_paren(pattern: &str, start: usize) -> bool {
+    let mut escaped = false;
+    let mut in_brackets = false;
+    let mut has_alternation = false;
+
+    for ch in pattern[start..].chars() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+
+        if ch == '\\' {
+            escaped = true;
+            continue;
+        }
+
+        if ch == '[' && !in_brackets {
+            in_brackets = true;
+            continue;
+        }
+
+        if ch == ']' && in_brackets {
+            in_brackets = false;
+            continue;
+        }
+
+        if in_brackets {
+            continue;
+        }
+
+        if ch == '|' {
+            has_alternation = true;
+            continue;
+        }
+
+        if ch == ')' {
+            return has_alternation;
+        }
+    }
+
+    false
 }
 
 #[cfg(test)]
@@ -95,5 +196,41 @@ mod test {
         let glob_set: GlobSet = from_value(json!(["../foo.js"])).unwrap();
         assert!(glob_set.is_match("../foo.js"));
         assert!(!glob_set.is_match("foo.js"));
+    }
+
+    #[test]
+    fn rejects_unsupported_extglob_syntax() {
+        for pattern in [
+            "**/*.stories.@(ts|tsx)",
+            "**/*.stories.?(ts|tsx)",
+            "**/*.stories.*(ts|tsx)",
+            "**/*.stories.+(ts|tsx)",
+            "**/*.stories.!(ts|tsx)",
+        ] {
+            let error = from_value::<GlobSet>(json!([pattern])).unwrap_err();
+            let message = error.to_string();
+            assert!(message.contains("unsupported extglob syntax"));
+            assert!(message.contains(pattern));
+        }
+    }
+
+    #[test]
+    fn allows_supported_glob_syntax() {
+        let glob_set: GlobSet = from_value(json!(["**/*.stories.{ts,tsx}"])).unwrap();
+        assert!(glob_set.is_match("src/button.stories.ts"));
+        assert!(glob_set.is_match("src/button.stories.tsx"));
+        assert!(!glob_set.is_match("src/button.test.ts"));
+
+        let glob_set: GlobSet = from_value(json!([r"**/*.stories.\@(ts|tsx)"])).unwrap();
+        assert!(!glob_set.is_match("src/button.stories.ts"));
+
+        let glob_set: GlobSet = from_value(json!(["**/*(legacy).ts"])).unwrap();
+        assert!(glob_set.is_match("src/button(legacy).ts"));
+
+        let glob_set: GlobSet = from_value(json!(["**/*.stories.@(ts)"])).unwrap();
+        assert!(glob_set.is_match("src/button.stories.@(ts)"));
+        assert!(!glob_set.is_match("src/button.stories.ts"));
+
+        from_value::<GlobSet>(json!(["**/[?()].ts"])).unwrap();
     }
 }

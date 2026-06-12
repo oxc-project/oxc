@@ -959,6 +959,21 @@ mod tests_reject_experimental {
     }
 
     #[test]
+    fn test_reject_extglob_in_overrides() {
+        let json = r#"{
+            "overrides": [
+                {
+                    "files": ["**/*.stories.@(ts|tsx)"],
+                    "options": { "printWidth": 120 }
+                }
+            ]
+        }"#;
+        let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
+        assert!(err.to_string().contains("unsupported extglob syntax"));
+        assert!(err.to_string().contains("**/*.stories.@(ts|tsx)"));
+    }
+
+    #[test]
     fn test_reject_experimental_via_napi_resolve_path() {
         // NAPI `resolve()` does `serde_json::from_value::<FormatConfig>(raw_config)`,
         // which goes through the same deserialize_with.
