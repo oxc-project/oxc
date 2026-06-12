@@ -368,11 +368,7 @@ function getOffsetFromLineColumn(lineCol: LineColumn): number {
   const lineOffset = lineStartIndices[line - 1];
   const offset = lineOffset + column;
 
-  // Ensure offset is within bounds.
-  // Do this here on JS side to prevent a NAPI error when converting to `u32` on Rust side.
-  if (offset < 0 || offset > sourceText.length) {
-    throw new RangeError("Line/column pair translates to an out of range offset");
-  }
-
-  return offset;
+  // Clamp to source bounds. Some ESLint rules intentionally report columns before
+  // the line start or after the line end, and Rust requires a valid `u32` offset.
+  return Math.max(0, Math.min(offset, sourceText.length));
 }
