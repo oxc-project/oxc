@@ -6,7 +6,6 @@ use tower_lsp_server::ls_types::{
     NumberOrString, Position, Range, Uri,
 };
 
-use oxc_data_structures::rope::Rope;
 use oxc_diagnostics::{OxcCode, Severity};
 use oxc_language_server::offset_to_position as lsp_offset_to_position;
 use oxc_linter::{
@@ -81,7 +80,6 @@ pub fn message_to_lsp_diagnostic(
     message: Message,
     uri: &Uri,
     source_text: &str,
-    rope: &Rope,
     rules_customization: Option<&RulesCustomization>,
 ) -> Option<DiagnosticReport> {
     let severity = if let Some(rules_customization) = rules_customization {
@@ -105,8 +103,8 @@ pub fn message_to_lsp_diagnostic(
                 .iter()
                 .map(|span| {
                     let offset = span.offset();
-                    let start_position = offset_to_position(rope, offset, source_text);
-                    let end_position = offset_to_position(rope, offset + span.len(), source_text);
+                    let start_position = offset_to_position(offset, source_text);
+                    let end_position = offset_to_position(offset + span.len(), source_text);
 
                     ls_types::DiagnosticRelatedInformation {
                         location: ls_types::Location {
@@ -122,8 +120,8 @@ pub fn message_to_lsp_diagnostic(
         )
     };
 
-    let start_position = offset_to_position(rope, message.span.start, source_text);
-    let end_position = offset_to_position(rope, message.span.end, source_text);
+    let start_position = offset_to_position(message.span.start, source_text);
+    let end_position = offset_to_position(message.span.end, source_text);
     let range = Range::new(start_position, end_position);
 
     let code = message.error.code.to_string();
@@ -183,7 +181,6 @@ pub fn message_to_lsp_diagnostic(
             }
             fixed_content.push(fix_to_fixed_content(
                 &fix,
-                rope,
                 source_text,
                 FixedContentKind::LintRule(message.error.code.clone()),
             ));
@@ -195,7 +192,6 @@ pub fn message_to_lsp_diagnostic(
                 }
                 fix_to_fixed_content(
                     &fix,
-                    rope,
                     source_text,
                     FixedContentKind::LintRule(message.error.code.clone()),
                 )
@@ -222,7 +218,6 @@ pub fn message_to_lsp_diagnostic(
         &message.error.code,
         error_offset,
         section_offset,
-        rope,
         source_text,
     );
 
@@ -235,14 +230,9 @@ pub fn message_to_lsp_diagnostic(
     Some(DiagnosticReport { diagnostic, code_action })
 }
 
-fn fix_to_fixed_content(
-    fix: &Fix,
-    rope: &Rope,
-    source_text: &str,
-    fix_kind: FixedContentKind,
-) -> FixedContent {
-    let start_position = offset_to_position(rope, fix.span.start, source_text);
-    let end_position = offset_to_position(rope, fix.span.end, source_text);
+fn fix_to_fixed_content(fix: &Fix, source_text: &str, fix_kind: FixedContentKind) -> FixedContent {
+    let start_position = offset_to_position(fix.span.start, source_text);
+    let end_position = offset_to_position(fix.span.end, source_text);
 
     debug_assert!(
         fix.message.is_some(),
@@ -304,7 +294,6 @@ pub fn create_unused_directives_report(
     directives: &DisableDirectives,
     severity: AllowWarnDeny,
     source_text: &str,
-    rope: &Rope,
 ) -> Vec<DiagnosticReport> {
     let mut reports = Vec::new();
     let fix_message = "remove unused disable directive";
@@ -327,7 +316,6 @@ pub fn create_unused_directives_report(
                     span,
                     severity,
                     source_text,
-                    rope,
                     Some(&Fix::delete(fix_span).with_message(fix_message)),
                 ));
             }
@@ -338,7 +326,6 @@ pub fn create_unused_directives_report(
                         rule.name_span,
                         severity,
                         source_text,
-                        rope,
                         Some(&rule.create_fix(source_text, span).with_message(fix_message)),
                     ));
                 }
@@ -359,7 +346,6 @@ pub fn create_unused_directives_report(
             *span,
             severity,
             source_text,
-            rope,
             // TODO: fixer
             // copy the structure of disable directives
             None,
@@ -374,11 +360,10 @@ fn build_unused_disable_diagnostic_report(
     span: Span,
     severity: DiagnosticSeverity,
     source_text: &str,
-    rope: &Rope,
     fix: Option<&Fix>,
 ) -> DiagnosticReport {
-    let start_position = offset_to_position(rope, span.start, source_text);
-    let end_position = offset_to_position(rope, span.end, source_text);
+    let start_position = offset_to_position(span.start, source_text);
+    let end_position = offset_to_position(span.end, source_text);
     let range = Range::new(start_position, end_position);
 
     DiagnosticReport {
@@ -397,7 +382,6 @@ fn build_unused_disable_diagnostic_report(
             range,
             fixed_content: vec![fix_to_fixed_content(
                 fix,
-                rope,
                 source_text,
                 FixedContentKind::UnusedDirective,
             )],
@@ -405,7 +389,7 @@ fn build_unused_disable_diagnostic_report(
     }
 }
 
-pub fn offset_to_position(_rope: &Rope, offset: u32, source_text: &str) -> Position {
+pub fn offset_to_position(offset: u32, source_text: &str) -> Position {
     lsp_offset_to_position(source_text, offset)
 }
 
@@ -425,7 +409,6 @@ fn add_ignore_fixes(
     code: &OxcCode,
     error_offset: u32,
     section_offset: u32,
-    rope: &Rope,
     source_text: &str,
 ) {
     debug_assert!(
@@ -441,17 +424,15 @@ fn add_ignore_fixes(
         &rule_name_with_plugin,
         error_offset,
         section_offset,
-        rope,
         source_text,
     ));
-    fixes.push(disable_for_this_section(&rule_name_with_plugin, section_offset, rope, source_text));
+    fixes.push(disable_for_this_section(&rule_name_with_plugin, section_offset, source_text));
 }
 
 fn disable_for_this_line(
     rule_name: &str,
     error_offset: u32,
     section_offset: u32,
-    rope: &Rope,
     source_text: &str,
 ) -> FixedContent {
     let bytes = source_text.as_bytes();
@@ -459,7 +440,7 @@ fn disable_for_this_line(
 
     // Reuse an inline disable-line comment on the same line when present.
     if let Some(existing_comment_end) = get_inline_disable_line_comment_end(error_offset, bytes) {
-        let position = offset_to_position(rope, existing_comment_end, source_text);
+        let position = offset_to_position(existing_comment_end, source_text);
         return FixedContent {
             message,
             code: format!(" {rule_name}"),
@@ -490,7 +471,7 @@ fn disable_for_this_line(
     if let Some(existing_comment_end) =
         get_existing_disable_comment_end(insert_offset, DisableDirective::NextLine, bytes)
     {
-        let position = offset_to_position(rope, existing_comment_end, source_text);
+        let position = offset_to_position(existing_comment_end, source_text);
         return FixedContent {
             message,
             code: format!(" {rule_name}"),
@@ -513,7 +494,7 @@ fn disable_for_this_line(
     };
     let whitespace_string = String::from_utf8_lossy(whitespace_range);
 
-    let position = offset_to_position(rope, insert_offset, source_text);
+    let position = offset_to_position(insert_offset, source_text);
     FixedContent {
         message,
         code: format!(
@@ -528,7 +509,6 @@ fn disable_for_this_line(
 fn disable_for_this_section(
     rule_name: &str,
     section_offset: u32,
-    rope: &Rope,
     source_text: &str,
 ) -> FixedContent {
     let bytes = source_text.as_bytes();
@@ -541,7 +521,7 @@ fn disable_for_this_section(
     if let Some(existing_comment_end) =
         get_existing_disable_comment_end(insert_offset, DisableDirective::Section, bytes)
     {
-        let position = offset_to_position(rope, existing_comment_end, source_text);
+        let position = offset_to_position(existing_comment_end, source_text);
         return FixedContent {
             message,
             code: format!(" {rule_name}"),
@@ -552,7 +532,7 @@ fn disable_for_this_section(
     }
 
     let content = format!("{content_prefix}// oxlint-disable {rule_name}\n");
-    let position = offset_to_position(rope, insert_offset, source_text);
+    let position = offset_to_position(insert_offset, source_text);
 
     FixedContent {
         message,
@@ -801,7 +781,6 @@ fn get_inline_disable_line_comment_end(error_offset: u32, bytes: &[u8]) -> Optio
 #[cfg(test)]
 #[expect(clippy::cast_possible_truncation)]
 mod test {
-    use oxc_data_structures::rope::Rope;
     use oxc_diagnostics::OxcCode;
 
     use super::offset_to_position;
@@ -846,17 +825,16 @@ mod test {
     #[test]
     #[should_panic(expected = "out of bounds")]
     fn out_of_bounds() {
-        offset_to_position(&Rope::from_str("foo"), 100, "foo");
+        offset_to_position(100, "foo");
     }
 
     #[test]
     fn add_ignore_fixes_uses_user_facing_plugin_names() {
         let source = "foo();";
-        let rope = Rope::from_str(source);
         let code = OxcCode { scope: Some("jsx-a11y".into()), number: Some("alt-text".into()) };
         let mut fixes = vec![];
 
-        super::add_ignore_fixes(&mut fixes, &code, 0, 0, &rope, source);
+        super::add_ignore_fixes(&mut fixes, &code, 0, 0, source);
 
         assert_eq!(fixes[0].code, "// oxlint-disable-next-line jsx-a11y/alt-text\n");
         assert_eq!(fixes[1].code, "// oxlint-disable jsx-a11y/alt-text\n");
@@ -865,8 +843,7 @@ mod test {
     #[test]
     fn disable_for_section_js_file() {
         let source = "console.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_section("no-console", 0, &rope, source);
+        let fix = super::disable_for_this_section("no-console", 0, source);
 
         assert_eq!(fix.code, "// oxlint-disable no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -876,8 +853,7 @@ mod test {
     #[test]
     fn disable_for_section_after_lf() {
         let source = "<script>\nconsole.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_section("no-console", 8, &rope, source);
+        let fix = super::disable_for_this_section("no-console", 8, source);
 
         assert_eq!(fix.code, "// oxlint-disable no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -887,8 +863,7 @@ mod test {
     #[test]
     fn disable_for_section_after_crlf() {
         let source = "<script>\r\nconsole.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_section("no-console", 8, &rope, source);
+        let fix = super::disable_for_this_section("no-console", 8, source);
 
         assert_eq!(fix.code, "// oxlint-disable no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -898,8 +873,7 @@ mod test {
     #[test]
     fn disable_for_section_with_shebang() {
         let source = "#!/usr/bin/env node\nconsole.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_section("no-console", 0, &rope, source);
+        let fix = super::disable_for_this_section("no-console", 0, source);
 
         assert_eq!(fix.code, "// oxlint-disable no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -909,8 +883,7 @@ mod test {
     #[test]
     fn disable_for_section_with_shebang_crlf() {
         let source = "#!/usr/bin/env node\r\nconsole.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_section("no-console", 0, &rope, source);
+        let fix = super::disable_for_this_section("no-console", 0, source);
 
         assert_eq!(fix.code, "// oxlint-disable no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -920,8 +893,7 @@ mod test {
     #[test]
     fn disable_for_section_mid_line() {
         let source = "const x = 5;";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_section("no-unused-vars", 6, &rope, source);
+        let fix = super::disable_for_this_section("no-unused-vars", 6, source);
 
         assert_eq!(fix.code, "\n// oxlint-disable no-unused-vars\n");
         assert_eq!(fix.range.start.line, 0);
@@ -932,9 +904,8 @@ mod test {
     fn disable_for_section_vue_script_block_after_template() {
         let source =
             "<template>\n  <div />\n</template>\n<script>\nconsole.log('hello');\n</script>";
-        let rope = Rope::from_str(source);
         let section_offset = source.find("<script>").unwrap() as u32 + "<script>".len() as u32;
-        let fix = super::disable_for_this_section("no-console", section_offset, &rope, source);
+        let fix = super::disable_for_this_section("no-console", section_offset, source);
 
         assert_eq!(fix.code, "// oxlint-disable no-console\n");
         assert_eq!(fix.range.start.line, 4);
@@ -944,9 +915,8 @@ mod test {
     #[test]
     fn disable_for_section_vue_script_block_after_template_crlf() {
         let source = "<template>\r\n  <div />\r\n</template>\r\n<script>\r\nconsole.log('hello');\r\n</script>";
-        let rope = Rope::from_str(source);
         let section_offset = source.find("<script>").unwrap() as u32 + "<script>".len() as u32;
-        let fix = super::disable_for_this_section("no-console", section_offset, &rope, source);
+        let fix = super::disable_for_this_section("no-console", section_offset, source);
 
         assert_eq!(fix.code, "// oxlint-disable no-console\n");
         assert_eq!(fix.range.start.line, 4);
@@ -956,9 +926,8 @@ mod test {
     #[test]
     fn disable_for_section_vue_script_setup_mid_line() {
         let source = "<template><div /></template>\n<script setup>const x = 1;\n</script>";
-        let rope = Rope::from_str(source);
         let section_offset = source.find("const x").unwrap() as u32;
-        let fix = super::disable_for_this_section("no-unused-vars", section_offset, &rope, source);
+        let fix = super::disable_for_this_section("no-unused-vars", section_offset, source);
 
         assert_eq!(fix.code, "\n// oxlint-disable no-unused-vars\n");
         assert_eq!(fix.range.start.line, 1);
@@ -971,10 +940,9 @@ mod test {
         let source = format!(
             "<template>\n</template>\n<script>\n{existing}\nconsole.log('hello');\n</script>"
         );
-        let rope = Rope::from_str(&source);
         let section_offset = source.find(existing).unwrap() as u32;
 
-        let fix = super::disable_for_this_section("no-console", section_offset, &rope, &source);
+        let fix = super::disable_for_this_section("no-console", section_offset, &source);
 
         assert_eq!(fix.code, " no-console");
         assert_eq!(fix.range.start.line, 3);
@@ -986,8 +954,7 @@ mod test {
     #[test]
     fn disable_for_this_line_single_line() {
         let source = "console.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -997,8 +964,7 @@ mod test {
     #[test]
     fn disable_for_this_line_with_spaces() {
         let source = "  console.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 10, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 10, 0, source);
 
         assert_eq!(fix.code, "  // oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -1008,8 +974,7 @@ mod test {
     #[test]
     fn disable_for_this_line_with_tabs() {
         let source = "\t\tconsole.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 10, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 10, 0, source);
 
         assert_eq!(fix.code, "\t\t// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -1019,8 +984,7 @@ mod test {
     #[test]
     fn disable_for_this_line_mixed_tabs_spaces() {
         let source = "\t  \tconsole.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 12, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 12, 0, source);
 
         assert_eq!(fix.code, "\t  \t// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -1030,8 +994,7 @@ mod test {
     #[test]
     fn disable_for_this_line_multiline_with_tabs() {
         let source = "function test() {\n\tconsole.log('hello');\n}";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 27, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 27, 0, source);
 
         assert_eq!(fix.code, "\t// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -1041,8 +1004,7 @@ mod test {
     #[test]
     fn disable_for_this_line_multiline_with_spaces() {
         let source = "function test() {\n    console.log('hello');\n}";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 30, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 30, 0, source);
 
         assert_eq!(fix.code, "    // oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -1052,8 +1014,7 @@ mod test {
     #[test]
     fn disable_for_this_line_complex_indentation() {
         let source = "function test() {\n\t  \t  console.log('hello');\n}";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 33, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 33, 0, source);
 
         assert_eq!(fix.code, "\t  \t  // oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -1063,8 +1024,7 @@ mod test {
     #[test]
     fn disable_for_this_line_no_indentation() {
         let source = "function test() {\nconsole.log('hello');\n}";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 26, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 26, 0, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -1074,8 +1034,7 @@ mod test {
     #[test]
     fn disable_for_this_line_crlf_with_tabs() {
         let source = "function test() {\r\n\tconsole.log('hello');\r\n}";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 28, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 28, 0, source);
 
         assert_eq!(fix.code, "\t// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -1085,8 +1044,7 @@ mod test {
     #[test]
     fn disable_for_this_line_deeply_nested() {
         let source = "if (true) {\n\t\tif (nested) {\n\t\t\tconsole.log('deep');\n\t\t}\n}";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 40, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 40, 0, source);
 
         assert_eq!(fix.code, "\t\t\t// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 2);
@@ -1096,8 +1054,7 @@ mod test {
     #[test]
     fn disable_for_this_line_at_start_of_file() {
         let source = "console.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -1108,9 +1065,8 @@ mod test {
     fn disable_for_this_line_whitespace_only_continuous() {
         // Test that only continuous whitespace from line start is captured
         let source = "function test() {\n  \tcode  \there\n}";
-        let rope = Rope::from_str(source);
         // Error at position of 'code' (after "  \t")
-        let fix = super::disable_for_this_line("no-console", 21, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 21, 0, source);
 
         // Should only capture "  \t" at the beginning, not the spaces around "here"
         assert_eq!(fix.code, "  \t// oxlint-disable-next-line no-console\n");
@@ -1122,11 +1078,9 @@ mod test {
     fn disable_for_this_line_with_section_offset() {
         // Test framework file with section offset (like Vue/Svelte)
         let source = "<script>\nconsole.log('hello');\n</script>";
-        let rope = Rope::from_str(source);
         let section_offset = 8; // At the \n after "<script>"
         let error_offset = 17; // At 'console'
-        let fix =
-            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+        let fix = super::disable_for_this_line("no-console", error_offset, section_offset, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -1137,11 +1091,9 @@ mod test {
     fn disable_for_this_line_section_offset_mid_line() {
         // Test framework file where section starts mid-line
         let source = "<script>console.log('hello');\n</script>";
-        let rope = Rope::from_str(source);
         let section_offset = 8; // After "<script>"
         let error_offset = 16; // At 'console'
-        let fix =
-            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+        let fix = super::disable_for_this_line("no-console", error_offset, section_offset, source);
 
         assert_eq!(fix.code, "\n// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 0);
@@ -1152,11 +1104,9 @@ mod test {
     fn disable_for_this_line_section_offset_with_indentation() {
         // Test framework file with indented code
         let source = "<template>\n</template>\n<script>\n  console.log('hello');\n</script>";
-        let rope = Rope::from_str(source);
         let section_offset = 31; // At \n after "<script>"
         let error_offset = 36; // At 'console' (after "  ")
-        let fix =
-            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+        let fix = super::disable_for_this_line("no-console", error_offset, section_offset, source);
 
         assert_eq!(fix.code, "  // oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 3);
@@ -1167,11 +1117,9 @@ mod test {
     fn disable_for_this_line_section_offset_start() {
         // Test framework file where error is exactly at section offset
         let source = "<script>\nconsole.log('hello');\n</script>";
-        let rope = Rope::from_str(source);
         let section_offset = 8; // At the \n after "<script>"
         let error_offset = 8; // Error exactly at section offset
-        let fix =
-            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+        let fix = super::disable_for_this_line("no-console", error_offset, section_offset, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -1181,8 +1129,7 @@ mod test {
     #[test]
     fn disable_for_this_line_with_shebang() {
         let source = "#!/usr/bin/env node\nconsole.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -1192,8 +1139,7 @@ mod test {
     #[test]
     fn disable_for_this_line_with_shebang_crlf() {
         let source = "#!/usr/bin/env node\r\nconsole.log('hello');";
-        let rope = Rope::from_str(source);
-        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -1204,10 +1150,9 @@ mod test {
     fn disable_for_this_line_merges_with_existing_ignore_comment_above() {
         let existing = "// oxlint-disable-next-line no-alert";
         let source = format!("{existing}\nconsole.log('hello');");
-        let rope = Rope::from_str(&source);
         let error_offset = source.find("console").unwrap() as u32;
 
-        let fix = super::disable_for_this_line("no-console", error_offset, 0, &rope, &source);
+        let fix = super::disable_for_this_line("no-console", error_offset, 0, &source);
 
         assert_eq!(fix.code, " no-console");
         assert_eq!(fix.range.start.line, 0);
@@ -1220,11 +1165,10 @@ mod test {
     fn disable_for_this_line_merges_with_inline_disable_line_comment() {
         let existing = "// oxlint-disable-line no-alert";
         let source = format!("console.log('hello'); {existing}");
-        let rope = Rope::from_str(&source);
         let error_offset = source.find("console").unwrap() as u32;
         let insert_offset = source.find(existing).unwrap() as u32 + existing.len() as u32;
 
-        let fix = super::disable_for_this_line("no-console", error_offset, 0, &rope, &source);
+        let fix = super::disable_for_this_line("no-console", error_offset, 0, &source);
 
         assert_eq!(fix.code, " no-console");
         assert_eq!(fix.range.start.line, 0);
@@ -1237,11 +1181,10 @@ mod test {
     fn disable_for_this_line_merges_inline_disable_line_before_description() {
         let existing = "// oxlint-disable-line no-alert -- reason";
         let source = format!("console.log('hello'); {existing}");
-        let rope = Rope::from_str(&source);
         let error_offset = source.find("console").unwrap() as u32;
         let insert_offset = source.find("--").unwrap() as u32;
 
-        let fix = super::disable_for_this_line("no-console", error_offset, 0, &rope, &source);
+        let fix = super::disable_for_this_line("no-console", error_offset, 0, &source);
 
         assert_eq!(fix.code, " no-console");
         assert_eq!(fix.range.start.line, 0);
@@ -1254,10 +1197,9 @@ mod test {
     fn disable_for_this_line_merges_before_description_suffix() {
         let existing = "// oxlint-disable-next-line no-alert -- description";
         let source = format!("{existing}\nconsole.log('hello');");
-        let rope = Rope::from_str(&source);
         let error_offset = source.find("console").unwrap() as u32;
 
-        let fix = super::disable_for_this_line("no-console", error_offset, 0, &rope, &source);
+        let fix = super::disable_for_this_line("no-console", error_offset, 0, &source);
 
         assert_eq!(fix.code, " no-console");
         assert_eq!(fix.range.start.line, 0);
@@ -1270,10 +1212,9 @@ mod test {
     fn disable_for_this_line_merges_before_single_dash_description_suffix() {
         let existing = "// oxlint-disable-next-line no-alert\t-\treason";
         let source = format!("{existing}\nconsole.log('hello');");
-        let rope = Rope::from_str(&source);
         let error_offset = source.find("console").unwrap() as u32;
 
-        let fix = super::disable_for_this_line("no-console", error_offset, 0, &rope, &source);
+        let fix = super::disable_for_this_line("no-console", error_offset, 0, &source);
 
         assert_eq!(fix.code, " no-console");
         assert_eq!(fix.range.start.line, 0);
@@ -1286,10 +1227,9 @@ mod test {
     fn disable_for_this_line_merges_before_double_dash_without_leading_space() {
         let existing = "// oxlint-disable-next-line no-alert-- reason";
         let source = format!("{existing}\nconsole.log('hello');");
-        let rope = Rope::from_str(&source);
         let error_offset = source.find("console").unwrap() as u32;
 
-        let fix = super::disable_for_this_line("no-console", error_offset, 0, &rope, &source);
+        let fix = super::disable_for_this_line("no-console", error_offset, 0, &source);
 
         assert_eq!(fix.code, " no-console");
         assert_eq!(fix.range.start.line, 0);
@@ -1302,10 +1242,9 @@ mod test {
     fn disable_for_this_line_merges_with_eslint_disable_comment_above() {
         let existing = "// eslint-disable-next-line no-alert";
         let source = format!("{existing}\nconsole.log('hello');");
-        let rope = Rope::from_str(&source);
         let error_offset = source.find("console").unwrap() as u32;
 
-        let fix = super::disable_for_this_line("no-console", error_offset, 0, &rope, &source);
+        let fix = super::disable_for_this_line("no-console", error_offset, 0, &source);
 
         assert_eq!(fix.code, " no-console");
         assert_eq!(fix.range.start.line, 0);
@@ -1318,10 +1257,9 @@ mod test {
     fn disable_for_this_section_merges_with_existing_ignore_comment_above() {
         let existing = "// oxlint-disable no-alert";
         let source = format!("{existing}\nconsole.log('hello');");
-        let rope = Rope::from_str(&source);
         let section_offset = source.find("console").unwrap() as u32;
 
-        let fix = super::disable_for_this_section("no-console", section_offset, &rope, &source);
+        let fix = super::disable_for_this_section("no-console", section_offset, &source);
 
         assert_eq!(fix.code, " no-console");
         assert_eq!(fix.range.start.line, 0);
@@ -1334,10 +1272,9 @@ mod test {
     fn disable_for_this_section_merges_with_eslint_disable_comment_above() {
         let existing = "// eslint-disable no-alert";
         let source = format!("{existing}\nconsole.log('hello');");
-        let rope = Rope::from_str(&source);
         let section_offset = source.find("console").unwrap() as u32;
 
-        let fix = super::disable_for_this_section("no-console", section_offset, &rope, &source);
+        let fix = super::disable_for_this_section("no-console", section_offset, &source);
 
         assert_eq!(fix.code, " no-console");
         assert_eq!(fix.range.start.line, 0);
@@ -1349,10 +1286,9 @@ mod test {
     #[test]
     fn disable_for_this_line_does_not_merge_with_non_disable_comment_above() {
         let source = "// this is not a disable comment\nconsole.log('hello');";
-        let rope = Rope::from_str(source);
         let error_offset = source.find("console").unwrap() as u32;
 
-        let fix = super::disable_for_this_line("no-console", error_offset, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", error_offset, 0, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
     }
@@ -1360,10 +1296,9 @@ mod test {
     #[test]
     fn disable_for_this_line_does_not_merge_with_lookalike_comment_above() {
         let source = "// oxlint-disable-next-line-foo no-alert\nconsole.log('hello');";
-        let rope = Rope::from_str(source);
         let error_offset = source.find("console").unwrap() as u32;
 
-        let fix = super::disable_for_this_line("no-console", error_offset, 0, &rope, source);
+        let fix = super::disable_for_this_line("no-console", error_offset, 0, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
     }
@@ -1371,16 +1306,15 @@ mod test {
     #[test]
     fn disable_for_this_section_does_not_merge_with_non_disable_comment_above() {
         let source = "// tslint:disable no-alert\nconsole.log('hello');";
-        let rope = Rope::from_str(source);
         let section_offset = source.find("console").unwrap() as u32;
 
-        let fix = super::disable_for_this_section("no-console", section_offset, &rope, source);
+        let fix = super::disable_for_this_section("no-console", section_offset, source);
 
         assert_eq!(fix.code, "\n// oxlint-disable no-console\n");
     }
 
     fn assert_position(source: &str, offset: u32, expected: (u32, u32)) {
-        let position = offset_to_position(&Rope::from_str(source), offset, source);
+        let position = offset_to_position(offset, source);
         assert_eq!(position.line, expected.0);
         assert_eq!(position.character, expected.1);
     }
