@@ -1651,7 +1651,7 @@ export interface DummyRuleMap {
   "vue/no-deprecated-model-definition"?: RuleNoConfig | [AllowWarnDeny, NoDeprecatedModelDefinitionConfig];
   "vue/no-deprecated-props-default-this"?: RuleNoConfig;
   "vue/no-deprecated-vue-config-keycodes"?: RuleNoConfig;
-  "vue/no-dupe-keys"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConfigElement0];
+  "vue/no-dupe-keys"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDupeKeysConfig];
   "vue/no-export-in-script-setup"?: RuleNoConfig;
   "vue/no-expose-after-await"?: RuleNoConfig;
   "vue/no-import-compiler-macros"?: RuleNoConfig;
@@ -6044,7 +6044,9 @@ export interface NoDeprecatedModelDefinitionConfig {
    */
   allowVue3Compat?: boolean;
 }
-export interface ConfigElement0 {}
+export interface NoDupeKeysConfig {
+  groups?: string[];
+}
 export interface NoReservedComponentNames {
   /**
    * Disallow Vue 3 built-in component names (e.g. `Teleport`, `Suspense`).

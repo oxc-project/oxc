@@ -5,12 +5,13 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpressionElement, Expression, ImportDeclarationSpecifier, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, PropertyKind, Statement, TSSignature,
+        ArrayExpressionElement, Expression, ObjectExpression, ObjectPropertyKind, PropertyKind,
+        Statement, TSSignature,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -18,7 +19,7 @@ use crate::{
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::Rule,
-    utils::{find_property, for_each_define_props_type_signature, is_vue_component_options_object},
+    utils::{for_each_define_props_type_signature, is_vue_component_options_object},
 };
 
 fn duplicate_key_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
@@ -102,10 +103,18 @@ impl Rule for NoDupeKeys {
             return;
         }
         let extra_groups = &self.0.groups;
-        let mut seen: Vec<(&str, Span)> = Vec::new();
-        for group in GROUP_NAMES.iter().copied().chain(extra_groups.iter().map(String::as_str)) {
-            let Some(group_prop) = find_property(obj, group) else { continue };
-            collect_group_keys(&group_prop.value, &mut seen, ctx);
+        // dedup: user-supplied group names may overlap with built-in names
+        let groups: FxHashSet<&str> =
+            GROUP_NAMES.iter().copied().chain(extra_groups.iter().map(String::as_str)).collect();
+        let mut seen: FxHashSet<String> = FxHashSet::default();
+        // Walk all properties in source order so duplicate group names are both visited
+        for prop_kind in &obj.properties {
+            let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
+            let Some(group_name) = prop.key.static_name() else { continue };
+            if !groups.contains(group_name.as_ref()) {
+                continue;
+            }
+            collect_group_keys(&prop.value, &mut seen, ctx);
         }
     }
 
@@ -113,61 +122,44 @@ impl Rule for NoDupeKeys {
         if ctx.frameworks_options() != FrameworkOptions::VueSetup {
             return;
         }
-        let Some(define_props_node) = find_define_props_call(ctx) else { return };
-        let props = collect_prop_names_from_call(define_props_node, ctx);
+        let Some(define_props_call) = find_define_props_call(ctx) else { return };
+        let props = collect_prop_names_from_call(define_props_call, ctx);
         if props.is_empty() {
             return;
         }
-        let renamed = collect_renamed_props(define_props_node, ctx);
+        let renamed = collect_renamed_props(define_props_call, ctx);
+        // Obtain the symbol bound to `const xxx = defineProps(...)` once for O(1) span checks
+        let props_symbol_id = find_props_symbol_id(define_props_call, ctx);
+        let root_scope_id = ctx.scoping().root_scope_id();
 
-        for node in ctx.nodes() {
-            if !is_script_setup_top_level(node.id(), ctx) {
+        for (prop_name, _) in &props {
+            if renamed.contains(prop_name.as_str()) {
                 continue;
             }
-            match node.kind() {
-                AstKind::VariableDeclarator(decl) => {
-                    if decl
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| is_define_props_initializer(init, define_props_node))
-                    {
+            // Only look in the module (root) scope — nested function/block bindings are invisible
+            let Some(symbol_id) =
+                ctx.scoping().get_binding(root_scope_id, prop_name.as_str().into())
+            else {
+                continue;
+            };
+            let decl = ctx.semantic().symbol_declaration(symbol_id);
+            let span = match decl.kind() {
+                AstKind::VariableDeclarator(d) => {
+                    if d.init.as_ref().is_some_and(|init| {
+                        // Initialised directly from defineProps / withDefaults(defineProps(...))
+                        is_define_props_initializer(init, define_props_call)
+                            // Initialiser references the props object (e.g. computed(() => props.foo))
+                            || props_symbol_id.is_some_and(|sid| {
+                                is_inside_props_reference(init, sid, ctx)
+                            })
+                    }) {
                         continue;
                     }
-                    if decl
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| is_props_access(init, define_props_node, ctx))
-                    {
-                        continue;
-                    }
-                    let Some(bound_name) = bound_name_of_declarator(decl) else { continue };
-                    check_prop_duplicate(bound_name, decl.id.span(), &props, &renamed, ctx);
+                    d.id.span()
                 }
-                AstKind::Function(func)
-                    if func.r#type == oxc_ast::ast::FunctionType::FunctionDeclaration =>
-                {
-                    let Some(id) = &func.id else { continue };
-                    check_prop_duplicate(id.name.as_str(), id.span, &props, &renamed, ctx);
-                }
-                AstKind::ImportDeclaration(import) => {
-                    let Some(specifiers) = &import.specifiers else { continue };
-                    for specifier in specifiers {
-                        let (name, span) = match specifier {
-                            ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
-                                (s.local.name.as_str(), s.local.span)
-                            }
-                            ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
-                                (s.local.name.as_str(), s.local.span)
-                            }
-                            ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                                (s.local.name.as_str(), s.local.span)
-                            }
-                        };
-                        check_prop_duplicate(name, span, &props, &renamed, ctx);
-                    }
-                }
-                _ => {}
-            }
+                _ => decl.kind().span(),
+            };
+            ctx.diagnostic(duplicate_key_diagnostic(span, prop_name));
         }
     }
 }
@@ -176,7 +168,7 @@ const GROUP_NAMES: &[&str] = &["props", "computed", "data", "methods", "setup"];
 
 fn collect_group_keys<'a>(
     value: &'a Expression<'a>,
-    seen: &mut Vec<(&'a str, Span)>,
+    seen: &mut FxHashSet<String>,
     ctx: &LintContext<'a>,
 ) {
     match value {
@@ -194,7 +186,9 @@ fn collect_group_keys<'a>(
             if let Some(body) = &func.body {
                 for stmt in &body.statements {
                     if let Statement::ReturnStatement(ret) = stmt
-                        && let Some(Expression::ObjectExpression(ret_obj)) = &ret.argument
+                        && let Some(ret_expr) = &ret.argument
+                        && let Expression::ObjectExpression(ret_obj) =
+                            ret_expr.get_inner_expression()
                     {
                         collect_object_keys(ret_obj, seen, ctx);
                     }
@@ -211,7 +205,9 @@ fn collect_group_keys<'a>(
             } else {
                 for stmt in &arrow.body.statements {
                     if let Statement::ReturnStatement(ret) = stmt
-                        && let Some(Expression::ObjectExpression(ret_obj)) = &ret.argument
+                        && let Some(ret_expr) = &ret.argument
+                        && let Expression::ObjectExpression(ret_obj) =
+                            ret_expr.get_inner_expression()
                     {
                         collect_object_keys(ret_obj, seen, ctx);
                     }
@@ -224,98 +220,87 @@ fn collect_group_keys<'a>(
 
 fn collect_object_keys<'a>(
     obj: &'a ObjectExpression<'a>,
-    seen: &mut Vec<(&'a str, Span)>,
+    seen: &mut FxHashSet<String>,
     ctx: &LintContext<'a>,
 ) {
-    let getter_names: Vec<&str> = obj
+    let getter_names: FxHashSet<String> = obj
         .properties
         .iter()
         .filter_map(|p| {
             let ObjectPropertyKind::ObjectProperty(prop) = p else { return None };
-            if prop.kind == PropertyKind::Get { static_key_name(&prop.key) } else { None }
+            if prop.kind == PropertyKind::Get {
+                prop.key.static_name().map(std::borrow::Cow::into_owned)
+            } else {
+                None
+            }
         })
         .collect();
 
-    let mut used_getters: Vec<&str> = Vec::new();
+    let mut used_getters: FxHashSet<String> = FxHashSet::default();
 
     for prop_kind in &obj.properties {
         let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
-        let Some(name) = static_key_name(&prop.key) else { continue };
+        let Some(name) = prop.key.static_name() else { continue };
+        let name_str = name.as_ref();
 
         if prop.kind == PropertyKind::Set
-            && let Some(&getter) = getter_names.iter().find(|&&g| g == name)
-            && !used_getters.contains(&getter)
+            && getter_names.contains(name_str)
+            && !used_getters.contains(name_str)
         {
-            used_getters.push(getter);
+            used_getters.insert(name_str.to_string());
             continue;
         }
 
-        report_or_add(name, prop.key.span(), seen, ctx);
+        report_or_add(name_str, prop.key.span(), seen, ctx);
     }
 }
 
-fn report_or_add<'a>(
-    name: &'a str,
-    span: Span,
-    seen: &mut Vec<(&'a str, Span)>,
-    ctx: &LintContext,
-) {
-    if seen.iter().any(|(n, _)| *n == name) {
+fn report_or_add(name: &str, span: Span, seen: &mut FxHashSet<String>, ctx: &LintContext) {
+    if !seen.insert(name.to_string()) {
         ctx.diagnostic(duplicate_key_diagnostic(span, name));
-    } else {
-        seen.push((name, span));
-    }
-}
-
-fn static_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<&'a str> {
-    match key {
-        PropertyKey::StaticIdentifier(id) => Some(id.name.as_str()),
-        PropertyKey::StringLiteral(s) => Some(s.value.as_str()),
-        _ => None,
     }
 }
 
 // ---- script setup helpers ----
-
-/// True when the node is at the top level of a `<script setup>` block
-/// (i.e., not nested inside a function body).
-fn is_script_setup_top_level(node_id: oxc_semantic::NodeId, ctx: &LintContext) -> bool {
-    for ancestor in ctx.nodes().ancestors(node_id).skip(1) {
-        match ancestor.kind() {
-            AstKind::Program(_) => return true,
-            AstKind::FunctionBody(_) => return false,
-            _ => {}
-        }
-    }
-    true
-}
-
-fn check_prop_duplicate(
-    name: &str,
-    span: Span,
-    props: &[(String, Span)],
-    renamed: &FxHashSet<String>,
-    ctx: &LintContext,
-) {
-    if renamed.contains(name) {
-        return;
-    }
-    if props.iter().any(|(p, _)| p.as_str() == name) {
-        ctx.diagnostic(duplicate_key_diagnostic(span, name));
-    }
-}
 
 fn find_define_props_call<'a>(
     ctx: &LintContext<'a>,
 ) -> Option<&'a oxc_ast::ast::CallExpression<'a>> {
     for node in ctx.nodes() {
         if let AstKind::CallExpression(call) = node.kind()
+            && matches!(call.callee, Expression::Identifier(_))
             && call.callee_name() == Some("defineProps")
         {
             return Some(call);
         }
     }
     None
+}
+
+/// Find the `SymbolId` of the variable bound to `const xxx = defineProps(...)`.
+fn find_props_symbol_id(
+    call: &oxc_ast::ast::CallExpression,
+    ctx: &LintContext,
+) -> Option<SymbolId> {
+    for node in ctx.nodes() {
+        let AstKind::VariableDeclarator(decl) = node.kind() else { continue };
+        if !decl.init.as_ref().is_some_and(|init| is_define_props_initializer(init, call)) {
+            continue;
+        }
+        if let oxc_ast::ast::BindingPattern::BindingIdentifier(id) = &decl.id {
+            return id.symbol_id.get();
+        }
+    }
+    None
+}
+
+/// True if any reference to `symbol_id` falls within `init`'s span.
+fn is_inside_props_reference(init: &Expression, symbol_id: SymbolId, ctx: &LintContext) -> bool {
+    let init_span = init.span();
+    ctx.semantic().symbol_references(symbol_id).any(|reference| {
+        let ref_span = ctx.nodes().get_node(reference.node_id()).kind().span();
+        init_span.start <= ref_span.start && ref_span.end <= init_span.end
+    })
 }
 
 /// Collects (prop_name, span) pairs from a `defineProps(...)` call.
@@ -330,9 +315,9 @@ fn collect_prop_names_from_call<'a>(
             Expression::ObjectExpression(obj) => {
                 for prop_kind in &obj.properties {
                     if let ObjectPropertyKind::ObjectProperty(p) = prop_kind
-                        && let Some(name) = static_key_name(&p.key)
+                        && let Some(name) = p.key.static_name()
                     {
-                        props.push((name.to_string(), p.key.span()));
+                        props.push((name.into_owned(), p.key.span()));
                     }
                 }
             }
@@ -371,6 +356,7 @@ fn collect_ts_type_prop_names<'a>(
 }
 
 /// Prop names that are renamed in `const { foo: bar } = defineProps(...)` — `foo` is renamed.
+/// withDefaults wrapping is also handled so `const { foo: bar } = withDefaults(defineProps<...>(), ...)` works.
 fn collect_renamed_props(
     call: &oxc_ast::ast::CallExpression,
     ctx: &LintContext,
@@ -378,7 +364,7 @@ fn collect_renamed_props(
     let mut renamed = FxHashSet::default();
     for node in ctx.nodes() {
         let AstKind::VariableDeclarator(decl) = node.kind() else { continue };
-        if !decl.init.as_ref().is_some_and(|init| is_exact_define_props(init, call)) {
+        if !decl.init.as_ref().is_some_and(|init| is_define_props_initializer(init, call)) {
             continue;
         }
         if let oxc_ast::ast::BindingPattern::ObjectPattern(pat) = &decl.id {
@@ -395,14 +381,6 @@ fn collect_renamed_props(
     renamed
 }
 
-fn bound_name_of_declarator<'a>(decl: &'a oxc_ast::ast::VariableDeclarator<'a>) -> Option<&'a str> {
-    if let oxc_ast::ast::BindingPattern::BindingIdentifier(id) = &decl.id {
-        Some(id.name.as_str())
-    } else {
-        None
-    }
-}
-
 fn is_define_props_initializer<'a>(
     init: &'a Expression<'a>,
     call: &'a oxc_ast::ast::CallExpression<'a>,
@@ -410,7 +388,8 @@ fn is_define_props_initializer<'a>(
     match init {
         Expression::CallExpression(c) => {
             std::ptr::eq(c.as_ref(), call)
-                || (c.callee_name() == Some("withDefaults")
+                || (matches!(c.callee, Expression::Identifier(_))
+                    && c.callee_name() == Some("withDefaults")
                     && c.arguments
                         .first()
                         .and_then(|a| a.as_expression())
@@ -418,58 +397,6 @@ fn is_define_props_initializer<'a>(
         }
         _ => false,
     }
-}
-
-fn is_exact_define_props<'a>(
-    init: &'a Expression<'a>,
-    call: &'a oxc_ast::ast::CallExpression<'a>,
-) -> bool {
-    matches!(init, Expression::CallExpression(c) if std::ptr::eq(c.as_ref(), call))
-}
-
-fn is_props_access<'a>(
-    init: &'a Expression<'a>,
-    define_props_call: &'a oxc_ast::ast::CallExpression<'a>,
-    ctx: &LintContext<'a>,
-) -> bool {
-    let props_var_name = find_props_variable_name(define_props_call, ctx);
-    match init {
-        Expression::StaticMemberExpression(m) => {
-            is_props_identifier(&m.object, props_var_name.as_deref())
-        }
-        Expression::ComputedMemberExpression(m) => {
-            is_props_identifier(&m.object, props_var_name.as_deref())
-        }
-        Expression::CallExpression(c) => {
-            matches!(c.callee_name(), Some("toRefs" | "toRef"))
-                && c.arguments
-                    .first()
-                    .and_then(|a| a.as_expression())
-                    .is_some_and(|a| is_props_identifier(a, props_var_name.as_deref()))
-        }
-        _ => false,
-    }
-}
-
-fn find_props_variable_name(
-    call: &oxc_ast::ast::CallExpression,
-    ctx: &LintContext,
-) -> Option<String> {
-    for node in ctx.nodes() {
-        let AstKind::VariableDeclarator(decl) = node.kind() else { continue };
-        if !decl.init.as_ref().is_some_and(|i| is_define_props_initializer(i, call)) {
-            continue;
-        }
-        if let Some(name) = bound_name_of_declarator(decl) {
-            return Some(name.to_string());
-        }
-    }
-    None
-}
-
-fn is_props_identifier(expr: &Expression, props_name: Option<&str>) -> bool {
-    let Some(name) = props_name else { return false };
-    matches!(expr, Expression::Identifier(id) if id.name.as_str() == name)
 }
 
 #[test]
@@ -1028,6 +955,84 @@ const bar = 'hello'
         ),
         // External import types (import { Props } from './x') require cross-file TS type
         // resolution which is not supported; skipping this case.
+
+        // fix-2a: nested function's binding is not in root scope — no false positive
+        (
+            r"
+<script setup>
+defineProps({foo: String})
+function outer() {
+  function foo() {}
+}
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // fix-2b: block-scoped const is not in root scope — no false positive
+        (
+            r"
+<script setup>
+defineProps(['foo'])
+{
+  const foo = 1
+}
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // fix-1: built-in group name in groups option must not double-report
+        (
+            r"
+<script>
+export default {
+  props: ['foo', 'bar']
+}
+</script>
+",
+            Some(serde_json::json!([{ "groups": ["props"] }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // fix-3: initializer that references the props variable should be skipped
+        (
+            r"
+<script setup>
+const props = defineProps(['foo'])
+const foo = computed(() => props.foo)
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // fix-4: withDefaults wrapping defineProps — rename collected correctly
+        (
+            r#"
+<script setup lang="ts">
+const { foo: renamedFoo } = withDefaults(defineProps<{foo?: string}>(), {foo: 'x'})
+const foo = 1
+</script>
+"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // fix-5: member-expression callee (utils.defineProps) must not be treated as defineProps
+        (
+            r"
+<script setup>
+const p = utils.defineProps({ foo: String })
+const foo = 1
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
@@ -1487,6 +1492,74 @@ const bar = 'bar'
         ),
         // External import type case (import { Props1 as Props } from './test01') requires
         // cross-file TS type resolution which is not supported; skipping this case.
+
+        // fix-7a: class declaration at root scope conflicts with prop name
+        (
+            r"
+<script setup>
+defineProps({ Foo: String })
+class Foo {}
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // fix-7b: destructuring binding at root scope conflicts with prop name
+        (
+            r"
+<script setup>
+defineProps({ foo: String })
+const { foo } = useSomething()
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // fix-6: duplicate group name (second data) — second occurrence must be reported
+        (
+            r"
+<script>
+export default {
+  props: ['foo'],
+  data () { return {} },
+  data () { return { foo: 1 } }
+}
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // fix-8a: return value wrapped in parens should still be detected
+        (
+            r"
+<script>
+export default {
+  props: ['foo'],
+  data () { return ({ foo: null }) }
+}
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // fix-8b: numeric property key
+        (
+            r"
+<script>
+export default {
+  props: { 1: String },
+  data () { return { 1: 'x' } }
+}
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     Tester::new(NoDupeKeys::NAME, NoDupeKeys::PLUGIN, pass, fail).test_and_snapshot();
