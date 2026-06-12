@@ -144,6 +144,19 @@ impl ExternalPluginStore {
         (&plugin.name, &external_rule.name)
     }
 
+    pub fn resolve_rule_config(
+        &self,
+        external_rule_id: ExternalRuleId,
+        options_id: ExternalOptionsId,
+    ) -> (/* plugin name */ &str, /* rule name */ &str, &SmallVec<[serde_json::Value; 1]>) {
+        let (plugin_name, rule_name) = self.resolve_plugin_rule_names(external_rule_id);
+        let (options_rule_id, options) = &self.options[options_id];
+        debug_assert!(
+            *options_rule_id == ExternalRuleId::DUMMY || *options_rule_id == external_rule_id
+        );
+        (plugin_name, rule_name, options)
+    }
+
     /// Add options to the store and return its [`ExternalOptionsId`].
     /// If `options` is empty, returns [`ExternalOptionsId::NONE`] without adding to the store.
     pub fn add_options(

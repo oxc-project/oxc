@@ -1,0 +1,10 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "jsPlugins": ["./plugin.ts"],
+  "rules": {
+    "no-debugger": "warn",
+    "print-config-plugin/with-options": ["error", { "mode": "strict" }]
+  }
+}

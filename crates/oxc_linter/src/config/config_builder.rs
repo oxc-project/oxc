@@ -559,7 +559,11 @@ impl ConfigStoreBuilder {
 
     /// # Panics
     /// This function will panic if the `oxlintrc` is not valid JSON.
-    pub fn resolve_final_config_file(&self, oxlintrc: Oxlintrc) -> String {
+    pub fn resolve_final_config_file(
+        &self,
+        oxlintrc: Oxlintrc,
+        external_plugin_store: &ExternalPluginStore,
+    ) -> String {
         let mut oxlintrc = oxlintrc;
         let previous_rules = std::mem::take(&mut oxlintrc.rules);
 
@@ -569,7 +573,7 @@ impl ConfigStoreBuilder {
             .map(|r| (get_name(&r.plugin_name, &r.rule_name), r))
             .collect::<rustc_hash::FxHashMap<_, _>>();
 
-        let new_rules = self
+        let mut new_rules = self
             .rules
             .iter()
             .sorted_unstable_by_key(|(r, _)| (r.plugin_name(), r.name()))
@@ -582,7 +586,23 @@ impl ConfigStoreBuilder {
                     .map(|r| r.config.clone())
                     .unwrap_or_default(),
             })
-            .collect();
+            .collect::<Vec<_>>();
+
+        new_rules.extend(self.external_rules.iter().map(
+            |(external_rule_id, (options_id, severity))| {
+                let (plugin_name, rule_name, config) =
+                    external_plugin_store.resolve_rule_config(*external_rule_id, *options_id);
+                ESLintRule {
+                    plugin_name: plugin_name.to_string(),
+                    rule_name: rule_name.to_string(),
+                    severity: *severity,
+                    config: config.clone(),
+                }
+            },
+        ));
+        new_rules.sort_unstable_by(|a, b| {
+            a.plugin_name.cmp(&b.plugin_name).then_with(|| a.rule_name.cmp(&b.rule_name))
+        });
 
         oxlintrc.plugins = Some(self.config.plugins);
         oxlintrc.settings.clone_from(&self.config.settings);
@@ -1682,6 +1702,43 @@ mod test {
         let err = builder.build(&mut external_plugin_store).unwrap_err();
 
         assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
+    }
+
+    #[test]
+    fn test_print_config_includes_external_rules() {
+        let mut external_plugin_store = ExternalPluginStore::default();
+        external_plugin_store.register_plugin(
+            PathBuf::from("path/to/custom-plugin"),
+            "custom".to_string(),
+            0,
+            vec!["my-rule".to_string()],
+        );
+
+        let rule_id = external_plugin_store.lookup_rule_id("custom", "my-rule").unwrap();
+        let options = smallvec::smallvec![serde_json::json!({ "mode": "strict" })];
+        let options_id = external_plugin_store.add_options(rule_id, &options);
+
+        let mut builder = ConfigStoreBuilder::empty();
+        builder.external_rules.insert(rule_id, (options_id, AllowWarnDeny::Deny));
+
+        let oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "jsPlugins": ["./plugin.ts"],
+                "rules": {
+                    "custom/my-rule": "warn"
+                }
+            }
+            "#,
+        )
+        .unwrap();
+        let config_file = builder.resolve_final_config_file(oxlintrc, &external_plugin_store);
+        let config: serde_json::Value = serde_json::from_str(&config_file).unwrap();
+
+        assert_eq!(
+            config["rules"]["custom/my-rule"],
+            serde_json::json!(["deny", [{ "mode": "strict" }]])
+        );
     }
 
     fn config_store_from_path(path: &str) -> Config {

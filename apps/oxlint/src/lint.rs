@@ -313,7 +313,12 @@ impl CliRunner {
         .with_filters(&filters);
 
         if misc_options.print_config {
-            return crate::mode::run_print_config(&config_builder, root_config, stdout);
+            return crate::mode::run_print_config(
+                &config_builder,
+                root_config,
+                &external_plugin_store,
+                stdout,
+            );
         }
 
         let lint_config = match config_builder.build(&mut external_plugin_store) {
