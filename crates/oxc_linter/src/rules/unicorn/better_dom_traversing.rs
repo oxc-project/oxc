@@ -128,7 +128,7 @@ fn check_child_nodes_index<'a>(
     if !value.is_finite() || value < 0.0 || value.fract() != 0.0 {
         return;
     }
-    #[expect(clippy::cast_sign_loss)]
+    #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     let index = value as u32;
 
     // The object must be a non-optional STATIC member expression
@@ -429,45 +429,41 @@ fn gather_query_selector_chain<'a>(
         selectors.push(selector_value.to_string());
 
         // Detect quote from the outermost call's argument
-        if selectors.len() == 1 {
-            if let Expression::StringLiteral(lit) = arg {
-                if lit.raw.is_some_and(|r| r.starts_with('"')) {
-                    quote = '"';
-                }
-            }
+        if selectors.len() == 1
+            && let Expression::StringLiteral(lit) = arg
+            && lit.raw.is_some_and(|r| r.starts_with('"'))
+        {
+            quote = '"';
         }
 
         // Move to the object of the member expression
         let next = callee_member.object();
-        match next {
-            Expression::CallExpression(next_call) => {
-                last_root = Some(callee_member.object());
-                current = next_call;
+        if let Expression::CallExpression(next_call) = next {
+            last_root = Some(callee_member.object());
+            current = next_call;
+        } else {
+            // Reached a non-call root
+            if selectors.len() < 2 {
+                return None;
             }
-            _ => {
-                // Reached a non-call root
-                if selectors.len() < 2 {
-                    return None;
-                }
 
-                if is_node_value_not_dom_node(next) {
-                    return None;
-                }
-
-                if matches!(next, Expression::ChainExpression(_)) {
-                    return None;
-                }
-
-                let start = next.span().start;
-                let end = call_expr.span.end;
-
-                return Some(QuerySelectorChainData {
-                    root: next,
-                    selectors,
-                    quote,
-                    span: Span::new(start, end),
-                });
+            if is_node_value_not_dom_node(next) {
+                return None;
             }
+
+            if matches!(next, Expression::ChainExpression(_)) {
+                return None;
+            }
+
+            let start = next.span().start;
+            let end = call_expr.span.end;
+
+            return Some(QuerySelectorChainData {
+                root: next,
+                selectors,
+                quote,
+                span: Span::new(start, end),
+            });
         }
     }
 
@@ -480,10 +476,10 @@ fn gather_query_selector_chain<'a>(
     if current.optional {
         return None;
     }
-    if let Some(callee) = current.callee.as_member_expression() {
-        if callee.optional() {
-            return None;
-        }
+    if let Some(callee) = current.callee.as_member_expression()
+        && callee.optional()
+    {
+        return None;
     }
 
     // The root is the callee.object of the innermost successfully collected call
