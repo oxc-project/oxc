@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     rules::ContextHost,
-    utils::{SetStateInFunctionConfig, is_es5_component, is_es6_component},
+    utils::{AllowedOrDisallowInFunc, is_es5_component, is_es6_component},
 };
 
 fn no_will_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -20,7 +20,7 @@ fn no_will_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct NoWillUpdateSetState(SetStateInFunctionConfig);
+pub struct NoWillUpdateSetState(AllowedOrDisallowInFunc);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -62,7 +62,7 @@ declare_oxc_lint!(
     NoWillUpdateSetState,
     react,
     correctness,
-    config = SetStateInFunctionConfig,
+    config = AllowedOrDisallowInFunc,
     version = "1.37.0",
 );
 
@@ -145,7 +145,7 @@ impl Rule for NoWillUpdateSetState {
 
         let in_nested_function = function_count > 1;
 
-        if in_nested_function && !matches!(self.0, SetStateInFunctionConfig::DisallowInFunc) {
+        if in_nested_function && !matches!(self.0, AllowedOrDisallowInFunc::DisallowInFunc) {
             return;
         }
 

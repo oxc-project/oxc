@@ -8,7 +8,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{SetStateInFunctionConfig, is_es5_component, is_es6_component},
+    utils::{AllowedOrDisallowInFunc, is_es5_component, is_es6_component},
 };
 
 fn no_did_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -18,7 +18,7 @@ fn no_did_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct NoDidUpdateSetState(SetStateInFunctionConfig);
+pub struct NoDidUpdateSetState(AllowedOrDisallowInFunc);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -74,7 +74,7 @@ declare_oxc_lint!(
     NoDidUpdateSetState,
     react,
     correctness,
-    config = SetStateInFunctionConfig,
+    config = AllowedOrDisallowInFunc,
     version = "1.62.0"
 );
 
@@ -143,7 +143,7 @@ impl Rule for NoDidUpdateSetState {
 
         let in_nested_function = function_count_before_component_did_update > 1;
 
-        if in_nested_function && !matches!(self.0, SetStateInFunctionConfig::DisallowInFunc) {
+        if in_nested_function && !matches!(self.0, AllowedOrDisallowInFunc::DisallowInFunc) {
             return;
         }
 

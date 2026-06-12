@@ -558,6 +558,13 @@ expression: json
         }
       ]
     },
+    "AllowedOrDisallowInFunc": {
+      "type": "string",
+      "enum": [
+        "allowed",
+        "disallow-in-func"
+      ]
+    },
     "AlwaysNever": {
       "type": "string",
       "enum": [
@@ -5941,7 +5948,7 @@ expression: json
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/SetStateInFunctionConfig"
+                  "$ref": "#/definitions/AllowedOrDisallowInFunc"
                 }
               ],
               "maxItems": 2,
@@ -5961,7 +5968,7 @@ expression: json
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/SetStateInFunctionConfig"
+                  "$ref": "#/definitions/AllowedOrDisallowInFunc"
                 }
               ],
               "maxItems": 2,
@@ -6114,7 +6121,7 @@ expression: json
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/SetStateInFunctionConfig"
+                  "$ref": "#/definitions/AllowedOrDisallowInFunc"
                 }
               ],
               "maxItems": 2,
@@ -15784,28 +15791,6 @@ expression: json
         }
       },
       "additionalProperties": false
-    },
-    "SetStateInFunctionConfig": {
-      "description": "Configures whether React `setState` calls are allowed in nested functions inside the lifecycle\nmethod checked by the rule.",
-      "oneOf": [
-        {
-          "description": "Allow `setState` calls in nested functions, the default behavior.",
-          "type": "string",
-          "enum": [
-            "allowed"
-          ],
-          "markdownDescription": "Allow `setState` calls in nested functions, the default behavior."
-        },
-        {
-          "description": "Disallow `setState` calls even when they are inside nested functions.",
-          "type": "string",
-          "enum": [
-            "disallow-in-func"
-          ],
-          "markdownDescription": "Disallow `setState` calls even when they are inside nested functions."
-        }
-      ],
-      "markdownDescription": "Configures whether React `setState` calls are allowed in nested functions inside the lifecycle\nmethod checked by the rule."
     },
     "ShorthandType": {
       "type": "string",
