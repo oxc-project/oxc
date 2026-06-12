@@ -55,7 +55,7 @@ impl AllowType {
 pub struct JsxFilenameExtension(Box<JsxFilenameExtensionConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxFilenameExtensionConfig {
     /// When to allow a JSX filename extension. By default all files may have a JSX extension.
     /// Set this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.

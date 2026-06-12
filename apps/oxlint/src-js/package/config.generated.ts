@@ -176,6 +176,7 @@ export type ForbidItem2 =
       message?: string;
     };
 export type EnforceBooleanAttribute = "always" | "never";
+export type AllowType = "always" | "as-needed";
 export type FragmentMode = "syntax" | "element";
 export type IgnoreEnforceOption = "ignore" | "enforce";
 export type NoDidMountSetStateConfig = "allowed" | "disallow-in-func";
@@ -1202,7 +1203,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, EnforceBooleanAttribute]
     | [AllowWarnDeny, EnforceBooleanAttribute, JsxBooleanValueOptions];
   "react/jsx-curly-brace-presence"?: DummyRule;
-  "react/jsx-filename-extension"?: DummyRule;
+  "react/jsx-filename-extension"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxFilenameExtensionConfig];
   "react/jsx-fragments"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, FragmentMode];
   "react/jsx-handler-names"?: DummyRule;
   "react/jsx-key"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxKeyConfig];
@@ -4151,6 +4152,22 @@ export interface JsxBooleanValueOptions {
    * Only necessary when main mode is `"always"`.
    */
   never?: string[];
+}
+export interface JsxFilenameExtensionConfig {
+  /**
+   * When to allow a JSX filename extension. By default all files may have a JSX extension.
+   * Set this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.
+   */
+  allow?: AllowType;
+  /**
+   * The set of allowed file extensions.
+   * Can include or exclude the leading dot (e.g., "jsx" and ".jsx" are both valid).
+   */
+  extensions?: string[];
+  /**
+   * If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected.
+   */
+  ignoreFilesWithoutCode?: boolean;
 }
 export interface JsxKeyConfig {
   /**
