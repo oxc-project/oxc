@@ -1,0 +1,228 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(better-dom-traversing): Prefer `.firstChild` over `.childNodes[0]`.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.childNodes[0];
+   · ─────────────────────
+   ╰────
+  help: Replace `.childNodes[0]` with `.firstChild`.
+
+  ⚠ unicorn(better-dom-traversing): Prefer `.firstElementChild` over `.children[0]`.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.children[0];
+   · ───────────────────
+   ╰────
+  help: Replace `.children[0]` with `.firstElementChild`.
+
+  ⚠ unicorn(better-dom-traversing): Prefer `.querySelector()` over positional child traversal.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.children[1];
+   · ───────────────────
+   ╰────
+  help: Use `.querySelector()` with a CSS selector to access the child element.
+
+  ⚠ unicorn(better-dom-traversing): Prefer `.querySelector()` over positional child traversal.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.children[10];
+   · ────────────────────
+   ╰────
+  help: Use `.querySelector()` with a CSS selector to access the child element.
+
+  ⚠ unicorn(better-dom-traversing): Prefer `.querySelector()` over positional child traversal.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.children[1].children[2];
+   · ───────────────────────────────
+   ╰────
+  help: Use `.querySelector()` with a CSS selector to access the child element.
+
+  ⚠ unicorn(better-dom-traversing): Prefer `.closest()` over chaining `.parentElement`.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.parentElement.parentElement;
+   · ───────────────────────────────────
+   ╰────
+  help: Use `.closest(selector)` to find an ancestor element instead of chaining `.parentElement` calls.
+
+  ⚠ unicorn(better-dom-traversing): Prefer `.closest()` over chaining `.parentElement`.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.parentElement.parentElement.parentElement;
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Use `.closest(selector)` to find an ancestor element instead of chaining `.parentElement` calls.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector("a").querySelector("b");
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ document.querySelector("a").querySelector("b");
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ document.body.querySelector("a").querySelector("b");
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector('a').querySelector('b');
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector(`a`).querySelector(`b`);
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector("a").querySelector(`b`);
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector("a > b").querySelector(".c");
+   · ──────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector(".a, .b").querySelector(".c");
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector(".a").querySelector(".b, .c");
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector(":scope a").querySelector("b");
+   · ────────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector("a").querySelector("b").querySelector("c");
+   · ────────────────────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector("a").querySelector("b").querySelector(selector);
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector(selector).querySelector("b").querySelector("c");
+   · ─────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ (getElement()).querySelector("a").querySelector("b");
+   · ────────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ (foo || bar).querySelector("a").querySelector("b");
+   · ──────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector("a").querySelector("b")?.querySelector("c");
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector("a").querySelector("b")?.foo;
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector("a").querySelector("b").foo?.querySelector("c");
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ (element?.querySelector("a")).querySelector("b").querySelector("c");
+   · ───────────────────────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer `.firstChild` over `.childNodes[0]`.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.childNodes[/* comment */ 0];
+   · ───────────────────────────────────
+   ╰────
+  help: Replace `.childNodes[0]` with `.firstChild`.
+
+  ⚠ unicorn(better-dom-traversing): Prefer `.firstElementChild` over `.children[0]`.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.children[/* comment */ 0];
+   · ─────────────────────────────────
+   ╰────
+  help: Replace `.children[0]` with `.firstElementChild`.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector(/* comment */ "a").querySelector("b");
+   · ───────────────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:1]
+ 1 │ element.querySelector("a").querySelector(/* comment */ "b");
+   · ───────────────────────────────────────────────────────────
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
+
+  ⚠ unicorn(better-dom-traversing): Prefer `.firstElementChild` over `.children[0]`.
+   ╭─[better_dom_traversing.tsx:1:14]
+ 1 │ ╭─▶ const item = element
+ 2 │ ╰─▶                 .children[0];
+   ╰────
+  help: Replace `.children[0]` with `.firstElementChild`.
+
+  ⚠ unicorn(better-dom-traversing): Prefer merging chained `.querySelector()` calls.
+   ╭─[better_dom_traversing.tsx:1:14]
+ 1 │ ╭─▶ const item = element
+ 2 │ │                   .querySelector("a")
+ 3 │ ╰─▶                 .querySelector("b");
+   ╰────
+  help: Combine the selectors into a single `.querySelector()` call.
