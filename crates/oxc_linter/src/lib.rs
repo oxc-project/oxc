@@ -269,6 +269,7 @@ pub struct Linter {
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
     workspace_uri: Option<Box<str>>,
+    cwd: Option<Box<Path>>,
 }
 
 impl Linter {
@@ -277,13 +278,23 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter, workspace_uri: None }
+        Self { options, config, external_linter, workspace_uri: None, cwd: None }
     }
 
     #[must_use]
     pub fn with_workspace_uri(mut self, workspace_uri: Option<&str>) -> Self {
         self.workspace_uri = workspace_uri.map(Box::from);
         self
+    }
+
+    #[must_use]
+    pub fn with_cwd(mut self, cwd: &Path) -> Self {
+        self.cwd = Some(cwd.to_path_buf().into_boxed_path());
+        self
+    }
+
+    fn cwd(&self) -> &Path {
+        self.cwd.as_deref().unwrap_or_else(|| Path::new(""))
     }
 
     /// Set the kind of auto fixes to apply.
@@ -350,7 +361,8 @@ impl Linter {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
-        let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+        let mut ctx_host =
+            Rc::new(ContextHost::new(path, self.cwd(), context_sub_hosts, self.options, config));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;

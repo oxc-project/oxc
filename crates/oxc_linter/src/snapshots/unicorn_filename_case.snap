@@ -132,6 +132,26 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Rename the file to '_foo_bar.js'
 
+  ⚠ unicorn(filename-case): Directory name should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the directory to 'foo-bar'
+
+  ⚠ unicorn(filename-case): Directory name should be in camelCase, or PascalCase
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the directory to 'fooBar', or 'FooBar'
+
+  ⚠ unicorn(filename-case): Filename should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo-bar.js'
+
+  ⚠ unicorn(filename-case): Directory name should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the directory to 'foo-bar'
+
   ⚠ unicorn(filename-case): Filename should be in kebab-case
    ╭─[filename_case.tsx:1:1]
    ╰────

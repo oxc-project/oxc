@@ -371,6 +371,7 @@ mod test {
             let semantic = SemanticBuilder::new_linter().build(program).semantic;
             Rc::new(ContextHost::new(
                 path,
+                std::path::Path::new(""),
                 vec![ContextSubHost::new(
                     semantic,
                     Arc::new(ModuleRecord::default()),

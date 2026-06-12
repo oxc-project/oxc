@@ -1,3 +1,5 @@
+use std::path::{Component, Path};
+
 use convert_case::{Boundary, Case, Converter};
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
@@ -37,6 +39,7 @@ pub struct FilenameCaseConfig {
     pascal_case: bool,
     ignore: Vec<Regex>,
     multiple_file_extensions: bool,
+    check_directories: bool,
 }
 
 impl Default for FilenameCaseConfig {
@@ -48,6 +51,7 @@ impl Default for FilenameCaseConfig {
             pascal_case: false,
             ignore: vec![],
             multiple_file_extensions: true,
+            check_directories: true,
         }
     }
 }
@@ -88,7 +92,7 @@ pub struct FilenameCaseConfigJson {
     /// }
     /// ```
     case: Option<FilenameCaseJsonOptions>,
-    /// An array of regular expression patterns for filenames to ignore.
+    /// An array of regular expression patterns for path segments to ignore.
     ///
     /// You can set the `ignore` option like this:
     /// ```json
@@ -107,11 +111,20 @@ pub struct FilenameCaseConfigJson {
     /// parts of the extension rather than parts of the filename.
     #[serde(default = "default_true")]
     multiple_file_extensions: bool,
+    /// Whether to check directory names. Filenames are always checked.
+    #[serde(default = "default_true")]
+    check_directories: bool,
 }
 
 impl Default for FilenameCaseConfigJson {
     fn default() -> Self {
-        Self { cases: None, case: None, ignore: vec![], multiple_file_extensions: true }
+        Self {
+            cases: None,
+            case: None,
+            ignore: vec![],
+            multiple_file_extensions: true,
+            check_directories: true,
+        }
     }
 }
 
@@ -137,6 +150,12 @@ enum FilenameCaseJsonOptions {
     CamelCase,
     SnakeCase,
     PascalCase,
+}
+
+#[derive(Clone, Copy)]
+enum PathSegmentKind {
+    Directory,
+    Filename,
 }
 
 declare_oxc_lint!(
@@ -195,6 +214,7 @@ impl Rule for FilenameCase {
         let mut config = FilenameCaseConfig {
             ignore: json.ignore,
             multiple_file_extensions: json.multiple_file_extensions,
+            check_directories: json.check_directories,
             ..Default::default()
         };
 
@@ -222,22 +242,61 @@ impl Rule for FilenameCase {
             return;
         }
 
-        let filename = if self.multiple_file_extensions {
-            raw_filename.split('.').next()
-        } else {
-            raw_filename.rsplit_once('.').map(|(before, _)| before)
-        };
-
-        let filename = filename.unwrap_or(raw_filename);
-
-        // Ignore files named "index" — they are often used as module entry points and
-        // cannot reliably be renamed to other casings (e.g. "Index.js"), so allow them
-        // regardless of the configured filename case.
-        if filename.eq_ignore_ascii_case("index") {
+        let path_segments = path_segments(ctx.file_path(), ctx.cwd(), raw_filename);
+        if path_segments.iter().any(|segment| self.ignore.iter().any(|r| r.is_match(segment))) {
             return;
         }
 
-        let trimmed_filename = filename.trim_matches('_');
+        if self.check_directories {
+            for directory in path_segments.iter().take(path_segments.len().saturating_sub(1)) {
+                if directory.starts_with(['.', '$']) {
+                    continue;
+                }
+
+                if !self.check_segment(ctx, directory, PathSegmentKind::Directory) {
+                    return;
+                }
+            }
+        }
+
+        self.check_segment(ctx, raw_filename, PathSegmentKind::Filename);
+    }
+
+    fn should_run(&self, ctx: &ContextHost<'_>) -> bool {
+        ctx.is_first_sub_host()
+    }
+}
+
+impl FilenameCase {
+    fn check_segment(
+        &self,
+        ctx: &LintContext<'_>,
+        raw_segment: &str,
+        kind: PathSegmentKind,
+    ) -> bool {
+        let segment = match kind {
+            PathSegmentKind::Directory => raw_segment,
+            PathSegmentKind::Filename => {
+                let filename = if self.multiple_file_extensions {
+                    raw_segment.split('.').next()
+                } else {
+                    raw_segment.rsplit_once('.').map(|(before, _)| before)
+                };
+
+                let filename = filename.unwrap_or(raw_segment);
+
+                // Ignore files named "index" — they are often used as module entry points and
+                // cannot reliably be renamed to other casings (e.g. "Index.js"), so allow them
+                // regardless of the configured filename case.
+                if filename.eq_ignore_ascii_case("index") {
+                    return true;
+                }
+
+                filename
+            }
+        };
+
+        let trimmed_segment = segment.trim_matches('_');
 
         let cases = [
             (self.camel_case, Case::Camel, "camelCase"),
@@ -253,8 +312,8 @@ impl Rule for FilenameCase {
                     .remove_boundaries(&[Boundary::LowerDigit, Boundary::DigitLower]);
                 let converter = converter.to_case(case);
 
-                if converter.convert(trimmed_filename) == trimmed_filename {
-                    return;
+                if converter.convert(trimmed_segment) == trimmed_segment {
+                    return true;
                 }
 
                 valid_cases.push((converter, name));
@@ -263,33 +322,69 @@ impl Rule for FilenameCase {
 
         let valid_cases_len = valid_cases.len();
 
-        let mut message = String::from("Filename should be in ");
-        let mut help_message = String::from("Rename the file to ");
+        let (message_subject, help_subject) = match kind {
+            PathSegmentKind::Directory => ("Directory name", "directory"),
+            PathSegmentKind::Filename => ("Filename", "file"),
+        };
+
+        let mut message = format!("{message_subject} should be in ");
+        let mut help_message = format!("Rename the {help_subject} to ");
 
         for (i, (converter, name)) in valid_cases.into_iter().enumerate() {
-            let filename = format!(
+            let replacement = format!(
                 "'{}'",
-                raw_filename.cow_replace(trimmed_filename, &converter.convert(trimmed_filename))
+                raw_segment.cow_replace(trimmed_segment, &converter.convert(trimmed_segment))
             );
 
-            let (name, filename) = if i == 0 {
-                (name, filename.as_ref())
+            let (name, replacement) = if i == 0 {
+                (name, replacement.as_ref())
             } else if i == valid_cases_len - 1 {
-                (&*format!(", or {name}"), &*format!(", or {filename}"))
+                (&*format!(", or {name}"), &*format!(", or {replacement}"))
             } else {
-                (&*format!(", {name}"), &*format!(", {filename}"))
+                (&*format!(", {name}"), &*format!(", {replacement}"))
             };
 
             message.push_str(name);
-            help_message.push_str(filename);
+            help_message.push_str(replacement);
         }
 
         ctx.diagnostic(filename_case_diagnostic(message, help_message));
+        false
+    }
+}
+
+fn path_segments<'a>(path: &'a Path, cwd: &Path, raw_filename: &'a str) -> Vec<&'a str> {
+    let Some(relative_path) = path_inside_cwd(path, cwd) else {
+        return vec![raw_filename];
+    };
+
+    let segments = relative_path
+        .components()
+        .filter_map(|component| match component {
+            Component::Normal(segment) => segment.to_str(),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+
+    if segments.is_empty() { vec![raw_filename] } else { segments }
+}
+
+fn path_inside_cwd<'a>(path: &'a Path, cwd: &Path) -> Option<&'a Path> {
+    if cwd.as_os_str().is_empty() && path.is_absolute() {
+        return None;
     }
 
-    fn should_run(&self, ctx: &ContextHost<'_>) -> bool {
-        ctx.is_first_sub_host()
+    if path.is_absolute() {
+        return path.strip_prefix(cwd).ok();
     }
+
+    if path.components().any(|component| {
+        matches!(component, Component::ParentDir | Component::Prefix(_) | Component::RootDir)
+    }) {
+        return None;
+    }
+
+    Some(path)
 }
 
 #[test]
@@ -346,12 +441,15 @@ fn test() {
         ("", Some(options), None, Some(PathBuf::from(path)))
     }
 
+    let outside_cwd = std::env::current_dir().unwrap().join("fixtures/FooBar/file.js");
+
     let pass = vec![
         // Default is to allow kebab-case
         ("", None, None, Some(PathBuf::from("foo-bar.tsx"))),
         ("", None, None, Some(PathBuf::from("src/foo-bar.tsx"))),
         ("", None, None, Some(PathBuf::from("src/bar/foo-bar.js"))),
         ("", None, None, Some(PathBuf::from("src/bar/foo.js"))),
+        ("", None, None, Some(outside_cwd)),
         // Specific cases
         test_case("src/foo/bar.js", "camelCase"),
         test_case("src/foo/fooBar.js", "camelCase"),
@@ -374,13 +472,13 @@ fn test() {
         test_case("src/foo/foo-bar.test-utils.js", "kebabCase"),
         test_case("src/foo/foo-bar.test_utils.js", "kebabCase"),
         test_case("src/foo/.test_utils.js", "kebabCase"),
-        test_case("src/foo/Foo.js", "pascalCase"),
-        test_case("src/foo/FooBar.js", "pascalCase"),
-        test_case("src/foo/Foo.test.js", "pascalCase"),
-        test_case("src/foo/FooBar.test.js", "pascalCase"),
-        test_case("src/foo/FooBar.test-utils.js", "pascalCase"),
-        test_case("src/foo/FooBar.test_utils.js", "pascalCase"),
-        test_case("src/foo/.test_utils.js", "pascalCase"),
+        test_case("Src/Foo/Foo.js", "pascalCase"),
+        test_case("Src/Foo/FooBar.js", "pascalCase"),
+        test_case("Src/Foo/Foo.test.js", "pascalCase"),
+        test_case("Src/Foo/FooBar.test.js", "pascalCase"),
+        test_case("Src/Foo/FooBar.test-utils.js", "pascalCase"),
+        test_case("Src/Foo/FooBar.test_utils.js", "pascalCase"),
+        test_case("Src/Foo/.test_utils.js", "pascalCase"),
         test_case("spec/iss47Spec.js", "camelCase"),
         test_case("spec/iss47Spec100.js", "camelCase"),
         test_case("spec/i18n.js", "camelCase"),
@@ -392,9 +490,9 @@ fn test() {
         test_case("spec/iss_47_spec.js", "snakeCase"),
         test_case("spec/iss47_100spec.js", "snakeCase"),
         test_case("spec/i18n.js", "snakeCase"),
-        test_case("spec/Iss47Spec.js", "pascalCase"),
-        test_case("spec/Iss47.100spec.js", "pascalCase"),
-        test_case("spec/I18n.js", "pascalCase"),
+        test_case("Spec/Iss47Spec.js", "pascalCase"),
+        test_case("Spec/Iss47.100spec.js", "pascalCase"),
+        test_case("Spec/I18n.js", "pascalCase"),
         test_case("", "camelCase"),
         test_case("", "snakeCase"),
         test_case("", "kebabCase"),
@@ -405,9 +503,9 @@ fn test() {
         test_case("src/foo/___foo_bar.js", "snakeCase"),
         test_case("src/foo/_foo-bar.js", "kebabCase"),
         test_case("src/foo/___foo-bar.js", "kebabCase"),
-        test_case("src/foo/_FooBar.js", "pascalCase"),
-        test_case("src/foo/___FooBar.js", "pascalCase"),
-        test_case("src/foo/$foo.js", "pascalCase"),
+        test_case("Src/Foo/_FooBar.js", "pascalCase"),
+        test_case("Src/Foo/___FooBar.js", "pascalCase"),
+        test_case("Src/Foo/$foo.js", "pascalCase"),
         test_case("src/foo/[fooBar].js", "camelCase"),
         test_case("src/foo/{foo_bar}.js", "snakeCase"),
         test_cases("src/foo/foo-bar.js", []),
@@ -545,6 +643,18 @@ fn test() {
             "src/foo/foo_bar.test_utils.js",
             serde_json::json!([{ "case": "snakeCase", "multipleFileExtensions": false }]),
         ),
+        test_case_with_options(
+            "src/FooBar/file.js",
+            serde_json::json!([{ "checkDirectories": false }]),
+        ),
+        test_case_with_options(
+            "src/FooBar/file.js",
+            serde_json::json!([{ "case": "kebabCase", "checkDirectories": false }]),
+        ),
+        test_case_with_options(
+            "src/meta/BadName.js",
+            serde_json::json!([{ "case": "kebabCase", "ignore": ["^meta$"] }]),
+        ),
         // Ensure all `index` files are allowed, despite being in non-conforming case.
         test_case("index.js", "camelCase"),
         test_case("index.js", "snakeCase"),
@@ -590,21 +700,28 @@ fn test() {
         test_case("test/foo/fooBar.js", "kebabCase"),
         test_case("test/foo/fooBar.test.js", "kebabCase"),
         test_case("test/foo/fooBar.testUtils.js", "kebabCase"),
-        test_case("test/foo/fooBar.js", "pascalCase"),
-        test_case("test/foo/foo_bar.test.js", "pascalCase"),
-        test_case("test/foo/foo-bar.test-utils.js", "pascalCase"),
+        test_case("Test/Foo/fooBar.js", "pascalCase"),
+        test_case("Test/Foo/foo_bar.test.js", "pascalCase"),
+        test_case("Test/Foo/foo-bar.test-utils.js", "pascalCase"),
         test_case("src/foo/_FOO-BAR.js", "camelCase"),
         test_case("src/foo/___FOO-BAR.js", "camelCase"),
         test_case("src/foo/_FOO-BAR.js", "snakeCase"),
         test_case("src/foo/___FOO-BAR.js", "snakeCase"),
         test_case("src/foo/_FOO-BAR.js", "kebabCase"),
         test_case("src/foo/___FOO-BAR.js", "kebabCase"),
-        test_case("src/foo/_FOO-BAR.js", "pascalCase"),
-        test_case("src/foo/___FOO-BAR.js", "pascalCase"),
+        test_case("Src/Foo/_FOO-BAR.js", "pascalCase"),
+        test_case("Src/Foo/___FOO-BAR.js", "pascalCase"),
         test_cases("src/foo/foo_bar.js", []),
         test_cases("src/foo/foo-bar.js", ["camelCase", "pascalCase"]),
         test_cases("src/foo/_foo_bar.js", ["camelCase", "pascalCase", "kebabCase"]),
         test_cases("src/foo/_FOO-BAR.js", ["snakeCase"]),
+        test_case("src/FooBar/file.js", ""),
+        test_cases("src/foo-bar/file.js", ["camelCase", "pascalCase"]),
+        test_case_with_options(
+            "src/FooBar/foo_bar.js",
+            serde_json::json!([{ "case": "kebabCase", "checkDirectories": false }]),
+        ),
+        test_case("src/FooBar/index.js", ""),
         test_case("src/foo/[foo_bar].js", ""),
         test_case("src/foo/$foo_bar.js", ""),
         test_case("src/foo/$fooBar.js", ""),

@@ -199,6 +199,9 @@ impl RuntimeFileSystem for OsFileSystem {
 
 impl Runtime {
     pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
+        let LintServiceOptions { cwd, tsconfig, cross_module } = options;
+        let linter = linter.with_cwd(&cwd);
+
         // If global thread pool wasn't already initialized, do it now.
         // This "locks" config for the thread pool, which ensures `rayon::current_num_threads()`
         // cannot change from now on.
@@ -234,7 +237,7 @@ impl Runtime {
         // * If no JS plugins, use standard allocators for parsing/linting.
         #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
         let (allocator_pool, js_allocator_pool) = if linter.has_external_linter() {
-            if options.cross_module {
+            if cross_module {
                 (
                     AllocatorPool::new(thread_count),
                     Some(AllocatorPool::new_fixed_size(thread_count)),
@@ -249,13 +252,13 @@ impl Runtime {
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         let allocator_pool = AllocatorPool::new(thread_count);
 
-        let resolver = options.cross_module.then(|| Self::get_resolver(options.tsconfig));
+        let resolver = cross_module.then(|| Self::get_resolver(tsconfig));
 
         Self {
             allocator_pool,
             #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
             js_allocator_pool,
-            cwd: options.cwd,
+            cwd,
             linter,
             resolver,
             modules_by_path: papaya::HashMap::builder()
