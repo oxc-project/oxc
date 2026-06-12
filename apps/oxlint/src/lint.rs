@@ -2,7 +2,8 @@ use std::{
     env,
     ffi::OsStr,
     fmt::Debug,
-    io::{ErrorKind, Write},
+    fs::File,
+    io::{BufWriter, ErrorKind, Write},
     path::{Path, PathBuf, absolute},
     sync::Arc,
     time::Instant,
@@ -73,6 +74,7 @@ impl CliRunner {
     /// # Panics
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
+        let output_file = self.options.output_options.output_file.clone();
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
         let output_formatter = OutputFormatter::new(format_str);
@@ -172,13 +174,15 @@ impl CliRunner {
                     );
                 }
 
-                return Self::handle_no_files_found(
-                    stdout,
-                    &output_formatter,
-                    now,
-                    None,
-                    misc_options.no_error_on_unmatched_pattern,
-                );
+                return Self::with_output_writer(stdout, output_file.as_deref(), |stdout| {
+                    Self::handle_no_files_found(
+                        stdout,
+                        &output_formatter,
+                        now,
+                        None,
+                        misc_options.no_error_on_unmatched_pattern,
+                    )
+                });
             }
 
             paths.push(self.cwd.clone());
@@ -460,13 +464,15 @@ impl CliRunner {
             if type_check_only { None } else { linter.number_of_rules(type_aware) };
 
         if number_of_files == 0 {
-            return Self::handle_no_files_found(
-                stdout,
-                &output_formatter,
-                now,
-                number_of_rules,
-                misc_options.no_error_on_unmatched_pattern,
-            );
+            return Self::with_output_writer(stdout, output_file.as_deref(), |stdout| {
+                Self::handle_no_files_found(
+                    stdout,
+                    &output_formatter,
+                    now,
+                    number_of_rules,
+                    misc_options.no_error_on_unmatched_pattern,
+                )
+            });
         }
 
         let cwd = options.cwd().to_path_buf();
@@ -517,49 +523,51 @@ impl CliRunner {
 
         drop(tx_error);
 
-        let diagnostic_result = diagnostic_service.run(stdout);
+        Self::with_output_writer(stdout, output_file.as_deref(), |stdout| {
+            let diagnostic_result = diagnostic_service.run(stdout);
 
-        let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
-            OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
-        } else {
-            suppression_manager.file_action
-        };
+            let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
+                OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
+            } else {
+                suppression_manager.file_action
+            };
 
-        let has_unpruned_suppressions = matches!(
-            oxlint_suppression_file_action,
-            OxlintSuppressionFileAction::HasUnprunedSuppressions
-        );
+            let has_unpruned_suppressions = matches!(
+                oxlint_suppression_file_action,
+                OxlintSuppressionFileAction::HasUnprunedSuppressions
+            );
 
-        if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
-            number_of_files,
-            number_of_rules,
-            threads_count: rayon::current_num_threads(),
-            start_time: now.elapsed(),
-            oxlint_suppression_file_action,
-            rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
-        }) {
-            print_and_flush_stdout(stdout, &end);
-        }
+            if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
+                number_of_files,
+                number_of_rules,
+                threads_count: rayon::current_num_threads(),
+                start_time: now.elapsed(),
+                oxlint_suppression_file_action,
+                rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
+            }) {
+                print_and_flush_stdout(stdout, &end);
+            }
 
-        // When --suppress-all is used and the file was written successfully,
-        // exit with success (matching ESLint behavior: suppressing is a success action).
-        if suppress_all_succeeded {
-            return CliRunResult::LintSucceeded;
-        }
+            // When --suppress-all is used and the file was written successfully,
+            // exit with success (matching ESLint behavior: suppressing is a success action).
+            if suppress_all_succeeded {
+                return CliRunResult::LintSucceeded;
+            }
 
-        if has_unpruned_suppressions {
-            return CliRunResult::LintUnprunedSuppressions;
-        }
+            if has_unpruned_suppressions {
+                return CliRunResult::LintUnprunedSuppressions;
+            }
 
-        if diagnostic_result.errors_count() > 0 {
-            CliRunResult::LintFoundErrors
-        } else if deny_warnings && diagnostic_result.warnings_count() > 0 {
-            CliRunResult::LintNoWarningsAllowed
-        } else if diagnostic_result.max_warnings_exceeded() {
-            CliRunResult::LintMaxWarningsExceeded
-        } else {
-            CliRunResult::LintSucceeded
-        }
+            if diagnostic_result.errors_count() > 0 {
+                CliRunResult::LintFoundErrors
+            } else if deny_warnings && diagnostic_result.warnings_count() > 0 {
+                CliRunResult::LintNoWarningsAllowed
+            } else if diagnostic_result.max_warnings_exceeded() {
+                CliRunResult::LintMaxWarningsExceeded
+            } else {
+                CliRunResult::LintSucceeded
+            }
+        })
     }
 }
 
@@ -591,6 +599,33 @@ impl CliRunner {
                 .with_max_warnings(max_warnings),
             sender,
         )
+    }
+
+    fn with_output_writer(
+        stdout: &mut dyn Write,
+        output_file: Option<&Path>,
+        run: impl FnOnce(&mut dyn Write) -> CliRunResult,
+    ) -> CliRunResult {
+        let Some(output_file) = output_file else {
+            return run(stdout);
+        };
+
+        let file = match File::create(output_file) {
+            Ok(file) => file,
+            Err(error) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to create output file {}.\n{error}\n",
+                        output_file.to_string_lossy().cow_replace('\\', "/")
+                    ),
+                );
+                return CliRunResult::InvalidOptionOutputFile;
+            }
+        };
+
+        let mut writer = BufWriter::new(file);
+        run(&mut writer)
     }
 
     fn handle_no_files_found(
@@ -706,7 +741,7 @@ fn render_config_builder_error(
 mod test {
     use std::fs;
 
-    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use crate::{DEFAULT_OXLINTRC_NAME, cli::CliRunResult, tester::Tester};
     use oxc_linter::rules::RULES;
 
     // lints the full directory of fixtures,
@@ -1531,6 +1566,86 @@ mod test {
             })
             .collect();
         assert!(rule_names.is_sorted(), "The rules list should be sorted by scope and value");
+    }
+
+    #[test]
+    fn test_output_file_json_report() {
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let output_file = temp_dir.path().join("report.json");
+        let output_file_arg = output_file.to_str().expect("Could not get output file path string");
+
+        let stdout = Tester::new().with_cwd("fixtures/cli/linter".into()).test_output_verbose(&[
+            "--format",
+            "json",
+            "--output-file",
+            output_file_arg,
+            "debugger.js",
+        ]);
+
+        assert!(stdout.is_empty(), "Expected report output to be written to file, got: {stdout}");
+
+        let report = fs::read_to_string(output_file).expect("Could not read JSON report");
+        let json: serde_json::Value =
+            serde_json::from_str(&report).expect("Report should be valid JSON");
+        assert_eq!(json["number_of_files"], 1);
+        assert!(
+            json["diagnostics"].as_array().is_some_and(|diagnostics| !diagnostics.is_empty()),
+            "Expected JSON report to contain diagnostics"
+        );
+    }
+
+    #[test]
+    fn test_output_file_sarif_report() {
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let output_file = temp_dir.path().join("report.sarif");
+        let output_file_arg = output_file.to_str().expect("Could not get output file path string");
+
+        let stdout = Tester::new().with_cwd("fixtures/cli/linter".into()).test_output_verbose(&[
+            "--format",
+            "sarif",
+            "-o",
+            output_file_arg,
+            "debugger.js",
+        ]);
+
+        assert!(stdout.is_empty(), "Expected report output to be written to file, got: {stdout}");
+
+        let report = fs::read_to_string(output_file).expect("Could not read SARIF report");
+        let sarif: serde_json::Value =
+            serde_json::from_str(&report).expect("Report should be valid SARIF JSON");
+        assert_eq!(sarif["version"], "2.1.0");
+        assert_eq!(
+            sarif["$schema"],
+            "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json"
+        );
+        assert!(
+            sarif["runs"][0]["results"].as_array().is_some_and(|results| !results.is_empty()),
+            "Expected SARIF report to contain results"
+        );
+    }
+
+    #[test]
+    fn test_output_file_create_error() {
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let output_file = temp_dir.path().join("missing").join("report.json");
+        let output_file_arg = output_file.to_str().expect("Could not get output file path string");
+
+        let (stdout, result) = Tester::new().with_cwd("fixtures/cli/linter".into()).test_output(&[
+            "--format",
+            "json",
+            "--output-file",
+            output_file_arg,
+            "debugger.js",
+        ]);
+
+        assert!(
+            matches!(result, CliRunResult::InvalidOptionOutputFile),
+            "Expected InvalidOptionOutputFile, got {result:?}"
+        );
+        assert!(
+            stdout.contains("Failed to create output file"),
+            "Expected output file error message, got: {stdout}"
+        );
     }
 
     #[test]

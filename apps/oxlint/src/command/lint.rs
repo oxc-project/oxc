@@ -281,6 +281,10 @@ pub struct OutputOptions {
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
 
+    /// Write the lint report to a file
+    #[bpaf(long("output-file"), short('o'), argument("PATH"), hide_usage)]
+    pub output_file: Option<PathBuf>,
+
     #[bpaf(
         long("debug"),
         argument::<DebugOptions>("OPTIONS"),
@@ -650,6 +654,7 @@ mod lint_options {
         assert!(!options.fix_options.fix);
         assert!(!options.list_rules);
         assert_eq!(options.output_options.format, OutputFormat::Default);
+        assert_eq!(options.output_options.output_file, None);
         assert_eq!(options.output_options.debug, DebugOptions::default());
     }
 
@@ -715,6 +720,17 @@ mod lint_options {
 
         let options = get_lint_options("-f agent");
         assert_eq!(options.output_options.format, OutputFormat::Agent);
+    }
+
+    #[test]
+    fn output_file() {
+        let options = get_lint_options("-o report.sarif");
+        assert_eq!(options.output_options.output_file, Some(PathBuf::from("report.sarif")));
+        assert!(options.paths.is_empty());
+
+        let options = get_lint_options("--output-file report.json src");
+        assert_eq!(options.output_options.output_file, Some(PathBuf::from("report.json")));
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
     }
 
     #[test]

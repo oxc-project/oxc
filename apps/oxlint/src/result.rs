@@ -5,6 +5,7 @@ pub enum CliRunResult {
     None,
     JsPluginWorkspaceSetupFailed,
     InvalidOptionConfig,
+    InvalidOptionOutputFile,
     InvalidOptionTsConfig,
     InvalidOptionTypeCheckWithoutTypeAware,
     InvalidOptionTypeCheckOnlyWithFix,
@@ -37,6 +38,7 @@ impl Termination for CliRunResult {
             | Self::LintNoWarningsAllowed
             | Self::LintMaxWarningsExceeded
             | Self::InvalidOptionConfig
+            | Self::InvalidOptionOutputFile
             | Self::InvalidOptionTsConfig
             | Self::InvalidOptionTypeCheckWithoutTypeAware
             | Self::InvalidOptionTypeCheckOnlyWithFix
