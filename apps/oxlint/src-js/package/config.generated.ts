@@ -190,6 +190,9 @@ export type ImportKind = "none" | "all" | "multiple" | "single";
 export type SortOrder = "desc" | "asc";
 export type ClassLiteralPropertyStyleOption = "fields" | "getters";
 export type ConsistentIndexedObjectStyleConfig = "record" | "index-signature";
+export type ArrayLiteralTypeAssertions = "allow" | "allow-as-parameter" | "never";
+export type AssertionStyle = "as" | "angle-bracket" | "never";
+export type ObjectLiteralTypeAssertions = "allow" | "allow-as-parameter" | "never";
 export type ConsistentTypeDefinitionsConfig = "interface" | "type";
 export type FixStyle = "separate-type-imports" | "inline-type-imports";
 export type Prefer = "type-imports" | "no-type-imports";
@@ -1289,7 +1292,10 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, ConsistentIndexedObjectStyleConfig];
   "typescript/consistent-return"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentReturnConfig];
-  "typescript/consistent-type-assertions"?: DummyRule;
+  "typescript/consistent-type-assertions"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, ConsistentTypeAssertionsConfig];
   "typescript/consistent-type-definitions"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
@@ -4544,6 +4550,20 @@ export interface ConsistentReturnConfig {
    * Treat explicit `return undefined` as equivalent to an unspecified return.
    */
   treatUndefinedAsUnspecified?: boolean;
+}
+export interface ConsistentTypeAssertionsConfig {
+  /**
+   * Whether array literal type assertions are allowed, allowed only as parameters, or disallowed.
+   */
+  arrayLiteralTypeAssertions?: ArrayLiteralTypeAssertions;
+  /**
+   * Which assertion syntax is enforced.
+   */
+  assertionStyle?: AssertionStyle;
+  /**
+   * Whether object literal type assertions are allowed, allowed only as parameters, or disallowed.
+   */
+  objectLiteralTypeAssertions?: ObjectLiteralTypeAssertions;
 }
 export interface ConsistentTypeExportsConfig {
   /**

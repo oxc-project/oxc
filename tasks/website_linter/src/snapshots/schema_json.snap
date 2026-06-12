@@ -683,6 +683,34 @@ expression: json
       },
       "additionalProperties": false
     },
+    "ArrayLiteralTypeAssertions": {
+      "oneOf": [
+        {
+          "description": "Allow type assertions on array literals.\n\nExamples of **correct** code with this option:\n```ts\nconst x = [1, 2] as number[];\nconst x = ['a'] as Array<string>;\n```",
+          "type": "string",
+          "enum": [
+            "allow"
+          ],
+          "markdownDescription": "Allow type assertions on array literals.\n\nExamples of **correct** code with this option:\n```ts\nconst x = [1, 2] as number[];\nconst x = ['a'] as Array<string>;\n```"
+        },
+        {
+          "description": "Allow type assertions on array literals only when used as a function parameter,\n`throw` target, or default value.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = [1, 2] as Foo;\nconst foo = () => [5] as Foo;\n```\n\nExamples of **correct** code with this option:\n```ts\nprint([5] as Foo);\nthrow [1, 2] as Bar;\nfunction f(x = [5] as Foo.Bar) {}\n```",
+          "type": "string",
+          "enum": [
+            "allow-as-parameter"
+          ],
+          "markdownDescription": "Allow type assertions on array literals only when used as a function parameter,\n`throw` target, or default value.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = [1, 2] as Foo;\nconst foo = () => [5] as Foo;\n```\n\nExamples of **correct** code with this option:\n```ts\nprint([5] as Foo);\nthrow [1, 2] as Bar;\nfunction f(x = [5] as Foo.Bar) {}\n```"
+        },
+        {
+          "description": "Disallow type assertions on array literals entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = [1, 2] as Foo;\nprint([5] as Foo);\n```\n\nExamples of **correct** code with this option:\n```ts\nconst x: Foo = [1, 2];\nconst x = [1, 2] satisfies Foo;\n```",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow type assertions on array literals entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = [1, 2] as Foo;\nprint([5] as Foo);\n```\n\nExamples of **correct** code with this option:\n```ts\nconst x: Foo = [1, 2];\nconst x = [1, 2] satisfies Foo;\n```"
+        }
+      ]
+    },
     "ArrowBodyStyle": {
       "type": "array",
       "items": [
@@ -705,6 +733,34 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "AssertionStyle": {
+      "oneOf": [
+        {
+          "description": "Enforce `as` syntax for type assertions.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = <Foo>bar;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value = bar as Foo;\n```",
+          "type": "string",
+          "enum": [
+            "as"
+          ],
+          "markdownDescription": "Enforce `as` syntax for type assertions.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = <Foo>bar;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value = bar as Foo;\n```"
+        },
+        {
+          "description": "Enforce angle-bracket syntax for type assertions.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = bar as Foo;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value = <Foo>bar;\n```",
+          "type": "string",
+          "enum": [
+            "angle-bracket"
+          ],
+          "markdownDescription": "Enforce angle-bracket syntax for type assertions.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = bar as Foo;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value = <Foo>bar;\n```"
+        },
+        {
+          "description": "Disallow type assertions entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = bar as Foo;\nconst value = <Foo>bar;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value: Foo = bar;\nconst value = bar satisfies Foo;\n```",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow type assertions entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = bar as Foo;\nconst value = <Foo>bar;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value: Foo = bar;\nconst value = bar satisfies Foo;\n```"
+        }
+      ]
     },
     "AutocompleteValidConfig": {
       "type": "object",
@@ -1267,6 +1323,39 @@ expression: json
             }
           ],
           "markdownDescription": "Decides whether to use `test` or `it` within a `describe` scope.\nIf only `fn` is provided, this will default to the value of `fn`.\n\nExamples of **incorrect** code for `{ \"withinDescribe\": \"test\" }`:\n```javascript\ndescribe('foo', function () {\nit('bar');\n});\n```\n\nExamples of **correct** code for `{ \"withinDescribe\": \"test\" }`:\n```javascript\ndescribe('foo', function () {\ntest('bar');\n});\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ConsistentTypeAssertionsConfig": {
+      "type": "object",
+      "properties": {
+        "arrayLiteralTypeAssertions": {
+          "description": "Whether array literal type assertions are allowed, allowed only as parameters, or disallowed.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArrayLiteralTypeAssertions"
+            }
+          ],
+          "markdownDescription": "Whether array literal type assertions are allowed, allowed only as parameters, or disallowed."
+        },
+        "assertionStyle": {
+          "description": "Which assertion syntax is enforced.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AssertionStyle"
+            }
+          ],
+          "markdownDescription": "Which assertion syntax is enforced."
+        },
+        "objectLiteralTypeAssertions": {
+          "description": "Whether object literal type assertions are allowed, allowed only as parameters, or disallowed.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ObjectLiteralTypeAssertions"
+            }
+          ],
+          "markdownDescription": "Whether object literal type assertions are allowed, allowed only as parameters, or disallowed."
         }
       },
       "additionalProperties": false
@@ -6322,7 +6411,24 @@ expression: json
           ]
         },
         "typescript/consistent-type-assertions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentTypeAssertionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/consistent-type-definitions": {
           "anyOf": [
@@ -13974,6 +14080,34 @@ expression: json
             "ignore"
           ],
           "markdownDescription": "Ignore null comparisons, allow either `== null`/`!= null` or `=== null`/`!== null`."
+        }
+      ]
+    },
+    "ObjectLiteralTypeAssertions": {
+      "oneOf": [
+        {
+          "description": "Allow type assertions on object literals.\n\nExamples of **correct** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nconst x = {} as Foo<int>;\n```",
+          "type": "string",
+          "enum": [
+            "allow"
+          ],
+          "markdownDescription": "Allow type assertions on object literals.\n\nExamples of **correct** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nconst x = {} as Foo<int>;\n```"
+        },
+        {
+          "description": "Allow type assertions on object literals only when used as a function parameter,\n`throw` target, or default value.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nconst x = {} as Foo<int>;\n```\n\nExamples of **correct** code with this option:\n```ts\nprint({ a: 1 } as Foo);\nthrow { bar: 5 } as Foo;\nfunction f(x = {} as Foo) {}\n```",
+          "type": "string",
+          "enum": [
+            "allow-as-parameter"
+          ],
+          "markdownDescription": "Allow type assertions on object literals only when used as a function parameter,\n`throw` target, or default value.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nconst x = {} as Foo<int>;\n```\n\nExamples of **correct** code with this option:\n```ts\nprint({ a: 1 } as Foo);\nthrow { bar: 5 } as Foo;\nfunction f(x = {} as Foo) {}\n```"
+        },
+        {
+          "description": "Disallow type assertions on object literals entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nprint({ a: 1 } as Foo);\n```\n\nExamples of **correct** code with this option:\n```ts\nconst x: Foo = { a: 1 };\nconst x = { a: 1 } satisfies Foo;\n```",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow type assertions on object literals entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nprint({ a: 1 } as Foo);\n```\n\nExamples of **correct** code with this option:\n```ts\nconst x: Foo = { a: 1 };\nconst x = { a: 1 } satisfies Foo;\n```"
         }
       ]
     },
