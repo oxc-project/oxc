@@ -558,6 +558,13 @@ expression: json
         }
       ]
     },
+    "AllowedOrDisallowInFunc": {
+      "type": "string",
+      "enum": [
+        "allowed",
+        "disallow-in-func"
+      ]
+    },
     "AlwaysNever": {
       "type": "string",
       "enum": [
@@ -5941,7 +5948,7 @@ expression: json
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoDidMountSetStateConfig"
+                  "$ref": "#/definitions/AllowedOrDisallowInFunc"
                 }
               ],
               "maxItems": 2,
@@ -5950,7 +5957,24 @@ expression: json
           ]
         },
         "react/no-did-update-set-state": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AllowedOrDisallowInFunc"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/no-direct-mutation-state": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -6097,7 +6121,7 @@ expression: json
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoWillUpdateSetStateConfig"
+                  "$ref": "#/definitions/AllowedOrDisallowInFunc"
                 }
               ],
               "maxItems": 2,
@@ -11860,26 +11884,6 @@ expression: json
       },
       "additionalProperties": false
     },
-    "NoDidMountSetStateConfig": {
-      "oneOf": [
-        {
-          "description": "Allow `setState` calls in nested functions within `componentDidMount`, the default behavior.",
-          "type": "string",
-          "enum": [
-            "allowed"
-          ],
-          "markdownDescription": "Allow `setState` calls in nested functions within `componentDidMount`, the default behavior."
-        },
-        {
-          "description": "When set, also disallows `setState` calls in nested functions within `componentDidMount`.",
-          "type": "string",
-          "enum": [
-            "disallow-in-func"
-          ],
-          "markdownDescription": "When set, also disallows `setState` calls in nested functions within `componentDidMount`."
-        }
-      ]
-    },
     "NoDuplicateImports": {
       "type": "object",
       "properties": {
@@ -14025,26 +14029,6 @@ expression: json
         }
       },
       "additionalProperties": false
-    },
-    "NoWillUpdateSetStateConfig": {
-      "oneOf": [
-        {
-          "description": "Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.",
-          "type": "string",
-          "enum": [
-            "allowed"
-          ],
-          "markdownDescription": "Forbids any call to `this.setState` in `componentWillUpdate` outside of functions."
-        },
-        {
-          "description": "Makes this rule more strict by disallowing calls to `this.setState`` even within functions.",
-          "type": "string",
-          "enum": [
-            "disallow-in-func"
-          ],
-          "markdownDescription": "Makes this rule more strict by disallowing calls to `this.setState`` even within functions."
-        }
-      ]
     },
     "Nofunc": {
       "type": "string",

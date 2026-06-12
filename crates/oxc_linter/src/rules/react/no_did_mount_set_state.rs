@@ -2,15 +2,14 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     rules::ContextHost,
-    utils::{is_es5_component, is_es6_component},
+    utils::{AllowedOrDisallowInFunc, is_es5_component, is_es6_component},
 };
 
 fn no_did_mount_set_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -19,18 +18,8 @@ fn no_did_mount_set_state_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-pub enum NoDidMountSetStateConfig {
-    /// Allow `setState` calls in nested functions within `componentDidMount`, the default behavior.
-    #[default]
-    Allowed,
-    /// When set, also disallows `setState` calls in nested functions within `componentDidMount`.
-    DisallowInFunc,
-}
-
 #[derive(Debug, Default, Clone, Deserialize)]
-pub struct NoDidMountSetState(NoDidMountSetStateConfig);
+pub struct NoDidMountSetState(AllowedOrDisallowInFunc);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -79,7 +68,7 @@ declare_oxc_lint!(
     NoDidMountSetState,
     react,
     correctness,
-    config = NoDidMountSetStateConfig,
+    config = AllowedOrDisallowInFunc,
     version = "1.36.0",
 );
 
@@ -145,7 +134,7 @@ impl Rule for NoDidMountSetState {
 
         let in_nested_function = function_count_before_component_did_mount > 1;
 
-        if in_nested_function && !matches!(self.0, NoDidMountSetStateConfig::DisallowInFunc) {
+        if in_nested_function && !matches!(self.0, AllowedOrDisallowInFunc::DisallowInFunc) {
             return;
         }
 
