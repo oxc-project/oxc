@@ -58,31 +58,93 @@ mod tests {
     }
 
     #[test]
-    fn uses_lsp_line_breaks() {
-        let source = "a\u{2028}b\nc\u{2029}d";
+    fn test_line_break() {
+        for nl in ["\n", "\r", "\r\n"] {
+            let source = format!("a{}b", nl);
+            assert_position(&source, source.find('b').unwrap(), (1, 0));
+        }
 
-        assert_position(source, source.find('b').unwrap(), (0, 2));
-        assert_position(source, source.find('c').unwrap(), (1, 0));
-        assert_position(source, source.find('d').unwrap(), (1, 2));
-    }
-
-    #[test]
-    fn treats_crlf_as_one_line_break() {
-        let source = "a\r\nb";
-
-        assert_position(source, source.find('b').unwrap(), (1, 0));
-    }
-
-    #[test]
-    fn reports_utf16_character_offsets() {
-        let source = "😀a";
-
-        assert_position(source, source.find('a').unwrap(), (0, 2));
+        for nl in ["\u{2028}", "\u{2029}"] {
+            let source = format!("a{}b", nl);
+            assert_position(&source, source.find('b').unwrap(), (0, 2));
+        }
     }
 
     #[test]
     #[should_panic(expected = "out of bounds")]
     fn panics_for_out_of_bounds_offset() {
         offset_to_position("foo", 100);
+    }
+
+    #[test]
+    fn empty_file() {
+        assert_position("", 0, (0, 0));
+    }
+
+    #[test]
+    fn first_line_start() {
+        assert_position("foo\nbar\n", 0, (0, 0));
+    }
+
+    #[test]
+    fn first_line_middle() {
+        assert_position("blahblahblah\noops\n", 5, (0, 5));
+    }
+
+    #[test]
+    fn later_line_start() {
+        assert_position("foo\nbar\nblahblahblah", 8, (2, 0));
+    }
+
+    #[test]
+    fn later_line_middle() {
+        assert_position("foo\nbar\nblahblahblah", 12, (2, 4));
+    }
+
+    #[test]
+    fn after_2_byte_unicode() {
+        assert_eq!("£".len(), 2);
+        assert_eq!(utf16_len("£"), 1);
+        assert_position("£abc", 4, (0, 3));
+    }
+
+    #[test]
+    fn after_3_byte_unicode() {
+        assert_eq!("अ".len(), 3);
+        assert_eq!(utf16_len("अ"), 1);
+        assert_position("अabc", 5, (0, 3));
+    }
+
+    #[test]
+    fn after_4_byte_unicode() {
+        assert_eq!("🍄".len(), 4);
+        assert_eq!(utf16_len("🍄"), 2);
+        assert_position("🍄abc", 6, (0, 4));
+    }
+
+    #[test]
+    fn after_2_byte_unicode_on_previous_line() {
+        assert_eq!("£".len(), 2);
+        assert_eq!(utf16_len("£"), 1);
+        assert_position("£\nabc", 4, (1, 1));
+    }
+
+    #[test]
+    fn after_3_byte_unicode_on_previous_line() {
+        assert_eq!("अ".len(), 3);
+        assert_eq!(utf16_len("अ"), 1);
+        assert_position("अ\nabc", 5, (1, 1));
+    }
+
+    #[test]
+    fn after_4_byte_unicode_on_previous_line() {
+        assert_eq!("🍄".len(), 4);
+        assert_eq!(utf16_len("🍄"), 2);
+        assert_position("🍄\nabc", 6, (1, 1));
+    }
+
+    #[cfg(test)]
+    fn utf16_len(s: &str) -> usize {
+        s.encode_utf16().count()
     }
 }
