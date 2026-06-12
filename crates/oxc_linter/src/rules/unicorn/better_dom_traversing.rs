@@ -31,9 +31,7 @@ fn first_element_child_diagnostic(span: Span) -> OxcDiagnostic {
 
 fn query_selector_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `.querySelector()` over positional child traversal.")
-        .with_help(
-            "Use `.querySelector()` with a CSS selector to access the child element.",
-        )
+        .with_help("Use `.querySelector()` with a CSS selector to access the child element.")
         .with_label(span)
 }
 
@@ -184,11 +182,14 @@ fn check_child_nodes_index<'a>(
         if has_comments_inside(computed.span, ctx) {
             ctx.diagnostic(first_element_child_diagnostic(computed.span));
         } else {
-            ctx.diagnostic_with_suggestion(first_element_child_diagnostic(computed.span), |fixer| {
-                let start = property_span.start;
-                let end = computed.span.end;
-                fixer.replace(Span::new(start, end), "firstElementChild")
-            });
+            ctx.diagnostic_with_suggestion(
+                first_element_child_diagnostic(computed.span),
+                |fixer| {
+                    let start = property_span.start;
+                    let end = computed.span.end;
+                    fixer.replace(Span::new(start, end), "firstElementChild")
+                },
+            );
         }
         return;
     }
@@ -241,9 +242,7 @@ fn check_parent_element_chain<'a>(
         return;
     };
 
-    if object_member.optional
-        || object_member.property.name.as_str() != "parentElement"
-    {
+    if object_member.optional || object_member.property.name.as_str() != "parentElement" {
         return;
     }
 
@@ -290,8 +289,7 @@ fn get_parent_element_chain_root<'a>(
     loop {
         match &member.object {
             Expression::StaticMemberExpression(inner)
-                if inner.property.name.as_str() == "parentElement"
-                    && !inner.optional =>
+                if inner.property.name.as_str() == "parentElement" && !inner.optional =>
             {
                 member = inner;
             }
@@ -331,17 +329,14 @@ fn check_query_selector_chain<'a>(
         return;
     };
 
-    if has_comments_inside(call_expr.span, ctx)
-        || !can_merge_selector_values(&chain.selectors)
-    {
+    if has_comments_inside(call_expr.span, ctx) || !can_merge_selector_values(&chain.selectors) {
         ctx.diagnostic(merge_query_selector_diagnostic(call_expr.span));
         return;
     }
 
-    ctx.diagnostic_with_suggestion(
-        merge_query_selector_diagnostic(call_expr.span),
-        |fixer| fix_merge_query_selector(&chain, fixer, ctx),
-    );
+    ctx.diagnostic_with_suggestion(merge_query_selector_diagnostic(call_expr.span), |fixer| {
+        fix_merge_query_selector(&chain, fixer, ctx)
+    });
 }
 
 /// Check if this CallExpression node is followed by another non-optional
@@ -367,9 +362,7 @@ fn is_followed_by_query_selector(node: &AstNode<'_>, ctx: &LintContext<'_>) -> b
         return false;
     };
 
-    if grandparent_call.optional 
-        || grandparent_call.arguments.len() != 1 
-    {
+    if grandparent_call.optional || grandparent_call.arguments.len() != 1 {
         return false;
     }
 
@@ -393,9 +386,7 @@ struct QuerySelectorChainData<'a> {
 /// Check if a set of selectors can be safely merged.
 /// Selectors containing `,` or `:scope` cannot be merged.
 fn can_merge_selector_values(selectors: &[String]) -> bool {
-    selectors
-        .iter()
-        .all(|s| !s.contains(',') && !s.contains(":scope"))
+    selectors.iter().all(|s| !s.contains(',') && !s.contains(":scope"))
 }
 
 /// Walk up the callee.object chain to gather all querySelector calls.
@@ -421,8 +412,7 @@ fn gather_query_selector_chain<'a>(
             break;
         };
 
-        if callee_member.optional()
-            || callee_member.static_property_name() != Some("querySelector")
+        if callee_member.optional() || callee_member.static_property_name() != Some("querySelector")
         {
             break;
         }
@@ -514,9 +504,7 @@ fn gather_query_selector_chain<'a>(
 fn get_static_selector_value<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
     match expr {
         Expression::StringLiteral(lit) => Some(lit.value.as_str()),
-        Expression::TemplateLiteral(lit)
-            if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
-        {
+        Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
             lit.quasis[0].value.cooked.as_deref()
         }
         _ => None,
@@ -544,10 +532,8 @@ fn fix_merge_query_selector<'a>(
         format!(":scope {}", reversed.join(" "))
     };
 
-    let replacement = format!(
-        "{root_text}.querySelector({quote}{selector}{quote})",
-        quote = chain.quote
-    );
+    let replacement =
+        format!("{root_text}.querySelector({quote}{selector}{quote})", quote = chain.quote);
 
     fixer.replace(chain.span, replacement)
 }
@@ -666,18 +652,12 @@ fn test() {
             r#"element.querySelector("a").querySelector("b");"#,
             r#"element.querySelector(":scope a b");"#,
         ),
-        (
-            r#"document.querySelector("a").querySelector("b");"#,
-            r#"document.querySelector("a b");"#,
-        ),
+        (r#"document.querySelector("a").querySelector("b");"#, r#"document.querySelector("a b");"#),
         (
             r#"document.body.querySelector("a").querySelector("b");"#,
             r#"document.body.querySelector(":scope a b");"#,
         ),
-        (
-            "element.querySelector('a').querySelector('b');",
-            "element.querySelector(':scope a b');",
-        ),
+        ("element.querySelector('a').querySelector('b');", "element.querySelector(':scope a b');"),
         (
             r#"element.querySelector("a").querySelector("b").querySelector("c");"#,
             r#"element.querySelector(":scope a b c");"#,
@@ -752,6 +732,6 @@ fn test() {
     ];
 
     Tester::new(BetterDomTraversing::NAME, BetterDomTraversing::PLUGIN, pass, fail)
-            .expect_fix(fix)
-            .test_and_snapshot();
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
