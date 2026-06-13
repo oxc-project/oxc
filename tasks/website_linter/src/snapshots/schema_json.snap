@@ -3636,7 +3636,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/media-has-caption": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MediaHasCaptionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/mouse-events-have-key-events": {
           "anyOf": [
@@ -11752,6 +11769,45 @@ expression: json
           "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "Maximum number of statements allowed per function."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MediaHasCaptionConfig": {
+      "type": "object",
+      "properties": {
+        "audio": {
+          "description": "Element names to treat as `<audio>` elements",
+          "default": [
+            "audio"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Element names to treat as `<audio>` elements"
+        },
+        "track": {
+          "description": "Element names to treat as `<track>` elements",
+          "default": [
+            "track"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Element names to treat as `<track>` elements"
+        },
+        "video": {
+          "description": "Element names to treat as `<video>` elements",
+          "default": [
+            "video"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Element names to treat as `<video>` elements"
         }
       },
       "additionalProperties": false

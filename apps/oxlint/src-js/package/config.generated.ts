@@ -947,7 +947,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, LabelHasAssociatedControlConfig];
   "jsx-a11y/lang"?: RuleNoConfig;
-  "jsx-a11y/media-has-caption"?: DummyRule;
+  "jsx-a11y/media-has-caption"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MediaHasCaptionConfig];
   "jsx-a11y/mouse-events-have-key-events"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
@@ -2556,6 +2556,20 @@ export interface LabelHasAssociatedControlConfig {
    * Custom JSX components to be treated as labels.
    */
   labelComponents?: string[];
+}
+export interface MediaHasCaptionConfig {
+  /**
+   * Element names to treat as `<audio>` elements
+   */
+  audio?: string[];
+  /**
+   * Element names to treat as `<track>` elements
+   */
+  track?: string[];
+  /**
+   * Element names to treat as `<video>` elements
+   */
+  video?: string[];
 }
 export interface MouseEventsHaveKeyEventsConfig {
   /**
