@@ -1201,14 +1201,14 @@ export interface DummyRuleMap {
   "react-perf/jsx-no-jsx-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-array-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-function-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
-  "react-perf/jsx-no-new-object-as-prop"?: DummyRule;
+  "react-perf/jsx-no-new-object-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react/button-has-type"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ButtonHasType];
   "react/checked-requires-onchange-or-readonly"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
   "react/display-name"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DisplayNameConfig];
-  "react/exhaustive-deps"?: DummyRule;
+  "react/exhaustive-deps"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExhaustiveDepsConfig];
   "react/forbid-component-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ForbidComponentPropsConfig];
   "react/forbid-dom-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ForbidDomPropsConfig];
   "react/forbid-elements"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ForbidElementsConfig];
@@ -1537,7 +1537,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-array-flat-map"?: RuleNoConfig;
   "unicorn/prefer-array-index-of"?: RuleNoConfig;
   "unicorn/prefer-array-some"?: RuleNoConfig;
-  "unicorn/prefer-at"?: DummyRule;
+  "unicorn/prefer-at"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferAtConfig];
   "unicorn/prefer-bigint-literals"?: RuleNoConfig;
   "unicorn/prefer-blob-reading-methods"?: RuleNoConfig;
   "unicorn/prefer-class-fields"?: RuleNoConfig;
@@ -4052,6 +4052,12 @@ export interface DisplayNameConfig {
    */
   ignoreTranspilerName?: boolean;
 }
+export interface ExhaustiveDepsConfig {
+  /**
+   * Optionally provide a regex of additional hooks to check.
+   */
+  additionalHooks?: string;
+}
 export interface ForbidComponentPropsConfig {
   /**
    * An array specifying the names of props that are forbidden.
@@ -5655,6 +5661,18 @@ export interface NoUselessUndefined {
    * Whether to check for useless `undefined` in arrow function bodies.
    */
   checkArrowFunctionBody?: boolean;
+}
+export interface PreferAtConfig {
+  /**
+   * Check all index access, not just special patterns like `array.length - 1`.
+   * When enabled, `array[0]`, `array[1]`, etc. will also be flagged.
+   */
+  checkAllIndexAccess?: boolean;
+  /**
+   * List of function names to treat as "get last element" functions.
+   * These functions will be checked for `.at(-1)` usage.
+   */
+  getLastElementFunctions?: string[];
 }
 export interface PreferExportFrom {
   /**
