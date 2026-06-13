@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { join as pathJoin } from "node:path";
 import { currentRule } from "../capture.ts";
+import repos from "../../repos.json" with { type: "json" };
 
 import type { MockFn, TestGroup } from "../index.ts";
 import type { TestCase, TestCases, ValidTestCase, InvalidTestCase } from "../rule_tester.ts";
@@ -17,6 +18,7 @@ const TEST_FILES_DIR_PATH = pathJoin(
 
 const group: TestGroup = {
   name: "sonarjs",
+  ...repos.sonarjs,
 
   submoduleName: SUBMODULE_NAME,
   testFilesDirPath: TEST_FILES_RELATIVE_DIR_PATH,

@@ -2,21 +2,21 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:1:16]
  1 │ interface Base {}
    ·                ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:1:16]
  1 │ interface Base {}
    ·                ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:6:44]
  5 │ 
  6 │             interface Derived extends Base {}
@@ -25,7 +25,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:6:44]
  5 │ 
  6 │             interface Derived extends Base {}
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:6:44]
  5 │ 
  6 │             interface Derived extends Base {}
@@ -43,7 +43,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:6:44]
  5 │ 
  6 │             interface Derived extends Base {}
@@ -52,28 +52,28 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:1:38]
  1 │ interface Base extends Array<number> {}
    ·                                      ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:1:43]
  1 │ interface Base extends Array<number | {}> {}
    ·                                           ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
+  ⚠ typescript(no-empty-object-type): Do not use the empty object type literal.
    ╭─[no_empty_object_type.tsx:1:39]
  1 │ interface Base extends Array<number | {}> {}
    ·                                       ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:5:51]
  4 │             }
  5 │             interface Base extends Array<Derived> {}
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:3:38]
  2 │             type R = Record<string, unknown>;
  3 │             interface Base extends R {}
@@ -91,14 +91,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:1:38]
  1 │ interface Base<T> extends Derived<T> {}
    ·                                      ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:4:53]
  3 │               type Base = typeof base;
  4 │               export interface Derived extends Base {}
@@ -107,35 +107,35 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
+  ⚠ typescript(no-empty-object-type): Do not use the empty object type literal.
    ╭─[no_empty_object_type.tsx:1:13]
  1 │ type Base = {};
    ·             ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
+  ⚠ typescript(no-empty-object-type): Do not use the empty object type literal.
    ╭─[no_empty_object_type.tsx:1:13]
  1 │ type Base = {};
    ·             ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
+  ⚠ typescript(no-empty-object-type): Do not use the empty object type literal.
    ╭─[no_empty_object_type.tsx:1:12]
  1 │ let value: {};
    ·            ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
+  ⚠ typescript(no-empty-object-type): Do not use the empty object type literal.
    ╭─[no_empty_object_type.tsx:1:12]
  1 │ let value: {};
    ·            ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
+  ⚠ typescript(no-empty-object-type): Do not use the empty object type literal.
    ╭─[no_empty_object_type.tsx:2:24]
  1 │     
  2 │ ╭─▶             let value: {
@@ -145,28 +145,28 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
+  ⚠ typescript(no-empty-object-type): Do not use the empty object type literal.
    ╭─[no_empty_object_type.tsx:1:23]
  1 │ type MyUnion<T> = T | {};
    ·                       ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
+  ⚠ typescript(no-empty-object-type): Do not use the empty object type literal.
    ╭─[no_empty_object_type.tsx:1:13]
  1 │ type Base = {} | null;
    ·             ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
+  ⚠ typescript(no-empty-object-type): Do not use the empty object type literal.
    ╭─[no_empty_object_type.tsx:1:13]
  1 │ type Base = {};
    ·             ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
-  ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
+  ⚠ typescript(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:1:16]
  1 │ interface Base {}
    ·                ──

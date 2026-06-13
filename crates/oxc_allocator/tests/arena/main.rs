@@ -12,7 +12,6 @@
     clippy::needless_pass_by_value,
     clippy::print_stderr,
     clippy::print_stdout,
-    clippy::ptr_as_ptr,
     clippy::ptr_cast_constness,
     clippy::ptr_offset_by_literal,
     clippy::ref_as_ptr,

@@ -116,12 +116,7 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `void 0`
     pub fn is_void_0(&self) -> bool {
-        match self {
-            Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void => {
-                matches!(&expr.argument, Self::NumericLiteral(lit) if lit.value == 0.0)
-            }
-            _ => false,
-        }
+        matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void && expr.argument.is_number_0())
     }
 
     /// Returns `true` for [numeric literals](NumericLiteral)
@@ -2063,6 +2058,16 @@ impl ImportPhase {
         match self {
             Self::Source => "source",
             Self::Defer => "defer",
+        }
+    }
+}
+
+impl WithClauseKeyword {
+    /// Returns the syntax associated with this [`WithClauseKeyword`].
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::With => "with",
+            Self::Assert => "assert",
         }
     }
 }

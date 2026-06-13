@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -5,21 +7,32 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_util::is_method_call,
-    utils::{ReactPerfRule, find_initialized_binding, is_constructor_matching_name},
+    utils::{
+        NativeAllowList, ReactPerfConfig, ReactPerfRule, find_initialized_binding,
+        is_constructor_matching_name,
+    },
 };
 
-#[derive(Debug, Default, Clone)]
-pub struct JsxNoNewObjectAsProp;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct JsxNoNewObjectAsProp(Box<ReactPerfConfig>);
+
+impl std::ops::Deref for JsxNoNewObjectAsProp {
+    type Target = ReactPerfConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent Objects that are local to the current method from being used
+    /// Prevent objects that are local to the current method from being used
     /// as values of JSX props.
     ///
     /// ### Why is this bad?
     ///
-    /// Using locally defined Objects as values for props can lead to unintentional
+    /// Using locally defined objects as values for props can lead to unintentional
     /// re-renders and performance issues. Every time the parent component renders,
     /// a new instance of the Object is created, causing unnecessary re-renders of
     /// child components. This also leads to harder-to-maintain code as the
@@ -44,12 +57,18 @@ declare_oxc_lint!(
     JsxNoNewObjectAsProp,
     react_perf,
     perf,
+    config = ReactPerfConfig,
     version = "0.2.3",
+    short_description = "Prevent objects that are local to the current method from being used as values of JSX props.",
 );
 
 impl ReactPerfRule for JsxNoNewObjectAsProp {
     const MESSAGE: &'static str =
         "JSX attribute values should not contain objects created in the same scope.";
+
+    fn native_allow_list(&self) -> &NativeAllowList {
+        self.0.native_allow_list()
+    }
 
     fn check_for_violation_on_expr(&self, expr: &Expression<'_>) -> Option<Span> {
         check_expression(expr)
@@ -114,19 +133,22 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 
 #[test]
 fn test() {
+    use serde_json::json;
+
     use crate::tester::Tester;
 
     let pass = vec![
-        r"<Item config={staticConfig} />",
-        r"<Item config={{}} />",
-        r"<Item config={'foo'} />",
-        r"const Foo = () => <Item config={staticConfig} />",
-        r"const Foo = (props) => <Item {...props} />",
-        r"const Foo = (props) => <Item x={props.x} />",
-        r"const Foo = ({ x = 5 }) => <Item x={x} />",
-        r"const x = {}; const Foo = () => <Bar x={x} />",
-        r"const DEFAULT_X = {}; const Foo = ({ x = DEFAULT_X }) => <Bar x={x} />",
-        r"
+        (r"<Item config={staticConfig} />", None),
+        (r"<Item config={{}} />", None),
+        (r"<Item config={'foo'} />", None),
+        (r"const Foo = () => <Item config={staticConfig} />", None),
+        (r"const Foo = (props) => <Item {...props} />", None),
+        (r"const Foo = (props) => <Item x={props.x} />", None),
+        (r"const Foo = ({ x = 5 }) => <Item x={x} />", None),
+        (r"const x = {}; const Foo = () => <Bar x={x} />", None),
+        (r"const DEFAULT_X = {}; const Foo = ({ x = DEFAULT_X }) => <Bar x={x} />", None),
+        (
+            r"
         import { FC, useMemo } from 'react';
         import { Bar } from './bar';
         export const Foo: FC = () => {
@@ -134,7 +156,10 @@ fn test() {
             return <Bar prop={x} />
         }
         ",
-        r"
+            None,
+        ),
+        (
+            r"
         import { FC, useMemo } from 'react';
         import { Bar } from './bar';
         export const Foo: FC = () => {
@@ -143,26 +168,36 @@ fn test() {
             return <Bar prop={y} />
         }
         ",
+            None,
+        ),
         // new arr, not an obj
-        r"const Foo = () => <Item arr={[]} />",
+        (r"const Foo = () => <Item arr={[]} />", None),
+        (r"const Foo = () => <div style={{}} />", Some(json!([{ "nativeAllowList": "all" }]))),
+        (r"const Foo = () => <div style={{}} />", Some(json!([{ "nativeAllowList": ["style"] }]))),
     ];
 
     let fail = vec![
-        r"const Foo = () => <Item config={{}} />",
-        r"const Foo = () => <Item config={Object.create(null)} />",
-        r"const Foo = ({ x }) => <Item config={Object.assign({}, x)} />",
-        r"const Foo = () => (<Item config={new Object()} />)",
-        r"const Foo = () => (<Item config={Object()} />)",
-        r"const Foo = () => (<div style={{display: 'none'}} />)",
-        r"const Foo = () => (<Item config={this.props.config || {}} />)",
-        r"const Foo = () => (<Item config={this.props.config ? this.props.config : {}} />)",
-        r"const Foo = () => (<Item config={this.props.config || (this.props.default ? this.props.default : {})} />)",
-        r"const Foo = () => { const x = {}; return <Bar x={x} /> }",
-        r"const Foo = ({ x = {} }) => <Item x={x} />",
-        r"const Foo = () => { const x: Foo = {}; return <Bar x={x} /> }",
-        r"const Foo = () => { const x: Foo = {} as Foo; return <Bar x={x} /> }",
-        r"const Foo = () => { const x: Foo = {} satisfies Foo; return <Bar x={x} /> }",
-        r"const Foo = () => { const x: Foo = {} as const; return <Bar x={x} /> }",
+        (r"const Foo = () => <Item config={{}} />", None),
+        (r"const Foo = () => <Item config={Object.create(null)} />", None),
+        (r"const Foo = ({ x }) => <Item config={Object.assign({}, x)} />", None),
+        (r"const Foo = () => (<Item config={new Object()} />)", None),
+        (r"const Foo = () => (<Item config={Object()} />)", None),
+        (r"const Foo = () => (<div style={{display: 'none'}} />)", None),
+        (r"const Foo = () => (<Item config={this.props.config || {}} />)", None),
+        (r"const Foo = () => (<Item config={this.props.config ? this.props.config : {}} />)", None),
+        (
+            r"const Foo = () => (<Item config={this.props.config || (this.props.default ? this.props.default : {})} />)",
+            None,
+        ),
+        (r"const Foo = () => { const x = {}; return <Bar x={x} /> }", None),
+        (r"const Foo = ({ x = {} }) => <Item x={x} />", None),
+        (r"const Foo = () => { const x: Foo = {}; return <Bar x={x} /> }", None),
+        (r"const Foo = () => { const x: Foo = {} as Foo; return <Bar x={x} /> }", None),
+        (r"const Foo = () => { const x: Foo = {} satisfies Foo; return <Bar x={x} /> }", None),
+        (r"const Foo = () => { const x: Foo = {} as const; return <Bar x={x} /> }", None),
+        (r"const Foo = () => <div config={{}} />", Some(json!([{ "nativeAllowList": ["style"] }]))),
+        // components are never exempt, even with `"all"`
+        (r"const Foo = () => <Item style={{}} />", Some(json!([{ "nativeAllowList": "all" }]))),
     ];
 
     Tester::new(JsxNoNewObjectAsProp::NAME, JsxNoNewObjectAsProp::PLUGIN, pass, fail)

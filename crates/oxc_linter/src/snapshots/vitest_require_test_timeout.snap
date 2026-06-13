@@ -2,231 +2,231 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+  ⚠ vitest(require-test-timeout): Test is missing a timeout.
    ╭─[require_test_timeout.tsx:1:1]
  1 │ test("a", () => {})
    · ───────────────────
    ╰────
   help: Add a numeric third argument, a `{ timeout }` option object second argument, or call `vi.setConfig({ testTimeout: ... })` before this test.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+  ⚠ vitest(require-test-timeout): Test is missing a timeout.
    ╭─[require_test_timeout.tsx:1:1]
  1 │ it("a", () => {})
    · ─────────────────
    ╰────
   help: Add a numeric third argument, a `{ timeout }` option object second argument, or call `vi.setConfig({ testTimeout: ... })` before this test.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+  ⚠ vitest(require-test-timeout): Test is missing a timeout.
    ╭─[require_test_timeout.tsx:1:1]
  1 │ test.only("a", () => {})
    · ────────────────────────
    ╰────
   help: Add a numeric third argument, a `{ timeout }` option object second argument, or call `vi.setConfig({ testTimeout: ... })` before this test.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+  ⚠ vitest(require-test-timeout): Test is missing a timeout.
    ╭─[require_test_timeout.tsx:1:1]
  1 │ test.concurrent("a", () => {})
    · ──────────────────────────────
    ╰────
   help: Add a numeric third argument, a `{ timeout }` option object second argument, or call `vi.setConfig({ testTimeout: ... })` before this test.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+  ⚠ vitest(require-test-timeout): Test is missing a timeout.
    ╭─[require_test_timeout.tsx:1:1]
  1 │ it.concurrent("a", () => {})
    · ────────────────────────────
    ╰────
   help: Add a numeric third argument, a `{ timeout }` option object second argument, or call `vi.setConfig({ testTimeout: ... })` before this test.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+  ⚠ vitest(require-test-timeout): Test is missing a timeout.
    ╭─[require_test_timeout.tsx:1:19]
  1 │ vi.setConfig({}); test("a", () => {})
    ·                   ───────────────────
    ╰────
   help: Add a numeric third argument, a `{ timeout }` option object second argument, or call `vi.setConfig({ testTimeout: ... })` before this test.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:37]
  1 │ const t = 500; test("a", { timeout: t }, () => {})
    ·                                     ─
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:21]
  1 │ test("a", () => {}, { timeout: null })
    ·                     ─────────────────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:21]
  1 │ test("a", () => {}, { timeout: undefined })
    ·                     ──────────────────────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must not be negative.
+  ⚠ vitest(require-test-timeout): Timeout must not be negative.
    ╭─[require_test_timeout.tsx:1:21]
  1 │ test("a", () => {}, -100)
    ·                     ────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:21]
  1 │ test("a", () => {}, { timeout: -1 })
    ·                     ───────────────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:29]
  1 │ vi.setConfig({ testTimeout: null }); test("a", () => {})
    ·                             ────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:29]
  1 │ vi.setConfig({ testTimeout: undefined }); test("a", () => {})
    ·                             ─────────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+  ⚠ vitest(require-test-timeout): Test is missing a timeout.
    ╭─[require_test_timeout.tsx:1:1]
  1 │ test("a", () => {}); vi.setConfig({ testTimeout: 1000 })
    · ───────────────────
    ╰────
   help: Add a numeric third argument, a `{ timeout }` option object second argument, or call `vi.setConfig({ testTimeout: ... })` before this test.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test options object is missing a `timeout` property.
+  ⚠ vitest(require-test-timeout): Test options object is missing a `timeout` property.
    ╭─[require_test_timeout.tsx:1:43]
  1 │ const opts = { timeout: 1000 }; test("a", { ...opts }, () => {})
    ·                                           ───────────
    ╰────
   help: Add a `timeout` property to the options object.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test options object is missing a `timeout` property.
+  ⚠ vitest(require-test-timeout): Test options object is missing a `timeout` property.
    ╭─[require_test_timeout.tsx:1:43]
  1 │ const opts = { timeout: 1000 }; test("a", { ...opts }, { foo: 1 }, () => {})
    ·                                           ───────────
    ╰────
   help: Add a `timeout` property to the options object.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:21]
  1 │ test("a", () => {}, { timeout: -1 }, { timeout: 500 })
    ·                     ───────────────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:21]
  1 │ test("a", () => {}, { timeout: 500 }, { timeout: -1 })
    ·                     ────────────────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:21]
  1 │ test("a", () => {}, { timeout: -1 }, 1000)
    ·                     ───────────────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:21]
  1 │ test("a", () => {}, null)
    ·                     ────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:21]
  1 │ test("a", () => {}, "1000")
    ·                     ──────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:22]
  1 │ test("a", { timeout: "1000" }, () => {})
    ·                      ──────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:29]
  1 │ vi.setConfig({ testTimeout: "1000" })
    ·                             ──────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:29]
  1 │ vi.setConfig({ testTimeout: -"1" })
    ·                             ────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:22]
  1 │ test("a", { timeout: null }, () => {})
    ·                      ────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:21]
  1 │ test("a", () => {}, undefined)
    ·                     ─────────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must not be negative.
+  ⚠ vitest(require-test-timeout): Timeout must not be negative.
    ╭─[require_test_timeout.tsx:1:29]
  1 │ vi.setConfig({ testTimeout: -100 }); test("a", () => {})
    ·                             ────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must not be negative.
+  ⚠ vitest(require-test-timeout): Timeout must not be negative.
    ╭─[require_test_timeout.tsx:1:22]
  1 │ test("a", { timeout: -500 }, () => {})
    ·                      ────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): `vi.setConfig()` is missing a `testTimeout` property.
+  ⚠ vitest(require-test-timeout): `vi.setConfig()` is missing a `testTimeout` property.
    ╭─[require_test_timeout.tsx:1:1]
  1 │ vi.setConfig("invalid"); test("a", () => {})
    · ───────────────────────
    ╰────
   help: Pass an object with a `testTimeout` property to `vi.setConfig()`.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+  ⚠ vitest(require-test-timeout): Test is missing a timeout.
    ╭─[require_test_timeout.tsx:1:26]
  1 │ vi.setConfig("invalid"); test("a", () => {})
    ·                          ───────────────────
    ╰────
   help: Add a numeric third argument, a `{ timeout }` option object second argument, or call `vi.setConfig({ testTimeout: ... })` before this test.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Test options object is missing a `timeout` property.
+  ⚠ vitest(require-test-timeout): Test options object is missing a `timeout` property.
    ╭─[require_test_timeout.tsx:1:11]
  1 │ test("a", { retries: 3 }, () => {})
    ·           ──────────────
    ╰────
   help: Add a `timeout` property to the options object.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must be a number.
+  ⚠ vitest(require-test-timeout): Timeout must be a number.
    ╭─[require_test_timeout.tsx:1:87]
  1 │ vi.setConfig({ testTimeout: 1000 }); test("a", () => {}); vi.setConfig({ testTimeout: null }); test("b", () => {})
    ·                                                                                       ────
    ╰────
   help: Use a non-negative numeric literal for the timeout value.
 
-  ⚠ eslint-plugin-vitest(require-test-timeout): Timeout must not be negative.
+  ⚠ vitest(require-test-timeout): Timeout must not be negative.
    ╭─[require_test_timeout.tsx:1:58]
  1 │ vi.setConfig({ testTimeout: 1000 }); test("a", () => {}, -1)
    ·                                                          ──

@@ -1,5 +1,11 @@
 import os from "node:os";
-import { BUFFER_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from "../generated/constants.js";
+import {
+  BLOCK_SIZE,
+  BLOCK_ALIGN,
+  BUFFER_SIZE,
+  ACTIVE_SIZE,
+  IS_TS_FLAG_POS,
+} from "../generated/constants.js";
 import {
   getBufferOffset,
   parseRaw as parseRawBinding,
@@ -33,9 +39,9 @@ if (!rawTransferSupported()) {
  * @returns {Object} - The return value of `convert`
  */
 export function parseSyncRawImpl(filename, sourceText, options, convert) {
-  const { buffer, sourceByteLen } = prepareRaw(sourceText);
-  parseRawSyncBinding(filename, buffer, sourceByteLen, options);
-  return convert(buffer, sourceText, sourceByteLen, options);
+  const { buffer, sourceStartPos, sourceByteLen } = prepareRaw(sourceText);
+  parseRawSyncBinding(filename, buffer.block, sourceStartPos, sourceByteLen, options);
+  return convert(buffer, sourceText, sourceStartPos, sourceByteLen, options);
 }
 
 // User should not schedule more async tasks than there are available CPUs, as it hurts performance,
@@ -113,9 +119,9 @@ export async function parseAsyncRawImpl(filename, sourceText, options, convert) 
   }
 
   // Parse
-  const { buffer, sourceByteLen } = prepareRaw(sourceText);
-  await parseRawBinding(filename, buffer, sourceByteLen, options);
-  const data = convert(buffer, sourceText, sourceByteLen, options);
+  const { buffer, sourceStartPos, sourceByteLen } = prepareRaw(sourceText);
+  await parseRawBinding(filename, buffer.block, sourceStartPos, sourceByteLen, options);
+  const data = convert(buffer, sourceText, sourceStartPos, sourceByteLen, options);
 
   // Free the CPU core
   if (queue.length > 0) {
@@ -131,7 +137,7 @@ export async function parseAsyncRawImpl(filename, sourceText, options, convert) 
   return data;
 }
 
-const ARRAY_BUFFER_SIZE = BUFFER_SIZE + BUFFER_ALIGN;
+const ARRAY_BUFFER_SIZE = BLOCK_SIZE + BLOCK_ALIGN;
 const ONE_GIB = 1 << 30;
 
 // We keep a cache of buffers for raw transfer, so we can reuse them as much as possible.
@@ -174,8 +180,9 @@ const textEncoder = new TextEncoder();
  * Get a buffer (from cache if possible), and copy source text into it.
  *
  * @param {string} sourceText - Source text of file
- * @returns {Object} - Object of form `{ buffer, sourceByteLen }`.
+ * @returns {Object} - Object of form `{ buffer, sourceStartPos, sourceByteLen }`.
  *   - `buffer`: `Uint8Array` containing the AST in raw form.
+ *   - `sourceStartPos`: Position of first byte of source text in buffer
  *   - `sourceByteLen`: Length of source text in UTF-8 bytes
  *     (which may not be equal to `sourceText.length` if source contains non-ASCII characters).
  */
@@ -200,14 +207,25 @@ export function prepareRaw(sourceText) {
   // Reuse existing buffer, or create a new one
   const buffer = buffers.length > 0 ? buffers.pop() : createBuffer();
 
-  // Write source into start of buffer.
-  // `TextEncoder` cannot write into a `Uint8Array` larger than 1 GiB,
-  // so create a view into buffer of this size to write into.
-  const sourceBuffer = new Uint8Array(buffer.buffer, buffer.byteOffset, ONE_GIB);
+  // Write source into end of buffer.
+  // Maximum size of a string encoded in UTF-8 is 3 x the length of the string in UTF-16 characters
+  // (a source which consists entirely of 3-byte UTF-8 characters).
+  // We can't predict how many bytes will be needed exactly in advance of encoding, so we reserve
+  // the maximum theoretically possible number of bytes required.
+  // `TextEncoder` cannot write into a `Uint8Array` larger than 1 GiB, so size is capped at 1 GiB.
+  const maxSourceByteLen = sourceText.length * 3;
+  if (maxSourceByteLen > ONE_GIB) throw new Error("Source text is too long");
+  const sourceStartPos = ACTIVE_SIZE - maxSourceByteLen;
+
+  const sourceBuffer = new Uint8Array(
+    buffer.buffer,
+    buffer.byteOffset + sourceStartPos,
+    maxSourceByteLen,
+  );
   const { read, written: sourceByteLen } = textEncoder.encodeInto(sourceText, sourceBuffer);
   if (read !== sourceText.length) throw new Error("Failed to write source text into buffer");
 
-  return { buffer, sourceByteLen };
+  return { buffer, sourceStartPos, sourceByteLen };
 }
 
 /**
@@ -260,6 +278,12 @@ function clearBuffersCache() {
  * It's always possible to obtain a 2 GiB slice aligned on 4 GiB within a 6 GiB buffer,
  * no matter how the 6 GiB buffer is aligned.
  *
+ * `buffer` itself, and `int32` and `float64` views of `buffer`, are `BUFFER_SIZE` bytes,
+ * which excludes `FixedSizeAllocatorMetadata` and `ChunkFooter`.
+ * This ensures this critical data cannot be accidentally overwritten on JS side.
+ * `block` is `BLOCK_SIZE` bytes, which includes `FixedSizeAllocatorMetadata` and `ChunkFooter`.
+ * `block` is what we pass to Rust, which needs to write `ChunkFooter`.
+ *
  * Note: On systems with virtual memory, this only consumes 6 GiB of *virtual* memory.
  * It does not consume physical memory until data is actually written to the `Uint8Array`.
  * Physical memory consumed corresponds to the quantity of data actually written.
@@ -272,5 +296,6 @@ function createBuffer() {
   const buffer = new Uint8Array(arrayBuffer, offset, BUFFER_SIZE);
   buffer.int32 = new Int32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
   buffer.float64 = new Float64Array(arrayBuffer, offset, BUFFER_SIZE / 8);
+  buffer.block = new Uint8Array(arrayBuffer, offset, BLOCK_SIZE);
   return buffer;
 }

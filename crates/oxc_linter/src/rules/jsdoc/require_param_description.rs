@@ -49,6 +49,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     version = "0.4.4",
+    short_description = "Requires that each `@param` tag has a description value.",
 );
 
 impl Rule for RequireParamDescription {
@@ -241,9 +242,11 @@ fn test() {
 			
 			          }
 			      ",
-            Some(
-                serde_json::json!([        {          "setDefaultDestructuredRootDescription": true,        },      ]),
-            ),
+            // TODO: support configurations for this rule
+            // Some(
+            //     serde_json::json!([        {          "setDefaultDestructuredRootDescription": true,        },      ]),
+            // ),
+            None,
             None,
         ),
         (
@@ -257,9 +260,11 @@ fn test() {
 			
 			          }
 			      ",
-            Some(
-                serde_json::json!([        {          "defaultDestructuredRootDescription": "Root description",          "setDefaultDestructuredRootDescription": true,        },      ]),
-            ),
+            // TODO: support configurations for this rule
+            // Some(
+            //     serde_json::json!([        {          "defaultDestructuredRootDescription": "Root description",          "setDefaultDestructuredRootDescription": true,        },      ]),
+            // ),
+            None,
             None,
         ),
         (
@@ -273,9 +278,11 @@ fn test() {
 			
 			          }
 			      ",
-            Some(
-                serde_json::json!([        {          "setDefaultDestructuredRootDescription": false,        },      ]),
-            ),
+            // TODO: support configurations for this rule
+            // Some(
+            //     serde_json::json!([        {          "setDefaultDestructuredRootDescription": false,        },      ]),
+            // ),
+            None,
             None,
         ),
     ];

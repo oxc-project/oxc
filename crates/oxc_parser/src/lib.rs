@@ -64,6 +64,8 @@
 //!
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
+use std::any::Any;
+
 pub mod config;
 mod context;
 mod cursor;
@@ -90,13 +92,15 @@ use oxc_ast::{
     AstBuilder,
     ast::{Expression, Program},
 };
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
-    config::{LexerConfig, NoTokensParserConfig, ParserConfig},
+    config::{
+        LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
+    },
     context::{Context, StatementContext},
     error_handler::FatalError,
     lexer::Lexer,
@@ -124,14 +128,14 @@ pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
 ///
 /// [`program`] will always contain a structurally valid AST, even if there are syntax errors.
 /// However, the AST may be semantically invalid. To ensure a valid AST,
-/// 1. Check that [`errors`] is empty
+/// 1. Check that [`diagnostics`] is empty
 /// 2. Run semantic analysis with [syntax error checking
 ///    enabled](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error)
 ///
 /// ## Errors
 /// Oxc's [`Parser`] is able to recover from some syntax errors and continue parsing. When this
 /// happens,
-/// 1. [`errors`] will be non-empty
+/// 1. [`diagnostics`] will be non-empty
 /// 2. [`program`] will contain a full AST
 /// 3. [`panicked`] will be false
 ///
@@ -139,7 +143,7 @@ pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
 /// be empty and [`panicked`] will be `true`.
 ///
 /// [`program`]: ParserReturn::program
-/// [`errors`]: ParserReturn::errors
+/// [`diagnostics`]: ParserReturn::diagnostics
 /// [`panicked`]: ParserReturn::panicked
 #[non_exhaustive]
 pub struct ParserReturn<'a> {
@@ -152,7 +156,7 @@ pub struct ParserReturn<'a> {
     /// 1. The [`Parser`] encounters a recoverable syntax error
     /// 2. The logic for checking the violation is in the semantic analyzer
     ///
-    /// To ensure a valid AST, check that [`errors`](ParserReturn::errors) is empty. Then, run
+    /// To ensure a valid AST, check that [`diagnostics`](ParserReturn::diagnostics) is empty. Then, run
     /// semantic analysis with syntax error checking enabled.
     pub program: Program<'a>,
 
@@ -164,7 +168,7 @@ pub struct ParserReturn<'a> {
     /// This list is not comprehensive. Oxc offloads more-expensive checks to [semantic
     /// analysis](https://docs.rs/oxc_semantic), which can be enabled using
     /// [`SemanticBuilder::with_check_syntax_error`](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error).
-    pub errors: Vec<OxcDiagnostic>,
+    pub diagnostics: Diagnostics,
 
     /// Irregular whitespaces for `Oxlint`
     pub irregular_whitespaces: Box<[Span]>,
@@ -177,11 +181,11 @@ pub struct ParserReturn<'a> {
     /// Whether the parser panicked and terminated early.
     ///
     /// This will be `false` if parsing was successful, or if parsing was able to recover from a
-    /// syntax error. When `true`, [`program`] will be empty and [`errors`] will contain at least
+    /// syntax error. When `true`, [`program`] will be empty and [`diagnostics`] will contain at least
     /// one error.
     ///
     /// [`program`]: ParserReturn::program
-    /// [`errors`]: ParserReturn::errors
+    /// [`diagnostics`]: ParserReturn::diagnostics
     pub panicked: bool,
 
     /// Whether the file is [flow](https://flow.org).
@@ -329,17 +333,53 @@ mod parser_parse {
         /// Recoverable errors are stored inside `errors`.
         ///
         /// See the [module-level documentation](crate) for examples and more information.
+        //
+        // # Implementation note
+        //
+        // Dispatches via `Any` to a non-generic helper for each known `ParserConfig`.
+        // The dispatch keeps the parser body emitted exactly once in `oxc_parser`'s rlib,
+        // so consuming crates don't each get a private copy. The `Any::is` / `downcast_ref`
+        // calls const-fold when `C` is concrete (the trait object is built from a known
+        // concrete type at every monomorphization site, so LLVM devirtualises the vtable
+        // call to `Any::type_id` and folds the comparison), leaving each monomorphization
+        // as a single call into the matching helper.
         pub fn parse(self) -> ParserReturn<'a> {
-            let unique = UniquePromise::new();
-            let parser = ParserImpl::new(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                self.config,
-                unique,
-            );
-            parser.parse()
+            let config: &dyn Any = &self.config;
+            if config.is::<NoTokensParserConfig>() {
+                parse_with_no_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if config.is::<TokensParserConfig>() {
+                parse_with_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
+                parse_with_runtime_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    config,
+                )
+            } else {
+                // User-defined `ParserConfig`. Generic codegen here, monomorphized per consuming crate.
+                // Users using custom configs would need to perform the monomorphization themselves.
+                ParserImpl::<C>::new(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    self.config,
+                    UniquePromise::new(),
+                )
+                .parse()
+            }
         }
 
         /// Parse a single [`Expression`].
@@ -361,18 +401,182 @@ mod parser_parse {
         ///
         /// # Errors
         /// If the source code being parsed has syntax errors.
-        pub fn parse_expression(self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
-            let unique = UniquePromise::new();
-            let parser = ParserImpl::new(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                self.config,
-                unique,
-            );
-            parser.parse_expression()
+        //
+        // # Implementation note
+        // Dispatches via `Any`, same as `parse` does.
+        pub fn parse_expression(self) -> Result<Expression<'a>, Diagnostics> {
+            let config: &dyn Any = &self.config;
+            if config.is::<NoTokensParserConfig>() {
+                parse_expression_with_no_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if config.is::<TokensParserConfig>() {
+                parse_expression_with_tokens_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                )
+            } else if let Some(&config) = config.downcast_ref::<RuntimeParserConfig>() {
+                parse_expression_with_runtime_config(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    config,
+                )
+            } else {
+                ParserImpl::<C>::new(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    self.config,
+                    UniquePromise::new(),
+                )
+                .parse_expression()
+            }
         }
+    }
+
+    // ===========================================================================
+    // Non-generic parse helpers, one per known `ParserConfig`.
+    //
+    // The parser is generic over `C: ParserConfig`. By default Rust monomorphizes
+    // generic functions per consuming crate (the legacy mangled name encodes the
+    // instantiating crate's disambiguator, and `share-generics` is off at
+    // `opt-level >= 2`). For a parser that's pulled in by ~15 crates in a real
+    // workspace, that means ~15 private copies of every parser method in the
+    // final cdylib — none of which can be deduped by COMDAT (different names)
+    // or fat LTO (slightly different inlining contexts).
+    //
+    // To avoid that, `Parser<C>::parse` and `Parser<C>::parse_expression` dispatch
+    // via `Any` to one of the helpers below for the three known configs.
+    // Each helper is non-generic, so it's emitted exactly once in `oxc_parser`'s
+    // rlib and shared by all consumers. The `Any::is` / `downcast_ref` checks fold
+    // at compile time when `C` is concrete, so each monomorphization of the dispatch
+    // shrinks to a single call into the matching helper.
+    //
+    // The helpers are `#[inline(never)]` to prevent fat LTO from re-inlining the
+    // parser body across the rlib boundary, which would defeat the purpose.
+    //
+    // For user-defined `ParserConfig` impls (rare), the dispatch falls through
+    // to a generic body that monomorphizes per consuming crate. That's the same
+    // cost the parser had without this pattern; we just keep that cost contained
+    // to the rare custom-config case.
+    // ===========================================================================
+
+    #[inline(never)]
+    fn parse_with_no_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> ParserReturn<'a> {
+        ParserImpl::<NoTokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            NoTokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse()
+    }
+
+    #[inline(never)]
+    fn parse_with_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> ParserReturn<'a> {
+        ParserImpl::<TokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            TokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse()
+    }
+
+    #[inline(never)]
+    fn parse_with_runtime_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        config: RuntimeParserConfig,
+    ) -> ParserReturn<'a> {
+        ParserImpl::<RuntimeParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            config,
+            UniquePromise::new(),
+        )
+        .parse()
+    }
+
+    #[inline(never)]
+    fn parse_expression_with_no_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> Result<Expression<'a>, Diagnostics> {
+        ParserImpl::<NoTokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            NoTokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse_expression()
+    }
+
+    #[inline(never)]
+    fn parse_expression_with_tokens_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+    ) -> Result<Expression<'a>, Diagnostics> {
+        ParserImpl::<TokensParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            TokensParserConfig,
+            UniquePromise::new(),
+        )
+        .parse_expression()
+    }
+
+    #[inline(never)]
+    fn parse_expression_with_runtime_config<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        config: RuntimeParserConfig,
+    ) -> Result<Expression<'a>, Diagnostics> {
+        ParserImpl::<RuntimeParserConfig>::new(
+            allocator,
+            source_text,
+            source_type,
+            options,
+            config,
+            UniquePromise::new(),
+        )
+        .parse_expression()
     }
 }
 use parser_parse::UniquePromise;
@@ -492,7 +696,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
 
         let mut is_flow_language = false;
-        let mut errors = vec![];
+        let mut errors = Diagnostics::new();
         // only check for `@flow` if the file failed to parse.
         if (!self.lexer.errors.is_empty() || !self.errors.is_empty())
             && let Some(error) = self.flow_error()
@@ -537,7 +741,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         ParserReturn {
             program,
             module_record,
-            errors,
+            diagnostics: errors,
             irregular_whitespaces,
             tokens,
             panicked,
@@ -545,15 +749,15 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
     }
 
-    pub fn parse_expression(mut self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
+    pub fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();
         if let Some(FatalError { error, .. }) = self.fatal_error.take() {
-            return Err(vec![error]);
+            return Err(error.into());
         }
         self.check_unfinished_errors();
-        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
+        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Diagnostics>();
         if !errors.is_empty() {
             return Err(errors);
         }
@@ -568,7 +772,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         let hashbang = self.parse_hashbang();
         self.ctx |= Context::TopLevel;
-        let (directives, mut statements) = self.parse_directives_and_statements();
+        let (directives, mut statements) =
+            self.parse_directives_and_statements(/* in_ts_namespace_body */ false);
 
         // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
         // we need to reparse statements that were originally parsed with `await` as identifier.
@@ -636,9 +841,13 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }
-        // CommonJS files are wrapped in a function, so return is allowed at top-level
+        // CommonJS files are wrapped in a function, so return and `new.target`
+        // are allowed at top-level
         if options.allow_return_outside_function || source_type.is_commonjs() {
             ctx = ctx.and_return(true);
+        }
+        if source_type.is_commonjs() {
+            ctx = ctx.and_new_target(true);
         }
         ctx
     }
@@ -699,7 +908,7 @@ mod test {
         let source = "";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         assert!(!ret.is_flow_language);
     }
 
@@ -729,8 +938,8 @@ mod test {
         for source in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(ret.is_flow_language);
-            assert_eq!(ret.errors.len(), 1);
-            assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
+            assert_eq!(ret.diagnostics.len(), 1);
+            assert_eq!(ret.diagnostics.first().unwrap().to_string(), "Flow is not supported");
         }
     }
 
@@ -740,7 +949,7 @@ mod test {
         let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
         let source = "declare module 'test'\n";
         let ret = Parser::new(&allocator, source, source_type).parse();
-        assert_eq!(ret.errors.len(), 0);
+        assert_eq!(ret.diagnostics.len(), 0);
     }
 
     #[test]
@@ -767,7 +976,7 @@ mod test {
             let source = "%DebugPrint('Raging against the Dying Light')";
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
             let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
-            assert!(ret.errors.is_empty());
+            assert!(ret.diagnostics.is_empty());
 
             if let Some(Statement::ExpressionStatement(expr_stmt)) = ret.program.body.first() {
                 if let Expression::V8IntrinsicExpression(expr) = &expr_stmt.expression {
@@ -783,17 +992,17 @@ mod test {
             let source = "%DebugPrint(...illegalSpread)";
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
             let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
-            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(ret.diagnostics.len(), 1);
             assert_eq!(
-                ret.errors[0].to_string(),
+                ret.diagnostics[0].to_string(),
                 "V8 runtime calls cannot have spread elements as arguments"
             );
         }
         {
             let source = "%DebugPrint('~~')";
             let ret = Parser::new(&allocator, source, source_type).parse();
-            assert_eq!(ret.errors.len(), 1);
-            assert_eq!(ret.errors[0].to_string(), "Unexpected token");
+            assert_eq!(ret.diagnostics.len(), 1);
+            assert_eq!(ret.diagnostics[0].to_string(), "Unexpected token");
         }
         {
             // https://github.com/oxc-project/oxc/issues/12121
@@ -802,9 +1011,9 @@ mod test {
             // Should not panic whether `allow_v8_intrinsics` is set or not.
             let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
             let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
-            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(ret.diagnostics.len(), 1);
             let ret = Parser::new(&allocator, source, source_type).parse();
-            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(ret.diagnostics.len(), 1);
         }
     }
 
@@ -863,13 +1072,13 @@ mod test {
         // U+FFFD as a standalone token — file appears to be binary
         let ret = Parser::new(&allocator, "\u{FFFD}", source_type).parse();
         assert!(ret.program.is_empty());
-        assert_eq!(ret.errors.len(), 1);
-        assert_eq!(ret.errors[0].to_string(), "File appears to be binary.");
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(ret.diagnostics[0].to_string(), "File appears to be binary.");
 
         // U+FFFD inside string literals — should parse fine
         let ret = Parser::new(&allocator, "\"oops \u{FFFD} oops\";", source_type).parse();
         assert!(!ret.program.is_empty());
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
     }
 
     #[test]
@@ -949,8 +1158,11 @@ mod test {
         // Parsing should fail
         assert!(ret.program.is_empty());
         assert!(ret.panicked);
-        assert_eq!(ret.errors.len(), 1);
-        assert_eq!(ret.errors.first().unwrap().to_string(), "Source length exceeds 4 GiB limit");
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(
+            ret.diagnostics.first().unwrap().to_string(),
+            "Source length exceeds 4 GiB limit"
+        );
     }
 
     // Source with length MAX_LEN parses OK.
@@ -972,7 +1184,7 @@ mod test {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
         assert!(!ret.panicked);
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         assert_eq!(ret.program.body.len(), 2);
     }
 }

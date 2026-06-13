@@ -18,13 +18,16 @@ use crate::{
     config::{LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
-    frameworks::{self, FrameworkOptions},
+    frameworks::FrameworkOptions,
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
 };
 
-use super::{LintContext, plugin_name_to_prefix};
+#[cfg(not(test))]
+use crate::frameworks::{has_jest_imports, has_vitest_imports, is_jestlike_file};
+
+use super::{LintContext, plugin_display_name};
 
 /// Stores shared information about a script block being linted.
 pub struct ContextSubHost<'a> {
@@ -46,48 +49,17 @@ pub struct ContextSubHost<'a> {
 }
 
 impl<'a> ContextSubHost<'a> {
+    pub(crate) fn source_text_offset(&self) -> u32 {
+        self.source_text_offset
+    }
+
+    /// # Panics
+    /// If `semantic.cfg()` is `None`.
     pub fn new(
         semantic: Semantic<'a>,
         module_record: Arc<ModuleRecord>,
         source_text_offset: u32,
-    ) -> Self {
-        Self::new_with_framework_options(
-            semantic,
-            module_record,
-            source_text_offset,
-            FrameworkOptions::Default,
-            ArenaBox::new_empty_boxed_slice(),
-        )
-    }
-
-    /// # Panics
-    /// If `semantic.cfg()` is `None`.
-    pub fn new_with_framework_options(
-        semantic: Semantic<'a>,
-        module_record: Arc<ModuleRecord>,
-        source_text_offset: u32,
-        frameworks_options: FrameworkOptions,
-        parser_tokens: ArenaBox<'a, [Token]>,
-    ) -> Self {
-        Self::new_with_framework_options_and_directive_support(
-            semantic,
-            module_record,
-            source_text_offset,
-            frameworks_options,
-            parser_tokens,
-            true,
-        )
-    }
-
-    /// # Panics
-    /// If `semantic.cfg()` is `None`.
-    pub(crate) fn new_with_framework_options_and_directive_support(
-        semantic: Semantic<'a>,
-        module_record: Arc<ModuleRecord>,
-        source_text_offset: u32,
-        frameworks_options: FrameworkOptions,
-        parser_tokens: ArenaBox<'a, [Token]>,
-        respect_eslint_disable_directives: bool,
+        options: ContextSubHostOptions<'a>,
     ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
@@ -97,7 +69,7 @@ impl<'a> ContextSubHost<'a> {
         );
 
         let disable_directives = DisableDirectivesBuilder::new()
-            .with_respect_eslint_disable_directives(respect_eslint_disable_directives)
+            .with_respect_eslint_disable_directives(options.respect_eslint_disable_directives)
             .build(semantic.source_text(), semantic.comments());
 
         Self {
@@ -105,8 +77,8 @@ impl<'a> ContextSubHost<'a> {
             module_record,
             source_text_offset,
             disable_directives,
-            framework_options: frameworks_options,
-            parser_tokens,
+            framework_options: options.framework_options,
+            parser_tokens: options.parser_tokens,
         }
     }
 
@@ -130,6 +102,23 @@ impl<'a> ContextSubHost<'a> {
     /// Shared reference to the [`FrameworkOptions`]
     pub fn framework_options(&self) -> FrameworkOptions {
         self.framework_options
+    }
+}
+
+#[non_exhaustive]
+pub struct ContextSubHostOptions<'a> {
+    pub framework_options: FrameworkOptions,
+    pub parser_tokens: ArenaBox<'a, [Token]>,
+    pub respect_eslint_disable_directives: bool,
+}
+
+impl Default for ContextSubHostOptions<'_> {
+    fn default() -> Self {
+        Self {
+            framework_options: FrameworkOptions::Default,
+            parser_tokens: ArenaBox::new_empty_boxed_slice(),
+            respect_eslint_disable_directives: true,
+        }
     }
 }
 
@@ -457,7 +446,7 @@ impl<'a> ContextHost<'a> {
             parent: self,
             current_rule_name: rule_name,
             current_plugin_name: plugin_name,
-            current_plugin_prefix: plugin_name_to_prefix(plugin_name),
+            current_plugin_display_name: plugin_display_name(plugin_name),
             #[cfg(debug_assertions)]
             current_rule_fix_capabilities: rule.fix(),
             severity: severity.into(),
@@ -471,7 +460,7 @@ impl<'a> ContextHost<'a> {
             parent: Rc::clone(&self),
             current_rule_name: "",
             current_plugin_name: "eslint",
-            current_plugin_prefix: "eslint",
+            current_plugin_display_name: "eslint",
             #[cfg(debug_assertions)]
             current_rule_fix_capabilities: crate::rule::RuleFixMeta::None,
             severity: oxc_diagnostics::Severity::Warning,
@@ -486,16 +475,32 @@ impl<'a> ContextHost<'a> {
     /// `package.json`` and look for relevant dependencies. This method builds
     /// on top of those hints, providing a more granular understanding of the
     /// frameworks in use.
+    #[cfg(not(test))]
     fn sniff_for_frameworks(mut self) -> Self {
         if self.plugins().has_test() {
             // let mut test_flags = FrameworkFlags::empty();
 
-            let vitest_like = frameworks::has_vitest_imports(self.module_record());
-            let jest_like = frameworks::is_jestlike_file(&self.file_path)
-                || frameworks::has_jest_imports(self.module_record());
+            let vitest_like = has_vitest_imports(self.module_record());
+            let jest_like =
+                is_jestlike_file(&self.file_path) || has_jest_imports(self.module_record());
 
             self.frameworks.set(FrameworkFlags::Vitest, vitest_like);
             self.frameworks.set(FrameworkFlags::Jest, jest_like);
+        }
+
+        self
+    }
+
+    /// Currently Oxlint isn't searching if Jest or Vitest is in `package.json`.
+    /// Once the method read the `package.json` we can discard this conditional flag,
+    /// and rely on the tester to create the correct `package.json` to have a reliable
+    /// sniff method.
+    #[cfg(test)]
+    fn sniff_for_frameworks(mut self) -> Self {
+        if self.plugins().has_test() {
+            self.frameworks.set(FrameworkFlags::Vitest, self.plugins().has_vitest());
+
+            self.frameworks.set(FrameworkFlags::Jest, self.plugins().has_jest());
         }
 
         self

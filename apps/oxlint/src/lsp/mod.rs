@@ -1,5 +1,6 @@
 use std::{fmt::Write, sync::Arc};
 
+use oxc_language_server::{WorkerManager, run_server};
 use oxc_linter::ExternalLinter;
 
 #[cfg(feature = "napi")]
@@ -9,11 +10,12 @@ mod code_actions;
 mod commands;
 mod error_with_position;
 mod lsp_file_system;
-mod options;
 mod server_linter;
 #[cfg(test)]
 mod tester;
 mod utils;
+
+pub mod options;
 
 /// Run the language server
 pub async fn run_lsp(
@@ -27,14 +29,14 @@ pub async fn run_lsp(
         }
         version
     };
-    oxc_language_server::run_server(
+    run_server(
         "oxlint".to_string(),
         version,
-        Arc::new(crate::lsp::server_linter::ServerLinterBuilder::new(
+        WorkerManager::new(Arc::new(crate::lsp::server_linter::ServerLinterBuilder::new(
             external_linter,
             #[cfg(feature = "napi")]
             js_config_loader,
-        )),
+        ))),
     )
     .await;
 }

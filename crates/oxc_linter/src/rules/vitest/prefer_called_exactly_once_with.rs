@@ -157,12 +157,12 @@ impl TrackingExpectPair {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// It checks when a target is expected with `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` instead of
+    /// It checks when a target is asserted with both `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` instead of
     /// `toHaveBeenCalledExactlyOnceWith`.
     ///
     /// ### Why is this bad?
     ///
-    /// The user must deduct from both expects that the spy function is called once and with a specific arguments.
+    /// The reader must deduce from both expectations that the spy function is called once and with specific arguments.
     ///
     /// ### Examples
     ///
@@ -189,6 +189,7 @@ declare_oxc_lint!(
     style,
     dangerous_fix,
     version = "1.58.0",
+    short_description = "It checks when a target is asserted with both `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` instead of `toHaveBeenCalledExactlyOnceWith`.",
 );
 
 impl Rule for PreferCalledExactlyOnceWith {

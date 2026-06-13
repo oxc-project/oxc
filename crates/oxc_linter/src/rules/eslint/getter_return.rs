@@ -87,6 +87,7 @@ declare_oxc_lint!(
     correctness,
     config = GetterReturn,
     version = "0.0.3",
+    short_description = "Requires all getters to have a `return` statement.",
 );
 
 impl Rule for GetterReturn {
@@ -237,8 +238,7 @@ impl GetterReturn {
                     match event {
                         // We only need to check paths that are normal or jump.
                         DfsEvent::TreeEdge(a, b) => {
-                            let edges = graph.edges_connecting(a, b).collect::<Vec<_>>();
-                            if edges.iter().any(|e| {
+                            if graph.edges_connecting(a, b).any(|e| {
                                 matches!(
                                     e.weight(),
                                     EdgeType::Normal

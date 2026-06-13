@@ -1,8 +1,8 @@
-commit: 2b2ecead
+commit: 05bb0329
 
 parser_test262 Summary:
-AST Parsed     : 47086/47086 (100.00%)
-Positive Passed: 47086/47086 (100.00%)
+AST Parsed     : 47240/47240 (100.00%)
+Positive Passed: 47240/47240 (100.00%)
 Negative Passed: 4588/4588 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -3195,7 +3195,7 @@ Negative Passed: 4588/4588 (100.00%)
  60 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dflt-params-rest.js:63:8]
  62 │ 
  63 │ 0, (...x = []) => {
@@ -4020,12 +4020,13 @@ Negative Passed: 4588/4588 (100.00%)
     ╰────
   help: Remove the trailing comma here
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-init.js:25:8]
  24 │ 
  25 │ 0, [...x = 1] = [];
     ·        ─────
     ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-init.js:25:8]
@@ -5013,6 +5014,14 @@ Negative Passed: 4588/4588 (100.00%)
  17 │ eval = 1;
     · ────
     ╰────
+
+  × Unexpected import.meta expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/direct-import.meta.js:21:1]
+ 20 │ 
+ 21 │ import.meta = 1;
+    · ───────────
+    ╰────
+  help: import.meta is only allowed in module code
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignmenttargettype/direct-import.meta.js:21:1]
@@ -6139,6 +6148,14 @@ Negative Passed: 4588/4588 (100.00%)
     ·  ────
     ╰────
 
+  × Unexpected import.meta expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-import.meta.js:24:2]
+ 23 │ 
+ 24 │ (import.meta) = 1;
+    ·  ───────────
+    ╰────
+  help: import.meta is only allowed in module code
+
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-import.meta.js:24:2]
  23 │ 
@@ -6981,7 +6998,7 @@ Negative Passed: 4588/4588 (100.00%)
  52 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/async-arrow-function/dflt-params-rest.js:55:12]
  54 │ 
  55 │ (async (...x = []) => {
@@ -7344,7 +7361,7 @@ Negative Passed: 4588/4588 (100.00%)
  38 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/async-function/named-dflt-params-rest.js:41:22]
  40 │ 
  41 │ (async function f(...x = []) {
@@ -7398,7 +7415,7 @@ Negative Passed: 4588/4588 (100.00%)
  38 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/async-function/nameless-dflt-params-rest.js:41:20]
  40 │ 
  41 │ (async function(...x = []) {
@@ -7516,7 +7533,7 @@ Negative Passed: 4588/4588 (100.00%)
  41 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dflt-params-rest.js:44:23]
  43 │ 
  44 │ 0, async function*(...x = []) {
@@ -7978,7 +7995,7 @@ Negative Passed: 4588/4588 (100.00%)
  41 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/named-dflt-params-rest.js:44:25]
  43 │ 
  44 │ 0, async function* g(...x = []) {
@@ -8366,7 +8383,7 @@ Negative Passed: 4588/4588 (100.00%)
  65 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-gen-method/dflt-params-rest.js:68:20]
  67 │ 0, class {
  68 │   async *method(...x = []) {
@@ -8590,7 +8607,7 @@ Negative Passed: 4588/4588 (100.00%)
  65 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-gen-method-static/dflt-params-rest.js:68:27]
  67 │ 0, class {
  68 │   static async *method(...x = []) {
@@ -8814,7 +8831,7 @@ Negative Passed: 4588/4588 (100.00%)
  63 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-method/dflt-params-rest.js:66:26]
  65 │ var C = class {
  66 │   static async method(...x = []) {
@@ -8932,7 +8949,7 @@ Negative Passed: 4588/4588 (100.00%)
  63 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-method-static/dflt-params-rest.js:66:26]
  65 │ var C = class {
  66 │   static async method(...x = []) {
@@ -13964,7 +13981,7 @@ Negative Passed: 4588/4588 (100.00%)
  86 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/gen-method/dflt-params-rest.js:89:14]
  88 │ 0, class {
  89 │   *method(...x = []) {
@@ -14133,7 +14150,7 @@ Negative Passed: 4588/4588 (100.00%)
  86 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/gen-method-static/dflt-params-rest.js:89:21]
  88 │ 0, class {
  89 │   static *method(...x = []) {
@@ -14301,7 +14318,7 @@ Negative Passed: 4588/4588 (100.00%)
  82 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/method/dflt-params-rest.js:85:13]
  84 │ 0, class {
  85 │   method(...x = []) {
@@ -14363,7 +14380,7 @@ Negative Passed: 4588/4588 (100.00%)
  82 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/method-static/dflt-params-rest.js:85:20]
  84 │ 0, class {
  85 │   static method(...x = []) {
@@ -14870,7 +14887,7 @@ Negative Passed: 4588/4588 (100.00%)
  35 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-call-unknown.js:36:15]
  35 │ 
  36 │ let f = () => import.UNKNOWN('./empty_FIXTURE.js');
@@ -14972,7 +14989,7 @@ Negative Passed: 4588/4588 (100.00%)
  35 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-call-unknown.js:37:3]
  36 │ let f = () => {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -15089,7 +15106,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ });
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-call-unknown.js:37:9]
  36 │ (async () => {
  37 │   await import.UNKNOWN('./empty_FIXTURE.js')
@@ -15206,7 +15223,7 @@ Negative Passed: 4588/4588 (100.00%)
  35 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-call-unknown.js:36:20]
  35 │ 
  36 │ (async () => await import.UNKNOWN('./empty_FIXTURE.js'))
@@ -15324,7 +15341,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-call-unknown.js:37:9]
  36 │ async function f() {
  37 │   await import.UNKNOWN('./empty_FIXTURE.js');
@@ -15433,7 +15450,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-call-unknown.js:37:3]
  36 │ async function f() {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -15524,7 +15541,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-call-unknown.js:37:16]
  36 │ async function f() {
  37 │   return await import.UNKNOWN('./empty_FIXTURE.js');
@@ -15667,7 +15684,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-call-unknown.js:37:9]
  36 │ async function * f() {
  37 │   await import.UNKNOWN('./empty_FIXTURE.js')
@@ -15784,7 +15801,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ };
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-call-unknown.js:37:3]
  36 │ {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -15850,7 +15867,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ };
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-call-unknown.js:37:3]
  36 │ label: {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16018,7 +16035,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ } while (false);
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-call-unknown.js:37:3]
  36 │ do {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16143,7 +16160,7 @@ Negative Passed: 4588/4588 (100.00%)
  37 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-call-unknown.js:38:8]
  37 │ 
  38 │ } else import.UNKNOWN('./empty_FIXTURE.js');
@@ -16245,7 +16262,7 @@ Negative Passed: 4588/4588 (100.00%)
  37 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-call-unknown.js:39:3]
  38 │ } else {
  39 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16362,7 +16379,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-call-unknown.js:37:3]
  36 │ function fn() {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16453,7 +16470,7 @@ Negative Passed: 4588/4588 (100.00%)
  36 │ }
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-call-unknown.js:37:10]
  36 │ function fn() {
  37 │   return import.UNKNOWN('./empty_FIXTURE.js');
@@ -16604,7 +16621,7 @@ Negative Passed: 4588/4588 (100.00%)
  35 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-call-unknown.js:36:11]
  35 │ 
  36 │ if (true) import.UNKNOWN('./empty_FIXTURE.js');
@@ -16706,7 +16723,7 @@ Negative Passed: 4588/4588 (100.00%)
  35 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-call-unknown.js:37:3]
  36 │ if (true) {
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16823,7 +16840,7 @@ Negative Passed: 4588/4588 (100.00%)
  38 │ };
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-call-unknown.js:39:3]
  38 │   x++;
  39 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -16948,7 +16965,7 @@ Negative Passed: 4588/4588 (100.00%)
  34 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-call-unknown.js:35:7]
  34 │ 
  35 │ with (import.UNKNOWN('./empty_FIXTURE.js')) {}
@@ -17050,7 +17067,7 @@ Negative Passed: 4588/4588 (100.00%)
  34 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-call-unknown.js:36:3]
  35 │ with ({}) {
  36 │   import.UNKNOWN('./empty_FIXTURE.js');
@@ -17167,7 +17184,7 @@ Negative Passed: 4588/4588 (100.00%)
  25 │ 
     ╰────
 
-  × The only valid meta property for import is import.meta
+  × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-call-unknown.js:26:1]
  25 │ 
  26 │ import.UNKNOWN('./empty_FIXTURE.js');
@@ -17344,7 +17361,7 @@ Negative Passed: 4588/4588 (100.00%)
  61 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dflt-params-rest.js:64:16]
  63 │ 
  64 │ 0, function(...x = []) {
@@ -17676,7 +17693,7 @@ Negative Passed: 4588/4588 (100.00%)
  62 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dflt-params-rest.js:65:17]
  64 │ 
  65 │ 0, function*(...x = []) {
@@ -18118,12 +18135,13 @@ Negative Passed: 4588/4588 (100.00%)
     ·  ───────────
     ╰────
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-array-rest-destructuring-expr.js:31:5]
  30 │ 
  31 │ [...import.meta] = [];
     ·     ───────────
     ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-array-rest-destructuring-expr.js:31:5]
@@ -18168,12 +18186,13 @@ Negative Passed: 4588/4588 (100.00%)
     ·      ───────────
     ╰────
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-object-rest-destructuring-expr.js:31:6]
  30 │ 
  31 │ ({...import.meta} = {});
     ·      ───────────
     ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-object-rest-destructuring-expr.js:31:6]
@@ -18944,7 +18963,7 @@ Negative Passed: 4588/4588 (100.00%)
  46 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js:49:20]
  48 │ 0, {
  49 │   async *method(...x = []) {
@@ -19112,7 +19131,7 @@ Negative Passed: 4588/4588 (100.00%)
  39 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/async-meth-dflt-params-rest.js:42:20]
  41 │ ({
  42 │   async *method(...x = []) {
@@ -19346,7 +19365,7 @@ Negative Passed: 4588/4588 (100.00%)
  68 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/gen-meth-dflt-params-rest.js:71:14]
  70 │ 0, {
  71 │   *method(...x = []) {
@@ -19572,7 +19591,7 @@ Negative Passed: 4588/4588 (100.00%)
  64 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/meth-dflt-params-rest.js:67:13]
  66 │ 0, {
  67 │   method(...x = []) {
@@ -26309,7 +26328,7 @@ Negative Passed: 4588/4588 (100.00%)
  38 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/async-function/dflt-params-rest.js:41:21]
  40 │ 
  41 │ async function f(...x = []) {
@@ -26549,7 +26568,7 @@ Negative Passed: 4588/4588 (100.00%)
  41 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dflt-params-rest.js:44:22]
  43 │ 
  44 │ async function* f(...x = []) {
@@ -27398,7 +27417,7 @@ Negative Passed: 4588/4588 (100.00%)
  64 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-gen-method/dflt-params-rest.js:67:20]
  66 │ class C {
  67 │   async *method(...x = []) {
@@ -27622,7 +27641,7 @@ Negative Passed: 4588/4588 (100.00%)
  65 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-gen-method-static/dflt-params-rest.js:68:27]
  67 │ class C {
  68 │   static async *method(...x = []) {
@@ -27854,7 +27873,7 @@ Negative Passed: 4588/4588 (100.00%)
  63 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-method/dflt-params-rest.js:66:19]
  65 │ class C {
  66 │   async method(...x = []) {
@@ -27972,7 +27991,7 @@ Negative Passed: 4588/4588 (100.00%)
  62 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-method-static/dflt-params-rest.js:65:26]
  64 │ class C {
  65 │   static async method(...x = []) {
@@ -33217,7 +33236,7 @@ Negative Passed: 4588/4588 (100.00%)
  84 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/gen-method/dflt-params-rest.js:87:14]
  86 │ class C {
  87 │   *method(...x = []) {
@@ -33386,7 +33405,7 @@ Negative Passed: 4588/4588 (100.00%)
  84 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/gen-method-static/dflt-params-rest.js:87:21]
  86 │ class C {
  87 │   static *method(...x = []) {
@@ -33554,7 +33573,7 @@ Negative Passed: 4588/4588 (100.00%)
  81 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/method/dflt-params-rest.js:84:13]
  83 │ class C {
  84 │   method(...x = []) {
@@ -33616,7 +33635,7 @@ Negative Passed: 4588/4588 (100.00%)
  81 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/method-static/dflt-params-rest.js:84:20]
  83 │ class C {
  84 │   static method(...x = []) {
@@ -35785,12 +35804,13 @@ Negative Passed: 4588/4588 (100.00%)
     ╰────
   help: Remove the trailing comma here
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
  33 │ 
  34 │ for ([...x = 1] in [[]]) ;
     ·          ─────
     ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
@@ -36301,12 +36321,13 @@ Negative Passed: 4588/4588 (100.00%)
     ╰────
   help: Remove the trailing comma here
 
-  × Invalid rest operator's argument.
+  × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
  33 │ 
  34 │ for ([...x = 1] of [[]]) ;
     ·          ─────
     ╰────
+  help: Expected an identifier or member expression, like `...rest` or `...obj.prop`.
 
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
@@ -36975,7 +36996,7 @@ Negative Passed: 4588/4588 (100.00%)
  62 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/function/dflt-params-rest.js:65:15]
  64 │ 
  65 │ function f(...x = []) {
@@ -37413,7 +37434,7 @@ Negative Passed: 4588/4588 (100.00%)
  62 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dflt-params-rest.js:65:16]
  64 │ 
  65 │ function* f(...x = []) {

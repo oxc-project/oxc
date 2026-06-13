@@ -1,0 +1,27 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=sarif ok.js
+working directory: fixtures/cli/output_formatter_diagnostic
+----------
+{
+  "version": "2.1.0",
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "oxlint",
+          "version": "<variable>",
+          "semanticVersion": "<variable>",
+          "informationUri": "https://oxc.rs/docs/guide/usage/linter.html",
+          "rules": []
+        }
+      },
+      "results": []
+    }
+  ]
+}----------
+CLI result: LintSucceeded
+----------

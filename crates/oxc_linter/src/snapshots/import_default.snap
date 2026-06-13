@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-import(default): No default export found in imported module "./named-exports"
+  ⚠ import(default): No default export found in imported module "./named-exports"
    ╭─[index.js:1:8]
  1 │ import baz from "./named-exports"
    ·        ───
@@ -27,14 +27,14 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───
    ╰────
 
-  ⚠ eslint-plugin-import(default): No default export found in imported module "./re-export"
+  ⚠ import(default): No default export found in imported module "./re-export"
    ╭─[index.js:1:8]
  1 │ import barDefault from "./re-export"
    ·        ──────────
    ╰────
   help: Does "./re-export" have the default export?
 
-  ⚠ eslint-plugin-import(default): No default export found in imported module "./typescript"
+  ⚠ import(default): No default export found in imported module "./typescript"
    ╭─[index.js:1:8]
  1 │ import foobar from "./typescript"
    ·        ──────

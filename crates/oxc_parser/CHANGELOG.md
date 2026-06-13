@@ -4,6 +4,116 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🚀 Features
+
+- 5b8dd68 parser: Report TS1255 for invalid class definite assertions (#22917) (camc314)
+
+### 🐛 Bug Fixes
+
+- cf53285 parser: Report reserved type-declaration names in the parser (#23035) (Boshen)
+- c543154 parser: Report comma operator in JSX expression in the parser (#23030) (Boshen)
+- 95dd3a2 parser: Report `import type` alias to a non-external reference in the parser (#23032) (Boshen)
+- 6da876e parser: Report `abstract` private class field in the parser (#23029) (Boshen)
+- 989230a parser: Report compound assignment to non-simple target in the parser (#23022) (Boshen)
+- 06f367c parser: Report `super.#field` private access in the parser (#23014) (Boshen)
+- 4d722e0 parser: Report duplicate switch `default` clause in the parser (#23012) (Boshen)
+- 1295882 parser: Report `new.target` and `import.meta` syntax errors in the parser (#23003) (Boshen)
+- 17e7cf3 parser: Disallow unerasable `as`/`satisfies` assertions (#22986) (Boshen)
+- beb46d3 parser: Commit to module goal on decorated exports (#22941) (Boshen)
+
+### ⚡ Performance
+
+- 7d89909 parser: Peek instead of lookahead for yield disambiguation (#23071) (Boshen)
+- bf872f0 parser: Skip arrow lookahead for a parenthesized literal (#23070) (Boshen)
+- d19fc54 parser: Guard type-argument speculation behind an angle-token check (#23069) (Boshen)
+- 8eb5507 parser: Skip redundant member-rest re-scan on call entry (#23068) (Boshen)
+- 883dfc1 parser: Skip parse_call_expression_rest when no call follows (#23063) (Boshen)
+- b171153 parser: Peek before the await-using lookahead (#23059) (Boshen)
+- 56f21bd parser: Use peek_token for the TS `asserts` type predicate (#23058) (Boshen)
+- 68805ac parser: Use peek_token instead of checkpoint/rewind for single-token decisions (#23056) (Boshen)
+
+## [0.134.0] - 2026-06-01
+
+### 🐛 Bug Fixes
+
+- cf5769c parser: Reject TypeScript declarations in single-statement context (#22827) (Boshen)
+- c360fb6 parser: Reject generators in ambient contexts and overload signatures (TS1221/TS1222) (#22848) (Boshen)
+- cc60d8d parser: Reject invalid index signature parameter types (TS1268/TS1337) (#22852) (Boshen)
+- 3d13e29 parser: Reject `declare` in an already-ambient context (TS1038) (#22850) (Boshen)
+- 5152854 parser: Reject statements in ambient contexts (TS1036) (#22849) (Boshen)
+- 4f9afc5 parser: Reject `export as namespace` inside a namespace body (TS1316) (#22846) (Boshen)
+- 2eafea6 parser: Reject function implementations in ambient contexts (TS1183) (#22845) (Boshen)
+- c645615 parser: Reject incompatible class member modifiers (#22843) (Boshen)
+- 276b78b parser: Reject module-referencing imports/exports in a namespace body (#22836) (Boshen)
+- 842ed1c parser: Parse `class implements` with `implements` as the class name (#22801) (Boshen)
+
+### ⚡ Performance
+
+- 7e3a567 parser: Reuse cached token kind in delimited-list loops (#22841) (Boshen)
+- 9e741c2 parser: Use peek_token instead of lookahead on the modifier path (#22842) (Boshen)
+
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- 661132d parser: More friendly error messages for rest assignment target and rest binding element (#22719) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- e184f74 parser: Improve invalid `import` property access diagnostic (#22693) (camc314)
+- a9ad27e parser: Keep annotation comments leading without preceding newline (#22711) (Dunqing)
+- b284045 parser: Switch to module goal eagerly on `export` (#22684) (Boshen)
+- 917da24 parser: Apply PURE comment through member-access chains (#22566) (Dunqing)
+
+### ⚡ Performance
+
+- 82f9662 parser: Check identifier kind before context flag (#22662) (camc314)
+- d7cd951 parser: Fast path identifier parsing and inline operator helpers (#22650) (Boshen)
+
+## [0.132.0] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- e431a0e parser: Break extends clause loop on fatal error (#22517) (Boshen)
+
+## [0.131.0] - 2026-05-15
+
+### ⚡ Performance
+
+- 83679ea parser: Split TriviaBuilder::handle_token hot/cold paths (#22415) (Boshen)
+- 0b4e158 parser: Reserve cap `2` for sequence expressions vec (#22374) (camc314)
+
+## [0.130.0] - 2026-05-11
+
+### 🐛 Bug Fixes
+
+- 9fa2122 parser: Parse array computed class keys (#22159) (camc314)
+
+## [0.129.0] - 2026-05-05
+
+### 🐛 Bug Fixes
+
+- 81e834c parser: Prevent multiple `Parser` instances in binary (#22120) (overlookmotel)
+- aaabde4 parser: Attach legal comments to following token (#21670) (Dunqing)
+
+## [0.128.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+
+### ⚡ Performance
+
+- b179688 parser: Allocate `TriviaBuilder` comments in the arena (#21512) (Boshen)
+- 2290f31 lexer: Fix perf of `Token::set_*` methods on Rust 1.95.0 (#21659) (overlookmotel)
+
 ## [0.127.0] - 2026-04-20
 
 ### ⚡ Performance

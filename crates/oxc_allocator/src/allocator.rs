@@ -113,7 +113,8 @@ use oxc_data_structures::assert_unchecked;
 ///
 /// If workload is completely uniform, it reaches stable state on the 3rd round.
 ///
-/// ```
+/// ```no_run
+/// # // This isn't run as a doctest. It's much too slow.
 /// # use oxc_allocator::Allocator;
 /// let mut allocator = Allocator::new();
 ///
@@ -204,7 +205,7 @@ use oxc_data_structures::assert_unchecked;
 ///
 /// let allocator = Allocator::default();
 /// let parsed = Parser::new(&allocator, "let x = 1;", SourceType::default());
-/// assert!(parsed.errors.is_empty());
+/// assert!(parsed.diagnostics.is_empty());
 /// ```
 ///
 /// [`reset`]: Allocator::reset
@@ -569,14 +570,12 @@ impl Allocator {
     /// [`Vec`]: crate::Vec
     /// [`StringBuilder`]: crate::StringBuilder
     /// [`HashMap`]: crate::HashMap
+    //
+    // `#[inline(always)]` because just delegates to `Arena` method
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn used_bytes(&self) -> usize {
-        let mut bytes = 0;
-        // SAFETY: No allocations are made while `chunks_iter` is alive. No data is read from the chunks.
-        let chunks_iter = unsafe { self.arena.iter_allocated_chunks_raw() };
-        for (_, size) in chunks_iter {
-            bytes += size;
-        }
-        bytes
+        self.arena.used_bytes()
     }
 
     /// Get inner [`Arena`].

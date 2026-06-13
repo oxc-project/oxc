@@ -10,7 +10,7 @@ use quote::{format_ident, quote};
 use crate::{
     AST_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
-    schema::{Def, Schema, TypeDef, TypeId},
+    schema::{Def, EnumDef, Schema, StructDef, TypeId},
 };
 
 use super::define_generator;
@@ -31,31 +31,35 @@ impl Generator for GetIdGenerator {
             semantic_id_type_ids[index] = schema.type_names[type_name];
         }
 
-        let impls = schema
-            .types
-            .iter()
-            .filter_map(|type_def| generate_for_type(type_def, &semantic_id_type_ids, schema));
+        let struct_impls = schema.structs().filter_map(|struct_def| {
+            generate_for_struct(struct_def, &semantic_id_type_ids, schema)
+        });
+
+        let enum_impls = schema.enums().filter_map(|enum_def| generate_for_enum(enum_def, schema));
 
         let output = quote! {
+            #![expect(clippy::inline_always)]
+            #![expect(clippy::match_same_arms)]
+
             use oxc_syntax::{node::NodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
             ///@@line_break
             use crate::ast::*;
 
-            #(#impls)*
+            #(#struct_impls)*
+
+            #(#enum_impls)*
         };
 
         Output::Rust { path: output_path(AST_CRATE_PATH, "get_id.rs"), tokens: output }
     }
 }
 
-fn generate_for_type(
-    type_def: &TypeDef,
+fn generate_for_struct(
+    struct_def: &StructDef,
     semantic_id_type_ids: &[TypeId; SEMANTIC_ID_TYPES.len()],
     schema: &Schema,
 ) -> Option<TokenStream> {
-    let TypeDef::Struct(struct_def) = type_def else { return None };
-
     let struct_name = struct_def.name();
 
     // Generate semantic ID getters/setters (`node_id`, `scope_id`, `symbol_id`, `reference_id`)
@@ -140,6 +144,61 @@ fn generate_for_type(
         ///@@line_break
         impl #struct_ty {
             #methods
+        }
+    })
+}
+
+fn generate_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<TokenStream> {
+    // Check all variants are structs with a `NodeId` field (`has_kind` is only `true` for structs that do).
+    // Also check if all variants are consistently boxed or consistently unboxed.
+    let mut all_variants_boxed = true;
+    let mut all_variants_unboxed = true;
+
+    for variant in enum_def.all_variants(schema) {
+        let mut field_type = variant.field_type(schema)?;
+        if let Some(box_def) = field_type.as_box() {
+            field_type = box_def.inner_type(schema);
+            all_variants_unboxed = false;
+        } else {
+            all_variants_boxed = false;
+        }
+
+        let struct_def = field_type.as_struct()?;
+        if !struct_def.kind.has_kind {
+            return None;
+        }
+    }
+
+    // If all variants are consistently boxed or consistently unboxed, add `#[inline(always)]` to the method.
+    // `NodeId` field is in a consistent position in all AST structs, so if all variants have the same shape,
+    // the method should boil down to a single instruction.
+    let maybe_inline = if all_variants_boxed || all_variants_unboxed {
+        quote! {
+            ///@ `#[inline(always)]` because this should boil down to a single instruction.
+            #[inline(always)]
+        }
+    } else {
+        quote!()
+    };
+
+    let matches = enum_def.all_variants(schema).map(|variant| {
+        let variant_ident = variant.ident();
+        quote!( Self::#variant_ident(it) => it.node_id() )
+    });
+
+    let enum_ty = enum_def.ty_anon(schema);
+    let get_doc = format!(" Get [`NodeId`] of [`{}`].", enum_def.name());
+
+    Some(quote! {
+        ///@@line_break
+        impl #enum_ty {
+            #[doc = #get_doc]
+            #maybe_inline
+            pub fn node_id(&self) -> NodeId {
+                match self {
+                    #(#matches),*
+                }
+            }
         }
     })
 }

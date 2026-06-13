@@ -4,8 +4,8 @@
 
 use std::{
     alloc::Layout,
-    ptr::{self},
-    slice, str,
+    ptr::{self, NonNull},
+    str,
 };
 
 use super::{Arena, bumpalo_alloc::AllocErr, utils::oom};
@@ -78,7 +78,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         F: FnOnce() -> T,
     {
         #[inline(always)]
-        unsafe fn inner_writer<T, F>(ptr: *mut T, f: F)
+        unsafe fn inner_writer<T, F>(ptr: NonNull<T>, f: F)
         where
             F: FnOnce() -> T,
         {
@@ -91,16 +91,15 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             // the code so it writes directly into the heap instead. It seems we get it to realize this most
             // consistently if we put this critical line into it's own function instead of inlining it into the
             // surrounding code.
-            unsafe { ptr::write(ptr, f()) };
+            unsafe { ptr.write(f()) };
         }
 
         let layout = Layout::new::<T>();
+        let mut ptr = self.alloc_layout(layout).cast::<T>();
 
         unsafe {
-            let ptr = self.alloc_layout(layout);
-            let ptr = ptr.as_ptr().cast::<T>();
             inner_writer(ptr, f);
-            &mut *ptr
+            ptr.as_mut()
         }
     }
 
@@ -131,7 +130,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         F: FnOnce() -> T,
     {
         #[inline(always)]
-        unsafe fn inner_writer<T, F>(ptr: *mut T, f: F)
+        unsafe fn inner_writer<T, F>(ptr: NonNull<T>, f: F)
         where
             F: FnOnce() -> T,
         {
@@ -144,17 +143,16 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
             // the code so it writes directly into the heap instead. It seems we get it to realize this most
             // consistently if we put this critical line into it's own function instead of inlining it into the
             // surrounding code.
-            unsafe { ptr::write(ptr, f()) };
+            unsafe { ptr.write(f()) };
         }
 
         // Self-contained: `ptr` is allocated for `T` and then a `T` is written.
         let layout = Layout::new::<T>();
-        let ptr = self.try_alloc_layout(layout)?;
-        let ptr = ptr.as_ptr().cast::<T>();
+        let mut ptr = self.try_alloc_layout(layout)?.cast::<T>();
 
         unsafe {
             inner_writer(ptr, f);
-            Ok(&mut *ptr)
+            Ok(ptr.as_mut())
         }
     }
 
@@ -184,7 +182,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
         unsafe {
             ptr::copy_nonoverlapping(src.as_ptr(), dst_ptr.as_ptr(), src.len());
-            slice::from_raw_parts_mut(dst_ptr.as_ptr(), src.len())
+            NonNull::slice_from_raw_parts(dst_ptr, src.len()).as_mut()
         }
     }
 
@@ -202,13 +200,13 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     ///
     /// #[derive(Clone, Debug, Eq, PartialEq)]
     /// struct Sheep {
-    ///     name: String,
+    ///     name: &'static str,
     /// }
     ///
     /// let originals = [
-    ///     Sheep { name: "Alice".into() },
-    ///     Sheep { name: "Bob".into() },
-    ///     Sheep { name: "Cathy".into() },
+    ///     Sheep { name: "Alice" },
+    ///     Sheep { name: "Bob" },
+    ///     Sheep { name: "Cathy" },
     /// ];
     ///
     /// let arena = Arena::new();
@@ -226,10 +224,10 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
         unsafe {
             for (i, val) in src.iter().cloned().enumerate() {
-                ptr::write(dst_ptr.as_ptr().add(i), val);
+                dst_ptr.add(i).write(val);
             }
 
-            slice::from_raw_parts_mut(dst_ptr.as_ptr(), src.len())
+            NonNull::slice_from_raw_parts(dst_ptr, src.len()).as_mut()
         }
     }
 
@@ -287,10 +285,10 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
         unsafe {
             for i in 0..len {
-                ptr::write(dst_ptr.as_ptr().add(i), f(i));
+                dst_ptr.add(i).write(f(i));
             }
 
-            let result = slice::from_raw_parts_mut(dst_ptr.as_ptr(), len);
+            let result = NonNull::slice_from_raw_parts(dst_ptr, len).as_mut();
             debug_assert_eq!(Layout::for_value(result), layout);
             result
         }
@@ -331,9 +329,14 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// ```
     /// # use oxc_allocator::arena::Arena;
     ///
+    /// #[derive(Clone, Debug, Eq, PartialEq)]
+    /// struct Sheep {
+    ///     name: &'static str,
+    /// }
+    ///
     /// let arena = Arena::new();
-    /// let s: String = "Hello Arena!".to_string();
-    /// let x: &[String] = arena.alloc_slice_fill_clone(2, &s);
+    /// let s = Sheep { name: "Flossy" };
+    /// let x: &[Sheep] = arena.alloc_slice_fill_clone(2, &s);
     /// assert_eq!(x.len(), 2);
     /// assert_eq!(&x[0], &s);
     /// assert_eq!(&x[1], &s);

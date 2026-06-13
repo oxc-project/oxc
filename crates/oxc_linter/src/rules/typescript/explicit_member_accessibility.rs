@@ -200,6 +200,7 @@ declare_oxc_lint!(
     conditional_fix_suggestion,
     config = ExplicitMemberAccessibilityConfig,
     version = "1.61.0",
+    short_description = "Require explicit accessibility modifiers on class properties and methods.",
 );
 
 impl Rule for ExplicitMemberAccessibility {
@@ -403,7 +404,7 @@ fn find_public_spans(ctx: &LintContext<'_>, search_start: u32, search_end: u32) 
         + ctx
             .find_next_token_within(search_start, search_end, "public")
             .expect("Expected 'public' keyword in source");
-    let keyword_span = Span::new(start, start + 6);
+    let keyword_span = Span::sized(start, 6);
     let end = skip_ascii_whitespace(ctx.source_text(), start + 6);
     (keyword_span, Span::new(start, end))
 }
@@ -723,7 +724,7 @@ fn test() {
         (
             "
             abstract class Test {
-              private abstract accessor foo: number;
+              private accessor foo: number;
             }
                   ",
             None,

@@ -1,4 +1,5 @@
 import { RuleTester } from "../rule_tester.ts";
+import repos from "../../repos.json" with { type: "json" };
 
 import type { MockFn, TestGroup } from "../index.ts";
 import type { LanguageOptions, TestCase } from "../rule_tester.ts";
@@ -7,6 +8,7 @@ type TSEslintParser = typeof import("@typescript-eslint/parser");
 
 const group: TestGroup = {
   name: "e18e",
+  ...repos.e18e,
 
   submoduleName: "e18e",
   testFilesDirPath: "src/rules",

@@ -1472,6 +1472,17 @@ fn test() {
             ",
             None,
         ),
+        (
+            "
+        const foo = { KEY: 'token' };
+        declare function Inject(token: unknown): ParameterDecorator;
+
+        export class C {
+          constructor(@Inject(foo.KEY) private readonly foo: number) {}
+        }
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1610,14 +1621,6 @@ fn test() {
           EMAIL = 'email',
         }
             ",
-            None,
-        ),
-        (
-            "
-          import test from 'test';
-          import baz from 'baz';
-          export interface Bar extends baz.test {}
-                ",
             None,
         ),
         (

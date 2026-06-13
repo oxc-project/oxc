@@ -55,6 +55,7 @@ Prerequisites: Rust (MSRV: 1.91), Node.js, pnpm, just
 
 - All tools already installed (`cargo-insta`, `typos-cli`, `cargo-shear`, `ast-grep`)
 - Rust components already installed (`clippy`, `rust-docs`, `rustfmt`)
+- Use Conventional Commits for commit messages; `.github/workflows/pr.yml` requires a scoped title like `fix(parser): handle trailing comma`
 - Run `just ready` after commits for final checks
 - You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang rust -p '<pattern>'` (or set `--lang` appropriately) and avoid falling back to text-only tools like `rg` or `grep` unless I explicitly request a plain-text search.
 
@@ -287,15 +288,15 @@ These test suites are pre-cloned and ready to search:
 NAPI packages use **Vitest** for testing Node.js bindings:
 
 ```bash
-pnpm build-dev    # Build all NAPI packages
-pnpm test         # Run all NAPI tests
+pnpm run build-test   # Build all NAPI packages
+pnpm test             # Run all NAPI tests
 ```
 
 **Package-specific commands:**
 
-- `oxc-parser`: `cd napi/parser && pnpm test` (also has `pnpm test-browser`)
-- `oxc-minify`: `cd napi/minify && pnpm test`
-- `oxc-transform`: `cd napi/transform && pnpm test`
+- `oxc-parser`: `cd napi/parser && pnpm run build-test && pnpm test` (also has `pnpm test-browser`)
+- `oxc-minify`: `cd napi/minify && pnpm run build-test && pnpm test`
+- `oxc-transform`: `cd napi/transform && pnpm run build-test && pnpm test`
 
 Tests are TypeScript files in each package's `test/` directory.
 

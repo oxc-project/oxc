@@ -6,7 +6,7 @@ arguments: issue_10054
 working directory: fixtures/cli
 ----------
 
-  x eslint-plugin-import(no-cycle): Dependency cycle detected
+  x import(no-cycle): Dependency cycle detected
    ,-[issue_10054/a.ts:1:19]
  1 | import { b } from "./b";
    :                   ^^^^^
@@ -19,7 +19,7 @@ working directory: fixtures/cli
            │    ./a (fixtures/cli/issue_10054/a.ts)
            ╰─────────╯ imports the current file
 
-  x eslint-plugin-import(no-cycle): Dependency cycle detected
+  x import(no-cycle): Dependency cycle detected
    ,-[issue_10054/b.ts:1:8]
  1 | import "./a";
    :        ^^^^^

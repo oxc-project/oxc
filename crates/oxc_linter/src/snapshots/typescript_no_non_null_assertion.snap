@@ -2,14 +2,14 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!;
    · ──
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!.y;
    · ──
@@ -17,14 +17,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y!;
    · ────
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:2]
  1 │ !x!.y;
    ·  ──
@@ -32,7 +32,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!.y?.z;
    · ──
@@ -40,7 +40,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x![y];
    · ──
@@ -48,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x![y]?.z;
    · ──
@@ -56,42 +56,42 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y.z!();
    · ──────
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y?.z!();
    · ───────
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!!;
    · ────
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!!;
    · ───
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!!;
    · ──
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!.y;
    · ───
@@ -99,42 +99,42 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!!.y;
    · ──
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y!!;
    · ─────
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y!!;
    · ────
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y.z!!();
    · ───────
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y.z!!();
    · ──────
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!?.[y].z;
    · ──
@@ -142,7 +142,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!?.y.z;
    · ──
@@ -150,14 +150,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x.y.z!?.();
    · ──────
    ╰────
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
@@ -167,7 +167,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
@@ -177,7 +177,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
@@ -187,7 +187,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
@@ -197,7 +197,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             document.querySelector('input')!.files = new FileList();
@@ -207,7 +207,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. `x!.y` is equivalent to `x.y` at runtime and will throw if `x` is `null` or `undefined`, but `x?.y` will return `undefined`.
   note: The non-null assertion operator (`!`) removes `null` and `undefined` from the type. For example, it changes `number | undefined` to `number`.
 
-  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+  ⚠ typescript(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:2:26]
  1 │ 
  2 │             hoge.files = document.querySelector('input')!.files;

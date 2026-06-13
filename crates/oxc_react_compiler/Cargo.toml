@@ -1,0 +1,67 @@
+# oxc_react_compiler
+#
+# Native oxc integration for the Rust port of the React Compiler:
+# https://github.com/react/react/tree/main/compiler
+#
+# This crate owns the oxc <-> react_compiler_ast conversion layer. The React
+# Compiler *core* crates are frontend-agnostic (they depend on serde/indexmap
+# only, never on oxc), so we consume them from crates.io (a published MIT fork of
+# the React Compiler) and keep the AST/scope conversion on our side, written
+# against the live workspace oxc AST.
+
+[package]
+name = "oxc_react_compiler"
+version = "0.135.0"
+publish = true
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "oxc integration for the Rust port of React Compiler"
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_ast_visit = { workspace = true }
+oxc_codegen = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_span = { workspace = true }
+oxc_syntax = { workspace = true }
+
+# React Compiler core crates — frontend-agnostic (no oxc deps). Published fork of
+# the React Compiler (MIT). `package` keeps the in-code name `react_compiler*`.
+react_compiler = { package = "forked_react_compiler", version = "0.1.4" }
+react_compiler_ast = { package = "forked_react_compiler_ast", version = "0.1.4" }
+react_compiler_hir = { package = "forked_react_compiler_hir", version = "0.1.4" }
+
+indexmap = { workspace = true, features = ["serde"] }
+rustc-hash = { workspace = true }
+serde_json = { workspace = true, features = ["raw_value"] }
+
+# The `src/` conversion modules are vendored close to upstream `react_compiler_oxc`
+# (kept near byte-for-byte to ease re-syncing), so relax the handful of lints they
+# trip here rather than editing the code. Defining `[lints.clippy]` means this crate
+# does not inherit `[lints] workspace = true`, which keeps the in-house restriction
+# lints (`todo!`/`unimplemented!`/...) off the vendored code while clippy's default
+# correctness and perf checks still apply.
+[lints.clippy]
+disallowed_types = "allow" # `react_compiler_ast`'s `ScopeInfo`/`ScopeData` fields are std `HashMap`
+collapsible_if = "allow"
+needless_return = "allow"
+unnecessary_unwrap = "allow"
+
+# The vendored modules' doc comments reference types like `Vec<PatternLike>`
+# without backticks; relax rustdoc for them rather than editing upstream code.
+[lints.rustdoc]
+broken_intra_doc_links = "allow"
+invalid_html_tags = "allow"
+bare_urls = "allow"

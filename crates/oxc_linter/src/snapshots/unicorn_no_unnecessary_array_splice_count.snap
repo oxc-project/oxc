@@ -2,126 +2,126 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:15]
  1 │ foo.splice(1, foo.length)
    ·               ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:16]
  1 │ foo?.splice(1, foo.length)
    ·                ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:15]
  1 │ foo.splice(1, foo.length,)
    ·               ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:15]
  1 │ foo.splice(1, (( foo.length )))
    ·               ────────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:15]
  1 │ foo.splice(1, foo?.length)
    ·               ───────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:16]
  1 │ foo?.splice(1, foo?.length)
    ·                ───────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `Infinity` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `Infinity` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:16]
  1 │ foo?.splice(1, Infinity)
    ·                ────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `Number.POSITIVE_INFINITY` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `Number.POSITIVE_INFINITY` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:16]
  1 │ foo?.splice(1, Number.POSITIVE_INFINITY)
    ·                ────────────────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `….length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `….length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:19]
  1 │ foo.bar.splice(1, foo.bar.length)
    ·                   ──────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:18]
  1 │ foo.toSpliced(1, foo.length)
    ·                  ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:19]
  1 │ foo?.toSpliced(1, foo.length)
    ·                   ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:18]
  1 │ foo.toSpliced(1, foo.length,)
    ·                  ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:18]
  1 │ foo.toSpliced(1, (( foo.length )))
    ·                  ────────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:18]
  1 │ foo.toSpliced(1, foo?.length)
    ·                  ───────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:19]
  1 │ foo?.toSpliced(1, foo?.length)
    ·                   ───────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `Infinity` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `Infinity` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:19]
  1 │ foo?.toSpliced(1, Infinity)
    ·                   ────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `Number.POSITIVE_INFINITY` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `Number.POSITIVE_INFINITY` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:19]
  1 │ foo?.toSpliced(1, Number.POSITIVE_INFINITY)
    ·                   ────────────────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
 
-  ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `….length` as the `deleteCount` argument is unnecessary.
+  ⚠ unicorn(no-unnecessary-array-splice-count): Passing `….length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:22]
  1 │ foo.bar.toSpliced(1, foo.bar.length)
    ·                      ──────────────

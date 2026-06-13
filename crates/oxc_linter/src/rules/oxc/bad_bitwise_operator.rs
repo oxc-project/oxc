@@ -71,6 +71,7 @@ declare_oxc_lint!(
     restriction, // Restricted because there are false positives for enum bitflags in TypeScript, e.g. in the vscode repo
     suggestion,
     version = "0.0.3",
+    short_description = "This rule applies when bitwise operators are used where logical operators are expected.",
 );
 
 impl Rule for BadBitwiseOperator {
@@ -119,7 +120,7 @@ impl BadBitwiseOperator {
             return fixer.noop();
         };
         let op_start = start + offset;
-        let op_span = Span::new(op_start, op_start + bad.len() as u32);
+        let op_span = Span::sized(op_start, bad.len() as u32);
         fixer.replace(op_span, good)
     }
 
@@ -132,7 +133,7 @@ impl BadBitwiseOperator {
             return fixer.noop();
         };
         let op_start = start + offset;
-        let op_span = Span::new(op_start, op_start + 2);
+        let op_span = Span::sized(op_start, 2);
         fixer.replace(op_span, "||=")
     }
 }

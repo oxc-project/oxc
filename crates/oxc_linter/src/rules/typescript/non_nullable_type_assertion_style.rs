@@ -58,8 +58,9 @@ declare_oxc_lint!(
     NonNullableTypeAssertionStyle(tsgolint),
     typescript,
     restriction,
-    fix,
+    suggestion,
     version = "1.12.0",
+    short_description = "This rule prefers a non-null assertion over an explicit type cast for non-nullable types.",
 );
 
 impl Rule for NonNullableTypeAssertionStyle {}

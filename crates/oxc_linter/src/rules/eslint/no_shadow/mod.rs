@@ -102,6 +102,7 @@ declare_oxc_lint!(
     suspicious,
     config = NoShadowConfig,
     version = "1.48.0",
+    short_description = "Disallows variable declarations from shadowing variables declared in the outer scope.",
 );
 
 impl Rule for NoShadow {

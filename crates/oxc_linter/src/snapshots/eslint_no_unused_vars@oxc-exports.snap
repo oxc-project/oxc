@@ -1,0 +1,20 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-unused-vars): Identifier 'b' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ import { a as b } from 'a'; export { a }
+   ·               ┬
+   ·               ╰── 'b' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'resolve' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:10]
+ 1 │ import { resolve } from "path";
+   ·          ───┬───
+   ·             ╰── 'resolve' is imported here
+ 2 │ export { resolve } from "path";
+   ╰────
+  help: Consider removing this import.

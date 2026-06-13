@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-next(no-sync-scripts): Prevent synchronous scripts.
+  ⚠ next(no-sync-scripts): Prevent synchronous scripts.
     ╭─[no_sync_scripts.tsx:9:21]
   8 │                             <h1>Hello title</h1>
   9 │                             <script src='https://blah.com'></script>
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: See https://nextjs.org/docs/messages/no-sync-scripts
 
-  ⚠ eslint-plugin-next(no-sync-scripts): Prevent synchronous scripts.
+  ⚠ next(no-sync-scripts): Prevent synchronous scripts.
     ╭─[no_sync_scripts.tsx:9:21]
   8 │                             <h1>Hello title</h1>
   9 │                             <script src={props.src}></script>

@@ -13,8 +13,11 @@ use crate::{
     AstNode,
     context::LintContext,
     globals::HTML_TAG,
-    rule::Rule,
-    utils::{get_element_type, has_jsx_prop_ignore_case, is_interactive_element, parse_jsx_value},
+    rule::{DefaultRuleConfig, Rule},
+    utils::{
+        get_element_type, has_jsx_prop_ignore_case, is_interactive_element, is_interactive_role,
+        parse_jsx_value,
+    },
 };
 
 fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
@@ -23,11 +26,11 @@ fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoNoninteractiveTabindex(Box<NoNoninteractiveTabindexConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoNoninteractiveTabindexConfig {
     /// An array of custom HTML elements that should be considered interactive.
     tags: Vec<CompactStr>,
@@ -89,41 +92,8 @@ declare_oxc_lint!(
     correctness,
     config = NoNoninteractiveTabindexConfig,
     version = "0.15.4",
+    short_description = "This rule checks that non-interactive elements don't have a tabIndex which would make them interactive via keyboard navigation.",
 );
-
-// https://www.w3.org/TR/wai-aria/#widget_roles
-// NOTE: "tabpanel" is not included here because it's technically a section role. It can optionally be considered interactive within the context of a tablist, because its visibility is dynamically controlled by an element with the "tab" aria role. It's included in the recommended jsx-a11y config for this reason.
-const INTERACTIVE_HTML_ROLES: [&str; 29] = [
-    "button",
-    "checkbox",
-    "combobox",
-    "grid",
-    "gridcell",
-    "link",
-    "listbox",
-    "menu",
-    "menubar",
-    "menuitem",
-    "menuitemcheckbox",
-    "menuitemradio",
-    "option",
-    "progressbar",
-    "radio",
-    "radiogroup",
-    "scrollbar",
-    "searchbox",
-    "separator",
-    "slider",
-    "spinbutton",
-    "switch",
-    "tab",
-    "tablist",
-    "textbox",
-    "toolbar",
-    "tree",
-    "treegrid",
-    "treeitem",
-];
 
 impl Rule for NoNoninteractiveTabindex {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -180,7 +150,7 @@ impl Rule for NoNoninteractiveTabindex {
                 JSXAttributeValue::StringLiteral(role) => {
                     let is_interactive_role =
                         role.value.split_whitespace().next().is_some_and(|role| {
-                            INTERACTIVE_HTML_ROLES.contains(&role)
+                            is_interactive_role(role)
                                 || self.0.roles.iter().any(|allowed_role| allowed_role == role)
                         });
 
@@ -199,30 +169,7 @@ impl Rule for NoNoninteractiveTabindex {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let default = Self::default();
-
-        let Some(config) = value.get(0) else {
-            return Ok(default);
-        };
-
-        Ok(Self(Box::new(NoNoninteractiveTabindexConfig {
-            roles: config
-                .get("roles")
-                .and_then(serde_json::Value::as_array)
-                .map_or(default.0.roles, |v| {
-                    v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
-                }),
-            tags: config
-                .get("tags")
-                .and_then(serde_json::Value::as_array)
-                .map_or(default.0.tags, |v| {
-                    v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
-                }),
-            allow_expression_values: config
-                .get("allowExpressionValues")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(default.0.allow_expression_values),
-        })))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 }
 
@@ -330,6 +277,8 @@ fn test() {
             Some(serde_json::json!([{ "allowExpressionValues": false }])),
             None,
         ),
+        (r"<div tabIndex={props.isTabbable ? 1 : 0} />", None, None),
+        (r"<div tabIndex={props.isTabbable ? '1' : '0'} />", None, None),
     ];
 
     Tester::new(NoNoninteractiveTabindex::NAME, NoNoninteractiveTabindex::PLUGIN, pass, fail)

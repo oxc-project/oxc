@@ -81,12 +81,12 @@ impl Deref for JsxKey {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce `key` prop for elements in array.
+    /// Enforce `key` prop for elements in an array.
     ///
     /// ### Why is this bad?
     ///
-    /// React requires a `key` prop for elements in an array to help identify which
-    /// items have changed, are added, or are removed.
+    /// React [requires a `key` prop](https://react.dev/learn/rendering-lists#rendering-data-from-arrays)
+    /// for elements in an array to help identify which items have changed, are added, or are removed.
     ///
     /// ### Examples
     ///
@@ -110,6 +110,7 @@ declare_oxc_lint!(
     correctness,
     config = JsxKey,
     version = "0.0.14",
+    short_description = "Enforce `key` prop for elements in an array.",
 );
 
 impl Rule for JsxKey {

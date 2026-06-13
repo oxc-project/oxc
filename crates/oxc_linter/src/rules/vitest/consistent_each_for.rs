@@ -90,7 +90,7 @@ pub struct ConsistentEachForConfig {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct ConsistentEachForJson {
     /// Preferred method to create parameterized tests for `describe` blocks.
     describe: Option<MemberNames>,
@@ -129,13 +129,13 @@ impl ConsistentEachForJson {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule ensure consistency on which method used to create parameterized test.
-    /// This configuration affects to different test function types (`test`, `it`, `describe`, `suite`).
+    /// This rule enforces consistency in which method is used to create parameterized tests.
+    /// This configuration affects different test function types (`test`, `it`, `describe`, `suite`).
     ///
     /// ### Why is this bad?
     ///
-    /// Not having a consistent way to create parametrized tests, we rely on the developer to remember that
-    /// `.for` spread the values as different arguments and `.each` pass the array as an unique argument.
+    /// Without a consistent way to create parameterized tests, we rely on the developer to remember that
+    /// `.for` spreads the values as different arguments while `.each` passes the array as a single argument.
     ///
     /// ### Examples
     ///
@@ -166,19 +166,15 @@ declare_oxc_lint!(
     /// ```
     ConsistentEachFor,
     vitest,
-    correctness,
+    style,
     config = ConsistentEachForJson,
     version = "1.39.0",
 );
 
 impl Rule for ConsistentEachFor {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<ConsistentEachForJson>>(value)
-                .unwrap_or_default()
-                .into_inner()
-                .into_consistent_each_for_config(),
-        )))
+        serde_json::from_value::<DefaultRuleConfig<ConsistentEachForJson>>(value)
+            .map(|config| Self(Box::new(config.into_inner().into_consistent_each_for_config())))
     }
 
     fn run_on_jest_node<'a, 'c>(

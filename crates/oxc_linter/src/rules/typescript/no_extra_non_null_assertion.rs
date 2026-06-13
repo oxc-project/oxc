@@ -1,10 +1,14 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{ChainElement, Expression, match_member_expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
     AstNode,
+    ast_util::outermost_paren_parent,
     context::{ContextHost, LintContext},
     rule::Rule,
 };
@@ -70,48 +74,61 @@ declare_oxc_lint!(
     NoExtraNonNullAssertion,
     typescript,
     correctness,
-    pending,
+    fix,
     version = "0.0.6",
+    short_description = "Disallow extra non-null assertions.",
 );
 
 impl Rule for NoExtraNonNullAssertion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let expr = match node.kind() {
-            AstKind::TSNonNullExpression(expr) => {
-                if let Expression::TSNonNullExpression(expr) = expr.expression.without_parentheses()
-                {
-                    Some(expr)
-                } else {
-                    None
-                }
-            }
-            AstKind::StaticMemberExpression(expr) if expr.optional => {
-                if let Expression::TSNonNullExpression(expr) = expr.object.without_parentheses() {
-                    Some(expr)
-                } else {
-                    None
-                }
-            }
-            AstKind::ComputedMemberExpression(expr) if expr.optional => {
-                if let Expression::TSNonNullExpression(expr) = expr.object.without_parentheses() {
-                    Some(expr)
-                } else {
-                    None
-                }
-            }
-            AstKind::CallExpression(expr) if expr.optional => {
-                if let Expression::TSNonNullExpression(expr) = expr.callee.without_parentheses() {
-                    Some(expr)
-                } else {
-                    None
-                }
-            }
-            _ => return,
+        let AstKind::TSNonNullExpression(non_null_expr) = node.kind() else {
+            return;
         };
 
-        if let Some(expr) = expr {
-            let end = expr.span.end - 1;
-            ctx.diagnostic(no_extra_non_null_assertion_diagnostic(Span::empty(end)));
+        let Some(parent) = outermost_paren_parent(node, ctx.semantic()) else {
+            return;
+        };
+
+        let is_extra_non_null_assertion = match parent.kind() {
+            AstKind::TSNonNullExpression(_) => true,
+            _ if let Some(member_expr) = parent.kind().as_member_expression_kind() => {
+                member_expr.optional()
+                    && matches!(
+                        member_expr.object().without_parentheses(),
+                        Expression::TSNonNullExpression(expr) if expr.span == non_null_expr.span
+                    )
+            }
+            AstKind::CallExpression(expr) if expr.optional => {
+                matches!(
+                    expr.callee.without_parentheses(),
+                    Expression::TSNonNullExpression(expr) if expr.span == non_null_expr.span
+                )
+            }
+            AstKind::ChainExpression(expr) => match &expr.expression {
+                chain_element @ match_member_expression!(ChainElement) => {
+                    let member_expr = chain_element.to_member_expression();
+                    member_expr.optional()
+                        && matches!(
+                            member_expr.object().without_parentheses(),
+                            Expression::TSNonNullExpression(expr) if expr.span == non_null_expr.span
+                        )
+                }
+                ChainElement::CallExpression(expr) if expr.optional => {
+                    matches!(
+                        expr.callee.without_parentheses(),
+                        Expression::TSNonNullExpression(expr) if expr.span == non_null_expr.span
+                    )
+                }
+                _ => false,
+            },
+            _ => false,
+        };
+
+        if is_extra_non_null_assertion {
+            let span = Span::sized(non_null_expr.span.end - 1, 1);
+            ctx.diagnostic_with_fix(no_extra_non_null_assertion_diagnostic(span), |fixer| {
+                fixer.delete_range(span)
+            });
         }
     }
 
@@ -144,9 +161,17 @@ fn test() {
         "function foo(bar?: { n: number }) { return (bar!)?.(); }",
     ];
 
-    // TODO: Implement fixer.
-    #[expect(clippy::useless_vec)]
-    let _fix = vec![
+    let fix = vec![
+        (
+            "
+            const foo: { bar: number } | null = null;
+            const bar = foo!!!.bar;
+                  ",
+            "
+            const foo: { bar: number } | null = null;
+            const bar = foo!!.bar;
+                  ",
+        ),
         (
             "
             const foo: { bar: number } | null = null;
@@ -160,12 +185,12 @@ fn test() {
         (
             "
             function foo(bar: number | undefined) {
-              const bar: number = bar!!;
+              const a: number = bar!!;
             }
                   ",
             "
             function foo(bar: number | undefined) {
-              const bar: number = bar!;
+              const a: number = bar!;
             }
                   ",
         ),
@@ -242,5 +267,6 @@ fn test() {
     ];
 
     Tester::new(NoExtraNonNullAssertion::NAME, NoExtraNonNullAssertion::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

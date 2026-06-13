@@ -1,11 +1,9 @@
-use std::borrow::Cow;
+use std::{alloc::Layout, borrow::Cow, mem::MaybeUninit, slice, str};
 
 use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str};
-use oxc_syntax::{
-    comment_node::CommentNodeId, number::NumberBase, operator::UnaryOperator, scope::ScopeId,
-};
+use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
 
@@ -39,13 +37,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn new(allocator: &'a Allocator) -> Self {
         Self { allocator }
-    }
-
-    /// Create [`CommentNodeId`] for an AST node.
-    #[expect(dead_code, clippy::unused_self, clippy::trivially_copy_pass_by_ref)]
-    pub(crate) fn get_comment_node_id(&self) -> CommentNodeId {
-        // TODO: Generate a real ID
-        CommentNodeId::DUMMY
     }
 
     /// Move a value into the memory arena.
@@ -287,4 +278,115 @@ impl<'a> AstBuilder<'a> {
             NONE,
         ))
     }
+
+    /* ---------- Template literals ---------- */
+
+    /// Build a [`TemplateElement`], escaping special characters in the raw value.
+    ///
+    /// Like [`AstBuilder::template_element`], but escapes backticks, `${`, backslashes, and carriage
+    /// returns in `value.raw` first.
+    #[inline]
+    pub fn template_element_escape_raw(
+        self,
+        span: Span,
+        mut value: TemplateElementValue<'a>,
+        tail: bool,
+    ) -> TemplateElement<'a> {
+        value.raw = escape_template_element_raw(value.raw, self);
+        self.template_element(span, value, tail)
+    }
+
+    /// Build a [`TemplateElement`] with `lone_surrogates`, escaping special characters in the raw value.
+    ///
+    /// Like [`AstBuilder::template_element_with_lone_surrogates`], but escapes backticks, `${`,
+    /// backslashes, and carriage returns in `value.raw` first.
+    #[inline]
+    pub fn template_element_escape_raw_with_lone_surrogates(
+        self,
+        span: Span,
+        mut value: TemplateElementValue<'a>,
+        tail: bool,
+        lone_surrogates: bool,
+    ) -> TemplateElement<'a> {
+        value.raw = escape_template_element_raw(value.raw, self);
+        self.template_element_with_lone_surrogates(span, value, tail, lone_surrogates)
+    }
+}
+
+/// Escape special characters for template element raw value.
+///
+/// Escapes: backticks, `${`, backslashes, and carriage returns.
+fn escape_template_element_raw<'a>(raw: Str<'a>, ast: AstBuilder<'a>) -> Str<'a> {
+    let bytes = raw.as_bytes();
+
+    // Calculate size needed for escaped string
+    let mut extra_bytes = 0usize;
+    for i in 0..bytes.len() {
+        extra_bytes += match bytes[i] {
+            b'\\' | b'`' | b'\r' => 1,
+            b'$' if bytes.get(i + 1) == Some(&b'{') => 1,
+            _ => 0,
+        };
+    }
+
+    if extra_bytes == 0 {
+        return raw;
+    }
+
+    // Allocate directly in arena.
+    // It's impossible for this addition to overflow, because max length of a `&str` is `isize::MAX`
+    // and we've at most doubled the length, which cannot overflow `usize::MAX`.
+    let len = bytes.len() + extra_bytes;
+    let layout = Layout::array::<u8>(len).unwrap();
+    let ptr = ast.allocator.alloc_layout(layout);
+
+    // SAFETY: `ptr` points to `len` bytes of memory allocated by the arena.
+    // `MaybeUninit<u8>` has the same layout as `u8` and does not require its contents to be initialized,
+    // so it's sound to form a `&mut [MaybeUninit<u8>]` over this uninitialized memory.
+    let dest = unsafe { slice::from_raw_parts_mut(ptr.as_ptr().cast::<MaybeUninit<u8>>(), len) };
+
+    let mut j = 0;
+    for i in 0..bytes.len() {
+        // SAFETY: For each input byte we write either 1 or 2 bytes, and `len` was sized to fit
+        // exactly that many bytes, so `j` and `j + 1` are always in bounds.
+        // Note: Compiler merges each pair of writes into a single 2-byte write.
+        unsafe {
+            match bytes[i] {
+                b'\\' => {
+                    dest.get_unchecked_mut(j).write(b'\\');
+                    dest.get_unchecked_mut(j + 1).write(b'\\');
+                    j += 2;
+                }
+                b'`' => {
+                    dest.get_unchecked_mut(j).write(b'\\');
+                    dest.get_unchecked_mut(j + 1).write(b'`');
+                    j += 2;
+                }
+                b'$' if bytes.get(i + 1) == Some(&b'{') => {
+                    dest.get_unchecked_mut(j).write(b'\\');
+                    dest.get_unchecked_mut(j + 1).write(b'$');
+                    j += 2;
+                }
+                b'\r' => {
+                    dest.get_unchecked_mut(j).write(b'\\');
+                    dest.get_unchecked_mut(j + 1).write(b'r');
+                    j += 2;
+                }
+                b => {
+                    dest.get_unchecked_mut(j).write(b);
+                    j += 1;
+                }
+            }
+        }
+    }
+
+    debug_assert_eq!(j, len);
+
+    // SAFETY: The loop above initialized all `len` bytes of `dest`.
+    // `MaybeUninit<u8>` has the same layout as `u8`, so it's sound to read those bytes back as `&[u8]`
+    // via a pointer cast. `MaybeUninit::slice_assume_init_ref` would express this directly, but it is unstable.
+    let bytes = unsafe { slice::from_raw_parts(dest.as_ptr().cast::<u8>(), len) };
+    // SAFETY: Input is valid UTF-8 and we only insert ASCII bytes replacing existing ASCII, so output is valid UTF-8
+    let escaped = unsafe { str::from_utf8_unchecked(bytes) };
+    Str::from(escaped)
 }

@@ -2,56 +2,56 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-import(no-webpack-loader-syntax): Unexpected `!` in `babel!lodash`.
+  ⚠ import(no-webpack-loader-syntax): Unexpected `!` in `babel!lodash`.
    ╭─[no_webpack_loader_syntax.tsx:1:15]
  1 │ import _ from 'babel!lodash'
    ·               ──────────────
    ╰────
   help: Do not use import syntax to configure webpack loaders
 
-  ⚠ eslint-plugin-import(no-webpack-loader-syntax): Unexpected `!` in `-babel-loader!lodash.find`.
+  ⚠ import(no-webpack-loader-syntax): Unexpected `!` in `-babel-loader!lodash.find`.
    ╭─[no_webpack_loader_syntax.tsx:1:18]
  1 │ import find from '-babel-loader!lodash.find'
    ·                  ───────────────────────────
    ╰────
   help: Do not use import syntax to configure webpack loaders
 
-  ⚠ eslint-plugin-import(no-webpack-loader-syntax): Unexpected `!` in `style!css!./foo.css`.
+  ⚠ import(no-webpack-loader-syntax): Unexpected `!` in `style!css!./foo.css`.
    ╭─[no_webpack_loader_syntax.tsx:1:17]
  1 │ import foo from 'style!css!./foo.css'
    ·                 ─────────────────────
    ╰────
   help: Do not use import syntax to configure webpack loaders
 
-  ⚠ eslint-plugin-import(no-webpack-loader-syntax): Unexpected `!` in `json!@scope/my-package/data.json`.
+  ⚠ import(no-webpack-loader-syntax): Unexpected `!` in `json!@scope/my-package/data.json`.
    ╭─[no_webpack_loader_syntax.tsx:1:18]
  1 │ import data from 'json!@scope/my-package/data.json'
    ·                  ──────────────────────────────────
    ╰────
   help: Do not use import syntax to configure webpack loaders
 
-  ⚠ eslint-plugin-import(no-webpack-loader-syntax): Unexpected `!` in `babel!lodash`.
+  ⚠ import(no-webpack-loader-syntax): Unexpected `!` in `babel!lodash`.
    ╭─[no_webpack_loader_syntax.tsx:1:17]
  1 │ var _ = require('babel!lodash')
    ·                 ──────────────
    ╰────
   help: Do not use import syntax to configure webpack loaders
 
-  ⚠ eslint-plugin-import(no-webpack-loader-syntax): Unexpected `!` in `-babel-loader!lodash.find`.
+  ⚠ import(no-webpack-loader-syntax): Unexpected `!` in `-babel-loader!lodash.find`.
    ╭─[no_webpack_loader_syntax.tsx:1:20]
  1 │ var find = require('-babel-loader!lodash.find')
    ·                    ───────────────────────────
    ╰────
   help: Do not use import syntax to configure webpack loaders
 
-  ⚠ eslint-plugin-import(no-webpack-loader-syntax): Unexpected `!` in `style!css!./foo.css`.
+  ⚠ import(no-webpack-loader-syntax): Unexpected `!` in `style!css!./foo.css`.
    ╭─[no_webpack_loader_syntax.tsx:1:19]
  1 │ var foo = require('style!css!./foo.css')
    ·                   ─────────────────────
    ╰────
   help: Do not use import syntax to configure webpack loaders
 
-  ⚠ eslint-plugin-import(no-webpack-loader-syntax): Unexpected `!` in `json!@scope/my-package/data.json`.
+  ⚠ import(no-webpack-loader-syntax): Unexpected `!` in `json!@scope/my-package/data.json`.
    ╭─[no_webpack_loader_syntax.tsx:1:20]
  1 │ var data = require('json!@scope/my-package/data.json')
    ·                    ──────────────────────────────────

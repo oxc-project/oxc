@@ -8,7 +8,7 @@ use crate::{
     Codegen, Generator,
     generators::{define_generator, formatter::ast_nodes::get_node_type},
     output::Output,
-    schema::{Def, EnumDef, Schema, StructDef, TypeDef, TypeId},
+    schema::{Def, EnumDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId},
 };
 
 use super::ast_nodes::formatter_output_path;
@@ -59,15 +59,14 @@ impl Generator for FormatterFormatGenerator {
         let parenthesis_type_ids = get_needs_parentheses_type_ids(schema);
 
         let impls = schema
-            .types
-            .iter()
+            .structs_and_enums()
             .filter_map(|type_def| match type_def {
-                TypeDef::Struct(struct_def)
+                StructOrEnum::Struct(struct_def)
                     if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
                 {
                     Some(generate_struct_implementation(struct_def, &parenthesis_type_ids, schema))
                 }
-                TypeDef::Enum(enum_def) if enum_def.visit.has_visitor() => {
+                StructOrEnum::Enum(enum_def) if enum_def.visit.has_visitor() => {
                     Some(generate_enum_implementation(enum_def, schema))
                 }
                 _ => None,
@@ -86,7 +85,7 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{Format, Formatter, trivia::{format_leading_comments, format_trailing_comments}},
+                formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
@@ -236,29 +235,29 @@ fn generate_struct_implementation(
     let fmt_implementation = generate_fmt_implementation(false);
     let fmt_options =
         NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.get(struct_name).map(|str| format_ident!("{}", str));
-    let fmt_with_options_implementation = if let Some(ref fmt_options) = fmt_options {
+    let fmt_with_options_inherent = if let Some(ref fmt_options) = fmt_options {
         let implementation = generate_fmt_implementation(true);
         quote! {
             ///@@line_break
-            fn fmt_with_options(&self, options: #fmt_options, f: &mut Formatter<'_, 'a>) {
-                #implementation
+            impl<'a> #type_ty {
+                pub fn fmt_with_options(&self, options: #fmt_options, f: &mut JsFormatter<'_, 'a>) {
+                    #implementation
+                }
             }
         }
     } else {
         quote! {}
     };
 
-    let option_type = fmt_options.map_or_else(|| quote! {}, |ident| quote! {, #ident});
-
     quote! {
         ///@@line_break
-        impl<'a> Format<'a #option_type> for #type_ty {
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
+            fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
                 #fmt_implementation
             }
-
-            #fmt_with_options_implementation
         }
+
+        #fmt_with_options_inherent
     }
 }
 
@@ -309,13 +308,6 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         match_arm
     });
 
-    let parent = if enum_def.kind.has_kind {
-        quote! {
-            let parent = allocator.alloc(AstNodes::#enum_ident(transmute_self(self)))
-        }
-    } else {
-        quote! { let parent = self.parent }
-    };
     let node_type = get_node_type(&enum_ty);
 
     let inline_trailing_suppression = match enum_def.name() {
@@ -350,12 +342,12 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
     quote! {
         ///@@line_break
-        impl<'a> Format<'a> for #node_type {
+        impl<'a> Format<'a, JsFormatContext<'a>> for #node_type {
             #[inline]
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+            fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
                 #inline_trailing_suppression
                 let allocator = self.allocator;
-                #parent;
+                let parent = self.parent;
                 match self.inner {
                     #(#variant_match_arms)*
                     #(#inherits_match_arms)*

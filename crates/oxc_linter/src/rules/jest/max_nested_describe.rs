@@ -1,189 +1,31 @@
-use schemars::JsonSchema;
-use serde::Deserialize;
-
-use oxc_ast::AstKind;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ScopeId;
-use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
-        is_type_of_jest_fn_call,
-    },
+    rules::shared::max_nested_describe::{DOCUMENTATION, MaxNestedDescribeConfig},
 };
 
-fn exceeded_max_depth(current: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Enforces a maximum depth to nested describe calls.")
-        .with_help(format!("Too many nested describe calls ({current}) - maximum allowed is {max}"))
-        .with_label(span)
-}
-
-#[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-#[schemars(default)]
-pub struct MaxNestedDescribe {
-    /// Maximum allowed depth of nested describe calls.
-    pub max: usize,
-}
-
-impl Default for MaxNestedDescribe {
-    fn default() -> Self {
-        Self { max: 5 }
-    }
-}
+#[derive(Debug, Default, Clone)]
+pub struct MaxNestedDescribe(Box<MaxNestedDescribeConfig>);
 
 declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// This rule enforces a maximum depth to nested `describe()` calls.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// Nesting `describe()` blocks too deeply can make the test suite hard to read and understand.
-    ///
-    /// ### Examples
-    ///
-    /// The following patterns are considered warnings (with the default option of
-    /// `{ "max": 5 } `):
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```javascript
-    /// describe('foo', () => {
-    ///     describe('bar', () => {
-    ///         describe('baz', () => {
-    ///             describe('qux', () => {
-    ///                 describe('quxx', () => {
-    ///                     describe('too many', () => {
-    ///                         it('should get something', () => {
-    ///                             expect(getSomething()).toBe('Something');
-    ///                         });
-    ///                     });
-    ///                 });
-    ///             });
-    ///         });
-    ///     });
-    /// });
-    ///
-    /// describe('foo', function () {
-    ///     describe('bar', function () {
-    ///         describe('baz', function () {
-    ///             describe('qux', function () {
-    ///                 describe('quxx', function () {
-    ///                     describe('too many', function () {
-    ///                         it('should get something', () => {
-    ///                             expect(getSomething()).toBe('Something');
-    ///                         });
-    ///                     });
-    ///                 });
-    ///             });
-    ///         });
-    ///     });
-    /// });
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```ts
-    /// describe('foo', () => {
-    ///     describe('bar', () => {
-    ///         it('should get something', () => {
-    ///             expect(getSomething()).toBe('Something');
-    ///         });
-    ///     });
-    ///     describe('qux', () => {
-    ///         it('should get something', () => {
-    ///             expect(getSomething()).toBe('Something');
-    ///         });
-    ///     });
-    /// });
-    ///
-    /// describe('foo2', function () {
-    ///     it('should get something', () => {
-    ///         expect(getSomething()).toBe('Something');
-    ///     });
-    /// });
-    ///
-    /// describe('foo', function () {
-    ///     describe('bar', function () {
-    ///         describe('baz', function () {
-    ///             describe('qux', function () {
-    ///                 describe('this is the limit', function () {
-    ///                     it('should get something', () => {
-    ///                         expect(getSomething()).toBe('Something');
-    ///                     });
-    ///                 });
-    ///             });
-    ///         });
-    ///     });
-    /// });
-    /// ```
-    ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/max-nested-describe.md),
-    /// to use it, add the following configuration to your `.oxlintrc.json`:
-    ///
-    /// ```json
-    /// {
-    ///   "rules": {
-    ///      "vitest/max-nested-describe": "error"
-    ///   }
-    /// }
-    /// ```
     MaxNestedDescribe,
     jest,
     style,
-    config = MaxNestedDescribe,
+    config = MaxNestedDescribeConfig,
+    docs = DOCUMENTATION,
     version = "0.4.4",
 );
 
 impl Rule for MaxNestedDescribe {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        let config = serde_json::from_value::<DefaultRuleConfig<MaxNestedDescribeConfig>>(value)?;
+        Ok(Self(Box::new(config.into_inner())))
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let mut describes_hooks_depth: Vec<ScopeId> = vec![];
-        let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
-        possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
-
-        for possible_jest_node in &possibles_jest_nodes {
-            self.run(possible_jest_node, &mut describes_hooks_depth, ctx);
-        }
-    }
-}
-
-impl MaxNestedDescribe {
-    fn run<'a>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, '_>,
-        describes_hooks_depth: &mut Vec<ScopeId>,
-        ctx: &LintContext<'a>,
-    ) {
-        let node = possible_jest_node.node;
-        let scope_id = node.scope_id();
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let is_describe_call = is_type_of_jest_fn_call(
-            call_expr,
-            possible_jest_node,
-            ctx,
-            &[JestFnKind::General(JestGeneralFnKind::Describe)],
-        );
-
-        if is_describe_call && !describes_hooks_depth.contains(&scope_id) {
-            describes_hooks_depth.push(scope_id);
-        }
-
-        if is_describe_call && describes_hooks_depth.len() > self.max {
-            ctx.diagnostic(exceeded_max_depth(
-                describes_hooks_depth.len(),
-                self.max,
-                call_expr.span,
-            ));
-        }
+        self.0.run_once(ctx);
     }
 }
 
@@ -191,7 +33,7 @@ impl MaxNestedDescribe {
 fn test() {
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         (
             "
                 describe('foo', function() {
@@ -297,7 +139,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         (
             "
                 describe('foo', function() {
@@ -406,91 +248,6 @@ fn test() {
             Some(serde_json::json!([{ "max": 1 }])),
         ),
     ];
-
-    let pass_vitest = vec![
-        (
-            "
-                describe('another suite', () => {
-                    describe('another suite', () => {
-                        it('skipped test', () => {
-                            // Test skipped, as tests are running in Only mode
-                            assert.equal(Math.sqrt(4), 3)
-                        })
-
-                        it.only('test', () => {
-                            // Only this test (and others marked with only) are run
-                            assert.equal(Math.sqrt(4), 2)
-                        })
-                    })
-                })
-            ",
-            None,
-        ),
-        (
-            "
-                describe('another suite', () => {
-                    describe('another suite', () => {
-                        describe('another suite', () => {
-                            describe('another suite', () => {
-
-                            })
-                        })
-                    })
-                })
-            ",
-            None,
-        ),
-    ];
-
-    let fail_vitest = vec![
-        (
-            "
-                describe('another suite', () => {
-                    describe('another suite', () => {
-                        describe('another suite', () => {
-                            describe('another suite', () => {
-                                describe('another suite', () => {
-                                    describe('another suite', () => {
-
-                                    })
-                                })
-                            })
-                        })
-                    })
-                })
-            ",
-            None,
-        ),
-        (
-            "
-                describe('another suite', () => {
-                    describe('another suite', () => {
-                        describe('another suite', () => {
-                            describe('another suite', () => {
-                                describe('another suite', () => {
-                                    describe('another suite', () => {
-                                        it('skipped test', () => {
-                                            // Test skipped, as tests are running in Only mode
-                                            assert.equal(Math.sqrt(4), 3)
-                                        })
-
-                                        it.only('test', () => {
-                                            // Only this test (and others marked with only) are run
-                                            assert.equal(Math.sqrt(4), 2)
-                                        })
-                                    })
-                                })
-                            })
-                        })
-                    })
-                })
-            ",
-            None,
-        ),
-    ];
-
-    pass.extend(pass_vitest);
-    fail.extend(fail_vitest);
 
     Tester::new(MaxNestedDescribe::NAME, MaxNestedDescribe::PLUGIN, pass, fail)
         .with_jest_plugin(true)

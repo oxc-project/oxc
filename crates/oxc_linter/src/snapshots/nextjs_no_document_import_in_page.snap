@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page
+  ⚠ next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page
    ╭─[no_document_import_in_page.tsx:1:1]
  1 │ import Document from "next/document"
    · ────────────────────────────────────
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prevent importing `next/document` outside of `pages/_document.js`.
 
-  ⚠ eslint-plugin-next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page
+  ⚠ next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page
    ╭─[no_document_import_in_page.tsx:1:1]
  1 │ import Document from "next/document"
    · ────────────────────────────────────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prevent importing `next/document` outside of `pages/_document.js`.
 
-  ⚠ eslint-plugin-next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page
+  ⚠ next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page
    ╭─[no_document_import_in_page.tsx:1:1]
  1 │ import Document from "next/document"
    · ────────────────────────────────────
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prevent importing `next/document` outside of `pages/_document.js`.
 
-  ⚠ eslint-plugin-next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page
+  ⚠ next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page
    ╭─[no_document_import_in_page.tsx:1:1]
  1 │ import Document from "next/document"
    · ────────────────────────────────────

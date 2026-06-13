@@ -4,6 +4,48 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 4e44969 ast: Fix UB in `escape_template_element_raw` (#23052) (overlookmotel)
+- 786d96f codegen: Give `TSTypeAssertion` unary precedence (#23002) (Boshen)
+
+### ⚡ Performance
+
+- 1f9d8eb ast: `AstBuilder::template_element_escape_raw` avoid allocation if no escape required (#23053) (overlookmotel)
+
+## [0.134.0] - 2026-06-01
+
+### 🚀 Features
+
+- 9c71f2e ast, codegen, formatter: Add `WithClauseKeyword::as_str` helper and use it (#22791) (camc314)
+
+## [0.128.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+- c5b3deb syntax: [**BREAKING**] Remove `CommentNodeId` (#21679) (overlookmotel)
+
+### 🚀 Features
+
+- 678767e ast: Generate node_id accessors for AST enum wrappers (#21653) (camc314)
+
+### ⚡ Performance
+
+- cab32ae ast: Add `#[inline(always)]` to `node_id` methods on enums with all variants unboxed (#21707) (overlookmotel)
+
+### 📚 Documentation
+
+- 5c93af8 ast: Add comments explaining `#[inline(always)]` to `node_id` methods on enums (#21706) (overlookmotel)
+
 ## [0.126.0] - 2026-04-15
 
 ### 🚀 Features

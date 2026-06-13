@@ -66,6 +66,7 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "0.15.4",
+    short_description = "Disallows the use of the `arguments` object and instead enforces the use of rest parameters.",
 );
 
 impl Rule for PreferRestParams {

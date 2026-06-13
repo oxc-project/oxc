@@ -58,6 +58,16 @@ pub(crate) fn test_same_options(source_text: &str, options: &CompressOptions) {
 }
 
 #[track_caller]
+pub(crate) fn test_smallest(source_text: &str, expected: &str) {
+    test_options(source_text, expected, &CompressOptions::smallest());
+}
+
+#[track_caller]
+pub(crate) fn test_same_smallest(source_text: &str) {
+    test_smallest(source_text, source_text);
+}
+
+#[track_caller]
 pub(crate) fn test_options_source_type(
     source_text: &str,
     expected: &str,
@@ -92,7 +102,7 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
         .with_options(ParseOptions { allow_return_outside_function: true, ..Default::default() })
         .parse();
     assert!(!ret.panicked, "{source_text}");
-    assert!(ret.errors.is_empty(), "{source_text}");
+    assert!(ret.diagnostics.is_empty(), "{source_text}");
     let mut program = ret.program;
     if let Some(options) = options {
         Compressor::new(&allocator).build(&mut program, options);

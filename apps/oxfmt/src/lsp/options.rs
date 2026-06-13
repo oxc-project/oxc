@@ -21,14 +21,17 @@ impl TryFrom<Value> for FormatOptions {
     type Error = String;
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
+        // null is treated as default options
+        if value == Value::Null {
+            return Ok(Self::default());
+        }
+
         let Some(object) = value.as_object() else {
             return Err("no object passed".to_string());
         };
 
         Ok(Self {
-            config_path: object
-                .get("fmt.configPath")
-                .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
+            config_path: object.get("fmt.configPath").and_then(Value::as_str).map(str::to_owned),
         })
     }
 }
@@ -55,6 +58,13 @@ mod test {
 
         let options = FormatOptions::try_from(json).unwrap();
         assert!(options.config_path.is_none());
+    }
+
+    #[test]
+    fn test_null_json() {
+        let json = json!(null);
+        let options = FormatOptions::try_from(json).unwrap();
+        assert_eq!(options, FormatOptions::default());
     }
 
     #[test]

@@ -35,7 +35,7 @@ fn helper_call_idempotency() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, &first, source_type).parse();
-        assert!(ret.errors.is_empty(), "Parse errors on second pass for: {source}");
+        assert!(ret.diagnostics.is_empty(), "Parse errors on second pass for: {source}");
         let second = Codegen::new().with_options(codegen_options()).build(&ret.program).code;
 
         assert_eq!(

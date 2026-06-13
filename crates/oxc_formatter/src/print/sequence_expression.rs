@@ -2,14 +2,19 @@ use oxc_ast::ast::*;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Format, Formatter, prelude::*},
+    formatter::{Format, JsFormatter, prelude::*},
     write,
 };
 
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_arrow_body = matches!(
+            self.parent(),
+            AstNodes::ExpressionStatement(statement) if statement.is_arrow_function_body()
+        );
+
         let format_inner = format_with(|f| {
             let mut expressions = self.expressions().iter();
             let separator = format_with(|f| {
@@ -39,6 +44,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
             }
         });
 
-        write!(f, group(&format_inner));
+        // For arrow bodies, own the `soft_block_indent` so the break decision is made
+        // at the opening `(`, not at the already-indented column inside it. The arrow
+        // body handler skips its own indent to defer to this group.
+        if is_arrow_body {
+            write!(f, group(&soft_block_indent(&format_inner)));
+        } else {
+            write!(f, group(&format_inner));
+        }
     }
 }

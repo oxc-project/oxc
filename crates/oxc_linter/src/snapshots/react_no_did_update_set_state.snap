@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:17]
  3 │               componentDidUpdate: function() {
  4 │                 this.setState({
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:17]
  3 │               componentDidUpdate: function componentDidUpdate() {
  4 │                 this.setState({
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:17]
  3 │               componentDidUpdate() {
  4 │                 this.setState({
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:17]
  3 │               componentDidUpdate = () => {
  4 │                 this.setState({
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:17]
  3 │               componentDidUpdate: function() {
  4 │                 this.setState({ data: 1 });
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:5:19]
  4 │                 if (true) {
  5 │                   this.setState({ data: 123 });
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:5:19]
  4 │                 if (true) {
  5 │                   this.setState({ data: 123 });
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:34]
  3 │               componentDidUpdate() {
  4 │                 const x = true ? this.setState({ data: 123 }) : null;
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:17]
  3 │               componentDidUpdate: function() {
  4 │                 this.setState({
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:5:19]
  4 │                 someClass.onSomeEvent(function(data) {
  5 │                   this.setState({
@@ -92,7 +92,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:5:19]
  4 │                 setTimeout(() => {
  5 │                   this.setState({ data: 123 });
@@ -101,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:5:19]
  4 │                 Promise.resolve().then(() => {
  5 │                   this.setState({ data: 123 });
@@ -110,7 +110,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:17]
  3 │               componentDidUpdate() {
  4 │                 this.setState({
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:5:19]
  4 │                 someClass.onSomeEvent(function(data) {
  5 │                   this.setState({
@@ -128,7 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:49]
  3 │               componentDidUpdate: function() {
  4 │                 someClass.onSomeEvent((data) => this.setState({data: data}));
@@ -137,7 +137,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:49]
  3 │               componentDidUpdate() {
  4 │                 someClass.onSomeEvent((data) => this.setState({data: data}));
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:17]
  3 │               componentDidUpdate: function() {
  4 │                 this.setState({
@@ -155,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Updating state after a component update triggers a second render() call and can lead to property/layout thrashing.
 
-  ⚠ eslint-plugin-react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
+  ⚠ react(no-did-update-set-state): Do not use `setState` in `componentDidUpdate`.
    ╭─[no_did_update_set_state.tsx:4:17]
  3 │               componentDidUpdate() {
  4 │                 this.setState({

@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo) {
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:30]
  4 │                        */
  5 │                       function quux ({foo}) {
@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:34]
  4 │                        */
  5 │                       function quux (foo, bar, {baz}) {
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:34]
  4 │                        */
  5 │                       function quux (foo, bar, {baz}) {
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:30]
  4 │                        */
  5 │                       function quux ({foo}) {
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:35]
  4 │                        */
  5 │                       function quux ({foo: bar = 5} = {}) {
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:30]
  4 │                        */
  5 │                       function quux ({foo}) {
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:30]
  4 │                        */
  5 │                       function quux ({foo}) {
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:30]
  4 │                        */
  5 │                       function quux ({foo}) {
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:31]
  4 │                        */
  5 │                       function quux ({ foo, bar: { baz }}) {
@@ -92,7 +92,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:30]
  4 │                        */
  5 │                       function quux ({foo}, {bar}) {
@@ -101,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:30]
  4 │                        */
  5 │                       function quux ({foo}, {bar}) {
@@ -110,7 +110,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:30]
  4 │                        */
  5 │                       function quux ({foo}, {bar}) {
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo, bar) {
@@ -128,7 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:34]
  4 │                        */
  5 │                       function quux (foo, bar) {
@@ -137,7 +137,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo, bar, baz) {
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:6:39]
  5 │                        */
  6 │                       function quux (foo, bar, baz) {
@@ -155,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo, bar, baz) {
@@ -164,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo) {
@@ -173,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo) {
@@ -182,7 +182,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo) {
@@ -191,7 +191,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo) {
@@ -200,7 +200,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo) {
@@ -209,7 +209,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo) {
@@ -218,7 +218,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:26]
  4 │                    */
  5 │                   function quux ({bar, baz}, foo) {
@@ -227,7 +227,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:25]
  4 │                    */
  5 │                   function quux (foo, {bar, baz}) {
@@ -236,7 +236,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:26]
  4 │                    */
  5 │                   function quux ([bar, baz], foo) {
@@ -245,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo) {
@@ -254,7 +254,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo) {
@@ -263,7 +263,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:8:42]
  7 │                        */
  8 │                       function assign (employees, name) {
@@ -272,7 +272,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:6:40]
  5 │                        */
  6 │                       function quux (baz, {foo: bar}) {
@@ -281,7 +281,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:29]
  4 │                        */
  5 │                       function quux (foo) {
@@ -290,7 +290,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:8:14]
  7 │                     async setData(
  8 │                       data: { last_modified?: number }
@@ -299,7 +299,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:6:34]
  5 │                    */
  6 │                   function quux ({num, ...extra}) {
@@ -308,7 +308,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:7:41]
  6 │                    */
  7 │                   function quux ({opts: {num, ...extra}}) {
@@ -317,7 +317,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:6:32]
  5 │                    */
  6 │                   function baar ([a, ...extra]) {
@@ -326,7 +326,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:5:31]
  4 │                    */
  5 │                   function baar (a, ...extra) {
@@ -335,7 +335,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:6:39]
  5 │                    */
  6 │                   const bboxToObj = function ({x, y, width, height}) {
@@ -344,7 +344,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:6:39]
  5 │                    */
  6 │                   const bboxToObj = function ({x, y, width, height}) {
@@ -353,7 +353,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:7:23]
  6 │                      */
  7 │                     fetch = ({ url, ...options }, cacheKey) => {
@@ -362,7 +362,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:6:16]
  5 │                  */
  6 │                 function f(param) {
@@ -371,7 +371,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:7:34]
  6 │                    */
  7 │                   function quux ({ foo: { bar } }) {}
@@ -380,7 +380,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:7:34]
  6 │                    */
  7 │                   function quux ({ foo: { bar } }) {}
@@ -389,7 +389,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:7:27]
  6 │                    */
  7 │                   function quux ({ foo: { bar } }) {}
@@ -398,7 +398,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:7:34]
  6 │                    */
  7 │                   function quux ({ foo: { bar } }) {}
@@ -407,7 +407,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:8:39]
  7 │                    */
  8 │                   function foo({ foo: { bar: { baz } }}) {}
@@ -416,7 +416,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:3:25]
  2 │                     /** Foo. */
  3 │                     function foo(a, b, c) {}
@@ -425,7 +425,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `@param` tag with name.
 
-  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:7:19]
  6 │                  */
  7 │                     tokens(tokens) {

@@ -46,6 +46,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     version = "0.0.11",
+    short_description = "Disallow unsafe declaration merging.",
 );
 
 impl Rule for NoUnsafeDeclarationMerging {

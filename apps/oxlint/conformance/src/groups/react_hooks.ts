@@ -1,8 +1,11 @@
+import repos from "../../repos.json" with { type: "json" };
+
 import type { MockFn, TestGroup } from "../index.ts";
 import type { TestCase } from "../rule_tester.ts";
 
 const group: TestGroup = {
   name: "react-hooks",
+  ...repos.react,
 
   submoduleName: "react",
   testFilesDirPath: "packages/eslint-plugin-react-hooks/__tests__",

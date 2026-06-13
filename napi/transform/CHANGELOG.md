@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.135.0] - 2026-06-08
+
+### 🚀 Features
+
+- b846ab2 react_compiler: Integrate the Rust port of the React Compiler (#22942) (Boshen)
+
+## [0.133.0] - 2026-05-26
+
+### 🚀 Features
+
+- ee659b6 transformer/legacy-decorator: Add `strictNullChecks` option for nullable-union design:type (#22266) (Kyle Cannon)
+
+## [0.128.0] - 2026-04-27
+
+### 📚 Documentation
+
+- e4cea25 transform: Use the `node:` namespace in the example (#19998) (루밀LuMir)
+
+### 🛡️ Security
+
+- d8076c9 deps: Update rolldown (#21639) (renovate)
+
 ## [0.126.0] - 2026-04-15
 
 ### 🚀 Features

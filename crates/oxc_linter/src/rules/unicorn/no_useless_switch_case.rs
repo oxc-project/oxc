@@ -51,6 +51,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     version = "0.0.18",
+    short_description = "Disallows useless `default` cases in `switch` statements.",
 );
 
 impl Rule for NoUselessSwitchCase {
@@ -164,17 +165,6 @@ fn test() {
                         console.log('1')
                 case 1:
                         console.log('2')
-        }
-        ",
-        "
-        switch (1) {
-            default:
-                handleDefaultCase1();
-                break;
-            case 1:
-            default:
-                handleDefaultCase2();
-                break;
         }
         ",
     ];

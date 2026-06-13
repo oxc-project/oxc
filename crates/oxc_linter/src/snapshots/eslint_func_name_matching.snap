@@ -1,0 +1,353 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match variable name `foo`.
+   ╭─[func_name_matching.tsx:1:20]
+ 1 │ let foo = function bar() {};
+   ·                    ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match variable name `foo`.
+   ╭─[func_name_matching.tsx:1:20]
+ 1 │ let foo = function bar() {};
+   ·                    ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match variable name `foo`.
+   ╭─[func_name_matching.tsx:1:16]
+ 1 │ foo = function bar() {};
+   ·                ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match variable name `foo`.
+   ╭─[func_name_matching.tsx:1:18]
+ 1 │ foo &&= function bar() {};
+   ·                  ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match property name `foo`.
+   ╭─[func_name_matching.tsx:1:22]
+ 1 │ obj.foo ||= function bar() {};
+   ·                      ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match property name `foo`.
+   ╭─[func_name_matching.tsx:1:25]
+ 1 │ obj['foo'] ??= function bar() {};
+   ·                         ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match property name `foo`.
+   ╭─[func_name_matching.tsx:1:20]
+ 1 │ obj.foo = function bar() {};
+   ·                    ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match property name `foo`.
+   ╭─[func_name_matching.tsx:1:24]
+ 1 │ obj.bar.foo = function bar() {};
+   ·                        ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match property name `foo`.
+   ╭─[func_name_matching.tsx:1:23]
+ 1 │ obj['foo'] = function bar() {};
+   ·                       ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match property name `foo`.
+   ╭─[func_name_matching.tsx:1:26]
+ 1 │ let obj = {foo: function bar() {}};
+   ·                          ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match property name `foo`.
+   ╭─[func_name_matching.tsx:1:28]
+ 1 │ let obj = {'foo': function bar() {}};
+   ·                            ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match property name `foo`.
+   ╭─[func_name_matching.tsx:1:21]
+ 1 │ ({['foo']: function bar() {}})
+   ·                     ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `foo` should match property name `exports`.
+   ╭─[func_name_matching.tsx:1:27]
+ 1 │ module.exports = function foo(name) {};
+   ·                           ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `foo` should match property name `exports`.
+   ╭─[func_name_matching.tsx:1:27]
+ 1 │ module.exports = function foo(name) {};
+   ·                           ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `exports` should not match property name `exports`.
+   ╭─[func_name_matching.tsx:1:27]
+ 1 │ module.exports = function exports(name) {};
+   ·                           ───────
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `foo` should match property name `exports`.
+   ╭─[func_name_matching.tsx:1:30]
+ 1 │ module['exports'] = function foo(name) {};
+   ·                              ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `foo` should match property name `exports`.
+   ╭─[func_name_matching.tsx:1:30]
+ 1 │ module['exports'] = function foo(name) {};
+   ·                              ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `exports` should not match property name `exports`.
+   ╭─[func_name_matching.tsx:1:30]
+ 1 │ module['exports'] = function exports(name) {};
+   ·                              ───────
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `foo` should not match variable name `foo`.
+   ╭─[func_name_matching.tsx:1:20]
+ 1 │ var foo = function foo(name) {};
+   ·                    ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `foo` should not match property name `foo`.
+   ╭─[func_name_matching.tsx:1:20]
+ 1 │ obj.foo = function foo(name) {};
+   ·                    ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `baz` should match property name `bar`.
+   ╭─[func_name_matching.tsx:1:53]
+ 1 │ Object.defineProperty(foo, 'bar', { value: function baz() {} })
+   ·                                                     ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `baz` should match property name `bar`.
+   ╭─[func_name_matching.tsx:1:55]
+ 1 │ Object.defineProperties(foo, { bar: { value: function baz() {} } })
+   ·                                                       ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `baz` should match property name `bar`.
+   ╭─[func_name_matching.tsx:1:47]
+ 1 │ Object.create(proto, { bar: { value: function baz() {} } })
+   ·                                               ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `foo` should match property name `value`.
+   ╭─[func_name_matching.tsx:1:29]
+ 1 │ var obj = { value: function foo(name) {} }
+   ·                             ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should not match property name `bar`.
+   ╭─[func_name_matching.tsx:1:53]
+ 1 │ Object.defineProperty(foo, 'bar', { value: function bar() {} })
+   ·                                                     ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should not match property name `bar`.
+   ╭─[func_name_matching.tsx:1:55]
+ 1 │ Object.defineProperties(foo, { bar: { value: function bar() {} } })
+   ·                                                       ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should not match property name `bar`.
+   ╭─[func_name_matching.tsx:1:47]
+ 1 │ Object.create(proto, { bar: { value: function bar() {} } })
+   ·                                               ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `baz` should match property name `bar`.
+   ╭─[func_name_matching.tsx:1:54]
+ 1 │ Reflect.defineProperty(foo, 'bar', { value: function baz() {} })
+   ·                                                      ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should not match property name `bar`.
+   ╭─[func_name_matching.tsx:1:54]
+ 1 │ Reflect.defineProperty(foo, 'bar', { value: function bar() {} })
+   ·                                                      ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match property name `value`.
+   ╭─[func_name_matching.tsx:1:23]
+ 1 │ foo({ value: function bar() {} })
+   ·                       ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should match property name `foo`.
+   ╭─[func_name_matching.tsx:1:27]
+ 1 │ (obj?.aaa).foo = function bar() {};
+   ·                           ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `baz` should match property name `bar`.
+   ╭─[func_name_matching.tsx:1:54]
+ 1 │ Object?.defineProperty(foo, 'bar', { value: function baz() {} })
+   ·                                                      ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `baz` should match property name `bar`.
+   ╭─[func_name_matching.tsx:1:56]
+ 1 │ (Object?.defineProperty)(foo, 'bar', { value: function baz() {} })
+   ·                                                        ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should not match property name `bar`.
+   ╭─[func_name_matching.tsx:1:54]
+ 1 │ Object?.defineProperty(foo, 'bar', { value: function bar() {} })
+   ·                                                      ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should not match property name `bar`.
+   ╭─[func_name_matching.tsx:1:56]
+ 1 │ (Object?.defineProperty)(foo, 'bar', { value: function bar() {} })
+   ·                                                        ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `baz` should match property name `bar`.
+   ╭─[func_name_matching.tsx:1:56]
+ 1 │ Object?.defineProperties(foo, { bar: { value: function baz() {} } })
+   ·                                                        ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `baz` should match property name `bar`.
+   ╭─[func_name_matching.tsx:1:58]
+ 1 │ (Object?.defineProperties)(foo, { bar: { value: function baz() {} } })
+   ·                                                          ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should not match property name `bar`.
+   ╭─[func_name_matching.tsx:1:56]
+ 1 │ Object?.defineProperties(foo, { bar: { value: function bar() {} } })
+   ·                                                        ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `bar` should not match property name `bar`.
+   ╭─[func_name_matching.tsx:1:58]
+ 1 │ (Object?.defineProperties)(foo, { bar: { value: function bar() {} } })
+   ·                                                          ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `y` should match property name `x`.
+   ╭─[func_name_matching.tsx:1:24]
+ 1 │ class C { x = function y() {}; }
+   ·                        ─
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `x` should not match property name `x`.
+   ╭─[func_name_matching.tsx:1:24]
+ 1 │ class C { x = function x() {}; }
+   ·                        ─
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `y` should match property name `x`.
+   ╭─[func_name_matching.tsx:1:26]
+ 1 │ class C { 'x' = function y() {}; }
+   ·                          ─
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `x` should not match property name `x`.
+   ╭─[func_name_matching.tsx:1:26]
+ 1 │ class C { 'x' = function x() {}; }
+   ·                          ─
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `y` should match property name `x`.
+   ╭─[func_name_matching.tsx:1:28]
+ 1 │ class C { ['x'] = function y() {}; }
+   ·                            ─
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `x` should not match property name `x`.
+   ╭─[func_name_matching.tsx:1:28]
+ 1 │ class C { ['x'] = function x() {}; }
+   ·                            ─
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `y` should match property name `x`.
+   ╭─[func_name_matching.tsx:1:31]
+ 1 │ class C { static x = function y() {}; }
+   ·                               ─
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `x` should not match property name `x`.
+   ╭─[func_name_matching.tsx:1:31]
+ 1 │ class C { static x = function x() {}; }
+   ·                               ─
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `y` should match property name `x`.
+   ╭─[func_name_matching.tsx:1:23]
+ 1 │ (class { x = function y() {}; })
+   ·                       ─
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `x` should not match property name `x`.
+   ╭─[func_name_matching.tsx:1:23]
+ 1 │ (class { x = function x() {}; })
+   ·                       ─
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.
+
+  ⚠ eslint(func-name-matching): Function name `foo` should match property name `ᢅ`.
+   ╭─[func_name_matching.tsx:1:32]
+ 1 │ var obj = { '\u1885': function foo() {} };
+   ·                                ───
+   ╰────
+  help: Rename the function or the variable/property so the names satisfy this rule.

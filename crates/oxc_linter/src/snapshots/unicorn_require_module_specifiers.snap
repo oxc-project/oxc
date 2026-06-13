@@ -2,112 +2,112 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:8]
  1 │ import {} from "foo";
    ·        ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:7]
  1 │ import{}from"foo";
    ·       ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:8]
  1 │ ╭─▶ import {
  2 │ ╰─▶             } from "foo";
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:13]
  1 │ import foo, {} from "foo";
    ·             ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:12]
  1 │ import foo,{}from "foo";
    ·            ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:13]
  1 │ ╭─▶ import foo, {
  2 │ ╰─▶             } from "foo";
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:12]
  1 │ import foo,{}/* comment */from "foo";
    ·            ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:13]
  1 │ import type {} from "foo"
    ·             ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:12]
  1 │ import type{}from"foo"
    ·            ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty export specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty export specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:8]
  1 │ export {}
    ·        ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty export specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty export specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:8]
  1 │ export {} from "foo";
    ·        ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty export specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty export specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:7]
  1 │ export{}from"foo";
    ·       ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty export specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty export specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:8]
  1 │ ╭─▶ export {
  2 │ ╰─▶             } from "foo";
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty export specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty export specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:8]
  1 │ export {} from "foo" with {type: "json"};
    ·        ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty export specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty export specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:12]
  1 │ export type{}
    ·            ──
    ╰────
   help: Remove empty braces
 
-  ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty export specifier is not allowed
+  ⚠ unicorn(require-module-specifiers): Empty export specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:13]
  1 │ export type {} from "foo"
    ·             ──

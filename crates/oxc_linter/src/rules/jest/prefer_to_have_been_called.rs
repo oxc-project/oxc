@@ -20,7 +20,6 @@ fn prefer_to_have_been_called_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferToHaveBeenCalled;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -50,6 +49,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.34.0",
+    short_description = "Suggests using `toHaveBeenCalled()` or `not.toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)` or `toBeCalledTimes(0)`.",
 );
 
 impl Rule for PreferToHaveBeenCalled {

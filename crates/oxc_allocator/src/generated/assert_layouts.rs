@@ -10,21 +10,19 @@ use crate::*;
 #[cfg(target_pointer_width = "64")]
 const _: () = {
     // Padding: 3 bytes
-    assert!(size_of::<FixedSizeAllocatorMetadata>() == 16);
-    assert!(align_of::<FixedSizeAllocatorMetadata>() == 8);
-    assert!(offset_of!(FixedSizeAllocatorMetadata, alloc_ptr) == 0);
-    assert!(offset_of!(FixedSizeAllocatorMetadata, id) == 8);
-    assert!(offset_of!(FixedSizeAllocatorMetadata, is_double_owned) == 12);
+    assert!(size_of::<FixedSizeAllocatorMetadata>() == 8);
+    assert!(align_of::<FixedSizeAllocatorMetadata>() == 4);
+    assert!(offset_of!(FixedSizeAllocatorMetadata, id) == 0);
+    assert!(offset_of!(FixedSizeAllocatorMetadata, is_double_owned) == 4);
 };
 
 #[cfg(target_pointer_width = "32")]
 const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 3 bytes
-    assert!(size_of::<FixedSizeAllocatorMetadata>() == 12);
+    assert!(size_of::<FixedSizeAllocatorMetadata>() == 8);
     assert!(align_of::<FixedSizeAllocatorMetadata>() == 4);
-    assert!(offset_of!(FixedSizeAllocatorMetadata, alloc_ptr) == 0);
-    assert!(offset_of!(FixedSizeAllocatorMetadata, id) == 4);
-    assert!(offset_of!(FixedSizeAllocatorMetadata, is_double_owned) == 8);
+    assert!(offset_of!(FixedSizeAllocatorMetadata, id) == 0);
+    assert!(offset_of!(FixedSizeAllocatorMetadata, is_double_owned) == 4);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

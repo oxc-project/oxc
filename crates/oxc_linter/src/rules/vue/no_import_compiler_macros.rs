@@ -63,6 +63,7 @@ declare_oxc_lint!(
     restriction,
     dangerous_fix,
     version = "1.21.0",
+    short_description = "Disallow importing Vue compiler macros.",
 );
 
 const COMPILER_MACROS: &[&str; 7] = &[

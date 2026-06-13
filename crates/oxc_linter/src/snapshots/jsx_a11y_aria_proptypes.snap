@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-hidden="yes" />
    ·      ─────────────────
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-hidden' is: 'true' or 'false'.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-hidden="no" />
    ·      ────────────────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-hidden' is: 'true' or 'false'.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-hidden={1234} />
    ·      ──────────────────
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-hidden' is: 'true' or 'false'.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-hidden={`${abc}`} />
    ·      ──────────────────────
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-hidden' is: 'true' or 'false'.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-label={true} />
    ·      ─────────────────
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-label' is: a string value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-label={false} />
    ·      ──────────────────
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-label' is: a string value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-label={1234} />
    ·      ─────────────────
@@ -58,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-label' is: a string value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-label'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-label={!true} />
    ·      ──────────────────
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-label' is: a string value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-checked'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-checked'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-checked="yes" />
    ·      ──────────────────
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-checked' is: 'true', 'false', or 'mixed'.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-checked'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-checked'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-checked="no" />
    ·      ─────────────────
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-checked' is: 'true', 'false', or 'mixed'.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-checked'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-checked'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-checked={1234} />
    ·      ───────────────────
@@ -90,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-checked' is: 'true', 'false', or 'mixed'.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-checked'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-checked'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-checked={`${abc}`} />
    ·      ───────────────────────
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-checked' is: 'true', 'false', or 'mixed'.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-level="yes" />
    ·      ────────────────
@@ -106,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-level' is: an integer value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-level="no" />
    ·      ───────────────
@@ -114,7 +114,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-level' is: an integer value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-level={`abc`} />
    ·      ──────────────────
@@ -122,7 +122,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-level' is: an integer value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-level={true} />
    ·      ─────────────────
@@ -130,7 +130,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-level' is: an integer value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-level />
    ·      ──────────
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-level' is: an integer value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-level={"false"} />
    ·      ────────────────────
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-level' is: an integer value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-level'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-level={!"false"} />
    ·      ─────────────────────
@@ -154,7 +154,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-level' is: an integer value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-valuemax="yes" />
    ·      ───────────────────
@@ -162,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-valuemax' is: a number value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-valuemax="no" />
    ·      ──────────────────
@@ -170,7 +170,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-valuemax' is: a number value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-valuemax={`abc`} />
    ·      ─────────────────────
@@ -178,7 +178,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-valuemax' is: a number value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-valuemax={true} />
    ·      ────────────────────
@@ -186,7 +186,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-valuemax' is: a number value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-valuemax />
    ·      ─────────────
@@ -194,7 +194,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-valuemax' is: a number value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-valuemax={"false"} />
    ·      ───────────────────────
@@ -202,7 +202,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-valuemax' is: a number value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-valuemax'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-valuemax={!"false"} />
    ·      ────────────────────────
@@ -210,7 +210,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-valuemax' is: a number value.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-sort="" />
    ·      ────────────
@@ -218,7 +218,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-sort' is: one of the following tokens: ascending, descending, none, other.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-sort="descnding" />
    ·      ─────────────────────
@@ -226,7 +226,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-sort' is: one of the following tokens: ascending, descending, none, other.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-sort />
    ·      ─────────
@@ -234,7 +234,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-sort' is: one of the following tokens: ascending, descending, none, other.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-sort={true} />
    ·      ────────────────
@@ -242,7 +242,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-sort' is: one of the following tokens: ascending, descending, none, other.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-sort={"false"} />
    ·      ───────────────────
@@ -250,7 +250,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-sort' is: one of the following tokens: ascending, descending, none, other.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-sort'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-sort="ascending descending" />
    ·      ────────────────────────────────
@@ -258,7 +258,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-sort' is: one of the following tokens: ascending, descending, none, other.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-relevant="" />
    ·      ────────────────
@@ -266,7 +266,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-relevant' is: a space-separated list of the following tokens: additions, all, removals, text.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-relevant="foobar" />
    ·      ──────────────────────
@@ -274,7 +274,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-relevant' is: a space-separated list of the following tokens: additions, all, removals, text.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-relevant />
    ·      ─────────────
@@ -282,7 +282,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-relevant' is: a space-separated list of the following tokens: additions, all, removals, text.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-relevant={true} />
    ·      ────────────────────
@@ -290,7 +290,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-relevant' is: a space-separated list of the following tokens: additions, all, removals, text.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-relevant={"false"} />
    ·      ───────────────────────
@@ -298,7 +298,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-relevant' is: a space-separated list of the following tokens: additions, all, removals, text.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-relevant="additions removalss" />
    ·      ───────────────────────────────────
@@ -306,7 +306,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-relevant' is: a space-separated list of the following tokens: additions, all, removals, text.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-relevant'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-relevant="additions removalss " />
    ·      ────────────────────────────────────
@@ -314,7 +314,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-relevant' is: a space-separated list of the following tokens: additions, all, removals, text.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-labelledby'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-labelledby'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-labelledby={true} />
    ·      ──────────────────────
@@ -322,7 +322,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-labelledby' is: a space-separated list of element IDs.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-labelledby'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-labelledby'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-labelledby={false} />
    ·      ───────────────────────
@@ -330,7 +330,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-labelledby' is: a space-separated list of element IDs.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-labelledby'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-labelledby'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-labelledby={123} />
    ·      ─────────────────────
@@ -338,7 +338,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The valid value for 'aria-labelledby' is: a space-separated list of element IDs.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
 
-  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
+  ⚠ jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-hidden={"!!foo"} />
    ·      ─────────────────────

@@ -69,6 +69,7 @@ use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     state::TransformState,
+    utils::sync_function_symbol_flags,
 };
 
 pub struct AsyncToGenerator<'a> {
@@ -294,6 +295,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         func.generator = false;
         func.body = Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(statement)));
         func.scope_id.set(Some(wrapper_scope_id));
+        sync_function_symbol_flags(func, ctx);
     }
 
     /// Transforms [`Function`] whose type is [`FunctionType::FunctionExpression`] to a generator function
@@ -438,6 +440,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         {
             wrapper_function.r#async = false;
             wrapper_function.generator = false;
+            sync_function_symbol_flags(wrapper_function, ctx);
             let statements = ctx.ast.vec1(Self::create_apply_call_statement(&bound_ident, ctx));
             debug_assert!(wrapper_function.body.is_none());
             wrapper_function.body.replace(ctx.ast.alloc_function_body(
@@ -654,9 +657,9 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         params: ArenaBox<'a, FormalParameters<'a>>,
         body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> ArenaBox<'a, Function<'a>> {
-        ctx.ast.alloc_function_with_scope_id(
+        let function = ctx.ast.alloc_function_with_scope_id(
             SPAN,
             r#type,
             id,
@@ -669,7 +672,9 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             NONE,
             Some(body),
             scope_id,
-        )
+        );
+        sync_function_symbol_flags(&function, ctx);
+        function
     }
 
     /// Creates a [`Statement`] that calls the `apply` method on the bound identifier.
@@ -915,17 +920,71 @@ impl<'a, 'ctx> BindingMover<'a, 'ctx> {
     fn new(target_scope_id: ScopeId, ctx: &'ctx mut TraverseCtx<'a>) -> Self {
         Self { ctx, target_scope_id }
     }
+
+    fn move_scope_to_target(&mut self, scope_id: ScopeId) {
+        self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.target_scope_id));
+    }
 }
 
 impl<'a> Visit<'a> for BindingMover<'a, '_> {
+    fn visit_formal_parameter(&mut self, param: &FormalParameter<'a>) {
+        // Move the parameter binding itself, then only reparent direct scopes from the initializer.
+        // Initializer expressions can contain function/class bindings that must stay in their own
+        // scopes, so they are not binding-moved.
+        self.visit_binding_pattern(&param.pattern);
+        if let Some(initializer) = &param.initializer {
+            self.visit_expression(initializer);
+        }
+    }
+
+    fn visit_formal_parameter_rest(&mut self, param: &FormalParameterRest<'a>) {
+        // Rest parameters have no initializer, so the binding rest element is the only binding
+        // position that needs to be moved.
+        self.visit_binding_rest_element(&param.rest);
+    }
+
+    fn visit_assignment_pattern(&mut self, pattern: &AssignmentPattern<'a>) {
+        // Move only the left-hand binding. The right-hand default is an expression, so only direct
+        // scopes inside it are reparented; bindings declared inside those scopes stay there.
+        self.visit_binding_pattern(&pattern.left);
+        self.visit_expression(&pattern.right);
+    }
+
+    fn visit_binding_property(&mut self, property: &BindingProperty<'a>) {
+        // Computed keys are expressions, not binding positions. They can still contain direct
+        // scopes that moved with the parameter list.
+        if property.computed {
+            self.visit_property_key(&property.key);
+        }
+        self.visit_binding_pattern(&property.value);
+    }
+
+    #[inline]
+    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
+        self.move_scope_to_target(func.scope_id());
+    }
+
+    #[inline]
+    fn visit_arrow_function_expression(&mut self, func: &ArrowFunctionExpression<'a>) {
+        self.move_scope_to_target(func.scope_id());
+    }
+
+    #[inline]
+    fn visit_class(&mut self, class: &Class<'a>) {
+        // Decorators are evaluated outside the class scope and may contain direct scopes of their
+        // own, so visit them before stopping at the class scope boundary.
+        self.visit_decorators(&class.decorators);
+        self.move_scope_to_target(class.scope_id());
+    }
+
     /// Visits a binding identifier and moves it to the target scope.
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
-        let symbols = self.ctx.scoping();
         let symbol_id = ident.symbol_id();
-        let current_scope_id = symbols.symbol_scope_id(symbol_id);
-        let scopes = self.ctx.scoping_mut();
-        scopes.move_binding(current_scope_id, self.target_scope_id, ident.name);
-        let symbols = self.ctx.scoping_mut();
-        symbols.set_symbol_scope_id(symbol_id, self.target_scope_id);
+        let current_scope_id = self.ctx.scoping().symbol_scope_id(symbol_id);
+        self.ctx.scoping_mut().move_binding_by_symbol_id(
+            current_scope_id,
+            self.target_scope_id,
+            symbol_id,
+        );
     }
 }

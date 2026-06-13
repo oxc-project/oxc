@@ -7,10 +7,14 @@
     clippy::uninlined_format_args
 )]
 
-use oxc_allocator::arena::Arena;
+use std::{
+    alloc::{GlobalAlloc, Layout, System},
+    sync::atomic::{AtomicBool, Ordering},
+};
+
 use rand::RngExt as _;
-use std::alloc::{GlobalAlloc, Layout, System};
-use std::sync::atomic::{AtomicBool, Ordering};
+
+use oxc_allocator::arena::Arena;
 
 /// A custom allocator that wraps the system allocator, but lets us force
 /// allocation failures for testing.
@@ -109,7 +113,7 @@ fn main() {
                 // We can't query the remaining free space in the current chunk,
                 // so we have to create a new Arena for each test and fill it to
                 // the brink of a new allocation.
-                let arena = Arena::try_new().unwrap();
+                let arena = Arena::new();
 
                 // Arena preallocates space in the initial chunk, so we need to
                 // use up this block prior to the actual test
@@ -139,7 +143,7 @@ fn main() {
             const NUM_TESTS: usize = 5000;
             const MAX_BYTES_ALLOCATED: usize = 65536;
 
-            let mut arena = Arena::try_new().unwrap();
+            let mut arena = Arena::new();
             let mut bytes_allocated = arena.chunk_capacity();
 
             // Arena preallocates space in the initial chunk, so we need to
@@ -163,7 +167,7 @@ fn main() {
                 }
 
                 if bytes_allocated >= MAX_BYTES_ALLOCATED {
-                    arena = GLOBAL_ALLOCATOR.with_successful_allocs(|| Arena::try_new().unwrap());
+                    arena = GLOBAL_ALLOCATOR.with_successful_allocs(Arena::new);
                     bytes_allocated = arena.chunk_capacity();
                 }
             }

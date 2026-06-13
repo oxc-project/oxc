@@ -397,8 +397,9 @@ impl Oxlintrc {
 
         let plugins = match (self.plugins, other.plugins) {
             (Some(self_plugins), Some(other_plugins)) => Some(self_plugins | other_plugins),
-            (Some(self_plugins), None) => Some(self_plugins),
-            (None, other_plugins) => other_plugins,
+            (Some(self_plugins), None) => Some(self_plugins | LintPlugins::default()),
+            (None, Some(other_plugins)) => Some(other_plugins | LintPlugins::default()),
+            (None, None) => None,
         };
 
         let external_plugins = match (&self.external_plugins, &other.external_plugins) {

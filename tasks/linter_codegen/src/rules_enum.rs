@@ -112,9 +112,12 @@ fn generate_imports() -> TokenStream {
         use crate::{
             context::{ContextHost, LintContext},
             rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
+            timing::RuleTimingStat,
             utils::PossibleJestNode,
             AstNode
         };
+        #[cfg(feature = "ruledocs")]
+        use crate::rule::RuleInfo;
         use oxc_semantic::AstTypesBitset;
     }
 }
@@ -267,6 +270,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
+    let info_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(_) => #enum_name::INFO }
+        })
+        .collect();
+
     let types_info_arms: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
@@ -344,25 +355,53 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 }
             }
 
-            pub(crate) fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-                match self {
-                    #(#run_arms),*
+            pub(crate) fn run<'a, const TIMINGS: bool>(
+                &self,
+                node: &AstNode<'a>,
+                ctx: &LintContext<'a>,
+                timing_stat: Option<&mut RuleTimingStat>,
+            ) {
+                if TIMINGS {
+                    timing_stat.expect("missing rule timing stat").time(|| match self {
+                        #(#run_arms),*
+                    });
+                } else {
+                    match self {
+                        #(#run_arms),*
+                    }
                 }
             }
 
-            pub(crate) fn run_once(&self, ctx: &LintContext<'_>) {
-                match self {
-                    #(#run_once_arms),*
+            pub(crate) fn run_once<const TIMINGS: bool>(
+                &self,
+                ctx: &LintContext<'_>,
+                timing_stat: Option<&mut RuleTimingStat>,
+            ) {
+                if TIMINGS {
+                    timing_stat.expect("missing rule timing stat").time(|| match self {
+                        #(#run_once_arms),*
+                    });
+                } else {
+                    match self {
+                        #(#run_once_arms),*
+                    }
                 }
             }
 
-            pub(crate) fn run_on_jest_node<'a, 'c>(
+            pub(crate) fn run_on_jest_node<'a, 'c, const TIMINGS: bool>(
                 &self,
                 jest_node: &PossibleJestNode<'a, 'c>,
                 ctx: &'c LintContext<'a>,
+                timing_stat: Option<&mut RuleTimingStat>,
             ) {
-                match self {
-                    #(#run_on_jest_node_arms),*
+                if TIMINGS {
+                    timing_stat.expect("missing rule timing stat").time(|| match self {
+                        #(#run_on_jest_node_arms),*
+                    });
+                } else {
+                    match self {
+                        #(#run_on_jest_node_arms),*
+                    }
                 }
             }
 
@@ -391,6 +430,20 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 match self {
                     #(#has_config_arms),*
                 }
+            }
+
+            /// Additional information about this rule.
+            #[cfg(feature = "ruledocs")]
+            pub fn info(&self) -> RuleInfo {
+                match self {
+                    #(#info_arms),*
+                }
+            }
+
+            /// A short, one-line summary of what this rule does.
+            #[cfg(feature = "ruledocs")]
+            pub fn short_description(&self) -> &'static str {
+                self.info().short_description
             }
 
             pub fn types_info(&self) -> Option<&'static AstTypesBitset> {

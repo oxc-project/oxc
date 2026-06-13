@@ -278,7 +278,9 @@ unsafe fn walk_array_expression_element<'a, Tr: Traverse<'a>>(
         ArrayExpressionElement::SpreadElement(node) => {
             walk_spread_element(traverser, (&mut **node) as *mut _, ctx)
         }
-        ArrayExpressionElement::Elision(node) => walk_elision(traverser, node as *mut _, ctx),
+        ArrayExpressionElement::Elision(node) => {
+            walk_elision(traverser, (&mut **node) as *mut _, ctx)
+        }
         ArrayExpressionElement::BooleanLiteral(_)
         | ArrayExpressionElement::NullLiteral(_)
         | ArrayExpressionElement::NumericLiteral(_)
@@ -3516,7 +3518,7 @@ unsafe fn walk_jsx_expression<'a, Tr: Traverse<'a>>(
     traverser.enter_jsx_expression(&mut *node, ctx);
     match &mut *node {
         JSXExpression::EmptyExpression(node) => {
-            walk_jsx_empty_expression(traverser, node as *mut _, ctx)
+            walk_jsx_empty_expression(traverser, (&mut **node) as *mut _, ctx)
         }
         JSXExpression::BooleanLiteral(_)
         | JSXExpression::NullLiteral(_)
@@ -4996,7 +4998,9 @@ unsafe fn walk_ts_type_predicate_name<'a, Tr: Traverse<'a>>(
         TSTypePredicateName::Identifier(node) => {
             walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSTypePredicateName::This(node) => walk_ts_this_type(traverser, node as *mut _, ctx),
+        TSTypePredicateName::This(node) => {
+            walk_ts_this_type(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_ts_type_predicate_name(&mut *node, ctx);
 }

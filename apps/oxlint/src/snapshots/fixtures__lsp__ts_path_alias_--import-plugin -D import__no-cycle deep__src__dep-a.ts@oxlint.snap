@@ -6,7 +6,7 @@ arguments: --import-plugin -D import/no-cycle deep/src/dep-a.ts
 working directory: fixtures/lsp/ts_path_alias
 ----------
 
-  x eslint-plugin-import(no-cycle): Dependency cycle detected
+  x import(no-cycle): Dependency cycle detected
    ,-[deep/src/dep-a.ts:2:19]
  1 | // should report cycle detected
  2 | import { b } from '@/dep-b';

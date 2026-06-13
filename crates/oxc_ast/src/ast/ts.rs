@@ -1208,7 +1208,7 @@ pub struct TSTypePredicate<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub enum TSTypePredicateName<'a> {
     Identifier(Box<'a, IdentifierName<'a>>) = 0,
-    This(TSThisType) = 1,
+    This(Box<'a, TSThisType>) = 1,
 }
 
 /// TypeScript Module and Namespace Declarations

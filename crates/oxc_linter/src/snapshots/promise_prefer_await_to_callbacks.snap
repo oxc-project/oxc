@@ -2,98 +2,98 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:7]
  1 │ heart(function(err) {})
    ·       ────────────────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:7]
  1 │ heart(err => {})
    ·       ─────────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:15]
  1 │ heart("ball", function(err) {})
    ·               ────────────────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:22]
  1 │ function getData(id, callback) {}
    ·                      ────────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:18]
  1 │ const getData = (cb) => {}
    ·                  ──
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:22]
  1 │ var x = function (x, cb) {}
    ·                      ──
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:1]
  1 │ cb()
    · ────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:1]
  1 │ callback()
    · ──────────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:7]
  1 │ heart(error => {})
    ·       ───────────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:27]
  1 │ async.map(files, fs.stat, function(err, results) { if (err) throw err; });
    ·                           ──────────────────────────────────────────────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:23]
  1 │ _.map(files, fs.stat, function(err, results) { if (err) throw err; });
    ·                       ──────────────────────────────────────────────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:21]
  1 │ map(files, fs.stat, function(err, results) { if (err) throw err; });
    ·                     ──────────────────────────────────────────────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:5]
  1 │ map(function(err, results) { if (err) throw err; });
    ·     ──────────────────────────────────────────────
    ╰────
   help: Refactor to use an `async` function with `await` instead of passing callbacks for cleaner error handling and control flow.
 
-  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+  ⚠ promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:19]
  1 │ customMap(errors, (err) => err.message)
    ·                   ────────────────────

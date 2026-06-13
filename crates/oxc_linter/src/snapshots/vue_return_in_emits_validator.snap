@@ -1,0 +1,114 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.
+   ╭─[return_in_emits_validator.tsx:5:25]
+ 4 │                       emits: {
+ 5 │ ╭─▶                     foo () {
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.
+   ╭─[return_in_emits_validator.tsx:5:26]
+ 4 │                       emits: {
+ 5 │ ╭─▶                     foo: function () {
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.
+   ╭─[return_in_emits_validator.tsx:5:26]
+ 4 │                       emits: {
+ 5 │ ╭─▶                     foo: () => {
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a true value in "foo" emits validator.
+   ╭─[return_in_emits_validator.tsx:5:26]
+ 4 │                   emits: {
+ 5 │                     foo: () => false
+   ·                          ───────────
+ 6 │                   }
+   ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.
+    ╭─[return_in_emits_validator.tsx:5:26]
+  4 │                       emits: {
+  5 │ ╭─▶                     foo: function () {
+  6 │ │                         function bar () {
+  7 │ │                           return this.baz * 2
+  8 │ │                         }
+  9 │ │                         bar()
+ 10 │ ╰─▶                     }
+ 11 │                       }
+    ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.
+   ╭─[return_in_emits_validator.tsx:5:25]
+ 4 │                       emits: {
+ 5 │ ╭─▶                     foo () {
+ 6 │ ╰─▶                     },
+ 7 │                         bar () {
+   ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "bar" emits validator.
+    ╭─[return_in_emits_validator.tsx:7:25]
+  6 │                         },
+  7 │ ╭─▶                     bar () {
+  8 │ │                         return
+  9 │ ╰─▶                     }
+ 10 │                       }
+    ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.
+   ╭─[return_in_emits_validator.tsx:5:25]
+ 4 │                       emits: {
+ 5 │ ╭─▶                     foo () {
+ 6 │ │                         return
+ 7 │ ╰─▶                     }
+ 8 │                       }
+   ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a true value in "foo" emits validator.
+    ╭─[return_in_emits_validator.tsx:5:26]
+  4 │                       emits: {
+  5 │ ╭─▶                     foo: function () {
+  6 │ │                         if (a) {
+  7 │ │                           return false
+  8 │ │                         } else if (b) {
+  9 │ │                           return 0
+ 10 │ │                         } else if (c) {
+ 11 │ │                           return null
+ 12 │ │                         } else if (d) {
+ 13 │ │                           return ''
+ 14 │ │                         } else if (e) {
+ 15 │ │                           return undefined
+ 16 │ │                         } else if (f) {
+ 17 │ │                           return NaN
+ 18 │ │                         } else if (g) {
+ 19 │ │                           return 0n
+ 20 │ │                         } else if (h) {
+ 21 │ │                           return 0x0n
+ 22 │ │                         }
+ 23 │ ╰─▶                     }
+ 24 │                       }
+    ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.
+   ╭─[return_in_emits_validator.tsx:4:23]
+ 3 │                     defineEmits({
+ 4 │ ╭─▶                   foo () {
+ 5 │ ╰─▶                   }
+ 6 │                     })
+   ╰────
+
+  ⚠ vue(return-in-emits-validator): Expected to return a boolean value in "foo" emits validator.
+   ╭─[return_in_emits_validator.tsx:5:25]
+ 4 │                       emits: {
+ 5 │ ╭─▶                     foo () {
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────

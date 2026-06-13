@@ -6,14 +6,14 @@ arguments: overrides
 working directory: fixtures/cli/extends_config
 ----------
 
-  x typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
    ,-[overrides/test.ts:1:10]
  1 | const x: any = 3;
    :          ^^^
    `----
   help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
 
-  x typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
    ,-[overrides/test.tsx:1:23]
  1 | function component(): any {
    :                       ^^^
@@ -21,7 +21,7 @@ working directory: fixtures/cli/extends_config
    `----
   help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
 
-  x eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
+  x jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ,-[overrides/test.tsx:2:10]
  1 | function component(): any {
  2 |   return <a>click here</a>;
@@ -30,7 +30,7 @@ working directory: fixtures/cli/extends_config
    `----
   help: Avoid using ambiguous text like "click here", replace it with more descriptive text that provides context.
 
-  ! eslint-plugin-jsx-a11y(anchor-is-valid): Missing `href` attribute for the `a` element.
+  ! jsx-a11y(anchor-is-valid): Missing `href` attribute for the `a` element.
    ,-[overrides/test.tsx:2:11]
  1 | function component(): any {
  2 |   return <a>click here</a>;

@@ -63,8 +63,9 @@ declare_oxc_lint!(
     NoUnsafeEnumComparison(tsgolint),
     typescript,
     suspicious,
-    pending,
+    suggestion,
     version = "1.12.0",
+    short_description = "This rule disallows comparing an enum value with a non-enum value.",
 );
 
 impl Rule for NoUnsafeEnumComparison {}

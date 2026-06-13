@@ -1,6 +1,6 @@
 #![expect(rustdoc::private_intra_doc_links)] // useful for intellisense
 
-use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
+use std::{borrow::Cow, ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
 use javascript_globals::{GLOBALS, GLOBALS_BUILTIN, GLOBALS_ES2026};
 
@@ -17,12 +17,12 @@ use crate::{
     WEBSITE_BASE_RULES_URL,
     config::GlobalValue,
     disable_directives::DisableDirectives,
-    fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
+    fixer::{Fix, FixKind, Message, MessageRule, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
 };
 
 mod host;
-pub use host::{ContextHost, ContextSubHost};
+pub use host::{ContextHost, ContextSubHost, ContextSubHostOptions};
 
 /// Contains all of the state and context specific to this lint rule.
 ///
@@ -35,11 +35,11 @@ pub struct LintContext<'a> {
     parent: Rc<ContextHost<'a>>,
     /// Name of the plugin this rule belongs to. Example: `eslint`, `unicorn`, `react`
     current_plugin_name: &'static str,
-    /// Prefixed version of the plugin name. Examples:
-    /// - `eslint-plugin-react`, for `react` plugin,
-    /// - `typescript-eslint`, for `typescript` plugin,
-    /// - `eslint-plugin-import`, for `import` plugin.
-    current_plugin_prefix: &'static str,
+    /// Display name of the plugin shown in diagnostic output. Examples:
+    /// - `react`, for `react` plugin,
+    /// - `typescript`, for `typescript` plugin,
+    /// - `jsx-a11y`, for `jsx_a11y` plugin.
+    current_plugin_display_name: &'static str,
     /// Kebab-cased name of the current rule being linted. Example: `no-unused-vars`, `no-undef`.
     current_rule_name: &'static str,
     /// Capabilities of the current rule to fix issues. Indicates whether:
@@ -74,7 +74,7 @@ impl<'a> LintContext<'a> {
     /// Set the plugin name for the current rule.
     pub fn with_plugin_name(mut self, plugin: &'static str) -> Self {
         self.current_plugin_name = plugin;
-        self.current_plugin_prefix = plugin_name_to_prefix(plugin);
+        self.current_plugin_display_name = plugin_display_name(plugin);
         self
     }
 
@@ -306,7 +306,7 @@ impl<'a> LintContext<'a> {
         }
         message.error = message
             .error
-            .with_error_code(self.current_plugin_prefix, self.current_rule_name)
+            .with_error_code(self.current_plugin_display_name, self.current_rule_name)
             .with_url(format!(
                 "{}/{}/{}.html",
                 WEBSITE_BASE_RULES_URL, self.current_plugin_name, self.current_rule_name
@@ -314,6 +314,10 @@ impl<'a> LintContext<'a> {
         if message.error.severity != self.severity {
             message.error = message.error.with_severity(self.severity);
         }
+        message.rule = Some(MessageRule {
+            plugin_name: Cow::Borrowed(self.current_plugin_name),
+            rule_name: Cow::Borrowed(self.current_rule_name),
+        });
 
         self.parent.push_diagnostic(message);
     }
@@ -581,29 +585,26 @@ impl<'a> LintContext<'a> {
     }
 }
 
-/// Gets the prefixed plugin name, given the short plugin name.
+/// Gets the canonical display name for a plugin, given its internal short plugin name.
+///
+/// This is what is shown to users in diagnostic output (e.g. `unicorn(prefer-date-now)`).
+/// Most plugin names are returned unchanged; the exceptions are plugins whose internal
+/// name differs from the canonical name (`jsx_a11y` → `jsx-a11y`, `react_perf` →
+/// `react-perf`, `nextjs` → `next`).
 ///
 /// Example:
 ///
-/// ```text
-/// assert_eq!(plugin_name_to_prefix("react"), "eslint-plugin-react");
+/// ```ignore
+/// assert_eq!(plugin_display_name("react"), "react");
+/// assert_eq!(plugin_display_name("jsx_a11y"), "jsx-a11y");
+/// assert_eq!(plugin_display_name("nextjs"), "next");
 /// ```
 #[inline]
-fn plugin_name_to_prefix(plugin_name: &'static str) -> &'static str {
+fn plugin_display_name(plugin_name: &'static str) -> &'static str {
     match plugin_name {
-        "import" => "eslint-plugin-import",
-        "jest" => "eslint-plugin-jest",
-        "jsdoc" => "eslint-plugin-jsdoc",
-        "jsx_a11y" => "eslint-plugin-jsx-a11y",
-        "nextjs" => "eslint-plugin-next",
-        "promise" => "eslint-plugin-promise",
-        "react_perf" => "eslint-plugin-react-perf",
-        "react" => "eslint-plugin-react",
-        "typescript" => "typescript-eslint",
-        "unicorn" => "eslint-plugin-unicorn",
-        "vitest" => "eslint-plugin-vitest",
-        "node" => "eslint-plugin-node",
-        "vue" => "eslint-plugin-vue",
+        "jsx_a11y" => "jsx-a11y",
+        "react_perf" => "react-perf",
+        "nextjs" => "next",
         _ => plugin_name,
     }
 }

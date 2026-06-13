@@ -745,10 +745,7 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
             use nonmax::NonMaxU32;
 
             ///@@line_break
-            use crate::{
-                comment_node::*, module_record::*, node::*, number::*, operator::*, reference::*,
-                scope::*, symbol::*,
-            };
+            use crate::{module_record::*, node::*, number::*, operator::*, reference::*, scope::*, symbol::*};
         },
         "napi/parser" => quote! {
             use crate::raw_transfer_types::*;
@@ -819,7 +816,9 @@ fn generate_struct_details(schema: &Schema) -> Output {
             quote!(None)
         };
 
-        let details = quote!( StructDetails { field_order: #field_order } );
+        let is_node = struct_def.kind.has_kind;
+
+        let details = quote!( StructDetails { field_order: #field_order, is_node: #is_node } );
 
         map.entry(struct_def.name(), details.to_string());
     }

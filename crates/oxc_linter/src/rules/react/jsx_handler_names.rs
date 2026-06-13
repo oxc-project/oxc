@@ -106,6 +106,7 @@ declare_oxc_lint!(
     style,
     config = JsxHandlerNamesConfig,
     version = "1.13.0",
+    short_description = "Ensures that any component or prop methods used to handle events are correctly prefixed.",
 );
 
 fn build_event_handler_regex(handler_prefix: &str, handler_prop_prefix: &str) -> Option<Regex> {

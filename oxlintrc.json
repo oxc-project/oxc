@@ -36,7 +36,7 @@
     {
       "files": ["tasks/e2e/test/*.test.ts"],
       "rules": {
-        "jest/valid-describe-callback": ["off"],
+        "vitest/valid-describe-callback": ["off"],
         "vitest/valid-title": ["off"]
       }
     },
@@ -56,6 +56,15 @@
         "vitest/expect-expect": "error",
         "vitest/no-standalone-expect": "error",
         "vitest/no-conditional-expect": "error"
+      }
+    },
+    {
+      "files": ["tasks/e2e/nestjs/test/*.ts"],
+      "rules": {
+        "vitest/expect-expect": [
+          "error",
+          { "assertFunctionNames": ["expect", "request.**.expect"] }
+        ]
       }
     },
     {

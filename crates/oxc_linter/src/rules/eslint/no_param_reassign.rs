@@ -24,7 +24,7 @@ fn assignment_to_param_property_diagnostic(name: &str, span: Span) -> OxcDiagnos
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoParamReassignConfig {
     /// When true, also check for modifications to properties of parameters.
     props: bool,
@@ -77,6 +77,7 @@ declare_oxc_lint!(
     restriction,
     config = NoParamReassignConfig,
     version = "1.20.0",
+    short_description = "Disallow reassigning function parameters or, optionally, their properties.",
 );
 
 impl Rule for NoParamReassign {
@@ -268,6 +269,19 @@ fn test() {
             Some(
                 serde_json::json!([ { "props": true, "ignorePropertyModificationsForRegex": ["^(foo|bar)$"], "ignorePropertyModificationsFor": ["baz"], }, ]),
             ),
+        ),
+        (
+            "function foo(key, value) { this[key] = value; }",
+            Some(serde_json::json!([{ "props": true }])),
+        ),
+        (
+            "function foo(key, value) { this[key] += value; }",
+            Some(serde_json::json!([{ "props": true }])),
+        ),
+        ("function foo(key) { delete this[key]; }", Some(serde_json::json!([{ "props": true }]))),
+        (
+            "function foo<T>(this: Record<PropertyKey, T>, key: PropertyKey, value: T) { this[key] = value; }",
+            Some(serde_json::json!([{ "props": true }])),
         ),
     ];
 

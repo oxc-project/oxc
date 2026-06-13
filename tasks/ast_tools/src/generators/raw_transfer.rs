@@ -42,6 +42,10 @@ const STR_LEN_OFFSET: u32 = 8;
 /// Bytes reserved for `malloc`'s metadata
 const MALLOC_RESERVED_SIZE: u32 = 16;
 
+/// Minimum alignment of arena (`Arena::MIN_ALIGN`).
+/// Code in `oxc_allocator` crate checks that this is correct.
+const ARENA_CURSOR_MIN_ALIGN: u32 = 1;
+
 /// Size of `ChunkFooter` struct.
 /// Code in `oxc_allocator` crate checks that this is correct.
 const CHUNK_FOOTER_SIZE: u32 = 48;
@@ -145,7 +149,7 @@ fn generate_deserializers(
         /* END_IF */
 
         let uint8, int32, float64, sourceText, sourceTextLatin,
-            sourceStartPos = 0, sourceEndPos = 0, firstNonAsciiPos = 0;
+            sourceStartPos = 0, firstNonAsciiPos = 0;
 
         let parent = null;
 
@@ -174,25 +178,24 @@ fn generate_deserializers(
         /* END_IF */
 
         /* IF !LINTER */
-        export function deserialize(buffer, sourceText, sourceByteLen) {{
-            sourceEndPos = sourceByteLen;
-            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
+        export function deserialize(buffer, sourceText, sourceStartPos, sourceByteLen) {{
+            return deserializeWith(buffer, sourceText, sourceStartPos, sourceByteLen, deserializeRawTransferData);
         }}
         /* END_IF */
 
         /* IF LINTER */
-        export function deserializeProgramOnly(buffer, sourceText, sourceStartPosInput, sourceByteLen) {{
-            sourceStartPos = sourceStartPosInput;
-            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
+        export function deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen) {{
+            return deserializeWith(buffer, sourceText, sourceStartPos, sourceByteLen, deserializeProgram);
         }}
         /* END_IF */
 
-        function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {{
+        function deserializeWith(buffer, sourceTextInput, sourceStartPosInput, sourceByteLen, deserialize) {{
             uint8 = buffer;
             int32 = buffer.int32;
             float64 = buffer.float64;
 
             sourceText = sourceTextInput;
+            sourceStartPos = sourceStartPosInput;
 
             const sourceIsAscii = sourceText.length === sourceByteLen;
 
@@ -200,29 +203,16 @@ fn generate_deserializers(
             // `sourceText.substr()` can be used for strings which are within source text and ending before
             // this position, since byte offsets equal char offsets in the all-ASCII prefix.
             // Also decode source text as Latin-1 (or reuse `sourceText` if it's all ASCII).
-            if (LINTER) {{
-                if (sourceIsAscii === true) {{
-                    firstNonAsciiPos = sourceStartPos + sourceByteLen;
-                    sourceTextLatin = sourceText;
-                }} else {{
-                    let i = sourceStartPos;
-                    const sourceEndPos = sourceStartPos + sourceByteLen;
-                    for (; i < sourceEndPos && uint8[i] < 128; i++);
-                    firstNonAsciiPos = i;
-
-                    sourceTextLatin = latin1Slice.call(uint8, sourceStartPos, sourceEndPos);
-                }}
+            if (sourceIsAscii === true) {{
+                firstNonAsciiPos = sourceStartPos + sourceByteLen;
+                sourceTextLatin = sourceText;
             }} else {{
-                if (sourceIsAscii === true) {{
-                    firstNonAsciiPos = sourceByteLen;
-                    sourceTextLatin = sourceText;
-                }} else {{
-                    let i = 0;
-                    for (; i < sourceByteLen && uint8[i] < 128; i++);
-                    firstNonAsciiPos = i;
+                let i = sourceStartPos;
+                const sourceEndPos = sourceStartPos + sourceByteLen;
+                for (; i < sourceEndPos && uint8[i] < 128; i++);
+                firstNonAsciiPos = i;
 
-                    sourceTextLatin = latin1Slice.call(uint8, 0, sourceByteLen);
-                }}
+                sourceTextLatin = latin1Slice.call(uint8, sourceStartPos, sourceEndPos);
             }}
 
             const data = deserialize(int32[{data_pointer_pos_32}]);
@@ -961,8 +951,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
     ");
 }
 
-// In parser, source text is always at the start of the buffer, and all other strings are after it.
-// In linter, source text is towards the end of the buffer, and all other strings are before it.
+// Source text is towards the end of the buffer, and all other strings are before it
 static STR_DESERIALIZER_BODY: &str = "
     const pos32 = pos >> 2,
         len = int32[pos32 + 2];
@@ -973,11 +962,6 @@ static STR_DESERIALIZER_BODY: &str = "
 
     const end = pos + len;
 
-    /* IF !LINTER */
-    if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
-    /* END_IF */
-
-    /* IF LINTER */
     // Note: Tried reducing this check to a single branch by making the comparison the equivalent of this Rust:
     // `end.wrapping_sub(sourceStartPos) <= firstNonAsciiOffset`.
     //
@@ -998,16 +982,11 @@ static STR_DESERIALIZER_BODY: &str = "
     if (isInSourceRegion && end <= firstNonAsciiPos) {
         return sourceTextLatin.substr(pos - sourceStartPos, len);
     }
-    /* END_IF */
 
     // Use `utf8Slice` for strings longer than 64 bytes
     if (len > STRING_DECODE_CROSSOVER) return utf8Slice.call(uint8, pos, end);
 
     // If string is in source region, use slice of `sourceTextLatin` if all ASCII
-    /* IF !LINTER */
-    const isInSourceRegion = pos < sourceEndPos;
-    /* END_IF */
-
     if (isInSourceRegion) {
         // Check if all bytes are ASCII, use `utf8Slice` if not
         for (let i = pos; i < end; i++) {
@@ -1015,7 +994,7 @@ static STR_DESERIALIZER_BODY: &str = "
         }
 
         // String is all ASCII, so slice from `sourceTextLatin`
-        return sourceTextLatin.substr(LINTER ? pos - sourceStartPos : pos, len);
+        return sourceTextLatin.substr(pos - sourceStartPos, len);
     }
 
     // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
@@ -1488,8 +1467,10 @@ struct Constants {
     deserialized_flag_offset: u32,
     /// Discriminant value for `CommentKind::Line`
     comment_line_kind: u8,
-    /// Size of `RawTransferData` in bytes
+    /// Size of `RawTransferMetadata` in bytes
     raw_metadata_size: u32,
+    /// Alignment of `RawTransferMetadata`
+    raw_metadata_align: u32,
 }
 
 /// Generate constants file.
@@ -1513,6 +1494,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         deserialized_flag_offset,
         comment_line_kind,
         raw_metadata_size,
+        raw_metadata_align,
     } = consts;
 
     let data_pointer_pos_32 = data_pointer_pos / 4;
@@ -1521,18 +1503,28 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 
     #[rustfmt::skip]
     let js_output = format!("
+        // See `crates/oxc_allocator/src/pool/fixed_size.rs` for a diagram showing
+        // how the constituent parts of the arena fit together.
+
         /**
-         * Total size of the transfer buffer in bytes (block size minus allocator metadata).
+         * Total size of the allocator block (including metadata and allocator `ChunkFooter`).
+         */
+        export const BLOCK_SIZE = {BLOCK_SIZE};
+
+        /**
+         * Required alignment of the allocator block (4 GiB).
+         */
+        export const BLOCK_ALIGN = {BLOCK_ALIGN};
+
+        /**
+         * Total size of the transfer buffer used on JS side, in bytes
+         * (`BLOCK_SIZE` minus `FixedSizeAllocatorMetadata` and `ChunkFooter`).
          */
         export const BUFFER_SIZE = {buffer_size};
 
         /**
-         * Required alignment of the transfer buffer (4 GiB).
-         */
-        export const BUFFER_ALIGN = {BLOCK_ALIGN};
-
-        /**
-         * Size of the active data area in bytes (buffer size minus raw metadata and chunk footer).
+         * Size of the active data region in bytes - the region where source text and AST live
+         * (`BUFFER_SIZE` minus `RawTransferMetadata`).
          */
         export const ACTIVE_SIZE = {active_size};
 
@@ -1618,18 +1610,58 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
     let block_size = number_lit(BLOCK_SIZE);
     let block_align = number_lit(BLOCK_ALIGN);
     let buffer_size = number_lit(buffer_size);
+    let active_size = number_lit(active_size);
     let raw_metadata_size = number_lit(raw_metadata_size);
+    let raw_metadata_align = number_lit(raw_metadata_align);
     let chunk_footer_size = number_lit(CHUNK_FOOTER_SIZE);
+    let arena_cursor_min_align = number_lit(ARENA_CURSOR_MIN_ALIGN);
+
     let rust_output = quote! {
+        //! Constants for raw transfer / fixed-sized allocators.
+        //!
+        //! See `crates/oxc_allocator/src/pool/fixed_size.rs` for a diagram showing
+        //! how the constituent parts of the arena fit together.
+        //!
+        //! This file must be feature-gated so it is not loaded on 32-bit platforms.
+        //! It will cause a compilation error on 32-bit platforms, as some values are too large for 32-bit `usize`.
+
+        //!@@line_break
         #![expect(clippy::unreadable_literal)]
         #![allow(dead_code)]
 
         ///@@line_break
+        /// Total size of the allocator block (including metadata and allocator `ChunkFooter`).
         pub const BLOCK_SIZE: usize = #block_size;
+
+        ///@@line_break
+        /// Required alignment of the allocator block (4 GiB).
         pub const BLOCK_ALIGN: usize = #block_align;
+
+        ///@@line_break
+        /// Total size of the transfer buffer used on JS side, in bytes
+        /// (`BLOCK_SIZE` minus `FixedSizeAllocatorMetadata` and `ChunkFooter`).
         pub const BUFFER_SIZE: usize = #buffer_size;
+
+        ///@@line_break
+        /// Size of the active data region in bytes - the region where source text and AST live
+        /// (`BUFFER_SIZE` minus `RawTransferMetadata`).
+        pub const ACTIVE_SIZE: usize = #active_size;
+
+        ///@@line_break
+        /// Size of `RawTransferMetadata` in bytes.
         pub const RAW_METADATA_SIZE: usize = #raw_metadata_size;
+
+        ///@@line_break
+        /// Alignment of `RawTransferMetadata`.
+        pub const RAW_METADATA_ALIGN: usize = #raw_metadata_align;
+
+        ///@@line_break
+        /// Size of `ChunkFooter` struct in bytes.
         pub const CHUNK_FOOTER_SIZE: usize = #chunk_footer_size;
+
+        ///@@line_break
+        /// Minimum alignment requirement for `Arena`'s cursor pointer (`ARENA::MIN_ALIGN`).
+        pub const CURSOR_MIN_ALIGN: usize = #arena_cursor_min_align;
     };
 
     (js_output, rust_output)
@@ -1672,18 +1704,23 @@ fn get_constants(schema: &Schema) -> Constants {
     let tokens_len_field = tokens_len_field.unwrap();
 
     let raw_metadata_size = raw_metadata_struct.layout_64().size;
+    let raw_metadata_align = raw_metadata_struct.layout_64().align;
 
-    // Round up to multiple of `ALLOCATOR_CHUNK_END_ALIGN`
     let fixed_metadata_struct =
         schema.type_by_name("FixedSizeAllocatorMetadata").as_struct().unwrap();
-    let fixed_metadata_size =
-        fixed_metadata_struct.layout_64().size.next_multiple_of(ALLOCATOR_CHUNK_END_ALIGN);
+    let fixed_metadata_size = fixed_metadata_struct.layout_64().size;
 
-    let buffer_size = BLOCK_SIZE - fixed_metadata_size;
-    let active_size = buffer_size - raw_metadata_size - CHUNK_FOOTER_SIZE;
+    // Buffer on JS side excludes `FixedSizeAllocatorMetadata` and `ChunkFooter`, but includes `RawTransferMetadata`.
+    // In the linter, `FixedSizeAllocatorMetadata` sits between `RawTransferMetadata` and `ChunkFooter`
+    // (`fixed_metadata_size` bytes). In `napi/parser`, there is no `FixedSizeAllocatorMetadata`, but the same slot
+    // is reserved (left unused) so layout is the same in both cases, with `RawTransferMetadata` in the same position.
+    let buffer_size = BLOCK_SIZE - fixed_metadata_size - CHUNK_FOOTER_SIZE;
+    let active_size = buffer_size - raw_metadata_size;
 
-    // Get offsets of data within buffer
-    let raw_metadata_pos = buffer_size - raw_metadata_size;
+    // Get offsets of data within buffer.
+    // `RawTransferMetadata` sits immediately before `FixedSizeAllocatorMetadata`, which sits immediately before
+    // `ChunkFooter` (which lives in the last `CHUNK_FOOTER_SIZE` bytes of the buffer).
+    let raw_metadata_pos = active_size;
     let data_pointer_pos = raw_metadata_pos + data_offset_field.offset_64();
     let is_ts_pos = raw_metadata_pos + is_ts_field.offset_64();
     let is_jsx_pos = raw_metadata_pos + is_jsx_field.offset_64();
@@ -1735,6 +1772,7 @@ fn get_constants(schema: &Schema) -> Constants {
         deserialized_flag_offset,
         comment_line_kind,
         raw_metadata_size,
+        raw_metadata_align,
     }
 }
 

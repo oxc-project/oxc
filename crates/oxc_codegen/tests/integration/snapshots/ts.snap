@@ -99,7 +99,7 @@ export { Foo, type Bar } from 'foo';
 ########## 15
 type A<T> = { [K in keyof T as K extends string ? B<K> : K ]: T[K] }
 ----------
-type A<T> = { [K in keyof T as K extends string ? B<K> : K] : T[K] };
+type A<T> = { [K in keyof T as K extends string ? B<K> : K]: T[K] };
 
 ########## 16
 class A {readonly type = 'frame'}
@@ -142,17 +142,17 @@ class A {
 }
 
 ########## 22
-abstract class A {private abstract static m()}
+abstract class A {protected abstract m()}
 ----------
 abstract class A {
-	private abstract static m();
+	protected abstract m();
 }
 
 ########## 23
-abstract class A {private abstract static readonly prop: string}
+class A {private static readonly prop: string}
 ----------
-abstract class A {
-	private abstract static readonly prop: string;
+class A {
+	private static readonly prop: string;
 }
 
 ########## 24

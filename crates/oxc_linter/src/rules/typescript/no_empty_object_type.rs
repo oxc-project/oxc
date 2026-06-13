@@ -28,7 +28,7 @@ pub struct NoEmptyObjectType(Box<NoEmptyObjectTypeConfig>);
 
 #[expect(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEmptyObjectTypeConfig {
     /// Whether to allow empty interfaces.
     allow_interfaces: AllowInterfaces,

@@ -39,7 +39,7 @@ pub struct NoMultipleResolved;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule warns of paths that resolve multiple times in executor functions that Promise constructors.
+    /// This rule warns of paths that resolve multiple times in executor functions of Promise constructors.
     ///
     /// ### Why is this bad?
     ///
@@ -80,6 +80,7 @@ declare_oxc_lint!(
     promise,
     suspicious,
     version = "1.19.0",
+    short_description = "This rule warns of paths that resolve multiple times in executor functions of Promise constructors.",
 );
 
 impl Rule for NoMultipleResolved {
@@ -470,14 +471,13 @@ impl<'a, 'b> MultipleResolvedChecker<'a, 'b> {
         set_depth_first_search::<_, _, _, Control<()>, _>(graph, Some(start_block_id), |event| {
             match event {
                 DfsEvent::TreeEdge(a, b) => {
-                    let edges = graph.edges_connecting(a, b).collect::<Vec<_>>();
-                    for edge in &edges {
+                    for edge in graph.edges_connecting(a, b) {
                         if matches!(edge.weight(), EdgeType::NewFunction) {
                             self.check(edge.target());
                             return Control::Prune;
                         }
                     }
-                    if edges.iter().any(|edge| {
+                    if graph.edges_connecting(a, b).any(|edge| {
                         matches!(edge.weight(), EdgeType::Backedge)
                             && graph
                                 .edges_directed(edge.target(), Direction::Outgoing)

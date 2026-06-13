@@ -49,6 +49,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     version = "0.4.4",
+    short_description = "Requires that each `@param` tag has a type value (within curly brackets).",
 );
 
 impl Rule for RequireParamType {
@@ -237,7 +238,9 @@ fn test() {
 
 			          }
 			      ",
-            Some(serde_json::json!([ { "setDefaultDestructuredRootType": true } ])),
+            // TODO: support configurations for this rule
+            // Some(serde_json::json!([ { "setDefaultDestructuredRootType": true } ])),
+            None,
             None,
         ),
         (
@@ -251,7 +254,9 @@ fn test() {
 
 			          }
 			      ",
-            Some(serde_json::json!([ { "setDefaultDestructuredRootType": false } ])),
+            // TODO: support configurations for this rule
+            // Some(serde_json::json!([ { "setDefaultDestructuredRootType": false } ])),
+            None,
             None,
         ),
     ];

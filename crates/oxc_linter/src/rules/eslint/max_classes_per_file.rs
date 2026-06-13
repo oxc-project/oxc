@@ -11,7 +11,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn max_classes_per_file_diagnostic(total: usize, max: usize, span: Span) -> OxcDiagnostic {
+fn max_classes_per_file_diagnostic(total: u32, max: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("File has too many classes ({total}). Maximum allowed is {max}"))
         .with_help("Reduce the number of classes in this file")
         .with_label(span)
@@ -21,12 +21,24 @@ fn max_classes_per_file_diagnostic(total: usize, max: usize, span: Span) -> OxcD
 pub struct MaxClassesPerFile(Box<MaxClassesPerFileConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxClassesPerFileConfig {
     /// The maximum number of classes allowed per file.
-    pub max: usize,
+    pub max: u32,
     /// Whether to ignore class expressions when counting classes.
     pub ignore_expressions: bool,
+}
+
+#[cfg(feature = "ruledocs")]
+impl MaxClassesPerFile {
+    #[expect(clippy::unnecessary_wraps)]
+    pub fn config_schema(
+        r#gen: &mut schemars::r#gen::SchemaGenerator,
+    ) -> Option<schemars::schema::Schema> {
+        let mut schema = r#gen.subschema_for::<MaxClassesPerFileConfig>();
+        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
+        Some(schema)
+    }
 }
 
 impl std::ops::Deref for MaxClassesPerFile {
@@ -74,6 +86,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxClassesPerFileConfig,
     version = "0.3.4",
+    short_description = "Enforce a maximum number of classes per file.",
 );
 
 impl Rule for MaxClassesPerFile {
@@ -83,7 +96,7 @@ impl Rule for MaxClassesPerFile {
             .get(0)
             .and_then(serde_json::Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok())
+            .and_then(|v| u32::try_from(v).ok())
         {
             Ok(Self(Box::new(MaxClassesPerFileConfig { max, ignore_expressions: false })))
         } else {
@@ -93,15 +106,16 @@ impl Rule for MaxClassesPerFile {
         }
     }
 
+    #[expect(clippy::cast_possible_truncation)] // the count of classes can't be over u32::MAX, because the source code is already limited by u32::MAX.
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut class_count = ctx.classes().declarations.len();
+        let mut class_count = ctx.classes().declarations.len() as u32;
 
         if self.ignore_expressions {
             let class_expressions = ctx
                 .classes()
                 .iter_enumerated()
                 .filter(|(_class_id, node_id)| !ctx.nodes().kind(**node_id).is_declaration())
-                .count();
+                .count() as u32;
             class_count -= class_expressions;
         }
 
@@ -109,7 +123,7 @@ impl Rule for MaxClassesPerFile {
             return;
         }
 
-        let node_id = ctx.classes().get_node_id(ClassId::from(self.max));
+        let node_id = ctx.classes().get_node_id(ClassId::new(self.max as usize));
         let span = if let AstKind::Class(class) = ctx.nodes().kind(node_id) {
             class.span
         } else {

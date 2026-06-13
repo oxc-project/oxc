@@ -78,6 +78,7 @@ declare_oxc_lint!(
     pedantic,
     config = NoInnerDeclarations,
     version = "0.0.5",
+    short_description = "Disallow variable or function declarations in nested blocks.",
 );
 
 impl Rule for NoInnerDeclarations {
@@ -204,7 +205,6 @@ fn test() {
         ("function decl(arg) { var fn; if (arg) { fn = function() { }; } }", None),
         ("var x = {doSomething() {function doSomethingElse() {}}}", None), // { "ecmaVersion": 6 },
         ("function decl(arg) { var fn; if (arg) { fn = function expr() { }; } }", None), // { "ecmaVersion": 6 },
-        ("function decl(arg) { var fn; if (arg) { fn = function expr() { }; } }", None),
         ("if (test) { var foo; }", None),
         ("if (test) { let x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
         ("if (test) { const x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
@@ -303,11 +303,6 @@ fn test() {
              if (test) { function doSomething() { } }",
             Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
         ), // { "ecmaVersion": 2022 },
-        (
-            "'use strict'
-             if (test) { function doSomething() { } }",
-            Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
-        ), // { "ecmaVersion": 5 },
         (
             "'use strict'
              if (test) { function doSomething() { } }",

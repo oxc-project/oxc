@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-vue(require-default-export): Missing default export.
+  ⚠ vue(require-default-export): Missing default export.
    ╭─[require_default_export.tsx:4:19]
  3 │                   const foo = 'foo';
  4 │                   </script>
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                   
    ╰────
 
-  ⚠ eslint-plugin-vue(require-default-export): Missing default export.
+  ⚠ vue(require-default-export): Missing default export.
    ╭─[require_default_export.tsx:4:19]
  3 │                   export const foo = 'foo';
  4 │                   </script>
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                   
    ╰────
 
-  ⚠ eslint-plugin-vue(require-default-export): Missing default export.
+  ⚠ vue(require-default-export): Missing default export.
    ╭─[require_default_export.tsx:6:19]
  5 │                   export { foo };
  6 │                   </script>
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                   
    ╰────
 
-  ⚠ eslint-plugin-vue(require-default-export): Missing default export.
+  ⚠ vue(require-default-export): Missing default export.
    ╭─[require_default_export.tsx:5:19]
  4 │                   export const bar = 'bar';
  5 │                   </script>
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                   
    ╰────
 
-  ⚠ eslint-plugin-vue(require-default-export): Component must be the default export.
+  ⚠ vue(require-default-export): Component must be the default export.
    ╭─[require_default_export.tsx:6:19]
  5 │                   export const component = defineComponent({});
  6 │                   </script>
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                   
    ╰────
 
-  ⚠ eslint-plugin-vue(require-default-export): Component must be the default export.
+  ⚠ vue(require-default-export): Component must be the default export.
    ╭─[require_default_export.tsx:6:19]
  5 │                   const component = Vue.component('foo', {});
  6 │                   </script>

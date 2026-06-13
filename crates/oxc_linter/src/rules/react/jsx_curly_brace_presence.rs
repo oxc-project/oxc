@@ -461,6 +461,10 @@ impl JsxCurlyBracePresence {
         parent_is_attribute: bool,
     ) {
         let Some(inner) = container.expression.as_expression() else { return };
+        if ctx.has_comments_between(container.span) {
+            return;
+        }
+
         let allowed = if parent_is_attribute { self.props } else { self.children };
         match inner {
             Expression::JSXFragment(_)
@@ -757,8 +761,7 @@ fn build_missing_curly_fix_context_for_part(
     part.char_indices().find(|(_, ch)| !ch.is_whitespace()).map(|(first_char_index, _)| {
         let text = part.split_at(first_char_index).1;
         let new_start = span.start + part_start + u32::try_from(first_char_index).unwrap();
-        let span_from_first_char =
-            Span::new(new_start, new_start + u32::try_from(text.len()).unwrap());
+        let span_from_first_char = Span::sized(new_start, u32::try_from(text.len()).unwrap());
         (span_from_first_char, text)
     })
 }
@@ -1073,6 +1076,19 @@ fn test() {
         ("<App>{`${label}`}</App>", Some(json!(["never"]))),
         (r#"<div>{`Nobody's "here"`}</div>"#, None),
         (r#"<Foo bar={`a "x" 'y'`} />;"#, Some(json!(["never"]))),
+        ("<App>{<Component>{/* keep */}</Component>}</App>", None),
+        (r"<Component name={/* This is a comment */ 'test'} />", None),
+        (
+            r"
+                    <ComponentA>
+                        {
+                            // This is another comment
+                            <ComponentB />
+                        }
+                    </ComponentA>;
+                  ",
+            None,
+        ),
     ];
 
     let fail = vec![

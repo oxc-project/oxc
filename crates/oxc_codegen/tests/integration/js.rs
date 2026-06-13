@@ -45,6 +45,19 @@ fn module_decl() {
         "export { default } from './foo.js' with { type: 'json' }",
         "export{default}from\"./foo.js\"with{type:\"json\"};",
     );
+
+    test_minify("export default {a:1}", "export default{a:1};");
+    test_minify("export default [1]", "export default[1];");
+    test_minify("export default (a,b)", "export default(a,b);");
+    test_minify("export default 5", "export default 5;");
+    test_minify("export default foo", "export default foo;");
+    test_minify("export default function(){}", "export default function(){}");
+
+    // `as` next to a string export/import name needs no space.
+    test_minify("export { foo as \"name\" }", "export{foo as\"name\"};");
+    test_minify("import { \"y\" as z } from \"m\"", "import{\"y\"as z}from\"m\";");
+    test_minify("export * as \"ns\" from \"m\"", "export*as\"ns\" from\"m\";");
+    test_minify("export { foo as bar }", "export{foo as bar};");
 }
 
 #[test]
@@ -87,6 +100,31 @@ fn expr() {
 
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
     test_minify_same("new(import(``),function(){});");
+
+    // A `new` callee containing a call must keep parentheses.
+    test_same("new (f())();\n");
+    test_same("new (g?.())();\n");
+    test_same("new (f.g?.h)();\n");
+    test_same("new (f?.g.h)();\n");
+    test("new (f().g)();", "new (f()).g();\n");
+    test_same("new (f?.().g)();\n");
+    test_same("new (f()?.g)();\n");
+    test_same("new (f?.()?.g)();\n");
+    test("new (f()`g`)();", "new (f())`g`();\n"); // #22961
+    test_same("new (import(\"foo\"))();\n");
+    test("new (import(\"foo\").bar)();", "new (import(\"foo\")).bar();\n");
+    test("new (import(\"foo\")`bar`)();", "new (import(\"foo\"))`bar`();\n");
+    test("new (a`b`)();", "new a`b`();\n");
+    test("new (f().g.h)();", "new (f()).g.h();\n");
+    test("new (f[g()])();", "new f[g()]();\n");
+    test("new (new f())();", "new new f()();\n");
+
+    // The base of `**` must be an UpdateExpression, so a unary/await base keeps parens.
+    test_same("(-a) ** b;\n");
+    test_same("(typeof a) ** b;\n");
+    test_same("(await a) ** b;\n");
+    // Only the base needs wrapping; the `**` right operand may be a UnaryExpression.
+    test("(await a) ** (await b);", "(await a) ** await b;\n");
 }
 
 #[test]
@@ -138,6 +176,26 @@ fn for_stmt() {
         "for (var a = 1 || (2 in {}) in { x: 1 }) count++;",
         "for (var a = 1 || (2 in {}) in { x: 1 }) count++;\n",
     );
+
+    // A `for...of` head may not start with `let` or `async`; `for...in` may.
+    test("for ((let) of x);", "for ((let) of x);\n");
+    test("for ((async) of x);", "for ((async) of x);\n");
+    test("for (let in x);", "for (let in x);\n");
+    test("for (async in x);", "for (async in x);\n");
+    // A for-of head whose leading token is `let` is wrapped wherever it appears,
+    // not only as a bare identifier; a bare `async` is wrapped but `async.x` is fine.
+    test("for ((let.x) of x);", "for ((let.x) of x);\n");
+    test("for ((let.x[0]) of x);", "for ((let.x[0]) of x);\n");
+    test("for ((let[0]) of x);", "for ((let)[0] of x);\n");
+    test("for ((async.x) of x);", "for (async.x of x);\n");
+    test("for (((let).x) of x);", "for ((let.x) of x);\n");
+    // A leading `let` outside a for-of head is untouched.
+    test("let.x;", "let.x;\n");
+    // A nested for-of inside a `for` init is still wrapped correctly.
+    test(
+        "for (function f(){ for ((async) of xs); };;);",
+        "for (function f() {\n\tfor ((async) of xs);\n};;);\n",
+    );
 }
 
 #[test]
@@ -174,6 +232,12 @@ fn if_stmt() {
         "function f() { if (foo) return foo; else if (bar) return foo; }",
         "function f(){if(foo)return foo;else if(bar)return foo}",
     );
+    // `else` only needs a space before an identifier-like body.
+    test_minify("if(x)a();else b()", "if(x)a();else b();");
+    test_minify("if(x)a();else++b", "if(x)a();else++b;");
+    test_minify("if(x)a();else[b]", "if(x)a();else[b];");
+    test_minify("if(x)a();else`b`", "if(x)a();else`b`;");
+    test_minify("if(x)a();else debugger", "if(x)a();else debugger;");
 }
 
 #[test]
@@ -437,8 +501,16 @@ fn pure_comment() {
     test_same("/* @__PURE__ */ pureOperation();\n");
     test_same("/* @__PURE__ */ new PureConsutrctor();\n");
     test("/* @__PURE__ */\npureOperation();\n", "/* @__PURE__ */ pureOperation();\n");
+    test_same("/* @__PURE__ The comment may contain additional text */ pureOperation();\n");
+    test_same(
+        "/* #__PURE__ -- @preserve */ pureOperation();\n", // rolldown#9408
+    );
+    // A `@__NO_SIDE_EFFECTS__` comment sharing the call site's `attached_to`
+    // must not be emitted in place of the pure-call annotation. Without the
+    // kind filter, `FxHashMap` last-write-wins would print the wrong
+    // annotation kind in front of a CallExpression.
     test(
-        "/* @__PURE__ The comment may contain additional text */ pureOperation();\n",
+        "/* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ pureOperation();\n",
         "/* @__PURE__ */ pureOperation();\n",
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
@@ -450,7 +522,8 @@ fn pure_comment() {
     test("/*#__PURE__*/ (foo(), bar());", "/*#__PURE__*/ foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
 
     test_same("/* @__PURE__ */ a.b().c.d();\n");
-    test("/* @__PURE__ */ a().b;", "/* @__PURE__ */ a().b;\n"); // INVALID, it does not end with a call
+    // PURE applies to the innermost call; codegen wraps to keep the annotation on the call.
+    test("/* @__PURE__ */ a().b;", "(/* @__PURE__ */ a()).b;\n");
     test_same("(/* @__PURE__ */ a()).b;\n");
 
     // More
@@ -495,6 +568,11 @@ fn in_expr_in_arrow_function_expression() {
     test("() => ('foo' in bar)", "() => \"foo\" in bar;\n");
     test("() => 'foo' in bar", "() => \"foo\" in bar;\n");
     test("() => { ('foo' in bar) }", "() => {\n\t\"foo\" in bar;\n};\n");
+
+    // A parenthesized arrow resets FORBID_IN, so its concise body / param default
+    // does not need extra parentheses around `in` (was `(() => (a in b))`).
+    test("for (x = (() => a in b);;);", "for (x = (() => a in b);;);\n");
+    test("for (x = ((a = b in c) => 1);;);", "for (x = ((a = b in c) => 1);;);\n");
 }
 
 #[test]
@@ -639,6 +717,51 @@ fn string() {
         r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
     );
     test_minify(r#"foo("\n")"#, "foo(`\n`);");
+
+    // https://github.com/oxc-project/oxc/issues/22342
+    test_minify(
+        r#"Object.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
+        r#"Object.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
+    );
+    test_minify(
+        r#"Reflect.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
+        r#"Reflect.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
+    );
+    test_minify(
+        r#"exports["has-dash"] = a; module.exports["__esModule"] = true;"#,
+        r#"exports["has-dash"]=a;module.exports["__esModule"]=true;"#,
+    );
+    test_minify(r#"obj["not-exports"] = a;"#, "obj[`not-exports`]=a;");
+
+    // require() should preserve string quotes for cjs-module-lexer compatibility
+    test_minify(
+        r#"__exportStar(require("./decorators"), exports);"#,
+        r#"__exportStar(require("./decorators"),exports);"#,
+    );
+    test_minify(r#"var a = require("./foo");"#, r#"var a=require("./foo");"#);
+    test_minify(r#"require("./foo");"#, r#"require("./foo");"#);
+    // Non-require calls should still use backtick optimization
+    test_minify(r#"foo("./bar")"#, "foo(`./bar`);");
+    // Dynamic require is not affected
+    test_minify("require(foo);", "require(foo);");
+    // Single-quoted require
+    test_minify(r"require('./foo');", r#"require("./foo");"#);
+
+    // `cjs-module-lexer` re-export detection requires `"default"` and
+    // `"__esModule"` to stay as plain string literals in equality comparisons.
+    test_minify(
+        r#"function f(key) { if (key === "default" || key === "__esModule") return; }"#,
+        r#"function f(key){if(key==="default"||key==="__esModule")return}"#,
+    );
+    test_minify(r#"a = x !== "default""#, r#"a=x!=="default";"#);
+    test_minify(r#"a = x == "__esModule""#, r#"a=x=="__esModule";"#);
+    test_minify(r#"a = x != "default""#, r#"a=x!="default";"#);
+    // Magic string on the left side of an equality is also preserved.
+    test_minify(r#"a = "default" === x"#, r#"a="default"===x;"#);
+    // Other strings in equality comparisons are unaffected.
+    test_minify(r#"a = x === "foo""#, "a=x===`foo`;");
+    // The two magic strings are unaffected when not in equality comparisons.
+    test_minify(r#"a = "default""#, "a=`default`;");
 }
 
 #[test]
@@ -714,10 +837,10 @@ fn template_literal_escape_when_building_ast() {
 
     // Create a template literal with special characters that need escaping:
     // backtick, ${, and backslash
-    // Pass escape_raw: true to automatically escape the raw field
+    // Use `template_element_escape_raw` to automatically escape the raw field
     let cooked = "hello`world${foo}\\bar";
     let value = TemplateElementValue { raw: ast.str(cooked), cooked: Some(ast.str(cooked)) };
-    let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
+    let element = ast.template_element_escape_raw(SPAN, value, true);
     let quasis = ast.vec1(element);
     let template_literal = ast.template_literal(SPAN, quasis, ast.vec());
 

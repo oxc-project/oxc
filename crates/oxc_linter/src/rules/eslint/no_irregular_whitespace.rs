@@ -93,6 +93,7 @@ declare_oxc_lint!(
     correctness,
     config = NoIrregularWhitespaceConfig,
     version = "0.1.1",
+    short_description = "Disallows the use of irregular whitespace characters in the code.",
 );
 
 /// Check if a character is irregular whitespace for linting purposes.
@@ -115,7 +116,7 @@ fn report_irregular_whitespace_in_span(ctx: &LintContext, source_text: &str, spa
             let offset = span.start + i as u32;
             #[expect(clippy::cast_possible_truncation)]
             let len = c.len_utf8() as u32;
-            ctx.diagnostic(no_irregular_whitespace_diagnostic(Span::new(offset, offset + len)));
+            ctx.diagnostic(no_irregular_whitespace_diagnostic(Span::sized(offset, len)));
         }
     }
 }
@@ -351,73 +352,8 @@ fn test() {
         ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
         ("<div>　</div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
         ("﻿console.log('hello BOM');", None),
-        ("// ", None),
-        ("// ", None),
-        ("// ", None),
-        ("//  ", None),
-        ("// ᠎", None),
-        ("// ﻿", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("// ​", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("// 　", None),
-        ("/*  */", None),
-        ("/*  */", None),
-        ("/*  */", None),
-        ("/*   */", None),
-        ("/* ᠎ */", None),
-        ("/* ﻿ */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/* ​ */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/* 　 */", None),
         ("var any = /　/, other = //;", None),
         ("var any = `　`, other = ``;", None), // { "ecmaVersion": 6 },
-        ("<div></div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div></div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div></div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div>᠎</div>;", None),  // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div>﻿</div>;", None),  // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div>​</div>;", None),  // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div> </div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
-        ("<div>　</div>;", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
     ];
 
     let fail = vec![

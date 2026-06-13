@@ -285,3 +285,33 @@ fn remove_unused_use_strict_directive() {
     test("'use strict'; function _() { 'use strict' }", "function _() {}");
     test("'use strict';", "");
 }
+
+// Legal comments anchored to a removed `"use strict"` directive are rescued
+// by the same `print_legal_orphans_before` flush used for #19750: the
+// directive's `span.start` is gone, but the orphan re-anchors at the next
+// surviving statement. Pin that for the legal-comment subset of #19748.
+// Non-legal comments above a removed directive are not covered:
+// `print_legal_orphans_before` is gated on `Comment::is_legal()` by design.
+
+#[test]
+fn preserve_legal_comment_above_removed_use_strict() {
+    // Both `//!` and `/*! ... */` forms.
+    test(
+        "//! license\n'use strict';\nexport function foo(){}",
+        "//! license\nexport function foo() {}",
+    );
+    test(
+        "/*! banner */\n'use strict';\nexport function foo(){}",
+        "/*! banner */\nexport function foo() {}",
+    );
+}
+
+#[test]
+fn preserve_legal_comment_above_removed_inner_function_use_strict() {
+    // Redundant inner `"use strict"` is dropped under a strict outer scope;
+    // the comment must stay inside the function body, not escape outward.
+    test(
+        "//! outer\n'use strict';\nexport function f() {\n  //! inner\n  'use strict';\n  bar();\n}",
+        "//! outer\nexport function f() {\n\t//! inner\n\tbar();\n}",
+    );
+}

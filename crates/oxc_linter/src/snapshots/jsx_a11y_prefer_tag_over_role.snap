@@ -2,72 +2,296 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
    ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="checkbox" />
    ·      ───────────────
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
-  ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `button` over `role` attribute `button`.
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `button` over `role` attribute `button`.
    ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="button checkbox" />
    ·      ──────────────────────
    ╰────
   help: Replace HTML elements with `role` attribute `button` to corresponding semantic HTML tag `button`.
 
-  ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
    ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="button checkbox" />
    ·      ──────────────────────
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
-  ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `h1,h2,h3,h4,h5,h6` over `role` attribute `heading`.
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `h1, h2, h3, h4, h5, h6` over `role` attribute `heading`.
    ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="heading" />
    ·      ──────────────
    ╰────
-  help: Replace HTML elements with `role` attribute `heading` to corresponding semantic HTML tag `h1,h2,h3,h4,h5,h6`.
+  help: Replace HTML elements with `role` attribute `heading` to corresponding semantic HTML tag `h1, h2, h3, h4, h5, h6`.
 
-  ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `a,area` over `role` attribute `link`.
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `a, area` over `role` attribute `link`.
    ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="link" />
    ·      ───────────
    ╰────
-  help: Replace HTML elements with `role` attribute `link` to corresponding semantic HTML tag `a,area`.
+  help: Replace HTML elements with `role` attribute `link` to corresponding semantic HTML tag `a, area`.
 
-  ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `tbody,tfoot,thead` over `role` attribute `rowgroup`.
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `tbody, tfoot, thead` over `role` attribute `rowgroup`.
    ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="rowgroup" />
    ·      ───────────────
    ╰────
-  help: Replace HTML elements with `role` attribute `rowgroup` to corresponding semantic HTML tag `tbody,tfoot,thead`.
+  help: Replace HTML elements with `role` attribute `rowgroup` to corresponding semantic HTML tag `tbody, tfoot, thead`.
 
-  ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
    ╭─[prefer_tag_over_role.tsx:1:7]
  1 │ <span role="checkbox" />
    ·       ───────────────
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
-  ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
    ╭─[prefer_tag_over_role.tsx:1:8]
  1 │ <other role="checkbox" />
    ·        ───────────────
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
-  ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
    ╭─[prefer_tag_over_role.tsx:1:8]
  1 │ <other role="checkbox" />
    ·        ───────────────
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
-  ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `header` over `role` attribute `banner`.
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `header` over `role` attribute `banner`.
    ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="banner" />
    ·      ─────────────
    ╰────
   help: Replace HTML elements with `role` attribute `banner` to corresponding semantic HTML tag `header`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `datalist, select` over `role` attribute `listbox`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="listbox" />
+   ·      ──────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `listbox` to corresponding semantic HTML tag `datalist, select`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `section` over `role` attribute `region`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="region" />
+   ·      ─────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `region` to corresponding semantic HTML tag `section`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `slider`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="slider" />
+   ·      ─────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `slider` to corresponding semantic HTML tag `input`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input, select` over `role` attribute `combobox`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="combobox" />
+   ·      ───────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `combobox` to corresponding semantic HTML tag `input, select`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `radio`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="radio" />
+   ·      ────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `radio` to corresponding semantic HTML tag `input`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input, textarea` over `role` attribute `textbox`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="textbox" />
+   ·      ──────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `textbox` to corresponding semantic HTML tag `input, textarea`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `article` over `role` attribute `article`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="article" />
+   ·      ──────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `article` to corresponding semantic HTML tag `article`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `aside` over `role` attribute `complementary`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="complementary" />
+   ·      ────────────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `complementary` to corresponding semantic HTML tag `aside`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `footer` over `role` attribute `contentinfo`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="contentinfo" />
+   ·      ──────────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `contentinfo` to corresponding semantic HTML tag `footer`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `dialog` over `role` attribute `dialog`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="dialog" />
+   ·      ─────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `dialog` to corresponding semantic HTML tag `dialog`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `form` over `role` attribute `form`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="form" />
+   ·      ───────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `form` to corresponding semantic HTML tag `form`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `menu, ol, ul` over `role` attribute `list`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="list" />
+   ·      ───────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `list` to corresponding semantic HTML tag `menu, ol, ul`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `li` over `role` attribute `listitem`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="listitem" />
+   ·      ───────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `listitem` to corresponding semantic HTML tag `li`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `main` over `role` attribute `main`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="main" />
+   ·      ───────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `main` to corresponding semantic HTML tag `main`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `nav` over `role` attribute `navigation`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="navigation" />
+   ·      ─────────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `navigation` to corresponding semantic HTML tag `nav`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `hr` over `role` attribute `separator`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="separator" />
+   ·      ────────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `separator` to corresponding semantic HTML tag `hr`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `table` over `role` attribute `table`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="table" />
+   ·      ────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `table` to corresponding semantic HTML tag `table`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `td` over `role` attribute `cell`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="cell" />
+   ·      ───────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `cell` to corresponding semantic HTML tag `td`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `tr` over `role` attribute `row`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="row" />
+   ·      ──────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `row` to corresponding semantic HTML tag `tr`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `meter` over `role` attribute `meter`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="meter" />
+   ·      ────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `meter` to corresponding semantic HTML tag `meter`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `output` over `role` attribute `status`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="status" />
+   ·      ─────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `status` to corresponding semantic HTML tag `output`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `p` over `role` attribute `paragraph`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="paragraph" />
+   ·      ────────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `paragraph` to corresponding semantic HTML tag `p`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `progress` over `role` attribute `progressbar`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="progressbar" />
+   ·      ──────────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `progressbar` to corresponding semantic HTML tag `progress`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `figure` over `role` attribute `figure`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="figure" />
+   ·      ─────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `figure` to corresponding semantic HTML tag `figure`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `del, s` over `role` attribute `deletion`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="deletion" />
+   ·      ───────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `deletion` to corresponding semantic HTML tag `del, s`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `em` over `role` attribute `emphasis`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="emphasis" />
+   ·      ───────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `emphasis` to corresponding semantic HTML tag `em`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `strong` over `role` attribute `strong`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="strong" />
+   ·      ─────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `strong` to corresponding semantic HTML tag `strong`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `dfn` over `role` attribute `term`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="term" />
+   ·      ───────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `term` to corresponding semantic HTML tag `dfn`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `option` over `role` attribute `option`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="option" />
+   ·      ─────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `option` to corresponding semantic HTML tag `option`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `th` over `role` attribute `columnheader`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="columnheader" />
+   ·      ───────────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `columnheader` to corresponding semantic HTML tag `th`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `searchbox`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="searchbox" />
+   ·      ────────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `searchbox` to corresponding semantic HTML tag `input`.
+
+  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `spinbutton`.
+   ╭─[prefer_tag_over_role.tsx:1:6]
+ 1 │ <div role="spinbutton" />
+   ·      ─────────────────
+   ╰────
+  help: Replace HTML elements with `role` attribute `spinbutton` to corresponding semantic HTML tag `input`.

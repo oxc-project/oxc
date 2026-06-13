@@ -2,49 +2,49 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-import(no-named-as-default): Module "./bar" has named export "foo"
+  ⚠ import(no-named-as-default): Module "./bar" has named export "foo"
    ╭─[index.js:1:8]
  1 │ import foo from "./bar";
    ·        ───
    ╰────
   help: Using default import as "foo" can be confusing. Use another name for default import to avoid confusion.
 
-  ⚠ eslint-plugin-import(no-named-as-default): Module "./bar" has named export "foo"
+  ⚠ import(no-named-as-default): Module "./bar" has named export "foo"
    ╭─[index.js:1:8]
  1 │ import foo, { foo as bar } from "./bar";
    ·        ───
    ╰────
   help: Using default import as "foo" can be confusing. Use another name for default import to avoid confusion.
 
-  ⚠ eslint-plugin-import(no-named-as-default): Module "./export-default-string-and-named" has named export "foo"
+  ⚠ import(no-named-as-default): Module "./export-default-string-and-named" has named export "foo"
    ╭─[index.js:1:8]
  1 │ import foo from "./export-default-string-and-named"
    ·        ───
    ╰────
   help: Using default import as "foo" can be confusing. Use another name for default import to avoid confusion.
 
-  ⚠ eslint-plugin-import(no-named-as-default): Module "./export-default-string-and-named" has named export "foo"
+  ⚠ import(no-named-as-default): Module "./export-default-string-and-named" has named export "foo"
    ╭─[index.js:1:8]
  1 │ import foo, { foo as bar } from "./export-default-string-and-named"
    ·        ───
    ╰────
   help: Using default import as "foo" can be confusing. Use another name for default import to avoid confusion.
 
-  ⚠ eslint-plugin-import(no-named-as-default): Module "./re-export-default-and-named-misleading" has named export "userEvent"
+  ⚠ import(no-named-as-default): Module "./re-export-default-and-named-misleading" has named export "userEvent"
    ╭─[index.js:1:8]
  1 │ import userEvent from "./re-export-default-and-named-misleading"
    ·        ─────────
    ╰────
   help: Using default import as "userEvent" can be confusing. Use another name for default import to avoid confusion.
 
-  ⚠ eslint-plugin-import(no-named-as-default): Module "./re-export-default-and-named-alias-misleading" has named export "userEvent"
+  ⚠ import(no-named-as-default): Module "./re-export-default-and-named-alias-misleading" has named export "userEvent"
    ╭─[index.js:1:8]
  1 │ import userEvent from "./re-export-default-and-named-alias-misleading"
    ·        ─────────
    ╰────
   help: Using default import as "userEvent" can be confusing. Use another name for default import to avoid confusion.
 
-  ⚠ eslint-plugin-import(no-named-as-default): Module "./re-export-default-and-named-different-binding" has named export "userEvent"
+  ⚠ import(no-named-as-default): Module "./re-export-default-and-named-different-binding" has named export "userEvent"
    ╭─[index.js:1:8]
  1 │ import userEvent from "./re-export-default-and-named-different-binding"
    ·        ─────────

@@ -2,35 +2,35 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:1]
  1 │ array.length === 0 || array.every(Boolean)
    · ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:1]
  1 │ array.length > 0 && array.some(Boolean)
    · ────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:1]
  1 │ array.length !== 0 && array.some(Boolean)
    · ──────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:8]
  1 │ if ((( array.length > 0 )) && array.some(Boolean));
    ·        ────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:2:17]
  1 │ if (
  2 │                 array.length !== 0 &&
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:2:17]
  1 │ if (
  2 │                 array.length !== 0 &&
@@ -48,168 +48,168 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:2]
  1 │ (array.length === 0 || array.every(Boolean)) || foo
    ·  ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:2]
  1 │ (array.length === 0 || array.every(Boolean)) || foo
    ·  ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:9]
  1 │ foo || (array.length === 0 || array.every(Boolean))
    ·         ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:9]
  1 │ foo || (array.length === 0 || array.every(Boolean))
    ·         ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:2]
  1 │ (array.length > 0 && array.some(Boolean)) && foo
    ·  ────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:2]
  1 │ (array.length > 0 && array.some(Boolean)) && foo
    ·  ────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:9]
  1 │ foo && (array.length > 0 && array.some(Boolean))
    ·         ────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:9]
  1 │ foo && (array.length > 0 && array.some(Boolean))
    ·         ────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:25]
  1 │ array.every(Boolean) || array.length === 0
    ·                         ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:24]
  1 │ array.some(Boolean) && array.length !== 0
    ·                        ──────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:24]
  1 │ array.some(Boolean) && array.length > 0
    ·                        ────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:8]
  1 │ foo && array.length > 0 && array.some(Boolean)
    ·        ────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:8]
  1 │ foo || array.length === 0 || array.every(Boolean)
    ·        ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:9]
  1 │ (foo || array.length === 0) || array.every(Boolean)
    ·         ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:1]
  1 │ array.length === 0 || (array.every(Boolean) || foo)
    · ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:9]
  1 │ (foo && array.length > 0) && array.some(Boolean)
    ·         ────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:1]
  1 │ array.length > 0 && (array.some(Boolean) && foo)
    · ────────────────
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:25]
  1 │ array.every(Boolean) || array.length === 0 || array.every(Boolean)
    ·                         ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:25]
  1 │ array.every(Boolean) || array.length === 0 || array.every(Boolean)
    ·                         ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:25]
  1 │ array.every(Boolean) || array.length === 0 || array.every(Boolean)
    ·                         ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:1]
  1 │ array.length === 0 || array.every(Boolean) || array.length === 0
    · ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:47]
  1 │ array.length === 0 || array.every(Boolean) || array.length === 0
    ·                                               ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:1]
  1 │ array.length === 0 || array.every(Boolean) || array.length === 0
    · ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:2:19]
  1 │ array1.every(Boolean)
  2 │             || (( array1.length === 0 || array2.length === 0 )) // Both useless
@@ -218,7 +218,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:2:42]
  1 │ array1.every(Boolean)
  2 │             || (( array1.length === 0 || array2.length === 0 )) // Both useless
@@ -227,7 +227,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:2:19]
  1 │ array1.every(Boolean)
  2 │             || (( array1.length === 0 || array2.length === 0 )) // Both useless
@@ -236,7 +236,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:6:25]
  5 │                         zeroLengthChecks.has(node) &&
  6 │                         siblings.length > 0 &&
@@ -245,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
 
-  ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
     ╭─[no_useless_length_check.tsx:15:25]
  14 │                         nonZeroLengthChecks.has(node) &&
  15 │                         siblings.length > 0 &&

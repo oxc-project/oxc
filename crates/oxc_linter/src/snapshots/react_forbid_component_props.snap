@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "className" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "className" is forbidden on Components
    ╭─[forbid_component_props.tsx:5:37]
  4 │                       render: function() {
  5 │                         return <Foo className="bar" />;
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "style" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "style" is forbidden on Components
    ╭─[forbid_component_props.tsx:5:37]
  4 │                       render: function() {
  5 │                         return <Foo style={{color: "red"}} />;
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "className" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "className" is forbidden on Components
    ╭─[forbid_component_props.tsx:5:37]
  4 │                       render: function() {
  5 │                         return <Foo className="bar" />;
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "style" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "style" is forbidden on Components
    ╭─[forbid_component_props.tsx:5:37]
  4 │                       render: function() {
  5 │                         return <Foo style={{color: "red"}} />;
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "style" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "style" is forbidden on Components
    ╭─[forbid_component_props.tsx:5:37]
  4 │                       render: function() {
  5 │                         return <Foo style={{color: "red"}} />;
@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       }
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "className" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "className" is forbidden on Components
    ╭─[forbid_component_props.tsx:2:40]
  1 │ 
  2 │                     const item = (<Foo className="foo" />);
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "className" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "className" is forbidden on Components
    ╭─[forbid_component_props.tsx:2:52]
  1 │ 
  2 │                     const item = (<this.ReactModal className="foo" />);
@@ -58,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "className" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "className" is forbidden on Components
    ╭─[forbid_component_props.tsx:2:52]
  1 │ 
  2 │                     const item = (<this.ReactModal className="foo" />);
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "className" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "className" is forbidden on Components
    ╭─[forbid_component_props.tsx:2:47]
  1 │ 
  2 │                     const item = (<ReactModal className="foo" />);
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "className" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "className" is forbidden on Components
    ╭─[forbid_component_props.tsx:2:55]
  1 │ 
  2 │                     const item = (<AntdLayout.Content className="antdFoo" />);
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Please use ourCoolClassName instead of ClassName
+  ⚠ react(forbid-component-props): Please use ourCoolClassName instead of ClassName
    ╭─[forbid_component_props.tsx:2:40]
  1 │ 
  2 │                     const item = (<Foo className="foo" />);
@@ -90,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Please use ourCoolClassName instead of ClassName
+  ⚠ react(forbid-component-props): Please use ourCoolClassName instead of ClassName
    ╭─[forbid_component_props.tsx:3:28]
  2 │                     const item = () => (
  3 │                       <Foo className="foo">
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                         <Bar option="high" />
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Avoid using option
+  ⚠ react(forbid-component-props): Avoid using option
    ╭─[forbid_component_props.tsx:4:30]
  3 │                       <Foo className="foo">
  4 │                         <Bar option="high" />
@@ -106,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       </Foo>
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "className" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "className" is forbidden on Components
    ╭─[forbid_component_props.tsx:3:28]
  2 │                     const item = () => (
  3 │                       <Foo className="foo">
@@ -114,7 +114,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                         <Bar option="high" />
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Avoid using option
+  ⚠ react(forbid-component-props): Avoid using option
    ╭─[forbid_component_props.tsx:4:30]
  3 │                       <Foo className="foo">
  4 │                         <Bar option="high" />
@@ -122,7 +122,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       </Foo>
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "kebab-case-prop" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "kebab-case-prop" is forbidden on Components
    ╭─[forbid_component_props.tsx:3:28]
  2 │                     const MyComponent = () => (
  3 │                       <Foo kebab-case-prop={123} />
@@ -130,7 +130,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     );
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Avoid using kebab-case
+  ⚠ react(forbid-component-props): Avoid using kebab-case
    ╭─[forbid_component_props.tsx:3:28]
  2 │                     const MyComponent = () => (
  3 │                       <Foo kebab-case-prop={123} />
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     );
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "kebab-case-prop" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "kebab-case-prop" is forbidden on Components
    ╭─[forbid_component_props.tsx:5:30]
  4 │                         <div aria-label="Hello Akul" />
  5 │                         <Foo kebab-case-prop={123} />
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       </div>
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Prop "kebab-case-prop" is forbidden on Components
+  ⚠ react(forbid-component-props): Prop "kebab-case-prop" is forbidden on Components
    ╭─[forbid_component_props.tsx:6:30]
  5 │                         <h1 data-id="my-heading" />
  6 │                         <Foo kebab-case-prop={123} />
@@ -154,7 +154,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                       </div>
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): className available only for icons
+  ⚠ react(forbid-component-props): className available only for icons
    ╭─[forbid_component_props.tsx:5:34]
  4 │                         <SomeIcon className="size-lg" />
  5 │                         <SomeSvg className="size-lg" />
@@ -162,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       </Root>
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): style available only for SVGs
+  ⚠ react(forbid-component-props): style available only for SVGs
    ╭─[forbid_component_props.tsx:4:33]
  3 │                       <Root>
  4 │                         <UICard style={{backgroundColor: black}}/>
@@ -170,7 +170,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         <SomeIcon className="size-lg" />
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): className available only for icons
+  ⚠ react(forbid-component-props): className available only for icons
    ╭─[forbid_component_props.tsx:6:34]
  5 │                         <SomeIcon className="size-lg" />
  6 │                         <SomeSvg className="size-lg" style={{fill: currentColor}} />
@@ -178,7 +178,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                       </Root>
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Avoid using className for SomeSvg and components that match the `UI*` and `*Icon` patterns
+  ⚠ react(forbid-component-props): Avoid using className for SomeSvg and components that match the `UI*` and `*Icon` patterns
    ╭─[forbid_component_props.tsx:4:35]
  3 │                       <Root>
  4 │                         <SomeIcon className="size-lg" />
@@ -186,7 +186,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         <AnotherIcon className="size-lg" />
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Avoid using className for SomeSvg and components that match the `UI*` and `*Icon` patterns
+  ⚠ react(forbid-component-props): Avoid using className for SomeSvg and components that match the `UI*` and `*Icon` patterns
    ╭─[forbid_component_props.tsx:5:38]
  4 │                         <SomeIcon className="size-lg" />
  5 │                         <AnotherIcon className="size-lg" />
@@ -194,7 +194,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                         <SomeSvg className="size-lg" />
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Avoid using className for SomeSvg and components that match the `UI*` and `*Icon` patterns
+  ⚠ react(forbid-component-props): Avoid using className for SomeSvg and components that match the `UI*` and `*Icon` patterns
    ╭─[forbid_component_props.tsx:6:34]
  5 │                         <AnotherIcon className="size-lg" />
  6 │                         <SomeSvg className="size-lg" />
@@ -202,7 +202,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                         <UICard className="size-lg" />
    ╰────
 
-  ⚠ eslint-plugin-react(forbid-component-props): Avoid using className for SomeSvg and components that match the `UI*` and `*Icon` patterns
+  ⚠ react(forbid-component-props): Avoid using className for SomeSvg and components that match the `UI*` and `*Icon` patterns
    ╭─[forbid_component_props.tsx:7:33]
  6 │                         <SomeSvg className="size-lg" />
  7 │                         <UICard className="size-lg" />

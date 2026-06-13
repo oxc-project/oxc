@@ -46,6 +46,24 @@ export interface TestGroup {
   name: string;
 
   /**
+   * URL of the upstream repository.
+   * e.g. `"https://github.com/eslint/eslint"`
+   */
+  repoUrl: string;
+
+  /**
+   * Git commit SHA that the tests are pinned to.
+   * Must match the SHA used in `init.sh`.
+   */
+  commitSha: string;
+
+  /**
+   * Version tag or label corresponding to the pinned commit.
+   * e.g. `"10.0.0"`, `"v2.9.0"`
+   */
+  version: string;
+
+  /**
    * Name of the submodule for this group.
    * i.e. name of the directory in `submodules` directory.
    */
@@ -304,7 +322,7 @@ function runGroup(group: TestGroup, mocks: Mocks) {
   // Write results to markdown file
   const snapshotPath = pathJoin(SNAPSHOTS_DIR_PATH, `${groupName}.md`);
 
-  const report = generateReport(group.name, results);
+  const report = generateReport(group.name, group.repoUrl, group.commitSha, group.version, results);
   fs.writeFileSync(snapshotPath, report);
   console.log(`\nResults written to: ${snapshotPath}`);
 

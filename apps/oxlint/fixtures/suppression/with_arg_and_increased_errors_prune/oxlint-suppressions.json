@@ -1,0 +1,7 @@
+{
+  "folder_a/test.ts": {
+    "no-console": {
+      "count": 1
+    }
+  }
+}

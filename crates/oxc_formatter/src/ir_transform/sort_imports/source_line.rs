@@ -23,8 +23,6 @@ pub enum SourceLine<'a> {
     /// Line that contains only comment(s).
     /// May be used as a boundary if `options.partition_by_comment` is true.
     CommentOnly(Range<usize>, LineMode),
-    /// Other lines, always a boundary.
-    Others(Range<usize>, LineMode),
 }
 
 impl<'a> SourceLine<'a> {
@@ -38,34 +36,12 @@ impl<'a> SourceLine<'a> {
             "`range` must not be empty, otherwise use `SourceLine::Empty` directly."
         );
 
-        // Check if the line is comment-only.
-        // e.g.
-        // ```text
-        // // comment
-        // /* comment */
-        // /* comment */ // comment
-        // /* comment */ /* comment */
-        // ```
-        let is_comment_only = range.clone().all(|idx| match &elements[idx] {
-            FormatElement::Text { text, width: _ } => {
-                text.starts_with("//") || text.starts_with("/*")
-            }
-            FormatElement::Line(LineMode::Soft | LineMode::SoftOrSpace) | FormatElement::Space => {
-                true
-            }
-            _ => false,
-        });
-        if is_comment_only {
-            return SourceLine::CommentOnly(range, line_mode);
-        }
-
-        // Check if the line contains an import statement.
-        // Sometimes, there might be leading comments in the same line,
-        // so we need to check all elements in the line to find an `ImportDeclaration`.
-        // ```text
-        // /* THIS */ import ...
-        // import ...
-        // ```
+        // The chunk only contains:
+        // - non-suppressed `ImportDeclaration`s (wrapped with `JsLabels::ImportDeclaration`)
+        // - and their surrounding comments / line breaks
+        // So the label's presence is a sufficient signal for `Import` vs `CommentOnly`.
+        // Textual prefix checks would be fragile against.
+        // (e.g. formatted JSDoc, which splits a single comment into a mix of `Token`/`Text` elements.)
         let mut has_import = false;
         let mut source = None;
         let mut is_side_effect = true;
@@ -131,27 +107,21 @@ impl<'a> SourceLine<'a> {
             }
         }
 
-        if has_import && let Some(source) = source {
-            // TODO: Check line has trailing ignore comment?
-            return SourceLine::Import(
-                range,
-                ImportLineMetadata {
-                    source,
-                    is_side_effect,
-                    is_type_import,
-                    has_default_specifier,
-                    has_namespace_specifier,
-                    has_named_specifier,
-                },
-            );
+        if !has_import {
+            return SourceLine::CommentOnly(range, line_mode);
         }
 
-        // Otherwise, this line is neither of:
-        // - Empty line
-        // - Comment-only line
-        // - Import line
-        // So, it will be a boundary line.
-        SourceLine::Others(range, line_mode)
+        SourceLine::Import(
+            range,
+            ImportLineMetadata {
+                source: source.expect("`ImportDeclaration` must have a source"),
+                is_side_effect,
+                is_type_import,
+                has_default_specifier,
+                has_namespace_specifier,
+                has_named_specifier,
+            },
+        )
     }
 
     pub fn write(
@@ -174,7 +144,7 @@ impl<'a> SourceLine<'a> {
                 // Always use hard line break after import statement.
                 next_elements.push(FormatElement::Line(LineMode::Hard));
             }
-            SourceLine::CommentOnly(range, mode) | SourceLine::Others(range, mode) => {
+            SourceLine::CommentOnly(range, mode) => {
                 for idx in range.clone() {
                     next_elements.push(prev_elements[idx].clone());
                 }

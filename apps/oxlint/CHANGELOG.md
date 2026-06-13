@@ -4,6 +4,227 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.69.0] - 2026-06-08
+
+### 🚀 Features
+
+- e805174 linter: Add schema for `jest/vitest/max-expects` (#23105) (Sysix)
+- 7850577 linter: Add schema for `jest/vitest/expect-expect` (#23104) (Sysix)
+- 75f641a linter: Add schema for `jest/vitest/consistent-test-it` (#23103) (Sysix)
+- 5125f89 linter/unicorn: Support no-null `checkArguments` option (#23098) (camc314)
+- b8b9797 linter: Add schema for `import-max-dependencies` (#23096) (Sysix)
+- 65cb47a linter/eslint: Support no-unused-expressions `ignoreDirectives` option (#23097) (camc314)
+- f6c36d5 linter: Add schema for `import/prefer-default-export` (#23091) (Sysix)
+- 0d4a5d1 linter: Add schema for `eslint/sort-vars` (#23090) (Sysix)
+- fdb5bf5 linter: Add schema for `eslint/radix` (#23082) (Sysix)
+- 05b4dcf linter: Add schema for `eslint/prefer-const` (#23081) (Sysix)
+- 5a06c4d linter/vue: Implement next-tick-style rule (#23041) (Alex Peshkov)
+- e38a36a linter: Add schema for `eslint/operator-assignment` (#23080) (Sysix)
+- 907cee7 linter: Add schema for `eslint/no-warning-comments` (#23075) (Sysix)
+- 9470bb2 linter: Add schema for `eslint/no-unused-vars` (#23073) (Sysix)
+- 234b5cf linter: Add schema for `eslint/no-shadow` (#23072) (Sysix)
+- de0dd8b linter: Add schema for `eslint/no-restricted-exports` (#23020) (Sysix)
+- faa3e0d linter: Add schema for `eslint/no-param-reassign` (#23018) (Sysix)
+- dbc9c27 linter: Add schema for `eslint/no-magic-numbers` (#23017) (Sysix)
+- 38d3569 linter: Add schema for `eslint/no-inner-declarations` (#23016) (Sysix)
+- 008fa41 linter: Add schema for `eslint/no-constant-condition` (#22991) (Sysix)
+- ca44623 linter: Add schema for `eslint/no-empty-function` (#22988) (Sysix)
+- 43eb04d linter: Add schema for `eslint/id-match` (#22987) (Sysix)
+- a800f27 linter: Add schema for `eslint/capitalized-comments` (#22984) (Sysix)
+- 96e2d32 linter: Add schema for `eslint/id-length` (#22963) (Sysix)
+- 545493f linter: Add schema for `eslint/complexity` (#22960) (Sysix)
+- 5f0b558 linter: Add schema for `eslint/class-methods-use-this` (#22959) (Sysix)
+- 719b720 linter: Add schema for simple rule configurations (#22948) (Sysix)
+- fd00966 linter: Add right schema for `eslint/max-*` rules (#22923) (Sysix)
+- 1226d78 linter: Fill schema with rule configurations (#22907) (Sysix)
+- 8f423c1 linter/vue: Implement `require-direct-export` rule (#17623) (yefan)
+- 78e915b linter/vue: Implement no-reserved-props rule (#22914) (bab)
+- 0f200a9 linter/vue: Implement require-prop-types rule (#22083) (Alex Peshkov)
+- 5da9da9 linter/vue: Implement no-reserved-keys rule (#21780) (bab)
+- 75e14a8 linter/vue: Implement prop-name-casing rule (#22892) (bab)
+
+### 🐛 Bug Fixes
+
+- 0383e61 linter: Fix schema for rules without a config (#22946) (Sysix)
+- 6cb34b8 linter/plugins: Make spreading `Token` instances keep `loc` property (#22947) (Nicolas Le Cam)
+- 27de044 linter/plugins: Make spreading `Comment` instances keep `loc` property (#22238) (Nicolas Le Cam)
+
+### ⚡ Performance
+
+- 0b7ce7e linter/plugins: Create global prop vars at top level of modules (#22928) (overlookmotel)
+- 0f7c319 linter/plugins: Define class `#loc` setter functions as `const`s (#22919) (overlookmotel)
+
+## [1.68.0] - 2026-06-01
+
+### 🚀 Features
+
+- e4b1f46 linter/typescript: Implement `method-signature-style` rule (#22679) (Mikhail Baev)
+- bc462ca linter/vue: Implement no-reserved-component-names rule (#22741) (bab)
+- ef9e751 linter/vue: Implement component-definition-name-casing rule (#22818) (bab)
+- d67f51a linter/vue: Implement require-prop-type-constructor rule (#22708) (bab)
+- 8422e8b linter/jsdoc: Implement `require-yields-description` rule (#22805) (Mikhail Baev)
+- fe93f97 linter/eslint: Implement `prefer-named-capture-group` rule (#22759) (Sebastian Poxhofer)
+
+### 🐛 Bug Fixes
+
+- 1599f11 linter: Align lsp extends default plugins (#22788) (camc314)
+
+## [1.67.0] - 2026-05-26
+
+### 🚀 Features
+
+- b84941e linter/vue: Implement no-expose-after-await rule (#22675) (bab)
+- 98b98c1 linter/vue: Implement no-computed-properties-in-data rule (#22674) (bab)
+- 2d4c919 oxlint: Support `vite-plus/resolveConfig` for vite.config.ts (#22456) (leaysgur)
+- 2a60012 linter/vue: Implement require-render-return rule (#22613) (bab)
+- 9f227fd linter/vue: Implement no-deprecated-props-default-this rule (#21892) (bab)
+- 9cd28b3 linter: Add debug option to print files to be linted (#22546) (camchenry)
+- 87f065e linter/vue: Implement return-in-emits-validator rule (#21935) (bab)
+- ea0380c linter/unicorn: Implement `import-style` rule (#22173) (Hao Chen)
+- dde40fe linter/vue: Implement no-watch-after-await rule (#22006) (bab)
+- a735eb0 linter/vue: Implement valid-next-tick rule (#22531) (bab)
+- 6dc615d linter/vue: Implement no-shared-component-data rule (#21842) (bab)
+- a656418 linter/vue: Implement valid-define-options rule (#22107) (bab)
+- bb6f1b2 linter/vue: Implement require-slots-as-functions rule (#22244) (bab)
+- 5fa4774 linter/n: Implement `callback-return` rule (#22470) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 52bd016 linter: Respect allow unused disable directives in LSP (#22715) (camc314)
+- d0211b0 linter: Allow undefined in DummyRuleMap index (#22626) (camc314)
+- 36fc0ec oxlint/lsp: "ignore this" actions merge with existing directive (#22604) (Sysix)
+
+## [1.66.0] - 2026-05-18
+
+### 🚀 Features
+
+- 0440b0f linter/eslint: Implement `id-match` rule (#22379) (Vladislav Sayapin)
+- 65bf119 linter: Implement react no-object-type-as-default-prop (#22481) (uhyo)
+- 2a6ddce linter/eslint: Implement `no-implied-eval` rule (#22391) (Vladislav Sayapin)
+- d3a3c1d linter: Auto detect agents from CLI and transition to the agent output format (#22068) (Jovi De Croock)
+- 625758a linter/vitest: Implement padding-around-after-all-blocks rule (#21788) (kapobajza)
+- 37680b0 linter: Implement react no-unstable-nested-components (#22248) (Jovi De Croock)
+- d8d9c74 linter: Implement import/newline-after-import rule (#19142) (Ryuya Yanagi)
+
+### 🐛 Bug Fixes
+
+- 3f59e03 linter: Only call rayon/miette/tracing inits once (#21899) (Matiss Janis Aboltins)
+- 5747ff1 linter: Avoid enabling jest with vitest plugin (#22499) (camc314)
+
+### ⚡ Performance
+
+- 4c9ca72 oxlint: Align walker thread count with rayon pool (#22494) (Boshen)
+
+## [1.65.0] - 2026-05-15
+
+### 🚀 Features
+
+- 5478fb5 linter/jsdoc: Implement `require-throws-description` rule (#22386) (Mikhail Baev)
+- b46d4de linter: Add `--debug` options and add per-rule timing info (#22282) (camchenry)
+- c73225e linter/eslint: Implement `prefer-arrow-callback` rule (#22312) (박천(Cheon Park))
+- de82b59 linter: Add support for `eslint-plugin-jsx-a11y-x` (#22356) (mehm8128)
+- f44b6c8 linter: Fill schemas `DummyRuleMap` with built-in rules (#22288) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 41fcdcf linter: Fix rule count not including override rules (#19898) (Daniel Osmond)
+
+## [1.64.0] - 2026-05-11
+
+### 💥 BREAKING CHANGES
+
+- 00ce512 oxlint/lsp: [**BREAKING**] Don't fix suggestions on fixAll code actions & command (#22195) (Sysix)
+
+### 🚀 Features
+
+- cf86d7a linter: Bulk suppression (#19328) (Said Atrahouch)
+- fbb8f22 linter: Support `ignores` in overrides (#22148) (camc314)
+- 5a4414d oxlint/lsp: Support `rulesCustomization` lsp option (#21858) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 6b50f23 oxlint/cli: Load root config by searching up parent directories (#22272) (Sysix)
+- 080d90e linter: Move `no-debugger` fix to suggestion (#22256) (Sysix)
+- 25b7017 linter: Undocument override `ignores` option (#22213) (camc314)
+- aafef0f ci: Disable bulk supression test on big endian (#22175) (camc314)
+- 46ab679 linter/plugins: Trim leading newline for partial sources (#20928) (bab)
+
+### 📚 Documentation
+
+- 7c1e049 oxlint/lsp: Improve autogenerated lsp docs (#22154) (Sysix)
+
+## [1.63.0] - 2026-05-05
+
+### 🚀 Features
+
+- 1884833 linter/plugins: Implement `SourceCode.getDisableDirectives` method (#21029) (Nicolas Le Cam)
+- 1d40d60 linter: Implement SARIF formatter (#22067) (camchenry)
+- 5699d53 linter: Add help text to `agent` formatter (#22064) (camchenry)
+- fe7194d oxlint: Add agent output mode (#21955) (Jovi De Croock)
+- 8b4829b linter: Split `no-negated-condition` rule to unicorn & eslint (#21998) (Sysix)
+- 1f29459 linter: Split `no-restricted-jest-methods` rule into jest and vitest (#21859) (Sysix)
+- e7f8d55 linter: Remove eslint prefixes from plugin names in diagnostics (#21806) (Connor Shea)
+
+### 🐛 Bug Fixes
+
+- 2047a35 linter: Treat adjacent fixes as overlapping (#22071) (camc314)
+- 0beaffc linter: Print resolved extended config (#22040) (camc314)
+- 893e18f linter: Stop gitignore lookup at repo boundary (#22033) (camc314)
+- 959a2db linter/reporter/github: Omit empty `file` annotations (#22017) (camc314)
+
+### ⚡ Performance
+
+- d9a1b32 linter/plugins: Avoid array lookups where possible in CFG visitor (#21940) (overlookmotel)
+- fefefd8 linter/plugins: Replace addition with bitwise OR in CFG visitor (#21939) (overlookmotel)
+
+### 📚 Documentation
+
+- cacbc4a linter: Fix jest settings docs. (#22127) (connorshea)
+- a15c5bb linter: Note that the `--format` flag accepts an `agent` option. (#22126) (connorshea)
+- d58f594 oxlint/lsp: Auto generate docs for LSP options (#22082) (Sysix)
+- 1caf5ad linter/plugins: Reformat comments (#21873) (overlookmotel)
+
+### 🛡️ Security
+
+- 82dbbec deps: Update npm packages (major) (#21558) (renovate[bot])
+
+## [1.62.0] - 2026-04-27
+
+### 💥 BREAKING CHANGES
+
+- 502e804 ast: [**BREAKING**] Reduce size of `TSTypePredicateName` (#21711) (overlookmotel)
+- 5651539 ast: [**BREAKING**] Reduce size of `JSXExpression` (#21710) (overlookmotel)
+- c44e280 ast: [**BREAKING**] Reduce size of `ArrayExpressionElement` (#21709) (overlookmotel)
+
+### 🚀 Features
+
+- bb0c359 linter: Split jest/no-identical-title into vitest/no-identical-title (#21810) (camchenry)
+- 54d787f linter: Split jest/no-disabled-tests into vitest/no-disabled-tests (#21802) (camchenry)
+- 348f46c linter: Add `respectEslintDisableDirectives` option (#21384) (Christian Vuerings)
+- 63ec351 linter: Support nested vite+ config discovery (#21638) (camc314)
+- 560feb4 linter: Introduce `Vite` variant to `DiscoveredConfigFile` (#21637) (camc314)
+- ce7a4dc linter/no-unreachable: Move rule from nursery to correctness (#21618) (camc314)
+- e3b5e78 linter/getter-return: Move rule from nursery to correctness (#21617) (camc314)
+- a0c883c oxlint/lsp: Add vite plus version to server info (#21587) (Sysix)
+
+### 🐛 Bug Fixes
+
+- aace797 linter: Detect Svelte TS and module scripts correctly (#20819) (mustafa0x)
+- 28c3521 oxlint/lsp: Remove overlapping edits for `source.fixAllDangerous.oxc` code action (#21785) (Sysix)
+- bc6ade5 linter: Report actual disable directive prefix (#21682) (camc314)
+- aa1a00c linter: Support jsx-a11y attributes setting in anchor-is-valid rule (#21665) (camchenry)
+- 8c425db linter: Allow string for jest version in config schema (#21649) (camc314)
+- c2ada2c linter: Make `--fix-dangerously` fix dangerous fixes and suggestions as documented (#13366) (Ulrich Stark)
+
+### ⚡ Performance
+
+- cdc9eae oxlint/lsp: Avoid clones on lsp options deserializion (#21748) (Sysix)
+
+### 📚 Documentation
+
+- 43adae9 linter: Add version section to rules page (#21601) (camchenry)
+- d15dad2 linter: Export rule version metadata (#21588) (Old Autumn)
+
 ## [1.61.0] - 2026-04-20
 
 ### 🚀 Features

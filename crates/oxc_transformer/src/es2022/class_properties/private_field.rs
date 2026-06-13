@@ -669,9 +669,6 @@ impl<'a> ClassProperties<'a> {
                 assign_expr.right =
                     self.create_assert_class_brand(class_ident, object, value, SPAN, ctx);
             } else {
-                let class_ident = class_binding.create_read_expression(ctx);
-                let value = assign_expr.right.take_in(ctx.ast);
-
                 // Make 2 copies of `object`
                 let (object1, object2) = self.duplicate_object(object, ctx);
 
