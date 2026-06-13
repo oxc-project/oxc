@@ -417,6 +417,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Add `@param` tag with name.
 
   ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:8:37]
+ 7 │                   */
+ 8 │                   export function testFn1 ({ prop = { a: 1, b: 2 } }) {
+   ·                                              ────     ─     ─
+ 9 │                   }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ╭─[require_param.tsx:3:25]
  2 │                     /** Foo. */
  3 │                     function foo(a, b, c) {}

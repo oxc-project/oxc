@@ -58,8 +58,8 @@ struct RequireParamConfig {
     /// Regex pattern to match types that exempt parameters from checking.
     #[serde(default = "default_check_types_pattern")]
     check_types_pattern: String,
-    // TODO: Support this config
-    // use_default_object_properties: bool,
+    /// Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`.
+    use_default_object_properties: bool,
     /// Set to `true` to ignore reporting when all params are missing. Defaults to `false`.
     ignore_when_all_params_missing: bool,
     /// Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.
@@ -80,6 +80,7 @@ impl Default for RequireParamConfig {
             check_types_pattern: default_check_types_pattern(),
             ignore_when_all_params_missing: false,
             interface_exempts_params_check: false,
+            use_default_object_properties: false,
         }
     }
 }
@@ -135,7 +136,7 @@ impl Rule for RequireParam {
                     return;
                 }
 
-                collect_params(&func.params)
+                collect_params(&func.params, self.0.use_default_object_properties)
             }
             AstKind::ArrowFunctionExpression(arrow_func) => {
                 if self.0.interface_exempts_params_check
@@ -145,7 +146,7 @@ impl Rule for RequireParam {
                     return;
                 }
 
-                collect_params(&arrow_func.params)
+                collect_params(&arrow_func.params, self.0.use_default_object_properties)
             }
             // If not a function, skip
             _ => return,
@@ -809,16 +810,16 @@ fn test() {
 			      }) {
 			      }
 			      "#, None, None),
-// ("
-// 			      /**
-// 			      * Returns a number.
-// 			      * @param {Object} props Props.
-// 			      * @param {Object} props.prop Prop.
-// 			      * @return {number} A number.
-// 			      */
-// 			      export function testFn1 ({ prop = { a: 1, b: 2 } }) {
-// 			      }
-// 			      ", Some(serde_json::json!([        {          "useDefaultObjectProperties": false,        },      ])), None), // {        "sourceType": "module",      },
+("
+			      /**
+			      * Returns a number.
+			      * @param {Object} props Props.
+			      * @param {Object} props.prop Prop.
+			      * @return {number} A number.
+			      */
+			      export function testFn1 ({ prop = { a: 1, b: 2 } }) {
+			      }
+			      ", Some(serde_json::json!([        {          "useDefaultObjectProperties": false,        },      ])), None), // {        "sourceType": "module",      },
 ("
 			      /**
 			       * @param this The this object
@@ -1535,22 +1536,22 @@ fn test() {
             None,
             None,
         ),
-        // (
-        //     "
-        // 			      /**
-        // 			      * Returns a number.
-        // 			      * @param {Object} props Props.
-        // 			      * @param {Object} props.prop Prop.
-        // 			      * @return {number} A number.
-        // 			      */
-        // 			      export function testFn1 ({ prop = { a: 1, b: 2 } }) {
-        // 			      }
-        // 			      ",
-        //     Some(
-        //         serde_json::json!([        {          "useDefaultObjectProperties": true,        },      ]),
-        //     ),
-        //     None,
-        // ), // {        "sourceType": "module",      },
+        (
+            "
+			      /**
+			      * Returns a number.
+			      * @param {Object} props Props.
+			      * @param {Object} props.prop Prop.
+			      * @return {number} A number.
+			      */
+			      export function testFn1 ({ prop = { a: 1, b: 2 } }) {
+			      }
+			      ",
+            Some(
+                serde_json::json!([        {          "useDefaultObjectProperties": true,        },      ]),
+            ),
+            None,
+        ), // {        "sourceType": "module",      },
         (
             "
 			        /** Foo. */
@@ -1587,7 +1588,6 @@ fn test() {
             ),
             None,
         ),
-        // `interfaceExemptsParamsCheck`: variable has no type annotation, so still report `foo`
         (
             "
 				          /**
@@ -1601,7 +1601,6 @@ fn test() {
             ),
             None,
         ),
-        // `interfaceExemptsParamsCheck`: destructured param has no type annotation, so still report
         (
             "
 				          /**

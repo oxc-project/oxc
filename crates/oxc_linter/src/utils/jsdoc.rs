@@ -2,7 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, FormalParameters},
+    ast::{BindingPattern, Expression, FormalParameters, ObjectPropertyKind, PropertyKey},
 };
 use oxc_semantic::{JSDoc, JSDocTag, Semantic};
 use oxc_span::Span;
@@ -184,7 +184,10 @@ pub enum ParamKind {
     Nested(Vec<Param>),
 }
 
-pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
+pub fn collect_params(
+    params: &FormalParameters,
+    use_default_object_properties: bool,
+) -> Vec<ParamKind> {
     // NOTE: Property level `is_rest` is implemented.
     //   - fn(a, { b1, ...b2 })
     //                 ^^^^^
@@ -192,7 +195,11 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
     //   - fn(a, ...{ b })
     //           ^^^^   ^
     // Tests are not covering these cases...
-    fn get_param_name(pattern: &BindingPattern, is_rest: bool) -> ParamKind {
+    fn get_param_name(
+        pattern: &BindingPattern,
+        is_rest: bool,
+        use_default_object_properties: bool,
+    ) -> ParamKind {
         match &pattern {
             BindingPattern::BindingIdentifier(ident) => {
                 ParamKind::Single(Param { span: ident.span, name: ident.name.to_string(), is_rest })
@@ -203,7 +210,7 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
                 for prop in &obj_pat.properties {
                     let Some(name) = prop.key.name() else { continue };
 
-                    match get_param_name(&prop.value, false) {
+                    match get_param_name(&prop.value, false, use_default_object_properties) {
                         ParamKind::Single(param) => {
                             collected.push(Param { name: format!("{name}"), ..param });
                         }
@@ -225,7 +232,7 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
                 }
 
                 if let Some(rest) = &obj_pat.rest {
-                    match get_param_name(&rest.argument, true) {
+                    match get_param_name(&rest.argument, true, use_default_object_properties) {
                         ParamKind::Single(param) => collected.push(param),
                         ParamKind::Nested(params) => collected.extend(params),
                     }
@@ -240,7 +247,7 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
                     let name = format!("\"{idx}\"");
 
                     if let Some(pat) = elm {
-                        match get_param_name(pat, false) {
+                        match get_param_name(pat, false, use_default_object_properties) {
                             ParamKind::Single(param) => collected.push(Param { name, ..param }),
                             ParamKind::Nested(params) => collected.extend(params),
                         }
@@ -248,7 +255,7 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
                 }
 
                 if let Some(rest) = &arr_pat.rest {
-                    match get_param_name(&rest.argument, true) {
+                    match get_param_name(&rest.argument, true, use_default_object_properties) {
                         ParamKind::Single(param) => collected.push(param),
                         ParamKind::Nested(params) => collected.extend(params),
                     }
@@ -257,24 +264,50 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
                 ParamKind::Nested(collected)
             }
             BindingPattern::AssignmentPattern(assign_pat) => match &assign_pat.right {
-                Expression::Identifier(_) => get_param_name(&assign_pat.left, false),
-                _ => {
-                    // TODO: If `config.useDefaultObjectProperties` = true,
-                    // collect default parameters from `assign_pat.right` like:
-                    // { prop = { a: 1, b: 2 }} => [prop, prop.a, prop.b]
-                    //     get_param_name(&assign_pat.left, false)
-                    // }
-                    get_param_name(&assign_pat.left, false)
+                Expression::Identifier(_) => {
+                    get_param_name(&assign_pat.left, false, use_default_object_properties)
                 }
+                Expression::ObjectExpression(obj) if use_default_object_properties => {
+                    let mut collected = match get_param_name(
+                        &assign_pat.left,
+                        false,
+                        use_default_object_properties,
+                    ) {
+                        ParamKind::Single(param) => vec![param],
+                        ParamKind::Nested(params) => params,
+                    };
+
+                    collected.extend(obj.properties.iter().filter_map(|prop| {
+                        let ObjectPropertyKind::ObjectProperty(obj_prop) = &prop else {
+                            return None;
+                        };
+
+                        let PropertyKey::StaticIdentifier(ident) = &obj_prop.key else {
+                            return None;
+                        };
+
+                        Some(Param {
+                            name: ident.name.to_string(),
+                            is_rest: false,
+                            span: ident.span,
+                        })
+                    }));
+
+                    ParamKind::Nested(collected)
+                }
+                _ => get_param_name(&assign_pat.left, false, use_default_object_properties),
             },
         }
     }
 
-    let mut collected =
-        params.items.iter().map(|param| get_param_name(&param.pattern, false)).collect::<Vec<_>>();
+    let mut collected = params
+        .items
+        .iter()
+        .map(|param| get_param_name(&param.pattern, false, use_default_object_properties))
+        .collect::<Vec<_>>();
 
     if let Some(rest) = &params.rest {
-        match get_param_name(&rest.rest.argument, true) {
+        match get_param_name(&rest.rest.argument, true, use_default_object_properties) {
             ParamKind::Single(param) => collected.push(ParamKind::Single(param)),
             ParamKind::Nested(params) => collected.push(ParamKind::Nested(params)),
         }
