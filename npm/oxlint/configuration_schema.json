@@ -8189,7 +8189,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/prefer-at": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferAtConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/prefer-bigint-literals": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -14864,6 +14881,27 @@
         "allowUnboundThis": {
           "default": true,
           "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferAtConfig": {
+      "type": "object",
+      "properties": {
+        "checkAllIndexAccess": {
+          "description": "Check all index access, not just special patterns like `array.length - 1`.\nWhen enabled, `array[0]`, `array[1]`, etc. will also be flagged.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Check all index access, not just special patterns like `array.length - 1`.\nWhen enabled, `array[0]`, `array[1]`, etc. will also be flagged."
+        },
+        "getLastElementFunctions": {
+          "description": "List of function names to treat as \"get last element\" functions.\nThese functions will be checked for `.at(-1)` usage.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of function names to treat as \"get last element\" functions.\nThese functions will be checked for `.at(-1)` usage."
         }
       },
       "additionalProperties": false
