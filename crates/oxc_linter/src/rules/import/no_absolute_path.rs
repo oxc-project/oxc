@@ -61,7 +61,7 @@ impl Default for NoAbsolutePath {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule forbids the import of modules using absolute paths.
+    /// Forbid the import of modules using absolute paths.
     ///
     /// ### Why is this bad?
     ///
@@ -107,7 +107,7 @@ declare_oxc_lint!(
     pending,
     config = NoAbsolutePath,
     version = "0.15.13",
-    short_description = "This rule forbids the import of modules using absolute paths.",
+    short_description = "Forbid the import of modules using absolute paths.",
 );
 
 impl Rule for NoAbsolutePath {
