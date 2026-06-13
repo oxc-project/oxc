@@ -19,21 +19,21 @@ const NO_VERIFIED_VALID_SCHEMA: [&str; 22] = [
     "eslint/no-restricted-imports", // uses spread syntax like [AllowWarnDeny, ...Config]
     "eslint/no-restricted-properties", // uses spread syntax like [AllowWarnDeny, ...Config]
     "node/callback-return",      // uses array syntax [AllowWarnDeny, string[]]
-    "eslint/prefer-destructuring",
     "import/extensions", // second config can be on first position like[AllowWarnDeny, Config1, Config2] | [AllowWarnDeny, Config1] | [AllowWarnDeny, Config2]
-    "jest/prefer-lowercase-title", // has options from other rule
-    "jest/valid-title",  // has options from other rule
-    "vitest/prefer-lowercase-title", // has options from other rule
-    "vitest/valid-title", // has options from other rule
-    "jsdoc/require-param",
-    "jsx_a11y/anchor-is-valid",
+    "jest/prefer-lowercase-title", // has options from other rule #23186
+    "jest/valid-title",  // has options from other rule #23186
+    "vitest/prefer-lowercase-title", // has options from other rule #23186
+    "vitest/valid-title", // has options from other rule #23186
+    "jsdoc/require-param", // missing options #23356
+    "jsx_a11y/anchor-is-valid", // missing options #23358
+    "unicorn/filename-case", // missing options #23248
+    "eslint/prefer-destructuring",
     "jsx_a11y/no-noninteractive-element-to-interactive-role",
     "jsx_a11y/no-interactive-element-to-noninteractive-role",
     "react/jsx-curly-brace-presence",
     "react/jsx-handler-names",
     "react/jsx-no-script-url",
     "typescript/no-restricted-types",
-    "unicorn/filename-case",
     "unicorn/import-style",
     "unicorn/numeric-separators-style",
 ];
