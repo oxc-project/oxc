@@ -306,6 +306,46 @@ export type PathOption = "always" | "never";
 export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
+export type ModuleStylesOverride =
+  | false
+  | {
+      /**
+       * Whether default imports or whole-module `require()` assignments are allowed for this module.
+       *
+       * With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
+       * ```js
+       * import chalk from "chalk";
+       * ```
+       */
+      default?: boolean;
+      /**
+       * Whether named imports or destructured `require()` calls are allowed for this module.
+       *
+       * With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
+       * ```js
+       * import {promisify} from "node:util";
+       * ```
+       */
+      named?: boolean;
+      /**
+       * Whether namespace imports or whole-module `require()` assignments are allowed for this module.
+       *
+       * With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
+       * ```js
+       * import * as fs from "node:fs";
+       * ```
+       */
+      namespace?: boolean;
+      /**
+       * Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
+       *
+       * With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
+       * ```js
+       * import "polyfill";
+       * ```
+       */
+      unassigned?: boolean;
+    };
 export type NoInstanceofBuiltinsStrategy = "strict" | "loose";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
@@ -1509,7 +1549,7 @@ export interface DummyRuleMap {
   "unicorn/escape-case"?: RuleNoConfig;
   "unicorn/explicit-length-check"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExplicitLengthCheck];
   "unicorn/filename-case"?: DummyRule;
-  "unicorn/import-style"?: DummyRule;
+  "unicorn/import-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ImportStyleConfig];
   "unicorn/new-for-builtins"?: RuleNoConfig;
   "unicorn/no-abusive-eslint-disable"?: RuleNoConfig;
   "unicorn/no-accessor-recursion"?: RuleNoConfig;
@@ -5721,6 +5761,117 @@ export interface ExplicitLengthCheck {
    * Configuration option to specify how non-zero length checks should be enforced.
    */
   "non-zero"?: NonZero;
+}
+export interface ImportStyleConfig {
+  /**
+   * Whether dynamic import expressions are checked.
+   *
+   * Set this to `false` to skip calls such as `await import("module")`.
+   *
+   * With the default configuration, examples of **incorrect** code:
+   * ```js
+   * async () => {
+   * const {red} = await import("chalk");
+   * };
+   * ```
+   *
+   * Examples of **correct** code:
+   * ```js
+   * async () => {
+   * const {default: chalk} = await import("chalk");
+   * };
+   * ```
+   */
+  checkDynamicImport?: boolean;
+  /**
+   * Whether export-from declarations are checked.
+   *
+   * This is disabled by default. Set this to `true` to check declarations like
+   * `export ... from "module"`.
+   *
+   * With `{ "checkExportFrom": true }`, examples of **incorrect** code:
+   * ```js
+   * export * from "node:util";
+   * ```
+   *
+   * Examples of **correct** code:
+   * ```js
+   * export {promisify} from "node:util";
+   * ```
+   */
+  checkExportFrom?: boolean;
+  /**
+   * Whether static import declarations are checked.
+   *
+   * Set this to `false` to skip `import ... from "module"` and side-effect imports like
+   * `import "module"`.
+   *
+   * With the default configuration, examples of **incorrect** code:
+   * ```js
+   * import {red} from "chalk";
+   * ```
+   *
+   * Examples of **correct** code:
+   * ```js
+   * import chalk from "chalk";
+   * ```
+   */
+  checkImport?: boolean;
+  /**
+   * Whether CommonJS `require()` calls are checked.
+   *
+   * Set this to `false` to skip `require("module")` calls completely.
+   *
+   * With the default configuration, examples of **incorrect** code:
+   * ```js
+   * const util = require("node:util");
+   * ```
+   *
+   * Examples of **correct** code:
+   * ```js
+   * const {promisify} = require("node:util");
+   * ```
+   */
+  checkRequire?: boolean;
+  /**
+   * Whether `styles` extends or replaces the built-in module preferences.
+   *
+   * When this is `true`, entries in `styles` are merged with the default preferences. For
+   * example, `{ "styles": { "path": { "named": true } } }` allows named imports from
+   * `path` while leaving its default import style allowed. When this is `false`, only modules
+   * configured in `styles` are checked.
+   *
+   * With `{ "extendDefaultStyles": false, "styles": {} }`, examples of **correct** code:
+   * ```js
+   * import {red} from "chalk";
+   * ```
+   */
+  extendDefaultStyles?: boolean;
+  /**
+   * Per-module import style preferences.
+   *
+   * Each key is a module specifier. Set the value to `false` to disable checking for the
+   * module, or to an object that allows one or more import styles. The available styles are
+   * `unassigned`, `default`, `namespace`, and `named`. When `extendDefaultStyles` is `true`,
+   * these entries extend the built-in defaults instead of replacing them.
+   *
+   * The default module preferences are default imports for `chalk`, `path`, and `node:path`,
+   * and named imports for `util` and `node:util`.
+   *
+   * With `{ "styles": { "node:util": { "named": true, "default": false } } }`,
+   * examples of **incorrect** code:
+   * ```js
+   * import util from "node:util";
+   * ```
+   *
+   * Examples of **correct** code:
+   * ```js
+   * import {promisify} from "node:util";
+   * ```
+   */
+  styles?: {
+    [k: string]: ModuleStylesOverride;
+  };
 }
 export interface NoArrayReduce {
   /**
