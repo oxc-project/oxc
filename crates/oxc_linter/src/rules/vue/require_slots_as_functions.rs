@@ -24,7 +24,7 @@ pub struct RequireSlotsAsFunctions;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce properties of `$slots` to be used as a function.
+    /// Enforce properties of `$slots` to be used as functions.
     ///
     /// ### Why is this bad?
     ///
@@ -61,7 +61,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.67.0",
-    short_description = "Enforce properties of `$slots` to be used as a function.",
+    short_description = "Enforce properties of `$slots` to be used as functions.",
 );
 
 impl Rule for RequireSlotsAsFunctions {

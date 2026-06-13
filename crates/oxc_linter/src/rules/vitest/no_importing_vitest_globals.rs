@@ -27,7 +27,7 @@ pub struct NoImportingVitestGlobals;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The rule disallows importing any vitest global functions.
+    /// The rule disallows importing any Vitest global functions.
     ///
     /// ### Why is this bad?
     ///
@@ -68,7 +68,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.49.0",
-    short_description = "The rule disallows importing any vitest global functions.",
+    short_description = "The rule disallows importing any Vitest global functions.",
 );
 
 impl Rule for NoImportingVitestGlobals {

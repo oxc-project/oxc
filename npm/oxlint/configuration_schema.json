@@ -14827,12 +14827,12 @@
     "Prefer": {
       "oneOf": [
         {
-          "description": "Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators.",
+          "description": "Enforces that you always use `import type Foo from '...'`, except when referenced by decorator metadata.",
           "type": "string",
           "enum": [
             "type-imports"
           ],
-          "markdownDescription": "Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators."
+          "markdownDescription": "Enforces that you always use `import type Foo from '...'`, except when referenced by decorator metadata."
         },
         {
           "description": "Will enforce that you always use `import Foo from '...'`",

@@ -27,12 +27,12 @@ impl std::ops::Deref for JsxNoNewObjectAsProp {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent Objects that are local to the current method from being used
+    /// Prevent objects that are local to the current method from being used
     /// as values of JSX props.
     ///
     /// ### Why is this bad?
     ///
-    /// Using locally defined Objects as values for props can lead to unintentional
+    /// Using locally defined objects as values for props can lead to unintentional
     /// re-renders and performance issues. Every time the parent component renders,
     /// a new instance of the Object is created, causing unnecessary re-renders of
     /// child components. This also leads to harder-to-maintain code as the
@@ -59,7 +59,7 @@ declare_oxc_lint!(
     perf,
     config = ReactPerfConfig,
     version = "0.2.3",
-    short_description = "Prevent Objects that are local to the current method from being used as values of JSX props.",
+    short_description = "Prevent objects that are local to the current method from being used as values of JSX props.",
 );
 
 impl ReactPerfRule for JsxNoNewObjectAsProp {

@@ -49,7 +49,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "0.0.16",
-    short_description = "Enforce throwing a `TypeError` instead of a generic `Error` after a type checking if-statement.",
+    short_description = "Enforce throwing a `TypeError` instead of a generic `Error` after a type-checking if statement.",
 );
 
 impl Rule for PreferTypeError {

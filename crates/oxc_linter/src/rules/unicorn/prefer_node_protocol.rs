@@ -10,9 +10,11 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_node_protocol_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer using the `node:` protocol when importing Node.js builtin modules.")
-        .with_help(format!("Prefer `node:{module_name}` over `{module_name}`."))
-        .with_label(span)
+    OxcDiagnostic::warn(
+        "Prefer using the `node:` protocol when importing Node.js built-in modules.",
+    )
+    .with_help(format!("Prefer `node:{module_name}` over `{module_name}`."))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,11 +23,11 @@ pub struct PreferNodeProtocol;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer using the `node:protocol` when importing Node.js builtin modules.
+    /// Prefer using the `node:` protocol when importing Node.js built-in modules.
     ///
     /// ### Why is this bad?
     ///
-    /// Node.js builtin modules should be imported using the `node:` protocol to avoid ambiguity with local modules.
+    /// Node.js built-in modules should be imported using the `node:` protocol to avoid ambiguity with local modules.
     ///
     /// ### Examples
     ///
@@ -43,7 +45,7 @@ declare_oxc_lint!(
     restriction,
     fix,
     version = "0.0.19",
-    short_description = "Prefer using the `node:protocol` when importing Node.js builtin modules.",
+    short_description = "Prefer using the `node:` protocol when importing Node.js built-in modules.",
 );
 
 impl Rule for PreferNodeProtocol {

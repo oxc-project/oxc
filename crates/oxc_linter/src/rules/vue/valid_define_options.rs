@@ -39,7 +39,7 @@ pub struct ValidDefineOptions;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce valid `defineOptions` compiler macro.
+    /// Enforce valid use of the `defineOptions` compiler macro.
     ///
     /// ### Why is this bad?
     ///
@@ -71,7 +71,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.67.0",
-    short_description = "Enforce valid `defineOptions` compiler macro.",
+    short_description = "Enforce valid use of the `defineOptions` compiler macro.",
 );
 
 const DISALLOWED_PROPS: &[(&str, &str)] = &[

@@ -17,7 +17,7 @@ pub struct NoDeprecatedDataObjectDeclaration;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow object declaration on `data` (in Vue.js 3.0.0+).
+    /// Disallow object declarations for `data` (in Vue.js 3.0.0+).
     ///
     /// ### Why is this bad?
     ///
@@ -54,7 +54,7 @@ declare_oxc_lint!(
     correctness,
     pending, // fixer will be implemented later
     version = "1.62.0",
-    short_description = "Disallow object declaration on `data` (in Vue.js 3.0.0+).",
+    short_description = "Disallow object declarations for `data` (in Vue.js 3.0.0+).",
 );
 
 impl Rule for NoDeprecatedDataObjectDeclaration {

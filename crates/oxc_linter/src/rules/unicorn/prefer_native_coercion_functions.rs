@@ -27,7 +27,7 @@ pub struct PreferNativeCoercionFunctions;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers built in functions, over custom ones with the same functionality.
+    /// Prefers built-in functions over custom ones with the same functionality.
     ///
     /// ### Why is this bad?
     ///
@@ -55,7 +55,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     version = "0.0.19",
-    short_description = "Prefers built in functions, over custom ones with the same functionality.",
+    short_description = "Prefers built-in functions over custom ones with the same functionality.",
 );
 
 impl Rule for PreferNativeCoercionFunctions {

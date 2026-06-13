@@ -109,7 +109,7 @@ impl JsxNoTargetBlank {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule aims to prevent user generated link hrefs and form actions from creating security vulnerabilities by
+    /// This rule aims to prevent user-generated link hrefs and form actions from creating security vulnerabilities by
     /// requiring `rel='noreferrer'` for external link hrefs and form actions, and optionally any dynamically generated
     /// link hrefs and form actions.
     ///
@@ -147,7 +147,7 @@ declare_oxc_lint!(
     pending,
     config = JsxNoTargetBlank,
     version = "0.2.5",
-    short_description = "This rule aims to prevent user generated link hrefs and form actions from creating security vulnerabilities.",
+    short_description = "This rule aims to prevent user-generated link hrefs and form actions from creating security vulnerabilities.",
 );
 
 impl Rule for JsxNoTargetBlank {

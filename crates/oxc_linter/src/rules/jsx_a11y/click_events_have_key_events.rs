@@ -30,7 +30,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screenreader users.
+    /// Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screen reader users.
     /// This does not apply for interactive or hidden elements.
     ///
     /// ### Examples

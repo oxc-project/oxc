@@ -39,7 +39,7 @@ pub struct NoMultipleResolved;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule warns of paths that resolve multiple times in executor functions that Promise constructors.
+    /// This rule warns of paths that resolve multiple times in executor functions of Promise constructors.
     ///
     /// ### Why is this bad?
     ///
@@ -80,7 +80,7 @@ declare_oxc_lint!(
     promise,
     suspicious,
     version = "1.19.0",
-    short_description = "This rule warns of paths that resolve multiple times in executor functions that Promise constructors.",
+    short_description = "This rule warns of paths that resolve multiple times in executor functions of Promise constructors.",
 );
 
 impl Rule for NoMultipleResolved {

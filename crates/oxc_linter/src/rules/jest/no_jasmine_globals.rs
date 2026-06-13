@@ -27,7 +27,7 @@ pub struct NoJasmineGlobals;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule reports on any usage of Jasmine globals, which is not ported to
+    /// This rule reports on any usage of Jasmine globals, which are not ported to
     /// Jest, and suggests alternatives from Jest's own API.
     ///
     /// ### Why is this bad?
@@ -67,7 +67,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.0.13",
-    short_description = "This rule reports on any usage of Jasmine globals, which is not ported to Jest, and suggests alternatives from Jest's own API.",
+    short_description = "This rule reports on any usage of Jasmine globals, which are not ported to Jest, and suggests alternatives from Jest's own API.",
 );
 
 const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];
