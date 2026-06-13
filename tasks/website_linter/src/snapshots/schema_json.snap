@@ -1612,6 +1612,75 @@ expression: json
       },
       "additionalProperties": false
     },
+    "ControlHasAssociatedLabelConfig": {
+      "type": "object",
+      "properties": {
+        "controlComponents": {
+          "description": "Custom JSX components to be treated as interactive controls.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom JSX components to be treated as interactive controls."
+        },
+        "depth": {
+          "description": "Maximum depth to search for an accessible label within the element.\nDefaults to `2`.",
+          "default": 2,
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum depth to search for an accessible label within the element.\nDefaults to `2`."
+        },
+        "ignoreElements": {
+          "description": "Elements to ignore.\nDefaults to `[\"audio\", \"canvas\", \"embed\", \"input\", \"textarea\", \"tr\", \"video\"]`.",
+          "default": [
+            "audio",
+            "canvas",
+            "embed",
+            "input",
+            "textarea",
+            "tr",
+            "video"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Elements to ignore.\nDefaults to `[\"audio\", \"canvas\", \"embed\", \"input\", \"textarea\", \"tr\", \"video\"]`."
+        },
+        "ignoreRoles": {
+          "description": "Interactive roles to ignore.\nDefaults to `[\"grid\", \"listbox\", \"menu\", \"menubar\", \"radiogroup\", \"row\", \"tablist\", \"toolbar\", \"tree\", \"treegrid\"]`.",
+          "default": [
+            "grid",
+            "listbox",
+            "menu",
+            "menubar",
+            "radiogroup",
+            "row",
+            "tablist",
+            "toolbar",
+            "tree",
+            "treegrid"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Interactive roles to ignore.\nDefaults to `[\"grid\", \"listbox\", \"menu\", \"menubar\", \"radiogroup\", \"row\", \"tablist\", \"toolbar\", \"tree\", \"treegrid\"]`."
+        },
+        "labelAttributes": {
+          "description": "Additional attributes to check for accessible label text.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional attributes to check for accessible label text."
+        }
+      },
+      "additionalProperties": false
+    },
     "CountThis": {
       "oneOf": [
         {
@@ -3415,7 +3484,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/control-has-associated-label": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ControlHasAssociatedLabelConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/heading-has-content": {
           "anyOf": [

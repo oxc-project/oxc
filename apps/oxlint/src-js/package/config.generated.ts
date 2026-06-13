@@ -928,7 +928,10 @@ export interface DummyRuleMap {
   "jsx-a11y/aria-unsupported-elements"?: RuleNoConfig;
   "jsx-a11y/autocomplete-valid"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AutocompleteValidConfig];
   "jsx-a11y/click-events-have-key-events"?: RuleNoConfig;
-  "jsx-a11y/control-has-associated-label"?: DummyRule;
+  "jsx-a11y/control-has-associated-label"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, ControlHasAssociatedLabelConfig];
   "jsx-a11y/heading-has-content"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, HeadingHasContentConfig];
   "jsx-a11y/html-has-lang"?: RuleNoConfig;
   "jsx-a11y/iframe-has-title"?: RuleNoConfig;
@@ -2475,6 +2478,31 @@ export interface AutocompleteValidConfig {
    * List of custom component names that should be treated as input elements.
    */
   inputComponents?: string[];
+}
+export interface ControlHasAssociatedLabelConfig {
+  /**
+   * Custom JSX components to be treated as interactive controls.
+   */
+  controlComponents?: string[];
+  /**
+   * Maximum depth to search for an accessible label within the element.
+   * Defaults to `2`.
+   */
+  depth?: number;
+  /**
+   * Elements to ignore.
+   * Defaults to `["audio", "canvas", "embed", "input", "textarea", "tr", "video"]`.
+   */
+  ignoreElements?: string[];
+  /**
+   * Interactive roles to ignore.
+   * Defaults to `["grid", "listbox", "menu", "menubar", "radiogroup", "row", "tablist", "toolbar", "tree", "treegrid"]`.
+   */
+  ignoreRoles?: string[];
+  /**
+   * Additional attributes to check for accessible label text.
+   */
+  labelAttributes?: string[];
 }
 export interface HeadingHasContentConfig {
   /**
