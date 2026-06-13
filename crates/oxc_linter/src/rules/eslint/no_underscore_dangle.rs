@@ -113,6 +113,7 @@ declare_oxc_lint!(
     suspicious,
     config = NoUnderscoreDangle,
     version = "1.62.0",
+    short_description = "Disallows dangling underscores in identifiers.",
 );
 
 impl Rule for NoUnderscoreDangle {

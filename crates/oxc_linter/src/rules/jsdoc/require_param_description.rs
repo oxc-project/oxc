@@ -49,6 +49,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     version = "0.4.4",
+    short_description = "Requires that each `@param` tag has a description value.",
 );
 
 impl Rule for RequireParamDescription {

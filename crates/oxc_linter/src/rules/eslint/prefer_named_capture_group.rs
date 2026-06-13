@@ -65,6 +65,7 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "1.68.0",
+    short_description = "Enforces the use of named capture groups in regular expressions.",
 );
 
 impl Rule for PreferNamedCaptureGroup {

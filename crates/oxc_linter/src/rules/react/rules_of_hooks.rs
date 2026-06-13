@@ -228,6 +228,7 @@ declare_oxc_lint!(
     react,
     pedantic,
     version = "0.3.3",
+    short_description = "Enforces the Rules of Hooks, ensuring that React Hooks are only called in valid contexts and in the correct order.",
 );
 
 impl Rule for RulesOfHooks {

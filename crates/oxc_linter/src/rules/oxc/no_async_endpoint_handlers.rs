@@ -179,6 +179,7 @@ declare_oxc_lint!(
     suspicious,
     config = NoAsyncEndpointHandlersConfig,
     version = "0.9.2",
+    short_description = "Disallows the use of `async` functions as Express endpoint handlers.",
 );
 
 impl Rule for NoAsyncEndpointHandlers {

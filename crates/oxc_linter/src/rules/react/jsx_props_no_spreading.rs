@@ -86,6 +86,7 @@ declare_oxc_lint!(
     style,
     config = JsxPropsNoSpreadingConfig,
     version = "1.33.0",
+    short_description = "Disallow JSX prop spreading.",
 );
 
 impl Rule for JsxPropsNoSpreading {

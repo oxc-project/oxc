@@ -62,6 +62,7 @@ declare_oxc_lint!(
     oxc,
     suspicious,
     version = "1.33.0",
+    short_description = "Disallows the use of `this` in exported functions.",
 );
 
 impl Rule for NoThisInExportedFunction {

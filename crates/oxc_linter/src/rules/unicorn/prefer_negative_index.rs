@@ -56,6 +56,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.13.2",
+    short_description = "Prefer using a negative index over `.length - index` when possible.",
 );
 
 impl Rule for PreferNegativeIndex {

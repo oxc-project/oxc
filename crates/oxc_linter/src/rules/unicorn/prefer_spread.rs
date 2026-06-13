@@ -45,6 +45,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.0.17",
+    short_description = "Enforces the use of the spread operator (`...`) over outdated patterns.",
 );
 
 impl Rule for PreferSpread {

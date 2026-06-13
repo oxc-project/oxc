@@ -90,6 +90,7 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "0.15.4",
+    short_description = "Enforces that all `var` declarations are placed at the top of their containing scope.",
 );
 
 impl Rule for VarsOnTop {

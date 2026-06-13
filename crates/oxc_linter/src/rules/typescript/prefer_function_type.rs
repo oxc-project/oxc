@@ -87,6 +87,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.2.11",
+    short_description = "Enforce using function types instead of interfaces with call signatures.",
 );
 
 fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {

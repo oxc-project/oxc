@@ -94,6 +94,7 @@ declare_oxc_lint!(
     fix,
     config = NoRedundantRolesConfig,
     version = "0.2.1",
+    short_description = "Enforces that code does not include a redundant `role` property, in the case that it's identical to the implicit `role` property of the element type.",
 );
 
 impl Rule for NoRedundantRoles {

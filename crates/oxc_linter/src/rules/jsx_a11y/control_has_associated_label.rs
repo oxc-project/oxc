@@ -138,6 +138,7 @@ declare_oxc_lint!(
     correctness,
     config = ControlHasAssociatedLabelConfig,
     version = "1.65.0",
+    short_description = "Enforce that a control (an interactive element) has a text label.",
 );
 
 impl Rule for ControlHasAssociatedLabel {

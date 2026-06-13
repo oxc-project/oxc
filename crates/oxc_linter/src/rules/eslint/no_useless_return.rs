@@ -70,6 +70,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     version = "1.32.0",
+    short_description = "Disallows redundant return statements.",
 );
 
 impl Rule for NoUselessReturn {

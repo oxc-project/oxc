@@ -54,6 +54,7 @@ declare_oxc_lint!(
     restriction,
     fix,
     version = "0.0.18",
+    short_description = "Disallow 2+ consecutive spaces in regular expressions.",
 );
 
 impl Rule for NoRegexSpaces {

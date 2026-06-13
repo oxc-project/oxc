@@ -104,6 +104,7 @@ declare_oxc_lint!(
     correctness,
     config = ImgRedundantAltConfig,
     version = "0.0.19",
+    short_description = "Enforce that `img` alt attributes do not contain redundant words like \"image\", \"picture\", or \"photo\".",
 );
 
 impl Rule for ImgRedundantAlt {

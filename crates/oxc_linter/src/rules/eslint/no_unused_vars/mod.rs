@@ -205,6 +205,7 @@ declare_oxc_lint!(
     fix = conditional_dangerous_fix_or_suggestion,
     config = NoUnusedVarsConfig,
     version = "0.7.0",
+    short_description = "Disallows variable declarations, imports, or type declarations that are not used in code.",
 );
 
 impl Deref for NoUnusedVars {

@@ -127,6 +127,7 @@ declare_oxc_lint!(
     correctness,
     config = LabelHasAssociatedControlConfig,
     version = "0.9.1",
+    short_description = "Enforce that a label tag has a text label and an associated control.",
 );
 
 impl Rule for LabelHasAssociatedControl {

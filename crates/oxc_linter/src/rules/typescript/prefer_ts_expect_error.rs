@@ -58,6 +58,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "0.2.11",
+    short_description = "Enforce using @ts-expect-error over @ts-ignore.",
 );
 
 impl Rule for PreferTsExpectError {
