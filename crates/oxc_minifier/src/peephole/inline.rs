@@ -1,6 +1,8 @@
 use crate::generated::ancestor::Ancestor;
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
+use oxc_ecmascript::constant_evaluation::{
+    ConstantEvaluation, ConstantValue, str_has_lone_surrogate_encoding,
+};
 use oxc_span::GetSpan;
 
 use crate::TraverseCtx;
@@ -135,6 +137,15 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Some(cv) = &symbol_value.initialized_constant else { return };
+        // `ConstantValue::String` holds the encoded bytes but not the flag, so materializing
+        // a lone-surrogate initializer via `value_to_expr` would emit a flagless literal. Only
+        // the single-use branch below can reach a flagged string: the multi-reference branch is
+        // gated on `s.len() <= 3`, well under the 7-byte minimum encoded form.
+        if let ConstantValue::String(s) = cv
+            && str_has_lone_surrogate_encoding(s)
+        {
+            return;
+        }
         if symbol_value.read_references_count == 1
             || match cv {
                 ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,

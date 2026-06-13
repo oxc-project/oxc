@@ -1112,6 +1112,25 @@ fn test_fold_string_length() {
 
     // Test Unicode escapes are accounted for.
     fold("x = '123\\u01dc'.length", "x = 4");
+
+    // Lone-surrogate literals fold by subtracting 4 per encoded `\u{FFFD}XXXX` run from the
+    // stored UTF-16 length — each run is one runtime code unit (a surrogate, or U+FFFD itself
+    // via the `fffd` self-escape). `['length']` first rewrites to `.length`, then runs the
+    // same fold.
+    fold("x = '\\uDC00'.length", "x = 1");
+    fold("x = '[\\uDC00]'.length", "x = 3");
+    fold("x = '\\uDC00\\uDC00'.length", "x = 2");
+    fold("x = '\\uFFFD\\uDC00'.length", "x = 2");
+    fold("x = '\\uDC00'['length']", "x = 1");
+
+    // Identifier- and concat-bound flagged strings still bail: the flag doesn't survive the
+    // `ConstantValue::String` boundary, and a byte-scan can't tell an encoded run from a real
+    // U+FFFD followed by four hex characters. Pinning the current conservative miss.
+    test_same("const a = '\\uDC00'; x = a.length, y = a");
+    test_same("x = ('\\uDC00' + 'a').length");
+
+    // `\u{FFFD}` + non-surrogate hex is a real replacement character, not the encoding.
+    fold("x = '\\uFFFD0000'.length", "x = 5");
 }
 
 #[test]
@@ -1224,6 +1243,12 @@ fn test_number_constructor() {
     fold("Number('a')", "NaN");
     fold("Number('1')", "1");
     test_same("var Number; NOOP(Number(1))");
+    // `Number('\uDC00')` routes through `evaluate_value_to_number` and folds to `NaN` —
+    // the `+'\uDC00'` else-branch in `fold_call_expression` is unreachable for string
+    // literals (they always produce `Some(f64)`), but is kept as defensive coverage.
+    // Pinning this direction here; the defensive branch's flag-preservation is
+    // visually audited only.
+    fold("Number('\\uDC00')", "NaN");
 }
 
 #[test]
@@ -1277,6 +1302,147 @@ fn test_inline_values_in_template_literal() {
     fold("`foo${'${}'}`", "'foo${}'");
     fold("`foo${'${}'}${i}`", "`foo\\${}${i}`");
     fold_same("foo`foo${1}bar`");
+}
+
+/// String folds that merge bytes into a new `StringLiteral` must skip when any input carries the
+/// lone-surrogate encoding — the merged literal would default to `lone_surrogates: false`, so
+/// codegen would emit the escape bytes literally, or (adversarial case `"�dc00" + "\uDC00"`)
+/// misread the real U+FFFD as a surrogate escape.
+#[test]
+fn test_lone_surrogate_bailouts() {
+    // https://github.com/oxc-project/oxc/issues/15524
+    test_same("console.log(':' + `[\\uDC00-\\uDFFF]`)");
+
+    // String + string concat.
+    test_same("x = '[\\uDC00]' + '[\\uDFFF]'");
+    test_same("x = 'a' + '[\\uDC00]'");
+    test_same("x = '[\\uDC00]' + 'a'");
+
+    // Adversarial: left has real-U+FFFD-followed-by-ASCII bytes identical to the encoding of
+    // the right's lone low surrogate. A flagless merge would misread the result as an escape.
+    test_same("x = '\\uFFFDdc00' + '\\uDC00'");
+
+    // Triple concat and the `a + 'b' + 'c' → a + 'bc'` reshape.
+    test_same("x = 'a' + '[\\uDC00]' + 'b'");
+    test_same("x = '[\\uDC00]' + 'a' + '[\\uDFFF]'");
+    test_same("x = a + '[\\uDC00]' + 'b'");
+    test_same("x = a + 'b' + '[\\uDC00]'");
+
+    // Template merges, both directions and both kinds.
+    test_same("x = `[\\uDC00]` + ':'");
+    test_same("x = ':' + `[\\uDC00]`");
+    test_same("x = `[\\uDC00]` + `[\\uDFFF]`");
+    test_same("x = `a${b}[\\uDC00]` + `[\\uDFFF]${c}d`");
+
+    // Template → string-literal collapse stays a template.
+    test_same("x = `[\\uDC00]`");
+    test_same("x = `a[\\uDC00]b`");
+
+    // Template inlining bails when any quasi or foldable expression carries the encoding.
+    test_same("x = `foo${1}[\\uDC00]`");
+    test_same("x = `foo${'[\\uDC00]'}bar`");
+
+    // Single-use identifier bindings exercise `inline.rs`'s byte-scan guard. Without it, the
+    // initializer gets materialized at the reference site via `value_to_expr` as a flagless
+    // literal, i.e. `log('�dc00')` (real-U+FFFD + ASCII, a 5-code-unit runtime string
+    // instead of the 1-unit lone surrogate). With the guard, an identifier-substitution path
+    // preserves the flag and the output is `log('\uDC00')`. (The multi-reference analogue
+    // won't hit the inline path at all — the only string case that inlines at multi-ref is
+    // `s.len() <= 3`, and the shortest encoded lone surrogate is 7 bytes.)
+    test("const a = '\\uDC00'; log(a)", "log('\\uDC00')");
+    test("const a = `\\uDC00`; log(a)", "log(`\\uDC00`)");
+
+    // Multi-use identifier bindings. Template-initialized form exercises
+    // `substitute_template_literal`'s bail-out leaving the init as a template for codegen.
+    test_same("const a = '\\uDC00'; log(a, a)");
+    test_same("const a = `\\uDC00`; log(a, a)");
+
+    // Flagged-via-identifier operands at specific fold sites. The trailing `a` pins the
+    // binding against the single-reference inline path (strings only multi-ref-inline when
+    // `s.len() <= 3`, well below the 7-byte encoded lone surrogate), so `a` stays as an
+    // Identifier at the fold site and exercises the Identifier arm of the bail-out.
+    //
+    // `try_fold_string_casing`'s own inlined byte-scan on the resolved constant.
+    test_same("const a = '\\uDC00'; log(a.toLowerCase(), a)");
+    // `.replace()` fold calls `expr_may_have_lone_surrogates` on the replacement arg, hitting
+    // the Identifier arm's byte-scan.
+    test_same("const a = '\\uDC00'; log('foo'.replace('f', a), a)");
+    // Same guard, search-arg position (distinct call site). Adversarial receiver: bytes of
+    // `'�dc00'` are real-U+FFFD + ASCII at runtime (5 code units, no match for a lone
+    // surrogate) but match the encoded form of `a`. Without the guard the fold locates
+    // `a` by byte equality and replaces, emitting `log('x', ...)`.
+    test_same("const a = '\\uDC00'; log('\\uFFFDdc00'.replace(a, 'x'), a)");
+    // The `a + 'b' + 'c' → a + 'bc'` reshape with a flagged-via-identifier trailing operand:
+    // `(a + 'b') + c` checks `expr_may_have_lone_surrogates(c)` through the Identifier arm
+    // before merging `'b'` and `c` into a flagless literal.
+    test_same("const c = '\\uDC00'; log(a + 'b' + c, c)");
+    // Move-then-fold-bail: the single-use inliner in `minimize_statements.rs` substitutes
+    // `a`'s init verbatim via `take_in`, producing `log('\uDC00' + 'b')` with the flag
+    // intact; the next iteration's `+` fold then bails on its StringLiteral arm. Pins down
+    // that the move preserves `lone_surrogates` so the downstream guard still sees the flag.
+    test("const a = '\\uDC00'; log(a + 'b')", "log('\\uDC00' + 'b')");
+
+    // Control cases: plain U+FFFD (not the encoding) still folds.
+    fold("'\\uFFFD' + 'x'", "'\\uFFFDx'");
+    fold("'\\uFFFD' + '0000'", "'\\uFFFD0000'");
+    fold("'\\uFFFD' + 'dc00'", "'\\uFFFDdc00'");
+    fold("'\\uFFFD' + 'fffd'", "'\\uFFFDfffd'");
+
+    // Non-literal subexpressions fold in exit order to a plain lone-surrogate literal; the
+    // parent Addition then bails, leaving the literal with its flag preserved.
+    test("x = 'a' + (true ? '\\uDC00' : '')", "x = 'a' + '\\uDC00'");
+    test("x = 'a' + (0, '\\uDC00')", "x = 'a' + '\\uDC00'");
+    test("x = 'a' + ('' || '\\uDC00')", "x = 'a' + '\\uDC00'");
+
+    // `"" + x → x` and `x + "" → x` (with `x` string-typed) remain safe to fold even when `x`
+    // carries the encoding: `take_in` moves the operand verbatim so its flag rides along.
+    test("x = '' + '\\uDC00'", "x = '\\uDC00'");
+    test("x = '\\uDC00' + ''", "x = '\\uDC00'");
+    test("x = [] + '\\uDC00'", "x = '\\uDC00'");
+    test("x = '\\uDC00' + []", "x = '\\uDC00'");
+}
+
+/// String equality and ordering fold by byte comparison on the stored `value`. When either side
+/// carries the encoding those bytes don't correspond to the runtime code-unit sequence, so the
+/// compare lies — most sharply when a `lone_surrogates: false` literal has the same bytes as the
+/// encoded form of a `lone_surrogates: true` literal.
+#[test]
+fn test_lone_surrogate_comparison_bailouts() {
+    // Adversarial case: left is a real `�` + ASCII `dc00` (5 code units at runtime); right is a
+    // lone low surrogate (1 code unit). Same stored bytes, different runtime values. (`===`/`!==`
+    // still normalize to `==`/`!=` when both types are string — a separate rewrite that doesn't
+    // change the comparison's value.)
+    fold("'\\uFFFDdc00' === '\\uDC00'", "'\\uFFFDdc00' == '\\uDC00'"); // runtime: false;  byte compare: true
+    fold("'\\uFFFDdc00' !== '\\uDC00'", "'\\uFFFDdc00' != '\\uDC00'"); // runtime: true;   byte compare: false
+    fold_same("'\\uFFFDdc00' == '\\uDC00'"); // runtime: false;  byte compare: true
+    fold_same("'\\uFFFDdc00' != '\\uDC00'"); // runtime: true;   byte compare: false
+    fold_same("'\\uFFFDdc00' > '\\uDC00'"); //  runtime: true;   byte compare: false
+    fold_same("'\\uFFFDdc00' <= '\\uDC00'"); // runtime: false;  byte compare: true
+
+    // Any comparison involving a surrogate-flagged operand bails, without checking whether the
+    // byte compare would coincidentally agree.
+    fold_same("'\\uFFFDdc00' < '\\uDC00'");
+    fold_same("'\\uFFFDdc00' >= '\\uDC00'");
+    fold("'\\uDC00' === '\\uDC00'", "'\\uDC00' == '\\uDC00'");
+    fold_same("'\\uDC00' < '\\uDC00'");
+    fold("'\\uDC00' === '\\uFFFDdc00'", "'\\uDC00' == '\\uFFFDdc00'");
+    fold_same("'\\uDC00' > '\\uFFFDdc00'");
+
+    // Abstract equality (`==`/`!=`) on same-type strings routes through
+    // `strict_equality_comparison` just like `===`/`!==`, so the guard fires identically.
+    // Both-flagged with the same bytes is a conservative miss — runtime-equal, but we bail
+    // rather than return a byte-compare result that would happen to coincide.
+    fold_same("'\\uDC00' == '\\uDC00'");
+    fold_same("'\\uDC00' != '\\uDC00'");
+    // Both-unflagged with bytes that match the encoding pattern: neither side has the flag, so
+    // the byte compare *is* the runtime compare and folding is safe.
+    fold("'\\uFFFDdc00' == '\\uFFFDdc00'", "!0");
+    fold("'\\uFFFDdc00' != '\\uFFFDdc00'", "!1");
+
+    // Control cases: plain U+FFFD (not the encoding) still folds.
+    fold("'\\uFFFD' === '\\uFFFD'", "!0");
+    fold("'\\uFFFD' !== 'x'", "!0");
+    fold("'\\uFFFD' > 'z'", "!0");
 }
 
 mod bigint {

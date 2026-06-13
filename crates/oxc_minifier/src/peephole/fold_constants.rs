@@ -2,7 +2,10 @@ use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     GlobalContext, ToJsString,
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
+    constant_evaluation::{
+        ConstantEvaluation, ConstantValue, DetermineValueType, ValueType,
+        expr_may_have_lone_surrogates, template_may_have_lone_surrogates,
+    },
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{GetSpan, SPAN};
@@ -380,10 +383,16 @@ impl<'a> PeepholeOptimizations {
         if let Expression::BinaryExpression(left_binary_expr) = &mut e.left
             && left_binary_expr.right.value_type(ctx).is_string()
         {
-            if let (Some(left_str), Some(right_str)) = (
-                left_binary_expr.right.get_side_free_string_value(ctx),
-                e.right.get_side_free_string_value(ctx),
-            ) {
+            // A merged right-hand literal would be emitted without the flag.
+            let skip_for_lone_surrogates =
+                expr_may_have_lone_surrogates(&left_binary_expr.right, ctx)
+                    || expr_may_have_lone_surrogates(&e.right, ctx);
+            if !skip_for_lone_surrogates
+                && let (Some(left_str), Some(right_str)) = (
+                    left_binary_expr.right.get_side_free_string_value(ctx),
+                    e.right.get_side_free_string_value(ctx),
+                )
+            {
                 let span = left_binary_expr
                     .right
                     .span()
@@ -412,6 +421,23 @@ impl<'a> PeepholeOptimizations {
         parent_span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        // Remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`). Safe for lone-surrogate
+        // operands: the surviving operand is moved via `take_in`, preserving its flag.
+        if Self::evaluates_to_empty_string(left_expr) && right_expr.value_type(ctx).is_string() {
+            return Some(right_expr.take_in(ctx.ast));
+        } else if Self::evaluates_to_empty_string(right_expr)
+            && left_expr.value_type(ctx).is_string()
+        {
+            return Some(left_expr.take_in(ctx.ast));
+        }
+
+        // Template quasis can't escape lone surrogates, so splicing either operand's value into
+        // a quasi would corrupt the merged string.
+        if expr_may_have_lone_surrogates(left_expr, ctx)
+            || expr_may_have_lone_surrogates(right_expr, ctx)
+        {
+            return None;
+        }
         if let Expression::TemplateLiteral(left) = left_expr {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
             if let Expression::TemplateLiteral(right) = right_expr {
@@ -475,15 +501,6 @@ impl<'a> PeepholeOptimizations {
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx.ast));
             }
-        }
-
-        // remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`)
-        if Self::evaluates_to_empty_string(left_expr) && right_expr.value_type(ctx).is_string() {
-            return Some(right_expr.take_in(ctx.ast));
-        } else if Self::evaluates_to_empty_string(right_expr)
-            && left_expr.value_type(ctx).is_string()
-        {
-            return Some(left_expr.take_in(ctx.ast));
         }
 
         None
@@ -561,7 +578,12 @@ impl<'a> PeepholeOptimizations {
                     *expr = ctx.ast.expression_unary(
                         e.span,
                         UnaryOperator::UnaryPlus,
-                        ctx.ast.expression_string_literal(n.span, n.value, n.raw),
+                        ctx.ast.expression_string_literal_with_lone_surrogates(
+                            n.span,
+                            n.value,
+                            n.raw,
+                            n.lone_surrogates,
+                        ),
                     );
                     ctx.state.changed = true;
                     return;
@@ -729,6 +751,11 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
     pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Inlining splices values into quasi raw/cooked text, which can't represent lone
+        // surrogates as escapes.
+        if template_may_have_lone_surrogates(t, ctx) {
+            return;
+        }
         let has_expr_to_inline = t
             .expressions
             .iter()

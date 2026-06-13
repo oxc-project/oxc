@@ -279,6 +279,18 @@ impl<'a> PeepholeOptimizations {
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
                 let string_count = args.len() - expression_count;
 
+                // Lone surrogates can't ride through: string args merge into quasi text (which
+                // can't escape them), and with all-string args the result is one flagless
+                // literal. Non-string args stay as `${}` substitutions and preserve the flag
+                // at runtime, so they don't force a bailout.
+                if base_str.lone_surrogates
+                    || args
+                        .iter()
+                        .any(|arg| matches!(arg, Argument::StringLiteral(s) if s.lone_surrogates))
+                {
+                    return None;
+                }
+
                 // whether it is shorter to use `String::concat`
                 if ".concat()".len() + args.len() + "''".len() * string_count
                     < "${}".len() * expression_count

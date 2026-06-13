@@ -2,12 +2,18 @@ mod call_expr;
 mod equality_comparison;
 mod is_int32_or_uint32;
 mod is_literal_value;
+mod lone_surrogates;
 mod url_encoding;
 mod value;
 mod value_type;
 
 pub use is_int32_or_uint32::IsInt32OrUint32;
 pub use is_literal_value::IsLiteralValue;
+pub use lone_surrogates::{
+    array_may_have_lone_surrogates, expr_may_have_lone_surrogates,
+    flagged_str_runtime_utf16_length, get_side_free_string_value_without_lone_surrogates,
+    str_has_lone_surrogate_encoding, template_may_have_lone_surrogates,
+};
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
 
@@ -67,6 +73,12 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     }
 
     /// Evaluate the expression to a constant value and convert it to a string.
+    ///
+    /// The returned `Cow` is the stored byte form and does not carry the `lone_surrogates` flag.
+    /// Any caller that would produce a `StringLiteral` (directly or via `value_to_expr`) from the
+    /// result must first reject flagged operands with [`expr_may_have_lone_surrogates`], or the
+    /// emitted literal will default to `lone_surrogates: false` and silently corrupt the runtime
+    /// value.
     fn evaluate_value_to_string(
         &self,
         ctx: &impl ConstantEvaluationCtx<'a>,
@@ -216,6 +228,13 @@ fn binary_operation_evaluate_value_to<'a>(
             if left_to_primitive.is_string() == Some(true)
                 || right_to_primitive.is_string() == Some(true)
             {
+                // A merged literal via `value_to_expr` would lose the flag distinguishing a real
+                // U+FFFD from an encoded surrogate. Leave the two operands for codegen.
+                if expr_may_have_lone_surrogates(left, ctx)
+                    || expr_may_have_lone_surrogates(right, ctx)
+                {
+                    return None;
+                }
                 let lval = left.evaluate_value_to_string(ctx)?;
                 let rval = right.evaluate_value_to_string(ctx)?;
                 return Some(ConstantValue::String(lval + rval));
@@ -533,7 +552,23 @@ fn evaluate_value_length<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
+    // Flagged string literal: the runtime length is the stored UTF-16 length minus 4 for each
+    // encoded `\u{FFFD}XXXX` run (5 stored units collapse to 1 runtime unit). Only the direct
+    // literal case — where we can read `lone_surrogates` — can fold; identifiers and concat
+    // results drop the flag at the `ConstantValue::String` boundary and are left to the
+    // bail-out below.
+    if let Expression::StringLiteral(s) = object
+        && s.lone_surrogates
+    {
+        let runtime = flagged_str_runtime_utf16_length(&s.value);
+        return Some(ConstantValue::Number(runtime.to_f64().unwrap()));
+    }
     if let Some(ConstantValue::String(s)) = object.evaluate_value(ctx) {
+        // Counting UTF-16 units of the encoded bytes reports the encoding's length (5 chars per
+        // surrogate), not the runtime string's.
+        if expr_may_have_lone_surrogates(object, ctx) {
+            return None;
+        }
         Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
     } else if let Expression::ArrayExpression(arr) = object {
         if arr.elements.iter().any(|e| matches!(e, ArrayExpressionElement::SpreadElement(_))) {

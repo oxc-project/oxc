@@ -1,6 +1,9 @@
 use oxc_ast::ast::{Expression, NumberBase};
 
-use super::{ConstantEvaluation, ConstantEvaluationCtx, DetermineValueType, ValueType};
+use super::{
+    ConstantEvaluation, ConstantEvaluationCtx, DetermineValueType, ValueType,
+    expr_may_have_lone_surrogates,
+};
 
 /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
 pub(super) fn abstract_equality_comparison<'a>(
@@ -100,6 +103,14 @@ pub(super) fn strict_equality_comparison<'a>(
                 Some(lnum == rnum)
             }
             ValueType::String => {
+                // A real U+FFFD + four ASCII hex chars has the same bytes as the lone-surrogate
+                // encoding of the same hex, but they're different runtime values — so a byte
+                // compare here would lie when one side carries the flag and the other doesn't.
+                if expr_may_have_lone_surrogates(left_expr, ctx)
+                    || expr_may_have_lone_surrogates(right_expr, ctx)
+                {
+                    return None;
+                }
                 let left = left_expr.get_side_free_string_value(ctx)?;
                 let right = right_expr.get_side_free_string_value(ctx)?;
                 Some(left == right)
