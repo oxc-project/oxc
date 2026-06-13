@@ -98,6 +98,7 @@ declare_oxc_lint!(
     fix,
     config = ConsistentVitestConfig,
     version = "1.37.0",
+    short_description = "This rule triggers an error when an unexpected vitest accessor is used.",
 );
 
 impl Rule for ConsistentVitestVi {

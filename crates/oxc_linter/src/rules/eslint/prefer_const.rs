@@ -95,6 +95,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = PreferConst,
     version = "1.43.0",
+    short_description = "Requires `const` declarations for variables that are never reassigned after their initial declaration.",
 );
 
 impl Rule for PreferConst {

@@ -65,6 +65,7 @@ declare_oxc_lint!(
     correctness,
     pending, // TODO: add `import Image from "next/image"` (if missing), then change `<img />` to `<Image />`
     version = "0.2.0",
+    short_description = "Prevent the usage of `<img>` element due to slower LCP and higher bandwidth.",
 );
 
 impl Rule for NoImgElement {

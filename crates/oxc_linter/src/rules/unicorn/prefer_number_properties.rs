@@ -85,6 +85,7 @@ declare_oxc_lint!(
     dangerous_fix,
     config = PreferNumberPropertiesConfig,
     version = "0.0.19",
+    short_description = "Disallows use of `parseInt()`, `parseFloat()`, `isNan()`, `isFinite()`, `Nan`, `Infinity` and `-Infinity` as global variables.",
 );
 
 impl Rule for PreferNumberProperties {

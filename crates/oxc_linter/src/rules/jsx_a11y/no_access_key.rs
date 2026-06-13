@@ -43,6 +43,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.0.21",
+    short_description = "Enforces that the `accessKey` prop is not used on any element to avoid complications with keyboard commands used by a screenreader.",
 );
 
 impl Rule for NoAccessKey {

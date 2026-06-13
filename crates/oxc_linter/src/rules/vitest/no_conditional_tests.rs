@@ -54,6 +54,7 @@ declare_oxc_lint!(
     vitest,
     correctness,
     version = "0.8.0",
+    short_description = "The rule disallows the use of conditional statements within test cases to ensure that tests are deterministic and clearly readable.",
 );
 
 impl Rule for NoConditionalTests {

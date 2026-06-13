@@ -111,6 +111,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "1.39.0",
+    short_description = "Requires hoisted Vitest APIs (`vi.mock`, `vi.unmock`, and `vi.hoisted`) to appear in the top-level of the file.",
 );
 
 impl Rule for HoistedApisOnTop {

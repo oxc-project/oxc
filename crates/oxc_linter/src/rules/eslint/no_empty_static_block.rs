@@ -53,6 +53,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.0.19",
+    short_description = "Disallows the usages of empty static blocks.",
 );
 
 impl Rule for NoEmptyStaticBlock {

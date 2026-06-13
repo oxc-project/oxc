@@ -47,6 +47,7 @@ declare_oxc_lint!(
     eslint,
     pedantic,
     version = "0.4.3",
+    short_description = "Disallow returning value from constructor.",
 );
 
 impl Rule for NoConstructorReturn {

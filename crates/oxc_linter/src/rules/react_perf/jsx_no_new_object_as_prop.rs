@@ -59,6 +59,7 @@ declare_oxc_lint!(
     perf,
     config = ReactPerfConfig,
     version = "0.2.3",
+    short_description = "Prevent Objects that are local to the current method from being used as values of JSX props.",
 );
 
 impl ReactPerfRule for JsxNoNewObjectAsProp {

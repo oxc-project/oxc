@@ -186,6 +186,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = NoElseReturn,
     version = "0.9.10",
+    short_description = "Disallow `else` blocks after `return` statements in `if` statements.",
 );
 
 fn is_safe_from_name_collisions(

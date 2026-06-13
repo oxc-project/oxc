@@ -74,6 +74,7 @@ declare_oxc_lint!(
     jest,
     style,
     version = "0.0.14",
+    short_description = "Disallow confusing usages of `jest.setTimeout`.",
 );
 
 impl Rule for NoConfusingSetTimeout {

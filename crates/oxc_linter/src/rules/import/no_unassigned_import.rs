@@ -83,6 +83,7 @@ declare_oxc_lint!(
     suspicious,
     config = NoUnassignedImportConfig,
     version = "0.16.11",
+    short_description = "This rule aims to remove modules with side-effects by reporting when a module is imported but not assigned.",
 );
 
 impl Rule for NoUnassignedImport {

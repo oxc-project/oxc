@@ -71,6 +71,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.67.0",
+    short_description = "Enforce valid `defineOptions` compiler macro.",
 );
 
 const DISALLOWED_PROPS: &[(&str, &str)] = &[

@@ -61,6 +61,7 @@ declare_oxc_lint!(
     vue,
     style,
     version = "1.69.0",
+    short_description = "This rule enforces that a props statement contains type definition.",
 );
 
 impl Rule for RequirePropTypes {

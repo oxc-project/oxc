@@ -68,6 +68,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.49.0",
+    short_description = "The rule disallows importing any vitest global functions.",
 );
 
 impl Rule for NoImportingVitestGlobals {

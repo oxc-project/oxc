@@ -102,6 +102,7 @@ declare_oxc_lint!(
     style,
     config = ConsistentTestFilenameConfig,
     version = "1.36.0",
+    short_description = "This rule triggers an error when a file is considered a test file, but its name does not match an expected filename format.",
 );
 
 fn compile_matcher_pattern(matcher_pattern: &serde_json::Value) -> Option<lazy_regex::Regex> {

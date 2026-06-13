@@ -91,6 +91,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.59.0",
+    short_description = "Enforces explicit imports from 'vitest' instead of using vitest globals.",
 );
 
 impl Rule for PreferImportingVitestGlobals {

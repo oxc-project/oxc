@@ -94,6 +94,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = ExplicitLengthCheck,
     version = "0.0.19",
+    short_description = "Enforce explicitly comparing the `length` or `size` property of a value.",
 );
 
 fn is_literal(expr: &Expression, value: f64) -> bool {

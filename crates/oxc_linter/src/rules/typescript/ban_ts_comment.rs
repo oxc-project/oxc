@@ -183,6 +183,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = BanTsCommentConfig,
     version = "0.0.8",
+    short_description = "This rule lets you set which directive comments you want to allow in your codebase.",
 );
 
 impl Rule for BanTsComment {

@@ -77,6 +77,7 @@ declare_oxc_lint!(
     restriction,
     config = ButtonHasType,
     version = "0.1.1",
+    short_description = "Enforces explicit `type` attribute for all the `button` HTML elements.",
 );
 
 impl Rule for ButtonHasType {

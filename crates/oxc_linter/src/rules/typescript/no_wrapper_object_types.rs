@@ -58,6 +58,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.8.0",
+    short_description = "Disallow the use of wrapper object types.",
 );
 
 impl Rule for NoWrapperObjectTypes {

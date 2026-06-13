@@ -58,6 +58,7 @@ declare_oxc_lint!(
     correctness,
     conditional_fix,
     version = "0.0.8",
+    short_description = "Enforce the use of `as const` over literal type.",
 );
 
 impl Rule for PreferAsConst {

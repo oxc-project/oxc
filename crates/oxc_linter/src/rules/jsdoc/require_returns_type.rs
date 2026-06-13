@@ -45,6 +45,7 @@ declare_oxc_lint!(
     jsdoc,
     pedantic,
     version = "0.4.3",
+    short_description = "Requires that `@returns` tag has a type value (in curly brackets).",
 );
 
 impl Rule for RequireReturnsType {

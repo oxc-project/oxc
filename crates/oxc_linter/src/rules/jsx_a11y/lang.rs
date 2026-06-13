@@ -56,6 +56,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     version = "0.1.1",
+    short_description = "The lang prop on the `<html>` element must be a valid IETF's BCP 47 language tag.",
 );
 
 impl Rule for Lang {

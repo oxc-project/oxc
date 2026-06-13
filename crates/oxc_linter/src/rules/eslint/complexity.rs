@@ -148,6 +148,7 @@ declare_oxc_lint!(
     restriction,
     config = ComplexityConfig,
     version = "1.37.0",
+    short_description = "Enforces a maximum cyclomatic complexity in a program, which is the number of linearly independent paths in a program.",
 );
 
 impl Rule for Complexity {

@@ -63,6 +63,7 @@ declare_oxc_lint!(
     restriction,
     config = NoRestrictedGlobals,
     version = "0.4.0",
+    short_description = "This rule allows you to specify global variable names that you don't want to use in your application.",
 );
 
 impl Rule for NoRestrictedGlobals {

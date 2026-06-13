@@ -54,6 +54,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = SortVars,
     version = "0.9.3",
+    short_description = "When declaring multiple variables within the same block, sorting variable names make it easier to find necessary variable easier at a later time.",
 );
 
 impl Rule for SortVars {

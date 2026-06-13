@@ -54,6 +54,7 @@ declare_oxc_lint!(
     correctness,
     pending, // fixer will be implemented later
     version = "1.62.0",
+    short_description = "Disallow object declaration on `data` (in Vue.js 3.0.0+).",
 );
 
 impl Rule for NoDeprecatedDataObjectDeclaration {

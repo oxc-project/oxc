@@ -64,6 +64,7 @@ declare_oxc_lint!(
     correctness,
     config = AllowedOrDisallowInFunc,
     version = "1.37.0",
+    short_description = "Disallows using `setState` in the `componentWillUpdate` lifecycle method.",
 );
 
 impl Rule for NoWillUpdateSetState {

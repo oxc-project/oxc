@@ -64,6 +64,7 @@ declare_oxc_lint!(
     suggestion,
     config = NoInferrableTypes,
     version = "0.14.0",
+    short_description = "Disallow explicit type declarations for variables or parameters initialized to a number, string, or boolean.",
 );
 
 impl Rule for NoInferrableTypes {

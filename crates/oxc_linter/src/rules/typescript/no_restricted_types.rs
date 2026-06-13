@@ -147,6 +147,7 @@ declare_oxc_lint!(
     fix_suggestion,
     config = NoRestrictedTypesConfig,
     version = "1.31.0",
+    short_description = "Disallow certain types from being used.",
 );
 
 impl Rule for NoRestrictedTypes {

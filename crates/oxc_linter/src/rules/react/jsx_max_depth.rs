@@ -87,6 +87,7 @@ declare_oxc_lint!(
     style,
     config = JsxMaxDepthConfig,
     version = "1.36.0",
+    short_description = "Enforces a maximum depth for nested JSX elements and fragments.",
 );
 
 impl Rule for JsxMaxDepth {

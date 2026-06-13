@@ -67,6 +67,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.0.13",
+    short_description = "This rule reports on any usage of Jasmine globals, which is not ported to Jest, and suggests alternatives from Jest's own API.",
 );
 
 const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];

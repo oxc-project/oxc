@@ -94,6 +94,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     version = "0.10.0",
+    short_description = "Enforce sandbox attribute on iframe elements.",
 );
 
 impl Rule for IframeMissingSandbox {

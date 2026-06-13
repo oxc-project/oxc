@@ -98,6 +98,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = Mode,
     version = "0.16.11",
+    short_description = "This rule either enforces or bans the use of inline type-only markers for named imports.",
 );
 
 impl Rule for ConsistentTypeSpecifierStyle {

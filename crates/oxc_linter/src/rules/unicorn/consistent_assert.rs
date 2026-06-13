@@ -51,6 +51,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "0.16.9",
+    short_description = "Enforces consistent usage of the `assert` module.",
 );
 
 impl Rule for ConsistentAssert {

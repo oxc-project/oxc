@@ -91,6 +91,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     version = "1.22.0",
+    short_description = "Checks if the `if` and `else` blocks contain shared code that can be moved out of the blocks.",
 );
 
 impl Rule for BranchesSharingCode {

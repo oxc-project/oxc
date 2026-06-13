@@ -66,6 +66,7 @@ declare_oxc_lint!(
     suggestion,
     config = JsxNoUselessFragment,
     version = "0.0.14",
+    short_description = "Disallow unnecessary fragments.",
 );
 
 impl Rule for JsxNoUselessFragment {

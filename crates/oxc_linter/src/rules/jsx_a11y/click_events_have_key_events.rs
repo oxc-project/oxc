@@ -48,6 +48,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     version = "0.2.1",
+    short_description = "Enforce onClick is accompanied by at least one of the following: onKeyUp, onKeyDown, onKeyPress.",
 );
 
 impl Rule for ClickEventsHaveKeyEvents {

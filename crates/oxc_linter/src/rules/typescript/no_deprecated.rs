@@ -64,6 +64,7 @@ declare_oxc_lint!(
     pedantic,
     config = NoDeprecatedConfig,
     version = "1.26.0",
+    short_description = "Disallow using code marked as `@deprecated`.",
 );
 
 impl Rule for NoDeprecated {

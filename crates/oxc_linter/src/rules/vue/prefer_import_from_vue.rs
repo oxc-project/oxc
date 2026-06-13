@@ -43,6 +43,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "1.20.0",
+    short_description = "Enforce `import from 'vue'` instead of `import from '@vue/*'`.",
 );
 
 const VUE_MODULES: &[&str; 4] =

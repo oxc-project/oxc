@@ -81,6 +81,7 @@ declare_oxc_lint!(
     restriction,
     config = NoSequences,
     version = "1.33.0",
+    short_description = "Disallows the use of the comma operator.",
 );
 
 impl Rule for NoSequences {

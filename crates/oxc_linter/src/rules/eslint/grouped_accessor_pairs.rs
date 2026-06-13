@@ -183,6 +183,7 @@ declare_oxc_lint!(
     pending,
     config = GroupedAccessorPairs,
     version = "0.15.12",
+    short_description = "Require grouped accessor pairs in object literals and classes.",
 );
 
 impl Rule for GroupedAccessorPairs {

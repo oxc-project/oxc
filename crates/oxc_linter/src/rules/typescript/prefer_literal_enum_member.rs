@@ -56,6 +56,7 @@ declare_oxc_lint!(
     restriction,
     config = PreferLiteralEnumMember,
     version = "0.3.2",
+    short_description = "Explicit enum value must only be a literal value (string, number, boolean, etc).",
 );
 
 impl Rule for PreferLiteralEnumMember {

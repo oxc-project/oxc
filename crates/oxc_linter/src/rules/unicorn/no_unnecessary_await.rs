@@ -43,6 +43,7 @@ declare_oxc_lint!(
     correctness,
     conditional_fix,
     version = "0.0.12",
+    short_description = "Disallow awaiting on non-promise values.",
 );
 
 impl Rule for NoUnnecessaryAwait {

@@ -99,6 +99,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxDependenciesConfigJson,
     version = "0.5.0",
+    short_description = "Forbid modules to have too many dependencies (`import` statements only).",
 );
 
 impl Rule for MaxDependencies {

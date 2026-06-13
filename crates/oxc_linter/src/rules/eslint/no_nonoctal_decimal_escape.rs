@@ -47,6 +47,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.2.10",
+    short_description = "This rule disallows \\8 and \\9 escape sequences in string literals.",
 );
 
 impl Rule for NoNonoctalDecimalEscape {
