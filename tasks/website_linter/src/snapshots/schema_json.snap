@@ -854,6 +854,42 @@ expression: json
       },
       "additionalProperties": false
     },
+    "Assert": {
+      "oneOf": [
+        {
+          "description": "Assert that the label uses `htmlFor` to associate a control.",
+          "type": "string",
+          "enum": [
+            "htmlFor"
+          ],
+          "markdownDescription": "Assert that the label uses `htmlFor` to associate a control."
+        },
+        {
+          "description": "Assert that the label has a nested control",
+          "type": "string",
+          "enum": [
+            "nesting"
+          ],
+          "markdownDescription": "Assert that the label has a nested control"
+        },
+        {
+          "description": "Assert that the label uses both `htmlFor` and nesting for associating a control",
+          "type": "string",
+          "enum": [
+            "both"
+          ],
+          "markdownDescription": "Assert that the label uses both `htmlFor` and nesting for associating a control"
+        },
+        {
+          "description": "Assert that the label uses either `htmlFor` or nesting for associating a control",
+          "type": "string",
+          "enum": [
+            "either"
+          ],
+          "markdownDescription": "Assert that the label uses either `htmlFor` or nesting for associating a control"
+        }
+      ]
+    },
     "AssertionStyle": {
       "oneOf": [
         {
@@ -3577,7 +3613,24 @@ expression: json
           ]
         },
         "jsx-a11y/label-has-associated-control": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/LabelHasAssociatedControlConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/lang": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -11315,6 +11368,63 @@ expression: json
             }
           ],
           "markdownDescription": "`html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "LabelHasAssociatedControlConfig": {
+      "type": "object",
+      "properties": {
+        "assert": {
+          "description": "The type of association required between the label and the control.",
+          "default": "either",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Assert"
+            }
+          ],
+          "markdownDescription": "The type of association required between the label and the control."
+        },
+        "controlComponents": {
+          "description": "Custom JSX components to be treated as form controls.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom JSX components to be treated as form controls."
+        },
+        "depth": {
+          "description": "Maximum depth to search for a nested control.",
+          "default": 2,
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum depth to search for a nested control."
+        },
+        "labelAttributes": {
+          "description": "Attributes to check for accessible label text.",
+          "default": [
+            "alt",
+            "aria-label",
+            "aria-labelledby"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Attributes to check for accessible label text."
+        },
+        "labelComponents": {
+          "description": "Custom JSX components to be treated as labels.",
+          "default": [
+            "label"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom JSX components to be treated as labels."
         }
       },
       "additionalProperties": false

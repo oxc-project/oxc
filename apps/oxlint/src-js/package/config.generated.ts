@@ -93,6 +93,7 @@ export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type SnapshotHintMode = "always" | "multi";
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
+export type Assert = "htmlFor" | "nesting" | "both" | "either";
 export type DistractingElement = "marquee" | "blink";
 export type CountThis = "always" | "never" | "except-void";
 export type NoCondAssignConfig = "except-parens" | "always";
@@ -941,7 +942,10 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, InteractiveSupportsFocusConfig];
-  "jsx-a11y/label-has-associated-control"?: DummyRule;
+  "jsx-a11y/label-has-associated-control"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, LabelHasAssociatedControlConfig];
   "jsx-a11y/lang"?: RuleNoConfig;
   "jsx-a11y/media-has-caption"?: DummyRule;
   "jsx-a11y/mouse-events-have-key-events"?:
@@ -2530,6 +2534,28 @@ export interface InteractiveSupportsFocusConfig {
    * Defaults to `["button", "checkbox", "link", "searchbox", "spinbutton", "switch", "textbox"]`.
    */
   tabbable?: string[];
+}
+export interface LabelHasAssociatedControlConfig {
+  /**
+   * The type of association required between the label and the control.
+   */
+  assert?: Assert;
+  /**
+   * Custom JSX components to be treated as form controls.
+   */
+  controlComponents?: string[];
+  /**
+   * Maximum depth to search for a nested control.
+   */
+  depth?: number;
+  /**
+   * Attributes to check for accessible label text.
+   */
+  labelAttributes?: string[];
+  /**
+   * Custom JSX components to be treated as labels.
+   */
+  labelComponents?: string[];
 }
 export interface MouseEventsHaveKeyEventsConfig {
   /**
