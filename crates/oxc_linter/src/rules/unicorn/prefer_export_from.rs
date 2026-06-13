@@ -86,6 +86,7 @@ declare_oxc_lint!(
     suggestion,
     config = PreferExportFrom,
     version = "next",
+    short_description = "Prefer direct re-exports using `export ... from` syntax instead of separate import and export statements.",
 );
 
 impl Rule for PreferExportFrom {
