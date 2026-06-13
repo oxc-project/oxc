@@ -989,7 +989,10 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, NoNoninteractiveElementInteractionsConfig];
-  "jsx-a11y/no-noninteractive-element-to-interactive-role"?: DummyRule;
+  "jsx-a11y/no-noninteractive-element-to-interactive-role"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoNoninteractiveElementToInteractiveRoleConfig];
   "jsx-a11y/no-noninteractive-tabindex"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
@@ -2629,6 +2632,9 @@ export interface NoNoninteractiveElementInteractionsConfig {
    * An array of event handler names that should trigger this rule.
    */
   handlers?: string[];
+  [k: string]: string[];
+}
+export interface NoNoninteractiveElementToInteractiveRoleConfig {
   [k: string]: string[];
 }
 export interface NoNoninteractiveTabindexConfig {

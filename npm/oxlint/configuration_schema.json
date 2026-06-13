@@ -3806,7 +3806,24 @@
           ]
         },
         "jsx-a11y/no-noninteractive-element-to-interactive-role": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoNoninteractiveElementToInteractiveRoleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/no-noninteractive-tabindex": {
           "anyOf": [
@@ -13547,6 +13564,15 @@
           "markdownDescription": "An array of event handler names that should trigger this rule."
         }
       },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "NoNoninteractiveElementToInteractiveRoleConfig": {
+      "type": "object",
       "additionalProperties": {
         "type": "array",
         "items": {
