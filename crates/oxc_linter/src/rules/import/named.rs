@@ -53,7 +53,7 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Verifies that all named imports are part of the set of named exports in
-/// the referenced module.
+    /// the referenced module.
     ///
     /// For `export`, verifies that all named exports exist in the referenced
     /// module.
