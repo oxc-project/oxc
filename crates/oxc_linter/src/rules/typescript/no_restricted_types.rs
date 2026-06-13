@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::AstKind;
@@ -70,7 +70,7 @@ enum BanConfigValue {
 
 /// A type that only deserializes from `true`.
 /// This matches the upstream typescript-eslint schema which only allows `true`, not `false`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 struct True;
 
 impl<'de> Deserialize<'de> for True {
@@ -80,6 +80,22 @@ impl<'de> Deserialize<'de> for True {
     {
         let value = bool::deserialize(deserializer)?;
         if value { Ok(True) } else { Err(serde::de::Error::custom("expected `true`, got `false`")) }
+    }
+}
+
+impl JsonSchema for True {
+    fn schema_name() -> String {
+        "True".to_string()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        "True".into()
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        let mut schema = <bool as JsonSchema>::json_schema(r#gen).into_object();
+        schema.enum_values = Some(vec![true.into()]);
+        schema.into()
     }
 }
 

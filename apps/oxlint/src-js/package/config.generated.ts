@@ -252,6 +252,31 @@ export type AllowObjectTypes = "never" | "always";
 export type AllowInGenericTypeArguments = boolean | string[];
 export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
 /**
+ * Represents the different ways a ban config can be specified in JSON.
+ * Can be:
+ * - `true` - ban with default message
+ * - A string - ban with custom message
+ * - An object with `message` and optional `fixWith` and `suggest`
+ */
+export type BanConfigValue =
+  | True
+  | string
+  | {
+      /**
+       * Replacement type for automatic fixing. Applied directly with `--fix`.
+       */
+      fixWith?: string;
+      /**
+       * Custom message explaining why the type is banned.
+       */
+      message?: string;
+      /**
+       * Suggested replacement types for manual review. Shown as editor suggestions.
+       */
+      suggest?: string[];
+    };
+export type True = true;
+/**
  * Represents the different ways `allowConstantLoopConditions` can be specified in JSON.
  * Can be:
  * - `true` or `false`
@@ -1373,7 +1398,7 @@ export interface DummyRuleMap {
   "typescript/no-non-null-assertion"?: RuleNoConfig;
   "typescript/no-redundant-type-constituents"?: RuleNoConfig;
   "typescript/no-require-imports"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRequireImportsConfig];
-  "typescript/no-restricted-types"?: DummyRule;
+  "typescript/no-restricted-types"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedTypesConfig];
   "typescript/no-this-alias"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoThisAliasConfig];
   "typescript/no-unnecessary-boolean-literal-compare"?:
     | AllowWarnDeny
@@ -5243,6 +5268,14 @@ export interface NoRequireImportsConfig {
    * ```
    */
   allowAsImport?: boolean;
+}
+export interface NoRestrictedTypesConfig {
+  /**
+   * A mapping of type names to ban configurations.
+   */
+  types?: {
+    [k: string]: BanConfigValue;
+  };
 }
 export interface NoThisAliasConfig {
   /**
