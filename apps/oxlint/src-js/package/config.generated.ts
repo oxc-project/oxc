@@ -1201,7 +1201,7 @@ export interface DummyRuleMap {
   "react-perf/jsx-no-jsx-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-array-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-function-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
-  "react-perf/jsx-no-new-object-as-prop"?: DummyRule;
+  "react-perf/jsx-no-new-object-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react/button-has-type"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ButtonHasType];
   "react/checked-requires-onchange-or-readonly"?:
     | AllowWarnDeny
