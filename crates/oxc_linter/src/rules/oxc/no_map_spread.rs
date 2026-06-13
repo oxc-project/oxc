@@ -316,6 +316,7 @@ declare_oxc_lint!(
     conditional_suggestion,
     config = NoMapSpreadConfig,
     version = "0.11.0",
+    short_description = "Disallow object or array spreads in `Array.prototype.map` and `Array.prototype.flatMap` to add properties or elements to array items.",
 );
 
 const MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];
