@@ -65,6 +65,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.7",
+    short_description = "Disallow calling some global objects as functions.",
 );
 
 fn is_global_obj(s: &str) -> bool {

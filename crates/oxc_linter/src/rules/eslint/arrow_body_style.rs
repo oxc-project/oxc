@@ -196,6 +196,7 @@ declare_oxc_lint!(
     fix,
     config = ArrowBodyStyle,
     version = "1.4.0",
+    short_description = "Enforce consistent use of braces in arrow functions.",
 );
 
 impl Rule for ArrowBodyStyle {
@@ -871,7 +872,7 @@ fn test() {
             "var foo = () => {
         return 0;
         };",
-            "var foo = () => 
+            "var foo = () =>
         0
         ;",
             Some(serde_json::json!(["never"])),
@@ -941,7 +942,7 @@ fn test() {
             "var foo = () => {
         return bar;
         };",
-            "var foo = () => 
+            "var foo = () =>
         bar
         ;",
             None,
@@ -949,7 +950,7 @@ fn test() {
         (
             "var foo = () => {
         return bar;};",
-            "var foo = () => 
+            "var foo = () =>
         bar;",
             None,
         ),
@@ -968,7 +969,7 @@ var foo = () => {
 };
                     ",
             "
-var foo = () => 
+var foo = () =>
   foo
     .bar
 ;
@@ -1086,7 +1087,7 @@ var foo = () =>
   // comment
   return "something";
 };"#,
-            r#"const something = () => 
+            r#"const something = () =>
   // comment
   "something"
 ;"#,
@@ -1097,7 +1098,7 @@ var foo = () =>
   return "something";
   // comment
 };"#,
-            r#"const something = () => 
+            r#"const something = () =>
   "something"
   // comment
 ;"#,

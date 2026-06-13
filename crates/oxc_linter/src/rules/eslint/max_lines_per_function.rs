@@ -132,6 +132,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxLinesPerFunctionConfig,
     version = "0.15.12",
+    short_description = "Enforce a maximum number of lines of code in a function.",
 );
 
 impl Rule for MaxLinesPerFunction {
