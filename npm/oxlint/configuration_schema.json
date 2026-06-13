@@ -1972,6 +1972,13 @@
       },
       "additionalProperties": false
     },
+    "DistractingElement": {
+      "type": "string",
+      "enum": [
+        "marquee",
+        "blink"
+      ]
+    },
     "DotNotationConfig": {
       "type": "object",
       "properties": {
@@ -3621,7 +3628,24 @@
           ]
         },
         "jsx-a11y/no-distracting-elements": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoDistractingElementsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/no-interactive-element-to-noninteractive-role": {
           "$ref": "#/definitions/DummyRule"
@@ -12306,6 +12330,20 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Allow `model: { prop: 'modelValue', event: 'update:modelValue' }` (or\nthe kebab-case `model-value` variant) which is forwards-compatible with\nVue 3's `v-model`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoDistractingElementsConfig": {
+      "type": "object",
+      "properties": {
+        "elements": {
+          "description": "List of distracting elements to check for.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DistractingElement"
+          },
+          "markdownDescription": "List of distracting elements to check for."
         }
       },
       "additionalProperties": false

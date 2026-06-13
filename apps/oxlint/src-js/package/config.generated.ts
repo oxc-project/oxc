@@ -93,6 +93,7 @@ export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type SnapshotHintMode = "always" | "multi";
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
+export type DistractingElement = "marquee" | "blink";
 export type CountThis = "always" | "never" | "except-void";
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
@@ -950,7 +951,7 @@ export interface DummyRuleMap {
   "jsx-a11y/no-access-key"?: RuleNoConfig;
   "jsx-a11y/no-aria-hidden-on-focusable"?: RuleNoConfig;
   "jsx-a11y/no-autofocus"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoAutofocus];
-  "jsx-a11y/no-distracting-elements"?: DummyRule;
+  "jsx-a11y/no-distracting-elements"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDistractingElementsConfig];
   "jsx-a11y/no-interactive-element-to-noninteractive-role"?: DummyRule;
   "jsx-a11y/no-noninteractive-element-interactions"?:
     | AllowWarnDeny
@@ -2545,6 +2546,12 @@ export interface NoAutofocus {
    * Determines if developer-created components are checked.
    */
   ignoreNonDOM?: boolean;
+}
+export interface NoDistractingElementsConfig {
+  /**
+   * List of distracting elements to check for.
+   */
+  elements?: DistractingElement[];
 }
 export interface NoNoninteractiveElementInteractionsConfig {
   /**
