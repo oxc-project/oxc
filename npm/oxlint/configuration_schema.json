@@ -3766,7 +3766,24 @@
           ]
         },
         "jsx-a11y/no-interactive-element-to-noninteractive-role": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoInteractiveElementToNoninteractiveRoleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/no-noninteractive-element-interactions": {
           "anyOf": [
@@ -13110,6 +13127,15 @@
           "markdownDescription": "Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers."
         }
       ]
+    },
+    "NoInteractiveElementToNoninteractiveRoleConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
     },
     "NoInvalidRegexpConfig": {
       "type": "object",

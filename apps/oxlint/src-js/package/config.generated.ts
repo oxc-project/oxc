@@ -981,7 +981,10 @@ export interface DummyRuleMap {
   "jsx-a11y/no-aria-hidden-on-focusable"?: RuleNoConfig;
   "jsx-a11y/no-autofocus"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoAutofocus];
   "jsx-a11y/no-distracting-elements"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDistractingElementsConfig];
-  "jsx-a11y/no-interactive-element-to-noninteractive-role"?: DummyRule;
+  "jsx-a11y/no-interactive-element-to-noninteractive-role"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoInteractiveElementToNoninteractiveRoleConfig];
   "jsx-a11y/no-noninteractive-element-interactions"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
@@ -2617,6 +2620,9 @@ export interface NoDistractingElementsConfig {
    * List of distracting elements to check for.
    */
   elements?: DistractingElement[];
+}
+export interface NoInteractiveElementToNoninteractiveRoleConfig {
+  [k: string]: string[];
 }
 export interface NoNoninteractiveElementInteractionsConfig {
   /**
