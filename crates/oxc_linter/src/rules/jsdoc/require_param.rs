@@ -8,10 +8,13 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::MethodDefinitionKind};
+use oxc_ast::{
+    AstKind,
+    ast::{FormalParameters, MethodDefinitionKind, TSType},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, JSDoc};
+use oxc_semantic::{AstNode, JSDoc, NodeId};
 
 use crate::{
     context::LintContext,
@@ -57,6 +60,11 @@ struct RequireParamConfig {
     check_types_pattern: String,
     // TODO: Support this config
     // use_default_object_properties: bool,
+    /// Set to `true` to ignore reporting when all params are missing. Defaults to `false`.
+    ignore_when_all_params_missing: bool,
+    /// Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.
+    /// Will check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`.
+    interface_exempts_params_check: bool,
 }
 
 impl Default for RequireParamConfig {
@@ -70,6 +78,8 @@ impl Default for RequireParamConfig {
             check_destructured: true,
             check_rest_property: false,
             check_types_pattern: default_check_types_pattern(),
+            ignore_when_all_params_missing: false,
+            interface_exempts_params_check: false,
         }
     }
 }
@@ -117,11 +127,31 @@ impl Rule for RequireParam {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Collected targets from `FormalParameters`
         let params_to_check = match node.kind() {
-            AstKind::Function(func) if !func.is_typescript_syntax() => collect_params(&func.params),
-            AstKind::ArrowFunctionExpression(arrow_func) => collect_params(&arrow_func.params),
+            AstKind::Function(func) if !func.is_typescript_syntax() => {
+                if self.0.interface_exempts_params_check
+                    && (is_parent_fn_typed(func.node_id(), ctx)
+                        || is_first_fn_param_typed(&func.params))
+                {
+                    return;
+                }
+
+                collect_params(&func.params)
+            }
+            AstKind::ArrowFunctionExpression(arrow_func) => {
+                if self.0.interface_exempts_params_check
+                    && (is_parent_fn_typed(arrow_func.node_id(), ctx)
+                        || is_first_fn_param_typed(&arrow_func.params))
+                {
+                    return;
+                }
+
+                collect_params(&arrow_func.params)
+            }
             // If not a function, skip
             _ => return,
         };
+
+        let config = &self.0;
 
         let Some(func_def_node) = get_function_nearest_jsdoc_node(node, ctx) else {
             return;
@@ -131,7 +161,6 @@ impl Rule for RequireParam {
             return;
         };
 
-        let config = &self.0;
         let settings = &ctx.settings().jsdoc;
 
         // If config disabled checking, skip
@@ -175,6 +204,11 @@ impl Rule for RequireParam {
 
         // Collected JSDoc `@param` tags
         let tags_to_check = collect_tags(&jsdocs, settings.resolve_tag_name("param"));
+
+        if config.ignore_when_all_params_missing && tags_to_check.is_empty() {
+            return;
+        }
+
         let shallow_tags =
             tags_to_check.iter().filter(|(name, _)| !name.contains('.')).collect::<Vec<_>>();
 
@@ -321,6 +355,28 @@ fn is_name_equal(a: &str, b: &str) -> bool {
             _ => return false,           // Either one is done, or not equal
         }
     }
+}
+
+fn is_first_fn_param_typed(params: &FormalParameters) -> bool {
+    if let Some(param) = &params.items.first()
+        && let Some(param_type) = &param.type_annotation
+        && matches!(param_type.type_annotation, TSType::TSTypeReference(_))
+    {
+        return true;
+    }
+
+    false
+}
+
+fn is_parent_fn_typed(node_id: NodeId, ctx: &LintContext) -> bool {
+    if matches!(
+        ctx.nodes().parent_node(node_id).kind(),
+        AstKind::VariableDeclarator(var) if var.type_annotation.is_some()
+    ) {
+        return true;
+    }
+
+    false
 }
 
 #[test]
@@ -817,6 +873,64 @@ fn test() {
 			      };
 			      "#,
             None,
+            None,
+        ),
+        (
+            "
+				          /**
+				           * Some desc.
+				           */
+				          function quux (a, b) {}
+				      ",
+            Some(
+                serde_json::json!([        {          "ignoreWhenAllParamsMissing": true,        },      ]),
+            ),
+            None,
+        ),
+        (
+            "
+				          /**
+				           *
+				           */
+				          const quux: FunctionInterface = function quux (foo) {
+				          };
+				      ",
+            Some(
+                serde_json::json!([        {          "interfaceExemptsParamsCheck": true,        },      ]),
+            ),
+            None,
+        ),
+        (
+            "
+				          /**
+				           *
+				           */
+				          function quux ({
+				            abc,
+				            def
+				          }: FunctionInterface) {
+				          }
+				      ",
+            Some(
+                serde_json::json!([        {          "interfaceExemptsParamsCheck": true,        },      ]),
+            ),
+            None,
+        ),
+        (
+            "
+				          /**
+				           *
+				           */
+				          export async function fetchMarketstackEOD(
+				            parameters: FetchEODParameters,
+				          ): Promise<MarketstackDataPoint[]>
+				          {
+				            // ...
+				          };
+				      ",
+            Some(
+                serde_json::json!([        {          "interfaceExemptsParamsCheck": true,        },      ]),
+            ),
             None,
         ),
     ];
@@ -1458,6 +1572,50 @@ fn test() {
 			      };
 			      "#,
             None,
+            None,
+        ),
+        (
+            "
+				          /**
+				           * Some desc.
+				           * @param a
+				           */
+				          function quux (a, b) {}
+				      ",
+            Some(
+                serde_json::json!([        {          "ignoreWhenAllParamsMissing": true,        },      ]),
+            ),
+            None,
+        ),
+        // `interfaceExemptsParamsCheck`: variable has no type annotation, so still report `foo`
+        (
+            "
+				          /**
+				           *
+				           */
+				          const quux = function quux (foo) {
+				          };
+				      ",
+            Some(
+                serde_json::json!([        {          "interfaceExemptsParamsCheck": true,        },      ]),
+            ),
+            None,
+        ),
+        // `interfaceExemptsParamsCheck`: destructured param has no type annotation, so still report
+        (
+            "
+				          /**
+				           *
+				           */
+				          function quux ({
+				            abc,
+				            def
+				          }) {
+				          }
+				      ",
+            Some(
+                serde_json::json!([        {          "interfaceExemptsParamsCheck": true,        },      ]),
+            ),
             None,
         ),
     ];
