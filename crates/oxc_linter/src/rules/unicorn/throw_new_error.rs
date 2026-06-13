@@ -3,15 +3,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    ast_util::{outermost_paren, outermost_paren_parent},
-    context::LintContext,
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn throw_new_error_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Require `new` when throwing an error.")
+    OxcDiagnostic::warn("Require `new` when calling an error constructor.")
         .with_help("Using `new` ensures the error is correctly initialized.")
         .with_label(span)
 }
@@ -22,7 +17,7 @@ pub struct ThrowNewError;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule makes sure you always use `new` when throwing an error.
+    /// This rule makes sure you always use `new` when calling an error constructor.
     ///
     /// ### Why is this bad?
     ///
@@ -38,6 +33,7 @@ declare_oxc_lint!(
     /// throw Error('🦄');
     /// throw TypeError('unicorn');
     /// throw lib.TypeError('unicorn');
+    /// const e = Error('message');
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -45,6 +41,7 @@ declare_oxc_lint!(
     /// throw new Error('🦄');
     /// throw new TypeError('unicorn');
     /// throw new lib.TypeError('unicorn');
+    /// const e = new Error('message');
     /// ```
     ThrowNewError,
     unicorn,
@@ -59,13 +56,11 @@ impl Rule for ThrowNewError {
             return;
         };
 
-        let Some(outermost_paren_node) = outermost_paren_parent(node, ctx) else {
+        // Skip calls that are the superClass of a Class (extends clause).
+        // `new` is not appropriate there, e.g. `class Foo extends mixin() {}`.
+        if matches!(ctx.nodes().parent_kind(node.id()), AstKind::Class(_)) {
             return;
-        };
-
-        let AstKind::ThrowStatement(_) = outermost_paren(outermost_paren_node, ctx).kind() else {
-            return;
-        };
+        }
 
         let name = match call_expr.callee.without_parentheses() {
             Expression::Identifier(v) => v.name,
@@ -129,20 +124,28 @@ fn test() {
         "throw getGlobalThis().Error()",
         "throw utils.getGlobalThis().Error()",
         "throw (( getGlobalThis().Error ))()",
-        // TODO: Fix the rule so these cases pass.
-        // "const error = Error()",
-        // "throw Object.assign(Error(), {foo})",
-        // "new Promise((resolve, reject) => {
-        //         reject(Error('message'));
-        //     });",
-        // "function foo() {
-        //         return[globalThis][0].Error('message');
-        //     }",
+        "const error = Error()",
+        "throw Object.assign(Error(), {foo})",
+        "new Promise((resolve, reject) => {\n        reject(Error('message'));\n    });",
+        "function foo() {\n        return [globalThis][0].Error('message');\n    }",
     ];
 
     let fix = vec![
         ("throw Error()", "throw new Error()"),
         ("throw (( getGlobalThis().Error ))()", "throw new (( getGlobalThis().Error ))()"),
+        ("const error = Error()", "const error = new Error()"),
+        (
+            "throw Object.assign(Error(), {foo})",
+            "throw Object.assign(new Error(), {foo})",
+        ),
+        (
+            "new Promise((resolve, reject) => {\n        reject(Error('message'));\n    });",
+            "new Promise((resolve, reject) => {\n        reject(new Error('message'));\n    });",
+        ),
+        (
+            "function foo() {\n        return [globalThis][0].Error('message');\n    }",
+            "function foo() {\n        return new [globalThis][0].Error('message');\n    }",
+        ),
     ];
 
     Tester::new(ThrowNewError::NAME, ThrowNewError::PLUGIN, pass, fail)
