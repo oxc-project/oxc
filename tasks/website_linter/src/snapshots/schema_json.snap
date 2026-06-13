@@ -936,6 +936,54 @@ expression: json
       },
       "additionalProperties": false
     },
+    "BanConfigValue": {
+      "description": "Represents the different ways a ban config can be specified in JSON.\nCan be:\n- `true` - ban with default message\n- A string - ban with custom message\n- An object with `message` and optional `fixWith` and `suggest`",
+      "anyOf": [
+        {
+          "description": "`\"TypeName\": true` - ban with default message\nNote: Only `true` is valid; `false` would fail to deserialize and be ignored.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/True"
+            }
+          ],
+          "markdownDescription": "`\"TypeName\": true` - ban with default message\nNote: Only `true` is valid; `false` would fail to deserialize and be ignored."
+        },
+        {
+          "description": "`\"TypeName\": \"message\"` - ban with custom message",
+          "type": "string",
+          "markdownDescription": "`\"TypeName\": \"message\"` - ban with custom message"
+        },
+        {
+          "description": "`\"TypeName\": { \"message\": \"...\", \"fixWith\": \"...\", \"suggest\": [\"...\"] }` - full config",
+          "type": "object",
+          "properties": {
+            "fixWith": {
+              "description": "Replacement type for automatic fixing. Applied directly with `--fix`.",
+              "default": null,
+              "type": "string",
+              "markdownDescription": "Replacement type for automatic fixing. Applied directly with `--fix`."
+            },
+            "message": {
+              "description": "Custom message explaining why the type is banned.",
+              "default": null,
+              "type": "string",
+              "markdownDescription": "Custom message explaining why the type is banned."
+            },
+            "suggest": {
+              "description": "Suggested replacement types for manual review. Shown as editor suggestions.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Suggested replacement types for manual review. Shown as editor suggestions."
+            }
+          },
+          "additionalProperties": false,
+          "markdownDescription": "`\"TypeName\": { \"message\": \"...\", \"fixWith\": \"...\", \"suggest\": [\"...\"] }` - full config"
+        }
+      ],
+      "markdownDescription": "Represents the different ways a ban config can be specified in JSON.\nCan be:\n- `true` - ban with default message\n- A string - ban with custom message\n- An object with `message` and optional `fixWith` and `suggest`"
+    },
     "BanTsCommentConfig": {
       "description": "This rule allows you to specify how different TypeScript directive comments\nshould be handled.\n\nFor each directive (`@ts-expect-error`, `@ts-ignore`, `@ts-nocheck`, `@ts-check`), you can choose one of the following options:\n- `true`: Disallow the directive entirely, preventing its use in the entire codebase.\n- `false`: Allow the directive without any restrictions.\n- `\"allow-with-description\"`: Allow the directive only if it is followed by a description explaining its use. The description must meet the minimum length specified by `minimumDescriptionLength`.\n- `{ \"descriptionFormat\": \"<regex>\" }`: Allow the directive only if the description matches the specified regex pattern.\n\nFor example:\n```json\n{\n\"ts-expect-error\": \"allow-with-description\",\n\"ts-ignore\": true,\n\"ts-nocheck\": { \"descriptionFormat\": \"^: TS\\\\d+ because .+$\" },\n\"ts-check\": false,\n\"minimumDescriptionLength\": 3\n}\n```",
       "type": "object",
@@ -7460,7 +7508,24 @@ expression: json
           ]
         },
         "typescript/no-restricted-types": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedTypesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/no-this-alias": {
           "anyOf": [
@@ -13798,6 +13863,21 @@ expression: json
         ]
       }
     },
+    "NoRestrictedTypesConfig": {
+      "type": "object",
+      "properties": {
+        "types": {
+          "description": "A mapping of type names to ban configurations.",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/BanConfigValue"
+          },
+          "markdownDescription": "A mapping of type names to ban configurations."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoReturnAssignMode": {
       "oneOf": [
         {
@@ -16898,6 +16978,12 @@ expression: json
         }
       },
       "additionalProperties": false
+    },
+    "True": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
     },
     "TypeOrValueSpecifier": {
       "description": "Type or value specifier for matching specific declarations\n\nSupports four types of specifiers:\n\n1. **String specifier** (deprecated): Universal match by name\n```json\n\"Promise\"\n```\n\n2. **File specifier**: Match types/values declared in local files\n```json\n{ \"from\": \"file\", \"name\": \"MyType\" }\n{ \"from\": \"file\", \"name\": [\"Type1\", \"Type2\"] }\n{ \"from\": \"file\", \"name\": \"MyType\", \"path\": \"./types.ts\" }\n```\n\n3. **Lib specifier**: Match TypeScript built-in lib types\n```json\n{ \"from\": \"lib\", \"name\": \"Promise\" }\n{ \"from\": \"lib\", \"name\": [\"Promise\", \"PromiseLike\"] }\n```\n\n4. **Package specifier**: Match types/values from npm packages\n```json\n{ \"from\": \"package\", \"name\": \"Observable\", \"package\": \"rxjs\" }\n{ \"from\": \"package\", \"name\": [\"Observable\", \"Subject\"], \"package\": \"rxjs\" }\n```",
