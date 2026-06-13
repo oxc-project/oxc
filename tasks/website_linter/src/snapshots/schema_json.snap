@@ -3790,24 +3790,7 @@ expression: json
           ]
         },
         "jsx-a11y/no-noninteractive-element-interactions": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/AllowWarnDeny"
-            },
-            {
-              "type": "array",
-              "items": [
-                {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/NoNoninteractiveElementInteractionsConfig"
-                }
-              ],
-              "maxItems": 2,
-              "minItems": 1
-            }
-          ]
+          "$ref": "#/definitions/DummyRule"
         },
         "jsx-a11y/no-noninteractive-element-to-interactive-role": {
           "anyOf": [
@@ -13629,53 +13612,6 @@ expression: json
         }
       },
       "additionalProperties": false
-    },
-    "NoNoninteractiveElementInteractionsConfig": {
-      "type": "object",
-      "properties": {
-        "handlers": {
-          "description": "An array of event handler names that should trigger this rule.",
-          "default": [
-            "onError",
-            "onLoad",
-            "onKeyPress",
-            "onKeyDown",
-            "onKeyUp",
-            "onFocus",
-            "onBlur",
-            "onClick",
-            "onContextMenu",
-            "onDblClick",
-            "onDoubleClick",
-            "onDrag",
-            "onDragEnd",
-            "onDragEnter",
-            "onDragExit",
-            "onDragLeave",
-            "onDragOver",
-            "onDragStart",
-            "onDrop",
-            "onMouseDown",
-            "onMouseEnter",
-            "onMouseLeave",
-            "onMouseMove",
-            "onMouseOut",
-            "onMouseOver",
-            "onMouseUp"
-          ],
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "An array of event handler names that should trigger this rule."
-        }
-      },
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
     },
     "NoNoninteractiveElementToInteractiveRoleConfig": {
       "type": "object",
