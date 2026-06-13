@@ -935,7 +935,7 @@ export interface DummyRuleMap {
   "jsx-a11y/heading-has-content"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, HeadingHasContentConfig];
   "jsx-a11y/html-has-lang"?: RuleNoConfig;
   "jsx-a11y/iframe-has-title"?: RuleNoConfig;
-  "jsx-a11y/img-redundant-alt"?: DummyRule;
+  "jsx-a11y/img-redundant-alt"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ImgRedundantAltConfig];
   "jsx-a11y/interactive-supports-focus"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
@@ -2510,6 +2510,17 @@ export interface HeadingHasContentConfig {
    * These will be validated in addition to the standard h1-h6 elements.
    */
   components?: string[];
+}
+export interface ImgRedundantAltConfig {
+  /**
+   * JSX element types to validate (component names) where the rule applies.
+   * For example, `["img", "Image"]`.
+   */
+  components?: string[];
+  /**
+   * Words considered redundant in alt text that should trigger a warning.
+   */
+  words?: string[];
 }
 export interface InteractiveSupportsFocusConfig {
   /**

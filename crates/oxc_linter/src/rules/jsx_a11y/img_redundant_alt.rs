@@ -31,7 +31,7 @@ fn img_redundant_alt_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct ImgRedundantAlt(Box<ImgRedundantAltConfig>);
 
 #[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ImgRedundantAltConfig {
     /// JSX element types to validate (component names) where the rule applies.
     /// For example, `["img", "Image"]`.

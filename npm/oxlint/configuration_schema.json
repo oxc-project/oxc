@@ -3526,7 +3526,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/img-redundant-alt": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ImgRedundantAltConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/interactive-supports-focus": {
           "anyOf": [
@@ -10729,6 +10746,36 @@
       },
       "additionalProperties": false,
       "markdownDescription": "Options for ignoring specific primitive types."
+    },
+    "ImgRedundantAltConfig": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "description": "JSX element types to validate (component names) where the rule applies.\nFor example, `[\"img\", \"Image\"]`.",
+          "default": [
+            "img"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "JSX element types to validate (component names) where the rule applies.\nFor example, `[\"img\", \"Image\"]`."
+        },
+        "words": {
+          "description": "Words considered redundant in alt text that should trigger a warning.",
+          "default": [
+            "image",
+            "photo",
+            "picture"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Words considered redundant in alt text that should trigger a warning."
+        }
+      },
+      "additionalProperties": false
     },
     "ImportKind": {
       "type": "string",
