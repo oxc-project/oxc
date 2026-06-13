@@ -43,7 +43,6 @@ const NO_VERIFIED_VALID_SCHEMA: [&str; 29] = [
     "unicorn/filename-case",
     "unicorn/import-style",
     "unicorn/numeric-separators-style",
-    "unicorn/prefer-at",
 ];
 
 /// Should this rule be skipped for config schema generation?

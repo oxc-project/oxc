@@ -1537,7 +1537,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-array-flat-map"?: RuleNoConfig;
   "unicorn/prefer-array-index-of"?: RuleNoConfig;
   "unicorn/prefer-array-some"?: RuleNoConfig;
-  "unicorn/prefer-at"?: DummyRule;
+  "unicorn/prefer-at"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferAtConfig];
   "unicorn/prefer-bigint-literals"?: RuleNoConfig;
   "unicorn/prefer-blob-reading-methods"?: RuleNoConfig;
   "unicorn/prefer-class-fields"?: RuleNoConfig;
@@ -5655,6 +5655,18 @@ export interface NoUselessUndefined {
    * Whether to check for useless `undefined` in arrow function bodies.
    */
   checkArrowFunctionBody?: boolean;
+}
+export interface PreferAtConfig {
+  /**
+   * Check all index access, not just special patterns like `array.length - 1`.
+   * When enabled, `array[0]`, `array[1]`, etc. will also be flagged.
+   */
+  checkAllIndexAccess?: boolean;
+  /**
+   * List of function names to treat as "get last element" functions.
+   * These functions will be checked for `.at(-1)` usage.
+   */
+  getLastElementFunctions?: string[];
 }
 export interface PreferExportFrom {
   /**
