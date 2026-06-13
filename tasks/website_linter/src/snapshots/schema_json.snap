@@ -5748,7 +5748,24 @@ expression: json
           ]
         },
         "react/exhaustive-deps": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExhaustiveDepsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/forbid-component-props": {
           "anyOf": [
@@ -9655,6 +9672,17 @@ expression: json
             }
           ],
           "markdownDescription": "Configuration for whether to allow/disallow comparisons against `null`,\ne.g. `foo == null` or `foo != null`"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExhaustiveDepsConfig": {
+      "type": "object",
+      "properties": {
+        "additionalHooks": {
+          "description": "Optionally provide a regex of additional hooks to check.",
+          "type": "string",
+          "markdownDescription": "Optionally provide a regex of additional hooks to check."
         }
       },
       "additionalProperties": false

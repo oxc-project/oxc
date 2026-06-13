@@ -1208,7 +1208,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
   "react/display-name"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DisplayNameConfig];
-  "react/exhaustive-deps"?: DummyRule;
+  "react/exhaustive-deps"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExhaustiveDepsConfig];
   "react/forbid-component-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ForbidComponentPropsConfig];
   "react/forbid-dom-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ForbidDomPropsConfig];
   "react/forbid-elements"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ForbidElementsConfig];
@@ -4051,6 +4051,12 @@ export interface DisplayNameConfig {
    * and require a `displayName` property in this case.
    */
   ignoreTranspilerName?: boolean;
+}
+export interface ExhaustiveDepsConfig {
+  /**
+   * Optionally provide a regex of additional hooks to check.
+   */
+  additionalHooks?: string;
 }
 export interface ForbidComponentPropsConfig {
   /**
