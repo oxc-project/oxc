@@ -72,7 +72,7 @@ fn input_type_image(span: Span) -> OxcDiagnostic {
 pub struct AltText(Box<AltTextConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct AltTextConfig {
     /// Custom components to check for alt text on `img` elements.
     img: Option<Vec<CompactStr>>,
@@ -102,6 +102,26 @@ impl std::default::Default for AltTextConfig {
             input_type_image: Some(vec![]),
         }
     }
+}
+#[derive(Debug, Default, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+#[expect(unused)]
+struct AltTextConfigSchema {
+    #[serde(flatten)]
+    base: AltTextConfig,
+    /// Custom components to check for alt text on any of the supported elements.
+    elements: Option<Vec<AltTextElements>>,
+}
+
+#[derive(Debug, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+#[expect(unused)]
+enum AltTextElements {
+    Img,
+    Object,
+    Area,
+    #[serde(rename = "input[type=\"image\"]")]
+    InputTypeImage,
 }
 
 declare_oxc_lint!(
@@ -137,7 +157,7 @@ declare_oxc_lint!(
     AltText,
     jsx_a11y,
     correctness,
-    config = AltTextConfig,
+    config = AltTextConfigSchema,
     version = "0.0.16",
 );
 

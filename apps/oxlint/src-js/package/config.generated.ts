@@ -92,6 +92,7 @@ export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type SnapshotHintMode = "always" | "multi";
+export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type CountThis = "always" | "never" | "except-void";
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
@@ -916,7 +917,7 @@ export interface DummyRuleMap {
   "jsdoc/require-yields"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireYieldsConfig];
   "jsdoc/require-yields-description"?: RuleNoConfig;
   "jsdoc/require-yields-type"?: RuleNoConfig;
-  "jsx-a11y/alt-text"?: DummyRule;
+  "jsx-a11y/alt-text"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AltTextConfigSchema];
   "jsx-a11y/anchor-ambiguous-text"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AnchorAmbiguousTextConfig];
   "jsx-a11y/anchor-has-content"?: RuleNoConfig;
   "jsx-a11y/anchor-is-valid"?: DummyRule;
@@ -2430,6 +2431,28 @@ export interface RequireYieldsConfig {
    * When `true`, require `@yields` when a `@generator` tag is present.
    */
   withGeneratorTag?: boolean;
+}
+export interface AltTextConfigSchema {
+  /**
+   * Custom components to check for alt text on `area` elements.
+   */
+  area?: string[];
+  /**
+   * Custom components to check for alt text on any of the supported elements.
+   */
+  elements?: AltTextElements[];
+  /**
+   * Custom components to check for alt text on `img` elements.
+   */
+  img?: string[];
+  /**
+   * Custom components to check for alt text on `input[type="image"]` elements.
+   */
+  'input[type="image"]'?: string[];
+  /**
+   * Custom components to check for alt text on `object` elements.
+   */
+  object?: string[];
 }
 export interface AnchorAmbiguousTextConfig {
   /**

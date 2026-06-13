@@ -565,6 +565,65 @@ expression: json
         "disallow-in-func"
       ]
     },
+    "AltTextConfigSchema": {
+      "type": "object",
+      "properties": {
+        "area": {
+          "description": "Custom components to check for alt text on `area` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `area` elements."
+        },
+        "elements": {
+          "description": "Custom components to check for alt text on any of the supported elements.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AltTextElements"
+          },
+          "markdownDescription": "Custom components to check for alt text on any of the supported elements."
+        },
+        "img": {
+          "description": "Custom components to check for alt text on `img` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `img` elements."
+        },
+        "input[type=\"image\"]": {
+          "description": "Custom components to check for alt text on `input[type=\"image\"]` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `input[type=\"image\"]` elements."
+        },
+        "object": {
+          "description": "Custom components to check for alt text on `object` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `object` elements."
+        }
+      },
+      "additionalProperties": false
+    },
+    "AltTextElements": {
+      "type": "string",
+      "enum": [
+        "img",
+        "object",
+        "area",
+        "input[type=\"image\"]"
+      ]
+    },
     "AlwaysNever": {
       "type": "string",
       "enum": [
@@ -3255,7 +3314,24 @@ expression: json
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/alt-text": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AltTextConfigSchema"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/anchor-ambiguous-text": {
           "anyOf": [
