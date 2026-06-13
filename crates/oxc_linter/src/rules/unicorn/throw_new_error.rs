@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn throw_new_error_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Require `new` when calling an error constructor.")
+    OxcDiagnostic::warn("Require `new` when throwing an error.")
         .with_help("Using `new` ensures the error is correctly initialized.")
         .with_label(span)
 }
@@ -17,7 +17,7 @@ pub struct ThrowNewError;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule makes sure you always use `new` when calling an error constructor.
+    /// This rule makes sure you always use `new` when throwing an error.
     ///
     /// ### Why is this bad?
     ///
