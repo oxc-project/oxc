@@ -16,8 +16,8 @@ catalogs:
       specifier: 1.11.0
       version: 1.11.0
     '@napi-rs/cli':
-      specifier: 3.7.1
-      version: 3.7.1
+      specifier: 3.7.2
+      version: 3.7.2
     '@napi-rs/wasm-runtime':
       specifier: 1.1.4
       version: 1.1.4
@@ -58,7 +58,7 @@ importers:
     devDependencies:
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@25.0.2)
+        version: 3.7.2(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@25.0.2)
       oxfmt:
         specifier: ^0.54.0
         version: 0.54.0(svelte@5.56.2(@typescript-eslint/types@8.60.1))(vite-plus@0.1.24(@arethetypeswrong/core@0.18.3)(@types/node@25.0.2)(esbuild@0.28.0)(happy-dom@20.0.11)(publint@0.3.21)(svelte@5.56.2(@typescript-eslint/types@8.60.1))(terser@5.44.1)(tsx@4.22.4)(vite@7.3.0(@types/node@25.0.2)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.4)))
@@ -89,7 +89,7 @@ importers:
         version: 0.18.3
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)
+        version: 3.7.2(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)
       '@oxapps/shared':
         specifier: workspace:*
         version: link:../shared
@@ -137,7 +137,7 @@ importers:
         version: 7.29.7
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)
+        version: 3.7.2(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)
       '@oxapps/shared':
         specifier: workspace:*
         version: link:../shared
@@ -251,7 +251,7 @@ importers:
         version: 1.11.0
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)
+        version: 3.7.2(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)
       '@types/node':
         specifier: 'catalog:'
         version: 24.1.0
@@ -279,7 +279,7 @@ importers:
         version: 1.11.0
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)
+        version: 3.7.2(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)
       '@napi-rs/wasm-runtime':
         specifier: 'catalog:'
         version: 1.1.4(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)
@@ -325,7 +325,7 @@ importers:
         version: 1.11.0
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@25.0.2)
+        version: 3.7.2(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@25.0.2)
       publint:
         specifier: 'catalog:'
         version: 0.3.21
@@ -340,7 +340,7 @@ importers:
         version: 1.11.0
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.7.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)
+        version: 3.7.2(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)
       '@types/node':
         specifier: 'catalog:'
         version: 24.1.0
@@ -1444,8 +1444,8 @@ packages:
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
 
-  '@napi-rs/cli@3.7.1':
-    resolution: {integrity: sha512-7FkcxJ70SqpsYnyjaYwLVpkP3Xoyd8YkT5g7DevuEvSY7mzpLSva8oSQNENHiQ1T0GMLnae1X46KmiNIu5OXDw==}
+  '@napi-rs/cli@3.7.2':
+    resolution: {integrity: sha512-shDW0Td/XZQpP04Yy+OsMt1ILMKGGkoLcy1zVAsSAK0fLfWm0Upgkmfs/NOV2ZhMQwkgpR3ZEdyHmTwgrUDQuA==}
     engines: {node: '>= 16'}
     hasBin: true
     peerDependencies:
@@ -3902,8 +3902,8 @@ packages:
   electron-to-chromium@1.5.364:
     resolution: {integrity: sha512-G/dYE3+AYhyHwzTwg8UbnXf7zqMERYh7l2jJ3QujhFsH8agSYwtnGAR2aZ7f0AakIKJXd5En/Hre4igIUrdlYw==}
 
-  emnapi@1.11.0:
-    resolution: {integrity: sha512-3+AyVLAzk2jr9FPnCT9fgU4/gGoHrB3MpYxqNG6JdmkWmFPpKAhArQgfK/WEiT9kExX2ecXVA6DoPceDShR47g==}
+  emnapi@1.11.1:
+    resolution: {integrity: sha512-kSRjhIcxjMFsBqk7ORvoc9aA5SBKDmecrtF5RMcmOTao0kD/zamaxsuTxMI8C1//wGUuvE7a+19pCE7AEhGVnA==}
     peerDependencies:
       node-addon-api: '>= 6.1.0'
     peerDependenciesMeta:
@@ -4824,11 +4824,6 @@ packages:
         optional: true
       prettier-plugin-svelte:
         optional: true
-
-  prettier@3.8.3:
-    resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
-    engines: {node: '>=14'}
-    hasBin: true
 
   prettier@3.8.4:
     resolution: {integrity: sha512-N2MylSdi48+5N/6S5j+maeHbUSIzzZ5uOcX5Hm4QpV8Dkb1HFjfAKTKX6yNPJQD9AhcT3ifHNB66tWTTJDi11Q==}
@@ -6379,7 +6374,7 @@ snapshots:
 
   '@lukeed/csprng@1.1.0': {}
 
-  '@napi-rs/cli@3.7.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)':
+  '@napi-rs/cli@3.7.2(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@24.1.0)':
     dependencies:
       '@inquirer/prompts': 8.5.2(@types/node@24.1.0)
       '@napi-rs/cross-toolchain': 1.0.3(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)
@@ -6387,7 +6382,7 @@ snapshots:
       '@octokit/rest': 22.0.1
       clipanion: 4.0.0-rc.4(typanion@3.14.0)
       colorette: 2.0.20
-      emnapi: 1.11.0
+      emnapi: 1.11.1
       es-toolkit: 1.47.0
       js-yaml: 4.2.0
       obug: 2.1.2
@@ -6411,7 +6406,7 @@ snapshots:
       - node-addon-api
       - supports-color
 
-  '@napi-rs/cli@3.7.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@25.0.2)':
+  '@napi-rs/cli@3.7.2(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@types/node@25.0.2)':
     dependencies:
       '@inquirer/prompts': 8.5.2(@types/node@25.0.2)
       '@napi-rs/cross-toolchain': 1.0.3(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)
@@ -6419,7 +6414,7 @@ snapshots:
       '@octokit/rest': 22.0.1
       clipanion: 4.0.0-rc.4(typanion@3.14.0)
       colorette: 2.0.20
-      emnapi: 1.11.0
+      emnapi: 1.11.1
       es-toolkit: 1.47.0
       js-yaml: 4.2.0
       obug: 2.1.2
@@ -8550,7 +8545,7 @@ snapshots:
 
   electron-to-chromium@1.5.364: {}
 
-  emnapi@1.11.0: {}
+  emnapi@1.11.1: {}
 
   empathic@2.0.1: {}
 
@@ -9038,7 +9033,7 @@ snapshots:
       js-yaml: 4.2.0
       lodash: 4.17.21
       minimist: 1.2.8
-      prettier: 3.8.3
+      prettier: 3.8.4
       tinyglobby: 0.2.17
 
   json-schema-traverse@0.4.1: {}
@@ -9562,8 +9557,6 @@ snapshots:
       prettier: 3.8.4
     optionalDependencies:
       prettier-plugin-svelte: 4.1.0(prettier@3.8.4)(svelte@5.56.2(@typescript-eslint/types@8.60.1))
-
-  prettier@3.8.3: {}
 
   prettier@3.8.4: {}
 
