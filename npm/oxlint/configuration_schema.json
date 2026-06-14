@@ -2123,7 +2123,7 @@
         "accessor-pairs": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2136,14 +2136,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "array-callback-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2156,14 +2156,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "arrow-body-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2179,7 +2179,7 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2189,7 +2189,7 @@
         "capitalized-comments": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2205,14 +2205,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "class-methods-use-this": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2225,14 +2225,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "complexity": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2252,7 +2252,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2262,7 +2262,7 @@
         "curly": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2278,14 +2278,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "default-case": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2298,7 +2298,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2311,7 +2311,7 @@
         "eqeqeq": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2327,7 +2327,7 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2340,7 +2340,7 @@
         "func-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2356,14 +2356,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "func-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2379,14 +2379,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "getter-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2399,14 +2399,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "grouped-accessor-pairs": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2422,7 +2422,7 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2432,7 +2432,7 @@
         "id-length": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2445,14 +2445,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "id-match": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2468,14 +2468,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/consistent-type-specifier-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2488,7 +2488,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2507,7 +2507,7 @@
         "import/first": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2520,7 +2520,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2530,7 +2530,7 @@
         "import/max-dependencies": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2543,7 +2543,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2553,7 +2553,7 @@
         "import/namespace": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2566,14 +2566,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/newline-after-import": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2586,14 +2586,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/no-absolute-path": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2606,7 +2606,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2616,7 +2616,7 @@
         "import/no-anonymous-default-export": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2629,14 +2629,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/no-commonjs": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2649,14 +2649,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/no-cycle": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2669,7 +2669,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2679,7 +2679,7 @@
         "import/no-duplicates": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2692,14 +2692,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/no-dynamic-require": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2712,7 +2712,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2737,7 +2737,7 @@
         "import/no-namespace": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2750,14 +2750,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "import/no-nodejs-modules": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2770,7 +2770,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2783,7 +2783,7 @@
         "import/no-unassigned-import": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2796,7 +2796,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2806,7 +2806,7 @@
         "import/prefer-default-export": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2819,7 +2819,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2829,7 +2829,7 @@
         "init-declarations": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2845,14 +2845,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/consistent-test-it": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2865,14 +2865,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/expect-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2885,14 +2885,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/max-expects": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2905,14 +2905,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/max-nested-describe": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2925,7 +2925,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2947,7 +2947,7 @@
         "jest/no-deprecated-functions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2960,7 +2960,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -2982,7 +2982,7 @@
         "jest/no-hooks": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -2995,7 +2995,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3011,7 +3011,7 @@
         "jest/no-large-snapshots": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3024,7 +3024,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3034,7 +3034,7 @@
         "jest/no-restricted-jest-methods": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3047,14 +3047,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/no-restricted-matchers": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3067,14 +3067,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jest/no-standalone-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3087,7 +3087,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3121,7 +3121,7 @@
         "jest/prefer-ending-with-an-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3134,7 +3134,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3144,7 +3144,7 @@
         "jest/prefer-expect-assertions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3157,7 +3157,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3173,7 +3173,7 @@
         "jest/prefer-importing-jest-globals": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3186,7 +3186,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3205,7 +3205,7 @@
         "jest/prefer-snapshot-hint": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3218,7 +3218,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3249,7 +3249,7 @@
         "jest/require-hook": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3262,7 +3262,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3272,7 +3272,7 @@
         "jest/require-top-level-describe": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3285,7 +3285,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3295,7 +3295,7 @@
         "jest/valid-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3308,7 +3308,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3327,7 +3327,7 @@
         "jsdoc/check-tag-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3340,14 +3340,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsdoc/empty-tags": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3360,7 +3360,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3370,7 +3370,7 @@
         "jsdoc/no-defaults": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3383,7 +3383,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3414,7 +3414,7 @@
         "jsdoc/require-returns": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3427,7 +3427,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3446,7 +3446,7 @@
         "jsdoc/require-yields": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3459,7 +3459,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3472,7 +3472,7 @@
         "jsx-a11y/alt-text": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3485,14 +3485,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/anchor-ambiguous-text": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3505,7 +3505,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3527,7 +3527,7 @@
         "jsx-a11y/aria-role": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3540,7 +3540,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3550,7 +3550,7 @@
         "jsx-a11y/autocomplete-valid": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3563,7 +3563,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3573,7 +3573,7 @@
         "jsx-a11y/control-has-associated-label": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3586,14 +3586,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/heading-has-content": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3606,7 +3606,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3619,7 +3619,7 @@
         "jsx-a11y/img-redundant-alt": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3632,14 +3632,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/interactive-supports-focus": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3652,14 +3652,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/label-has-associated-control": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3672,7 +3672,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3682,7 +3682,7 @@
         "jsx-a11y/media-has-caption": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3695,14 +3695,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/mouse-events-have-key-events": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3715,7 +3715,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3728,7 +3728,7 @@
         "jsx-a11y/no-autofocus": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3741,14 +3741,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/no-distracting-elements": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3761,14 +3761,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/no-interactive-element-to-noninteractive-role": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3781,7 +3781,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3791,7 +3791,7 @@
         "jsx-a11y/no-noninteractive-element-to-interactive-role": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3804,14 +3804,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/no-noninteractive-tabindex": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3824,14 +3824,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/no-redundant-roles": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3844,14 +3844,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "jsx-a11y/no-static-element-interactions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3864,7 +3864,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -3886,7 +3886,7 @@
         "logical-assignment-operators": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3902,14 +3902,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-classes-per-file": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3929,14 +3929,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-depth": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3956,14 +3956,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-lines": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -3983,14 +3983,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-lines-per-function": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4010,14 +4010,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-nested-callbacks": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4037,14 +4037,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-params": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4064,14 +4064,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "max-statements": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4091,14 +4091,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "new-cap": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4111,7 +4111,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4193,7 +4193,7 @@
         "no-bitwise": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4206,7 +4206,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4225,7 +4225,7 @@
         "no-cond-assign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4238,14 +4238,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-console": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4258,7 +4258,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4271,7 +4271,7 @@
         "no-constant-condition": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4284,7 +4284,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4321,7 +4321,7 @@
         "no-duplicate-imports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4334,14 +4334,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-else-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4354,14 +4354,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-empty": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4374,7 +4374,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4384,7 +4384,7 @@
         "no-empty-function": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4397,14 +4397,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-empty-pattern": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4417,7 +4417,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4430,7 +4430,7 @@
         "no-eval": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4443,7 +4443,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4453,7 +4453,7 @@
         "no-extend-native": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4466,7 +4466,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4476,7 +4476,7 @@
         "no-extra-boolean-cast": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4489,7 +4489,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4499,7 +4499,7 @@
         "no-fallthrough": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4512,7 +4512,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4522,7 +4522,7 @@
         "no-global-assign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4535,14 +4535,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-implicit-coercion": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4555,14 +4555,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-implicit-globals": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4575,7 +4575,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4588,7 +4588,7 @@
         "no-inline-comments": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4601,14 +4601,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-inner-declarations": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4624,14 +4624,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-invalid-regexp": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4644,14 +4644,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-irregular-whitespace": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4664,7 +4664,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4677,7 +4677,7 @@
         "no-labels": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4690,7 +4690,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4709,7 +4709,7 @@
         "no-magic-numbers": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4722,14 +4722,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-misleading-character-class": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4742,14 +4742,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-multi-assign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4762,7 +4762,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4799,7 +4799,7 @@
         "no-param-reassign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4812,14 +4812,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-plusplus": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4832,14 +4832,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-promise-executor-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4852,7 +4852,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4865,7 +4865,7 @@
         "no-redeclare": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4878,7 +4878,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4888,7 +4888,7 @@
         "no-restricted-exports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4901,7 +4901,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4917,7 +4917,7 @@
         "no-return-assign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4930,7 +4930,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4940,7 +4940,7 @@
         "no-self-assign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4953,7 +4953,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4963,7 +4963,7 @@
         "no-sequences": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4976,7 +4976,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -4986,7 +4986,7 @@
         "no-shadow": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -4999,14 +4999,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-shadow-restricted-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5019,7 +5019,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5044,7 +5044,7 @@
         "no-undef": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5057,7 +5057,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5067,7 +5067,7 @@
         "no-underscore-dangle": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5080,7 +5080,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5093,7 +5093,7 @@
         "no-unneeded-ternary": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5106,7 +5106,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5119,7 +5119,7 @@
         "no-unsafe-negation": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5132,14 +5132,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-unsafe-optional-chaining": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5152,14 +5152,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-unused-expressions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5172,7 +5172,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5185,7 +5185,7 @@
         "no-unused-vars": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5198,14 +5198,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-use-before-define": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5218,7 +5218,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5237,7 +5237,7 @@
         "no-useless-computed-key": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5250,7 +5250,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5263,7 +5263,7 @@
         "no-useless-escape": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5276,14 +5276,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-useless-rename": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5296,7 +5296,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5309,7 +5309,7 @@
         "no-void": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5322,14 +5322,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "no-warning-comments": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5342,7 +5342,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5358,7 +5358,7 @@
         "node/handle-callback-err": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5371,7 +5371,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5387,7 +5387,7 @@
         "node/no-process-env": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5400,14 +5400,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "object-shorthand": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5423,14 +5423,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "operator-assignment": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5443,7 +5443,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5498,7 +5498,7 @@
         "oxc/no-async-endpoint-handlers": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5511,14 +5511,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "oxc/no-barrel-file": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5531,7 +5531,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5541,7 +5541,7 @@
         "oxc/no-map-spread": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5554,14 +5554,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "oxc/no-optional-chaining": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5574,14 +5574,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "oxc/no-rest-spread-properties": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5594,7 +5594,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5613,7 +5613,7 @@
         "prefer-arrow-callback": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5626,14 +5626,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "prefer-const": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5646,7 +5646,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5671,7 +5671,7 @@
         "prefer-promise-reject-errors": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5684,14 +5684,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "prefer-regex-literals": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5704,7 +5704,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5720,7 +5720,7 @@
         "preserve-caught-error": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5733,14 +5733,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "promise/always-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5753,7 +5753,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5763,7 +5763,7 @@
         "promise/catch-or-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5776,14 +5776,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "promise/no-callback-in-promise": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5796,7 +5796,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5812,7 +5812,7 @@
         "promise/no-promise-in-callback": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5825,7 +5825,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5835,7 +5835,7 @@
         "promise/no-return-wrap": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5848,14 +5848,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "promise/param-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5868,7 +5868,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5878,7 +5878,7 @@
         "promise/prefer-await-to-then": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5891,7 +5891,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5901,7 +5901,7 @@
         "promise/spec-only": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5914,7 +5914,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -5924,7 +5924,7 @@
         "radix": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5937,14 +5937,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react-perf/jsx-no-jsx-as-prop": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5957,14 +5957,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react-perf/jsx-no-new-array-as-prop": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5977,14 +5977,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react-perf/jsx-no-new-function-as-prop": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -5997,14 +5997,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react-perf/jsx-no-new-object-as-prop": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6017,14 +6017,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/button-has-type": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6037,14 +6037,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/checked-requires-onchange-or-readonly": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6057,14 +6057,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/display-name": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6077,14 +6077,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/exhaustive-deps": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6097,14 +6097,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/forbid-component-props": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6117,14 +6117,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/forbid-dom-props": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6137,14 +6137,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/forbid-elements": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6157,7 +6157,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6167,7 +6167,7 @@
         "react/hook-use-state": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6180,7 +6180,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6190,7 +6190,7 @@
         "react/jsx-boolean-value": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6206,14 +6206,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-curly-brace-presence": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6226,14 +6226,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-filename-extension": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6246,14 +6246,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-fragments": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6266,14 +6266,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-handler-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6286,14 +6286,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-key": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6306,14 +6306,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-max-depth": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6326,7 +6326,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6342,7 +6342,7 @@
         "react/jsx-no-literals": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6355,7 +6355,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6365,7 +6365,7 @@
         "react/jsx-no-target-blank": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6378,7 +6378,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6388,7 +6388,7 @@
         "react/jsx-no-useless-fragment": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6401,14 +6401,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/jsx-pascal-case": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6421,7 +6421,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6431,7 +6431,7 @@
         "react/jsx-props-no-spreading": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6444,7 +6444,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6466,7 +6466,7 @@
         "react/no-did-mount-set-state": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6479,14 +6479,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/no-did-update-set-state": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6499,7 +6499,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6515,7 +6515,7 @@
         "react/no-multi-comp": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6528,7 +6528,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6553,7 +6553,7 @@
         "react/no-string-refs": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6566,7 +6566,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6579,7 +6579,7 @@
         "react/no-unknown-property": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6592,14 +6592,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/no-unsafe": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6612,14 +6612,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/no-unstable-nested-components": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6632,14 +6632,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/no-will-update-set-state": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6652,14 +6652,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/only-export-components": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6672,14 +6672,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/prefer-es6-class": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6692,14 +6692,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/prefer-function-component": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6712,7 +6712,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6728,7 +6728,7 @@
         "react/self-closing-comp": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6741,14 +6741,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/state-in-constructor": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6761,14 +6761,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "react/style-prop-object": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6781,7 +6781,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6794,7 +6794,7 @@
         "require-unicode-regexp": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6807,7 +6807,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6817,7 +6817,7 @@
         "sort-imports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6830,14 +6830,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "sort-keys": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6853,14 +6853,14 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "sort-vars": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6873,7 +6873,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6886,7 +6886,7 @@
         "typescript/array-type": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6899,7 +6899,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6909,7 +6909,7 @@
         "typescript/ban-ts-comment": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6922,7 +6922,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -6935,7 +6935,7 @@
         "typescript/class-literal-property-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6948,14 +6948,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-generic-constructors": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6968,14 +6968,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-indexed-object-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -6988,14 +6988,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7008,14 +7008,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-type-assertions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7028,14 +7028,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-type-definitions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7048,14 +7048,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-type-exports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7068,14 +7068,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/consistent-type-imports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7088,14 +7088,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/dot-notation": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7108,14 +7108,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/explicit-function-return-type": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7128,14 +7128,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/explicit-member-accessibility": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7148,14 +7148,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/explicit-module-boundary-types": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7168,14 +7168,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/method-signature-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7188,7 +7188,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7198,7 +7198,7 @@
         "typescript/no-base-to-string": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7211,7 +7211,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7221,7 +7221,7 @@
         "typescript/no-confusing-void-expression": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7234,14 +7234,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-deprecated": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7254,7 +7254,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7264,7 +7264,7 @@
         "typescript/no-duplicate-type-constituents": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7277,7 +7277,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7287,7 +7287,7 @@
         "typescript/no-empty-interface": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7300,14 +7300,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-empty-object-type": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7320,14 +7320,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-explicit-any": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7340,7 +7340,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7350,7 +7350,7 @@
         "typescript/no-extraneous-class": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7363,14 +7363,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-floating-promises": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7383,7 +7383,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7399,7 +7399,7 @@
         "typescript/no-inferrable-types": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7412,14 +7412,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-invalid-void-type": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7432,14 +7432,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-meaningless-void-operator": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7452,7 +7452,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7462,7 +7462,7 @@
         "typescript/no-misused-promises": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7475,14 +7475,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-misused-spread": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7495,7 +7495,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7505,7 +7505,7 @@
         "typescript/no-namespace": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7518,7 +7518,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7537,7 +7537,7 @@
         "typescript/no-require-imports": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7550,14 +7550,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-restricted-types": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7570,14 +7570,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-this-alias": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7590,14 +7590,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-unnecessary-boolean-literal-compare": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7610,14 +7610,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/no-unnecessary-condition": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7630,7 +7630,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7649,7 +7649,7 @@
         "typescript/no-unnecessary-type-assertion": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7662,7 +7662,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7696,7 +7696,7 @@
         "typescript/no-unsafe-member-access": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7709,7 +7709,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7740,7 +7740,7 @@
         "typescript/only-throw-error": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7753,14 +7753,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/parameter-properties": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7773,7 +7773,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7798,7 +7798,7 @@
         "typescript/prefer-literal-enum-member": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7811,7 +7811,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7821,7 +7821,7 @@
         "typescript/prefer-nullish-coalescing": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7834,14 +7834,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/prefer-optional-chain": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7854,14 +7854,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/prefer-promise-reject-errors": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7874,14 +7874,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/prefer-readonly": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7894,14 +7894,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/prefer-readonly-parameter-types": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7914,7 +7914,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7930,7 +7930,7 @@
         "typescript/prefer-string-starts-ends-with": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7943,7 +7943,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7953,7 +7953,7 @@
         "typescript/promise-function-async": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7966,7 +7966,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7976,7 +7976,7 @@
         "typescript/require-array-sort-compare": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -7989,7 +7989,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -7999,7 +7999,7 @@
         "typescript/restrict-plus-operands": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8012,14 +8012,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/restrict-template-expressions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8032,14 +8032,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/return-await": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8052,14 +8052,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/strict-boolean-expressions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8072,14 +8072,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/strict-void-return": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8092,14 +8092,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/switch-exhaustiveness-check": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8112,14 +8112,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/triple-slash-reference": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8132,14 +8132,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/unbound-method": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8152,14 +8152,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "typescript/unified-signatures": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8172,7 +8172,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8182,7 +8182,7 @@
         "unicode-bom": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8195,14 +8195,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "unicorn/catch-error-name": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8215,7 +8215,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8234,7 +8234,7 @@
         "unicorn/consistent-function-scoping": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8247,7 +8247,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8269,7 +8269,7 @@
         "unicorn/explicit-length-check": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8282,7 +8282,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8292,7 +8292,7 @@
         "unicorn/import-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8305,7 +8305,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8336,7 +8336,7 @@
         "unicorn/no-array-reduce": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8349,14 +8349,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "unicorn/no-array-reverse": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8369,14 +8369,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "unicorn/no-array-sort": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8389,7 +8389,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8420,7 +8420,7 @@
         "unicorn/no-instanceof-builtins": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8433,7 +8433,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8470,7 +8470,7 @@
         "unicorn/no-null": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8483,7 +8483,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8508,7 +8508,7 @@
         "unicorn/no-typeof-undefined": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8521,7 +8521,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8561,7 +8561,7 @@
         "unicorn/no-useless-promise-resolve-reject": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8574,7 +8574,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8587,7 +8587,7 @@
         "unicorn/no-useless-undefined": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8600,7 +8600,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8634,7 +8634,7 @@
         "unicorn/prefer-at": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8647,7 +8647,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8690,7 +8690,7 @@
         "unicorn/prefer-export-from": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8703,7 +8703,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8749,7 +8749,7 @@
         "unicorn/prefer-number-properties": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8762,14 +8762,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "unicorn/prefer-object-from-entries": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8782,7 +8782,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8813,7 +8813,7 @@
         "unicorn/prefer-single-call": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8826,7 +8826,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8851,7 +8851,7 @@
         "unicorn/prefer-structured-clone": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8864,14 +8864,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "unicorn/prefer-ternary": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8884,7 +8884,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8897,7 +8897,7 @@
         "unicorn/relative-url-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8910,7 +8910,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8932,7 +8932,7 @@
         "unicorn/switch-case-braces": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8945,7 +8945,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8955,7 +8955,7 @@
         "unicorn/text-encoding-identifier-case": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8968,7 +8968,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -8978,7 +8978,7 @@
         "use-isnan": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -8991,14 +8991,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "valid-typeof": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9011,7 +9011,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9021,7 +9021,7 @@
         "vitest/consistent-each-for": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9034,14 +9034,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/consistent-test-filename": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9054,14 +9054,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/consistent-test-it": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9074,14 +9074,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/consistent-vitest-vi": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9094,14 +9094,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/expect-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9114,7 +9114,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9124,7 +9124,7 @@
         "vitest/max-expects": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9137,14 +9137,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/max-nested-describe": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9157,7 +9157,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9188,7 +9188,7 @@
         "vitest/no-hooks": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9201,7 +9201,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9220,7 +9220,7 @@
         "vitest/no-large-snapshots": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9233,7 +9233,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9243,7 +9243,7 @@
         "vitest/no-restricted-matchers": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9256,14 +9256,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/no-restricted-vi-methods": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9276,14 +9276,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vitest/no-standalone-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9296,7 +9296,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9339,7 +9339,7 @@
         "vitest/prefer-expect-assertions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9352,7 +9352,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9371,7 +9371,7 @@
         "vitest/prefer-import-in-mock": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9384,7 +9384,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9403,7 +9403,7 @@
         "vitest/prefer-snapshot-hint": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9416,7 +9416,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9459,7 +9459,7 @@
         "vitest/require-hook": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9472,7 +9472,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9482,7 +9482,7 @@
         "vitest/require-mock-type-parameters": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9495,7 +9495,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9508,7 +9508,7 @@
         "vitest/require-top-level-describe": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9521,7 +9521,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9531,7 +9531,7 @@
         "vitest/valid-expect": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9544,7 +9544,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9560,7 +9560,7 @@
         "vue/component-definition-name-casing": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9573,14 +9573,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/define-emits-declaration": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9593,14 +9593,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/define-props-declaration": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9613,14 +9613,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/define-props-destructuring": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9633,14 +9633,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/max-props": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9653,14 +9653,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/next-tick-style": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9673,7 +9673,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9698,7 +9698,7 @@
         "vue/no-deprecated-model-definition": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9711,7 +9711,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9742,7 +9742,7 @@
         "vue/no-reserved-component-names": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9755,14 +9755,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/no-reserved-keys": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9775,14 +9775,14 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
         "vue/no-reserved-props": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9795,7 +9795,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9817,7 +9817,7 @@
         "vue/prop-name-casing": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9833,7 +9833,7 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9846,7 +9846,7 @@
         "vue/require-direct-export": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9859,7 +9859,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9881,7 +9881,7 @@
         "vue/return-in-computed-property": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9894,7 +9894,7 @@
                 }
               ],
               "maxItems": 2,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         },
@@ -9916,7 +9916,7 @@
         "yoda": {
           "anyOf": [
             {
-              "$ref": "#/definitions/AllowWarnDeny"
+              "$ref": "#/definitions/RuleNoConfig"
             },
             {
               "type": "array",
@@ -9932,7 +9932,7 @@
                 }
               ],
               "maxItems": 3,
-              "minItems": 1
+              "minItems": 2
             }
           ]
         }
