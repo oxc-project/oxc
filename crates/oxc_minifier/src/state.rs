@@ -5,6 +5,7 @@ use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_str::Str;
+use oxc_syntax::scope::ScopeId;
 use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_value::SymbolValues};
@@ -30,6 +31,12 @@ pub struct MinifierState<'a> {
     /// setters that make subsequent property writes side-effectful.
     pub proto_write_symbols: FxHashSet<SymbolId>,
 
+    /// Lexical scopes of direct `eval(...)` call sites (not ancestor-propagated).
+    pub direct_eval_scopes: FxHashSet<ScopeId>,
+
+    /// Body scopes of unused named function/class declarations.
+    pub unused_declaration_body_scopes: FxHashSet<ScopeId>,
+
     pub changed: bool,
 
     /// Scratch buffer reused by `try_fold_concat` to build template literal
@@ -52,6 +59,8 @@ impl MinifierState<'_> {
             symbol_values: SymbolValues::new(scoping.symbols_len()),
             class_symbols_stack: ClassSymbolsStack::new(),
             proto_write_symbols: FxHashSet::default(),
+            direct_eval_scopes: FxHashSet::default(),
+            unused_declaration_body_scopes: FxHashSet::default(),
             changed: false,
             concat_scratch: String::new(),
         }

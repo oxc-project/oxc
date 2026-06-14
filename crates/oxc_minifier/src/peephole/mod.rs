@@ -1,4 +1,5 @@
 mod convert_to_dotted_properties;
+mod direct_eval;
 mod fold_constants;
 mod inline;
 mod minimize_conditional_expression;
@@ -159,10 +160,20 @@ impl<'a> PeepholeOptimizations {
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
-    fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.reset();
         ctx.state.proto_write_symbols.clear();
         ctx.state.changed = false;
+        // `contains_direct_eval()` is only a cheap "any eval exists" signal
+        if ctx.scoping().root_scope_flags().contains_direct_eval() {
+            let prepass = direct_eval::collect_prepass_data(ctx.scoping(), program);
+            ctx.state.direct_eval_scopes = prepass.direct_eval_scopes;
+            ctx.state.unused_declaration_body_scopes = prepass.unused_declaration_body_scopes;
+        } else {
+            // Eval may have been removed last iteration; `refresh_direct_eval_flags` clears the root flag.
+            ctx.state.direct_eval_scopes.clear();
+            ctx.state.unused_declaration_body_scopes.clear();
+        }
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -586,14 +597,7 @@ impl<'a, 's> LiveUsageCollector<'a, 's> {
 
 impl<'a> Visit<'a> for LiveUsageCollector<'_, '_> {
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
-        if !it.optional
-            && let Some(ident) = it.callee.get_identifier_reference()
-            && ident.name == "eval"
-        {
-            let scope_id = self.scoping.get_reference(ident.reference_id()).scope_id();
-            self.direct_eval_scopes.insert(scope_id);
-        }
-        // Recurse — `eval` may be nested in another call's arguments, e.g. `foo(eval('x'))`.
+        direct_eval::record_direct_eval_call(self.scoping, it, &mut self.direct_eval_scopes);
         walk_call_expression(self, it);
     }
 

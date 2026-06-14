@@ -1,4 +1,5 @@
 use super::PeepholeOptimizations;
+use super::direct_eval;
 use crate::{CompressOptionsUnused, TraverseCtx};
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
@@ -87,12 +88,17 @@ impl<'a> PeepholeOptimizations {
         }
         let Some(id) = &f.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::keep_top_level_var_in_script_mode(ctx)
-            || ctx.current_scope_flags().contains_direct_eval()
-        {
+        if !ctx.scoping().symbol_is_unused(symbol_id) {
             return;
         }
-        if !ctx.scoping().symbol_is_unused(symbol_id) {
+        if Self::keep_top_level_var_in_script_mode(ctx)
+            || direct_eval::direct_eval_blocks_unused_declaration_removal(
+                f.scope_id(),
+                &ctx.state.direct_eval_scopes,
+                &ctx.state.unused_declaration_body_scopes,
+                ctx.scoping(),
+            )
+        {
             return;
         }
         *stmt = ctx.ast.statement_empty(f.span);
@@ -106,12 +112,17 @@ impl<'a> PeepholeOptimizations {
         }
         let Some(id) = &c.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::keep_top_level_var_in_script_mode(ctx)
-            || ctx.current_scope_flags().contains_direct_eval()
-        {
+        if !ctx.scoping().symbol_is_unused(symbol_id) {
             return;
         }
-        if !ctx.scoping().symbol_is_unused(symbol_id) {
+        if Self::keep_top_level_var_in_script_mode(ctx)
+            || direct_eval::direct_eval_blocks_unused_declaration_removal(
+                c.scope_id(),
+                &ctx.state.direct_eval_scopes,
+                &ctx.state.unused_declaration_body_scopes,
+                ctx.scoping(),
+            )
+        {
             return;
         }
         if let Some(changed) = Self::remove_unused_class(c, ctx).map(|exprs| {

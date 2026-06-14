@@ -165,6 +165,64 @@ fn remove_unused_function_declaration() {
     test_same_options("function foo() { bar } eval('foo()')", &options);
 }
 
+///  Eval inside an unused declaration is execution-dead and must not block its removal.(#20992)
+#[test]
+fn remove_unused_declaration_with_direct_eval_inside_body() {
+    let options = CompressOptions::smallest();
+    test_options("function foo() { eval('foo()') }", "", &options);
+    test_options("function foo() { eval('foo()'); var x = 1 }", "", &options);
+    test_options("class C { m() { eval('C') } }", "", &options);
+    test_same_options("function foo() { bar } eval('foo()')", &options);
+    // `bar` is unused and its eval never runs, so `bar` is removed; then `foo` is removed too.
+    test_options("function bar() { eval('foo()') } function foo() {}", "", &options);
+    // Live call to `bar` keeps `foo` -> eval in `bar` may reference `foo` at runtime.
+    test_same_options("function bar() { eval('foo()') } function foo() {} bar()", &options);
+    test_options("class D { m() { eval('C') } } class C {}", "", &options);
+    test_options("function outer() { function inner() { eval('x') } }", "", &options);
+    test_options("function outer() { eval('x') } function inner() {}", "", &options);
+    test_options(
+        "(0, eval)('code'); function foo() { eval('foo()') }",
+        "(0, eval)('code');",
+        &options,
+    );
+    // Nested class with eval inside an unused function.
+    test_options("function foo() { class Inner { m() { eval('foo()') } } }", "", &options);
+    // Direct eval inside try/catch still lexically inside the function body.
+    test_options("function foo() { try { eval('foo()') } catch (e) {} }", "", &options);
+    // Reassigned eval is indirect -> must not block removal.
+    test_options("function foo() { let e = eval; e('foo()') }", "", &options);
+    // Optional chaining on eval is indirect (see `remove_unused_declaration_with_optional_eval`).
+    test_options("function foo() { eval?.('foo()') }", "", &options);
+    // Unused class with a static block containing only direct eval.
+    test_options("class C { static { eval('C') } }", "", &options);
+}
+
+#[test]
+fn remove_unused_class_static_block_shadowed_eval() {
+    let options = CompressOptions::smallest();
+    // Shadowed `eval` is not direct eval; class is unused so the static block never runs.
+    test_options("class C { static { function eval() {} eval('x') } }", "", &options);
+}
+
+/// Eval inside a named function *expression* still runs when the expression is evaluated.
+#[test]
+fn remove_unused_declaration_eval_in_named_function_expression() {
+    let options = CompressOptions::smallest();
+    test_same_options("(function helper() { eval('target()') })(); function target() {}", &options);
+}
+
+/// Edge cases where eval runs eagerly, not inside the function/class body (#20992).
+#[test]
+fn remove_unused_declaration_direct_eval_edge_cases() {
+    let options = CompressOptions::smallest();
+    // Default-parameter scope is nested -> eval does not escape.
+    test_options("function foo(x = eval('foo()')) {}", "", &options);
+    // Computed method key runs at class definition -> keep the eval, drop the class.
+    test_options("class C { [eval('C')]() {} }", "eval('C');", &options);
+    // `extends` runs at class definition -> keep the super expression.
+    test_options("class C extends eval('Base') {}", "eval('Base');", &options);
+}
+
 #[test]
 fn remove_unused_declaration_after_dead_direct_eval() {
     let options = CompressOptions::smallest();
@@ -337,7 +395,10 @@ fn remove_unused_import_specifiers() {
     test_same_options("import { a } from 'a'; eval('a');", &options);
     test_same_options("import a from 'a'; eval('a');", &options);
     test_same_options("import * as a from 'a'; eval('a');", &options);
-    test_same_options("import { a } from 'a'; function f() { eval('a'); }", &options);
+    // Eval inside an unused function never runs -> `f` and the `a` import binding can go.
+    test_options("import { a } from 'a'; function f() { eval('a'); }", "import 'a';", &options);
+    // Live `f` keeps the import: eval in `f` may reference `a` at runtime.
+    test_same_options("import { a } from 'a'; function f() { eval('a'); } f();", &options);
 }
 
 #[test]
