@@ -501,6 +501,7 @@ pub(crate) mod unicorn {
     pub mod no_accessor_recursion;
     pub mod no_anonymous_default_export;
     pub mod no_array_callback_reference;
+    pub mod no_array_fill_with_reference_type;
     pub mod no_array_for_each;
     pub mod no_array_method_this_argument;
     pub mod no_array_reduce;
