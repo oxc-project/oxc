@@ -179,6 +179,8 @@ export type ForbidItem2 =
       message?: string;
     };
 export type EnforceBooleanAttribute = "always" | "never";
+export type JsxCurlyBracePresenceConfig = JsxCurlyBracePresenceMode | JsxCurlyBracePresence;
+export type JsxCurlyBracePresenceMode = "always" | "never" | "ignore";
 export type JsxFilenameExtensionAllowMode = "always" | "as-needed";
 export type FragmentMode = "syntax" | "element";
 export type EnforceDynamicLinksEnum = "always" | "never";
@@ -1297,7 +1299,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny]
     | [AllowWarnDeny, EnforceBooleanAttribute]
     | [AllowWarnDeny, EnforceBooleanAttribute, JsxBooleanValueOptions];
-  "react/jsx-curly-brace-presence"?: DummyRule;
+  "react/jsx-curly-brace-presence"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxCurlyBracePresenceConfig];
   "react/jsx-filename-extension"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxFilenameExtensionConfig];
   "react/jsx-fragments"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, FragmentMode];
   "react/jsx-handler-names"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxHandlerNamesConfig];
@@ -4369,6 +4371,36 @@ export interface JsxBooleanValueOptions {
    * Only necessary when main mode is `"always"`.
    */
   never?: string[];
+}
+export interface JsxCurlyBracePresence {
+  /**
+   * Whether to enforce or disallow curly braces for child content of a JSX element.
+   *
+   * - `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo>I love oxlint</Foo>`
+   * - `always` will force the usage of curly braces like this, in all cases: `<Foo>{'I love oxlint'}</Foo>`
+   * - `ignore` will allow either style for child content.
+   */
+  children?: JsxCurlyBracePresenceMode;
+  /**
+   * When set to `ignore` or `never`, this JSX code is allowed (or enforced):
+   * `<App prop=<div /> />;`
+   *
+   * When set to `always`, the curly braces are required for prop values that are
+   * JSX elements: `<App prop={<div />} />;`
+   *
+   * **Note**: it is _highly_ recommended that you set `propElementValues` to `always`.
+   * The ability to omit curly braces around prop values that are JSX elements is obscure, and
+   * intentionally undocumented, and should not be relied upon.
+   */
+  propElementValues?: JsxCurlyBracePresenceMode;
+  /**
+   * Whether to enforce or disallow curly braces for props on JSX elements.
+   *
+   * - `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo foo="bar" />`
+   * - `always` will force the usage of curly braces like this, in all cases: `<Foo foo={'bar'} />`
+   * - `ignore` will allow either style for prop values.
+   */
+  props?: JsxCurlyBracePresenceMode;
 }
 export interface JsxFilenameExtensionConfig {
   /**
