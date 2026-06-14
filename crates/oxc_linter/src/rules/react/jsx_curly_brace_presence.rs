@@ -335,6 +335,7 @@ declare_oxc_lint!(
     fix,
     config = JsxCurlyBracePresenceConfig,
     version = "0.7.0",
+    short_description = "Disallow unnecessary JSX expressions when literals alone are sufficient.",
 );
 
 impl Rule for JsxCurlyBracePresence {

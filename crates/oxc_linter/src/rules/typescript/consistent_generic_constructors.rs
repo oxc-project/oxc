@@ -78,6 +78,7 @@ declare_oxc_lint!(
     fix,
     config = PreferGenericType,
     version = "0.14.0",
+    short_description = "Enforce specifying generic type arguments on type annotation or constructor name of a constructor call.",
 );
 
 impl Rule for ConsistentGenericConstructors {

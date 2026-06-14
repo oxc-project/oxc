@@ -158,6 +158,7 @@ declare_oxc_lint!(
     pending,
     config = NoEmptyObjectTypeConfig,
     version = "0.12.0",
+    short_description = "Disallow accidentally using the \"empty object\" type.",
 );
 
 impl Rule for NoEmptyObjectType {

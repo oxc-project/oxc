@@ -124,6 +124,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     version = "0.16.9",
+    short_description = "Enforce the use of variables within the scope they are defined.",
 );
 
 impl Rule for BlockScopedVar {
