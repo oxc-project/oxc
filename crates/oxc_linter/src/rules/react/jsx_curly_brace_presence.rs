@@ -1,7 +1,7 @@
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_allocator::{Allocator, Vec};
@@ -14,13 +14,12 @@ use oxc_ast::{
     },
 };
 use oxc_codegen::CodegenOptions;
-use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan as _, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 fn jsx_curly_brace_presence_unnecessary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Curly braces are unnecessary here.").with_label(span)
@@ -41,19 +40,6 @@ enum JsxCurlyBracePresenceMode {
     Never,
     #[default]
     Ignore,
-}
-
-impl TryFrom<&str> for JsxCurlyBracePresenceMode {
-    type Error = ();
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
-            "always" => Ok(Self::Always),
-            "never" => Ok(Self::Never),
-            "ignore" => Ok(Self::Ignore),
-            _ => Err(()),
-        }
-    }
 }
 
 impl JsxCurlyBracePresenceMode {
@@ -104,12 +90,30 @@ impl Default for JsxCurlyBracePresence {
     }
 }
 
-#[derive(Debug, JsonSchema)]
+#[derive(Debug, JsonSchema, Deserialize)]
 #[serde(untagged)]
-#[expect(unused)] // only for schema generation
 enum JsxCurlyBracePresenceConfig {
     String(JsxCurlyBracePresenceMode),
     Object(JsxCurlyBracePresence),
+}
+
+impl Default for JsxCurlyBracePresenceConfig {
+    fn default() -> Self {
+        Self::Object(JsxCurlyBracePresence::default())
+    }
+}
+
+impl JsxCurlyBracePresenceConfig {
+    fn into_rule(self) -> JsxCurlyBracePresence {
+        match self {
+            Self::String(allowed) => JsxCurlyBracePresence {
+                props: allowed,
+                children: allowed,
+                prop_element_values: allowed,
+            },
+            Self::Object(config) => config,
+        }
+    }
 }
 
 declare_oxc_lint!(
@@ -334,44 +338,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxCurlyBracePresence {
-    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let default = Self::default();
-        let value = match value.as_array() {
-            Some(arr) => &arr[0],
-            _ => &value,
-        };
-        match value {
-            Value::String(s) => {
-                // TODO: Replace this with a proper DefaultRuleConfig implementation and handle errors with that.
-                let allowed = JsxCurlyBracePresenceMode::try_from(s.as_str())
-                .map_err(|()| Error::msg(
-                    r#"Invalid string config for react/jsx-curly-brace-presence: only "always", "never", or "ignore" are allowed. "#
-                )).unwrap();
-                Ok(Self { props: allowed, children: allowed, prop_element_values: allowed })
-            }
-            Value::Object(obj) => {
-                let props = obj
-                    .get("props")
-                    .and_then(Value::as_str)
-                    .and_then(|props| JsxCurlyBracePresenceMode::try_from(props).ok())
-                    .unwrap_or(default.props);
-                let children = obj
-                    .get("children")
-                    .and_then(Value::as_str)
-                    .and_then(|children| JsxCurlyBracePresenceMode::try_from(children).ok())
-                    .unwrap_or(default.children);
-                let prop_element_values = obj
-                    .get("propElementValues")
-                    .and_then(Value::as_str)
-                    .and_then(|prop_element_values| {
-                        JsxCurlyBracePresenceMode::try_from(prop_element_values).ok()
-                    })
-                    .unwrap_or(default.prop_element_values);
-
-                Ok(Self { props, children, prop_element_values })
-            }
-            _ => Ok(default),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<JsxCurlyBracePresenceConfig>>(value)
+            .map(|config| config.into_inner().into_rule())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
