@@ -3494,7 +3494,24 @@
           "$ref": "#/definitions/DummyRule"
         },
         "jsdoc/require-param-description": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamDescriptionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-param-name": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -16932,6 +16949,24 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also require type parameters for `importActual` and `importMock`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamDescriptionConfig": {
+      "type": "object",
+      "properties": {
+        "defaultDestructuredRootDescription": {
+          "description": "The description string to set by default for destructured roots. Defaults to \"The root object\".",
+          "default": "The root object",
+          "type": "string",
+          "markdownDescription": "The description string to set by default for destructured roots. Defaults to \"The root object\"."
+        },
+        "setDefaultDestructuredRootDescription": {
+          "description": "Whether to set a default destructured root description.\nFor example, you may wish to avoid manually having to set the description for a @param corresponding to a destructured root object as it should always be the same type of object.\nUses `defaultDestructuredRootDescription` for the description string. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to set a default destructured root description.\nFor example, you may wish to avoid manually having to set the description for a @param corresponding to a destructured root object as it should always be the same type of object.\nUses `defaultDestructuredRootDescription` for the description string. Defaults to `false`."
         }
       },
       "additionalProperties": false
