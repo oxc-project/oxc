@@ -56,6 +56,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     version = "0.2.0",
+    short_description = "Enforce that elements only contain `aria-*` properties supported by their explicit or implicit role.",
 );
 
 fn default(span: Span, attr_name: &str, role: &str) -> OxcDiagnostic {
