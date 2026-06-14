@@ -186,6 +186,7 @@ declare_oxc_lint!(
     style,
     config = FilenameCaseConfigJson,
     version = "0.0.14",
+    short_description = "Enforce a consistent case style for filenames.",
 );
 
 impl Rule for FilenameCase {

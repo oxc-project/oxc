@@ -17,8 +17,8 @@ pub struct PreferCodePoint;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers usage of `String.prototype.codePointAt` over `String.prototype.charCodeAt`.
-    /// Prefers usage of `String.fromCodePoint` over `String.fromCharCode`.
+    /// Prefer usage of `String#codePointAt` over `String#charCodeAt`.
+    /// Prefer usage of `String.fromCodePoint` over `String.fromCharCode`.
     ///
     /// ### Why is this bad?
     ///
@@ -44,6 +44,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "0.0.16",
+    short_description = "Prefer `String#codePointAt` over `String#charCodeAt` and `String.fromCodePoint` over `String.fromCharCode`.",
 );
 
 impl Rule for PreferCodePoint {

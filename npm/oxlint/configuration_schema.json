@@ -6254,7 +6254,24 @@
           ]
         },
         "react/jsx-handler-names": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxHandlerNamesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/jsx-key": {
           "anyOf": [
@@ -11305,6 +11322,61 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxHandlerNamesConfig": {
+      "type": "object",
+      "properties": {
+        "checkInlineFunction": {
+          "description": "Whether to check for inline functions in JSX attributes.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check for inline functions in JSX attributes."
+        },
+        "checkLocalVariables": {
+          "description": "Whether to check for local variables in JSX attributes.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check for local variables in JSX attributes."
+        },
+        "eventHandlerPrefix": {
+          "description": "Event handler prefixes to check against.",
+          "default": "handle",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean",
+              "const": false
+            }
+          ],
+          "markdownDescription": "Event handler prefixes to check against."
+        },
+        "eventHandlerPropPrefix": {
+          "description": "Event handler prop prefixes to check against.",
+          "default": "on",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean",
+              "const": false
+            }
+          ],
+          "markdownDescription": "Event handler prop prefixes to check against."
+        },
+        "ignoreComponentNames": {
+          "description": "Component names to ignore when checking for event handler prefixes.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Component names to ignore when checking for event handler prefixes."
         }
       },
       "additionalProperties": false

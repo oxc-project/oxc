@@ -37,6 +37,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.7.1",
+    short_description = "Prefer `toBeFalsy()` over `toBe(false)`.",
 );
 
 impl Rule for PreferToBeFalsy {
