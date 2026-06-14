@@ -6211,7 +6211,24 @@
           ]
         },
         "react/jsx-curly-brace-presence": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxCurlyBracePresenceConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/jsx-filename-extension": {
           "anyOf": [
@@ -11275,6 +11292,60 @@
         }
       },
       "additionalProperties": false
+    },
+    "JsxCurlyBracePresence": {
+      "type": "object",
+      "properties": {
+        "children": {
+          "description": "Whether to enforce or disallow curly braces for child content of a JSX element.\n\n- `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo>I love oxlint</Foo>`\n- `always` will force the usage of curly braces like this, in all cases: `<Foo>{'I love oxlint'}</Foo>`\n- `ignore` will allow either style for child content.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsxCurlyBracePresenceMode"
+            }
+          ],
+          "markdownDescription": "Whether to enforce or disallow curly braces for child content of a JSX element.\n\n- `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo>I love oxlint</Foo>`\n- `always` will force the usage of curly braces like this, in all cases: `<Foo>{'I love oxlint'}</Foo>`\n- `ignore` will allow either style for child content."
+        },
+        "propElementValues": {
+          "description": "When set to `ignore` or `never`, this JSX code is allowed (or enforced):\n`<App prop=<div /> />;`\n\nWhen set to `always`, the curly braces are required for prop values that are\nJSX elements: `<App prop={<div />} />;`\n\n**Note**: it is _highly_ recommended that you set `propElementValues` to `always`.\nThe ability to omit curly braces around prop values that are JSX elements is obscure, and\nintentionally undocumented, and should not be relied upon.",
+          "default": "ignore",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsxCurlyBracePresenceMode"
+            }
+          ],
+          "markdownDescription": "When set to `ignore` or `never`, this JSX code is allowed (or enforced):\n`<App prop=<div /> />;`\n\nWhen set to `always`, the curly braces are required for prop values that are\nJSX elements: `<App prop={<div />} />;`\n\n**Note**: it is _highly_ recommended that you set `propElementValues` to `always`.\nThe ability to omit curly braces around prop values that are JSX elements is obscure, and\nintentionally undocumented, and should not be relied upon."
+        },
+        "props": {
+          "description": "Whether to enforce or disallow curly braces for props on JSX elements.\n\n- `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo foo=\"bar\" />`\n- `always` will force the usage of curly braces like this, in all cases: `<Foo foo={'bar'} />`\n- `ignore` will allow either style for prop values.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsxCurlyBracePresenceMode"
+            }
+          ],
+          "markdownDescription": "Whether to enforce or disallow curly braces for props on JSX elements.\n\n- `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo foo=\"bar\" />`\n- `always` will force the usage of curly braces like this, in all cases: `<Foo foo={'bar'} />`\n- `ignore` will allow either style for prop values."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxCurlyBracePresenceConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JsxCurlyBracePresenceMode"
+        },
+        {
+          "$ref": "#/definitions/JsxCurlyBracePresence"
+        }
+      ]
+    },
+    "JsxCurlyBracePresenceMode": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "ignore"
+      ]
     },
     "JsxFilenameExtensionAllowMode": {
       "oneOf": [

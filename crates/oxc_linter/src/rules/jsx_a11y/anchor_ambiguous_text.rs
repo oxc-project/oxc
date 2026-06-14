@@ -95,6 +95,7 @@ declare_oxc_lint!(
     restriction,
     config = AnchorAmbiguousTextConfig,
     version = "0.13.2",
+    short_description = "Inspects anchor link text for the use of ambiguous words.",
 );
 
 impl Rule for AnchorAmbiguousText {

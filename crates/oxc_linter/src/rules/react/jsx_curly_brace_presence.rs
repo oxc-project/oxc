@@ -36,14 +36,14 @@ fn jsx_curly_brace_presence_necessary_diagnostic(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone, Copy, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-enum Allowed {
+enum JsxCurlyBracePresenceMode {
     Always,
     Never,
     #[default]
     Ignore,
 }
 
-impl TryFrom<&str> for Allowed {
+impl TryFrom<&str> for JsxCurlyBracePresenceMode {
     type Error = ();
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
@@ -56,7 +56,7 @@ impl TryFrom<&str> for Allowed {
     }
 }
 
-impl Allowed {
+impl JsxCurlyBracePresenceMode {
     pub fn is_never(self) -> bool {
         matches!(self, Self::Never)
     }
@@ -68,20 +68,20 @@ impl Allowed {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxCurlyBracePresence {
     /// Whether to enforce or disallow curly braces for props on JSX elements.
     ///
     /// - `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo foo="bar" />`
     /// - `always` will force the usage of curly braces like this, in all cases: `<Foo foo={'bar'} />`
     /// - `ignore` will allow either style for prop values.
-    props: Allowed,
+    props: JsxCurlyBracePresenceMode,
     /// Whether to enforce or disallow curly braces for child content of a JSX element.
     ///
     /// - `never` will disallow unnecessary curly braces, e.g. this will be preferred: `<Foo>I love oxlint</Foo>`
     /// - `always` will force the usage of curly braces like this, in all cases: `<Foo>{'I love oxlint'}</Foo>`
     /// - `ignore` will allow either style for child content.
-    children: Allowed,
+    children: JsxCurlyBracePresenceMode,
     /// When set to `ignore` or `never`, this JSX code is allowed (or enforced):
     /// `<App prop=<div /> />;`
     ///
@@ -91,17 +91,25 @@ pub struct JsxCurlyBracePresence {
     /// **Note**: it is _highly_ recommended that you set `propElementValues` to `always`.
     /// The ability to omit curly braces around prop values that are JSX elements is obscure, and
     /// intentionally undocumented, and should not be relied upon.
-    prop_element_values: Allowed,
+    prop_element_values: JsxCurlyBracePresenceMode,
 }
 
 impl Default for JsxCurlyBracePresence {
     fn default() -> Self {
         Self {
-            props: Allowed::Never,
-            children: Allowed::Never,
-            prop_element_values: Allowed::Ignore,
+            props: JsxCurlyBracePresenceMode::Never,
+            children: JsxCurlyBracePresenceMode::Never,
+            prop_element_values: JsxCurlyBracePresenceMode::Ignore,
         }
     }
+}
+
+#[derive(Debug, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)] // only for schema generation
+enum JsxCurlyBracePresenceConfig {
+    String(JsxCurlyBracePresenceMode),
+    Object(JsxCurlyBracePresence),
 }
 
 declare_oxc_lint!(
@@ -321,7 +329,7 @@ declare_oxc_lint!(
     react,
     style,
     fix,
-    config = JsxCurlyBracePresence,
+    config = JsxCurlyBracePresenceConfig,
     version = "0.7.0",
 );
 
@@ -335,7 +343,7 @@ impl Rule for JsxCurlyBracePresence {
         match value {
             Value::String(s) => {
                 // TODO: Replace this with a proper DefaultRuleConfig implementation and handle errors with that.
-                let allowed = Allowed::try_from(s.as_str())
+                let allowed = JsxCurlyBracePresenceMode::try_from(s.as_str())
                 .map_err(|()| Error::msg(
                     r#"Invalid string config for react/jsx-curly-brace-presence: only "always", "never", or "ignore" are allowed. "#
                 )).unwrap();
@@ -345,17 +353,19 @@ impl Rule for JsxCurlyBracePresence {
                 let props = obj
                     .get("props")
                     .and_then(Value::as_str)
-                    .and_then(|props| Allowed::try_from(props).ok())
+                    .and_then(|props| JsxCurlyBracePresenceMode::try_from(props).ok())
                     .unwrap_or(default.props);
                 let children = obj
                     .get("children")
                     .and_then(Value::as_str)
-                    .and_then(|children| Allowed::try_from(children).ok())
+                    .and_then(|children| JsxCurlyBracePresenceMode::try_from(children).ok())
                     .unwrap_or(default.children);
                 let prop_element_values = obj
                     .get("propElementValues")
                     .and_then(Value::as_str)
-                    .and_then(|prop_element_values| Allowed::try_from(prop_element_values).ok())
+                    .and_then(|prop_element_values| {
+                        JsxCurlyBracePresenceMode::try_from(prop_element_values).ok()
+                    })
                     .unwrap_or(default.prop_element_values);
 
                 Ok(Self { props, children, prop_element_values })
