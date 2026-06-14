@@ -8,10 +8,10 @@ packages:
   - tasks/compat_data
 
 catalog:
-  "@emnapi/core": 1.11.0
-  "@emnapi/runtime": 1.11.0
+  "@emnapi/core": 1.11.1
+  "@emnapi/runtime": 1.11.1
   "@arethetypeswrong/core": 0.18.3
-  "@napi-rs/cli": 3.7.1
+  "@napi-rs/cli": 3.7.2
   "@napi-rs/wasm-runtime": 1.1.4
   "@types/node": 24.1.0
   cross-env: ^10.1.0
