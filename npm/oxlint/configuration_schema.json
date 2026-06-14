@@ -3397,7 +3397,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsdoc/require-param-type": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamTypeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-property": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -16455,6 +16472,24 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also require type parameters for `importActual` and `importMock`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamTypeConfig": {
+      "type": "object",
+      "properties": {
+        "defaultDestructuredRootType": {
+          "description": "The type string to set by default for destructured roots. Defaults to \"object\".",
+          "default": "object",
+          "type": "string",
+          "markdownDescription": "The type string to set by default for destructured roots. Defaults to \"object\"."
+        },
+        "setDefaultDestructuredRootType": {
+          "description": "Whether to set a default destructured root type. For example, you may wish to avoid manually having to set the type for a `@param` corresponding to a destructured root object as it is always going to be an object. Uses `defaultDestructuredRootType` for the type string. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to set a default destructured root type. For example, you may wish to avoid manually having to set the type for a `@param` corresponding to a destructured root object as it is always going to be an object. Uses `defaultDestructuredRootType` for the type string. Defaults to `false`."
         }
       },
       "additionalProperties": false
