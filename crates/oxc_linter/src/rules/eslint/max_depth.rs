@@ -106,6 +106,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxDepth,
     version = "0.15.12",
+    short_description = "Enforce a maximum depth that blocks can be nested.",
 );
 
 impl Rule for MaxDepth {
