@@ -21,7 +21,6 @@ fn no_sequences_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoSequences {
     /// If this option is set to `false`, this rule disallows the comma operator
     /// even when the expression sequence is explicitly wrapped in parentheses.
-    /// Default is `true`.
     allow_in_parentheses: bool,
 }
 
@@ -41,11 +40,6 @@ declare_oxc_lint!(
     /// The comma operator evaluates each of its operands (from left to right)
     /// and returns the value of the last operand. However, this frequently
     /// obscures side effects, and its use is often an accident.
-    ///
-    /// ### Options
-    ///
-    /// - `allowInParentheses` (default: `true`): If set to `false`, disallows
-    ///   the comma operator even when wrapped in parentheses.
     ///
     /// ### Examples
     ///
