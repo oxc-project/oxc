@@ -184,6 +184,7 @@ declare_oxc_lint!(
     nursery, // TODO: change category to `restriction`
     config = NoRestrictedExportsConfig,
     version = "1.59.0",
+    short_description = "Disallow specified names in exports.",
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

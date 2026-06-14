@@ -105,6 +105,7 @@ declare_oxc_lint!(
     suspicious,
     fix_dangerous,
     version = "0.9.7",
+    short_description = "Disallow confusing multiline expressions.",
 );
 
 impl Rule for NoUnexpectedMultiline {
