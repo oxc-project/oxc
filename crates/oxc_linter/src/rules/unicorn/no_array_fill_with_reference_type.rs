@@ -51,6 +51,7 @@ declare_oxc_lint!(
     unicorn,
     suspicious,
     version = "next",
+    short_description = "Disallows using reference values as `Array#fill()` values."
 );
 
 impl Rule for NoArrayFillWithReferenceType {
