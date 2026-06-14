@@ -1425,9 +1425,9 @@ export interface DummyRuleMap {
   "typescript/unbound-method"?: RuleNoConfig | [AllowWarnDeny, UnboundMethodConfig];
   "typescript/unified-signatures"?: RuleNoConfig | [AllowWarnDeny, UnifiedSignaturesOptions];
   "typescript/use-unknown-in-catch-callback-variable"?: RuleNoConfig;
-  "unicode-bom"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, BomOptionType];
+  "unicode-bom"?: RuleNoConfig | [AllowWarnDeny, BomOptionType];
   "unicorn/better-dom-traversing"?: RuleNoConfig;
-  "unicorn/catch-error-name"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, CatchErrorNameConfig];
+  "unicorn/catch-error-name"?: RuleNoConfig | [AllowWarnDeny, CatchErrorNameConfig];
   "unicorn/consistent-assert"?: RuleNoConfig;
   "unicorn/consistent-date-clone"?: RuleNoConfig;
   "unicorn/consistent-empty-array-spread"?: RuleNoConfig;
