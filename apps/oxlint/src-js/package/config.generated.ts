@@ -1300,7 +1300,7 @@ export interface DummyRuleMap {
   "react/jsx-curly-brace-presence"?: DummyRule;
   "react/jsx-filename-extension"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxFilenameExtensionConfig];
   "react/jsx-fragments"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, FragmentMode];
-  "react/jsx-handler-names"?: DummyRule;
+  "react/jsx-handler-names"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxHandlerNamesConfig];
   "react/jsx-key"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxKeyConfig];
   "react/jsx-max-depth"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxMaxDepthConfig];
   "react/jsx-no-comment-textnodes"?: RuleNoConfig;
@@ -4385,6 +4385,28 @@ export interface JsxFilenameExtensionConfig {
    * If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected.
    */
   ignoreFilesWithoutCode?: boolean;
+}
+export interface JsxHandlerNamesConfig {
+  /**
+   * Whether to check for inline functions in JSX attributes.
+   */
+  checkInlineFunction?: boolean;
+  /**
+   * Whether to check for local variables in JSX attributes.
+   */
+  checkLocalVariables?: boolean;
+  /**
+   * Event handler prefixes to check against.
+   */
+  eventHandlerPrefix?: string | false;
+  /**
+   * Event handler prop prefixes to check against.
+   */
+  eventHandlerPropPrefix?: string | false;
+  /**
+   * Component names to ignore when checking for event handler prefixes.
+   */
+  ignoreComponentNames?: string[];
 }
 export interface JsxKeyConfig {
   /**
