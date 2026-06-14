@@ -71,6 +71,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.33.0",
+    short_description = "Prefer `KeyboardEvent#key` over `KeyboardEvent#keyCode`.",
 );
 
 impl Rule for PreferKeyboardEventKey {
