@@ -61,6 +61,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.5.0",
+    short_description = "Prefer the `jest.mocked()` helper over type assertions for typing mocked functions.",
 );
 
 impl Rule for PreferJestMocked {

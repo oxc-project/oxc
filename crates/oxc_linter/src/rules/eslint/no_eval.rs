@@ -93,6 +93,7 @@ declare_oxc_lint!(
     correctness,
     config = NoEval,
     version = "0.0.3",
+    short_description = "Disallow using the `eval` function.",
 );
 
 impl Rule for NoEval {

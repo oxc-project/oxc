@@ -97,6 +97,7 @@ declare_oxc_lint!(
     dangerous_fix_suggestion,
     config = PreferOptionalChainConfig,
     version = "1.39.0",
+    short_description = "Enforce using concise optional chain (`?.`) expressions.",
 );
 
 impl Rule for PreferOptionalChain {
