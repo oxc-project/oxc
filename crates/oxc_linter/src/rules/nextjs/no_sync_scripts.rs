@@ -22,8 +22,8 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Prevent the use of synchronous `<script>` tags in Next.js applications.
-    /// Require that any `<script>` tag with a `src` attribute must also have either
-    /// the `async` or `defer` attributes.
+    /// Require any `<script>` tag with a `src` attribute to also have either
+    /// the `async` or `defer` attribute.
     ///
     /// ### Why is this bad?
     ///
