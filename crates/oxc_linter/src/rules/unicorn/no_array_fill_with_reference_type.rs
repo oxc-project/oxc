@@ -16,7 +16,7 @@ use crate::{
 
 fn no_array_fill_with_reference_type_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use a reference value as the fill value.")
-        .with_help("Use `Array.from()` or `.map()` to create a distinct value for each element.")
+        .with_help("Use `Array.from({ length: n }, () => /* new value */)` or `.map(() => /* new value */)` to create a distinct value for each element.")
         .with_label(span)
 }
 
