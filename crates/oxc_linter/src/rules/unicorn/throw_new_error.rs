@@ -56,9 +56,11 @@ impl Rule for ThrowNewError {
             return;
         };
 
-        // Skip calls that are the superClass of a Class (extends clause).
-        // `new` is not appropriate there, e.g. `class Foo extends mixin() {}`.
-        if matches!(ctx.nodes().parent_kind(node.id()), AstKind::Class(_)) {
+        // Skip calls that are the superClass of a Class (extends clause)
+        // or a decorator (e.g. @RegisterServiceError()).
+        // `new` is not appropriate there.
+        let parent_kind = ctx.nodes().parent_kind(node.id());
+        if matches!(parent_kind, AstKind::Class(_) | AstKind::Decorator(_)) {
             return;
         }
 
@@ -99,6 +101,7 @@ fn test() {
         r#"throw lib["Error"]()"#,
         "throw lib.getError()",
         "class QueryError extends Data.TaggedError('QueryError') {}",
+        "@RegisterServiceError()\nexport class SomeError extends Error {}",
     ];
 
     let fail = vec![
