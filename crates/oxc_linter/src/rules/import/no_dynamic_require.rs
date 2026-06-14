@@ -55,6 +55,7 @@ declare_oxc_lint!(
     restriction,
     config = NoDynamicRequire,
     version = "0.9.3",
+    short_description = "Forbid imports that use an expression for the module argument.",
 );
 
 impl Rule for NoDynamicRequire {

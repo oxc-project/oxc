@@ -115,6 +115,7 @@ declare_oxc_lint!(
     fix,
     config = NoDeprecatedFunctionsConfig,
     version = "0.0.18",
+    short_description = "Disallow Jest functions that have been deprecated, renamed, or replaced.",
 );
 
 fn deprecated_functions_map(deprecated_fn: &str) -> Option<(usize, &'static str)> {

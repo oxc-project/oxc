@@ -64,6 +64,7 @@ declare_oxc_lint!(
     correctness,
     dangerous_fix,
     version = "0.1.1",
+    short_description = "Checks for arguments that are only used in recursion with no side effects.",
 );
 
 fn is_exported(id: &BindingIdentifier<'_>, ctx: &LintContext<'_>) -> bool {

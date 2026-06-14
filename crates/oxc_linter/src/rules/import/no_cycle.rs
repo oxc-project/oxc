@@ -90,10 +90,11 @@ impl Default for NoCycle {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Ensures that there is no resolvable path back to this module via its dependencies.
+    /// Disallow cyclic dependencies. The rule ensures that there is no resolvable path back
+    /// to this module via its dependencies.
     ///
-    /// This includes cycles of depth 1 (imported module imports me) to an effectively
-    /// infinite value, if the `maxDepth` option is not set.
+    /// This includes cycles of depth 1 (imported module imports me), up to an effectively
+    /// infinite value when the `maxDepth` option is not set.
     ///
     /// ### Why is this bad?
     ///
@@ -134,6 +135,7 @@ declare_oxc_lint!(
     restriction,
     config = NoCycle,
     version = "0.0.13",
+    short_description = "Disallow cyclic dependencies that import the current module in its own dependency graph.",
 );
 
 impl Rule for NoCycle {

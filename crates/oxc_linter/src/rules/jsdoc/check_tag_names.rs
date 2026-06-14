@@ -84,6 +84,7 @@ declare_oxc_lint!(
     pending,
     config = CheckTagNamesConfig,
     version = "0.3.2",
+    short_description = "Reports invalid block tag names.",
 );
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
