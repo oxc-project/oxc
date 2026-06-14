@@ -92,6 +92,7 @@ declare_oxc_lint!(
     conditional_suggestion,
     config = NoPlusplus,
     version = "0.9.5",
+    short_description = "Disallow the unary operators `++` and `--`.",
 );
 
 impl Rule for NoPlusplus {

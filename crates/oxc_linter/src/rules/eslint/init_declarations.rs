@@ -118,6 +118,7 @@ declare_oxc_lint!(
     style,
     config = InitDeclarations,
     version = "0.15.11",
+    short_description = "Require or disallow initialization in variable declarations.",
 );
 
 impl Rule for InitDeclarations {

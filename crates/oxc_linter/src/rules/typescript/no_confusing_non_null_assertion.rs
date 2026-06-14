@@ -45,6 +45,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     version = "0.6.1",
+    short_description = "Disallow non-null assertion in locations that may be confusing.",
 );
 
 fn not_need_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {

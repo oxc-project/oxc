@@ -92,6 +92,9 @@ export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type SnapshotHintMode = "always" | "multi";
+export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
+export type Assert = "htmlFor" | "nesting" | "both" | "either";
+export type DistractingElement = "marquee" | "blink";
 export type CountThis = "always" | "never" | "except-void";
 export type NoCondAssignConfig = "except-parens" | "always";
 export type CheckLoopsConfig = boolean | CheckLoops;
@@ -176,19 +179,35 @@ export type ForbidItem2 =
       message?: string;
     };
 export type EnforceBooleanAttribute = "always" | "never";
+export type JsxFilenameExtensionAllowMode = "always" | "as-needed";
 export type FragmentMode = "syntax" | "element";
+export type EnforceDynamicLinksEnum = "always" | "never";
 export type IgnoreEnforceOption = "ignore" | "enforce";
-export type NoDidMountSetStateConfig = "allowed" | "disallow-in-func";
-export type NoWillUpdateSetStateConfig = "allowed" | "disallow-in-func";
+export type AllowedOrDisallowInFunc = "allowed" | "disallow-in-func";
 export type RequireFlag = "u" | "v";
 export type ImportKind = "none" | "all" | "multiple" | "single";
 /**
  * Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
  */
 export type SortOrder = "desc" | "asc";
+export type ArrayOption = "array" | "array-simple" | "generic";
+export type ReadonlyArrayOption = "array" | "array-simple" | "generic";
+export type DirectiveConfigSchema =
+  | boolean
+  | RequireDescription
+  | {
+      descriptionFormat?: string;
+    };
+export type RequireDescription = "allow-with-description";
 export type ClassLiteralPropertyStyleOption = "fields" | "getters";
+export type PreferGenericType = "constructor" | "type-annotation";
 export type ConsistentIndexedObjectStyleConfig = "record" | "index-signature";
+export type ArrayLiteralTypeAssertions = "allow" | "allow-as-parameter" | "never";
+export type AssertionStyle = "as" | "angle-bracket" | "never";
+export type ObjectLiteralTypeAssertions = "allow" | "allow-as-parameter" | "never";
 export type ConsistentTypeDefinitionsConfig = "interface" | "type";
+export type FixStyle = "separate-type-imports" | "inline-type-imports";
+export type Prefer = "type-imports" | "no-type-imports";
 export type AccessibilityLevel = "explicit" | "no-public" | "off";
 export type MethodSignatureStyleConfig = "property" | "method";
 /**
@@ -228,8 +247,35 @@ export type FileFrom = "file";
 export type NameSpecifier = string | string[];
 export type LibFrom = "lib";
 export type PackageFrom = "package";
+export type AllowInterfaces = "never" | "always" | "with-single-extends";
+export type AllowObjectTypes = "never" | "always";
 export type AllowInGenericTypeArguments = boolean | string[];
 export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
+/**
+ * Represents the different ways a ban config can be specified in JSON.
+ * Can be:
+ * - `true` - ban with default message
+ * - A string - ban with custom message
+ * - An object with `message` and optional `fixWith` and `suggest`
+ */
+export type BanConfigValue =
+  | True
+  | string
+  | {
+      /**
+       * Replacement type for automatic fixing. Applied directly with `--fix`.
+       */
+      fixWith?: string;
+      /**
+       * Custom message explaining why the type is banned.
+       */
+      message?: string;
+      /**
+       * Suggested replacement types for manual review. Shown as editor suggestions.
+       */
+      suggest?: string[];
+    };
+export type True = true;
 /**
  * Represents the different ways `allowConstantLoopConditions` can be specified in JSON.
  * Can be:
@@ -246,7 +292,7 @@ export type Modifier =
   | "public"
   | "public readonly"
   | "readonly";
-export type Prefer = "class-property" | "parameter-property";
+export type Prefer2 = "class-property" | "parameter-property";
 /**
  * Represents the different ways `ignorePrimitives` can be specified in JSON.
  * Can be:
@@ -260,6 +306,46 @@ export type PathOption = "always" | "never";
 export type TypesOption = "always" | "never" | "prefer-import";
 export type BomOptionType = "always" | "never";
 export type NonZero = "greater-than" | "not-equal";
+export type ModuleStylesOverride =
+  | false
+  | {
+      /**
+       * Whether default imports or whole-module `require()` assignments are allowed for this module.
+       *
+       * With `{ "styles": { "chalk": { "default": true } } }`, this is valid:
+       * ```js
+       * import chalk from "chalk";
+       * ```
+       */
+      default?: boolean;
+      /**
+       * Whether named imports or destructured `require()` calls are allowed for this module.
+       *
+       * With `{ "styles": { "node:util": { "named": true } } }`, this is valid:
+       * ```js
+       * import {promisify} from "node:util";
+       * ```
+       */
+      named?: boolean;
+      /**
+       * Whether namespace imports or whole-module `require()` assignments are allowed for this module.
+       *
+       * With `{ "styles": { "node:fs": { "namespace": true } } }`, this is valid:
+       * ```js
+       * import * as fs from "node:fs";
+       * ```
+       */
+      namespace?: boolean;
+      /**
+       * Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.
+       *
+       * With `{ "styles": { "polyfill": { "unassigned": true } } }`, this is valid:
+       * ```js
+       * import "polyfill";
+       * ```
+       */
+      unassigned?: boolean;
+    };
 export type NoInstanceofBuiltinsStrategy = "strict" | "loose";
 export type PreferTernaryOption = "always" | "only-single-line";
 export type RelativeUrlStyleConfig = "never" | "always";
@@ -898,7 +984,7 @@ export interface DummyRuleMap {
   "jsdoc/require-yields"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, RequireYieldsConfig];
   "jsdoc/require-yields-description"?: RuleNoConfig;
   "jsdoc/require-yields-type"?: RuleNoConfig;
-  "jsx-a11y/alt-text"?: DummyRule;
+  "jsx-a11y/alt-text"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AltTextConfigSchema];
   "jsx-a11y/anchor-ambiguous-text"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AnchorAmbiguousTextConfig];
   "jsx-a11y/anchor-has-content"?: RuleNoConfig;
   "jsx-a11y/anchor-is-valid"?: DummyRule;
@@ -909,18 +995,24 @@ export interface DummyRuleMap {
   "jsx-a11y/aria-unsupported-elements"?: RuleNoConfig;
   "jsx-a11y/autocomplete-valid"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AutocompleteValidConfig];
   "jsx-a11y/click-events-have-key-events"?: RuleNoConfig;
-  "jsx-a11y/control-has-associated-label"?: DummyRule;
+  "jsx-a11y/control-has-associated-label"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, ControlHasAssociatedLabelConfig];
   "jsx-a11y/heading-has-content"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, HeadingHasContentConfig];
   "jsx-a11y/html-has-lang"?: RuleNoConfig;
   "jsx-a11y/iframe-has-title"?: RuleNoConfig;
-  "jsx-a11y/img-redundant-alt"?: DummyRule;
+  "jsx-a11y/img-redundant-alt"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ImgRedundantAltConfig];
   "jsx-a11y/interactive-supports-focus"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, InteractiveSupportsFocusConfig];
-  "jsx-a11y/label-has-associated-control"?: DummyRule;
+  "jsx-a11y/label-has-associated-control"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, LabelHasAssociatedControlConfig];
   "jsx-a11y/lang"?: RuleNoConfig;
-  "jsx-a11y/media-has-caption"?: DummyRule;
+  "jsx-a11y/media-has-caption"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, MediaHasCaptionConfig];
   "jsx-a11y/mouse-events-have-key-events"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
@@ -928,14 +1020,20 @@ export interface DummyRuleMap {
   "jsx-a11y/no-access-key"?: RuleNoConfig;
   "jsx-a11y/no-aria-hidden-on-focusable"?: RuleNoConfig;
   "jsx-a11y/no-autofocus"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoAutofocus];
-  "jsx-a11y/no-distracting-elements"?: DummyRule;
-  "jsx-a11y/no-interactive-element-to-noninteractive-role"?: DummyRule;
-  "jsx-a11y/no-noninteractive-element-interactions"?:
+  "jsx-a11y/no-distracting-elements"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDistractingElementsConfig];
+  "jsx-a11y/no-interactive-element-to-noninteractive-role"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
-    | [AllowWarnDeny, NoNoninteractiveElementInteractionsConfig];
-  "jsx-a11y/no-noninteractive-element-to-interactive-role"?: DummyRule;
-  "jsx-a11y/no-noninteractive-tabindex"?: DummyRule;
+    | [AllowWarnDeny, NoInteractiveElementToNoninteractiveRoleConfig];
+  "jsx-a11y/no-noninteractive-element-interactions"?: DummyRule;
+  "jsx-a11y/no-noninteractive-element-to-interactive-role"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoNoninteractiveElementToInteractiveRoleConfig];
+  "jsx-a11y/no-noninteractive-tabindex"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoNoninteractiveTabindexConfig];
   "jsx-a11y/no-redundant-roles"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRedundantRolesConfig];
   "jsx-a11y/no-static-element-interactions"?:
     | AllowWarnDeny
@@ -1180,14 +1278,14 @@ export interface DummyRuleMap {
   "react-perf/jsx-no-jsx-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-array-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-function-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
-  "react-perf/jsx-no-new-object-as-prop"?: DummyRule;
+  "react-perf/jsx-no-new-object-as-prop"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ReactPerfConfig];
   "react/button-has-type"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ButtonHasType];
   "react/checked-requires-onchange-or-readonly"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
   "react/display-name"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DisplayNameConfig];
-  "react/exhaustive-deps"?: DummyRule;
+  "react/exhaustive-deps"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExhaustiveDepsConfig];
   "react/forbid-component-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ForbidComponentPropsConfig];
   "react/forbid-dom-props"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ForbidDomPropsConfig];
   "react/forbid-elements"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ForbidElementsConfig];
@@ -1200,7 +1298,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, EnforceBooleanAttribute]
     | [AllowWarnDeny, EnforceBooleanAttribute, JsxBooleanValueOptions];
   "react/jsx-curly-brace-presence"?: DummyRule;
-  "react/jsx-filename-extension"?: DummyRule;
+  "react/jsx-filename-extension"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxFilenameExtensionConfig];
   "react/jsx-fragments"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, FragmentMode];
   "react/jsx-handler-names"?: DummyRule;
   "react/jsx-key"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxKeyConfig];
@@ -1210,7 +1308,7 @@ export interface DummyRuleMap {
   "react/jsx-no-duplicate-props"?: RuleNoConfig;
   "react/jsx-no-literals"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxNoLiteralsConfig];
   "react/jsx-no-script-url"?: DummyRule;
-  "react/jsx-no-target-blank"?: DummyRule;
+  "react/jsx-no-target-blank"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxNoTargetBlank];
   "react/jsx-no-undef"?: RuleNoConfig;
   "react/jsx-no-useless-fragment"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxNoUselessFragment];
   "react/jsx-pascal-case"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, JsxPascalCaseConfig];
@@ -1221,8 +1319,8 @@ export interface DummyRuleMap {
   "react/no-clone-element"?: RuleNoConfig;
   "react/no-danger"?: RuleNoConfig;
   "react/no-danger-with-children"?: RuleNoConfig;
-  "react/no-did-mount-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDidMountSetStateConfig];
-  "react/no-did-update-set-state"?: DummyRule;
+  "react/no-did-mount-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AllowedOrDisallowInFunc];
+  "react/no-did-update-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AllowedOrDisallowInFunc];
   "react/no-direct-mutation-state"?: RuleNoConfig;
   "react/no-find-dom-node"?: RuleNoConfig;
   "react/no-is-mounted"?: RuleNoConfig;
@@ -1242,7 +1340,7 @@ export interface DummyRuleMap {
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, NoUnstableNestedComponentsConfig];
-  "react/no-will-update-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoWillUpdateSetStateConfig];
+  "react/no-will-update-set-state"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AllowedOrDisallowInFunc];
   "react/only-export-components"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, OnlyExportComponentsConfig];
   "react/prefer-es6-class"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, AlwaysNever];
   "react/prefer-function-component"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferFunctionComponent];
@@ -1265,28 +1363,31 @@ export interface DummyRuleMap {
   "sort-vars"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, SortVars];
   "symbol-description"?: RuleNoConfig;
   "typescript/adjacent-overload-signatures"?: RuleNoConfig;
-  "typescript/array-type"?: DummyRule;
+  "typescript/array-type"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ArrayTypeConfig];
   "typescript/await-thenable"?: RuleNoConfig;
-  "typescript/ban-ts-comment"?: DummyRule;
+  "typescript/ban-ts-comment"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, BanTsCommentConfig];
   "typescript/ban-tslint-comment"?: RuleNoConfig;
   "typescript/ban-types"?: RuleNoConfig;
   "typescript/class-literal-property-style"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, ClassLiteralPropertyStyleOption];
-  "typescript/consistent-generic-constructors"?: DummyRule;
+  "typescript/consistent-generic-constructors"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferGenericType];
   "typescript/consistent-indexed-object-style"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, ConsistentIndexedObjectStyleConfig];
   "typescript/consistent-return"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentReturnConfig];
-  "typescript/consistent-type-assertions"?: DummyRule;
+  "typescript/consistent-type-assertions"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, ConsistentTypeAssertionsConfig];
   "typescript/consistent-type-definitions"?:
     | AllowWarnDeny
     | [AllowWarnDeny]
     | [AllowWarnDeny, ConsistentTypeDefinitionsConfig];
   "typescript/consistent-type-exports"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTypeExportsConfig];
-  "typescript/consistent-type-imports"?: DummyRule;
+  "typescript/consistent-type-imports"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ConsistentTypeImportsConfig];
   "typescript/dot-notation"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, DotNotationConfig];
   "typescript/explicit-function-return-type"?:
     | AllowWarnDeny
@@ -1310,10 +1411,13 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, NoConfusingVoidExpressionConfig];
   "typescript/no-deprecated"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDeprecatedConfig];
   "typescript/no-duplicate-enum-values"?: RuleNoConfig;
-  "typescript/no-duplicate-type-constituents"?: DummyRule;
+  "typescript/no-duplicate-type-constituents"?:
+    | AllowWarnDeny
+    | [AllowWarnDeny]
+    | [AllowWarnDeny, NoDuplicateTypeConstituentsConfig];
   "typescript/no-dynamic-delete"?: RuleNoConfig;
   "typescript/no-empty-interface"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoEmptyInterface];
-  "typescript/no-empty-object-type"?: DummyRule;
+  "typescript/no-empty-object-type"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoEmptyObjectTypeConfig];
   "typescript/no-explicit-any"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoExplicitAny];
   "typescript/no-extra-non-null-assertion"?: RuleNoConfig;
   "typescript/no-extraneous-class"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoExtraneousClass];
@@ -1337,7 +1441,7 @@ export interface DummyRuleMap {
   "typescript/no-non-null-assertion"?: RuleNoConfig;
   "typescript/no-redundant-type-constituents"?: RuleNoConfig;
   "typescript/no-require-imports"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRequireImportsConfig];
-  "typescript/no-restricted-types"?: DummyRule;
+  "typescript/no-restricted-types"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoRestrictedTypesConfig];
   "typescript/no-this-alias"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoThisAliasConfig];
   "typescript/no-unnecessary-boolean-literal-compare"?:
     | AllowWarnDeny
@@ -1446,7 +1550,7 @@ export interface DummyRuleMap {
   "unicorn/escape-case"?: RuleNoConfig;
   "unicorn/explicit-length-check"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ExplicitLengthCheck];
   "unicorn/filename-case"?: DummyRule;
-  "unicorn/import-style"?: DummyRule;
+  "unicorn/import-style"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, ImportStyleConfig];
   "unicorn/new-for-builtins"?: RuleNoConfig;
   "unicorn/no-abusive-eslint-disable"?: RuleNoConfig;
   "unicorn/no-accessor-recursion"?: RuleNoConfig;
@@ -1511,7 +1615,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-array-flat-map"?: RuleNoConfig;
   "unicorn/prefer-array-index-of"?: RuleNoConfig;
   "unicorn/prefer-array-some"?: RuleNoConfig;
-  "unicorn/prefer-at"?: DummyRule;
+  "unicorn/prefer-at"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, PreferAtConfig];
   "unicorn/prefer-bigint-literals"?: RuleNoConfig;
   "unicorn/prefer-blob-reading-methods"?: RuleNoConfig;
   "unicorn/prefer-class-fields"?: RuleNoConfig;
@@ -2405,6 +2509,28 @@ export interface RequireYieldsConfig {
    */
   withGeneratorTag?: boolean;
 }
+export interface AltTextConfigSchema {
+  /**
+   * Custom components to check for alt text on `area` elements.
+   */
+  area?: string[];
+  /**
+   * Custom components to check for alt text on any of the supported elements.
+   */
+  elements?: AltTextElements[];
+  /**
+   * Custom components to check for alt text on `img` elements.
+   */
+  img?: string[];
+  /**
+   * Custom components to check for alt text on `input[type="image"]` elements.
+   */
+  'input[type="image"]'?: string[];
+  /**
+   * Custom components to check for alt text on `object` elements.
+   */
+  object?: string[];
+}
 export interface AnchorAmbiguousTextConfig {
   /**
    * List of ambiguous words or phrases that should be flagged in anchor text.
@@ -2427,12 +2553,48 @@ export interface AutocompleteValidConfig {
    */
   inputComponents?: string[];
 }
+export interface ControlHasAssociatedLabelConfig {
+  /**
+   * Custom JSX components to be treated as interactive controls.
+   */
+  controlComponents?: string[];
+  /**
+   * Maximum depth to search for an accessible label within the element.
+   * Defaults to `2`.
+   */
+  depth?: number;
+  /**
+   * Elements to ignore.
+   * Defaults to `["audio", "canvas", "embed", "input", "textarea", "tr", "video"]`.
+   */
+  ignoreElements?: string[];
+  /**
+   * Interactive roles to ignore.
+   * Defaults to `["grid", "listbox", "menu", "menubar", "radiogroup", "row", "tablist", "toolbar", "tree", "treegrid"]`.
+   */
+  ignoreRoles?: string[];
+  /**
+   * Additional attributes to check for accessible label text.
+   */
+  labelAttributes?: string[];
+}
 export interface HeadingHasContentConfig {
   /**
    * Additional custom component names to treat as heading elements.
    * These will be validated in addition to the standard h1-h6 elements.
    */
   components?: string[];
+}
+export interface ImgRedundantAltConfig {
+  /**
+   * JSX element types to validate (component names) where the rule applies.
+   * For example, `["img", "Image"]`.
+   */
+  components?: string[];
+  /**
+   * Words considered redundant in alt text that should trigger a warning.
+   */
+  words?: string[];
 }
 export interface InteractiveSupportsFocusConfig {
   /**
@@ -2441,6 +2603,42 @@ export interface InteractiveSupportsFocusConfig {
    * Defaults to `["button", "checkbox", "link", "searchbox", "spinbutton", "switch", "textbox"]`.
    */
   tabbable?: string[];
+}
+export interface LabelHasAssociatedControlConfig {
+  /**
+   * The type of association required between the label and the control.
+   */
+  assert?: Assert;
+  /**
+   * Custom JSX components to be treated as form controls.
+   */
+  controlComponents?: string[];
+  /**
+   * Maximum depth to search for a nested control.
+   */
+  depth?: number;
+  /**
+   * Attributes to check for accessible label text.
+   */
+  labelAttributes?: string[];
+  /**
+   * Custom JSX components to be treated as labels.
+   */
+  labelComponents?: string[];
+}
+export interface MediaHasCaptionConfig {
+  /**
+   * Element names to treat as `<audio>` elements
+   */
+  audio?: string[];
+  /**
+   * Element names to treat as `<track>` elements
+   */
+  track?: string[];
+  /**
+   * Element names to treat as `<video>` elements
+   */
+  video?: string[];
 }
 export interface MouseEventsHaveKeyEventsConfig {
   /**
@@ -2458,12 +2656,31 @@ export interface NoAutofocus {
    */
   ignoreNonDOM?: boolean;
 }
-export interface NoNoninteractiveElementInteractionsConfig {
+export interface NoDistractingElementsConfig {
   /**
-   * An array of event handler names that should trigger this rule.
+   * List of distracting elements to check for.
    */
-  handlers?: string[];
+  elements?: DistractingElement[];
+}
+export interface NoInteractiveElementToNoninteractiveRoleConfig {
   [k: string]: string[];
+}
+export interface NoNoninteractiveElementToInteractiveRoleConfig {
+  [k: string]: string[];
+}
+export interface NoNoninteractiveTabindexConfig {
+  /**
+   * If `true`, allows tabIndex values to be expression values (e.g., variables, ternaries). If `false`, only string literal values are allowed.
+   */
+  allowExpressionValues?: boolean;
+  /**
+   * An array of ARIA roles that should be considered interactive.
+   */
+  roles?: string[];
+  /**
+   * An array of custom HTML elements that should be considered interactive.
+   */
+  tags?: string[];
 }
 export interface NoRedundantRolesConfig {
   [k: string]: string[];
@@ -4012,6 +4229,12 @@ export interface DisplayNameConfig {
    */
   ignoreTranspilerName?: boolean;
 }
+export interface ExhaustiveDepsConfig {
+  /**
+   * Optionally provide a regex of additional hooks to check.
+   */
+  additionalHooks?: string;
+}
 export interface ForbidComponentPropsConfig {
   /**
    * An array specifying the names of props that are forbidden.
@@ -4148,6 +4371,22 @@ export interface JsxBooleanValueOptions {
    */
   never?: string[];
 }
+export interface JsxFilenameExtensionConfig {
+  /**
+   * When to allow a JSX filename extension. By default all files may have a JSX extension.
+   * Set this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.
+   */
+  allow?: JsxFilenameExtensionAllowMode;
+  /**
+   * The set of allowed file extensions.
+   * Can include or exclude the leading dot (e.g., "jsx" and ".jsx" are both valid).
+   */
+  extensions?: string[];
+  /**
+   * If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected.
+   */
+  ignoreFilesWithoutCode?: boolean;
+}
 export interface JsxKeyConfig {
   /**
    * When true, check fragment shorthand `<>` for keys
@@ -4231,6 +4470,28 @@ export interface ElementOverrideOptions {
    * An array of unique attribute names where string literals should be restricted. Only the specified attributes will be checked for string literals when this option is used. Note: When noAttributeStrings is true, this option is ignored at the root level.
    */
   restrictedAttributes?: string[];
+}
+export interface JsxNoTargetBlank {
+  /**
+   * Whether to allow referrers.
+   */
+  allowReferrer?: boolean;
+  /**
+   * Whether to enforce dynamic links or enforce static links.
+   */
+  enforceDynamicLinks?: EnforceDynamicLinksEnum;
+  /**
+   * Whether to check form elements.
+   */
+  forms?: boolean;
+  /**
+   * Whether to check link elements.
+   */
+  links?: boolean;
+  /**
+   * Whether to warn when spread attributes are used.
+   */
+  warnOnSpreadAttributes?: boolean;
 }
 export interface JsxNoUselessFragment {
   /**
@@ -4476,17 +4737,100 @@ export interface SortVars {
    */
   ignoreCase?: boolean;
 }
+export interface ArrayTypeConfig {
+  /**
+   * The array type expected for mutable cases.
+   */
+  default?: ArrayOption;
+  /**
+   * The array type expected for readonly cases. If omitted, the value for `default` will be used.
+   */
+  readonly?: ReadonlyArrayOption;
+}
+/**
+ * This rule allows you to specify how different TypeScript directive comments
+ * should be handled.
+ *
+ * For each directive (`@ts-expect-error`, `@ts-ignore`, `@ts-nocheck`, `@ts-check`), you can choose one of the following options:
+ * - `true`: Disallow the directive entirely, preventing its use in the entire codebase.
+ * - `false`: Allow the directive without any restrictions.
+ * - `"allow-with-description"`: Allow the directive only if it is followed by a description explaining its use. The description must meet the minimum length specified by `minimumDescriptionLength`.
+ * - `{ "descriptionFormat": "<regex>" }`: Allow the directive only if the description matches the specified regex pattern.
+ *
+ * For example:
+ * ```json
+ * {
+ *   "ts-expect-error": "allow-with-description",
+ *   "ts-ignore": true,
+ *   "ts-nocheck": {
+ *     "descriptionFormat": "^: TS\\d+ because .+$"
+ *   },
+ *   "ts-check": false,
+ *   "minimumDescriptionLength": 3
+ * }
+ * ```
+ */
+export interface BanTsCommentConfig {
+  /**
+   * Minimum description length required when using directives with `allow-with-description`.
+   */
+  minimumDescriptionLength?: number;
+  /**
+   * How to handle the `@ts-check` directive.
+   */
+  "ts-check"?: DirectiveConfigSchema;
+  /**
+   * How to handle the `@ts-expect-error` directive.
+   */
+  "ts-expect-error"?: DirectiveConfigSchema;
+  /**
+   * How to handle the `@ts-ignore` directive.
+   */
+  "ts-ignore"?: DirectiveConfigSchema;
+  /**
+   * How to handle the `@ts-nocheck` directive.
+   */
+  "ts-nocheck"?: DirectiveConfigSchema;
+}
 export interface ConsistentReturnConfig {
   /**
    * Treat explicit `return undefined` as equivalent to an unspecified return.
    */
   treatUndefinedAsUnspecified?: boolean;
 }
+export interface ConsistentTypeAssertionsConfig {
+  /**
+   * Whether array literal type assertions are allowed, allowed only as parameters, or disallowed.
+   */
+  arrayLiteralTypeAssertions?: ArrayLiteralTypeAssertions;
+  /**
+   * Which assertion syntax is enforced.
+   */
+  assertionStyle?: AssertionStyle;
+  /**
+   * Whether object literal type assertions are allowed, allowed only as parameters, or disallowed.
+   */
+  objectLiteralTypeAssertions?: ObjectLiteralTypeAssertions;
+}
 export interface ConsistentTypeExportsConfig {
   /**
    * Enables an autofix strategy that rewrites mixed exports using inline `type` specifiers.
    */
   fixMixedExportsWithInlineTypeSpecifier?: boolean;
+}
+export interface ConsistentTypeImportsConfig {
+  /**
+   * Disallow using `import()` in type annotations, like `type T = import('foo')`
+   */
+  disallowTypeAnnotations?: boolean;
+  /**
+   * Control how type imports are added when auto-fixing.
+   */
+  fixStyle?: FixStyle;
+  /**
+   * Control whether to enforce type imports or value imports.
+   */
+  prefer?: Prefer;
 }
 export interface DotNotationConfig {
   /**
@@ -4699,11 +5043,51 @@ export interface PackageSpecifier {
    */
   package: string;
 }
+export interface NoDuplicateTypeConstituentsConfig {
+  /**
+   * Whether to ignore duplicate types in intersection types.
+   * When true, allows `type T = A & A`.
+   */
+  ignoreIntersections?: boolean;
+  /**
+   * Whether to ignore duplicate types in union types.
+   * When true, allows `type T = A | A`.
+   */
+  ignoreUnions?: boolean;
+}
 export interface NoEmptyInterface {
   /**
    * When set to `true`, allows empty interfaces that extend a single interface.
    */
   allowSingleExtends?: boolean;
+}
+export interface NoEmptyObjectTypeConfig {
+  /**
+   * Whether to allow empty interfaces.
+   */
+  allowInterfaces?: AllowInterfaces;
+  /**
+   * Whether to allow empty object type literals.
+   */
+  allowObjectTypes?: AllowObjectTypes;
+  /**
+   * A stringified regular expression to allow interfaces and object type aliases with the configured name.
+   *
+   * This can be useful if your existing code style includes a pattern of declaring empty types with `{}` instead of `object`.
+   *
+   * Example of **incorrect** code for this rule with `{ allowWithName: 'Props$' }`:
+   * ```ts
+   * interface InterfaceValue {}
+   * type TypeValue = {};
+   * ```
+   *
+   * Example of **correct** code for this rule with `{ allowWithName: 'Props$' }`:
+   * ```ts
+   * interface InterfaceProps {}
+   * type TypeProps = {};
+   * ```
+   */
+  allowWithName?: string;
 }
 export interface NoExplicitAny {
   /**
@@ -4928,6 +5312,14 @@ export interface NoRequireImportsConfig {
    */
   allowAsImport?: boolean;
 }
+export interface NoRestrictedTypesConfig {
+  /**
+   * A mapping of type names to ban configurations.
+   */
+  types?: {
+    [k: string]: BanConfigValue;
+  };
+}
 export interface NoThisAliasConfig {
   /**
    * Whether to allow destructuring of `this` to local variables.
@@ -5010,7 +5402,7 @@ export interface ParameterPropertiesConfig {
   /**
    * Whether to prefer parameter properties or class properties.
    */
-  prefer?: Prefer;
+  prefer?: Prefer2;
 }
 export interface PreferLiteralEnumMember {
   /**
@@ -5371,6 +5763,117 @@ export interface ExplicitLengthCheck {
    */
   "non-zero"?: NonZero;
 }
+export interface ImportStyleConfig {
+  /**
+   * Whether dynamic import expressions are checked.
+   *
+   * Set this to `false` to skip calls such as `await import("module")`.
+   *
+   * With the default configuration, examples of **incorrect** code:
+   * ```js
+   * async () => {
+   * const {red} = await import("chalk");
+   * };
+   * ```
+   *
+   * Examples of **correct** code:
+   * ```js
+   * async () => {
+   * const {default: chalk} = await import("chalk");
+   * };
+   * ```
+   */
+  checkDynamicImport?: boolean;
+  /**
+   * Whether export-from declarations are checked.
+   *
+   * This is disabled by default. Set this to `true` to check declarations like
+   * `export ... from "module"`.
+   *
+   * With `{ "checkExportFrom": true }`, examples of **incorrect** code:
+   * ```js
+   * export * from "node:util";
+   * ```
+   *
+   * Examples of **correct** code:
+   * ```js
+   * export {promisify} from "node:util";
+   * ```
+   */
+  checkExportFrom?: boolean;
+  /**
+   * Whether static import declarations are checked.
+   *
+   * Set this to `false` to skip `import ... from "module"` and side-effect imports like
+   * `import "module"`.
+   *
+   * With the default configuration, examples of **incorrect** code:
+   * ```js
+   * import {red} from "chalk";
+   * ```
+   *
+   * Examples of **correct** code:
+   * ```js
+   * import chalk from "chalk";
+   * ```
+   */
+  checkImport?: boolean;
+  /**
+   * Whether CommonJS `require()` calls are checked.
+   *
+   * Set this to `false` to skip `require("module")` calls completely.
+   *
+   * With the default configuration, examples of **incorrect** code:
+   * ```js
+   * const util = require("node:util");
+   * ```
+   *
+   * Examples of **correct** code:
+   * ```js
+   * const {promisify} = require("node:util");
+   * ```
+   */
+  checkRequire?: boolean;
+  /**
+   * Whether `styles` extends or replaces the built-in module preferences.
+   *
+   * When this is `true`, entries in `styles` are merged with the default preferences. For
+   * example, `{ "styles": { "path": { "named": true } } }` allows named imports from
+   * `path` while leaving its default import style allowed. When this is `false`, only modules
+   * configured in `styles` are checked.
+   *
+   * With `{ "extendDefaultStyles": false, "styles": {} }`, examples of **correct** code:
+   * ```js
+   * import {red} from "chalk";
+   * ```
+   */
+  extendDefaultStyles?: boolean;
+  /**
+   * Per-module import style preferences.
+   *
+   * Each key is a module specifier. Set the value to `false` to disable checking for the
+   * module, or to an object that allows one or more import styles. The available styles are
+   * `unassigned`, `default`, `namespace`, and `named`. When `extendDefaultStyles` is `true`,
+   * these entries extend the built-in defaults instead of replacing them.
+   *
+   * The default module preferences are default imports for `chalk`, `path`, and `node:path`,
+   * and named imports for `util` and `node:util`.
+   *
+   * With `{ "styles": { "node:util": { "named": true, "default": false } } }`,
+   * examples of **incorrect** code:
+   * ```js
+   * import util from "node:util";
+   * ```
+   *
+   * Examples of **correct** code:
+   * ```js
+   * import {promisify} from "node:util";
+   * ```
+   */
+  styles?: {
+    [k: string]: ModuleStylesOverride;
+  };
+}
 export interface NoArrayReduce {
   /**
    * When set to `true`, allows simple operations (like summing numbers) in `reduce` and `reduceRight` calls.
@@ -5454,6 +5957,18 @@ export interface NoUselessUndefined {
    * Whether to check for useless `undefined` in arrow function bodies.
    */
   checkArrowFunctionBody?: boolean;
+}
+export interface PreferAtConfig {
+  /**
+   * Check all index access, not just special patterns like `array.length - 1`.
+   * When enabled, `array[0]`, `array[1]`, etc. will also be flagged.
+   */
+  checkAllIndexAccess?: boolean;
+  /**
+   * List of function names to treat as "get last element" functions.
+   * These functions will be checked for `.at(-1)` usage.
+   */
+  getLastElementFunctions?: string[];
 }
 export interface PreferExportFrom {
   /**

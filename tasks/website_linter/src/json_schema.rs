@@ -16,12 +16,11 @@ fn test_schema_json() {
     let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
     let json = generate_schema_json::<Oxlintrc>();
     let existing_json = fs::read_to_string(&path).unwrap_or_default();
-    if existing_json.trim() != json.trim() {
-        fs::write(&path, &json).unwrap();
-    }
-    insta::with_settings!({ prepend_module_to_snapshot => false }, {
-        insta::assert_snapshot!(json);
-    });
+    assert_eq!(
+        existing_json.trim(),
+        json.trim(),
+        "The generated schema JSON does not match the existing one. Run `just linter-schema-json` to update it.",
+    );
 }
 
 #[test]

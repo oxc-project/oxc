@@ -73,6 +73,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.39.0",
+    short_description = "This rule disallows using arrow functions when defining a watcher.",
 );
 
 impl Rule for NoArrowFunctionsInWatch {

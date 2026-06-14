@@ -77,6 +77,7 @@ declare_oxc_lint!(
     pending,
     config = JsxNoScriptUrlConfig,
     version = "0.13.2",
+    short_description = "Disallow usage of `javascript:` URLs.",
 );
 
 fn is_link_attribute(tag_name: &str, prop_value_literal: String, ctx: &LintContext) -> bool {

@@ -84,6 +84,7 @@ declare_oxc_lint!(
     pending,
     config = PreferObjectFromEntriesConfig,
     version = "0.16.12",
+    short_description = "Encourages using `Object.fromEntries` when converting an array of key-value pairs into an object.",
 );
 
 impl Rule for PreferObjectFromEntries {

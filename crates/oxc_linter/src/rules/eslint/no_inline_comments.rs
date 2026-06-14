@@ -81,6 +81,7 @@ declare_oxc_lint!(
     pedantic,
     config = NoInlineCommentsConfig,
     version = "1.34.0",
+    short_description = "Disallows comments on the same line as code.",
 );
 
 impl Rule for NoInlineComments {

@@ -324,6 +324,34 @@
         }
       ]
     },
+    "AllowInterfaces": {
+      "oneOf": [
+        {
+          "description": "Never allow interfaces with no fields.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Never allow interfaces with no fields."
+        },
+        {
+          "description": "Always allow interfaces with no fields.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always allow interfaces with no fields."
+        },
+        {
+          "description": "Allow empty interfaces that `extend` from a single base interface.\n\nExamples of **correct** code for this rule with `{ allowInterfaces: 'with-single-extends' }`:\n```ts\ninterface Base {\nvalue: boolean;\n}\ninterface Derived extends Base {}\n```",
+          "type": "string",
+          "enum": [
+            "with-single-extends"
+          ],
+          "markdownDescription": "Allow empty interfaces that `extend` from a single base interface.\n\nExamples of **correct** code for this rule with `{ allowInterfaces: 'with-single-extends' }`:\n```ts\ninterface Base {\nvalue: boolean;\n}\ninterface Derived extends Base {}\n```"
+        }
+      ]
+    },
     "AllowKind": {
       "description": "Kinds of functions that can be allowed to be empty.",
       "oneOf": [
@@ -442,6 +470,26 @@
       ],
       "markdownDescription": "Kinds of functions that can be allowed to be empty."
     },
+    "AllowObjectTypes": {
+      "oneOf": [
+        {
+          "description": "Never allow object type literals with no fields.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Never allow object type literals with no fields."
+        },
+        {
+          "description": "Always allow object type literals with no fields.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always allow object type literals with no fields."
+        }
+      ]
+    },
     "AllowSingleElementEquality": {
       "oneOf": [
         {
@@ -504,6 +552,72 @@
           ],
           "markdownDescription": "The `\"always\"` option requires that literal values must always come first in comparisons."
         }
+      ]
+    },
+    "AllowedOrDisallowInFunc": {
+      "type": "string",
+      "enum": [
+        "allowed",
+        "disallow-in-func"
+      ]
+    },
+    "AltTextConfigSchema": {
+      "type": "object",
+      "properties": {
+        "area": {
+          "description": "Custom components to check for alt text on `area` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `area` elements."
+        },
+        "elements": {
+          "description": "Custom components to check for alt text on any of the supported elements.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AltTextElements"
+          },
+          "markdownDescription": "Custom components to check for alt text on any of the supported elements."
+        },
+        "img": {
+          "description": "Custom components to check for alt text on `img` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `img` elements."
+        },
+        "input[type=\"image\"]": {
+          "description": "Custom components to check for alt text on `input[type=\"image\"]` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `input[type=\"image\"]` elements."
+        },
+        "object": {
+          "description": "Custom components to check for alt text on `object` elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to check for alt text on `object` elements."
+        }
+      },
+      "additionalProperties": false
+    },
+    "AltTextElements": {
+      "type": "string",
+      "enum": [
+        "img",
+        "object",
+        "area",
+        "input[type=\"image\"]"
       ]
     },
     "AlwaysNever": {
@@ -631,6 +745,88 @@
       },
       "additionalProperties": false
     },
+    "ArrayLiteralTypeAssertions": {
+      "oneOf": [
+        {
+          "description": "Allow type assertions on array literals.\n\nExamples of **correct** code with this option:\n```ts\nconst x = [1, 2] as number[];\nconst x = ['a'] as Array<string>;\n```",
+          "type": "string",
+          "enum": [
+            "allow"
+          ],
+          "markdownDescription": "Allow type assertions on array literals.\n\nExamples of **correct** code with this option:\n```ts\nconst x = [1, 2] as number[];\nconst x = ['a'] as Array<string>;\n```"
+        },
+        {
+          "description": "Allow type assertions on array literals only when used as a function parameter,\n`throw` target, or default value.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = [1, 2] as Foo;\nconst foo = () => [5] as Foo;\n```\n\nExamples of **correct** code with this option:\n```ts\nprint([5] as Foo);\nthrow [1, 2] as Bar;\nfunction f(x = [5] as Foo.Bar) {}\n```",
+          "type": "string",
+          "enum": [
+            "allow-as-parameter"
+          ],
+          "markdownDescription": "Allow type assertions on array literals only when used as a function parameter,\n`throw` target, or default value.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = [1, 2] as Foo;\nconst foo = () => [5] as Foo;\n```\n\nExamples of **correct** code with this option:\n```ts\nprint([5] as Foo);\nthrow [1, 2] as Bar;\nfunction f(x = [5] as Foo.Bar) {}\n```"
+        },
+        {
+          "description": "Disallow type assertions on array literals entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = [1, 2] as Foo;\nprint([5] as Foo);\n```\n\nExamples of **correct** code with this option:\n```ts\nconst x: Foo = [1, 2];\nconst x = [1, 2] satisfies Foo;\n```",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow type assertions on array literals entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = [1, 2] as Foo;\nprint([5] as Foo);\n```\n\nExamples of **correct** code with this option:\n```ts\nconst x: Foo = [1, 2];\nconst x = [1, 2] satisfies Foo;\n```"
+        }
+      ]
+    },
+    "ArrayOption": {
+      "oneOf": [
+        {
+          "description": "Enforce using `T[]` for all array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: Array<number> = new Array<number>();\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: number[] = new Array<number>();\n```",
+          "type": "string",
+          "enum": [
+            "array"
+          ],
+          "markdownDescription": "Enforce using `T[]` for all array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: Array<number> = new Array<number>();\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: number[] = new Array<number>();\n```"
+        },
+        {
+          "description": "Enforce using `T[]` for simple types, and `Array<T>` for complex types.\n\nExample of **incorrect** code for this option:\n```ts\nconst a: (string | number)[] = ['a', 'b'];\nconst b: { prop: string }[] = [{ prop: 'a' }];\nconst c: Array<MyType> = ['a', 'b'];\nconst d: Array<string> = ['a', 'b'];\n```\n\nExample of **correct** code for this option:\n```ts\nconst a: Array<string | number> = ['a', 'b'];\nconst b: Array<{ prop: string }> = [{ prop: 'a' }];\nconst c: string[] = ['a', 'b'];\nconst d: MyType[] = ['a', 'b'];\n```",
+          "type": "string",
+          "enum": [
+            "array-simple"
+          ],
+          "markdownDescription": "Enforce using `T[]` for simple types, and `Array<T>` for complex types.\n\nExample of **incorrect** code for this option:\n```ts\nconst a: (string | number)[] = ['a', 'b'];\nconst b: { prop: string }[] = [{ prop: 'a' }];\nconst c: Array<MyType> = ['a', 'b'];\nconst d: Array<string> = ['a', 'b'];\n```\n\nExample of **correct** code for this option:\n```ts\nconst a: Array<string | number> = ['a', 'b'];\nconst b: Array<{ prop: string }> = [{ prop: 'a' }];\nconst c: string[] = ['a', 'b'];\nconst d: MyType[] = ['a', 'b'];\n```"
+        },
+        {
+          "description": "Enforce using `Array<T>` for all array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: number[] = new Array<number>();\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: Array<number> = new Array<number>();\n```",
+          "type": "string",
+          "enum": [
+            "generic"
+          ],
+          "markdownDescription": "Enforce using `Array<T>` for all array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: number[] = new Array<number>();\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: Array<number> = new Array<number>();\n```"
+        }
+      ]
+    },
+    "ArrayTypeConfig": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "description": "The array type expected for mutable cases.",
+          "default": "array",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArrayOption"
+            }
+          ],
+          "markdownDescription": "The array type expected for mutable cases."
+        },
+        "readonly": {
+          "description": "The array type expected for readonly cases. If omitted, the value for `default` will be used.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/ReadonlyArrayOption"
+            }
+          ],
+          "markdownDescription": "The array type expected for readonly cases. If omitted, the value for `default` will be used."
+        }
+      },
+      "additionalProperties": false
+    },
     "ArrowBodyStyle": {
       "type": "array",
       "items": [
@@ -654,6 +850,70 @@
       },
       "additionalProperties": false
     },
+    "Assert": {
+      "oneOf": [
+        {
+          "description": "Assert that the label uses `htmlFor` to associate a control.",
+          "type": "string",
+          "enum": [
+            "htmlFor"
+          ],
+          "markdownDescription": "Assert that the label uses `htmlFor` to associate a control."
+        },
+        {
+          "description": "Assert that the label has a nested control",
+          "type": "string",
+          "enum": [
+            "nesting"
+          ],
+          "markdownDescription": "Assert that the label has a nested control"
+        },
+        {
+          "description": "Assert that the label uses both `htmlFor` and nesting for associating a control",
+          "type": "string",
+          "enum": [
+            "both"
+          ],
+          "markdownDescription": "Assert that the label uses both `htmlFor` and nesting for associating a control"
+        },
+        {
+          "description": "Assert that the label uses either `htmlFor` or nesting for associating a control",
+          "type": "string",
+          "enum": [
+            "either"
+          ],
+          "markdownDescription": "Assert that the label uses either `htmlFor` or nesting for associating a control"
+        }
+      ]
+    },
+    "AssertionStyle": {
+      "oneOf": [
+        {
+          "description": "Enforce `as` syntax for type assertions.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = <Foo>bar;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value = bar as Foo;\n```",
+          "type": "string",
+          "enum": [
+            "as"
+          ],
+          "markdownDescription": "Enforce `as` syntax for type assertions.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = <Foo>bar;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value = bar as Foo;\n```"
+        },
+        {
+          "description": "Enforce angle-bracket syntax for type assertions.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = bar as Foo;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value = <Foo>bar;\n```",
+          "type": "string",
+          "enum": [
+            "angle-bracket"
+          ],
+          "markdownDescription": "Enforce angle-bracket syntax for type assertions.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = bar as Foo;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value = <Foo>bar;\n```"
+        },
+        {
+          "description": "Disallow type assertions entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = bar as Foo;\nconst value = <Foo>bar;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value: Foo = bar;\nconst value = bar satisfies Foo;\n```",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow type assertions entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst value = bar as Foo;\nconst value = <Foo>bar;\n```\n\nExamples of **correct** code with this option:\n```ts\nconst value: Foo = bar;\nconst value = bar satisfies Foo;\n```"
+        }
+      ]
+    },
     "AutocompleteValidConfig": {
       "type": "object",
       "properties": {
@@ -671,6 +931,106 @@
         }
       },
       "additionalProperties": false
+    },
+    "BanConfigValue": {
+      "description": "Represents the different ways a ban config can be specified in JSON.\nCan be:\n- `true` - ban with default message\n- A string - ban with custom message\n- An object with `message` and optional `fixWith` and `suggest`",
+      "anyOf": [
+        {
+          "description": "`\"TypeName\": true` - ban with default message\nNote: Only `true` is valid; `false` would fail to deserialize and be ignored.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/True"
+            }
+          ],
+          "markdownDescription": "`\"TypeName\": true` - ban with default message\nNote: Only `true` is valid; `false` would fail to deserialize and be ignored."
+        },
+        {
+          "description": "`\"TypeName\": \"message\"` - ban with custom message",
+          "type": "string",
+          "markdownDescription": "`\"TypeName\": \"message\"` - ban with custom message"
+        },
+        {
+          "description": "`\"TypeName\": { \"message\": \"...\", \"fixWith\": \"...\", \"suggest\": [\"...\"] }` - full config",
+          "type": "object",
+          "properties": {
+            "fixWith": {
+              "description": "Replacement type for automatic fixing. Applied directly with `--fix`.",
+              "default": null,
+              "type": "string",
+              "markdownDescription": "Replacement type for automatic fixing. Applied directly with `--fix`."
+            },
+            "message": {
+              "description": "Custom message explaining why the type is banned.",
+              "default": null,
+              "type": "string",
+              "markdownDescription": "Custom message explaining why the type is banned."
+            },
+            "suggest": {
+              "description": "Suggested replacement types for manual review. Shown as editor suggestions.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "markdownDescription": "Suggested replacement types for manual review. Shown as editor suggestions."
+            }
+          },
+          "additionalProperties": false,
+          "markdownDescription": "`\"TypeName\": { \"message\": \"...\", \"fixWith\": \"...\", \"suggest\": [\"...\"] }` - full config"
+        }
+      ],
+      "markdownDescription": "Represents the different ways a ban config can be specified in JSON.\nCan be:\n- `true` - ban with default message\n- A string - ban with custom message\n- An object with `message` and optional `fixWith` and `suggest`"
+    },
+    "BanTsCommentConfig": {
+      "description": "This rule allows you to specify how different TypeScript directive comments\nshould be handled.\n\nFor each directive (`@ts-expect-error`, `@ts-ignore`, `@ts-nocheck`, `@ts-check`), you can choose one of the following options:\n- `true`: Disallow the directive entirely, preventing its use in the entire codebase.\n- `false`: Allow the directive without any restrictions.\n- `\"allow-with-description\"`: Allow the directive only if it is followed by a description explaining its use. The description must meet the minimum length specified by `minimumDescriptionLength`.\n- `{ \"descriptionFormat\": \"<regex>\" }`: Allow the directive only if the description matches the specified regex pattern.\n\nFor example:\n```json\n{\n\"ts-expect-error\": \"allow-with-description\",\n\"ts-ignore\": true,\n\"ts-nocheck\": { \"descriptionFormat\": \"^: TS\\\\d+ because .+$\" },\n\"ts-check\": false,\n\"minimumDescriptionLength\": 3\n}\n```",
+      "type": "object",
+      "properties": {
+        "minimumDescriptionLength": {
+          "description": "Minimum description length required when using directives with `allow-with-description`.",
+          "default": 3,
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0,
+          "markdownDescription": "Minimum description length required when using directives with `allow-with-description`."
+        },
+        "ts-check": {
+          "description": "How to handle the `@ts-check` directive.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DirectiveConfigSchema"
+            }
+          ],
+          "markdownDescription": "How to handle the `@ts-check` directive."
+        },
+        "ts-expect-error": {
+          "description": "How to handle the `@ts-expect-error` directive.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DirectiveConfigSchema"
+            }
+          ],
+          "markdownDescription": "How to handle the `@ts-expect-error` directive."
+        },
+        "ts-ignore": {
+          "description": "How to handle the `@ts-ignore` directive.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DirectiveConfigSchema"
+            }
+          ],
+          "markdownDescription": "How to handle the `@ts-ignore` directive."
+        },
+        "ts-nocheck": {
+          "description": "How to handle the `@ts-nocheck` directive.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DirectiveConfigSchema"
+            }
+          ],
+          "markdownDescription": "How to handle the `@ts-nocheck` directive."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "This rule allows you to specify how different TypeScript directive comments\nshould be handled.\n\nFor each directive (`@ts-expect-error`, `@ts-ignore`, `@ts-nocheck`, `@ts-check`), you can choose one of the following options:\n- `true`: Disallow the directive entirely, preventing its use in the entire codebase.\n- `false`: Allow the directive without any restrictions.\n- `\"allow-with-description\"`: Allow the directive only if it is followed by a description explaining its use. The description must meet the minimum length specified by `minimumDescriptionLength`.\n- `{ \"descriptionFormat\": \"<regex>\" }`: Allow the directive only if the description matches the specified regex pattern.\n\nFor example:\n```json\n{\n\"ts-expect-error\": \"allow-with-description\",\n\"ts-ignore\": true,\n\"ts-nocheck\": { \"descriptionFormat\": \"^: TS\\\\d+ because .+$\" },\n\"ts-check\": false,\n\"minimumDescriptionLength\": 3\n}\n```"
     },
     "BlockScopedFunctions": {
       "oneOf": [
@@ -1219,6 +1579,39 @@
       },
       "additionalProperties": false
     },
+    "ConsistentTypeAssertionsConfig": {
+      "type": "object",
+      "properties": {
+        "arrayLiteralTypeAssertions": {
+          "description": "Whether array literal type assertions are allowed, allowed only as parameters, or disallowed.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArrayLiteralTypeAssertions"
+            }
+          ],
+          "markdownDescription": "Whether array literal type assertions are allowed, allowed only as parameters, or disallowed."
+        },
+        "assertionStyle": {
+          "description": "Which assertion syntax is enforced.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AssertionStyle"
+            }
+          ],
+          "markdownDescription": "Which assertion syntax is enforced."
+        },
+        "objectLiteralTypeAssertions": {
+          "description": "Whether object literal type assertions are allowed, allowed only as parameters, or disallowed.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ObjectLiteralTypeAssertions"
+            }
+          ],
+          "markdownDescription": "Whether object literal type assertions are allowed, allowed only as parameters, or disallowed."
+        }
+      },
+      "additionalProperties": false
+    },
     "ConsistentTypeDefinitionsConfig": {
       "oneOf": [
         {
@@ -1251,6 +1644,38 @@
       },
       "additionalProperties": false
     },
+    "ConsistentTypeImportsConfig": {
+      "type": "object",
+      "properties": {
+        "disallowTypeAnnotations": {
+          "description": "Disallow using `import()` in type annotations, like `type T = import('foo')`",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Disallow using `import()` in type annotations, like `type T = import('foo')`"
+        },
+        "fixStyle": {
+          "description": "Control how type imports are added when auto-fixing.",
+          "default": "separate-type-imports",
+          "allOf": [
+            {
+              "$ref": "#/definitions/FixStyle"
+            }
+          ],
+          "markdownDescription": "Control how type imports are added when auto-fixing."
+        },
+        "prefer": {
+          "description": "Control whether to enforce type imports or value imports.",
+          "default": "type-imports",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Prefer"
+            }
+          ],
+          "markdownDescription": "Control whether to enforce type imports or value imports."
+        }
+      },
+      "additionalProperties": false
+    },
     "ConsistentVitestConfig": {
       "type": "object",
       "properties": {
@@ -1263,6 +1688,75 @@
             }
           ],
           "markdownDescription": "Decides whether to prefer vitest function accessor"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ControlHasAssociatedLabelConfig": {
+      "type": "object",
+      "properties": {
+        "controlComponents": {
+          "description": "Custom JSX components to be treated as interactive controls.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom JSX components to be treated as interactive controls."
+        },
+        "depth": {
+          "description": "Maximum depth to search for an accessible label within the element.\nDefaults to `2`.",
+          "default": 2,
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum depth to search for an accessible label within the element.\nDefaults to `2`."
+        },
+        "ignoreElements": {
+          "description": "Elements to ignore.\nDefaults to `[\"audio\", \"canvas\", \"embed\", \"input\", \"textarea\", \"tr\", \"video\"]`.",
+          "default": [
+            "audio",
+            "canvas",
+            "embed",
+            "input",
+            "textarea",
+            "tr",
+            "video"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Elements to ignore.\nDefaults to `[\"audio\", \"canvas\", \"embed\", \"input\", \"textarea\", \"tr\", \"video\"]`."
+        },
+        "ignoreRoles": {
+          "description": "Interactive roles to ignore.\nDefaults to `[\"grid\", \"listbox\", \"menu\", \"menubar\", \"radiogroup\", \"row\", \"tablist\", \"toolbar\", \"tree\", \"treegrid\"]`.",
+          "default": [
+            "grid",
+            "listbox",
+            "menu",
+            "menubar",
+            "radiogroup",
+            "row",
+            "tablist",
+            "toolbar",
+            "tree",
+            "treegrid"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Interactive roles to ignore.\nDefaults to `[\"grid\", \"listbox\", \"menu\", \"menubar\", \"radiogroup\", \"row\", \"tablist\", \"toolbar\", \"tree\", \"treegrid\"]`."
+        },
+        "labelAttributes": {
+          "description": "Additional attributes to check for accessible label text.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional attributes to check for accessible label text."
         }
       },
       "additionalProperties": false
@@ -1525,6 +2019,25 @@
         }
       ]
     },
+    "DirectiveConfigSchema": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/RequireDescription"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "descriptionFormat": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "DisplayNameConfig": {
       "type": "object",
       "properties": {
@@ -1542,6 +2055,13 @@
         }
       },
       "additionalProperties": false
+    },
+    "DistractingElement": {
+      "type": "string",
+      "enum": [
+        "marquee",
+        "blink"
+      ]
     },
     "DotNotationConfig": {
       "type": "object",
@@ -2950,7 +3470,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/alt-text": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AltTextConfigSchema"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/anchor-ambiguous-text": {
           "anyOf": [
@@ -3034,7 +3571,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/control-has-associated-label": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ControlHasAssociatedLabelConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/heading-has-content": {
           "anyOf": [
@@ -3063,7 +3617,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/img-redundant-alt": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ImgRedundantAltConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/interactive-supports-focus": {
           "anyOf": [
@@ -3086,13 +3657,47 @@
           ]
         },
         "jsx-a11y/label-has-associated-control": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/LabelHasAssociatedControlConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/lang": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/media-has-caption": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MediaHasCaptionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/mouse-events-have-key-events": {
           "anyOf": [
@@ -3141,12 +3746,6 @@
           ]
         },
         "jsx-a11y/no-distracting-elements": {
-          "$ref": "#/definitions/DummyRule"
-        },
-        "jsx-a11y/no-interactive-element-to-noninteractive-role": {
-          "$ref": "#/definitions/DummyRule"
-        },
-        "jsx-a11y/no-noninteractive-element-interactions": {
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -3158,7 +3757,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoNoninteractiveElementInteractionsConfig"
+                  "$ref": "#/definitions/NoDistractingElementsConfig"
                 }
               ],
               "maxItems": 2,
@@ -3166,11 +3765,68 @@
             }
           ]
         },
-        "jsx-a11y/no-noninteractive-element-to-interactive-role": {
+        "jsx-a11y/no-interactive-element-to-noninteractive-role": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoInteractiveElementToNoninteractiveRoleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
+        },
+        "jsx-a11y/no-noninteractive-element-interactions": {
           "$ref": "#/definitions/DummyRule"
         },
+        "jsx-a11y/no-noninteractive-element-to-interactive-role": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoNoninteractiveElementToInteractiveRoleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
+        },
         "jsx-a11y/no-noninteractive-tabindex": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoNoninteractiveTabindexConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "jsx-a11y/no-redundant-roles": {
           "anyOf": [
@@ -5346,7 +6002,24 @@
           ]
         },
         "react-perf/jsx-no-new-object-as-prop": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactPerfConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/button-has-type": {
           "anyOf": [
@@ -5409,7 +6082,24 @@
           ]
         },
         "react/exhaustive-deps": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExhaustiveDepsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/forbid-component-props": {
           "anyOf": [
@@ -5524,7 +6214,24 @@
           "$ref": "#/definitions/DummyRule"
         },
         "react/jsx-filename-extension": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxFilenameExtensionConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/jsx-fragments": {
           "anyOf": [
@@ -5622,7 +6329,24 @@
           "$ref": "#/definitions/DummyRule"
         },
         "react/jsx-no-target-blank": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxNoTargetBlank"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/jsx-no-undef": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -5717,7 +6441,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoDidMountSetStateConfig"
+                  "$ref": "#/definitions/AllowedOrDisallowInFunc"
                 }
               ],
               "maxItems": 2,
@@ -5726,7 +6450,24 @@
           ]
         },
         "react/no-did-update-set-state": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AllowedOrDisallowInFunc"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "react/no-direct-mutation-state": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -5873,7 +6614,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoWillUpdateSetStateConfig"
+                  "$ref": "#/definitions/AllowedOrDisallowInFunc"
                 }
               ],
               "maxItems": 2,
@@ -6109,13 +6850,47 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/array-type": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ArrayTypeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/await-thenable": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/ban-ts-comment": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/BanTsCommentConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/ban-tslint-comment": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -6144,7 +6919,24 @@
           ]
         },
         "typescript/consistent-generic-constructors": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferGenericType"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/consistent-indexed-object-style": {
           "anyOf": [
@@ -6187,7 +6979,24 @@
           ]
         },
         "typescript/consistent-type-assertions": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentTypeAssertionsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/consistent-type-definitions": {
           "anyOf": [
@@ -6230,7 +7039,24 @@
           ]
         },
         "typescript/consistent-type-imports": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ConsistentTypeImportsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/dot-notation": {
           "anyOf": [
@@ -6402,7 +7228,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/no-duplicate-type-constituents": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoDuplicateTypeConstituentsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/no-dynamic-delete": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -6428,7 +7271,24 @@
           ]
         },
         "typescript/no-empty-object-type": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoEmptyObjectTypeConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/no-explicit-any": {
           "anyOf": [
@@ -6661,7 +7521,24 @@
           ]
         },
         "typescript/no-restricted-types": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedTypesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "typescript/no-this-alias": {
           "anyOf": [
@@ -7382,7 +8259,24 @@
           "$ref": "#/definitions/DummyRule"
         },
         "unicorn/import-style": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ImportStyleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/new-for-builtins": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -7704,7 +8598,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/prefer-at": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferAtConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 1
+            }
+          ]
         },
         "unicorn/prefer-bigint-literals": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9088,6 +9999,26 @@
         }
       ]
     },
+    "EnforceDynamicLinksEnum": {
+      "oneOf": [
+        {
+          "description": "Always enforce dynamic links.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always enforce dynamic links."
+        },
+        {
+          "description": "Always enforce static links.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Always enforce static links."
+        }
+      ]
+    },
     "Eqeqeq": {
       "type": "array",
       "items": [
@@ -9112,6 +10043,17 @@
             }
           ],
           "markdownDescription": "Configuration for whether to allow/disallow comparisons against `null`,\ne.g. `foo == null` or `foo != null`"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExhaustiveDepsConfig": {
+      "type": "object",
+      "properties": {
+        "additionalHooks": {
+          "description": "Optionally provide a regex of additional hooks to check.",
+          "type": "string",
+          "markdownDescription": "Optionally provide a regex of additional hooks to check."
         }
       },
       "additionalProperties": false
@@ -9365,6 +10307,26 @@
       },
       "additionalProperties": false,
       "markdownDescription": "Describes specific types or values declared in local files."
+    },
+    "FixStyle": {
+      "oneOf": [
+        {
+          "description": "Will add the type keyword after the import keyword `import type { A } from '...'`",
+          "type": "string",
+          "enum": [
+            "separate-type-imports"
+          ],
+          "markdownDescription": "Will add the type keyword after the import keyword `import type { A } from '...'`"
+        },
+        {
+          "description": "Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)",
+          "type": "string",
+          "enum": [
+            "inline-type-imports"
+          ],
+          "markdownDescription": "Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)"
+        }
+      ]
     },
     "ForbidComponentPropsConfig": {
       "type": "object",
@@ -9981,6 +10943,36 @@
       "additionalProperties": false,
       "markdownDescription": "Options for ignoring specific primitive types."
     },
+    "ImgRedundantAltConfig": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "description": "JSX element types to validate (component names) where the rule applies.\nFor example, `[\"img\", \"Image\"]`.",
+          "default": [
+            "img"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "JSX element types to validate (component names) where the rule applies.\nFor example, `[\"img\", \"Image\"]`."
+        },
+        "words": {
+          "description": "Words considered redundant in alt text that should trigger a warning.",
+          "default": [
+            "image",
+            "photo",
+            "picture"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Words considered redundant in alt text that should trigger a warning."
+        }
+      },
+      "additionalProperties": false
+    },
     "ImportKind": {
       "type": "string",
       "enum": [
@@ -9989,6 +10981,51 @@
         "multiple",
         "single"
       ]
+    },
+    "ImportStyleConfig": {
+      "type": "object",
+      "properties": {
+        "checkDynamicImport": {
+          "description": "Whether dynamic import expressions are checked.\n\nSet this to `false` to skip calls such as `await import(\"module\")`.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nasync () => {\nconst {red} = await import(\"chalk\");\n};\n```\n\nExamples of **correct** code:\n```js\nasync () => {\nconst {default: chalk} = await import(\"chalk\");\n};\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether dynamic import expressions are checked.\n\nSet this to `false` to skip calls such as `await import(\"module\")`.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nasync () => {\nconst {red} = await import(\"chalk\");\n};\n```\n\nExamples of **correct** code:\n```js\nasync () => {\nconst {default: chalk} = await import(\"chalk\");\n};\n```"
+        },
+        "checkExportFrom": {
+          "description": "Whether export-from declarations are checked.\n\nThis is disabled by default. Set this to `true` to check declarations like\n`export ... from \"module\"`.\n\nWith `{ \"checkExportFrom\": true }`, examples of **incorrect** code:\n```js\nexport * from \"node:util\";\n```\n\nExamples of **correct** code:\n```js\nexport {promisify} from \"node:util\";\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether export-from declarations are checked.\n\nThis is disabled by default. Set this to `true` to check declarations like\n`export ... from \"module\"`.\n\nWith `{ \"checkExportFrom\": true }`, examples of **incorrect** code:\n```js\nexport * from \"node:util\";\n```\n\nExamples of **correct** code:\n```js\nexport {promisify} from \"node:util\";\n```"
+        },
+        "checkImport": {
+          "description": "Whether static import declarations are checked.\n\nSet this to `false` to skip `import ... from \"module\"` and side-effect imports like\n`import \"module\"`.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nimport {red} from \"chalk\";\n```\n\nExamples of **correct** code:\n```js\nimport chalk from \"chalk\";\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether static import declarations are checked.\n\nSet this to `false` to skip `import ... from \"module\"` and side-effect imports like\n`import \"module\"`.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nimport {red} from \"chalk\";\n```\n\nExamples of **correct** code:\n```js\nimport chalk from \"chalk\";\n```"
+        },
+        "checkRequire": {
+          "description": "Whether CommonJS `require()` calls are checked.\n\nSet this to `false` to skip `require(\"module\")` calls completely.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nconst util = require(\"node:util\");\n```\n\nExamples of **correct** code:\n```js\nconst {promisify} = require(\"node:util\");\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether CommonJS `require()` calls are checked.\n\nSet this to `false` to skip `require(\"module\")` calls completely.\n\nWith the default configuration, examples of **incorrect** code:\n```js\nconst util = require(\"node:util\");\n```\n\nExamples of **correct** code:\n```js\nconst {promisify} = require(\"node:util\");\n```"
+        },
+        "extendDefaultStyles": {
+          "description": "Whether `styles` extends or replaces the built-in module preferences.\n\nWhen this is `true`, entries in `styles` are merged with the default preferences. For\nexample, `{ \"styles\": { \"path\": { \"named\": true } } }` allows named imports from\n`path` while leaving its default import style allowed. When this is `false`, only modules\nconfigured in `styles` are checked.\n\nWith `{ \"extendDefaultStyles\": false, \"styles\": {} }`, examples of **correct** code:\n```js\nimport {red} from \"chalk\";\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether `styles` extends or replaces the built-in module preferences.\n\nWhen this is `true`, entries in `styles` are merged with the default preferences. For\nexample, `{ \"styles\": { \"path\": { \"named\": true } } }` allows named imports from\n`path` while leaving its default import style allowed. When this is `false`, only modules\nconfigured in `styles` are checked.\n\nWith `{ \"extendDefaultStyles\": false, \"styles\": {} }`, examples of **correct** code:\n```js\nimport {red} from \"chalk\";\n```"
+        },
+        "styles": {
+          "description": "Per-module import style preferences.\n\nEach key is a module specifier. Set the value to `false` to disable checking for the\nmodule, or to an object that allows one or more import styles. The available styles are\n`unassigned`, `default`, `namespace`, and `named`. When `extendDefaultStyles` is `true`,\nthese entries extend the built-in defaults instead of replacing them.\n\nThe default module preferences are default imports for `chalk`, `path`, and `node:path`,\nand named imports for `util` and `node:util`.\n\nWith `{ \"styles\": { \"node:util\": { \"named\": true, \"default\": false } } }`,\nexamples of **incorrect** code:\n```js\nimport util from \"node:util\";\n```\n\nExamples of **correct** code:\n```js\nimport {promisify} from \"node:util\";\n```",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ModuleStylesOverride"
+          },
+          "markdownDescription": "Per-module import style preferences.\n\nEach key is a module specifier. Set the value to `false` to disable checking for the\nmodule, or to an object that allows one or more import styles. The available styles are\n`unassigned`, `default`, `namespace`, and `named`. When `extendDefaultStyles` is `true`,\nthese entries extend the built-in defaults instead of replacing them.\n\nThe default module preferences are default imports for `chalk`, `path`, and `node:path`,\nand named imports for `util` and `node:util`.\n\nWith `{ \"styles\": { \"node:util\": { \"named\": true, \"default\": false } } }`,\nexamples of **incorrect** code:\n```js\nimport util from \"node:util\";\n```\n\nExamples of **correct** code:\n```js\nimport {promisify} from \"node:util\";\n```"
+        }
+      },
+      "additionalProperties": false
     },
     "InitDeclarations": {
       "type": "array",
@@ -10222,6 +11259,59 @@
       },
       "additionalProperties": false
     },
+    "JsxFilenameExtensionAllowMode": {
+      "oneOf": [
+        {
+          "description": "Always allow a JSX filename extension.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Always allow a JSX filename extension."
+        },
+        {
+          "description": "Only allow JSX filename extension for files that contain JSX syntax.",
+          "type": "string",
+          "enum": [
+            "as-needed"
+          ],
+          "markdownDescription": "Only allow JSX filename extension for files that contain JSX syntax."
+        }
+      ]
+    },
+    "JsxFilenameExtensionConfig": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "When to allow a JSX filename extension. By default all files may have a JSX extension.\nSet this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax.",
+          "default": "always",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsxFilenameExtensionAllowMode"
+            }
+          ],
+          "markdownDescription": "When to allow a JSX filename extension. By default all files may have a JSX extension.\nSet this to `as-needed` to only allow JSX file extensions in files that contain JSX syntax."
+        },
+        "extensions": {
+          "description": "The set of allowed file extensions.\nCan include or exclude the leading dot (e.g., \"jsx\" and \".jsx\" are both valid).",
+          "default": [
+            "jsx"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "The set of allowed file extensions.\nCan include or exclude the leading dot (e.g., \"jsx\" and \".jsx\" are both valid)."
+        },
+        "ignoreFilesWithoutCode": {
+          "description": "If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If enabled, files that do not contain code (i.e. are empty, contain only whitespaces or comments) will not be rejected."
+        }
+      },
+      "additionalProperties": false
+    },
     "JsxKeyConfig": {
       "type": "object",
       "properties": {
@@ -10312,6 +11402,46 @@
       "additionalProperties": false,
       "markdownDescription": "The options shared between the top-level config and each `elementOverrides` entry."
     },
+    "JsxNoTargetBlank": {
+      "type": "object",
+      "properties": {
+        "allowReferrer": {
+          "description": "Whether to allow referrers.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to allow referrers."
+        },
+        "enforceDynamicLinks": {
+          "description": "Whether to enforce dynamic links or enforce static links.",
+          "default": "always",
+          "allOf": [
+            {
+              "$ref": "#/definitions/EnforceDynamicLinksEnum"
+            }
+          ],
+          "markdownDescription": "Whether to enforce dynamic links or enforce static links."
+        },
+        "forms": {
+          "description": "Whether to check form elements.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check form elements."
+        },
+        "links": {
+          "description": "Whether to check link elements.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check link elements."
+        },
+        "warnOnSpreadAttributes": {
+          "description": "Whether to warn when spread attributes are used.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to warn when spread attributes are used."
+        }
+      },
+      "additionalProperties": false
+    },
     "JsxNoUselessFragment": {
       "type": "object",
       "properties": {
@@ -10398,6 +11528,63 @@
             }
           ],
           "markdownDescription": "`html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "LabelHasAssociatedControlConfig": {
+      "type": "object",
+      "properties": {
+        "assert": {
+          "description": "The type of association required between the label and the control.",
+          "default": "either",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Assert"
+            }
+          ],
+          "markdownDescription": "The type of association required between the label and the control."
+        },
+        "controlComponents": {
+          "description": "Custom JSX components to be treated as form controls.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom JSX components to be treated as form controls."
+        },
+        "depth": {
+          "description": "Maximum depth to search for a nested control.",
+          "default": 2,
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0,
+          "markdownDescription": "Maximum depth to search for a nested control."
+        },
+        "labelAttributes": {
+          "description": "Attributes to check for accessible label text.",
+          "default": [
+            "alt",
+            "aria-label",
+            "aria-labelledby"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Attributes to check for accessible label text."
+        },
+        "labelComponents": {
+          "description": "Custom JSX components to be treated as labels.",
+          "default": [
+            "label"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom JSX components to be treated as labels."
         }
       },
       "additionalProperties": false
@@ -10729,6 +11916,45 @@
       },
       "additionalProperties": false
     },
+    "MediaHasCaptionConfig": {
+      "type": "object",
+      "properties": {
+        "audio": {
+          "description": "Element names to treat as `<audio>` elements",
+          "default": [
+            "audio"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Element names to treat as `<audio>` elements"
+        },
+        "track": {
+          "description": "Element names to treat as `<track>` elements",
+          "default": [
+            "track"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Element names to treat as `<track>` elements"
+        },
+        "video": {
+          "description": "Element names to treat as `<video>` elements",
+          "default": [
+            "video"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Element names to treat as `<video>` elements"
+        }
+      },
+      "additionalProperties": false
+    },
     "MemberNames": {
       "oneOf": [
         {
@@ -10807,6 +12033,46 @@
         "public",
         "public readonly",
         "readonly"
+      ]
+    },
+    "ModuleStylesOverride": {
+      "oneOf": [
+        {
+          "type": "boolean",
+          "enum": [
+            false
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "default": {
+              "description": "Whether default imports or whole-module `require()` assignments are allowed for this module.\n\nWith `{ \"styles\": { \"chalk\": { \"default\": true } } }`, this is valid:\n```js\nimport chalk from \"chalk\";\n```",
+              "default": null,
+              "type": "boolean",
+              "markdownDescription": "Whether default imports or whole-module `require()` assignments are allowed for this module.\n\nWith `{ \"styles\": { \"chalk\": { \"default\": true } } }`, this is valid:\n```js\nimport chalk from \"chalk\";\n```"
+            },
+            "named": {
+              "description": "Whether named imports or destructured `require()` calls are allowed for this module.\n\nWith `{ \"styles\": { \"node:util\": { \"named\": true } } }`, this is valid:\n```js\nimport {promisify} from \"node:util\";\n```",
+              "default": null,
+              "type": "boolean",
+              "markdownDescription": "Whether named imports or destructured `require()` calls are allowed for this module.\n\nWith `{ \"styles\": { \"node:util\": { \"named\": true } } }`, this is valid:\n```js\nimport {promisify} from \"node:util\";\n```"
+            },
+            "namespace": {
+              "description": "Whether namespace imports or whole-module `require()` assignments are allowed for this module.\n\nWith `{ \"styles\": { \"node:fs\": { \"namespace\": true } } }`, this is valid:\n```js\nimport * as fs from \"node:fs\";\n```",
+              "default": null,
+              "type": "boolean",
+              "markdownDescription": "Whether namespace imports or whole-module `require()` assignments are allowed for this module.\n\nWith `{ \"styles\": { \"node:fs\": { \"namespace\": true } } }`, this is valid:\n```js\nimport * as fs from \"node:fs\";\n```"
+            },
+            "unassigned": {
+              "description": "Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.\n\nWith `{ \"styles\": { \"polyfill\": { \"unassigned\": true } } }`, this is valid:\n```js\nimport \"polyfill\";\n```",
+              "default": null,
+              "type": "boolean",
+              "markdownDescription": "Whether side-effect imports or unassigned dynamic imports/requires are allowed for this module.\n\nWith `{ \"styles\": { \"polyfill\": { \"unassigned\": true } } }`, this is valid:\n```js\nimport \"polyfill\";\n```"
+            }
+          },
+          "additionalProperties": false
+        }
       ]
     },
     "MouseEventsHaveKeyEventsConfig": {
@@ -11421,25 +12687,19 @@
       },
       "additionalProperties": false
     },
-    "NoDidMountSetStateConfig": {
-      "oneOf": [
-        {
-          "description": "Allow `setState` calls in nested functions within `componentDidMount`, the default behavior.",
-          "type": "string",
-          "enum": [
-            "allowed"
-          ],
-          "markdownDescription": "Allow `setState` calls in nested functions within `componentDidMount`, the default behavior."
-        },
-        {
-          "description": "When set, also disallows `setState` calls in nested functions within `componentDidMount`.",
-          "type": "string",
-          "enum": [
-            "disallow-in-func"
-          ],
-          "markdownDescription": "When set, also disallows `setState` calls in nested functions within `componentDidMount`."
+    "NoDistractingElementsConfig": {
+      "type": "object",
+      "properties": {
+        "elements": {
+          "description": "List of distracting elements to check for.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DistractingElement"
+          },
+          "markdownDescription": "List of distracting elements to check for."
         }
-      ]
+      },
+      "additionalProperties": false
     },
     "NoDuplicateImports": {
       "type": "object",
@@ -11455,6 +12715,24 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When `true` this rule will also look at exports to see if there is both a re-export of a\nmodule as in `export ... from 'module'` and also a standard import statement for the same\nmodule. This would count as a rule violation because there are in a sense two statements\nimporting from the same module.\n\nExamples of **incorrect** code when `includeExports` is set to `true`:\n```js\nimport { merge } from 'module';\n\nexport { find } from 'module'; // re-export which is an import and an export.\n```\n\nExamples of **correct** code when `includeExports` is set to `true`:\n\nIf re-exporting from an imported module, you should add the imports to the\n`import` statement, and export that directly, not use `export ... from`.\n```js\nimport { merge } from \"lodash-es\";\nexport { merge as lodashMerge }\n```\n\n```js\nimport { merge, find } from 'module';\n\n// cannot be merged with the above import\nexport * as something from 'module';\n\n// cannot be written differently\nexport * from 'module';\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoDuplicateTypeConstituentsConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreIntersections": {
+          "description": "Whether to ignore duplicate types in intersection types.\nWhen true, allows `type T = A & A`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore duplicate types in intersection types.\nWhen true, allows `type T = A & A`."
+        },
+        "ignoreUnions": {
+          "description": "Whether to ignore duplicate types in union types.\nWhen true, allows `type T = A | A`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to ignore duplicate types in union types.\nWhen true, allows `type T = A | A`."
         }
       },
       "additionalProperties": false
@@ -11535,6 +12813,37 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true`, allows empty interfaces that extend a single interface."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoEmptyObjectTypeConfig": {
+      "type": "object",
+      "properties": {
+        "allowInterfaces": {
+          "description": "Whether to allow empty interfaces.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AllowInterfaces"
+            }
+          ],
+          "markdownDescription": "Whether to allow empty interfaces."
+        },
+        "allowObjectTypes": {
+          "description": "Whether to allow empty object type literals.",
+          "default": "never",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AllowObjectTypes"
+            }
+          ],
+          "markdownDescription": "Whether to allow empty object type literals."
+        },
+        "allowWithName": {
+          "description": "A stringified regular expression to allow interfaces and object type aliases with the configured name.\n\nThis can be useful if your existing code style includes a pattern of declaring empty types with `{}` instead of `object`.\n\nExample of **incorrect** code for this rule with `{ allowWithName: 'Props$' }`:\n```ts\ninterface InterfaceValue {}\ntype TypeValue = {};\n```\n\nExample of **correct** code for this rule with `{ allowWithName: 'Props$' }`:\n```ts\ninterface InterfaceProps {}\ntype TypeProps = {};\n```",
+          "type": "string",
+          "markdownDescription": "A stringified regular expression to allow interfaces and object type aliases with the configured name.\n\nThis can be useful if your existing code style includes a pattern of declaring empty types with `{}` instead of `object`.\n\nExample of **incorrect** code for this rule with `{ allowWithName: 'Props$' }`:\n```ts\ninterface InterfaceValue {}\ntype TypeValue = {};\n```\n\nExample of **correct** code for this rule with `{ allowWithName: 'Props$' }`:\n```ts\ninterface InterfaceProps {}\ntype TypeProps = {};\n```"
         }
       },
       "additionalProperties": false
@@ -11924,6 +13233,15 @@
         }
       ]
     },
+    "NoInteractiveElementToNoninteractiveRoleConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
     "NoInvalidRegexpConfig": {
       "type": "object",
       "properties": {
@@ -12294,52 +13612,46 @@
       },
       "additionalProperties": false
     },
-    "NoNoninteractiveElementInteractionsConfig": {
+    "NoNoninteractiveElementToInteractiveRoleConfig": {
       "type": "object",
-      "properties": {
-        "handlers": {
-          "description": "An array of event handler names that should trigger this rule.",
-          "default": [
-            "onError",
-            "onLoad",
-            "onKeyPress",
-            "onKeyDown",
-            "onKeyUp",
-            "onFocus",
-            "onBlur",
-            "onClick",
-            "onContextMenu",
-            "onDblClick",
-            "onDoubleClick",
-            "onDrag",
-            "onDragEnd",
-            "onDragEnter",
-            "onDragExit",
-            "onDragLeave",
-            "onDragOver",
-            "onDragStart",
-            "onDrop",
-            "onMouseDown",
-            "onMouseEnter",
-            "onMouseLeave",
-            "onMouseMove",
-            "onMouseOut",
-            "onMouseOver",
-            "onMouseUp"
-          ],
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "An array of event handler names that should trigger this rule."
-        }
-      },
       "additionalProperties": {
         "type": "array",
         "items": {
           "type": "string"
         }
       }
+    },
+    "NoNoninteractiveTabindexConfig": {
+      "type": "object",
+      "properties": {
+        "allowExpressionValues": {
+          "description": "If `true`, allows tabIndex values to be expression values (e.g., variables, ternaries). If `false`, only string literal values are allowed.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "If `true`, allows tabIndex values to be expression values (e.g., variables, ternaries). If `false`, only string literal values are allowed."
+        },
+        "roles": {
+          "description": "An array of ARIA roles that should be considered interactive.",
+          "default": [
+            "tabpanel"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of ARIA roles that should be considered interactive."
+        },
+        "tags": {
+          "description": "An array of custom HTML elements that should be considered interactive.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "An array of custom HTML elements that should be considered interactive."
+        }
+      },
+      "additionalProperties": false
     },
     "NoNull": {
       "type": "object",
@@ -12639,6 +13951,21 @@
           }
         ]
       }
+    },
+    "NoRestrictedTypesConfig": {
+      "type": "object",
+      "properties": {
+        "types": {
+          "description": "A mapping of type names to ban configurations.",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/BanConfigValue"
+          },
+          "markdownDescription": "A mapping of type names to ban configurations."
+        }
+      },
+      "additionalProperties": false
     },
     "NoReturnAssignMode": {
       "oneOf": [
@@ -13506,26 +14833,6 @@
       },
       "additionalProperties": false
     },
-    "NoWillUpdateSetStateConfig": {
-      "oneOf": [
-        {
-          "description": "Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.",
-          "type": "string",
-          "enum": [
-            "allowed"
-          ],
-          "markdownDescription": "Forbids any call to `this.setState` in `componentWillUpdate` outside of functions."
-        },
-        {
-          "description": "Makes this rule more strict by disallowing calls to `this.setState`` even within functions.",
-          "type": "string",
-          "enum": [
-            "disallow-in-func"
-          ],
-          "markdownDescription": "Makes this rule more strict by disallowing calls to `this.setState`` even within functions."
-        }
-      ]
-    },
     "Nofunc": {
       "type": "string",
       "enum": [
@@ -13577,6 +14884,34 @@
             "ignore"
           ],
           "markdownDescription": "Ignore null comparisons, allow either `== null`/`!= null` or `=== null`/`!== null`."
+        }
+      ]
+    },
+    "ObjectLiteralTypeAssertions": {
+      "oneOf": [
+        {
+          "description": "Allow type assertions on object literals.\n\nExamples of **correct** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nconst x = {} as Foo<int>;\n```",
+          "type": "string",
+          "enum": [
+            "allow"
+          ],
+          "markdownDescription": "Allow type assertions on object literals.\n\nExamples of **correct** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nconst x = {} as Foo<int>;\n```"
+        },
+        {
+          "description": "Allow type assertions on object literals only when used as a function parameter,\n`throw` target, or default value.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nconst x = {} as Foo<int>;\n```\n\nExamples of **correct** code with this option:\n```ts\nprint({ a: 1 } as Foo);\nthrow { bar: 5 } as Foo;\nfunction f(x = {} as Foo) {}\n```",
+          "type": "string",
+          "enum": [
+            "allow-as-parameter"
+          ],
+          "markdownDescription": "Allow type assertions on object literals only when used as a function parameter,\n`throw` target, or default value.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nconst x = {} as Foo<int>;\n```\n\nExamples of **correct** code with this option:\n```ts\nprint({ a: 1 } as Foo);\nthrow { bar: 5 } as Foo;\nfunction f(x = {} as Foo) {}\n```"
+        },
+        {
+          "description": "Disallow type assertions on object literals entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nprint({ a: 1 } as Foo);\n```\n\nExamples of **correct** code with this option:\n```ts\nconst x: Foo = { a: 1 };\nconst x = { a: 1 } satisfies Foo;\n```",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Disallow type assertions on object literals entirely.\n\nExamples of **incorrect** code with this option:\n```ts\nconst x = { a: 1 } as Foo;\nprint({ a: 1 } as Foo);\n```\n\nExamples of **correct** code with this option:\n```ts\nconst x: Foo = { a: 1 };\nconst x = { a: 1 } satisfies Foo;\n```"
         }
       ]
     },
@@ -14109,7 +15444,7 @@
           "default": "class-property",
           "allOf": [
             {
-              "$ref": "#/definitions/Prefer"
+              "$ref": "#/definitions/Prefer2"
             }
           ],
           "markdownDescription": "Whether to prefer parameter properties or class properties."
@@ -14138,6 +15473,26 @@
       ]
     },
     "Prefer": {
+      "oneOf": [
+        {
+          "description": "Enforces that you always use `import type Foo from '...'`, except when referenced by decorator metadata.",
+          "type": "string",
+          "enum": [
+            "type-imports"
+          ],
+          "markdownDescription": "Enforces that you always use `import type Foo from '...'`, except when referenced by decorator metadata."
+        },
+        {
+          "description": "Will enforce that you always use `import Foo from '...'`",
+          "type": "string",
+          "enum": [
+            "no-type-imports"
+          ],
+          "markdownDescription": "Will enforce that you always use `import Foo from '...'`"
+        }
+      ]
+    },
+    "Prefer2": {
       "type": "string",
       "enum": [
         "class-property",
@@ -14157,6 +15512,27 @@
         "allowUnboundThis": {
           "default": true,
           "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferAtConfig": {
+      "type": "object",
+      "properties": {
+        "checkAllIndexAccess": {
+          "description": "Check all index access, not just special patterns like `array.length - 1`.\nWhen enabled, `array[0]`, `array[1]`, etc. will also be flagged.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Check all index access, not just special patterns like `array.length - 1`.\nWhen enabled, `array[0]`, `array[1]`, etc. will also be flagged."
+        },
+        "getLastElementFunctions": {
+          "description": "List of function names to treat as \"get last element\" functions.\nThese functions will be checked for `.at(-1)` usage.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of function names to treat as \"get last element\" functions.\nThese functions will be checked for `.at(-1)` usage."
         }
       },
       "additionalProperties": false
@@ -14287,6 +15663,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "PreferGenericType": {
+      "oneOf": [
+        {
+          "description": "Type arguments that only appear on the type annotation are disallowed.",
+          "type": "string",
+          "enum": [
+            "constructor"
+          ],
+          "markdownDescription": "Type arguments that only appear on the type annotation are disallowed."
+        },
+        {
+          "description": "Type arguments that only appear on the constructor are disallowed.",
+          "type": "string",
+          "enum": [
+            "type-annotation"
+          ],
+          "markdownDescription": "Type arguments that only appear on the constructor are disallowed."
+        }
+      ]
     },
     "PreferImportInMockConfig": {
       "type": "object",
@@ -14808,6 +16204,34 @@
       },
       "markdownDescription": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)"
     },
+    "ReadonlyArrayOption": {
+      "oneOf": [
+        {
+          "description": "Enforce using `readonly T[]` for all readonly array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: ReadonlyArray<number> = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: readonly number[] = [];\n```",
+          "type": "string",
+          "enum": [
+            "array"
+          ],
+          "markdownDescription": "Enforce using `readonly T[]` for all readonly array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: ReadonlyArray<number> = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: readonly number[] = [];\n```"
+        },
+        {
+          "description": "Enforce using `readonly T[]` for simple types, and `ReadonlyArray<T>` for complex types.\n\nExample of **incorrect** code for this option:\n```ts\nconst a: readonly (string | number)[] = [];\nconst b: ReadonlyArray<number> = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst a: ReadonlyArray<string | number> = [];\nconst b: readonly number[] = [];\n```",
+          "type": "string",
+          "enum": [
+            "array-simple"
+          ],
+          "markdownDescription": "Enforce using `readonly T[]` for simple types, and `ReadonlyArray<T>` for complex types.\n\nExample of **incorrect** code for this option:\n```ts\nconst a: readonly (string | number)[] = [];\nconst b: ReadonlyArray<number> = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst a: ReadonlyArray<string | number> = [];\nconst b: readonly number[] = [];\n```"
+        },
+        {
+          "description": "Enforce using `ReadonlyArray<T>` for all readonly array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: readonly number[] = [];\nconst arr2: readonly (string | number)[] = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: ReadonlyArray<number> = [];\nconst arr2: ReadonlyArray<string | number> = [];\n```",
+          "type": "string",
+          "enum": [
+            "generic"
+          ],
+          "markdownDescription": "Enforce using `ReadonlyArray<T>` for all readonly array types.\n\nExample of **incorrect** code for this option:\n```ts\nconst arr: readonly number[] = [];\nconst arr2: readonly (string | number)[] = [];\n```\n\nExample of **correct** code for this option:\n```ts\nconst arr: ReadonlyArray<number> = [];\nconst arr2: ReadonlyArray<string | number> = [];\n```"
+        }
+      ]
+    },
     "RelativeUrlStyleConfig": {
       "oneOf": [
         {
@@ -14839,6 +16263,12 @@
         }
       },
       "additionalProperties": false
+    },
+    "RequireDescription": {
+      "type": "string",
+      "enum": [
+        "allow-with-description"
+      ]
     },
     "RequireDirectExport": {
       "type": "object",
@@ -15637,6 +17067,12 @@
         }
       },
       "additionalProperties": false
+    },
+    "True": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
     },
     "TypeOrValueSpecifier": {
       "description": "Type or value specifier for matching specific declarations\n\nSupports four types of specifiers:\n\n1. **String specifier** (deprecated): Universal match by name\n```json\n\"Promise\"\n```\n\n2. **File specifier**: Match types/values declared in local files\n```json\n{ \"from\": \"file\", \"name\": \"MyType\" }\n{ \"from\": \"file\", \"name\": [\"Type1\", \"Type2\"] }\n{ \"from\": \"file\", \"name\": \"MyType\", \"path\": \"./types.ts\" }\n```\n\n3. **Lib specifier**: Match TypeScript built-in lib types\n```json\n{ \"from\": \"lib\", \"name\": \"Promise\" }\n{ \"from\": \"lib\", \"name\": [\"Promise\", \"PromiseLike\"] }\n```\n\n4. **Package specifier**: Match types/values from npm packages\n```json\n{ \"from\": \"package\", \"name\": \"Observable\", \"package\": \"rxjs\" }\n{ \"from\": \"package\", \"name\": [\"Observable\", \"Subject\"], \"package\": \"rxjs\" }\n```",

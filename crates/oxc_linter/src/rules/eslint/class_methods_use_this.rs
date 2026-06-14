@@ -130,6 +130,7 @@ declare_oxc_lint!(
     restriction,
     config = ClassMethodsUseThisConfig,
     version = "1.16.0",
+    short_description = "Enforce that class methods utilize `this`.",
 );
 
 impl Rule for ClassMethodsUseThis {

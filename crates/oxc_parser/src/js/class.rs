@@ -89,7 +89,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.check_reserved_type_name(id, "Class");
         }
 
-        let type_parameters = if self.is_ts { self.parse_ts_type_parameters() } else { None };
+        let type_parameters =
+            if self.is_ts { self.parse_ts_type_parameters_with_variance() } else { None };
         let (extends, implements) = self.parse_heritage_clause();
         let mut super_class = None;
         let mut super_type_parameters = None;

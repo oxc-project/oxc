@@ -131,6 +131,7 @@ declare_oxc_lint!(
     restriction,
     config = HandleCallbackErrConfig,
     version = "1.56.0",
+    short_description = "This rule expects that when you're using the callback pattern in Node.js you'll handle the error.",
 );
 
 impl Rule for HandleCallbackErr {

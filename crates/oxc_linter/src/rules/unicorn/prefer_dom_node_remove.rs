@@ -46,6 +46,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     version = "0.0.18",
+    short_description = "Prefers the use of `child.remove()` over `parentNode.removeChild(child)`.",
 );
 
 /// Returns `true` if the expression is a type that can never be a DOM node

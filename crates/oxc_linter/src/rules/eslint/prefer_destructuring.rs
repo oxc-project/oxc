@@ -91,6 +91,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = PreferDestructuring,
     version = "1.10.0",
+    short_description = "Require destructuring from arrays and/or objects.",
 );
 
 impl Rule for PreferDestructuring {

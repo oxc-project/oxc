@@ -36,6 +36,14 @@ pub enum AlwaysNever {
     Never,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum AllowedOrDisallowInFunc {
+    #[default]
+    Allowed,
+    DisallowInFunc,
+}
+
 pub fn deserialize_regex_option<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
 where
     D: serde::Deserializer<'de>,

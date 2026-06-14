@@ -25,7 +25,7 @@ fn media_has_caption_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct MediaHasCaption(Box<MediaHasCaptionConfig>);
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MediaHasCaptionConfig {
     /// Element names to treat as `<audio>` elements
     audio: Vec<Cow<'static, str>>,

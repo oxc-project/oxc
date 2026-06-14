@@ -24,7 +24,7 @@ fn no_interactive_element_to_noninteractive_role_diagnostic(span: Span) -> OxcDi
         .with_label(span)
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoInteractiveElementToNoninteractiveRole(
     Box<NoInteractiveElementToNoninteractiveRoleConfig>,
 );
@@ -37,7 +37,7 @@ pub struct NoInteractiveElementToNoninteractiveRoleConfig {
     pub allowed_roles: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
 
-impl Default for NoInteractiveElementToNoninteractiveRole {
+impl Default for NoInteractiveElementToNoninteractiveRoleConfig {
     fn default() -> Self {
         let mut allowed_roles = FxHashMap::default();
         allowed_roles.insert(
@@ -45,7 +45,7 @@ impl Default for NoInteractiveElementToNoninteractiveRole {
             vec![CompactStr::new("none"), CompactStr::new("presentation")],
         );
         allowed_roles.insert(CompactStr::new("canvas"), vec![CompactStr::new("img")]);
-        Self(Box::new(NoInteractiveElementToNoninteractiveRoleConfig { allowed_roles }))
+        Self { allowed_roles }
     }
 }
 

@@ -44,6 +44,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.12.0",
+    short_description = "Prefers use of `String.raw` to avoid escaping `\\`.",
 );
 
 fn unescape_backslash(input: &str, quote: char) -> String {

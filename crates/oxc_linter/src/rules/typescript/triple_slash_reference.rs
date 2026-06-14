@@ -90,6 +90,7 @@ declare_oxc_lint!(
     correctness,
     config = TripleSlashReferenceConfig,
     version = "0.2.0",
+    short_description = "Disallow certain triple slash directives in favor of ES module import declarations.",
 );
 
 impl Rule for TripleSlashReference {

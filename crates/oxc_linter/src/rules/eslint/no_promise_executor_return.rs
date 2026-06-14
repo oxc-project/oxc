@@ -118,6 +118,7 @@ declare_oxc_lint!(
     pending,
     config = NoPromiseExecutorReturnConfig,
     version = "1.33.0",
+    short_description = "Disallow returning values from Promise executor functions.",
 );
 
 impl Rule for NoPromiseExecutorReturn {

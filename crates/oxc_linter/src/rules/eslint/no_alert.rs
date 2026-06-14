@@ -54,6 +54,7 @@ declare_oxc_lint!(
     eslint,
     restriction,
     version = "0.9.3",
+    short_description = "Disallow the use of `alert`, `confirm`, and `prompt`.",
 );
 
 const GLOBAL_THIS: &str = "globalThis";

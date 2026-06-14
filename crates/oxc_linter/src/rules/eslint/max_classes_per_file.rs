@@ -86,6 +86,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxClassesPerFileConfig,
     version = "0.3.4",
+    short_description = "Enforce a maximum number of classes per file.",
 );
 
 impl Rule for MaxClassesPerFile {

@@ -331,15 +331,27 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
-            let (binding_name, is_member_expression): (Option<Ident>, _) = match &call_expr.callee {
-                Expression::Identifier(ident) => (Some(ident.name), false),
-                Expression::StaticMemberExpression(member) => {
-                    if let Expression::Identifier(object) = &member.object {
-                        (Some(object.name), true)
-                    } else {
-                        (None, false)
+            let (binding_name, middle_property, is_member_expression): (
+                Option<Ident>,
+                Option<Ident>,
+                bool,
+            ) = match &call_expr.callee {
+                Expression::Identifier(ident) => (Some(ident.name), None, false),
+                Expression::StaticMemberExpression(member) => match &member.object {
+                    // `FancyHook.useHook()`
+                    Expression::Identifier(object) => (Some(object.name), None, true),
+                    // `FancyHook.property.useHook()`.
+                    // Like the upstream Babel plugin (facebook/react#35318), only one
+                    // extra member level is supported; deeper nesting is not collected.
+                    Expression::StaticMemberExpression(inner_member) => {
+                        if let Expression::Identifier(object) = &inner_member.object {
+                            (Some(object.name), Some(inner_member.property.name), true)
+                        } else {
+                            (None, None, false)
+                        }
                     }
-                }
+                    _ => (None, None, false),
+                },
                 _ => unreachable!(),
             };
 
@@ -359,6 +371,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
                             );
 
                             if is_member_expression {
+                                if let Some(middle_property) = middle_property {
+                                    // binding_name.middle_property
+                                    expr = Expression::from(ctx.ast.member_expression_static(
+                                        SPAN,
+                                        expr,
+                                        ctx.ast.identifier_name(SPAN, middle_property),
+                                        false,
+                                    ));
+                                }
                                 // binding_name.hook_name
                                 expr = Expression::from(ctx.ast.member_expression_static(
                                     SPAN,

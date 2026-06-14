@@ -106,6 +106,9 @@ pub struct Transformer<'a> {
     state: TransformState<'a>,
     allocator: &'a Allocator,
 
+    // Options, in evaluation order.
+    #[cfg(feature = "react_compiler")]
+    react_compiler: Option<PluginOptions>,
     typescript: TypeScriptOptions,
     decorator: DecoratorOptions,
     plugins: PluginsOptions,
@@ -113,8 +116,6 @@ pub struct Transformer<'a> {
     env: EnvOptions,
     #[expect(dead_code)]
     proposals: ProposalOptions,
-    #[cfg(feature = "react_compiler")]
-    react_compiler: Option<PluginOptions>,
 }
 
 impl<'a> Transformer<'a> {
@@ -124,14 +125,14 @@ impl<'a> Transformer<'a> {
         Self {
             state,
             allocator,
+            #[cfg(feature = "react_compiler")]
+            react_compiler: options.react_compiler.clone(),
             typescript: options.typescript.clone(),
             decorator: options.decorator,
             plugins: options.plugins.clone(),
             jsx: options.jsx.clone(),
             env: options.env,
             proposals: options.proposals,
-            #[cfg(feature = "react_compiler")]
-            react_compiler: options.react_compiler.clone(),
         }
     }
 
@@ -240,6 +241,7 @@ impl<'a> Transformer<'a> {
 
 struct TransformerImpl<'a> {
     // NOTE: all callbacks must run in order.
+    // Keep `TransformOptions` field order and docs in sync with this order.
     x0_typescript: Option<TypeScript<'a>>,
     decorator: Decorator<'a>,
     plugins: Plugins<'a>,

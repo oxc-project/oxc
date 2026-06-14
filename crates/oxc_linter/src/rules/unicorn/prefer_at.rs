@@ -34,7 +34,7 @@ fn prefer_at_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
 pub struct PreferAt(Box<PreferAtConfig>);
 
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferAtConfig {
     /// Check all index access, not just special patterns like `array.length - 1`.
     /// When enabled, `array[0]`, `array[1]`, etc. will also be flagged.

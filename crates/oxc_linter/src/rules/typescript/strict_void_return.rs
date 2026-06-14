@@ -49,6 +49,7 @@ declare_oxc_lint!(
     pedantic,
     config = StrictVoidReturnConfig,
     version = "0.0.8",
+    short_description = "Disallow returning non-void values where a `void` return is expected.",
 );
 
 impl Rule for StrictVoidReturn {

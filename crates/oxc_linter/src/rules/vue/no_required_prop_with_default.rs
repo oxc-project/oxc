@@ -79,6 +79,7 @@ declare_oxc_lint!(
     suspicious,
     suggestion,
     version = "1.17.0",
+    short_description = "Enforce props with default values to be optional.",
 );
 
 impl Rule for NoRequiredPropWithDefault {

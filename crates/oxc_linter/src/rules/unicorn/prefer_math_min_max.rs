@@ -58,6 +58,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "0.10.1",
+    short_description = "Prefers use of `Math.min()` and `Math.max()` instead of ternary expressions when performing simple comparisons.",
 );
 
 impl Rule for PreferMathMinMax {
