@@ -5651,7 +5651,27 @@
           ]
         },
         "prefer-destructuring": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferDestructuringOption"
+                },
+                {
+                  "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+                }
+              ],
+              "maxItems": 3,
+              "minItems": 2
+            }
+          ]
         },
         "prefer-exponentiation-operator": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -15729,6 +15749,63 @@
             }
           ],
           "markdownDescription": "Configuration option to specify the target type for preferring default exports."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferDestructuringAssignmentConfig": {
+      "type": "object",
+      "properties": {
+        "AssignmentExpression": {
+          "$ref": "#/definitions/PreferDestructuringTargetOption"
+        },
+        "VariableDeclarator": {
+          "$ref": "#/definitions/PreferDestructuringTargetOption"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferDestructuringConfig": {
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/PreferDestructuringOption"
+        },
+        {
+          "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2
+    },
+    "PreferDestructuringOption": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PreferDestructuringTargetOption"
+        },
+        {
+          "$ref": "#/definitions/PreferDestructuringAssignmentConfig"
+        }
+      ]
+    },
+    "PreferDestructuringRenamedPropertiesConfig": {
+      "type": "object",
+      "properties": {
+        "enforceForRenamedProperties": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferDestructuringTargetOption": {
+      "type": "object",
+      "properties": {
+        "array": {
+          "type": "boolean"
+        },
+        "object": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false
