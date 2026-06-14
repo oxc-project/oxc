@@ -71,6 +71,7 @@ declare_oxc_lint!(
     react,
     nursery,
     version = "0.2.0",
+    short_description = "Enforce ES5 or ES2015 class for returning value in the `render` function.",
 );
 
 impl Rule for RequireRenderReturn {

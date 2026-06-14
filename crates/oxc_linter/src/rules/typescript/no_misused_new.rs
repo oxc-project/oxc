@@ -81,6 +81,7 @@ declare_oxc_lint!(
     typescript,
     correctness,
     version = "0.0.7",
+    short_description = "Enforce valid definition of `new` and `constructor` in TypeScript.",
 );
 
 impl Rule for NoMisusedNew {

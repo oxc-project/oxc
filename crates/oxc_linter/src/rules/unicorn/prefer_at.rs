@@ -87,6 +87,7 @@ declare_oxc_lint!(
     dangerous_fix,
     config = PreferAtConfig,
     version = "1.20.0",
+    short_description = "Prefer the `Array#at()` and `String#at()` methods for index access.",
 );
 
 impl Rule for PreferAt {
