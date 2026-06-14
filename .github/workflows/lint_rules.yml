@@ -27,7 +27,8 @@ jobs:
 
       - name: Install latest plugins
         working-directory: tasks/lint_rules
-        run: npm install
+        # Use `-f` to bypass peer dependency problems.
+        run: npm install -f
 
       - name: Run task
         env:
