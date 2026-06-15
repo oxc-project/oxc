@@ -48,7 +48,7 @@ pub use oxc_data_structures::code_buffer::IndentChar;
 
 /// Output from [`Codegen::build`]
 #[non_exhaustive]
-pub struct CodegenReturn {
+pub struct CodegenReturn<'a> {
     /// The generated source code.
     pub code: String,
 
@@ -56,7 +56,7 @@ pub struct CodegenReturn {
     ///
     /// You must set [`CodegenOptions::source_map_path`] for this to be [`Some`].
     #[cfg(feature = "sourcemap")]
-    pub map: Option<oxc_sourcemap::OwnedSourceMap>,
+    pub map: Option<oxc_sourcemap::SourceMap<'a>>,
 
     /// All the legal comments returned from [LegalComment::Linked] or [LegalComment::External].
     pub legal_comments: Vec<Comment>,
@@ -246,7 +246,7 @@ impl<'a> Codegen<'a> {
     ///
     /// A source map will be generated if [`CodegenOptions::source_map_path`] is set.
     #[must_use]
-    pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
+    pub fn build(mut self, program: &Program<'a>) -> CodegenReturn<'a> {
         self.quote = if self.options.single_quote { Quote::Single } else { Quote::Double };
         self.source_text = Some(program.source_text);
         self.indent = self.options.initial_indent;

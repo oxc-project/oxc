@@ -1,5 +1,6 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
+use oxc_ast::ast::Comment;
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
@@ -95,14 +96,20 @@ pub fn codegen(source_text: &str) -> String {
 }
 
 #[track_caller]
-pub fn codegen_options(source_text: &str, options: &CodegenOptions) -> CodegenReturn {
+pub fn codegen_options(source_text: &str, options: &CodegenOptions) -> CodegenTestReturn {
     let allocator = Allocator::default();
     let source_type = SourceType::ts();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
     let mut options = options.clone();
     options.single_quote = true;
-    Codegen::new().with_options(options).build(&ret.program)
+    let ret = Codegen::new().with_options(options).build(&ret.program);
+    CodegenTestReturn { code: ret.code, legal_comments: ret.legal_comments }
+}
+
+pub struct CodegenTestReturn {
+    pub code: String,
+    pub legal_comments: Vec<Comment>,
 }
 
 #[track_caller]

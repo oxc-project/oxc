@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{borrow::Cow, path::Path};
 
 use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_span::Span;
@@ -52,7 +52,7 @@ pub struct SourcemapBuilder<'a> {
     last_generated_update: usize,
     last_position: Option<u32>,
     line_offset_tables: LineOffsetTables,
-    sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
+    sourcemap_builder: oxc_sourcemap::SourceMapBuilder<'a>,
     generated_line: u32,
     generated_column: u32,
     /// Tracks the last accessed line index to optimize sequential lookups in `search_original_line_and_column`.
@@ -65,8 +65,8 @@ impl<'a> SourcemapBuilder<'a> {
     pub fn new(path: &Path, source_text: &'a str) -> Self {
         let mut sourcemap_builder = oxc_sourcemap::SourceMapBuilder::default();
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
-        let source_id =
-            sourcemap_builder.set_source_and_content(path.to_string_lossy().as_ref(), source_text);
+        let source_id = sourcemap_builder
+            .set_source_and_content(Cow::Owned(path.to_string_lossy().into_owned()), source_text);
         Self {
             source_id,
             original_source: source_text,
@@ -80,8 +80,8 @@ impl<'a> SourcemapBuilder<'a> {
         }
     }
 
-    pub fn into_sourcemap(self) -> oxc_sourcemap::OwnedSourceMap {
-        self.sourcemap_builder.into_owned_sourcemap()
+    pub fn into_sourcemap(self) -> oxc_sourcemap::SourceMap<'a> {
+        self.sourcemap_builder.into_sourcemap()
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
@@ -99,7 +99,7 @@ impl<'a> SourcemapBuilder<'a> {
         self.add_source_mapping(output, span.start, token_name);
     }
 
-    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&str>) {
+    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&'a str>) {
         if self.last_position == Some(position) {
             return;
         }

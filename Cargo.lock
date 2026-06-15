@@ -2627,9 +2627,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "7.0.0"
+version = "8.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db3866f9075027840e0711b52e15d2e1ba076fc5f5f01c96eeedd26375410641"
+checksum = "ae44116995c00fe1573068490a91d2a7272b1eb473d740f79188d99e1e1c0660"
 dependencies = [
  "base64-simd",
  "json-escape-simd",
