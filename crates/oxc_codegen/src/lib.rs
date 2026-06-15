@@ -3,6 +3,8 @@
 //! Code adapted from
 //! * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer.go)
 
+#[cfg(not(feature = "sourcemap"))]
+use std::marker::PhantomData;
 use std::{borrow::Cow, cmp, slice};
 
 use cow_utils::CowUtils;
@@ -57,6 +59,9 @@ pub struct CodegenReturn<'a> {
     /// You must set [`CodegenOptions::source_map_path`] for this to be [`Some`].
     #[cfg(feature = "sourcemap")]
     pub map: Option<oxc_sourcemap::SourceMap<'a>>,
+
+    #[cfg(not(feature = "sourcemap"))]
+    _source_map_lifetime: PhantomData<&'a ()>,
 
     /// All the legal comments returned from [LegalComment::Linked] or [LegalComment::External].
     pub legal_comments: Vec<Comment>,
@@ -265,6 +270,8 @@ impl<'a> Codegen<'a> {
             code,
             #[cfg(feature = "sourcemap")]
             map,
+            #[cfg(not(feature = "sourcemap"))]
+            _source_map_lifetime: PhantomData,
             legal_comments,
         }
     }

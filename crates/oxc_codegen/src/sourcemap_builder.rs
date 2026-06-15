@@ -42,13 +42,16 @@ pub struct Line {
 
 #[derive(Debug)]
 pub struct ColumnOffsets {
-    byte_offset_to_first: u32,
-    columns: Box<[u32]>,
+    offsets: Box<[ColumnOffset]>,
 }
 
-#[expect(clippy::struct_field_names)]
+#[derive(Debug, Clone, Copy)]
+pub struct ColumnOffset {
+    byte_offset: u32,
+    column: u32,
+}
+
 pub struct SourcemapBuilder<'a> {
-    source_id: u32,
     source_name: String,
     original_source: &'a str,
     names: Vec<&'a str>,
@@ -69,7 +72,6 @@ impl<'a> SourcemapBuilder<'a> {
     pub fn new(path: &Path, source_text: &'a str) -> Self {
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
         Self {
-            source_id: 0,
             source_name: path.to_string_lossy().into_owned(),
             original_source: source_text,
             names: Vec::new(),
@@ -128,7 +130,7 @@ impl<'a> SourcemapBuilder<'a> {
             self.generated_column,
             original_line,
             original_column,
-            Some(self.source_id),
+            Some(0),
             name_id,
         ));
         self.last_position = Some(position);
@@ -138,7 +140,7 @@ impl<'a> SourcemapBuilder<'a> {
         if let Some(&id) = self.names_map.get(name) {
             return id;
         }
-        let id = self.names.len() as u32;
+        let id = u32::try_from(self.names.len()).expect("sourcemap names length should fit in u32");
         self.names_map.insert(name, id);
         self.names.push(name);
         id
