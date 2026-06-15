@@ -6716,6 +6716,26 @@
             }
           ]
         },
+        "react/react-compiler": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactCompilerConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "react/react-in-jsx-scope": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -16290,6 +16310,18 @@
           "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
+    },
+    "ReactCompilerConfig": {
+      "type": "object",
+      "properties": {
+        "reportAllBailouts": {
+          "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
+        }
+      },
+      "additionalProperties": false
     },
     "ReactPerfConfig": {
       "type": "object",

@@ -1299,6 +1299,7 @@ export interface DummyRuleMap {
   "react/only-export-components"?: RuleNoConfig | [AllowWarnDeny, OnlyExportComponentsConfig];
   "react/prefer-es6-class"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
   "react/prefer-function-component"?: RuleNoConfig | [AllowWarnDeny, PreferFunctionComponent];
+  "react/react-compiler"?: RuleNoConfig | [AllowWarnDeny, ReactCompilerConfig];
   "react/react-in-jsx-scope"?: RuleNoConfig;
   "react/require-render-return"?: RuleNoConfig;
   "react/rules-of-hooks"?: RuleNoConfig;
@@ -4556,6 +4557,15 @@ export interface PreferFunctionComponent {
    * `PureComponent` are allowed.
    */
   allowJsxUtilityClass?: boolean;
+}
+export interface ReactCompilerConfig {
+  /**
+   * Also report compiler bail-outs — places where React Compiler skipped a
+   * component or hook (for example because of unsupported syntax) without
+   * finding a rule violation. These do not indicate incorrect code, only
+   * code that the compiler declined to optimize.
+   */
+  reportAllBailouts?: boolean;
 }
 export interface SelfClosingComp {
   /**
