@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 69/69 (100.00%)
 Positive Passed: 69/69 (100.00%)
-Negative Passed: 147/147 (100.00%)
+Negative Passed: 148/148 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3584,6 +3584,31 @@ Negative Passed: 147/147 (100.00%)
  1 │ x = (/* a */)
    ·     ─────────
    ╰────
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:1:5]
+ 1 │ new import('').prop;
+   ·     ───────────────
+ 2 │ new import.source('<module source>').prop;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:2:5]
+ 1 │ new import('').prop;
+ 2 │ new import.source('<module source>').prop;
+   ·     ─────────────────────────────────────
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:3:5]
+ 2 │ new import.source('<module source>').prop;
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+   ·     ───────────────────────────────────────
+   ╰────
+  help: Wrap this with parenthesis
 
   × Expected 'with' in import type options
     ╭─[misc/fail/oxc-2394.ts:20:22]

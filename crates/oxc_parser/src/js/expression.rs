@@ -955,6 +955,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ast.member_expression_computed(self.end_span(lhs_span), lhs, property, optional).into()
     }
 
+    fn is_import_expression_or_member_access_on_import_expression(callee: &Expression<'a>) -> bool {
+        let mut expr = callee;
+        loop {
+            if matches!(expr, Expression::ImportExpression(_)) {
+                return true;
+            }
+            let Some(member_expr) = expr.as_member_expression() else {
+                return false;
+            };
+            expr = member_expr.object();
+        }
+    }
+
     /// [NewExpression](https://tc39.es/ecma262/#sec-new-operator)
     fn parse_new_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
@@ -1019,7 +1032,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.ast.vec()
         };
 
-        if is_import && matches!(callee, Expression::ImportExpression(_)) {
+        if is_import && Self::is_import_expression_or_member_access_on_import_expression(&callee) {
             self.error(diagnostics::new_dynamic_import(self.end_span(rhs_span)));
         }
 
