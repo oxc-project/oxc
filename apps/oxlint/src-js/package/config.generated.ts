@@ -1651,7 +1651,7 @@ export interface DummyRuleMap {
   "vue/no-deprecated-model-definition"?: RuleNoConfig | [AllowWarnDeny, NoDeprecatedModelDefinitionConfig];
   "vue/no-deprecated-props-default-this"?: RuleNoConfig;
   "vue/no-deprecated-vue-config-keycodes"?: RuleNoConfig;
-  "vue/no-dupe-keys"?: AllowWarnDeny | [AllowWarnDeny] | [AllowWarnDeny, NoDupeKeysConfig];
+  "vue/no-dupe-keys"?: RuleNoConfig | [AllowWarnDeny, NoDupeKeysConfig];
   "vue/no-export-in-script-setup"?: RuleNoConfig;
   "vue/no-expose-after-await"?: RuleNoConfig;
   "vue/no-import-compiler-macros"?: RuleNoConfig;
