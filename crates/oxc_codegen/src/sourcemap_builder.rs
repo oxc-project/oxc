@@ -42,13 +42,8 @@ pub struct Line {
 
 #[derive(Debug)]
 pub struct ColumnOffsets {
-    offsets: Box<[ColumnOffset]>,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct ColumnOffset {
-    byte_offset: u32,
-    column: u32,
+    byte_offset_to_first: u32,
+    columns: Box<[u32]>,
 }
 
 pub struct SourcemapBuilder<'a> {
