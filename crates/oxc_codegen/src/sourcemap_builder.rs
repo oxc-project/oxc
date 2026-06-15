@@ -1,8 +1,9 @@
-use std::path::Path;
+use std::{borrow::Cow, path::Path};
 
 use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_span::Span;
 use oxc_syntax::line_terminator::{LS, LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS, PS_LAST_2_BYTES};
+use rustc_hash::FxHashMap;
 
 /// Number of lines to check with linear search when translating byte position to line index
 const LINE_SEARCH_LINEAR_ITERATIONS: usize = 16;
@@ -45,14 +46,15 @@ pub struct ColumnOffsets {
     columns: Box<[u32]>,
 }
 
-#[expect(clippy::struct_field_names)]
 pub struct SourcemapBuilder<'a> {
-    source_id: u32,
+    source_name: String,
     original_source: &'a str,
+    names: Vec<&'a str>,
+    names_map: FxHashMap<&'a str, u32>,
+    tokens: Vec<oxc_sourcemap::Token>,
     last_generated_update: usize,
     last_position: Option<u32>,
     line_offset_tables: LineOffsetTables,
-    sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
     generated_column: u32,
     /// Tracks the last accessed line index to optimize sequential lookups in `search_original_line_and_column`.
@@ -63,25 +65,37 @@ pub struct SourcemapBuilder<'a> {
 
 impl<'a> SourcemapBuilder<'a> {
     pub fn new(path: &Path, source_text: &'a str) -> Self {
-        let mut sourcemap_builder = oxc_sourcemap::SourceMapBuilder::default();
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
-        let source_id =
-            sourcemap_builder.set_source_and_content(path.to_string_lossy().as_ref(), source_text);
         Self {
-            source_id,
+            source_name: path.to_string_lossy().into_owned(),
             original_source: source_text,
+            names: Vec::new(),
+            names_map: FxHashMap::default(),
+            tokens: Vec::new(),
             last_generated_update: 0,
             last_position: None,
             line_offset_tables,
-            sourcemap_builder,
             generated_line: 0,
             generated_column: 0,
             last_line_lookup: 0,
         }
     }
 
-    pub fn into_sourcemap(self) -> oxc_sourcemap::OwnedSourceMap {
-        self.sourcemap_builder.into_owned_sourcemap()
+    pub fn into_sourcemap(mut self) -> oxc_sourcemap::SourceMap<'a> {
+        self.names.shrink_to_fit();
+        self.tokens.shrink_to_fit();
+
+        oxc_sourcemap::SourceMap::from_parts(oxc_sourcemap::SourceMapParts {
+            file: None,
+            names: self.names.into_iter().map(Cow::Borrowed).collect(),
+            source_root: None,
+            sources: vec![Cow::Owned(self.source_name)],
+            source_contents: vec![Some(Cow::Borrowed(self.original_source))],
+            tokens: self.tokens.into_boxed_slice(),
+            token_chunks: None,
+            x_google_ignore_list: None,
+            debug_id: None,
+        })
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
@@ -99,22 +113,32 @@ impl<'a> SourcemapBuilder<'a> {
         self.add_source_mapping(output, span.start, token_name);
     }
 
-    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&str>) {
+    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&'a str>) {
         if self.last_position == Some(position) {
             return;
         }
         let (original_line, original_column) = self.search_original_line_and_column(position);
         self.update_generated_line_and_column(output);
-        let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
-        self.sourcemap_builder.add_token(
+        let name_id = name.map(|s| self.add_name(s));
+        self.tokens.push(oxc_sourcemap::Token::new(
             self.generated_line,
             self.generated_column,
             original_line,
             original_column,
-            Some(self.source_id),
+            Some(0),
             name_id,
-        );
+        ));
         self.last_position = Some(position);
+    }
+
+    fn add_name(&mut self, name: &'a str) -> u32 {
+        if let Some(&id) = self.names_map.get(name) {
+            return id;
+        }
+        let id = u32::try_from(self.names.len()).expect("sourcemap names length should fit in u32");
+        self.names_map.insert(name, id);
+        self.names.push(name);
+        id
     }
 
     #[expect(clippy::cast_possible_truncation)]
