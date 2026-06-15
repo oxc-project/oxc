@@ -111,12 +111,14 @@ impl Rule for MaxNestedCalls {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !matches!(node.kind(), AstKind::CallExpression(_) | AstKind::NewExpression(_)) {
-            return;
-        }
+        let node_span = match node.kind() {
+            AstKind::CallExpression(call) => call.span,
+            AstKind::NewExpression(new_expression) => new_expression.span,
+            _ => return,
+        };
 
         let mut depth = 1u32;
-        let mut child_span = node.span();
+        let mut child_span = node_span;
 
         for ancestor in ctx.nodes().ancestors(node.id()) {
             match ancestor.kind() {
@@ -146,7 +148,7 @@ impl Rule for MaxNestedCalls {
         }
 
         if depth > self.max {
-            ctx.diagnostic(max_nested_calls_diagnostic(self.max, node.span()));
+            ctx.diagnostic(max_nested_calls_diagnostic(self.max, node_span));
         }
     }
 }
