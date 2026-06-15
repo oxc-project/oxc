@@ -1,6 +1,5 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
-use serde_json::Value;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
@@ -31,18 +30,6 @@ const DEFAULT_MAX_NESTED_CALLS: u32 = 3;
 impl Default for MaxNestedCalls {
     fn default() -> Self {
         Self { max: DEFAULT_MAX_NESTED_CALLS }
-    }
-}
-
-#[cfg(feature = "ruledocs")]
-impl MaxNestedCalls {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<Self>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
     }
 }
 
@@ -97,17 +84,7 @@ declare_oxc_lint!(
 
 impl Rule for MaxNestedCalls {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        if let Some(max) = value
-            .get(0)
-            .and_then(Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .and_then(|v| u32::try_from(v).ok())
-        {
-            Ok(Self { max })
-        } else {
-            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .map(DefaultRuleConfig::into_inner)
-        }
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -212,4 +189,9 @@ fn test() {
     ];
 
     Tester::new(MaxNestedCalls::NAME, MaxNestedCalls::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn reject_number_configuration() {
+    assert!(MaxNestedCalls::from_configuration(serde_json::json!([4])).is_err());
 }

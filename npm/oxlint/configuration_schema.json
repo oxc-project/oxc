@@ -8399,14 +8399,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "$ref": "#/definitions/MaxNestedCalls"
-                    }
-                  ]
+                  "$ref": "#/definitions/MaxNestedCalls"
                 }
               ],
               "maxItems": 2,
