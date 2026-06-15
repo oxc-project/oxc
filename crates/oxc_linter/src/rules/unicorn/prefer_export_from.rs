@@ -85,7 +85,7 @@ declare_oxc_lint!(
     style,
     suggestion,
     config = PreferExportFrom,
-    version = "next",
+    version = "1.70.0",
     short_description = "Prefer direct re-exports using `export ... from` syntax instead of separate import and export statements.",
 );
 

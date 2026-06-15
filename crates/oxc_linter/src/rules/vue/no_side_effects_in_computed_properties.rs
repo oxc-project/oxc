@@ -69,7 +69,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     none,
-    version = "next",
+    version = "1.70.0",
     short_description = "Disallow side effects in computed properties.",
 );
 

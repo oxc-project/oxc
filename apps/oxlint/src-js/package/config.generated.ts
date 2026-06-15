@@ -80,12 +80,13 @@ export type CurlyType = "all" | "multi" | "multi-line" | "multi-or-nest";
 export type CurlyConsistent = "consistent";
 export type CompareType = "always" | "smart";
 export type NullType = "always" | "never" | "ignore";
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+export type FuncNameMatchingMode = "always" | "never";
 export type FuncNamesConfigType = "always" | "as-needed" | "never";
 export type Style = "expression" | "declaration";
 export type NamedExports = "ignore" | "expression" | "declaration";
 export type PairOrder = "anyOrder" | "getBeforeSet" | "setBeforeGet";
 export type Mode = "prefer-top-level" | "prefer-inline";
+export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
 export type AbsoluteFirst = "absolute-first" | "disable-absolute-first";
 export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
 export type Target = "single" | "any";
@@ -93,6 +94,7 @@ export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type SnapshotHintMode = "always" | "multi";
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
+export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
 export type DistractingElement = "marquee" | "blink";
 export type CountThis = "always" | "never" | "except-void";
@@ -829,7 +831,7 @@ export interface DummyRuleMap {
   "block-scoped-var"?: RuleNoConfig;
   "capitalized-comments"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, OptionsJsonEnum];
   "class-methods-use-this"?: RuleNoConfig | [AllowWarnDeny, ClassMethodsUseThisConfig];
-  complexity?: RuleNoConfig | [AllowWarnDeny, number | ComplexityConfig];
+  complexity?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, ComplexityConfig]);
   "constructor-super"?: RuleNoConfig;
   curly?: RuleNoConfig | [AllowWarnDeny, CurlyType] | [AllowWarnDeny, CurlyType, CurlyConsistent];
   "default-case"?: RuleNoConfig | [AllowWarnDeny, DefaultCaseConfig];
@@ -837,7 +839,14 @@ export interface DummyRuleMap {
   "default-param-last"?: RuleNoConfig;
   eqeqeq?: RuleNoConfig | [AllowWarnDeny, CompareType] | [AllowWarnDeny, CompareType, EqeqeqOptions];
   "for-direction"?: RuleNoConfig;
-  "func-name-matching"?: DummyRule;
+  "func-name-matching"?:
+    | RuleNoConfig
+    | (
+        | [AllowWarnDeny, FuncNameMatchingMode]
+        | [AllowWarnDeny, FuncNameMatchingMode, FuncNameMatchingConfig]
+        | [AllowWarnDeny, FuncNameMatchingMode]
+        | [AllowWarnDeny, FuncNameMatchingConfig]
+      );
   "func-names"?:
     | RuleNoConfig
     | [AllowWarnDeny, FuncNamesConfigType]
@@ -973,7 +982,7 @@ export interface DummyRuleMap {
   "jsx-a11y/alt-text"?: RuleNoConfig | [AllowWarnDeny, AltTextConfigSchema];
   "jsx-a11y/anchor-ambiguous-text"?: RuleNoConfig | [AllowWarnDeny, AnchorAmbiguousTextConfig];
   "jsx-a11y/anchor-has-content"?: RuleNoConfig;
-  "jsx-a11y/anchor-is-valid"?: DummyRule;
+  "jsx-a11y/anchor-is-valid"?: RuleNoConfig | [AllowWarnDeny, AnchorIsValidConfig];
   "jsx-a11y/aria-activedescendant-has-tabindex"?: RuleNoConfig;
   "jsx-a11y/aria-props"?: RuleNoConfig;
   "jsx-a11y/aria-proptypes"?: RuleNoConfig;
@@ -1014,13 +1023,13 @@ export interface DummyRuleMap {
     | RuleNoConfig
     | [AllowWarnDeny, AlwaysNever]
     | [AllowWarnDeny, AlwaysNever, LogicalAssignmentOperatorsConfig];
-  "max-classes-per-file"?: RuleNoConfig | [AllowWarnDeny, number | MaxClassesPerFileConfig];
-  "max-depth"?: RuleNoConfig | [AllowWarnDeny, number | MaxDepth];
-  "max-lines"?: RuleNoConfig | [AllowWarnDeny, number | MaxLinesConfig];
-  "max-lines-per-function"?: RuleNoConfig | [AllowWarnDeny, number | MaxLinesPerFunctionConfig];
-  "max-nested-callbacks"?: RuleNoConfig | [AllowWarnDeny, number | MaxNestedCallbacks];
-  "max-params"?: RuleNoConfig | [AllowWarnDeny, number | MaxParamsConfig];
-  "max-statements"?: RuleNoConfig | [AllowWarnDeny, number | MaxStatementsConfig];
+  "max-classes-per-file"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxClassesPerFileConfig]);
+  "max-depth"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxDepth]);
+  "max-lines"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesConfig]);
+  "max-lines-per-function"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxLinesPerFunctionConfig]);
+  "max-nested-callbacks"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxNestedCallbacks]);
+  "max-params"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxParamsConfig]);
+  "max-statements"?: RuleNoConfig | ([AllowWarnDeny, number] | [AllowWarnDeny, MaxStatementsConfig]);
   "new-cap"?: RuleNoConfig | [AllowWarnDeny, NewCapConfig];
   "nextjs/google-font-display"?: RuleNoConfig;
   "nextjs/google-font-preconnect"?: RuleNoConfig;
@@ -1303,6 +1312,7 @@ export interface DummyRuleMap {
   "react/only-export-components"?: RuleNoConfig | [AllowWarnDeny, OnlyExportComponentsConfig];
   "react/prefer-es6-class"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
   "react/prefer-function-component"?: RuleNoConfig | [AllowWarnDeny, PreferFunctionComponent];
+  "react/react-compiler"?: RuleNoConfig | [AllowWarnDeny, ReactCompilerConfig];
   "react/react-in-jsx-scope"?: RuleNoConfig;
   "react/require-render-return"?: RuleNoConfig;
   "react/rules-of-hooks"?: RuleNoConfig;
@@ -1444,6 +1454,7 @@ export interface DummyRuleMap {
   "unicorn/explicit-length-check"?: RuleNoConfig | [AllowWarnDeny, ExplicitLengthCheck];
   "unicorn/filename-case"?: DummyRule;
   "unicorn/import-style"?: RuleNoConfig | [AllowWarnDeny, ImportStyleConfig];
+  "unicorn/max-nested-calls"?: RuleNoConfig | [AllowWarnDeny, MaxNestedCalls];
   "unicorn/new-for-builtins"?: RuleNoConfig;
   "unicorn/no-abusive-eslint-disable"?: RuleNoConfig;
   "unicorn/no-accessor-recursion"?: RuleNoConfig;
@@ -1654,6 +1665,7 @@ export interface DummyRuleMap {
   "vue/no-deprecated-model-definition"?: RuleNoConfig | [AllowWarnDeny, NoDeprecatedModelDefinitionConfig];
   "vue/no-deprecated-props-default-this"?: RuleNoConfig;
   "vue/no-deprecated-vue-config-keycodes"?: RuleNoConfig;
+  "vue/no-dupe-keys"?: RuleNoConfig | [AllowWarnDeny, NoDupeKeysConfig];
   "vue/no-export-in-script-setup"?: RuleNoConfig;
   "vue/no-expose-after-await"?: RuleNoConfig;
   "vue/no-import-compiler-macros"?: RuleNoConfig;
@@ -1799,6 +1811,16 @@ export interface EqeqeqOptions {
    * e.g. `foo == null` or `foo != null`
    */
   null?: NullType;
+}
+export interface FuncNameMatchingConfig {
+  /**
+   * If `considerPropertyDescriptor` is set to `true`, the check will take into account the use of `Object.create`, `Object.defineProperty`, `Object.defineProperties`, and `Reflect.defineProperty`.
+   */
+  considerPropertyDescriptor?: boolean;
+  /**
+   * If `includeCommonJSModuleExports` is set to `true`, `module.exports` and `module["exports"]` will be checked by this rule.
+   */
+  includeCommonJSModuleExports?: boolean;
 }
 export interface FuncNamesGeneratorsConfig {
   /**
@@ -2408,6 +2430,20 @@ export interface AnchorAmbiguousTextConfig {
    * List of ambiguous words or phrases that should be flagged in anchor text.
    */
   words?: string[];
+}
+export interface AnchorIsValidConfig {
+  /**
+   * Sub-rule aspects to run.
+   */
+  aspects?: AnchorIsValidAspect[];
+  /**
+   * Custom components to treat as anchor elements.
+   */
+  components?: string[];
+  /**
+   * Custom prop names to treat as link destinations.
+   */
+  specialLink?: string[];
 }
 export interface AriaRoleConfig {
   /**
@@ -3286,7 +3322,6 @@ export interface NoSequences {
   /**
    * If this option is set to `false`, this rule disallows the comma operator
    * even when the expression sequence is explicitly wrapped in parentheses.
-   * Default is `true`.
    */
   allowInParentheses?: boolean;
 }
@@ -3842,7 +3877,13 @@ export interface NoRestSpreadPropertiesOptions {
   objectSpreadMessage?: string;
 }
 export interface PreferArrowCallbackConfig {
+  /**
+   * If this option is set to `true`, named function expressions are allowed.
+   */
   allowNamedFunctions?: boolean;
+  /**
+   * If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value.
+   */
   allowUnboundThis?: boolean;
 }
 export interface PreferConstConfig {
@@ -4571,6 +4612,15 @@ export interface PreferFunctionComponent {
    * `PureComponent` are allowed.
    */
   allowJsxUtilityClass?: boolean;
+}
+export interface ReactCompilerConfig {
+  /**
+   * Also report compiler bail-outs — places where React Compiler skipped a
+   * component or hook (for example because of unsupported syntax) without
+   * finding a rule violation. These do not indicate incorrect code, only
+   * code that the compiler declined to optimize.
+   */
+  reportAllBailouts?: boolean;
 }
 export interface SelfClosingComp {
   /**
@@ -5809,6 +5859,12 @@ export interface ImportStyleConfig {
     [k: string]: ModuleStylesOverride;
   };
 }
+export interface MaxNestedCalls {
+  /**
+   * The maximum allowed nested call depth.
+   */
+  max?: number;
+}
 export interface NoArrayReduce {
   /**
    * When set to `true`, allows simple operations (like summing numbers) in `reduce` and `reduceRight` calls.
@@ -6048,6 +6104,13 @@ export interface NoDeprecatedModelDefinitionConfig {
    * Vue 3's `v-model`.
    */
   allowVue3Compat?: boolean;
+}
+export interface NoDupeKeysConfig {
+  /**
+   * Additional group names to search for duplicate keys in, on top of the
+   * built-in `props`, `computed`, `data`, `methods` and `setup` groups.
+   */
+  groups?: string[];
 }
 export interface NoReservedComponentNames {
   /**

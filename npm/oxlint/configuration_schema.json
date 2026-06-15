@@ -672,6 +672,46 @@
       },
       "additionalProperties": false
     },
+    "AnchorIsValidAspect": {
+      "type": "string",
+      "enum": [
+        "noHref",
+        "invalidHref",
+        "preferButton"
+      ]
+    },
+    "AnchorIsValidConfig": {
+      "type": "object",
+      "properties": {
+        "aspects": {
+          "description": "Sub-rule aspects to run.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AnchorIsValidAspect"
+          },
+          "markdownDescription": "Sub-rule aspects to run."
+        },
+        "components": {
+          "description": "Custom components to treat as anchor elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to treat as anchor elements."
+        },
+        "specialLink": {
+          "description": "Custom prop names to treat as link destinations.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom prop names to treat as link destinations."
+        }
+      },
+      "additionalProperties": false
+    },
     "ArgsOption": {
       "oneOf": [
         {
@@ -1709,6 +1749,7 @@
           "default": 2,
           "type": "integer",
           "format": "uint8",
+          "maximum": 25.0,
           "minimum": 0.0,
           "markdownDescription": "Maximum depth to search for an accessible label within the element.\nDefaults to `2`."
         },
@@ -2235,24 +2276,34 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "type": "array",
-              "items": [
+              "anyOf": [
                 {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "anyOf": [
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
                     {
                       "type": "number"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
                     },
                     {
                       "$ref": "#/definitions/ComplexityConfig"
                     }
-                  ]
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
                 }
-              ],
-              "maxItems": 2,
-              "minItems": 2
+              ]
             }
           ]
         },
@@ -2335,7 +2386,57 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "func-name-matching": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/FuncNameMatchingMode"
+                    },
+                    {
+                      "$ref": "#/definitions/FuncNameMatchingConfig"
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/FuncNameMatchingMode"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
+                    {
+                      "$ref": "#/definitions/FuncNameMatchingConfig"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              ]
+            }
+          ]
         },
         "func-names": {
           "anyOf": [
@@ -3513,7 +3614,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/anchor-is-valid": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AnchorIsValidConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/aria-activedescendant-has-tabindex": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -3912,24 +4030,34 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "type": "array",
-              "items": [
+              "anyOf": [
                 {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "anyOf": [
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
                     {
                       "type": "number"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
                     },
                     {
                       "$ref": "#/definitions/MaxClassesPerFileConfig"
                     }
-                  ]
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
                 }
-              ],
-              "maxItems": 2,
-              "minItems": 2
+              ]
             }
           ]
         },
@@ -3939,24 +4067,34 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "type": "array",
-              "items": [
+              "anyOf": [
                 {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "anyOf": [
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
                     {
                       "type": "number"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
                     },
                     {
                       "$ref": "#/definitions/MaxDepth"
                     }
-                  ]
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
                 }
-              ],
-              "maxItems": 2,
-              "minItems": 2
+              ]
             }
           ]
         },
@@ -3966,24 +4104,34 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "type": "array",
-              "items": [
+              "anyOf": [
                 {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "anyOf": [
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
                     {
                       "type": "number"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
                     },
                     {
                       "$ref": "#/definitions/MaxLinesConfig"
                     }
-                  ]
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
                 }
-              ],
-              "maxItems": 2,
-              "minItems": 2
+              ]
             }
           ]
         },
@@ -3993,24 +4141,34 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "type": "array",
-              "items": [
+              "anyOf": [
                 {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "anyOf": [
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
                     {
                       "type": "number"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
                     },
                     {
                       "$ref": "#/definitions/MaxLinesPerFunctionConfig"
                     }
-                  ]
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
                 }
-              ],
-              "maxItems": 2,
-              "minItems": 2
+              ]
             }
           ]
         },
@@ -4020,24 +4178,34 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "type": "array",
-              "items": [
+              "anyOf": [
                 {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "anyOf": [
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
                     {
                       "type": "number"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
                     },
                     {
                       "$ref": "#/definitions/MaxNestedCallbacks"
                     }
-                  ]
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
                 }
-              ],
-              "maxItems": 2,
-              "minItems": 2
+              ]
             }
           ]
         },
@@ -4047,24 +4215,34 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "type": "array",
-              "items": [
+              "anyOf": [
                 {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "anyOf": [
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
                     {
                       "type": "number"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
                     },
                     {
                       "$ref": "#/definitions/MaxParamsConfig"
                     }
-                  ]
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
                 }
-              ],
-              "maxItems": 2,
-              "minItems": 2
+              ]
             }
           ]
         },
@@ -4074,24 +4252,34 @@
               "$ref": "#/definitions/RuleNoConfig"
             },
             {
-              "type": "array",
-              "items": [
+              "anyOf": [
                 {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "anyOf": [
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
+                    },
                     {
                       "type": "number"
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AllowWarnDeny"
                     },
                     {
                       "$ref": "#/definitions/MaxStatementsConfig"
                     }
-                  ]
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
                 }
-              ],
-              "maxItems": 2,
-              "minItems": 2
+              ]
             }
           ]
         },
@@ -6736,6 +6924,26 @@
             }
           ]
         },
+        "react/react-compiler": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactCompilerConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "react/react-in-jsx-scope": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -8329,6 +8537,26 @@
             }
           ]
         },
+        "unicorn/max-nested-calls": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MaxNestedCalls"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/new-for-builtins": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -9741,6 +9969,26 @@
         "vue/no-deprecated-vue-config-keycodes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/no-dupe-keys": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoDupeKeys"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "vue/no-export-in-script-setup": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -10571,6 +10819,31 @@
           ],
           "markdownDescription": "This mode enforces the standard form for React fragments.\n\nExamples of **incorrect** code for this rule:\n```jsx\n<><Foo /></>\n```\n\nExamples of **correct** code for this rule:\n```jsx\n<React.Fragment><Foo /></React.Fragment>\n```\n\n```jsx\n<React.Fragment key=\"key\"><Foo /></React.Fragment>\n```"
         }
+      ]
+    },
+    "FuncNameMatchingConfig": {
+      "type": "object",
+      "properties": {
+        "considerPropertyDescriptor": {
+          "description": "If `considerPropertyDescriptor` is set to `true`, the check will take into account the use of `Object.create`, `Object.defineProperty`, `Object.defineProperties`, and `Reflect.defineProperty`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `considerPropertyDescriptor` is set to `true`, the check will take into account the use of `Object.create`, `Object.defineProperty`, `Object.defineProperties`, and `Reflect.defineProperty`."
+        },
+        "includeCommonJSModuleExports": {
+          "description": "If `includeCommonJSModuleExports` is set to `true`, `module.exports` and `module[\"exports\"]` will be checked by this rule.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `includeCommonJSModuleExports` is set to `true`, `module.exports` and `module[\"exports\"]` will be checked by this rule."
+        }
+      },
+      "additionalProperties": false
+    },
+    "FuncNameMatchingMode": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never"
       ]
     },
     "FuncNames": {
@@ -12002,6 +12275,20 @@
       },
       "additionalProperties": false
     },
+    "MaxNestedCalls": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "The maximum allowed nested call depth.",
+          "default": 3,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The maximum allowed nested call depth."
+        }
+      },
+      "additionalProperties": false
+    },
     "MaxNestedDescribeConfig": {
       "type": "object",
       "properties": {
@@ -12860,6 +13147,24 @@
             "$ref": "#/definitions/DistractingElement"
           },
           "markdownDescription": "List of distracting elements to check for."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoDupeKeys": {
+      "$ref": "#/definitions/NoDupeKeysConfig"
+    },
+    "NoDupeKeysConfig": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "description": "Additional group names to search for duplicate keys in, on top of the\nbuilt-in `props`, `computed`, `data`, `methods` and `setup` groups.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional group names to search for duplicate keys in, on top of the\nbuilt-in `props`, `computed`, `data`, `methods` and `setup` groups."
         }
       },
       "additionalProperties": false
@@ -14178,10 +14483,10 @@
       "type": "object",
       "properties": {
         "allowInParentheses": {
-          "description": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`.",
+          "description": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.",
           "default": true,
           "type": "boolean",
-          "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`."
+          "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses."
         }
       },
       "additionalProperties": false
@@ -15669,12 +15974,16 @@
       "type": "object",
       "properties": {
         "allowNamedFunctions": {
+          "description": "If this option is set to `true`, named function expressions are allowed.",
           "default": false,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "If this option is set to `true`, named function expressions are allowed."
         },
         "allowUnboundThis": {
+          "description": "If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value.",
           "default": true,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value."
         }
       },
       "additionalProperties": false
@@ -16367,6 +16676,18 @@
           "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
+    },
+    "ReactCompilerConfig": {
+      "type": "object",
+      "properties": {
+        "reportAllBailouts": {
+          "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
+        }
+      },
+      "additionalProperties": false
     },
     "ReactPerfConfig": {
       "type": "object",

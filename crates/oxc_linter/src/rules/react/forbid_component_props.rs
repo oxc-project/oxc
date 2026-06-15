@@ -275,7 +275,8 @@ declare_oxc_lint!(
     react,
     restriction,
     config = ForbidComponentPropsConfig,
-    version = "1.62.0"
+    version = "1.62.0",
+    short_description = "Disallow specific props on components.",
 );
 
 impl Rule for ForbidComponentProps {
