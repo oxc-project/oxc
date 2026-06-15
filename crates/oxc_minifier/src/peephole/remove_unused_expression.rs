@@ -65,16 +65,16 @@ impl<'a> PeepholeOptimizations {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
-                *e = unary_expr.argument.take_in(ctx.ast);
-                ctx.state.changed = true;
+                let new_expr = unary_expr.argument.take_in(ctx.ast);
+                ctx.replace_expression(e, new_expr);
                 Self::remove_unused_expression(e, ctx)
             }
             UnaryOperator::Typeof => {
                 if unary_expr.argument.is_identifier_reference() {
                     true
                 } else {
-                    *e = unary_expr.argument.take_in(ctx.ast);
-                    ctx.state.changed = true;
+                    let new_expr = unary_expr.argument.take_in(ctx.ast);
+                    ctx.replace_expression(e, new_expr);
                     Self::remove_unused_expression(e, ctx)
                 }
             }
@@ -84,11 +84,14 @@ impl<'a> PeepholeOptimizations {
 
     fn remove_unused_sequence_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::SequenceExpression(sequence_expr) = e else { return false };
-        let old_len = sequence_expr.expressions.len();
-        sequence_expr.expressions.retain_mut(|e| !Self::remove_unused_expression(e, ctx));
-        if sequence_expr.expressions.len() != old_len {
-            ctx.state.changed = true;
-        }
+        sequence_expr.expressions.retain_mut(|e| {
+            if Self::remove_unused_expression(e, ctx) {
+                ctx.drop_expression(e);
+                false
+            } else {
+                true
+            }
+        });
         sequence_expr.expressions.is_empty()
     }
 
@@ -115,8 +118,8 @@ impl<'a> PeepholeOptimizations {
         }
         if Self::remove_unused_expression(&mut logical_expr.right, ctx) {
             Self::remove_unused_expression(&mut logical_expr.left, ctx);
-            *e = logical_expr.left.take_in(ctx.ast);
-            ctx.state.changed = true;
+            let new_expr = logical_expr.left.take_in(ctx.ast);
+            ctx.replace_expression(e, new_expr);
             return false;
         }
 
@@ -156,8 +159,8 @@ impl<'a> PeepholeOptimizations {
                                 ctx,
                             )
                         {
-                            *e = logical_right.take_in(ctx.ast);
-                            ctx.state.changed = true;
+                            let new_expr = logical_right.take_in(ctx.ast);
+                            ctx.replace_expression(e, new_expr);
                             return false;
                         }
                     }
@@ -195,18 +198,18 @@ impl<'a> PeepholeOptimizations {
                                 assignment_expr.operator = AssignmentOperator::LogicalNullish;
                                 // `??=` reads the LHS to check for nullish, so update reference flags.
                                 Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
-                                *e = logical_right.take_in(ctx.ast);
-                                ctx.state.changed = true;
+                                let new_expr = logical_right.take_in(ctx.ast);
+                                ctx.replace_expression(e, new_expr);
                                 return false;
                             }
 
-                            *e = ctx.ast.expression_logical(
+                            let new_expr = ctx.ast.expression_logical(
                                 *logical_span,
                                 new_left_hand_expr.take_in(ctx.ast),
                                 LogicalOperator::Coalesce,
                                 logical_right.take_in(ctx.ast),
                             );
-                            ctx.state.changed = true;
+                            ctx.replace_expression(e, new_expr);
                             return false;
                         }
                     }
@@ -229,15 +232,35 @@ impl<'a> PeepholeOptimizations {
 
         let old_len = array_expr.elements.len();
         array_expr.elements.retain_mut(|el| match el {
-            ArrayExpressionElement::SpreadElement(_) => el.may_have_side_effects(ctx),
+            // `Elision` carries no subtree, so it can be dropped through the
+            // outer `notice_change` accounting below.
             ArrayExpressionElement::Elision(_) => false,
+            ArrayExpressionElement::SpreadElement(_) => {
+                // Use the `ArrayExpressionElement` `may_have_side_effects`
+                // impl (NOT `spread.argument.may_have_side_effects`) so that
+                // the iterator-protocol invocation of `[...ident]` is
+                // counted as a side effect and the spread is kept.
+                if el.may_have_side_effects(ctx) {
+                    return true;
+                }
+                // The spread is being elided without a slot-replacement
+                // helper, so record the drop of its argument explicitly.
+                let ArrayExpressionElement::SpreadElement(spread) = el else { unreachable!() };
+                ctx.drop_expression(&spread.argument);
+                false
+            }
             match_expression!(ArrayExpressionElement) => {
                 let el_expr = el.to_expression_mut();
-                !Self::remove_unused_expression(el_expr, ctx)
+                if Self::remove_unused_expression(el_expr, ctx) {
+                    ctx.drop_expression(el_expr);
+                    false
+                } else {
+                    true
+                }
             }
         });
         if array_expr.elements.len() != old_len {
-            ctx.state.changed = true;
+            ctx.notice_change();
         }
 
         if array_expr.elements.is_empty() {
@@ -261,11 +284,14 @@ impl<'a> PeepholeOptimizations {
         if expressions.is_empty() {
             return true;
         } else if expressions.len() == 1 {
-            *e = expressions.pop().unwrap();
+            let new_expr = expressions.pop().unwrap();
+            ctx.replace_expression(e, new_expr);
             return false;
         }
 
-        *e = ctx.ast.expression_sequence(array_expr.span, expressions);
+        let span = array_expr.span;
+        let new_expr = ctx.ast.expression_sequence(span, expressions);
+        ctx.replace_expression(e, new_expr);
         false
     }
 
@@ -277,12 +303,12 @@ impl<'a> PeepholeOptimizations {
             if exprs.is_empty() {
                 return true;
             } else if exprs.len() == 1 {
-                *e = exprs.pop().unwrap();
-                ctx.state.changed = true;
+                let folded = exprs.pop().unwrap();
+                ctx.replace_expression(e, folded);
                 return false;
             }
-            *e = ctx.ast.expression_sequence(new_expr.span, exprs);
-            ctx.state.changed = true;
+            let folded = ctx.ast.expression_sequence(new_expr.span, exprs);
+            ctx.replace_expression(e, folded);
             return false;
         }
         false
@@ -358,13 +384,13 @@ impl<'a> PeepholeOptimizations {
         if transformed_elements.is_empty() {
             return true;
         } else if transformed_elements.len() == 1 {
-            *e = transformed_elements.pop().unwrap();
-            ctx.state.changed = true;
+            let new_expr = transformed_elements.pop().unwrap();
+            ctx.replace_expression(e, new_expr);
             return false;
         }
 
-        *e = ctx.ast.expression_sequence(temp_lit.span, transformed_elements);
-        ctx.state.changed = true;
+        let new_expr = ctx.ast.expression_sequence(temp_lit.span, transformed_elements);
+        ctx.replace_expression(e, new_expr);
         false
     }
 
@@ -408,13 +434,23 @@ impl<'a> PeepholeOptimizations {
                         PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => {}
                         match_expression!(PropertyKey) => {
                             let mut prop_key = key.into_expression();
-                            if !Self::remove_unused_expression(&mut prop_key, ctx) {
+                            if Self::remove_unused_expression(&mut prop_key, ctx) {
+                                // Mark refs in the dropped key as dead so the per-pass
+                                // scoping refresh removes them; otherwise refs inside
+                                // (e.g. computed-key identifier references) leak.
+                                ctx.drop_expression(&prop_key);
+                            } else {
                                 transformed_elements.push(prop_key);
                             }
                         }
                     }
 
-                    if !Self::remove_unused_expression(&mut value, ctx) {
+                    if Self::remove_unused_expression(&mut value, ctx) {
+                        // Same rationale as the key branch above — the property
+                        // value is being dropped without a `replace_*` helper,
+                        // so record the drop explicitly.
+                        ctx.drop_expression(&value);
+                    } else {
                         transformed_elements.push(value);
                     }
                 }
@@ -429,13 +465,13 @@ impl<'a> PeepholeOptimizations {
         if transformed_elements.is_empty() {
             return true;
         } else if transformed_elements.len() == 1 {
-            *e = transformed_elements.pop().unwrap();
-            ctx.state.changed = true;
+            let new_expr = transformed_elements.pop().unwrap();
+            ctx.replace_expression(e, new_expr);
             return false;
         }
 
-        *e = ctx.ast.expression_sequence(object_expr.span, transformed_elements);
-        ctx.state.changed = true;
+        let new_expr = ctx.ast.expression_sequence(object_expr.span, transformed_elements);
+        ctx.replace_expression(e, new_expr);
         false
     }
 
@@ -456,34 +492,34 @@ impl<'a> PeepholeOptimizations {
             if test {
                 return true;
             }
-            *e = conditional_expr.test.take_in(ctx.ast);
-            ctx.state.changed = true;
+            let new_expr = conditional_expr.test.take_in(ctx.ast);
+            ctx.replace_expression(e, new_expr);
             return false;
         }
 
         // "foo() ? 1 : bar()" => "foo() || bar()"
         if consequent {
-            *e = Self::join_with_left_associative_op(
+            let new_expr = Self::join_with_left_associative_op(
                 conditional_expr.span,
                 LogicalOperator::Or,
                 conditional_expr.test.take_in(ctx.ast),
                 conditional_expr.alternate.take_in(ctx.ast),
                 ctx,
             );
-            ctx.state.changed = true;
+            ctx.replace_expression(e, new_expr);
             return false;
         }
 
         // "foo() ? bar() : 2" => "foo() && bar()"
         if alternate {
-            *e = Self::join_with_left_associative_op(
+            let new_expr = Self::join_with_left_associative_op(
                 conditional_expr.span,
                 LogicalOperator::And,
                 conditional_expr.test.take_in(ctx.ast),
                 conditional_expr.consequent.take_in(ctx.ast),
                 ctx,
             );
-            ctx.state.changed = true;
+            ctx.replace_expression(e, new_expr);
             return false;
         }
 
@@ -509,24 +545,24 @@ impl<'a> PeepholeOptimizations {
                 match (left, right) {
                     (true, true) => true,
                     (true, false) => {
-                        *e = binary_expr.right.take_in(ctx.ast);
-                        ctx.state.changed = true;
+                        let new_expr = binary_expr.right.take_in(ctx.ast);
+                        ctx.replace_expression(e, new_expr);
                         false
                     }
                     (false, true) => {
-                        *e = binary_expr.left.take_in(ctx.ast);
-                        ctx.state.changed = true;
+                        let new_expr = binary_expr.left.take_in(ctx.ast);
+                        ctx.replace_expression(e, new_expr);
                         false
                     }
                     (false, false) => {
-                        *e = ctx.ast.expression_sequence(
+                        let new_expr = ctx.ast.expression_sequence(
                             binary_expr.span,
                             ctx.ast.vec_from_array([
                                 binary_expr.left.take_in(ctx.ast),
                                 binary_expr.right.take_in(ctx.ast),
                             ]),
                         );
-                        ctx.state.changed = true;
+                        ctx.replace_expression(e, new_expr);
                         false
                     }
                 }
@@ -553,17 +589,17 @@ impl<'a> PeepholeOptimizations {
             if !binary_expr.left.may_have_side_effects(ctx)
                 && !binary_expr.left.is_specific_string_literal("")
             {
-                binary_expr.left =
-                    ctx.ast.expression_string_literal(binary_expr.left.span(), "", None);
-                ctx.state.changed = true;
+                let left_span = binary_expr.left.span();
+                let new_left = ctx.ast.expression_string_literal(left_span, "", None);
+                ctx.replace_expression(&mut binary_expr.left, new_left);
             }
 
             let right_as_primitive = binary_expr.right.to_primitive(ctx);
             if right_as_primitive.is_symbol() == Some(false)
                 && !binary_expr.right.may_have_side_effects(ctx)
             {
-                *e = binary_expr.left.take_in(ctx.ast);
-                ctx.state.changed = true;
+                let new_expr = binary_expr.left.take_in(ctx.ast);
+                ctx.replace_expression(e, new_expr);
                 return true;
             }
             return true;
@@ -574,9 +610,9 @@ impl<'a> PeepholeOptimizations {
             if !binary_expr.right.may_have_side_effects(ctx)
                 && !binary_expr.right.is_specific_string_literal("")
             {
-                binary_expr.right =
-                    ctx.ast.expression_string_literal(binary_expr.right.span(), "", None);
-                ctx.state.changed = true;
+                let right_span = binary_expr.right.span();
+                let new_right = ctx.ast.expression_string_literal(right_span, "", None);
+                ctx.replace_expression(&mut binary_expr.right, new_right);
             }
             return true;
         }
@@ -605,12 +641,12 @@ impl<'a> PeepholeOptimizations {
             if exprs.is_empty() {
                 return true;
             } else if exprs.len() == 1 {
-                *e = exprs.pop().unwrap();
-                ctx.state.changed = true;
+                let new_expr = exprs.pop().unwrap();
+                ctx.replace_expression(e, new_expr);
                 return false;
             }
-            *e = ctx.ast.expression_sequence(call_expr.span, exprs);
-            ctx.state.changed = true;
+            let new_expr = ctx.ast.expression_sequence(call_expr.span, exprs);
+            ctx.replace_expression(e, new_expr);
             return false;
         }
 
@@ -621,7 +657,12 @@ impl<'a> PeepholeOptimizations {
         args: &mut Vec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Vec<'a, Expression<'a>> {
-        ctx.ast.vec_from_iter(args.drain(..).filter_map(|arg| {
+        // `args.drain(..)` would silently move owned `Argument`s out and the
+        // filter would drop any whose inner expression `remove_unused_expression`
+        // collapsed to nothing — leaking references in the dropped subtree.
+        // Use a manual loop so we can `drop_expression` before discarding.
+        let mut out: Vec<'a, Expression<'a>> = ctx.ast.vec_with_capacity(args.len());
+        for arg in args.drain(..) {
             let mut expr = match arg {
                 Argument::SpreadElement(e) => ctx.ast.expression_array(
                     e.span,
@@ -629,8 +670,13 @@ impl<'a> PeepholeOptimizations {
                 ),
                 match_expression!(Argument) => arg.into_expression(),
             };
-            (!Self::remove_unused_expression(&mut expr, ctx)).then_some(expr)
-        }))
+            if Self::remove_unused_expression(&mut expr, ctx) {
+                ctx.drop_expression(&expr);
+            } else {
+                out.push(expr);
+            }
+        }
+        out
     }
 
     pub fn remove_unused_assignment_expr(
@@ -681,8 +727,8 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.read_references_count > 0 {
             return false;
         }
-        *e = assign_expr.right.take_in(ctx.ast);
-        ctx.state.changed = true;
+        let new_expr = assign_expr.right.take_in(ctx.ast);
+        ctx.replace_expression(e, new_expr);
         false
     }
 
@@ -797,7 +843,9 @@ impl<'a> PeepholeOptimizations {
             if exprs.is_empty() {
                 return true;
             }
-            *e = ctx.ast.expression_sequence(c.span, exprs);
+            let span = c.span;
+            let new_expr = ctx.ast.expression_sequence(span, exprs);
+            ctx.replace_expression(e, new_expr);
         }
         false
     }
@@ -877,7 +925,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        ctx.state.changed = true;
+        ctx.notice_change();
         Some(exprs)
     }
 }

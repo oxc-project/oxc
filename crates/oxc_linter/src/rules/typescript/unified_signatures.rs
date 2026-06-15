@@ -74,6 +74,7 @@ declare_oxc_lint!(
     style,
     config = UnifiedSignaturesOptions,
     version = "1.48.0",
+    short_description = "Disallow overload signatures that can be unified into one.",
 );
 
 impl Rule for UnifiedSignatures {

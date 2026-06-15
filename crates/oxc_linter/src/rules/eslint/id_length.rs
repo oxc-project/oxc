@@ -18,7 +18,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::AlwaysNever,
+    utils::{AlwaysNever, deserialize_regex_vec},
 };
 
 fn id_length_is_too_short_diagnostic(span: Span, config_min: u64) -> OxcDiagnostic {
@@ -48,7 +48,7 @@ impl Deref for IdLength {
 pub struct IdLengthConfig {
     /// An array of regex patterns for identifiers to exclude from the rule.
     /// For example, `["^x.*"]` would exclude all identifiers starting with "x".
-    #[serde(deserialize_with = "deserialize_exception_patterns")]
+    #[serde(deserialize_with = "deserialize_regex_vec")]
     exception_patterns: Vec<Regex>,
     /// An array of identifier names that are excluded from the rule.
     /// For example, `["x", "y", "z"]` would allow single-letter identifiers "x", "y", and "z".
@@ -78,22 +78,10 @@ impl Default for IdLengthConfig {
     }
 }
 
-fn deserialize_exception_patterns<'de, D>(deserializer: D) -> Result<Vec<Regex>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::de::Error;
-
-    Vec::<String>::deserialize(deserializer)?
-        .into_iter()
-        .map(|pattern| Regex::new(&pattern).map_err(D::Error::custom))
-        .collect()
-}
-
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces a minimum and/or maximum identifier length convention by counting the
+    /// Enforce a minimum and/or maximum identifier length convention by counting the
     /// graphemes for a given identifier.
     ///
     /// ### Why is this bad?
@@ -172,6 +160,7 @@ declare_oxc_lint!(
     style,
     config = IdLengthConfig,
     version = "1.4.0",
+    short_description = "Enforce a minimum and/or maximum identifier length convention by counting the graphemes for a given identifier.",
 );
 
 impl Rule for IdLength {

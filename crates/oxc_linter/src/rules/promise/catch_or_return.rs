@@ -90,6 +90,7 @@ pub struct CatchOrReturnConfig {
         default = "default_termination_method",
         deserialize_with = "deserialize_termination_method"
     )]
+    #[schemars(with = "TerminationMethod")]
     termination_method: Vec<CompactStr>,
 }
 
@@ -104,6 +105,13 @@ impl Default for CatchOrReturnConfig {
     }
 }
 
+#[derive(Deserialize, JsonSchema)]
+#[serde(untagged)]
+enum TerminationMethod {
+    Single(CompactStr),
+    Multiple(Vec<CompactStr>),
+}
+
 fn default_termination_method() -> Vec<CompactStr> {
     vec![CompactStr::new("catch")]
 }
@@ -112,13 +120,6 @@ fn deserialize_termination_method<'de, D>(deserializer: D) -> Result<Vec<Compact
 where
     D: serde::Deserializer<'de>,
 {
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum TerminationMethod {
-        Single(CompactStr),
-        Multiple(Vec<CompactStr>),
-    }
-
     Ok(match TerminationMethod::deserialize(deserializer)? {
         TerminationMethod::Single(method) => vec![method],
         TerminationMethod::Multiple(methods) => methods,
@@ -167,6 +168,7 @@ declare_oxc_lint!(
     restriction,
     config = CatchOrReturnConfig,
     version = "0.9.2",
+    short_description = "Ensure that each `then()` applied to a promise also has a `catch()`.",
 );
 
 impl Rule for CatchOrReturn {

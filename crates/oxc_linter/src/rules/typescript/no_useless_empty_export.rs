@@ -54,6 +54,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.4.4",
+    short_description = "Disallow empty exports that don't change anything in a module file.",
 );
 
 impl Rule for NoUselessEmptyExport {

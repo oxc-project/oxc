@@ -24,14 +24,14 @@ impl std::ops::Deref for JsxNoNewFunctionAsProp {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent Functions that are local to the current method from being used
+    /// Prevent functions that are local to the current method from being used
     /// as values of JSX props.
     ///
     /// ### Why is this bad?
     ///
-    /// Using locally defined Functions as values for props can lead to unintentional
+    /// Using locally defined functions as values for props can lead to unintentional
     /// re-renders and performance issues. Every time the parent component renders,
-    /// a new instance of the Function is created, causing unnecessary re-renders
+    /// a new instance of the function is created, causing unnecessary re-renders
     /// of child components. This also leads to harder-to-maintain code as the
     /// component's props are not passed consistently.
     ///
@@ -52,6 +52,7 @@ declare_oxc_lint!(
     perf,
     config = ReactPerfConfig,
     version = "0.2.3",
+    short_description = "Prevent functions that are local to the current method from being used as values of JSX props.",
 );
 
 impl ReactPerfRule for JsxNoNewFunctionAsProp {

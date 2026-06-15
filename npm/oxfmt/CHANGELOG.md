@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.55.0] - 2026-06-15
+
+### 🚀 Features
+
+- 9a2788b linter/unicorn: Implement `prefer-export-from` rule (#22935) (AliceLanniste)
+
 ## [0.54.0] - 2026-06-08
 
 ### 📚 Documentation

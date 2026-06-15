@@ -89,6 +89,7 @@ declare_oxc_lint!(
     vue,
     style,
     version = "1.69.0",
+    short_description = "This rule requires that the component object be directly exported.",
     config = RequireDirectExport,
 );
 

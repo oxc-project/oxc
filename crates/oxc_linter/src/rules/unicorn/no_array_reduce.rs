@@ -60,6 +60,7 @@ declare_oxc_lint!(
     restriction,
     config = NoArrayReduce,
     version = "0.0.19",
+    short_description = "Disallow `Array#reduce()` and `Array#reduceRight()`.",
 );
 
 impl Rule for NoArrayReduce {

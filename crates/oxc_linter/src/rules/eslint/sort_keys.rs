@@ -95,6 +95,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = SortKeysConfig,
     version = "0.9.4",
+    short_description = "When declaring multiple properties, sorting property names alphabetically makes it easier to find and/or diff necessary properties at a later time.",
 );
 
 impl Rule for SortKeys {

@@ -104,7 +104,7 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             js::check_variable_declarator_redeclaration(decl, ctx);
         }
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
-        AstKind::TSTypeParameter(param) => ts::check_ts_type_parameter(param, ctx),
+        AstKind::TSTypePredicate(predicate) => ts::check_ts_type_predicate(predicate, ctx),
         AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, ctx),
         AstKind::TSGlobalDeclaration(decl) => ts::check_ts_global_declaration(decl, ctx),
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),

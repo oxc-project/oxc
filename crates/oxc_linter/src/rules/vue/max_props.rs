@@ -81,6 +81,7 @@ declare_oxc_lint!(
     restriction,
     config = MaxProps,
     version = "1.19.0",
+    short_description = "Enforce a maximum number of props defined for a given Vue component.",
 );
 
 impl Rule for MaxProps {

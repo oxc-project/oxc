@@ -70,7 +70,7 @@ pub struct ConsistentVitestConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule triggers an error when an unexpected vitest accessor is used.
+    /// This rule triggers an error when an unexpected Vitest accessor is used.
     ///
     /// ### Why is this bad?
     ///
@@ -98,6 +98,7 @@ declare_oxc_lint!(
     fix,
     config = ConsistentVitestConfig,
     version = "1.37.0",
+    short_description = "This rule triggers an error when an unexpected Vitest accessor is used.",
 );
 
 impl Rule for ConsistentVitestVi {

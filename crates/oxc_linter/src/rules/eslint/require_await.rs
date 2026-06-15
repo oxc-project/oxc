@@ -82,6 +82,7 @@ declare_oxc_lint!(
     pedantic,
     fix_dangerous,
     version = "0.4.2",
+    short_description = "Disallow async functions which have no `await` expression.",
 );
 
 impl Rule for RequireAwait {

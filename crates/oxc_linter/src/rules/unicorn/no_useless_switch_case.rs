@@ -51,6 +51,7 @@ declare_oxc_lint!(
     pedantic,
     pending,
     version = "0.0.18",
+    short_description = "Disallows useless `default` cases in `switch` statements.",
 );
 
 impl Rule for NoUselessSwitchCase {

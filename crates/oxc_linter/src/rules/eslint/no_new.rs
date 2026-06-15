@@ -44,6 +44,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     version = "0.4.0",
+    short_description = "Disallow new operators outside of assignments or comparisons.",
 );
 
 impl Rule for NoNew {

@@ -73,9 +73,13 @@ impl<'a> Compressor<'a> {
         ctx: &mut ReusableTraverseCtx<'a>,
     ) -> u8 {
         let mut iteration = 0u8;
+        // Defensive: start the fixed-point loop from a clean signal. Nothing records
+        // mutations before the loop today (Normalize uses raw slot writes and does
+        // not consume the signal).
+        ctx.state_mut().take_mutated();
         loop {
             PeepholeOptimizations.run_once(program, ctx);
-            if !ctx.state().changed {
+            if !ctx.state_mut().take_mutated() {
                 break;
             }
             if let Some(max) = max_iterations {

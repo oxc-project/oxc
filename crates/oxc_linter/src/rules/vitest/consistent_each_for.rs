@@ -90,7 +90,7 @@ pub struct ConsistentEachForConfig {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct ConsistentEachForJson {
     /// Preferred method to create parameterized tests for `describe` blocks.
     describe: Option<MemberNames>,
@@ -166,9 +166,10 @@ declare_oxc_lint!(
     /// ```
     ConsistentEachFor,
     vitest,
-    correctness,
+    style,
     config = ConsistentEachForJson,
     version = "1.39.0",
+    short_description = "Enforce consistency in whether `.each` or `.for` is used to create parameterized tests.",
 );
 
 impl Rule for ConsistentEachFor {

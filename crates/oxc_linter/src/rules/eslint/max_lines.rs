@@ -74,6 +74,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxLinesConfig,
     version = "0.2.14",
+    short_description = "Enforce a maximum number of lines per file.",
 );
 
 impl Rule for MaxLines {

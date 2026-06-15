@@ -136,6 +136,7 @@ declare_oxc_lint!(
     correctness,
     config = NoConstantCondition,
     version = "0.0.3",
+    short_description = "Disallow constant expressions in conditions.",
 );
 
 impl Rule for NoConstantCondition {

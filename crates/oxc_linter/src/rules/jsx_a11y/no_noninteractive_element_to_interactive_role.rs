@@ -14,7 +14,7 @@ use crate::{
     AstNode,
     context::LintContext,
     globals::HTML_TAG,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_type, has_jsx_prop_ignore_case, is_interactive_role, is_non_interactive_element,
     },
@@ -69,12 +69,13 @@ fn default_allowed_roles() -> FxHashMap<CompactStr, Vec<CompactStr>> {
     map
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoNoninteractiveElementToInteractiveRole(
     Box<NoNoninteractiveElementToInteractiveRoleConfig>,
 );
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 struct NoNoninteractiveElementToInteractiveRoleConfig {
     /// A mapping of HTML element names to arrays of ARIA role strings that are
     /// allowed overrides for that element. For example, `{ "ul": ["menu", "tablist"] }`
@@ -89,14 +90,13 @@ struct NoNoninteractiveElementToInteractiveRoleConfig {
     ///   "fieldset": ["radiogroup", "presentation"]
     /// }
     /// ```
+    #[serde(flatten)]
     allowed_roles: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
 
-impl Default for NoNoninteractiveElementToInteractiveRole {
+impl Default for NoNoninteractiveElementToInteractiveRoleConfig {
     fn default() -> Self {
-        Self(Box::new(NoNoninteractiveElementToInteractiveRoleConfig {
-            allowed_roles: default_allowed_roles(),
-        }))
+        Self { allowed_roles: default_allowed_roles() }
     }
 }
 
@@ -142,10 +142,15 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     config = NoNoninteractiveElementToInteractiveRoleConfig,
-    version = "1.64.0"
+    version = "1.64.0",
+    short_description = "Disallow using an interactive WAI-ARIA role on a non-interactive HTML element.",
 );
 
 impl Rule for NoNoninteractiveElementToInteractiveRole {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
@@ -192,27 +197,6 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
                 role_attr.span,
             ));
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let Some(config) = value.get(0) else {
-            return Ok(Self::default());
-        };
-
-        let Some(obj) = config.as_object() else {
-            return Ok(Self::default());
-        };
-
-        let mut allowed_roles = FxHashMap::default();
-        for (element, roles_value) in obj {
-            if let Some(roles_arr) = roles_value.as_array() {
-                let roles: Vec<CompactStr> =
-                    roles_arr.iter().filter_map(|v| v.as_str().map(CompactStr::new)).collect();
-                allowed_roles.insert(CompactStr::new(element), roles);
-            }
-        }
-
-        Ok(Self(Box::new(NoNoninteractiveElementToInteractiveRoleConfig { allowed_roles })))
     }
 }
 

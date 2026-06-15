@@ -148,6 +148,7 @@ declare_oxc_lint!(
     restriction,
     config = ComplexityConfig,
     version = "1.37.0",
+    short_description = "Enforces a maximum cyclomatic complexity in a program, which is the number of linearly independent paths in a program.",
 );
 
 impl Rule for Complexity {
@@ -160,9 +161,8 @@ impl Rule for Complexity {
         {
             Ok(Self(Box::new(ComplexityConfig { max, variant: Variant::Classic })))
         } else {
-            Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .unwrap_or_default()
-                .into_inner())
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
         }
     }
 

@@ -52,6 +52,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     version = "0.0.18",
+    short_description = "Prefer `EventTarget` over `EventEmitter`.",
 );
 
 impl Rule for PreferEventTarget {

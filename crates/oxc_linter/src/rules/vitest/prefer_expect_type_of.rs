@@ -66,6 +66,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.44.0",
+    short_description = "Enforce using `toBeTypeOf` instead of `expect(typeof ...).toBe(...)`.",
 );
 
 impl Rule for PreferExpectTypeOf {

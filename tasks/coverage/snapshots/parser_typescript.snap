@@ -1,9 +1,9 @@
-commit: 7539c04d
+commit: 7964e22f
 
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1638/2640 (62.05%)
+Negative Passed: 1642/2640 (62.20%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1074,8 +1074,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnum
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/importElisionConstEnumMerge1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAliasing.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowDeleteOperator.ts
@@ -1394,10 +1392,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormInstanceOf.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardRedundancy.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInIfStatement.ts
@@ -1411,8 +1405,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithInstanceOfByConstructorSignature.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithInstanceOfBySymbolHasInstance.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_optionalMemberConformance.ts
 
@@ -17839,6 +17831,62 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Only 'readonly' modifier is allowed here.
 
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:157:37]
+ 156 │ 
+ 157 │ declare let Q1: new (x: unknown) => x is string;
+     ·                                     ───────────
+ 158 │ declare let Q2: new (x: boolean) => asserts x;
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:158:37]
+ 157 │ declare let Q1: new (x: unknown) => x is string;
+ 158 │ declare let Q2: new (x: boolean) => asserts x;
+     ·                                     ─────────
+ 159 │ declare let Q3: new (x: unknown) => asserts x is string;
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:159:37]
+ 158 │ declare let Q2: new (x: boolean) => asserts x;
+ 159 │ declare let Q3: new (x: unknown) => asserts x is string;
+     ·                                     ───────────────────
+ 160 │ 
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:162:15]
+ 161 │ declare class Wat {
+ 162 │     get p1(): this is string;
+     ·               ──────────────
+ 163 │     set p1(x: this is string);
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:163:15]
+ 162 │     get p1(): this is string;
+ 163 │     set p1(x: this is string);
+     ·               ──────────────
+ 164 │     get p2(): asserts this is string;
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:164:15]
+ 163 │     set p1(x: this is string);
+ 164 │     get p2(): asserts this is string;
+     ·               ──────────────────────
+ 165 │     set p2(x: asserts this is string);
+     ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:165:15]
+ 164 │     get p2(): asserts this is string;
+ 165 │     set p2(x: asserts this is string);
+     ·               ──────────────────────
+ 166 │ }
+     ╰────
+
   × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:20:6]
  19 │ class C3 {
@@ -22465,6 +22513,100 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  18 │     return true;
     ╰────
   help: Try inserting a semicolon here
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:4:10]
+ 3 │     export class FileSystemObject {
+ 4 │         isFSO: this is FileSystemObject;
+   ·                ────────────────────────
+ 5 │         get isFile(): this is File {
+   ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:5:17]
+ 4 │         isFSO: this is FileSystemObject;
+ 5 │         get isFile(): this is File {
+   ·                       ────────────
+ 6 │             return this instanceof File;
+   ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:11:22]
+ 10 │         }
+ 11 │         get isDirectory(): this is Directory {
+    ·                            ─────────────────
+ 12 │             return this instanceof Directory;
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:14:16]
+ 13 │         }
+ 14 │         isNetworked: this is (Networked & this);
+    ·                      ──────────────────────────
+ 15 │         constructor(public path: string) {}
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:57:13]
+ 56 │         target: T;
+ 57 │         isLeader: this is (GenericLeadGuard<T>);
+    ·                   ─────────────────────────────
+ 58 │         isFollower: this is GenericFollowerGuard<T>;
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:58:15]
+ 57 │         isLeader: this is (GenericLeadGuard<T>);
+ 58 │         isFollower: this is GenericFollowerGuard<T>;
+    ·                     ───────────────────────────────
+ 59 │     }
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:70:19]
+ 69 │     interface SpecificGuard {
+ 70 │         isMoreSpecific: this is MoreSpecificGuard;
+    ·                         ─────────────────────────
+ 71 │     }
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:4:10]
+ 3 │     export class FileSystemObject {
+ 4 │         isFSO: this is FileSystemObject;
+   ·                ────────────────────────
+ 5 │         get isFile(): this is File {
+   ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:5:17]
+ 4 │         isFSO: this is FileSystemObject;
+ 5 │         get isFile(): this is File {
+   ·                       ────────────
+ 6 │             return this instanceof File;
+   ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:11:22]
+ 10 │         }
+ 11 │         get isDirectory(): this is Directory {
+    ·                            ─────────────────
+ 12 │             return this instanceof Directory;
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:14:16]
+ 13 │         }
+ 14 │         isNetworked: this is (Networked & this);
+    ·                      ──────────────────────────
+ 15 │         constructor(public path: string) {}
+    ╰────
+
+  × TS(1228): A type predicate is only allowed in return type position for functions and methods.
+   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts:1:8]
+ 1 │ var x: this is string;
+   ·        ──────────────
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration02.ts:1:9]
@@ -30589,6 +30731,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
   help: Remove the duplicate modifier.
 
   × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:100:21]
+  99 │ 
+ 100 │ declare function f1<in T>(x: T): void;  // Error
+     ·                     ──
+ 101 │ declare function f2<out T>(): T;  // Error
+     ╰────
+
+  × TS(1274): 'out' modifier can only appear on a type parameter of a class, interface or type alias.
+     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:101:21]
+ 100 │ declare function f1<in T>(x: T): void;  // Error
+ 101 │ declare function f2<out T>(): T;  // Error
+     ·                     ───
+ 102 │ 
+     ╰────
+
+  × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
      ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:104:5]
  103 │ class C {
  104 │     in a = 0;  // Error
@@ -30602,22 +30760,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  105 │     out b = 0;  // Error
      ·     ───
  106 │ }
-     ╰────
-
-  × TS(1274): 'in' modifier can only appear on a type parameter of a class, interface or type alias.
-     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:100:21]
-  99 │ 
- 100 │ declare function f1<in T>(x: T): void;  // Error
-     ·                     ────
- 101 │ declare function f2<out T>(): T;  // Error
-     ╰────
-
-  × TS(1274): 'out' modifier can only appear on a type parameter of a class, interface or type alias.
-     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:101:21]
- 100 │ declare function f1<in T>(x: T): void;  // Error
- 101 │ declare function f2<out T>(): T;  // Error
-     ·                     ─────
- 102 │ 
      ╰────
 
   × Identifier expected. 'in' is a reserved word that cannot be used here.

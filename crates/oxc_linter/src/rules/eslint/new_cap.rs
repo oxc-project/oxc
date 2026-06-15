@@ -413,6 +413,7 @@ declare_oxc_lint!(
     pending, // TODO: maybe?
     config = NewCapConfig,
     version = "0.15.5",
+    short_description = "This rule requires constructor names to begin with a capital letter.",
 );
 
 impl Rule for NewCap {

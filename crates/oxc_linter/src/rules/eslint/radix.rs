@@ -91,6 +91,7 @@ declare_oxc_lint!(
     conditional_fix_dangerous,
     config = RadixType,
     version = "0.3.3",
+    short_description = "Enforce the consistent use of the radix argument when using `parseInt()`, which specifies what base to use for parsing the number.",
 );
 
 impl Rule for Radix {

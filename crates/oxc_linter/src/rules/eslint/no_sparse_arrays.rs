@@ -54,6 +54,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.4",
+    short_description = "Disallow sparse arrays.",
 );
 
 impl Rule for NoSparseArrays {

@@ -69,6 +69,7 @@ declare_oxc_lint!(
     conditional_dangerous_fix,
     config = NoNull,
     version = "0.0.21",
+    short_description = "Disallow the use of the `null` literal, to encourage using `undefined` instead.",
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {

@@ -276,6 +276,7 @@ declare_oxc_lint!(
     safe_fixes_and_dangerous_suggestions,
     config = ExhaustiveDepsConfig,
     version = "0.12.0",
+    short_description = "Verifies the list of dependencies for Hooks like `useEffect` and similar.",
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];

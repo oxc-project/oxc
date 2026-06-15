@@ -61,6 +61,7 @@ declare_oxc_lint!(
     restriction,
     config = SpecOnlyConfig,
     version = "0.9.2",
+    short_description = "Disallow use of non-standard Promise static methods.",
 );
 
 impl Rule for SpecOnly {

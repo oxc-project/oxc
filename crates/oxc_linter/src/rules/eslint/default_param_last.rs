@@ -69,6 +69,7 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "0.2.15",
+    short_description = "Requires default parameters in functions to be the last ones.",
 );
 
 impl Rule for DefaultParamLast {

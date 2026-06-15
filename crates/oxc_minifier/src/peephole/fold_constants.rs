@@ -30,8 +30,7 @@ impl<'a> PeepholeOptimizations {
             _ if e.may_have_side_effects(ctx) => {}
             _ => {
                 if let Some(changed) = e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v)) {
-                    *expr = changed;
-                    ctx.state.changed = true;
+                    ctx.replace_expression(expr, changed);
                 }
             }
         }
@@ -44,8 +43,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
-            *expr = changed;
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, changed);
         }
     }
 
@@ -56,8 +54,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
-            *expr = changed;
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, changed);
         }
     }
 
@@ -67,8 +64,7 @@ impl<'a> PeepholeOptimizations {
             LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(e, ctx),
             LogicalOperator::Coalesce => Self::try_fold_coalesce(e, ctx),
         } {
-            *expr = changed;
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, changed);
         }
     }
 
@@ -80,21 +76,28 @@ impl<'a> PeepholeOptimizations {
             ChainFold::Flipped { has_optional } => {
                 // For `(known_obj)?.foo?.bar` the inner `?.` flips, but the
                 // outer `?.bar` keeps the wrapper alive.
-                if !has_optional {
-                    *expr = Expression::from(e.expression.take_in(ctx.ast));
+                if has_optional {
+                    ctx.notice_change();
+                } else {
+                    let new_expr = Expression::from(e.expression.take_in(ctx.ast));
+                    ctx.replace_expression(expr, new_expr);
                 }
-                ctx.state.changed = true;
             }
             ChainFold::Collapse { base, base_has_side_effects } => {
-                *expr = if base_has_side_effects {
+                let new_expr = if base_has_side_effects {
                     ctx.ast.expression_sequence(
                         span,
                         ctx.ast.vec_from_array([base, ctx.ast.void_0(span)]),
                     )
                 } else {
+                    // `base` was `take_in`'d out of the old chain into our
+                    // local variable, so `replace_expression`'s walk over the
+                    // old subtree won't see its references. Mark them dead
+                    // explicitly before discarding `base`.
+                    ctx.drop_expression(&base);
                     ctx.value_to_expr(span, ConstantValue::Undefined)
                 };
-                ctx.state.changed = true;
+                ctx.replace_expression(expr, new_expr);
             }
         }
     }
@@ -341,8 +344,7 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::In => None,
         };
         if let Some(changed) = changed {
-            *expr = changed;
-            ctx.state.changed = true;
+            ctx.replace_expression(expr, changed);
         }
     }
 
@@ -558,20 +560,20 @@ impl<'a> PeepholeOptimizations {
                 if let Some(n) = arg.evaluate_value_to_number(ctx) {
                     n
                 } else {
-                    *expr = ctx.ast.expression_unary(
+                    let new_expr = ctx.ast.expression_unary(
                         e.span,
                         UnaryOperator::UnaryPlus,
                         ctx.ast.expression_string_literal(n.span, n.value, n.raw),
                     );
-                    ctx.state.changed = true;
+                    ctx.replace_expression(expr, new_expr);
                     return;
                 }
             }
             e if e.is_void_0() => f64::NAN,
             _ => return,
         });
-        *expr = ctx.value_to_expr(e.span, value);
-        ctx.state.changed = true;
+        let new_expr = ctx.value_to_expr(e.span, value);
+        ctx.replace_expression(expr, new_expr);
     }
 
     pub fn fold_binary_typeof_comparison(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -587,8 +589,8 @@ impl<'a> PeepholeOptimizations {
             && left_ident.name == right_ident.name
         {
             let b = matches!(e.operator, BinaryOperator::StrictEquality | BinaryOperator::Equality);
-            *expr = ctx.ast.expression_boolean_literal(e.span, b);
-            ctx.state.changed = true;
+            let new_expr = ctx.ast.expression_boolean_literal(e.span, b);
+            ctx.replace_expression(expr, new_expr);
             return;
         }
 
@@ -601,12 +603,12 @@ impl<'a> PeepholeOptimizations {
             let right_ty = e.right.value_type(ctx);
 
             if !right_ty.is_undetermined() && right_ty != ValueType::String {
-                *expr = ctx.ast.expression_boolean_literal(
+                let new_expr = ctx.ast.expression_boolean_literal(
                     e.span,
                     e.operator == BinaryOperator::Inequality
                         || e.operator == BinaryOperator::StrictInequality,
                 );
-                ctx.state.changed = true;
+                ctx.replace_expression(expr, new_expr);
                 return;
             }
             if let Expression::StringLiteral(string_lit) = &e.right
@@ -623,12 +625,12 @@ impl<'a> PeepholeOptimizations {
                         | "unknown" // IE
                 )
             {
-                *expr = ctx.ast.expression_boolean_literal(
+                let new_expr = ctx.ast.expression_boolean_literal(
                     e.span,
                     e.operator == BinaryOperator::Inequality
                         || e.operator == BinaryOperator::StrictInequality,
                 );
-                ctx.state.changed = true;
+                ctx.replace_expression(expr, new_expr);
             }
         }
     }
@@ -669,28 +671,44 @@ impl<'a> PeepholeOptimizations {
         let mut new_properties = ctx.ast.vec_with_capacity::<ObjectPropertyKind>(new_size);
         for p in e.properties.drain(..) {
             if let ObjectPropertyKind::SpreadProperty(mut spread_element) = p {
-                let e = &mut spread_element.argument;
-                if ctx.is_expression_undefined(e) {
+                if ctx.is_expression_undefined(&spread_element.argument) {
+                    // The spread argument is being dropped — walk it so refs
+                    // inside don't leak past this pass.
+                    ctx.drop_expression(&spread_element.argument);
                     continue;
                 }
-                match e {
+                match &mut spread_element.argument {
                     Expression::ObjectExpression(o)
                         if Self::is_spread_inlineable_object_literal(o, ctx) =>
                     {
-                        new_properties.extend(o.properties.drain(..).filter(|prop| {
-                            match prop {
-                                ObjectPropertyKind::SpreadProperty(_) => true,
-                                ObjectPropertyKind::ObjectProperty(p) => {
-                                    // non-computed __proto__ property sets the prototype of the object instead
-                                    p.computed
+                        for prop in o.properties.drain(..) {
+                            match &prop {
+                                ObjectPropertyKind::SpreadProperty(_) => {
+                                    new_properties.push(prop);
+                                }
+                                ObjectPropertyKind::ObjectProperty(p)
+                                    if p.computed
                                         || p.method
-                                        || !p.key.is_specific_static_name("__proto__")
+                                        || !p.key.is_specific_static_name("__proto__") =>
+                                {
+                                    new_properties.push(prop);
+                                }
+                                ObjectPropertyKind::ObjectProperty(p) => {
+                                    // Non-computed `__proto__` is being elided
+                                    // because it would set the prototype rather
+                                    // than become a regular property. The key is
+                                    // a static name with no refs, but the value
+                                    // subtree must be walked to drop its refs.
+                                    ctx.drop_expression(&p.value);
                                 }
                             }
-                        }));
+                        }
                     }
                     e if should_fold_spread_element(e, ctx) => {
-                        // skip
+                        // The spread argument is being folded away (e.g.
+                        // `...function(){}`); walk it so refs inside don't
+                        // leak past this pass.
+                        ctx.drop_expression(&spread_element.argument);
                     }
                     _ => {
                         new_properties.push(ObjectPropertyKind::SpreadProperty(spread_element));
@@ -702,7 +720,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         e.properties = new_properties;
-        ctx.state.changed = true;
+        ctx.notice_change();
     }
 
     fn is_spread_inlineable_object_literal(
@@ -738,18 +756,18 @@ impl<'a> PeepholeOptimizations {
         }
 
         let mut inline_exprs = Vec::with_capacity(t.expressions.len());
-        let new_exprs =
-            ctx.ast.vec_from_iter(t.expressions.drain(..).enumerate().filter_map(|(idx, expr)| {
-                if expr.may_have_side_effects(ctx) {
-                    Some(expr)
-                } else if let Some(str) = expr.to_js_string(ctx) {
-                    inline_exprs.push((idx, str));
-                    None
-                } else {
-                    Some(expr)
-                }
-            }));
-        t.expressions = new_exprs;
+        let mut kept = ctx.ast.vec_with_capacity(t.expressions.len());
+        for (idx, expr) in t.expressions.drain(..).enumerate() {
+            if expr.may_have_side_effects(ctx) {
+                kept.push(expr);
+            } else if let Some(str) = expr.to_js_string(ctx) {
+                ctx.drop_expression(&expr);
+                inline_exprs.push((idx, str));
+            } else {
+                kept.push(expr);
+            }
+        }
+        t.expressions = kept;
 
         // inline the extracted inline-able expressions into quasis
         // "current_quasis + extracted_value + next_quasis"
@@ -774,8 +792,6 @@ impl<'a> PeepholeOptimizations {
                 quasi.tail = true;
             }
         }
-
-        ctx.state.changed = true;
     }
 }
 
@@ -900,6 +916,7 @@ fn try_fold_at_optional<'a>(
         }
         ValueType::Undetermined => None,
         _ => {
+            // Bool field flip on an existing AST node, not a slot replacement.
             *optional = false;
             Some(ChainFold::Flipped { has_optional: false })
         }
