@@ -127,6 +127,33 @@ fn get_timing_stat<const TIMINGS: bool>(
     }
 }
 
+/// Per-thread scratch buffers for dispatching rules to AST nodes by node type.
+///
+/// Reused across files, so the bucketed dispatch path incurs no per-file allocation.
+struct RuleBuckets {
+    /// `by_type[ast_type]` = indices, into the per-file `rules` slice, of rules that run on that AST
+    /// node type. A boxed fixed-size array so indexing by an `AstType` elides bounds checks.
+    by_type: Box<[Vec<usize>; AST_TYPE_MAX as usize + 1]>,
+    /// Indices of rules that run on every node (rules without `types_info`).
+    any_type: Vec<usize>,
+}
+
+impl RuleBuckets {
+    fn clear(&mut self) {
+        for bucket in self.by_type.iter_mut() {
+            bucket.clear();
+        }
+        self.any_type.clear();
+    }
+}
+
+thread_local! {
+    static RULE_BUCKETS: std::cell::RefCell<RuleBuckets> = std::cell::RefCell::new(RuleBuckets {
+        by_type: boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1],
+        any_type: Vec::new(),
+    });
+}
+
 fn execute_rules<'a, const TIMINGS: bool>(
     rules: &[(&RuleEnum, LintContext<'a>)],
     semantic: &Semantic<'a>,
@@ -156,61 +183,55 @@ fn execute_rules<'a, const TIMINGS: bool>(
         //
         // See https://github.com/oxc-project/oxc/pull/6600 for more context.
         if semantic.nodes().len() > 200_000 {
-            // TODO: It seems like there is probably a more intelligent way to preallocate space here. This will
-            // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
-            // compile-time since we know all of the rules and their AST node type information ahead of time.
-            //
-            // Use boxed array to help compiler see that indexing into it with an `AstType`
-            // cannot go out of bounds, and remove bounds checks.
-            let mut rules_by_ast_type = boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1];
-            // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
-            // node types, but it at least guarantees we won't need to realloc.
-            let mut rules_any_ast_type = Vec::with_capacity(rules.len());
+            RULE_BUCKETS.with_borrow_mut(|buckets| {
+                buckets.clear();
 
-            for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
-                let rule = *rule;
-                let run_info = rule.run_info();
-                // Collect node type information for rules. In large files, benchmarking showed it was worth
-                // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
-                if let Some(ast_types) = rule.types_info()
-                    && run_info.is_run_implemented()
-                {
-                    for ty in ast_types {
-                        rules_by_ast_type[ty as usize].push((rule_index, rule, ctx));
+                for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
+                    let run_info = rule.run_info();
+                    // Collect node type information for rules. In large files, benchmarking showed it was worth
+                    // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
+                    if let Some(ast_types) = rule.types_info()
+                        && run_info.is_run_implemented()
+                    {
+                        for ty in ast_types {
+                            buckets.by_type[ty as usize].push(rule_index);
+                        }
+                    } else if run_info.is_run_implemented() {
+                        buckets.any_type.push(rule_index);
                     }
-                } else if run_info.is_run_implemented() {
-                    rules_any_ast_type.push((rule_index, rule, ctx));
+
+                    if run_info.is_run_once_implemented() {
+                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                        rule.run_once::<TIMINGS>(ctx, timing_stat);
+                    }
                 }
 
-                if run_info.is_run_once_implemented() {
-                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                    rule.run_once::<TIMINGS>(ctx, timing_stat);
+                // Run rules on nodes
+                for node in semantic.nodes() {
+                    for &rule_index in &buckets.by_type[node.kind().ty() as usize] {
+                        let (rule, ctx) = &rules[rule_index];
+                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                        rule.run::<TIMINGS>(node, ctx, timing_stat);
+                    }
+                    for &rule_index in &buckets.any_type {
+                        let (rule, ctx) = &rules[rule_index];
+                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                        rule.run::<TIMINGS>(node, ctx, timing_stat);
+                    }
                 }
-            }
 
-            // Run rules on nodes
-            for node in semantic.nodes() {
-                for (rule_index, rule, ctx) in &rules_by_ast_type[node.kind().ty() as usize] {
-                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, *rule_index);
-                    rule.run::<TIMINGS>(node, ctx, timing_stat);
-                }
-                for (rule_index, rule, ctx) in &rules_any_ast_type {
-                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, *rule_index);
-                    rule.run::<TIMINGS>(node, ctx, timing_stat);
-                }
-            }
-
-            if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
-                    for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
-                        if rule.run_info().is_run_on_jest_node_implemented() {
-                            let timing_stat =
-                                get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                            rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
+                if should_run_on_jest_node {
+                    for jest_node in iter_possible_jest_call_node(semantic) {
+                        for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
+                            if rule.run_info().is_run_on_jest_node_implemented() {
+                                let timing_stat =
+                                    get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                                rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
+                            }
                         }
                     }
                 }
-            }
+            });
         } else {
             for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
                 let run_info = rule.run_info();
