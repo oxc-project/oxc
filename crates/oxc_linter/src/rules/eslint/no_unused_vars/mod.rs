@@ -218,7 +218,9 @@ impl Deref for NoUnusedVars {
 
 impl Rule for NoUnusedVars {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(NoUnusedVarsOptions::try_from(value).unwrap_or_default())))
+        NoUnusedVarsOptions::try_from(value)
+            .map(|options| Self(Box::new(options)))
+            .map_err(|error| <serde_json::Error as serde::de::Error>::custom(error.to_string()))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -287,7 +289,7 @@ impl NoUnusedVars {
 
                 if let Some(declaration) = declaration {
                     Self::report_with_fix_mode(self.fix.imports, ctx, diagnostic, |fixer| {
-                        self.remove_unused_import_declaration(fixer, symbol, declaration)
+                        self.remove_unused_import_declaration(fixer, ctx, symbol, declaration)
                     });
                 } else {
                     ctx.diagnostic(diagnostic);

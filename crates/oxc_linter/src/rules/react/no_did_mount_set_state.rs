@@ -70,6 +70,7 @@ declare_oxc_lint!(
     correctness,
     config = AllowedOrDisallowInFunc,
     version = "1.36.0",
+    short_description = "Disallow usage of `setState` in `componentDidMount`.",
 );
 
 impl Rule for NoDidMountSetState {

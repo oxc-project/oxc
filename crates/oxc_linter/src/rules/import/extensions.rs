@@ -474,6 +474,7 @@ declare_oxc_lint!(
     restriction,
     config = ExtensionsConfig,
     version = "1.2.0",
+    short_description = "Enforce consistent use of file extensions in import paths.",
 );
 
 impl Rule for Extensions {

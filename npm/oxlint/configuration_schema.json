@@ -1709,6 +1709,7 @@
           "default": 2,
           "type": "integer",
           "format": "uint8",
+          "maximum": 25.0,
           "minimum": 0.0,
           "markdownDescription": "Maximum depth to search for an accessible label within the element.\nDefaults to `2`."
         },
@@ -6716,6 +6717,26 @@
             }
           ]
         },
+        "react/react-compiler": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ReactCompilerConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "react/react-in-jsx-scope": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -9723,6 +9744,26 @@
         },
         "vue/no-deprecated-vue-config-keycodes": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vue/no-dupe-keys": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoDupeKeys"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "vue/no-export-in-script-setup": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -12847,6 +12888,24 @@
       },
       "additionalProperties": false
     },
+    "NoDupeKeys": {
+      "$ref": "#/definitions/NoDupeKeysConfig"
+    },
+    "NoDupeKeysConfig": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "description": "Additional group names to search for duplicate keys in, on top of the\nbuilt-in `props`, `computed`, `data`, `methods` and `setup` groups.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional group names to search for duplicate keys in, on top of the\nbuilt-in `props`, `computed`, `data`, `methods` and `setup` groups."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoDuplicateImports": {
       "type": "object",
       "properties": {
@@ -14161,10 +14220,10 @@
       "type": "object",
       "properties": {
         "allowInParentheses": {
-          "description": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`.",
+          "description": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.",
           "default": true,
           "type": "boolean",
-          "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`."
+          "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses."
         }
       },
       "additionalProperties": false
@@ -15652,12 +15711,16 @@
       "type": "object",
       "properties": {
         "allowNamedFunctions": {
+          "description": "If this option is set to `true`, named function expressions are allowed.",
           "default": false,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "If this option is set to `true`, named function expressions are allowed."
         },
         "allowUnboundThis": {
+          "description": "If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value.",
           "default": true,
-          "type": "boolean"
+          "type": "boolean",
+          "markdownDescription": "If this option is set to `false`, function expressions that reference `this` are reported even when they are not bound to a `this` value."
         }
       },
       "additionalProperties": false
@@ -16293,6 +16356,18 @@
           "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
+    },
+    "ReactCompilerConfig": {
+      "type": "object",
+      "properties": {
+        "reportAllBailouts": {
+          "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
+        }
+      },
+      "additionalProperties": false
     },
     "ReactPerfConfig": {
       "type": "object",

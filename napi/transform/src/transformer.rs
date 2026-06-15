@@ -871,12 +871,12 @@ impl CompilerInterface for Compiler {
         self.inject.clone()
     }
 
-    fn after_codegen(&mut self, ret: CodegenReturn) {
+    fn after_codegen(&mut self, ret: CodegenReturn<'_>) {
         self.printed = ret.code;
         self.printed_sourcemap = ret.map.map(SourceMap::from);
     }
 
-    fn after_isolated_declarations(&mut self, ret: CodegenReturn) {
+    fn after_isolated_declarations(&mut self, ret: CodegenReturn<'_>) {
         self.declaration.replace(ret.code);
         self.declaration_map = ret.map.map(SourceMap::from);
     }

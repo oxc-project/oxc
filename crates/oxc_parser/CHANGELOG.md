@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.136.0] - 2026-06-15
+
+### 🚀 Features
+
+- 1d3af58 parser: Add TS2398 parameter property diagnostic (#23216) (camc314)
+- e5050c0 parser: Improve diagnostic for rest initializer (#23205) (camc314)
+- e7374fe parser: Report error for `const` modifier on interface type parameter (#23173) (camc314)
+- a7c1c9b parser: Report ambient definite variable assertions (#23165) (camc314)
+- d169fcd parser: Report invalid class definite assertions (#23164) (camc314)
+- 00244d8 parser: Report definite property initializer errors (#23160) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8edd234 parser: Report accessor definite assertion on token (#23203) (camc314)
+- e89f81d parser: Don't emit TS1477 for parenthesized instantiation expression (#23147) (Boshen)
+- 8a04149 parser: Reject module-referencing imports/exports in a namespace body (#22829) (Boshen)
+
+### ⚡ Performance
+
+- 2783295 parser: Table-driven operator precedence lookup (#23346) (Boshen)
+- 231d5de parser: Single-match member expression dispatch (#23347) (Boshen)
+- a6c11fa parser: Force-inline read_non_decimal to fold per-digit number dispatch (#23157) (Boshen)
+- d74964c parser: Store class definite assertion offset (#23170) (camc314)
+- f0fda4d parser: Shrink-wrap cold diagnostic tails out of hot frames (#23159) (Boshen)
+- a082180 parser: Store definite assertion offset (#23167) (camc314)
+- b435c6a parser: Skip checkpoint for `infer T extends U` constraint in disallow context (#23128) (Boshen)
+- 7464dce parser: Peek instead of checkpoint/rewind for `export default` modifier (#23124) (Boshen)
+- 80a9a32 parser: Fast-path single-keyword TS declarations (#23083) (Boshen)
+- b7b08ce parser: Peek once for the static modifier disambiguation (#23079) (Boshen)
+- e7e07a3 parser: Fold unary dispatch into a single match (#23076) (Boshen)
+
+### 📚 Documentation
+
+- 026f1ae parser: Add `AGENTS.md` test guidance for agents (#23440) (camc314)
+- e6bdfd4 lexer: Correct reference link for `byte_handlers!` (#23313) (Dunqing)
+
 ## [0.135.0] - 2026-06-08
 
 ### 💥 BREAKING CHANGES

@@ -470,6 +470,7 @@ pub use crate::rules::react::no_will_update_set_state::NoWillUpdateSetState as R
 pub use crate::rules::react::only_export_components::OnlyExportComponents as ReactOnlyExportComponents;
 pub use crate::rules::react::prefer_es6_class::PreferEs6Class as ReactPreferEs6Class;
 pub use crate::rules::react::prefer_function_component::PreferFunctionComponent as ReactPreferFunctionComponent;
+pub use crate::rules::react::react_compiler::ReactCompiler as ReactReactCompiler;
 pub use crate::rules::react::react_in_jsx_scope::ReactInJsxScope as ReactReactInJsxScope;
 pub use crate::rules::react::require_render_return::RequireRenderReturn as ReactRequireRenderReturn;
 pub use crate::rules::react::rules_of_hooks::RulesOfHooks as ReactRulesOfHooks;
@@ -813,6 +814,7 @@ pub use crate::rules::vue::no_deprecated_events_api::NoDeprecatedEventsApi as Vu
 pub use crate::rules::vue::no_deprecated_model_definition::NoDeprecatedModelDefinition as VueNoDeprecatedModelDefinition;
 pub use crate::rules::vue::no_deprecated_props_default_this::NoDeprecatedPropsDefaultThis as VueNoDeprecatedPropsDefaultThis;
 pub use crate::rules::vue::no_deprecated_vue_config_keycodes::NoDeprecatedVueConfigKeycodes as VueNoDeprecatedVueConfigKeycodes;
+pub use crate::rules::vue::no_dupe_keys::NoDupeKeys as VueNoDupeKeys;
 pub use crate::rules::vue::no_export_in_script_setup::NoExportInScriptSetup as VueNoExportInScriptSetup;
 pub use crate::rules::vue::no_expose_after_await::NoExposeAfterAwait as VueNoExposeAfterAwait;
 pub use crate::rules::vue::no_import_compiler_macros::NoImportCompilerMacros as VueNoImportCompilerMacros;
@@ -1296,6 +1298,7 @@ pub enum RuleEnum {
     ReactOnlyExportComponents(ReactOnlyExportComponents),
     ReactPreferEs6Class(ReactPreferEs6Class),
     ReactPreferFunctionComponent(ReactPreferFunctionComponent),
+    ReactReactCompiler(ReactReactCompiler),
     ReactReactInJsxScope(ReactReactInJsxScope),
     ReactRequireRenderReturn(ReactRequireRenderReturn),
     ReactRulesOfHooks(ReactRulesOfHooks),
@@ -1663,6 +1666,7 @@ pub enum RuleEnum {
     VueNoDeprecatedModelDefinition(VueNoDeprecatedModelDefinition),
     VueNoDeprecatedPropsDefaultThis(VueNoDeprecatedPropsDefaultThis),
     VueNoDeprecatedVueConfigKeycodes(VueNoDeprecatedVueConfigKeycodes),
+    VueNoDupeKeys(VueNoDupeKeys),
     VueNoExportInScriptSetup(VueNoExportInScriptSetup),
     VueNoExposeAfterAwait(VueNoExposeAfterAwait),
     VueNoImportCompilerMacros(VueNoImportCompilerMacros),
@@ -2185,7 +2189,8 @@ const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = REACT_NO_UNSTABLE_NESTED_COMPON
 const REACT_ONLY_EXPORT_COMPONENTS_ID: usize = REACT_NO_WILL_UPDATE_SET_STATE_ID + 1usize;
 const REACT_PREFER_ES_6_CLASS_ID: usize = REACT_ONLY_EXPORT_COMPONENTS_ID + 1usize;
 const REACT_PREFER_FUNCTION_COMPONENT_ID: usize = REACT_PREFER_ES_6_CLASS_ID + 1usize;
-const REACT_REACT_IN_JSX_SCOPE_ID: usize = REACT_PREFER_FUNCTION_COMPONENT_ID + 1usize;
+const REACT_REACT_COMPILER_ID: usize = REACT_PREFER_FUNCTION_COMPONENT_ID + 1usize;
+const REACT_REACT_IN_JSX_SCOPE_ID: usize = REACT_REACT_COMPILER_ID + 1usize;
 const REACT_REQUIRE_RENDER_RETURN_ID: usize = REACT_REACT_IN_JSX_SCOPE_ID + 1usize;
 const REACT_RULES_OF_HOOKS_ID: usize = REACT_REQUIRE_RENDER_RETURN_ID + 1usize;
 const REACT_SELF_CLOSING_COMP_ID: usize = REACT_RULES_OF_HOOKS_ID + 1usize;
@@ -2601,7 +2606,8 @@ const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize =
     VUE_NO_DEPRECATED_MODEL_DEFINITION_ID + 1usize;
 const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize =
     VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID + 1usize;
-const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID + 1usize;
+const VUE_NO_DUPE_KEYS_ID: usize = VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID + 1usize;
+const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = VUE_NO_DUPE_KEYS_ID + 1usize;
 const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID + 1usize;
 const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = VUE_NO_EXPOSE_AFTER_AWAIT_ID + 1usize;
 const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = VUE_NO_IMPORT_COMPILER_MACROS_ID + 1usize;
@@ -3153,6 +3159,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => REACT_ONLY_EXPORT_COMPONENTS_ID,
             Self::ReactPreferEs6Class(_) => REACT_PREFER_ES_6_CLASS_ID,
             Self::ReactPreferFunctionComponent(_) => REACT_PREFER_FUNCTION_COMPONENT_ID,
+            Self::ReactReactCompiler(_) => REACT_REACT_COMPILER_ID,
             Self::ReactReactInJsxScope(_) => REACT_REACT_IN_JSX_SCOPE_ID,
             Self::ReactRequireRenderReturn(_) => REACT_REQUIRE_RENDER_RETURN_ID,
             Self::ReactRulesOfHooks(_) => REACT_RULES_OF_HOOKS_ID,
@@ -3566,6 +3573,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VUE_NO_DEPRECATED_MODEL_DEFINITION_ID,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID,
+            Self::VueNoDupeKeys(_) => VUE_NO_DUPE_KEYS_ID,
             Self::VueNoExportInScriptSetup(_) => VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID,
             Self::VueNoExposeAfterAwait(_) => VUE_NO_EXPOSE_AFTER_AWAIT_ID,
             Self::VueNoImportCompilerMacros(_) => VUE_NO_IMPORT_COMPILER_MACROS_ID,
@@ -4113,6 +4121,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::NAME,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::NAME,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::NAME,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::NAME,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::NAME,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::NAME,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::NAME,
@@ -4516,6 +4525,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::NAME,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::NAME,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::NAME,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::NAME,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::NAME,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::NAME,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::NAME,
@@ -5089,6 +5099,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::CATEGORY,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::CATEGORY,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::CATEGORY,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::CATEGORY,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::CATEGORY,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::CATEGORY,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::CATEGORY,
@@ -5524,6 +5535,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::CATEGORY,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::CATEGORY,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::CATEGORY,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::CATEGORY,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::CATEGORY,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::CATEGORY,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::CATEGORY,
@@ -6072,6 +6084,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::FIX,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::FIX,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::FIX,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::FIX,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::FIX,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::FIX,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::FIX,
@@ -6475,6 +6488,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::FIX,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::FIX,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::FIX,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::FIX,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::FIX,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::FIX,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::FIX,
@@ -7135,6 +7149,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::documentation(),
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::documentation(),
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::documentation(),
+            Self::ReactReactCompiler(_) => ReactReactCompiler::documentation(),
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::documentation(),
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::documentation(),
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::documentation(),
@@ -7686,6 +7701,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::documentation()
             }
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::documentation(),
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::documentation(),
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::documentation(),
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::documentation(),
@@ -8977,6 +8993,8 @@ impl RuleEnum {
                 ReactPreferFunctionComponent::config_schema(generator)
                     .or_else(|| ReactPreferFunctionComponent::schema(generator))
             }
+            Self::ReactReactCompiler(_) => ReactReactCompiler::config_schema(generator)
+                .or_else(|| ReactReactCompiler::schema(generator)),
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::config_schema(generator)
                 .or_else(|| ReactReactInJsxScope::schema(generator)),
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::config_schema(generator)
@@ -10040,6 +10058,9 @@ impl RuleEnum {
                 VueNoDeprecatedVueConfigKeycodes::config_schema(generator)
                     .or_else(|| VueNoDeprecatedVueConfigKeycodes::schema(generator))
             }
+            Self::VueNoDupeKeys(_) => {
+                VueNoDupeKeys::config_schema(generator).or_else(|| VueNoDupeKeys::schema(generator))
+            }
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::config_schema(generator)
                 .or_else(|| VueNoExportInScriptSetup::schema(generator)),
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::config_schema(generator)
@@ -10562,6 +10583,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => "react",
             Self::ReactPreferEs6Class(_) => "react",
             Self::ReactPreferFunctionComponent(_) => "react",
+            Self::ReactReactCompiler(_) => "react",
             Self::ReactReactInJsxScope(_) => "react",
             Self::ReactRequireRenderReturn(_) => "react",
             Self::ReactRulesOfHooks(_) => "react",
@@ -10923,6 +10945,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => "vue",
             Self::VueNoDeprecatedPropsDefaultThis(_) => "vue",
             Self::VueNoDeprecatedVueConfigKeycodes(_) => "vue",
+            Self::VueNoDupeKeys(_) => "vue",
             Self::VueNoExportInScriptSetup(_) => "vue",
             Self::VueNoExposeAfterAwait(_) => "vue",
             Self::VueNoImportCompilerMacros(_) => "vue",
@@ -12377,6 +12400,9 @@ impl RuleEnum {
             Self::ReactPreferFunctionComponent(_) => Ok(Self::ReactPreferFunctionComponent(
                 ReactPreferFunctionComponent::from_configuration(value)?,
             )),
+            Self::ReactReactCompiler(_) => {
+                Ok(Self::ReactReactCompiler(ReactReactCompiler::from_configuration(value)?))
+            }
             Self::ReactReactInJsxScope(_) => {
                 Ok(Self::ReactReactInJsxScope(ReactReactInJsxScope::from_configuration(value)?))
             }
@@ -13552,6 +13578,9 @@ impl RuleEnum {
                     VueNoDeprecatedVueConfigKeycodes::from_configuration(value)?,
                 ))
             }
+            Self::VueNoDupeKeys(_) => {
+                Ok(Self::VueNoDupeKeys(VueNoDupeKeys::from_configuration(value)?))
+            }
             Self::VueNoExportInScriptSetup(_) => Ok(Self::VueNoExportInScriptSetup(
                 VueNoExportInScriptSetup::from_configuration(value)?,
             )),
@@ -14089,6 +14118,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.to_configuration(),
             Self::ReactPreferEs6Class(rule) => rule.to_configuration(),
             Self::ReactPreferFunctionComponent(rule) => rule.to_configuration(),
+            Self::ReactReactCompiler(rule) => rule.to_configuration(),
             Self::ReactReactInJsxScope(rule) => rule.to_configuration(),
             Self::ReactRequireRenderReturn(rule) => rule.to_configuration(),
             Self::ReactRulesOfHooks(rule) => rule.to_configuration(),
@@ -14452,6 +14482,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.to_configuration(),
+            Self::VueNoDupeKeys(rule) => rule.to_configuration(),
             Self::VueNoExportInScriptSetup(rule) => rule.to_configuration(),
             Self::VueNoExposeAfterAwait(rule) => rule.to_configuration(),
             Self::VueNoImportCompilerMacros(rule) => rule.to_configuration(),
@@ -14935,6 +14966,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run(node, ctx),
+                Self::ReactReactCompiler(rule) => rule.run(node, ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run(node, ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run(node, ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run(node, ctx),
@@ -15298,6 +15330,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run(node, ctx),
+                Self::VueNoDupeKeys(rule) => rule.run(node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run(node, ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run(node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
@@ -15774,6 +15807,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run(node, ctx),
+                Self::ReactReactCompiler(rule) => rule.run(node, ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run(node, ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run(node, ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run(node, ctx),
@@ -16137,6 +16171,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run(node, ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run(node, ctx),
+                Self::VueNoDupeKeys(rule) => rule.run(node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run(node, ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run(node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
@@ -16620,6 +16655,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run_once(ctx),
+                Self::ReactReactCompiler(rule) => rule.run_once(ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run_once(ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run_once(ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run_once(ctx),
@@ -16983,6 +17019,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_once(ctx),
+                Self::VueNoDupeKeys(rule) => rule.run_once(ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_once(ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run_once(ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
@@ -17459,6 +17496,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run_once(ctx),
+                Self::ReactReactCompiler(rule) => rule.run_once(ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run_once(ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run_once(ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run_once(ctx),
@@ -17822,6 +17860,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedModelDefinition(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_once(ctx),
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_once(ctx),
+                Self::VueNoDupeKeys(rule) => rule.run_once(ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_once(ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run_once(ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
@@ -18436,6 +18475,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactReactCompiler(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -18927,6 +18967,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::VueNoDupeKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -19535,6 +19576,7 @@ impl RuleEnum {
                 Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPreferFunctionComponent(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactReactCompiler(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactReactInJsxScope(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactRulesOfHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20026,6 +20068,7 @@ impl RuleEnum {
                 Self::VueNoDeprecatedVueConfigKeycodes(rule) => {
                     rule.run_on_jest_node(jest_node, ctx)
                 }
+                Self::VueNoDupeKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoExportInScriptSetup(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoExposeAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::VueNoImportCompilerMacros(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -20504,6 +20547,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.should_run(ctx),
             Self::ReactPreferEs6Class(rule) => rule.should_run(ctx),
             Self::ReactPreferFunctionComponent(rule) => rule.should_run(ctx),
+            Self::ReactReactCompiler(rule) => rule.should_run(ctx),
             Self::ReactReactInJsxScope(rule) => rule.should_run(ctx),
             Self::ReactRequireRenderReturn(rule) => rule.should_run(ctx),
             Self::ReactRulesOfHooks(rule) => rule.should_run(ctx),
@@ -20865,6 +20909,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.should_run(ctx),
+            Self::VueNoDupeKeys(rule) => rule.should_run(ctx),
             Self::VueNoExportInScriptSetup(rule) => rule.should_run(ctx),
             Self::VueNoExposeAfterAwait(rule) => rule.should_run(ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.should_run(ctx),
@@ -21522,6 +21567,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::IS_TSGOLINT_RULE,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::IS_TSGOLINT_RULE,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::IS_TSGOLINT_RULE,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::IS_TSGOLINT_RULE,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::IS_TSGOLINT_RULE,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::IS_TSGOLINT_RULE,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::IS_TSGOLINT_RULE,
@@ -22073,6 +22119,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::IS_TSGOLINT_RULE
             }
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::IS_TSGOLINT_RULE,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::IS_TSGOLINT_RULE,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::IS_TSGOLINT_RULE,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::IS_TSGOLINT_RULE,
@@ -22650,6 +22697,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::VERSION,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::VERSION,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::VERSION,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::VERSION,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::VERSION,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::VERSION,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::VERSION,
@@ -23085,6 +23133,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::VERSION,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::VERSION,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::VERSION,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::VERSION,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::VERSION,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::VERSION,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::VERSION,
@@ -23675,6 +23724,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::HAS_CONFIG,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::HAS_CONFIG,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::HAS_CONFIG,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::HAS_CONFIG,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::HAS_CONFIG,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::HAS_CONFIG,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::HAS_CONFIG,
@@ -24132,6 +24182,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedVueConfigKeycodes(_) => {
                 VueNoDeprecatedVueConfigKeycodes::HAS_CONFIG
             }
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::HAS_CONFIG,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::HAS_CONFIG,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::HAS_CONFIG,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::HAS_CONFIG,
@@ -24681,6 +24732,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::INFO,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::INFO,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::INFO,
+            Self::ReactReactCompiler(_) => ReactReactCompiler::INFO,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::INFO,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::INFO,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::INFO,
@@ -25084,6 +25136,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::INFO,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::INFO,
             Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::INFO,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::INFO,
             Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::INFO,
             Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::INFO,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::INFO,
@@ -25566,6 +25619,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.types_info(),
             Self::ReactPreferEs6Class(rule) => rule.types_info(),
             Self::ReactPreferFunctionComponent(rule) => rule.types_info(),
+            Self::ReactReactCompiler(rule) => rule.types_info(),
             Self::ReactReactInJsxScope(rule) => rule.types_info(),
             Self::ReactRequireRenderReturn(rule) => rule.types_info(),
             Self::ReactRulesOfHooks(rule) => rule.types_info(),
@@ -25927,6 +25981,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(rule) => rule.types_info(),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.types_info(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.types_info(),
+            Self::VueNoDupeKeys(rule) => rule.types_info(),
             Self::VueNoExportInScriptSetup(rule) => rule.types_info(),
             Self::VueNoExposeAfterAwait(rule) => rule.types_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.types_info(),
@@ -26402,6 +26457,7 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.run_info(),
             Self::ReactPreferEs6Class(rule) => rule.run_info(),
             Self::ReactPreferFunctionComponent(rule) => rule.run_info(),
+            Self::ReactReactCompiler(rule) => rule.run_info(),
             Self::ReactReactInJsxScope(rule) => rule.run_info(),
             Self::ReactRequireRenderReturn(rule) => rule.run_info(),
             Self::ReactRulesOfHooks(rule) => rule.run_info(),
@@ -26763,6 +26819,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedModelDefinition(rule) => rule.run_info(),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_info(),
             Self::VueNoDeprecatedVueConfigKeycodes(rule) => rule.run_info(),
+            Self::VueNoDupeKeys(rule) => rule.run_info(),
             Self::VueNoExportInScriptSetup(rule) => rule.run_info(),
             Self::VueNoExposeAfterAwait(rule) => rule.run_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.run_info(),
@@ -27330,6 +27387,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactOnlyExportComponents(ReactOnlyExportComponents::default()),
         RuleEnum::ReactPreferEs6Class(ReactPreferEs6Class::default()),
         RuleEnum::ReactPreferFunctionComponent(ReactPreferFunctionComponent::default()),
+        RuleEnum::ReactReactCompiler(ReactReactCompiler::default()),
         RuleEnum::ReactReactInJsxScope(ReactReactInJsxScope::default()),
         RuleEnum::ReactRequireRenderReturn(ReactRequireRenderReturn::default()),
         RuleEnum::ReactRulesOfHooks(ReactRulesOfHooks::default()),
@@ -27733,6 +27791,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueNoDeprecatedModelDefinition(VueNoDeprecatedModelDefinition::default()),
         RuleEnum::VueNoDeprecatedPropsDefaultThis(VueNoDeprecatedPropsDefaultThis::default()),
         RuleEnum::VueNoDeprecatedVueConfigKeycodes(VueNoDeprecatedVueConfigKeycodes::default()),
+        RuleEnum::VueNoDupeKeys(VueNoDupeKeys::default()),
         RuleEnum::VueNoExportInScriptSetup(VueNoExportInScriptSetup::default()),
         RuleEnum::VueNoExposeAfterAwait(VueNoExposeAfterAwait::default()),
         RuleEnum::VueNoImportCompilerMacros(VueNoImportCompilerMacros::default()),

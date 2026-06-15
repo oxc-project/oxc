@@ -81,15 +81,15 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn minify(
-    allocator: &Allocator,
-    source_text: &str,
+fn minify<'a>(
+    allocator: &'a Allocator,
+    source_text: &'a str,
     source_type: SourceType,
     source_map_path: Option<PathBuf>,
     mangle: bool,
     nospace: bool,
     max_iterations: Option<u8>,
-) -> CodegenReturn {
+) -> CodegenReturn<'a> {
     let ret = Parser::new(allocator, source_text, source_type).parse();
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;

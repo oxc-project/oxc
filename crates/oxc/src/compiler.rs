@@ -27,7 +27,7 @@ impl CompilerInterface for Compiler {
         self.errors.extend(errors);
     }
 
-    fn after_codegen(&mut self, ret: CodegenReturn) {
+    fn after_codegen(&mut self, ret: CodegenReturn<'_>) {
         self.printed = ret.code;
     }
 }
@@ -112,7 +112,7 @@ pub trait CompilerInterface {
         ControlFlow::Continue(())
     }
 
-    fn after_isolated_declarations(&mut self, _ret: CodegenReturn) {}
+    fn after_isolated_declarations(&mut self, _ret: CodegenReturn<'_>) {}
 
     fn after_transform(
         &mut self,
@@ -122,7 +122,7 @@ pub trait CompilerInterface {
         ControlFlow::Continue(())
     }
 
-    fn after_codegen(&mut self, _ret: CodegenReturn) {}
+    fn after_codegen(&mut self, _ret: CodegenReturn<'_>) {}
 
     fn compile(&mut self, source_text: &str, source_type: SourceType, source_path: &Path) {
         let allocator = Allocator::default();
@@ -308,13 +308,13 @@ pub trait CompilerInterface {
         Mangler::new().with_options(options).build(program)
     }
 
-    fn codegen(
+    fn codegen<'a>(
         &self,
-        program: &Program<'_>,
+        program: &Program<'a>,
         source_path: &Path,
         mangler_return: Option<ManglerReturn>,
         options: CodegenOptions,
-    ) -> CodegenReturn {
+    ) -> CodegenReturn<'a> {
         let mut options = options;
         if self.enable_sourcemap() {
             options.source_map_path = Some(source_path.to_path_buf());
