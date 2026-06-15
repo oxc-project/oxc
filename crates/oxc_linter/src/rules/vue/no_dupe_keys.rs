@@ -336,11 +336,11 @@ fn collect_props_bindings<'a>(
     collect_binding_symbol_ids(&decl.id, &mut ids);
     if let BindingPattern::ObjectPattern(pat) = &decl.id {
         for prop in &pat.properties {
-            if let Some(key_name) = static_key_name(&prop.key)
+            if let PropertyKey::StaticIdentifier(key) = &prop.key
                 && let BindingPattern::BindingIdentifier(val) = &prop.value
-                && key_name.as_ref() != val.name.as_str()
+                && key.name != val.name
             {
-                renamed.insert(key_name);
+                renamed.insert(Cow::Borrowed(key.name.as_str()));
             }
         }
     }
@@ -1629,6 +1629,18 @@ const bar = 42
 const { foo: renamedFoo } = defineProps(['foo', 'bar'])
 const foo = 'foo'
 const bar = 'bar'
+</script>
+",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // Literal destructuring keys are not treated as renamed props upstream.
+        (
+            r"
+<script setup>
+const { 'foo': renamedFoo } = defineProps(['foo'])
+const foo = 'foo'
 </script>
 ",
             None,

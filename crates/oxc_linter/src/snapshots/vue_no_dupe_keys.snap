@@ -299,6 +299,14 @@ source: crates/oxc_linter/src/tester.rs
  6 │ </script>
    ╰────
 
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:4:7]
+ 3 │ const { 'foo': renamedFoo } = defineProps(['foo'])
+ 4 │ const foo = 'foo'
+   ·       ───
+ 5 │ </script>
+   ╰────
+
   ⚠ vue(no-dupe-keys): Duplicate key 'Foo'. May cause name collision in script or template tag.
    ╭─[no_dupe_keys.tsx:4:1]
  3 │ defineProps({ Foo: String })
