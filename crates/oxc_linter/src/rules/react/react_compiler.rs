@@ -71,6 +71,10 @@ declare_oxc_lint!(
     ///
     /// This rule surfaces the same diagnostics as `eslint-plugin-react-compiler`.
     ///
+    /// ::: warning
+    /// This rule is experimental, and will change to fit in better with Oxlint.
+    /// :::
+    ///
     /// ### Why is this bad?
     ///
     /// Code that breaks the Rules of React can behave unpredictably at runtime
