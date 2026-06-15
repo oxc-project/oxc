@@ -82,7 +82,7 @@ declare_oxc_lint!(
     NoDupeKeys,
     vue,
     correctness,
-    version = "next",
+    version = "1.70.0",
     config = NoDupeKeys,
 );
 

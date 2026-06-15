@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.55.0] - 2026-06-15
+
+### 🚀 Features
+
+- 8cc82c4 formatter_json: Implement json-stringify variant (#23192) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- b0b5d39 formatter_json: Support JSON5/JSON6 value in json/jsonc/json5 (#23193) (leaysgur)
+
+### 📚 Documentation
+
+- 4986613 formatter_json: Update AGENTS.md (#23199) (leaysgur)
+
 ## [0.54.0] - 2026-06-08
 
 ### 🚀 Features
