@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.136.0] - 2026-06-15
+
+### 🚀 Features
+
+- 47991bd semantic: Report TS1228 for invalid type predicates (#23174) (camc314)
+- 44313da semantic: Add `scope_is_descendant_of` api (#22313) (camc314)
+
+### 📚 Documentation
+
+- d241add semantic: Add `AGENTS.md` test guidance for agents (#23441) (camc314)
+
 ## [0.135.0] - 2026-06-08
 
 ### 🚀 Features
