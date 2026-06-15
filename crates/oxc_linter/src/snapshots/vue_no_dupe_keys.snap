@@ -195,6 +195,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:7:15]
+ 6 │             return {
+ 7 │               foo: null
+   ·               ───
+ 8 │             }
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
    ╭─[no_dupe_keys.tsx:7:17]
  6 │           return {
  7 │             get foo() {

@@ -107,7 +107,7 @@ impl NoDupeKeys {
         obj: &'a ObjectExpression<'a>,
         ctx: &LintContext<'a>,
     ) {
-        if !is_vue_component_options_object(node, ctx) {
+        if !is_vue_component_options_object(node, ctx) && !has_vue_component_annotation(node, ctx) {
             return;
         }
         let extra_groups = &self.0.groups;
@@ -152,6 +152,9 @@ fn check_define_props<'a>(node: &AstNode<'a>, call: &'a CallExpression<'a>, ctx:
         else {
             continue;
         };
+        if !ctx.scoping().symbol_flags(symbol_id).can_be_referenced_by_value() {
+            continue;
+        }
         let decl = ctx.semantic().symbol_declaration(symbol_id);
         let span = match decl.kind() {
             AstKind::VariableDeclarator(d) => {
@@ -174,6 +177,31 @@ fn check_define_props<'a>(node: &AstNode<'a>, call: &'a CallExpression<'a>, ctx:
 }
 
 const GROUP_NAMES: &[&str] = &["props", "computed", "data", "methods", "setup"];
+
+fn has_vue_component_annotation(node: &AstNode, ctx: &LintContext) -> bool {
+    let mut target_start = node.kind().span().start;
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        if matches!(
+            ancestor.kind(),
+            AstKind::ExportDefaultDeclaration(_)
+                | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExpressionStatement(_)
+                | AstKind::VariableDeclaration(_)
+        ) {
+            target_start = ancestor.kind().span().start;
+        }
+    }
+
+    for comment in ctx.comments_range(..target_start).rev() {
+        if comment.attached_to != target_start {
+            break;
+        }
+        if comment.content_span().source_text(ctx.source_text()).trim() == "@vue/component" {
+            return true;
+        }
+    }
+    false
+}
 
 fn collect_group_keys<'a>(
     value: &'a Expression<'a>,
@@ -911,6 +939,23 @@ fn test() {
             Some(PathBuf::from("test.vue")),
         ),
         (
+            r#"
+<script setup lang="ts">
+defineProps<{
+  Foo: string;
+  Bar: string;
+  Baz: string;
+}>();
+interface Foo {}
+type Bar = string
+import type { Baz } from './types'
+</script>
+"#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
             r"
 <script setup>
 const props = defineProps(['foo', 'bar'])
@@ -1464,6 +1509,22 @@ export default { props: { [null]: String }, data () { return { 'null': 1 } } }
         })
       ",
             Some(serde_json::json!([{ "groups": ["foo"] }])),
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            r"
+        // @vue/component
+        export const comp = {
+          props: ['foo'],
+          data () {
+            return {
+              foo: null
+            }
+          }
+        }
+      ",
+            None,
             None,
             Some(PathBuf::from("test.js")),
         ),
