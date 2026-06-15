@@ -57,11 +57,14 @@ impl Rule for ThrowNewError {
             return;
         };
 
-        // Skip calls that are the superClass of a Class (extends clause)
-        // or a decorator (e.g. @RegisterServiceError()).
+        // Skip decorator callees (e.g. @RegisterServiceError()).
         // `new` is not appropriate there.
         let parent_kind = ctx.nodes().parent_kind(node.id());
-        if matches!(parent_kind, AstKind::Class(_) | AstKind::Decorator(_)) {
+        if matches!(parent_kind, AstKind::Decorator(_)) {
+            return;
+        }
+
+        if is_data_tagged_error(call_expr.callee.without_parentheses()) {
             return;
         }
 
@@ -72,11 +75,24 @@ impl Rule for ThrowNewError {
         };
 
         if name.len() >= 5 && name.as_bytes()[0].is_ascii_uppercase() && name.ends_with("Error") {
+            if matches!(parent_kind, AstKind::Class(_)) {
+                ctx.diagnostic(throw_new_error_diagnostic(call_expr.span));
+                return;
+            }
+
             ctx.diagnostic_with_fix(throw_new_error_diagnostic(call_expr.span), |fixer| {
                 fixer.insert_text_before_range(call_expr.span, "new ")
             });
         }
     }
+}
+
+fn is_data_tagged_error(callee: &Expression<'_>) -> bool {
+    let Expression::StaticMemberExpression(member) = callee else {
+        return false;
+    };
+
+    member.property.name == "TaggedError" && member.object.is_specific_id("Data")
 }
 
 #[test]
@@ -102,7 +118,9 @@ fn test() {
         r#"throw lib["Error"]()"#,
         "throw lib.getError()",
         "class QueryError extends Data.TaggedError('QueryError') {}",
-        "@RegisterServiceError()\nexport class SomeError extends Error {}",
+        "function RegisterServiceError() {\n    return function <T extends new (...arguments_: any[]) => Error>(constructor: T) {\n        return constructor;\n    };\n}\n\n@RegisterServiceError()\nexport class SomeError extends Error {}",
+        "@decorators.RegisterServiceError()\nexport class SomeError extends Error {}",
+        "class Service {\n    @OnQueueError()\n    handle() {}\n}",
     ];
 
     let fail = vec![
@@ -132,6 +150,10 @@ fn test() {
         "throw Object.assign(Error(), {foo})",
         "new Promise((resolve, reject) => {\n        reject(Error('message'));\n    });",
         "function foo() {\n        return [globalThis][0].Error('message');\n    }",
+        "@Decorator(Error())\nexport class SomeError extends Error {}",
+        // Unlike the `Data.TaggedError` factory above, generic error-looking calls in `extends`
+        // clauses should still match upstream `eslint-plugin-unicorn` behavior.
+        "class Foo extends CustomError() {}",
     ];
 
     let fix = vec![
@@ -146,6 +168,10 @@ fn test() {
         (
             "function foo() {\n        return [globalThis][0].Error('message');\n    }",
             "function foo() {\n        return new [globalThis][0].Error('message');\n    }",
+        ),
+        (
+            "@Decorator(Error())\nexport class SomeError extends Error {}",
+            "@Decorator(new Error())\nexport class SomeError extends Error {}",
         ),
     ];
 

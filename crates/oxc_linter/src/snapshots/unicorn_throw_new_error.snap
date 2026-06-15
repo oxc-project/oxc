@@ -187,3 +187,18 @@ source: crates/oxc_linter/src/tester.rs
  3 │     }
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:12]
+ 1 │ @Decorator(Error())
+   ·            ───────
+ 2 │ export class SomeError extends Error {}
+   ╰────
+  help: Using `new` ensures the error is correctly initialized.
+
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:19]
+ 1 │ class Foo extends CustomError() {}
+   ·                   ─────────────
+   ╰────
+  help: Using `new` ensures the error is correctly initialized.
