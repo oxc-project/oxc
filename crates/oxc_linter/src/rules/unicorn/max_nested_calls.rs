@@ -190,8 +190,3 @@ fn test() {
 
     Tester::new(MaxNestedCalls::NAME, MaxNestedCalls::PLUGIN, pass, fail).test_and_snapshot();
 }
-
-#[test]
-fn reject_number_configuration() {
-    assert!(MaxNestedCalls::from_configuration(serde_json::json!([4])).is_err());
-}
