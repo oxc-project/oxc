@@ -61,19 +61,6 @@ declare_oxc_lint!(
     /// // Fluent chains are ignored.
     /// query().filter().map().toArray();
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### max
-    ///
-    /// `{ type: integer, default: 3 }`
-    ///
-    /// The maximum allowed nested call depth.
-    ///
-    /// Example:
-    /// ```json
-    /// "unicorn/max-nested-calls": ["error", { "max": 4 }]
-    /// ```
     MaxNestedCalls,
     unicorn,
     style,
