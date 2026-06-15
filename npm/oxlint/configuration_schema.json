@@ -1709,6 +1709,7 @@
           "default": 2,
           "type": "integer",
           "format": "uint8",
+          "maximum": 25.0,
           "minimum": 0.0,
           "markdownDescription": "Maximum depth to search for an accessible label within the element.\nDefaults to `2`."
         },
