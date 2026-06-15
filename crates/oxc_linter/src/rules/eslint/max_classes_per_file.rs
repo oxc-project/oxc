@@ -86,6 +86,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxClassesPerFileConfig,
     version = "0.3.4",
+    short_description = "Enforce a maximum number of classes per file.",
 );
 
 impl Rule for MaxClassesPerFile {
@@ -99,9 +100,8 @@ impl Rule for MaxClassesPerFile {
         {
             Ok(Self(Box::new(MaxClassesPerFileConfig { max, ignore_expressions: false })))
         } else {
-            Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .unwrap_or_default()
-                .into_inner())
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
         }
     }
 

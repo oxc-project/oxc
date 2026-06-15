@@ -51,6 +51,7 @@ declare_oxc_lint!(
     import,
     restriction,
     version = "1.43.0",
+    short_description = "Forbids importing modules from parent directories using relative paths.",
 );
 
 impl Rule for NoRelativeParentImports {

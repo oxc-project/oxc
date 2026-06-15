@@ -154,6 +154,7 @@ declare_oxc_lint!(
     none,
     config = IdMatchConfig,
     version = "1.66.0",
+    short_description = "Enforces a naming convention for identifiers by requiring each checked name to match a configured regular expression.",
 );
 
 impl Rule for IdMatch {

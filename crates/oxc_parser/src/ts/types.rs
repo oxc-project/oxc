@@ -151,7 +151,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_type_parameters(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        self.parse_ts_type_parameters_impl().0
+        self.parse_ts_type_parameters_impl(false).0
+    }
+
+    pub(crate) fn parse_ts_type_parameters_with_variance(
+        &mut self,
+    ) -> Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        self.parse_ts_type_parameters_impl(true).0
     }
 
     /// Parse TypeScript type parameters and return whether there was a trailing comma.
@@ -159,11 +165,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_type_parameters_with_trailing_comma(
         &mut self,
     ) -> (Option<Box<'a, TSTypeParameterDeclaration<'a>>>, bool) {
-        self.parse_ts_type_parameters_impl()
+        self.parse_ts_type_parameters_impl(false)
     }
 
     fn parse_ts_type_parameters_impl(
         &mut self,
+        allow_variance: bool,
     ) -> (Option<Box<'a, TSTypeParameterDeclaration<'a>>>, bool) {
         if !self.is_ts {
             return (None, false);
@@ -174,12 +181,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LAngle);
-        let (params, trailing_comma) = self.parse_delimited_list(
-            Kind::RAngle,
-            Kind::Comma,
-            opening_span,
-            Self::parse_ts_type_parameter,
-        );
+        let (params, trailing_comma) =
+            self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, |p| {
+                p.parse_ts_type_parameter(allow_variance)
+            });
         self.expect(Kind::RAngle);
         let span = self.end_span(span);
         if params.is_empty() {
@@ -198,15 +203,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         implements
     }
 
-    pub(crate) fn parse_ts_type_parameter(&mut self) -> TSTypeParameter<'a> {
+    fn parse_ts_type_parameter(&mut self, allow_variance: bool) -> TSTypeParameter<'a> {
         let span = self.start_span();
 
         let modifiers = self.parse_modifiers(true, false);
+        let allowed_modifiers = if allow_variance {
+            ModifierKinds::new([ModifierKind::In, ModifierKind::Out, ModifierKind::Const])
+        } else {
+            ModifierKinds::new([ModifierKind::Const])
+        };
         self.verify_modifiers(
             &modifiers,
-            ModifierKinds::new([ModifierKind::In, ModifierKind::Out, ModifierKind::Const]),
-            false, // `in` and `out` are only allowed on a type parameter of a class, interface or type alias
-            diagnostics::cannot_appear_on_a_type_parameter,
+            allowed_modifiers,
+            false,
+            |modifier, allowed| match modifier.kind {
+                ModifierKind::In | ModifierKind::Out => {
+                    diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
+                        modifier.kind,
+                        modifier.span(),
+                    )
+                }
+                _ => diagnostics::cannot_appear_on_a_type_parameter(modifier, allowed),
+            },
         );
 
         let name = self.parse_binding_identifier();

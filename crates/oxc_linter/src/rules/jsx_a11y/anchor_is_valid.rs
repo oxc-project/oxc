@@ -132,6 +132,7 @@ declare_oxc_lint!(
     correctness,
     config = AnchorIsValidConfig,
     version = "0.0.19",
+    short_description = "Enforce that anchors have a valid `href` and are not used in place of buttons for attaching click logic.",
 );
 
 impl Rule for AnchorIsValid {

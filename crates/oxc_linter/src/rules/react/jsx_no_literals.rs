@@ -132,6 +132,7 @@ declare_oxc_lint!(
     none,
     config = JsxNoLiteralsConfig,
     version = "next",
+    short_description = "Disallows usage of unwrapped string literals inside JSX, such as text children of a JSX element or string-valued props.",
 );
 
 impl Rule for JsxNoLiterals {

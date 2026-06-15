@@ -106,6 +106,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxDepth,
     version = "0.15.12",
+    short_description = "Enforce a maximum depth that blocks can be nested.",
 );
 
 impl Rule for MaxDepth {
@@ -118,9 +119,8 @@ impl Rule for MaxDepth {
         {
             Ok(MaxDepth { max })
         } else {
-            Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .unwrap_or_default()
-                .into_inner())
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
         }
     }
 

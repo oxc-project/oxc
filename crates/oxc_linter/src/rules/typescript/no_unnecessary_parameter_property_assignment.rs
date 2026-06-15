@@ -57,6 +57,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.15.13",
+    short_description = "Prevents unnecessary assignment of parameter properties.",
 );
 
 impl Rule for NoUnnecessaryParameterPropertyAssignment {

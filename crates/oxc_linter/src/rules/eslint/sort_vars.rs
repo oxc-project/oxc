@@ -28,10 +28,12 @@ pub struct SortVars {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// When declaring multiple variables within the same block, sorting variable names make it
-    /// easier to find necessary variable easier at a later time.
+    /// Enforce sorting of variable declarations within the same block.
     ///
     /// ### Why is this bad?
+    ///
+    /// When declaring multiple variables within the same block, sorting variable names can make it
+    /// easier to find necessary variables at a later time.
     ///
     /// Unsorted variable declarations can make the code harder to read and maintain.
     ///
@@ -54,6 +56,7 @@ declare_oxc_lint!(
     conditional_fix,
     config = SortVars,
     version = "0.9.3",
+    short_description = "Enforce sorting of variable declarations within the same block.",
 );
 
 impl Rule for SortVars {

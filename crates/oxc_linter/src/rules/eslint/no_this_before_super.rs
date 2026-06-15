@@ -52,6 +52,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.2.6",
+    short_description = "Require calling `super()` before using `this` or `super`.",
 );
 
 #[derive(Default, Copy, Clone, Debug)]

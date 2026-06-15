@@ -95,6 +95,7 @@ declare_oxc_lint!(
     fix,
     config = PreferArrowCallback,
     version = "1.65.0",
+    short_description = "Requires using arrow functions for callbacks.",
 );
 
 impl Rule for PreferArrowCallback {

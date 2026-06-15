@@ -44,6 +44,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     version = "0.2.14",
+    short_description = "Disallow the use of the `__proto__` property.",
 );
 
 impl Rule for NoProto {

@@ -288,15 +288,6 @@ pub fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
 
 // TypeScript diagnostics
 
-#[cold]
-pub fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
-    modifier: &str,
-    span: Span,
-) -> OxcDiagnostic {
-    ts_error("1274", format!("'{modifier}' modifier can only appear on a type parameter of a class, interface or type alias."))
-        .with_label(span)
-}
-
 /// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
 #[cold]
 pub fn jsdoc_type_in_annotation(

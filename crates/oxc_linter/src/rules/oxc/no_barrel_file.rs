@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Disallow the use of barrel files where the file contains `export *` statements,
-    /// and the total number of modules exceed a threshold.
+    /// and the total number of modules exceeds a threshold.
     ///
     /// The default threshold is 100.
     ///
@@ -73,6 +73,7 @@ declare_oxc_lint!(
     restriction,
     config = NoBarrelFile,
     version = "0.3.0",
+    short_description = "Disallow barrel files containing `export *` statements when the total number of modules exceeds a threshold.",
 );
 
 impl Rule for NoBarrelFile {

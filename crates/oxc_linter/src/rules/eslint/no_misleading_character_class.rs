@@ -135,6 +135,7 @@ declare_oxc_lint!(
     suggestion,
     config = NoMisleadingCharacterClass,
     version = "1.17.0",
+    short_description = "This rule reports regular expressions which include multiple code point characters in character class syntax.",
 );
 
 #[derive(Debug)]

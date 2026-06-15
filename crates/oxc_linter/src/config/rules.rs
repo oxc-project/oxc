@@ -380,14 +380,14 @@ impl JsonSchema for OxlintRules {
                 #[expect(clippy::cast_possible_truncation)]
                 #[cfg(feature = "ruledocs")]
                 fn rule_config_schema(r: &RuleEnum, r#gen: &mut SchemaGenerator) -> Schema {
-                    fn with_toggle_schema(
+                    fn with_default_rule_schema(
                         config_schema: Schema,
                         r#gen: &mut SchemaGenerator,
                     ) -> Schema {
                         SchemaObject {
                             subschemas: Some(Box::new(schemars::schema::SubschemaValidation {
                                 any_of: Some(vec![
-                                    r#gen.subschema_for::<AllowWarnDeny>(),
+                                    r#gen.subschema_for::<RuleNoConfig>(),
                                     config_schema,
                                 ]),
                                 ..Default::default()
@@ -411,14 +411,14 @@ impl JsonSchema for OxlintRules {
                                     r#gen.subschema_for::<AllowWarnDeny>(),
                                     Schema::Bool(true),
                                 ])),
-                                min_items: Some(1),
+                                min_items: Some(2),
                                 max_items: Some(2),
                                 ..Default::default()
                             })),
                             ..Default::default()
                         }
                         .into();
-                        return with_toggle_schema(array_schema, r#gen);
+                        return with_default_rule_schema(array_schema, r#gen);
                     };
 
                     debug_assert!(
@@ -440,14 +440,14 @@ impl JsonSchema for OxlintRules {
                                         ..Default::default()
                                     }),
                                 ])),
-                                min_items: Some(1),
+                                min_items: Some(2),
                                 max_items: Some(2),
                                 ..Default::default()
                             })),
                             ..Default::default()
                         }
                         .into();
-                        return with_toggle_schema(array_schema, r#gen);
+                        return with_default_rule_schema(array_schema, r#gen);
                     }
 
                     if let Some(array) = obj.array {
@@ -470,14 +470,14 @@ impl JsonSchema for OxlintRules {
                             instance_type: Some(InstanceType::Array.into()),
                             array: Some(Box::new(ArrayValidation {
                                 items: Some(SingleOrVec::Vec(items)),
-                                min_items: Some(1),
+                                min_items: Some(2),
                                 max_items: Some(config_length),
                                 ..Default::default()
                             })),
                             ..Default::default()
                         }
                         .into();
-                        return with_toggle_schema(array_schema, r#gen);
+                        return with_default_rule_schema(array_schema, r#gen);
                     }
 
                     let array_schema = Schema::Object(SchemaObject {
@@ -487,14 +487,14 @@ impl JsonSchema for OxlintRules {
                                 r#gen.subschema_for::<AllowWarnDeny>(),
                                 Schema::Object(obj),
                             ])),
-                            min_items: Some(1),
+                            min_items: Some(2),
                             max_items: Some(2),
                             ..Default::default()
                         })),
                         ..Default::default()
                     });
 
-                    with_toggle_schema(array_schema, r#gen)
+                    with_default_rule_schema(array_schema, r#gen)
                 }
 
                 let dummy_schema = r#gen.subschema_for::<DummyRule>();

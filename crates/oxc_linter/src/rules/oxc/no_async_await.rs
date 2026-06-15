@@ -42,6 +42,7 @@ declare_oxc_lint!(
     oxc,
     restriction,
     version = "0.4.2",
+    short_description = "Disallows the use of `async`/`await`.",
 );
 
 impl Rule for NoAsyncAwait {

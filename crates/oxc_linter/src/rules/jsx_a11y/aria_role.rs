@@ -100,6 +100,7 @@ declare_oxc_lint!(
     correctness,
     config = AriaRoleConfig,
     version = "0.1.1",
+    short_description = "Enforce that elements with ARIA roles use a valid, non-abstract ARIA role.",
 );
 
 impl Rule for AriaRole {

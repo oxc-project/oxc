@@ -103,6 +103,7 @@ declare_oxc_lint!(
     suspicious,
     suggestion,
     version = "0.4.4",
+    short_description = "Disallow constructors that can be safely removed without changing how the class works.",
 );
 
 impl Rule for NoUselessConstructor {

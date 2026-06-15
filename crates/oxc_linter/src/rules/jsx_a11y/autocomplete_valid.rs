@@ -74,6 +74,7 @@ declare_oxc_lint!(
     correctness,
     config = AutocompleteValidConfig,
     version = "0.2.0",
+    short_description = "Enforces that an element's autocomplete attribute must be a valid value.",
 );
 
 static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf::phf_set![

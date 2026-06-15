@@ -101,6 +101,7 @@ declare_oxc_lint!(
     pedantic,
     config = MaxNestedCallbacks,
     version = "0.15.12",
+    short_description = "Enforce a maximum depth that callbacks can be nested.",
 );
 
 impl Rule for MaxNestedCallbacks {

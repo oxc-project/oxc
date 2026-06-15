@@ -155,3 +155,35 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────────────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:15]
+ 1 │ const error = Error()
+   ·               ───────
+   ╰────
+  help: Using `new` ensures the error is correctly initialized.
+
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:21]
+ 1 │ throw Object.assign(Error(), {foo})
+   ·                     ───────
+   ╰────
+  help: Using `new` ensures the error is correctly initialized.
+
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:2:16]
+ 1 │ new Promise((resolve, reject) => {
+ 2 │         reject(Error('message'));
+   ·                ────────────────
+ 3 │     });
+   ╰────
+  help: Using `new` ensures the error is correctly initialized.
+
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:2:16]
+ 1 │ function foo() {
+ 2 │         return [globalThis][0].Error('message');
+   ·                ────────────────────────────────
+ 3 │     }
+   ╰────
+  help: Using `new` ensures the error is correctly initialized.

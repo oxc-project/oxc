@@ -70,6 +70,7 @@ declare_oxc_lint!(
     correctness,
     none,
     version = "next",
+    short_description = "Disallow side effects in computed properties.",
 );
 
 impl Rule for NoSideEffectsInComputedProperties {

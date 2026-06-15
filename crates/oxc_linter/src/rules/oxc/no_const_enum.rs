@@ -41,6 +41,7 @@ declare_oxc_lint!(
     restriction,
     fix,
     version = "0.4.2",
+    short_description = "Disallow TypeScript `const enum`",
 );
 
 impl Rule for NoConstEnum {

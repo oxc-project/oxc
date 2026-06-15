@@ -87,6 +87,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.2.15",
+    short_description = "This rule triggers a warning if `mock()` or `doMock()` is used without a generic type parameter or return type.",
 );
 
 impl Rule for NoUntypedMockFactory {

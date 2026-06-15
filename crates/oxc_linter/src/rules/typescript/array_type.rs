@@ -166,6 +166,7 @@ declare_oxc_lint!(
     fix,
     config = ArrayTypeConfig,
     version = "0.2.8",
+    short_description = "Require consistently using either `T[]` or `Array<T>` for arrays.",
 );
 
 fn generic(readonly_prefix: &str, name: &str, type_name: &str, span: Span) -> OxcDiagnostic {

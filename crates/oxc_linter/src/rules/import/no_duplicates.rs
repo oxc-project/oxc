@@ -104,6 +104,7 @@ declare_oxc_lint!(
     none,
     config = NoDuplicates,
     version = "0.2.11",
+    short_description = "Forbid importing the same module multiple times.",
 );
 
 impl Rule for NoDuplicates {
