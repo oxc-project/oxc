@@ -93,6 +93,7 @@ export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type SnapshotHintMode = "always" | "multi";
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
+export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
 export type DistractingElement = "marquee" | "blink";
 export type CountThis = "always" | "never" | "except-void";
@@ -972,7 +973,7 @@ export interface DummyRuleMap {
   "jsx-a11y/alt-text"?: RuleNoConfig | [AllowWarnDeny, AltTextConfigSchema];
   "jsx-a11y/anchor-ambiguous-text"?: RuleNoConfig | [AllowWarnDeny, AnchorAmbiguousTextConfig];
   "jsx-a11y/anchor-has-content"?: RuleNoConfig;
-  "jsx-a11y/anchor-is-valid"?: DummyRule;
+  "jsx-a11y/anchor-is-valid"?: RuleNoConfig | [AllowWarnDeny, AnchorIsValidConfig];
   "jsx-a11y/aria-activedescendant-has-tabindex"?: RuleNoConfig;
   "jsx-a11y/aria-props"?: RuleNoConfig;
   "jsx-a11y/aria-proptypes"?: RuleNoConfig;
@@ -2406,6 +2407,20 @@ export interface AnchorAmbiguousTextConfig {
    * List of ambiguous words or phrases that should be flagged in anchor text.
    */
   words?: string[];
+}
+export interface AnchorIsValidConfig {
+  /**
+   * Sub-rule aspects to run.
+   */
+  aspects?: AnchorIsValidAspect[];
+  /**
+   * Custom components to treat as anchor elements.
+   */
+  components?: string[];
+  /**
+   * Custom prop names to treat as link destinations.
+   */
+  specialLink?: string[];
 }
 export interface AriaRoleConfig {
   /**

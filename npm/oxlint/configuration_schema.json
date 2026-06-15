@@ -672,6 +672,46 @@
       },
       "additionalProperties": false
     },
+    "AnchorIsValidAspect": {
+      "type": "string",
+      "enum": [
+        "noHref",
+        "invalidHref",
+        "preferButton"
+      ]
+    },
+    "AnchorIsValidConfig": {
+      "type": "object",
+      "properties": {
+        "aspects": {
+          "description": "Sub-rule aspects to run.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AnchorIsValidAspect"
+          },
+          "markdownDescription": "Sub-rule aspects to run."
+        },
+        "components": {
+          "description": "Custom components to treat as anchor elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom components to treat as anchor elements."
+        },
+        "specialLink": {
+          "description": "Custom prop names to treat as link destinations.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Custom prop names to treat as link destinations."
+        }
+      },
+      "additionalProperties": false
+    },
     "ArgsOption": {
       "oneOf": [
         {
@@ -3514,7 +3554,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsx-a11y/anchor-is-valid": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AnchorIsValidConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/aria-activedescendant-has-tabindex": {
           "$ref": "#/definitions/RuleNoConfig"
