@@ -2,8 +2,8 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId, ReferenceId};
-use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashMap;
+use oxc_span::Span;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     context::LintContext,
@@ -89,6 +89,7 @@ impl Rule for NoConfusingSetTimeout {
             });
 
         let mut jest_reference_id_list: Vec<(ReferenceId, Span)> = vec![];
+        let mut reported_unordered_set_timeouts = FxHashSet::default();
         let mut seen_jest_set_timeout = false;
 
         for reference_ids in scopes.root_unresolved_references_ids() {
@@ -109,6 +110,7 @@ impl Rule for NoConfusingSetTimeout {
                 reference_id_list,
                 &jest_reference_id_list,
                 &mut seen_jest_set_timeout,
+                &mut reported_unordered_set_timeouts,
                 &id_to_jest_node_map,
             );
         }
@@ -119,6 +121,7 @@ impl Rule for NoConfusingSetTimeout {
                 reference_id_list.iter().copied(),
                 &jest_reference_id_list,
                 &mut seen_jest_set_timeout,
+                &mut reported_unordered_set_timeouts,
                 &id_to_jest_node_map,
             );
         }
@@ -139,19 +142,22 @@ fn collect_jest_reference_id(
         if !is_jest_call(ctx.semantic().reference_name(reference)) {
             continue;
         }
-        let parent_node = nodes.parent_node(reference.node_id());
-        if !parent_node.kind().is_member_expression_kind() {
+        let AstKind::StaticMemberExpression(expr) = nodes.parent_node(reference.node_id()).kind()
+        else {
             continue;
+        };
+        if expr.property.name == "setTimeout" {
+            jest_reference_list.push((reference_id, expr.span));
         }
-        jest_reference_list.push((reference_id, parent_node.kind().span()));
     }
 }
 
 fn handle_jest_set_time_out<'a>(
     ctx: &LintContext<'a>,
     reference_id_list: impl Iterator<Item = ReferenceId>,
-    jest_reference_id_list: &Vec<(ReferenceId, Span)>,
+    jest_reference_id_list: &[(ReferenceId, Span)],
     seen_jest_set_timeout: &mut bool,
+    reported_unordered_set_timeouts: &mut FxHashSet<ReferenceId>,
     id_to_jest_node_map: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
 ) {
     let nodes = ctx.nodes();
@@ -165,7 +171,9 @@ fn handle_jest_set_time_out<'a>(
         if !is_jest_call(ctx.semantic().reference_name(reference)) {
             if is_jest_fn_call(parent_node, id_to_jest_node_map, ctx) {
                 for (jest_reference_id, span) in jest_reference_id_list {
-                    if jest_reference_id > &reference_id {
+                    if jest_reference_id > &reference_id
+                        && reported_unordered_set_timeouts.insert(*jest_reference_id)
+                    {
                         ctx.diagnostic(no_unorder_set_timeout_diagnostic(*span));
                     }
                 }
@@ -345,6 +353,22 @@ fn test() {
                     setTimeout(() => {
                         Promise.resolv();
                     }, 5000);
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                describe('example', () => {
+                    beforeEach(() => {
+                        jest.clearAllMocks();
+                    });
+
+                    it('works', () => {
+                        const fn = jest.fn();
+                        fn();
+                        expect(fn).toHaveBeenCalled();
+                    });
                 });
             ",
             None,
