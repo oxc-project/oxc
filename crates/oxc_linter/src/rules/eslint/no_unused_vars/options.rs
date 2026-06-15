@@ -663,7 +663,13 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     .map_or(Some(false), Value::as_bool)
                     .unwrap_or(false);
 
-                let fix = if let Some(fix) = config.get("fix").and_then(Value::as_object) {
+                let fix = if let Some(fix_value) = config.get("fix") {
+                    let Some(fix) = fix_value.as_object() else {
+                        return Err(invalid_option_error(
+                            "fix",
+                            format!("Expected an object, got {fix_value}"),
+                        ));
+                    };
                     NoUnusedVarsFixOptions {
                         imports: parse_fix_mode(fix.get("imports"), "fix.imports")?,
                         variables: parse_fix_mode(fix.get("variables"), "fix.variables")?,
@@ -790,6 +796,11 @@ mod tests {
         // option object provided, no default argsIgnorePattern
         assert!(matches!(rule.vars_ignore_pattern, IgnorePattern::Default));
         assert!(rule.args_ignore_pattern.is_none());
+    }
+
+    #[test]
+    fn invalid_fix_option_error() {
+        assert!(NoUnusedVarsOptions::try_from(json!([{ "fix": true }])).is_err());
     }
 
     #[test]
