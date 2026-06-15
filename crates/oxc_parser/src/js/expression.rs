@@ -968,6 +968,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             &tagged_template.tag,
                         )
                     }
+                    Expression::TSNonNullExpression(non_null) => {
+                        Self::is_import_expression_or_member_access_on_import_expression(
+                            &non_null.expression,
+                        )
+                    }
                     _ => false,
                 };
             };

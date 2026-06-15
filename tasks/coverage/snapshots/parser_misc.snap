@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 69/69 (100.00%)
 Positive Passed: 69/69 (100.00%)
-Negative Passed: 148/148 (100.00%)
+Negative Passed: 149/149 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3616,6 +3616,13 @@ Negative Passed: 148/148 (100.00%)
  3 │ new import.defer('./empty_FIXTURE.js').prop;
  4 │ new import('x').prop``;
    ·     ──────────────────
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.ts:1:5]
+ 1 │ new import('x').prop!;
+   ·     ─────────────────
    ╰────
   help: Wrap this with parenthesis
 
