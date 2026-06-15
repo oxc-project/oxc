@@ -3282,7 +3282,6 @@ export interface NoSequences {
   /**
    * If this option is set to `false`, this rule disallows the comma operator
    * even when the expression sequence is explicitly wrapped in parentheses.
-   * Default is `true`.
    */
   allowInParentheses?: boolean;
 }

@@ -14158,10 +14158,10 @@
       "type": "object",
       "properties": {
         "allowInParentheses": {
-          "description": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`.",
+          "description": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.",
           "default": true,
           "type": "boolean",
-          "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses.\nDefault is `true`."
+          "markdownDescription": "If this option is set to `false`, this rule disallows the comma operator\neven when the expression sequence is explicitly wrapped in parentheses."
         }
       },
       "additionalProperties": false
