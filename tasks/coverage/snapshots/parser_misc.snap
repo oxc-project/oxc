@@ -3607,6 +3607,15 @@ Negative Passed: 148/148 (100.00%)
  2 │ new import.source('<module source>').prop;
  3 │ new import.defer('./empty_FIXTURE.js').prop;
    ·     ───────────────────────────────────────
+ 4 │ new import('x').prop``;
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.js:4:5]
+ 3 │ new import.defer('./empty_FIXTURE.js').prop;
+ 4 │ new import('x').prop``;
+   ·     ──────────────────
    ╰────
   help: Wrap this with parenthesis
 

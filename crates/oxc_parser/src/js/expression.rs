@@ -962,7 +962,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return true;
             }
             let Some(member_expr) = expr.as_member_expression() else {
-                return false;
+                return match expr {
+                    Expression::TaggedTemplateExpression(tagged_template) => {
+                        Self::is_import_expression_or_member_access_on_import_expression(
+                            &tagged_template.tag,
+                        )
+                    }
+                    _ => false,
+                };
             };
             expr = member_expr.object();
         }
