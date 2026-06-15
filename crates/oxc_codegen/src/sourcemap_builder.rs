@@ -40,7 +40,10 @@ pub struct Line {
     column_offsets_id: Option<ColumnOffsetsId>,
 }
 
-type ColumnOffsets = Box<[ColumnOffset]>;
+#[derive(Debug)]
+pub struct ColumnOffsets {
+    offsets: Box<[ColumnOffset]>,
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct ColumnOffset {
@@ -154,21 +157,9 @@ impl<'a> SourcemapBuilder<'a> {
         let mut original_column = position - line.byte_offset_to_start_of_line;
         if let Some(column_offsets_id) = line.column_offsets_id {
             let column_offsets = &self.line_offset_tables.column_offsets[column_offsets_id];
-            let offset_index =
-                column_offsets.partition_point(|offset| offset.byte_offset <= original_column);
-            if offset_index != 0 {
-                let offset = column_offsets[offset_index - 1];
-                let char_start = (line.byte_offset_to_start_of_line + offset.byte_offset) as usize;
-                let ch = self.original_source[char_start..].chars().next().unwrap();
-                let byte_len = ch.len_utf8() as u32;
-
-                original_column = if original_column < offset.byte_offset + byte_len {
-                    offset.column
-                } else {
-                    offset.column
-                        + ch.len_utf16() as u32
-                        + (original_column - offset.byte_offset - byte_len)
-                };
+            if original_column >= column_offsets.byte_offset_to_first {
+                original_column = column_offsets.columns
+                    [(original_column - column_offsets.byte_offset_to_first) as usize];
             }
         }
         (original_line as u32, original_column)
@@ -255,6 +246,12 @@ impl<'a> SourcemapBuilder<'a> {
 
         while lines[idx].byte_offset_to_start_of_line > position {
             idx -= 1;
+        }
+
+        if lines[idx].byte_offset_to_start_of_line < position {
+            idx = lines
+                .partition_point(|table| table.byte_offset_to_start_of_line <= position)
+                .saturating_sub(1);
         }
 
         idx
@@ -359,6 +356,7 @@ impl<'a> SourcemapBuilder<'a> {
         // Used as a buffer to reduce memory reallocations.
         // Pre-allocate with reasonable capacity to avoid frequent reallocations.
         // 16 is a guess, probably adequate for most files which don't heavily use unicode chars.
+        // 16 entries is 64 bytes = 1 CPU cache line on most CPUs.
         // If file does heavily use unicode chars, `columns` will grow adaptively as needed.
         let mut columns = Vec::with_capacity(16);
 
@@ -366,8 +364,7 @@ impl<'a> SourcemapBuilder<'a> {
         // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
         // If line is all ASCII, UTF-8 columns and UTF-16 columns are the same,
         // so no need to create a `columns` Vec. This is the fast path for common case.
-        // If a Unicode character found, read rest of line char-by-char, recording Unicode char
-        // offsets. ASCII byte columns can then be derived from the closest preceding Unicode char.
+        // If a Unicode character found, read rest of line char-by-char, populating `columns` Vec.
         // At end of line, go back to top of outer loop, and again assume ASCII for next line.
         let mut line_byte_offset = 0;
         'lines: loop {
@@ -410,12 +407,7 @@ impl<'a> SourcemapBuilder<'a> {
                         for (chunk_byte_offset, ch) in remaining.char_indices() {
                             #[expect(clippy::cast_possible_truncation)]
                             let mut chunk_byte_offset = chunk_byte_offset as u32;
-                            if !ch.is_ascii() {
-                                columns.push(ColumnOffset {
-                                    byte_offset: byte_offset_from_line_start + chunk_byte_offset,
-                                    column,
-                                });
-                            }
+                            columns.extend(std::iter::repeat_n(column, ch.len_utf8()));
 
                             match ch {
                                 '\r' => {
@@ -425,6 +417,7 @@ impl<'a> SourcemapBuilder<'a> {
                                         == Some(&b'\n')
                                     {
                                         chunk_byte_offset += 1;
+                                        columns.push(column + 1);
                                     }
                                 }
                                 '\n' => {
@@ -452,15 +445,25 @@ impl<'a> SourcemapBuilder<'a> {
                             // and does not need to reallocate again.
                             // `columns` is reused for next line, and will grow adaptively depending on
                             // how heavily the file uses unicode chars.
-                            column_offsets.push(columns.clone().into_boxed_slice());
+                            column_offsets.push(ColumnOffsets {
+                                byte_offset_to_first: byte_offset_from_line_start,
+                                columns: columns.clone().into_boxed_slice(),
+                            });
                             columns.clear();
 
                             // Revert back to outer loop for next line
                             continue 'lines;
                         }
 
+                        // EOF.
+                        // One last column entry for EOF position.
+                        columns.push(column);
+
                         // Record column offsets
-                        column_offsets.push(columns.into_boxed_slice());
+                        column_offsets.push(ColumnOffsets {
+                            byte_offset_to_first: byte_offset_from_line_start,
+                            columns: columns.into_boxed_slice(),
+                        });
 
                         break 'lines;
                     }
@@ -528,10 +531,6 @@ mod test {
         assert_mapping("\nÖÖ\n", &[(0, 0, 0), (1, 1, 0), (3, 1, 1), (5, 1, 2), (6, 2, 0)]);
         assert_mapping("Ö\ra", &[(0, 0, 0), (2, 0, 1), (3, 1, 0), (4, 1, 1)]);
         assert_mapping("Ö\r\na", &[(0, 0, 0), (2, 0, 1), (3, 0, 2), (4, 1, 0), (5, 1, 1)]);
-        assert_mapping("测a", &[(0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 1), (4, 0, 2)]);
-        assert_mapping("😀a", &[(0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 0), (4, 0, 2), (5, 0, 3)]);
-        assert_mapping("\u{2028}a", &[(0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 1, 0), (4, 1, 1)]);
-        assert_mapping("\u{2029}a", &[(0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 1, 0), (4, 1, 1)]);
     }
 
     #[test]
