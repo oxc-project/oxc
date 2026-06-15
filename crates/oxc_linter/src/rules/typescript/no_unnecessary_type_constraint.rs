@@ -78,6 +78,7 @@ declare_oxc_lint!(
     suspicious,
     pending,
     version = "0.0.6",
+    short_description = "Disallow unnecessary constraints on generic types.",
 );
 
 impl Rule for NoUnnecessaryTypeConstraint {

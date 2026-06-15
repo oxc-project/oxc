@@ -127,7 +127,7 @@ function Component() {
     expect(errors.some((error) => error.severity === "Error")).toBe(false);
   });
 
-  it("reports React Compiler errors at error severity without aborting codegen", () => {
+  it("aborts the transform when React Compiler reports an error", () => {
     const { code, errors } = transformSync(
       "Component.jsx",
       `
@@ -144,13 +144,10 @@ function Component(props) {
       },
     );
 
-    // The Rules of Hooks violation is surfaced at error severity (not flattened
-    // to a warning)...
+    // A React Compiler error (Rules of Hooks violation) is fatal: it is surfaced
+    // at error severity and the transform stops, emitting no code.
     expect(errors.some((error) => error.severity === "Error")).toBe(true);
-    // ...but the React Compiler leaves a valid program, so codegen still runs
-    // and the component is emitted rather than the whole file being dropped.
-    expect(code).not.toBe("");
-    expect(code).toContain("function Component");
+    expect(code).toBe("");
   });
 
   it("keeps enum values available for the downstream TypeScript transform", () => {

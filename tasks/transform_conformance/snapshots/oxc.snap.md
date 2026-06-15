@@ -1,6 +1,6 @@
 commit: 2688fbd1
 
-Passed: 236/395
+Passed: 239/397
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -659,18 +659,12 @@ after transform: ["dce"]
 rebuilt        : []
 
 * use-define-for-class-fields-without-class-properties/input.ts
-Scope parent mismatch:
-after transform: ScopeId(12): Some(ScopeId(0))
-rebuilt        : ScopeId(2): Some(ScopeId(1))
-Scope parent mismatch:
-after transform: ScopeId(17): Some(ScopeId(0))
-rebuilt        : ScopeId(12): Some(ScopeId(11))
 Unresolved reference IDs mismatch for "dce":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(17)]
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (49/52)
+# babel-plugin-transform-react-jsx (51/54)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"
@@ -685,7 +679,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (9/105)
+# legacy-decorators (10/105)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -708,11 +702,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["PropertyDescriptor", "babelHelpers"]
 rebuilt        : ["babelHelpers", "property"]
-
-* oxc/accessor-use-define-for-class-fields/input.ts
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(0))
-rebuilt        : ScopeId(2): Some(ScopeId(1))
 
 * oxc/accessor-with-class-properties/input.ts
 Bindings mismatch:

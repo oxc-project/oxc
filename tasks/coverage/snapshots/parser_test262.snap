@@ -3195,7 +3195,7 @@ Negative Passed: 4588/4588 (100.00%)
  60 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dflt-params-rest.js:63:8]
  62 │ 
  63 │ 0, (...x = []) => {
@@ -6998,7 +6998,7 @@ Negative Passed: 4588/4588 (100.00%)
  52 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/async-arrow-function/dflt-params-rest.js:55:12]
  54 │ 
  55 │ (async (...x = []) => {
@@ -7361,7 +7361,7 @@ Negative Passed: 4588/4588 (100.00%)
  38 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/async-function/named-dflt-params-rest.js:41:22]
  40 │ 
  41 │ (async function f(...x = []) {
@@ -7415,7 +7415,7 @@ Negative Passed: 4588/4588 (100.00%)
  38 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/async-function/nameless-dflt-params-rest.js:41:20]
  40 │ 
  41 │ (async function(...x = []) {
@@ -7533,7 +7533,7 @@ Negative Passed: 4588/4588 (100.00%)
  41 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dflt-params-rest.js:44:23]
  43 │ 
  44 │ 0, async function*(...x = []) {
@@ -7995,7 +7995,7 @@ Negative Passed: 4588/4588 (100.00%)
  41 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/named-dflt-params-rest.js:44:25]
  43 │ 
  44 │ 0, async function* g(...x = []) {
@@ -8383,7 +8383,7 @@ Negative Passed: 4588/4588 (100.00%)
  65 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-gen-method/dflt-params-rest.js:68:20]
  67 │ 0, class {
  68 │   async *method(...x = []) {
@@ -8607,7 +8607,7 @@ Negative Passed: 4588/4588 (100.00%)
  65 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-gen-method-static/dflt-params-rest.js:68:27]
  67 │ 0, class {
  68 │   static async *method(...x = []) {
@@ -8831,7 +8831,7 @@ Negative Passed: 4588/4588 (100.00%)
  63 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-method/dflt-params-rest.js:66:26]
  65 │ var C = class {
  66 │   static async method(...x = []) {
@@ -8949,7 +8949,7 @@ Negative Passed: 4588/4588 (100.00%)
  63 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-method-static/dflt-params-rest.js:66:26]
  65 │ var C = class {
  66 │   static async method(...x = []) {
@@ -13981,7 +13981,7 @@ Negative Passed: 4588/4588 (100.00%)
  86 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/gen-method/dflt-params-rest.js:89:14]
  88 │ 0, class {
  89 │   *method(...x = []) {
@@ -14150,7 +14150,7 @@ Negative Passed: 4588/4588 (100.00%)
  86 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/gen-method-static/dflt-params-rest.js:89:21]
  88 │ 0, class {
  89 │   static *method(...x = []) {
@@ -14318,7 +14318,7 @@ Negative Passed: 4588/4588 (100.00%)
  82 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/method/dflt-params-rest.js:85:13]
  84 │ 0, class {
  85 │   method(...x = []) {
@@ -14380,7 +14380,7 @@ Negative Passed: 4588/4588 (100.00%)
  82 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/class/method-static/dflt-params-rest.js:85:20]
  84 │ 0, class {
  85 │   static method(...x = []) {
@@ -17361,7 +17361,7 @@ Negative Passed: 4588/4588 (100.00%)
  61 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dflt-params-rest.js:64:16]
  63 │ 
  64 │ 0, function(...x = []) {
@@ -17693,7 +17693,7 @@ Negative Passed: 4588/4588 (100.00%)
  62 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dflt-params-rest.js:65:17]
  64 │ 
  65 │ 0, function*(...x = []) {
@@ -18963,7 +18963,7 @@ Negative Passed: 4588/4588 (100.00%)
  46 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js:49:20]
  48 │ 0, {
  49 │   async *method(...x = []) {
@@ -19131,7 +19131,7 @@ Negative Passed: 4588/4588 (100.00%)
  39 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/async-meth-dflt-params-rest.js:42:20]
  41 │ ({
  42 │   async *method(...x = []) {
@@ -19365,7 +19365,7 @@ Negative Passed: 4588/4588 (100.00%)
  68 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/gen-meth-dflt-params-rest.js:71:14]
  70 │ 0, {
  71 │   *method(...x = []) {
@@ -19591,7 +19591,7 @@ Negative Passed: 4588/4588 (100.00%)
  64 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/meth-dflt-params-rest.js:67:13]
  66 │ 0, {
  67 │   method(...x = []) {
@@ -26328,7 +26328,7 @@ Negative Passed: 4588/4588 (100.00%)
  38 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/async-function/dflt-params-rest.js:41:21]
  40 │ 
  41 │ async function f(...x = []) {
@@ -26568,7 +26568,7 @@ Negative Passed: 4588/4588 (100.00%)
  41 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dflt-params-rest.js:44:22]
  43 │ 
  44 │ async function* f(...x = []) {
@@ -27417,7 +27417,7 @@ Negative Passed: 4588/4588 (100.00%)
  64 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-gen-method/dflt-params-rest.js:67:20]
  66 │ class C {
  67 │   async *method(...x = []) {
@@ -27641,7 +27641,7 @@ Negative Passed: 4588/4588 (100.00%)
  65 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-gen-method-static/dflt-params-rest.js:68:27]
  67 │ class C {
  68 │   static async *method(...x = []) {
@@ -27873,7 +27873,7 @@ Negative Passed: 4588/4588 (100.00%)
  63 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-method/dflt-params-rest.js:66:19]
  65 │ class C {
  66 │   async method(...x = []) {
@@ -27991,7 +27991,7 @@ Negative Passed: 4588/4588 (100.00%)
  62 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-method-static/dflt-params-rest.js:65:26]
  64 │ class C {
  65 │   static async method(...x = []) {
@@ -33236,7 +33236,7 @@ Negative Passed: 4588/4588 (100.00%)
  84 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/gen-method/dflt-params-rest.js:87:14]
  86 │ class C {
  87 │   *method(...x = []) {
@@ -33405,7 +33405,7 @@ Negative Passed: 4588/4588 (100.00%)
  84 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/gen-method-static/dflt-params-rest.js:87:21]
  86 │ class C {
  87 │   static *method(...x = []) {
@@ -33573,7 +33573,7 @@ Negative Passed: 4588/4588 (100.00%)
  81 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/method/dflt-params-rest.js:84:13]
  83 │ class C {
  84 │   method(...x = []) {
@@ -33635,7 +33635,7 @@ Negative Passed: 4588/4588 (100.00%)
  81 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/class/method-static/dflt-params-rest.js:84:20]
  83 │ class C {
  84 │   static method(...x = []) {
@@ -36996,7 +36996,7 @@ Negative Passed: 4588/4588 (100.00%)
  62 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/function/dflt-params-rest.js:65:15]
  64 │ 
  65 │ function f(...x = []) {
@@ -37434,7 +37434,7 @@ Negative Passed: 4588/4588 (100.00%)
  62 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × A rest parameter cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dflt-params-rest.js:65:16]
  64 │ 
  65 │ function* f(...x = []) {

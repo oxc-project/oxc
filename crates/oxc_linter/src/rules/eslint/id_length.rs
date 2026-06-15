@@ -93,7 +93,7 @@ where
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces a minimum and/or maximum identifier length convention by counting the
+    /// Enforce a minimum and/or maximum identifier length convention by counting the
     /// graphemes for a given identifier.
     ///
     /// ### Why is this bad?
@@ -172,6 +172,7 @@ declare_oxc_lint!(
     style,
     config = IdLengthConfig,
     version = "1.4.0",
+    short_description = "Enforce a minimum and/or maximum identifier length convention by counting the graphemes for a given identifier.",
 );
 
 impl Rule for IdLength {

@@ -242,6 +242,15 @@ pub fn require_class_name(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn type_predicate_only_in_return_type(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1228",
+        "A type predicate is only allowed in return type position for functions and methods.",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn super_without_derived_class(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be referenced in a derived class.")
         .with_help("either remove this super, or extend the class")
@@ -278,15 +287,6 @@ pub fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 // TypeScript diagnostics
-
-#[cold]
-pub fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
-    modifier: &str,
-    span: Span,
-) -> OxcDiagnostic {
-    ts_error("1274", format!("'{modifier}' modifier can only appear on a type parameter of a class, interface or type alias."))
-        .with_label(span)
-}
 
 /// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
 #[cold]

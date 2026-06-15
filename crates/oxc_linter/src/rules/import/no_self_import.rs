@@ -42,6 +42,7 @@ declare_oxc_lint!(
     import,
     suspicious,
     version = "0.0.13",
+    short_description = "Forbid a module from importing itself.",
 );
 
 impl Rule for NoSelfImport {

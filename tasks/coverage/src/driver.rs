@@ -11,7 +11,7 @@ use oxc::{
     },
     ast_visit::{Visit, walk},
     codegen::{CodegenOptions, CodegenReturn},
-    diagnostics::OxcDiagnostic,
+    diagnostics::{Diagnostics, OxcDiagnostic},
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
     regular_expression::{LiteralParser, Options},
@@ -36,7 +36,7 @@ pub struct Driver {
     pub allow_return_outside_function: bool,
     // results
     pub panicked: bool,
-    pub errors: Vec<OxcDiagnostic>,
+    pub errors: Diagnostics,
     pub printed: String,
     pub source_type: Option<SourceType>,
 }
@@ -73,19 +73,19 @@ impl CompilerInterface for Driver {
         })
     }
 
-    fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {
+    fn handle_errors(&mut self, errors: Diagnostics) {
         self.errors.extend(errors);
     }
 
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
-        let ParserReturn { program, panicked, errors, .. } = parser_return;
+        let ParserReturn { program, panicked, diagnostics, .. } = parser_return;
         self.panicked = *panicked;
         self.source_type = Some(program.source_type);
         self.check_ast_nodes(program);
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
         }
-        if (errors.is_empty() || !*panicked) && program.source_type.is_unambiguous() {
+        if (diagnostics.is_empty() || !*panicked) && program.source_type.is_unambiguous() {
             self.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
         }
         // Make sure serialization doesn't crash; also for code coverage.

@@ -411,7 +411,7 @@ mod module_record_tests {
     fn build<'a>(allocator: &'a Allocator, source_text: &'a str) -> ModuleRecord<'a> {
         let source_type = SourceType::ts();
         let ret = Parser::new(allocator, source_text, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         ret.module_record
     }
 

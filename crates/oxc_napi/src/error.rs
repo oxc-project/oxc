@@ -27,8 +27,9 @@ impl OxcError {
     pub fn from_diagnostics(
         filename: &str,
         source_text: &str,
-        diagnostics: Vec<OxcDiagnostic>,
+        diagnostics: impl IntoIterator<Item = OxcDiagnostic>,
     ) -> Vec<Self> {
+        let diagnostics = diagnostics.into_iter().collect::<Vec<_>>();
         if diagnostics.is_empty() {
             return vec![];
         }

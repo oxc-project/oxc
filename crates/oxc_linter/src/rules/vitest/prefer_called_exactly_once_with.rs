@@ -189,6 +189,7 @@ declare_oxc_lint!(
     style,
     dangerous_fix,
     version = "1.58.0",
+    short_description = "It checks when a target is asserted with both `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` instead of `toHaveBeenCalledExactlyOnceWith`.",
 );
 
 impl Rule for PreferCalledExactlyOnceWith {

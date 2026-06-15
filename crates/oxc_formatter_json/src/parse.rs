@@ -61,13 +61,13 @@ pub fn parse_json<'a>(
     // we retry without the wrap and accept the result only when it contains no statements.
     // i.e. `source` is comments / whitespace only.
     // This lets comment-only JSON files round-trip without changing the normal path's cost.
-    if !ret.errors.is_empty() || ret.panicked {
+    if !ret.diagnostics.is_empty() || ret.panicked {
         if let Some(parsed) = try_parse_comments_only(allocator, source, options) {
             validate_comments_for_variant(variant, parsed.comments, false)?;
             return Ok(parsed);
         }
 
-        if let Some(err) = ret.errors.into_iter().next() {
+        if let Some(err) = ret.diagnostics.into_iter().next() {
             return Err(err);
         }
         return Err(OxcDiagnostic::error("Failed to parse JSON source"));
@@ -114,7 +114,7 @@ fn try_parse_comments_only<'a>(
 
     let ret =
         Parser::new(allocator, bare_source, SourceType::default()).with_options(options).parse();
-    if !ret.errors.is_empty() || ret.panicked || !ret.program.body.is_empty() {
+    if !ret.diagnostics.is_empty() || ret.panicked || !ret.program.body.is_empty() {
         return None;
     }
 

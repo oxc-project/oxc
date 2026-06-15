@@ -10,30 +10,6 @@ use oxc_str::Str;
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
-pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
-    if param.r#in || param.out {
-        let is_allowed_node = matches!(
-            // skip parent TSTypeParameterDeclaration (grandparent is index 1)
-            ctx.ancestry().ancestor_kinds().nth(1).unwrap(),
-            AstKind::TSInterfaceDeclaration(_)
-                | AstKind::Class(_)
-                | AstKind::TSTypeAliasDeclaration(_)
-        );
-        if !is_allowed_node {
-            if param.r#in {
-                ctx.error(diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
-                    "in", param.span,
-                ));
-            }
-            if param.out {
-                ctx.error(diagnostics::can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
-                    "out", param.span,
-                ));
-            }
-        }
-    }
-}
-
 pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
     let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
         TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
@@ -62,6 +38,37 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
         span_with_illegal_modifier,
         &suggestion,
     ));
+}
+
+pub fn check_ts_type_predicate(predicate: &TSTypePredicate<'_>, ctx: &SemanticBuilder<'_>) {
+    if !is_allowed_type_predicate_position(ctx) {
+        ctx.error(diagnostics::type_predicate_only_in_return_type(predicate.span));
+    }
+}
+
+fn is_allowed_type_predicate_position(ctx: &SemanticBuilder<'_>) -> bool {
+    let mut ancestors = ctx.ancestry().ancestor_kinds();
+
+    let Some(AstKind::TSTypeAnnotation(_)) = ancestors.next() else {
+        return false;
+    };
+
+    match ancestors.next() {
+        Some(AstKind::Function(_)) => match ancestors.next() {
+            Some(AstKind::MethodDefinition(method)) => method.kind.is_method(),
+            Some(AstKind::ObjectProperty(property)) => !property.kind.is_accessor(),
+            _ => true,
+        },
+        Some(
+            AstKind::ArrowFunctionExpression(_)
+            | AstKind::TSFunctionType(_)
+            | AstKind::TSCallSignatureDeclaration(_),
+        ) => true,
+        Some(AstKind::TSMethodSignature(signature)) => {
+            signature.kind == TSMethodSignatureKind::Method
+        }
+        _ => false,
+    }
 }
 
 pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuilder<'a>) {

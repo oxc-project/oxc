@@ -89,7 +89,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.check_reserved_type_name(id, "Class");
         }
 
-        let type_parameters = if self.is_ts { self.parse_ts_type_parameters() } else { None };
+        let type_parameters =
+            if self.is_ts { self.parse_ts_type_parameters_with_variance() } else { None };
         let (extends, implements) = self.parse_heritage_clause();
         let mut super_class = None;
         let mut super_type_parameters = None;
@@ -392,7 +393,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         key: PropertyKey<'a>,
         computed: bool,
-        definite: bool,
+        definite: Option<u32>,
         modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
@@ -421,13 +422,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::accessor_modifier,
         );
-        if definite
+        if let Some(definite_token_start) = definite
             && ((self.ctx.has_ambient() && !modifiers.contains(ModifierKind::Declare))
                 || r#type.is_abstract())
         {
-            self.error(diagnostics::definite_assignment_assertion_not_permitted(
-                self.end_span(span),
-            ));
+            self.error(diagnostics::definite_assignment_assertion_not_permitted(Span::sized(
+                definite_token_start,
+                1,
+            )));
         }
         self.ast.class_element_accessor_property(
             self.end_span(span),
@@ -439,7 +441,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             computed,
             modifiers.contains(ModifierKind::Static),
             modifiers.contains(ModifierKind::Override),
-            definite,
+            definite.is_some(),
             modifiers.accessibility(),
         )
     }
@@ -599,12 +601,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::constructor_accessor(name.span()));
             }
             return self.parse_class_accessor_property(
-                span,
-                name,
-                computed,
-                is_definite,
-                modifiers,
-                decorators,
+                span, name, computed, definite, modifiers, decorators,
             );
         }
 

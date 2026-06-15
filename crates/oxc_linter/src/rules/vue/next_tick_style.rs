@@ -87,6 +87,7 @@ declare_oxc_lint!(
     fix,
     config = NextTickOption,
     version = "1.69.0",
+    short_description = "Enforce Promise or callback style in `nextTick`.",
 );
 
 impl Rule for NextTickStyle {

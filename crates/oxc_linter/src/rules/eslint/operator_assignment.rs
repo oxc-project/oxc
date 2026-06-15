@@ -97,6 +97,7 @@ declare_oxc_lint!(
     fix_dangerous,
     config = AlwaysNever,
     version = "0.15.13",
+    short_description = "Enforce whether to use assignment operator shorthand.",
 );
 
 impl Rule for OperatorAssignment {

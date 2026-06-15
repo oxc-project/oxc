@@ -96,6 +96,7 @@ declare_oxc_lint!(
     pending,
     config = NoUnknownPropertyConfig,
     version = "0.2.0",
+    short_description = "Disallow usage of unknown DOM properties.",
 );
 
 const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {

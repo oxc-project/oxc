@@ -1027,7 +1027,7 @@ mod test {
             let allocator = Allocator::default();
             let source_type = SourceType::jsx();
             let parser_ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+            assert!(parser_ret.diagnostics.is_empty(), "Parse error in: {source}");
             let semantic =
                 SemanticBuilder::new_linter().build(allocator.alloc(parser_ret.program)).semantic;
 
@@ -1057,7 +1057,7 @@ mod test {
         for (source, expected) in cases {
             let allocator = Allocator::default();
             let parser_ret = Parser::new(&allocator, source, SourceType::tsx()).parse();
-            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+            assert!(parser_ret.diagnostics.is_empty(), "Parse error in: {source}");
 
             let semantic =
                 SemanticBuilder::new_linter().build(allocator.alloc(parser_ret.program)).semantic;
@@ -1122,7 +1122,7 @@ mod test {
             let allocator = Allocator::default();
             let source_type = SourceType::tsx();
             let parser_ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+            assert!(parser_ret.diagnostics.is_empty(), "Parse error in: {source}");
             let semantic =
                 SemanticBuilder::new_linter().build(allocator.alloc(parser_ret.program)).semantic;
 

@@ -67,6 +67,7 @@ declare_oxc_lint!(
     correctness,
     config = NoUnusedExpressionsConfig,
     version = "0.14.0",
+    short_description = "This rule disallows unused expressions.",
 );
 
 impl Rule for NoUnusedExpressions {

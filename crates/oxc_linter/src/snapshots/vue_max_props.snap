@@ -55,3 +55,12 @@ source: crates/oxc_linter/src/tester.rs
  12 │                       </script>
     ╰────
   help: Consider refactoring the component to reduce the number of props that are needed.
+
+  ⚠ vue(max-props): This component has too many props (3). Maximum allowed is 2.
+   ╭─[max_props.tsx:4:10]
+ 3 │                   type Props = { prop1: string, prop2: string, prop3: string };
+ 4 │                   defineProps<Props>();
+   ·                   ────────────────────
+ 5 │                   </script>
+   ╰────
+  help: Consider refactoring the component to reduce the number of props that are needed.

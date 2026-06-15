@@ -223,9 +223,9 @@ impl Oxc {
             preserve_parens: parser_options.preserve_parens,
             allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
         };
-        let ParserReturn { program, errors, module_record, .. } =
+        let ParserReturn { program, diagnostics, module_record, .. } =
             Parser::new(allocator, source_text, source_type).with_options(parser_options).parse();
-        self.diagnostics.extend(errors);
+        self.diagnostics.extend(diagnostics);
         (program, module_record)
     }
 
@@ -245,7 +245,7 @@ impl Oxc {
             .with_check_syntax_error(parser_options.semantic_errors)
             .with_cfg(run_options.cfg)
             .build(program);
-        self.diagnostics.extend(semantic_ret.errors);
+        self.diagnostics.extend(semantic_ret.diagnostics);
 
         self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
             cfg.debug_dot(DebugDotContext::new(
@@ -270,10 +270,10 @@ impl Oxc {
             .map(|o| IsolatedDeclarationsOptions { strip_internal: o.strip_internal })
             .unwrap_or_default();
         let ret = IsolatedDeclarations::new(allocator, id_options).build(program);
-        if ret.errors.is_empty() {
+        if ret.diagnostics.is_empty() {
             self.codegen(path, &ret.program, None, run_options, codegen_options);
         } else {
-            self.diagnostics.extend(ret.errors);
+            self.diagnostics.extend(ret.diagnostics);
             self.codegen_text = String::new();
             self.codegen_sourcemap_text = None;
         }
@@ -308,7 +308,7 @@ impl Oxc {
         options.typescript.optimize_const_enums = transform_options.optimize_const_enums;
         let result =
             Transformer::new(allocator, path, &options).build_with_scoping(scoping, program);
-        self.diagnostics.extend(result.errors);
+        self.diagnostics.extend(result.diagnostics);
         result.scoping
     }
 

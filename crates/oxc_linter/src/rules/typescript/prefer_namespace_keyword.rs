@@ -63,6 +63,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.7.0",
+    short_description = "Require using `namespace` keyword over `module` keyword to declare custom TypeScript modules.",
 );
 
 fn is_valid_module(module: &TSModuleDeclaration) -> bool {

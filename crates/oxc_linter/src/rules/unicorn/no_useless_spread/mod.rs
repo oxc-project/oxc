@@ -144,6 +144,7 @@ declare_oxc_lint!(
     correctness,
     fix_dangerous,
     version = "0.0.19",
+    short_description = "Disallow unnecessary spread.",
 );
 
 impl Rule for NoUselessSpread {

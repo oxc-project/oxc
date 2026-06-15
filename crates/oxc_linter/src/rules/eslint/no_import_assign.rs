@@ -51,6 +51,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.5",
+    short_description = "Disallow assigning to imported bindings.",
 );
 
 const OBJECT_MUTATION_METHODS: [&str; 5] =

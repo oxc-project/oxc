@@ -86,6 +86,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.3",
+    short_description = "Disallow reassigning class members.",
 );
 
 impl Rule for NoClassAssign {

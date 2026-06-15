@@ -64,6 +64,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.7.2",
+    short_description = "Enforces that any unique expression is only spread once.",
 );
 
 impl Rule for JsxPropsNoSpreadMulti {

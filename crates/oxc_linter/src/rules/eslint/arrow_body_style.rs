@@ -196,6 +196,7 @@ declare_oxc_lint!(
     fix,
     config = ArrowBodyStyle,
     version = "1.4.0",
+    short_description = "Enforce consistent use of braces in arrow functions.",
 );
 
 impl Rule for ArrowBodyStyle {

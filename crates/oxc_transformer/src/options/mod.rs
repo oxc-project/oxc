@@ -1,5 +1,8 @@
 use std::path::PathBuf;
 
+#[cfg(feature = "react_compiler")]
+use oxc_react_compiler::PluginOptions;
+
 use crate::{
     ReactRefreshOptions,
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
@@ -32,6 +35,10 @@ pub use oxc_compat::{ESFeature, Engine, EngineTargets};
 pub use oxc_syntax::es_target::ESTarget;
 
 /// <https://babel.dev/docs/options>
+///
+/// Transform options are listed in evaluation order: `react_compiler` runs in its own
+/// pass before the main traversal, which then applies `typescript`, `decorator`, `plugins`,
+/// `jsx`, and `env` (newest edition to oldest, then RegExp) in order.
 #[derive(Debug, Default, Clone)]
 pub struct TransformOptions {
     //
@@ -43,14 +50,30 @@ pub struct TransformOptions {
     // Core
     /// Set assumptions in order to produce smaller output.
     /// For more information, check the [assumptions](https://babel.dev/docs/assumptions) documentation page.
+    ///
+    /// Shared by all transforms below; not a transform itself.
     pub assumptions: CompilerAssumptions,
 
-    // Plugins
+    //
+    // Transforms, in evaluation order.
+    //
+    /// Experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
+    ///
+    /// Runs in a separate pass before all other transforms.
+    #[cfg(feature = "react_compiler")]
+    pub react_compiler: Option<PluginOptions>,
+
     /// [preset-typescript](https://babeljs.io/docs/babel-preset-typescript)
     pub typescript: TypeScriptOptions,
 
     /// Decorator
+    ///
+    /// Runs interleaved with the TypeScript transform: decorators are collected
+    /// before type information is stripped, and lowered afterwards.
     pub decorator: DecoratorOptions,
+
+    /// Third-party plugins (e.g. `styled-components`).
+    pub plugins: PluginsOptions,
 
     /// Jsx Transform
     ///
@@ -60,13 +83,14 @@ pub struct TransformOptions {
     /// ECMAScript Env Options
     pub env: EnvOptions,
 
-    /// Proposals
+    /// TC39 Proposals
+    ///
+    /// Currently none are implemented.
     pub proposals: ProposalOptions,
 
-    /// Plugins
-    pub plugins: PluginsOptions,
-
     /// Helper loading configuration for generated runtime helpers.
+    ///
+    /// Not a transform; serves all transforms above.
     pub helper_loader: HelperLoaderOptions,
 }
 
@@ -79,11 +103,17 @@ impl TransformOptions {
         Self {
             cwd: PathBuf::new(),
             assumptions: CompilerAssumptions::default(),
+            #[cfg(feature = "react_compiler")]
+            react_compiler: None,
             typescript: TypeScriptOptions::default(),
             decorator: DecoratorOptions {
                 legacy: true,
                 emit_decorator_metadata: true,
                 strict_null_checks: true,
+            },
+            plugins: PluginsOptions {
+                styled_components: Some(StyledComponentsOptions::default()),
+                tagged_template_transform: true,
             },
             jsx: JsxOptions {
                 development: true,
@@ -92,10 +122,6 @@ impl TransformOptions {
             },
             env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
             proposals: ProposalOptions::default(),
-            plugins: PluginsOptions {
-                styled_components: Some(StyledComponentsOptions::default()),
-                tagged_template_transform: true,
-            },
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
@@ -281,27 +307,29 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),
             assumptions: options.assumptions,
+            #[cfg(feature = "react_compiler")]
+            react_compiler: None,
             typescript,
             decorator,
+            plugins,
             jsx,
             env: EnvOptions {
                 module,
-                regexp,
-                es2015,
-                es2016,
-                es2017,
-                es2018,
-                es2019,
-                es2020,
-                es2021,
-                es2022,
                 es2026: ES2026Options {
                     explicit_resource_management: options.plugins.explicit_resource_management,
                 },
+                es2022,
+                es2021,
+                es2020,
+                es2019,
+                es2018,
+                es2017,
+                es2016,
+                es2015,
+                regexp,
             },
             proposals: ProposalOptions::default(),
             helper_loader,
-            plugins,
         })
     }
 }

@@ -5,7 +5,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpression, CallExpression, Expression, ObjectExpression, ObjectPropertyKind,
-        TSSignature, TSType, TSTypeName,
+        TSSignature,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -14,11 +14,13 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    ast_util::get_declaration_from_reference_id,
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
-    utils::{is_vue_component_options_object, vue_casing::kebab_case},
+    utils::{
+        for_each_define_props_type_signature, is_vue_component_options_object,
+        vue_casing::kebab_case,
+    },
 };
 
 /// Reserved attribute names that cannot be used as prop names, by Vue version.
@@ -93,6 +95,7 @@ declare_oxc_lint!(
     correctness,
     config = NoReservedProps,
     version = "1.69.0",
+    short_description = "Disallow reserved attribute names (e.g. `key`, `ref`) from being used as prop names.",
 );
 
 impl Rule for NoReservedProps {
@@ -186,47 +189,9 @@ impl NoReservedProps {
         if let Some(type_args) = call.type_arguments.as_ref()
             && let Some(first) = type_args.params.first()
         {
-            self.check_type_props(first, ctx);
-        }
-    }
-
-    fn check_type_props<'a>(&self, ty: &TSType<'a>, ctx: &LintContext<'a>) {
-        match ty {
-            TSType::TSTypeLiteral(literal) => {
-                for sig in &literal.members {
-                    self.check_signature(sig, ctx);
-                }
-            }
-            TSType::TSUnionType(union) => {
-                for member in &union.types {
-                    self.check_type_props(member, ctx);
-                }
-            }
-            TSType::TSIntersectionType(intersection) => {
-                for member in &intersection.types {
-                    self.check_type_props(member, ctx);
-                }
-            }
-            TSType::TSTypeReference(type_ref) => {
-                let TSTypeName::IdentifierReference(ident) = &type_ref.type_name else { return };
-                let Some(decl) =
-                    get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
-                else {
-                    return;
-                };
-                match decl.kind() {
-                    AstKind::TSInterfaceDeclaration(interface) => {
-                        for sig in &interface.body.body {
-                            self.check_signature(sig, ctx);
-                        }
-                    }
-                    AstKind::TSTypeAliasDeclaration(alias) => {
-                        self.check_type_props(&alias.type_annotation, ctx);
-                    }
-                    _ => {}
-                }
-            }
-            _ => {}
+            for_each_define_props_type_signature(first, ctx, &mut |sig| {
+                self.check_signature(sig, ctx);
+            });
         }
     }
 

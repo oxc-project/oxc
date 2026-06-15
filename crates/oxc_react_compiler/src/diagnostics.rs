@@ -3,31 +3,15 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use oxc_diagnostics::{OxcDiagnostic, Severity};
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use react_compiler::entrypoint::compile_result::{
     CompileResult, CompilerErrorDetailInfo, LoggerEvent,
 };
 
-/// Errors and warnings produced by a compile, partitioned by severity.
-#[derive(Default)]
-pub struct Diagnostics {
-    pub errors: Vec<OxcDiagnostic>,
-    pub warnings: Vec<OxcDiagnostic>,
-}
-
-impl Diagnostics {
-    fn push(&mut self, diagnostic: OxcDiagnostic) {
-        if diagnostic.severity == Severity::Error {
-            self.errors.push(diagnostic);
-        } else {
-            self.warnings.push(diagnostic);
-        }
-    }
-}
-
-/// Convert a `CompileResult` into OXC diagnostics, split into errors and warnings.
+/// Convert a `CompileResult` into OXC diagnostics. Each diagnostic carries its
+/// own severity (set by [`OxcDiagnostic::error`]/[`OxcDiagnostic::warn`]).
 pub fn compile_result_to_diagnostics(result: &CompileResult) -> Diagnostics {
-    let mut diagnostics = Diagnostics::default();
+    let mut diagnostics = Diagnostics::new();
 
     match result {
         CompileResult::Success { events, .. } => {

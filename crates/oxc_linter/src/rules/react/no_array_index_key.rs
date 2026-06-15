@@ -53,6 +53,7 @@ declare_oxc_lint!(
     react,
     perf,
     version = "0.13.0",
+    short_description = "Warn if an element uses an Array index in its key.",
 );
 
 fn check_jsx_element<'a>(

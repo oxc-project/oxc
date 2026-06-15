@@ -1,8 +1,8 @@
 //! # React Compiler Example
 //!
-//! Runs the Rust port of React Compiler ([facebook/react#36173]) over a file
-//! through the oxc frontend (parse + semantic -> convert -> compile -> convert
-//! back -> codegen) and prints the memoized output.
+//! Runs the Rust port of the [React Compiler] over a file through the oxc
+//! frontend (parse + semantic -> convert -> compile -> convert back -> codegen)
+//! and prints the memoized output.
 //!
 //! ## Usage
 //!
@@ -10,7 +10,7 @@
 //! just example react_compiler MyFile.jsx
 //! ```
 //!
-//! [facebook/react#36173]: https://github.com/facebook/react/pull/36173
+//! [React Compiler]: https://github.com/react/react/tree/main/compiler
 
 use std::path::Path;
 
@@ -40,9 +40,9 @@ fn main() {
 
     let result = transform(&program, &allocator, default_plugin_options());
 
-    if !result.errors.is_empty() || !result.warnings.is_empty() {
+    if !result.diagnostics.is_empty() {
         println!("Diagnostics:\n");
-        for diagnostic in result.errors.iter().chain(&result.warnings) {
+        for diagnostic in &result.diagnostics {
             println!("{diagnostic:?}");
         }
         println!();

@@ -199,6 +199,7 @@ declare_oxc_lint!(
     fix = pending,
     config = FuncStyle,
     version = "0.15.11",
+    short_description = "Enforce the consistent use of either function declarations or expressions assigned to variables.",
 );
 
 fn is_ancestor_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {

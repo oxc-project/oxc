@@ -28,7 +28,7 @@ pub struct NoEmptyObjectType(Box<NoEmptyObjectTypeConfig>);
 
 #[expect(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEmptyObjectTypeConfig {
     /// Whether to allow empty interfaces.
     allow_interfaces: AllowInterfaces,
@@ -158,6 +158,7 @@ declare_oxc_lint!(
     pending,
     config = NoEmptyObjectTypeConfig,
     version = "0.12.0",
+    short_description = "Disallow accidentally using the \"empty object\" type.",
 );
 
 impl Rule for NoEmptyObjectType {

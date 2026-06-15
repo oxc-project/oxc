@@ -122,3 +122,17 @@ source: crates/oxc_linter/src/tester.rs
  7 │         }
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
+   ╭─[jsx_no_new_function_as_prop.tsx:1:36]
+ 1 │ const Foo = () => <button onClick={() => true} />
+   ·                                    ──────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
+   ╭─[jsx_no_new_function_as_prop.tsx:1:34]
+ 1 │ const Foo = () => <Item onClick={() => true} />
+   ·                                  ──────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).

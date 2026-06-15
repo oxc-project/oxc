@@ -31,6 +31,10 @@ declare_oxc_lint!(
     ///
     /// Prefer [`String#startsWith()`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith) and [`String#endsWith()`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith) over using a regex with `/^foo/` or `/foo$/`.
     ///
+    /// ::: warning
+    /// This rule is deprecated. Prefer the type-aware [`typescript/prefer-string-starts-ends-with`](https://oxc.rs/docs/guide/usage/linter/rules/typescript/prefer-string-starts-ends-with.html) rule instead.
+    /// :::
+    ///
     /// ### Why is this bad?
     ///
     /// Using `String#startsWith()` and `String#endsWith()` is more readable and performant as it does not need to parse a regex.
@@ -53,6 +57,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.0.18",
+    short_description = "Prefer `String#startsWith()` and `String#endsWith()` over `RegExp#test()`.",
 );
 
 impl Rule for PreferStringStartsEndsWith {

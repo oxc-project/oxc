@@ -15,6 +15,7 @@ pub enum TestLanguage {
     Json,
     Jsonc,
     Json5,
+    JsonStringify,
 }
 
 impl TestLanguage {
@@ -25,6 +26,7 @@ impl TestLanguage {
             Self::Json => "json",
             Self::Jsonc => "jsonc",
             Self::Json5 => "json5",
+            Self::JsonStringify => "json-stringify",
         }
     }
 
@@ -35,8 +37,7 @@ impl TestLanguage {
             // There is no `tsx` directory, just check it works with TS
             // `SourceType`.`variant` is handled by spec file extension
             Self::Ts => ["typescript", "jsx"].iter().map(|dir| base.join(dir)).collect::<Vec<_>>(),
-            // For the JSON family (`Json`/`Jsonc`/`Json5`)
-            // the `json/` and `with-comment/` dirs are shared:
+            // For the JSON family (`Json`/`Jsonc`/`Json5`), the `json/` and `with-comment/` dirs are shared:
             // each `format.test.js` call lists its own parser,
             // so `spec.rs` keeps only the calls matching the active language.
             //
@@ -54,6 +55,8 @@ impl TestLanguage {
                 base.join("json").join("with-comment"),
                 base.join("json").join("json5-as-json-with-trailing-commas"),
             ],
+            // `json-stringify` runs only on the shared `json/` dir
+            Self::JsonStringify => vec![base.join("json").join("json")],
         }
     }
 }

@@ -77,6 +77,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.9.3",
+    short_description = "Disallows assignment to `exports`.",
 );
 
 impl Rule for NoExportsAssign {

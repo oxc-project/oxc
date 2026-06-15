@@ -7,7 +7,7 @@
 use napi::Either;
 use napi_derive::napi;
 
-/// Options for the experimental [React Compiler](https://github.com/facebook/react/pull/36173).
+/// Options for the experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
 ///
 /// Mirrors the compiler's `PluginOptions`. The deep `environment` configuration
 /// (inference / validation flags) is not surfaced here.

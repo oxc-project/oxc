@@ -426,11 +426,11 @@ mod tests {
     use std::sync::Arc;
     use tower_lsp_server::{
         jsonrpc::ErrorCode,
-        ls_types::{
-            CodeActionContext, CodeActionOrCommand, DidChangeWatchedFilesRegistrationOptions,
-            FileChangeType, FileEvent, GlobPattern, Range, Uri,
-        },
+        ls_types::{CodeActionContext, CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri},
     };
+
+    #[cfg(unix)]
+    use tower_lsp_server::ls_types::{DidChangeWatchedFilesRegistrationOptions, GlobPattern};
 
     use crate::{
         LanguageId, TextDocument, ToolBuilder,

@@ -22,7 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["full"] }
+oxc = { workspace = true, features = ["full", "react_compiler"] }
 oxc_napi = { workspace = true }
 oxc_react_compiler = { workspace = true } # build the React Compiler `PluginOptions`
 oxc_sourcemap = { workspace = true, features = ["napi"] }

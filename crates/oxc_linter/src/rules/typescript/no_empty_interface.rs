@@ -69,6 +69,7 @@ declare_oxc_lint!(
     pending,
     config = NoEmptyInterface,
     version = "0.0.6",
+    short_description = "Disallow the declaration of empty interfaces.",
 );
 
 impl Rule for NoEmptyInterface {

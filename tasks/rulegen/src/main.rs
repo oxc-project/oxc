@@ -1494,14 +1494,14 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
-            if !ret.errors.is_empty() {
-                let first_error = ret.errors.first().map_or_else(
+            if !ret.diagnostics.is_empty() {
+                let first_error = ret.diagnostics.first().map_or_else(
                     || "unknown parse error".to_string(),
                     std::string::ToString::to_string,
                 );
                 eprintln!(
                     "Warning: {} parse error(s) in test file (possibly due to unsupported or invalid syntax). First error: {}. Attempting to extract test cases anyway.",
-                    ret.errors.len(),
+                    ret.diagnostics.len(),
                     first_error
                 );
             }
@@ -1594,10 +1594,10 @@ fn main() {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_src_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
-            if !ret.errors.is_empty() {
+            if !ret.diagnostics.is_empty() {
                 eprintln!(
                     "Warning: {} parse error(s) in rule source file (possibly due to Flow types). Attempting to extract rule config anyway.",
-                    ret.errors.len()
+                    ret.diagnostics.len()
                 );
             }
             let debug_mode = false;
@@ -2178,7 +2178,7 @@ mod tests {
         let source_text = "String.raw`new RegExp('([\\\\q])', 'v')`";
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
-        assert!(ret.errors.is_empty(), "{:?}", ret.errors);
+        assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
 
         let Statement::ExpressionStatement(stmt) = ret.program.body.first().unwrap() else {
             panic!("expected expression statement");

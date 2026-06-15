@@ -1,13 +1,13 @@
 use std::borrow::Cow;
 
+use rustc_hash::{FxBuildHasher, FxHashSet};
+
 use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, Function},
 };
-use oxc_cfg::{
-    ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
-    graph::{algo, visit::Control},
-};
+use oxc_ast_visit::{Visit, walk};
+use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId};
 use oxc_span::{GetSpan, Span};
@@ -120,6 +120,14 @@ mod diagnostics {
         .with_error_code_scope(SCOPE)
     }
 
+    pub(super) fn try_catch_use(span: Span, hook_name: &str) -> OxcDiagnostic {
+        OxcDiagnostic::warn(format!(
+            "React Hook {hook_name:?} cannot be called in a try/catch block."
+        ))
+        .with_label(span.label("This Hook call is inside a try/catch block."))
+        .with_error_code_scope(SCOPE)
+    }
+
     pub(super) fn class_component(
         hook_span: Span,
         class_component_span: Option<Span>,
@@ -220,6 +228,7 @@ declare_oxc_lint!(
     react,
     pedantic,
     version = "0.3.3",
+    short_description = "Enforces the Rules of Hooks, ensuring that React Hooks are only called in valid contexts and in the correct order.",
 );
 
 impl Rule for RulesOfHooks {
@@ -358,6 +367,9 @@ impl Rule for RulesOfHooks {
         // `use(...)` can be called within a loop.
         // So we don't need the following checks.
         if is_use {
+            if is_inside_try_catch(nodes, node.id(), parent_func.id()) {
+                ctx.diagnostic(diagnostics::try_catch_use(span, hook_name));
+            }
             return;
         }
 
@@ -370,10 +382,17 @@ impl Rule for RulesOfHooks {
         }
 
         if !cfg.is_reachable(func_cfg_id, node_cfg_id) {
-            // There should always be a control flow path between a parent and child node.
-            // If there is none it means we always do an early exit before reaching our hook call.
-            // In some cases it might mean that we are operating on an invalid `cfg` but in either
-            // case, It is somebody else's problem so we just return.
+            if !is_inside_try_catch(nodes, node.id(), parent_func.id()) {
+                return;
+            }
+
+            if has_conditional_path_accept_throw(ctx.nodes(), cfg, parent_func, node) {
+                return ctx.diagnostic(diagnostics::conditional_hook(
+                    span,
+                    hook_name,
+                    conditional_context(ctx, node.id(), span, parent_func.id()),
+                ));
+            }
             return;
         }
 
@@ -560,71 +579,171 @@ fn has_conditional_path_accept_throw(
     let from_graph_id = nodes.cfg_id(from.id());
     let to_graph_id = nodes.cfg_id(to.id());
     let graph = cfg.graph();
-    if graph
-        .edges(to_graph_id)
-        .any(|it| matches!(it.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
-    {
-        // TODO: We are simplifying here, There is a real need for a trait like `MayThrow` that
-        // would provide a method `may_throw`, since not everything may throw and break the control flow.
-        return true;
-        // let paths = algo::all_simple_paths::<Vec<_>, _>(graph, from_graph_id, to_graph_id, 0, None);
-        // if paths
-        //     .flatten()
-        //     .flat_map(|id| cfg.basic_block(id).instructions())
-        //     .filter_map(|it| match it {
-        //         Instruction { kind: InstructionKind::Statement, node_id: Some(node_id) } => {
-        //             let r = Some(nodes.get_node(*node_id));
-        //             dbg!(&r);
-        //             r
-        //         }
-        //         _ => None,
-        //     })
-        //     .filter(|it| it.node_id() != to.node_id())
-        //     .any(|it| {
-        //         // TODO: it.may_throw()
-        //         matches!(
-        //             it.kind(),
-        //             AstKind::ExpressionStatement(ExpressionStatement {
-        //                 expression: Expression::CallExpression(_),
-        //                 ..
-        //             })
-        //         )
-        //     })
-        // {
-        //     // return true;
-        // }
-    }
-    // All nodes should be able to reach the hook node, Otherwise we have a conditional/branching flow.
-    algo::dijkstra(graph, from_graph_id, Some(to_graph_id), |e| match e.weight() {
-        EdgeType::NewFunction | EdgeType::Error(ErrorEdgeKind::Implicit) => 1,
-        EdgeType::Error(ErrorEdgeKind::Explicit)
-        | EdgeType::Join
-        | EdgeType::Finalize
-        | EdgeType::Jump
-        | EdgeType::Unreachable
-        | EdgeType::Backedge
-        | EdgeType::Normal => 0,
-    })
-    .into_iter()
-    .filter(|(_, val)| *val == 0)
-    .any(|(f, _)| {
-        !cfg.is_reachable_filtered(f, to_graph_id, |it| {
-            if cfg
-                .basic_block(it)
-                .instructions()
-                .iter()
-                .any(|i| matches!(i.kind, InstructionKind::Throw))
+    let block_count = graph.node_count();
+    let mut stack = Vec::with_capacity(block_count);
+    stack.push((from_graph_id, false));
+    let mut visited =
+        FxHashSet::with_capacity_and_hasher(block_count.saturating_mul(2), FxBuildHasher);
+
+    while let Some((block_id, passed_hook)) = stack.pop() {
+        if !visited.insert((block_id, passed_hook)) {
+            continue;
+        }
+
+        let entered_after_hook = passed_hook;
+        let passed_hook = passed_hook || block_id == to_graph_id;
+        let block = cfg.basic_block(block_id);
+
+        if !passed_hook
+            && block.instructions().iter().any(|instruction| {
+                matches!(
+                    instruction.kind,
+                    InstructionKind::ImplicitReturn | InstructionKind::Return(_)
+                )
+            })
+        {
+            return true;
+        }
+
+        if block
+            .instructions()
+            .iter()
+            .any(|instruction| matches!(instruction.kind, InstructionKind::Unreachable))
+        {
+            continue;
+        }
+
+        // Oxc's CFG is statement-granular, so a possible throw before the Hook can share the
+        // same basic block as the Hook. Keep that explicit error edge on the pre-Hook path.
+        let has_pre_hook_throw = block_id == to_graph_id
+            && block.instructions().iter().any(|instruction| {
+                statement_has_throw_before_hook(nodes, instruction.node_id, to.span())
+            });
+
+        for edge in graph.edges(block_id) {
+            let edge_passed_hook = if block_id == to_graph_id
+                && !entered_after_hook
+                && has_pre_hook_throw
+                && matches!(edge.weight(), EdgeType::Error(ErrorEdgeKind::Explicit))
             {
-                Control::Break(true)
+                false
             } else {
-                Control::Continue
+                passed_hook
+            };
+
+            match edge.weight() {
+                EdgeType::NewFunction
+                | EdgeType::Error(ErrorEdgeKind::Implicit)
+                | EdgeType::Unreachable => {}
+                EdgeType::Error(ErrorEdgeKind::Explicit)
+                | EdgeType::Join
+                | EdgeType::Finalize
+                | EdgeType::Jump
+                | EdgeType::Backedge
+                | EdgeType::Normal => stack.push((edge.target(), edge_passed_hook)),
             }
-        })
+        }
+    }
+
+    false
+}
+
+fn statement_has_throw_before_hook(
+    nodes: &AstNodes<'_>,
+    statement_node_id: Option<NodeId>,
+    hook_span: Span,
+) -> bool {
+    statement_node_id.is_some_and(|node_id| {
+        let mut visitor = MayThrowBeforeHook { hook_span, found: false };
+        visitor.visit_ast_kind(nodes.get_node(node_id).kind());
+        visitor.found
     })
+}
+
+struct MayThrowBeforeHook {
+    hook_span: Span,
+    found: bool,
+}
+
+impl<'a> MayThrowBeforeHook {
+    fn visit_ast_kind(&mut self, kind: AstKind<'a>) {
+        match kind {
+            AstKind::VariableDeclaration(node) => self.visit_variable_declaration(node),
+            AstKind::ExpressionStatement(node) => self.visit_expression_statement(node),
+            AstKind::IfStatement(node) => self.visit_if_statement(node),
+            AstKind::DoWhileStatement(node) => self.visit_do_while_statement(node),
+            AstKind::WhileStatement(node) => self.visit_while_statement(node),
+            AstKind::ForStatement(node) => self.visit_for_statement(node),
+            AstKind::ForInStatement(node) => self.visit_for_in_statement(node),
+            AstKind::ForOfStatement(node) => self.visit_for_of_statement(node),
+            AstKind::ReturnStatement(node) => self.visit_return_statement(node),
+            AstKind::WithStatement(node) => self.visit_with_statement(node),
+            AstKind::SwitchStatement(node) => self.visit_switch_statement(node),
+            AstKind::LabeledStatement(node) => self.visit_labeled_statement(node),
+            AstKind::ThrowStatement(node) => self.visit_throw_statement(node),
+            AstKind::TryStatement(node) => self.visit_try_statement(node),
+            _ => self.enter_node(kind),
+        }
+    }
+}
+
+impl<'a> Visit<'a> for MayThrowBeforeHook {
+    fn enter_node(&mut self, kind: AstKind<'a>) {
+        if self.found {
+            return;
+        }
+
+        let span = kind.span();
+        if span.end > self.hook_span.start {
+            return;
+        }
+
+        self.found = matches!(
+            kind,
+            AstKind::AwaitExpression(_)
+                | AstKind::CallExpression(_)
+                | AstKind::ComputedMemberExpression(_)
+                | AstKind::ImportExpression(_)
+                | AstKind::NewExpression(_)
+                | AstKind::PrivateFieldExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::TaggedTemplateExpression(_)
+                | AstKind::ThrowStatement(_)
+        );
+    }
+
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: oxc_syntax::scope::ScopeFlags) {}
+
+    fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
+
+    fn visit_call_expression(&mut self, expr: &oxc_ast::ast::CallExpression<'a>) {
+        self.enter_node(AstKind::CallExpression(expr));
+        if !self.found {
+            walk::walk_call_expression(self, expr);
+        }
+    }
+
+    fn visit_new_expression(&mut self, expr: &oxc_ast::ast::NewExpression<'a>) {
+        self.enter_node(AstKind::NewExpression(expr));
+        if !self.found {
+            walk::walk_new_expression(self, expr);
+        }
+    }
 }
 
 fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
     nodes.ancestors(node.id()).find(|node| node.kind().is_function_like())
+}
+
+fn is_inside_try_catch(
+    nodes: &AstNodes<'_>,
+    hook_node_id: NodeId,
+    function_node_id: NodeId,
+) -> bool {
+    nodes
+        .ancestors(hook_node_id)
+        .take_while(|node| node.id() != function_node_id)
+        .any(|node| matches!(node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_)))
 }
 
 /// Checks if the `node_id` is a callback argument (including JSX render props),
@@ -1336,6 +1455,31 @@ fn test() {
         async (_, use) => {
           await use();
         };
+    ",
+    "
+        function Foo() {
+          try {
+            useCustomHook();
+          } catch (error) {
+            console.error(error);
+          }
+        }
+    ",
+    "
+        function Foo() {
+          try {
+            f();
+          } catch {}
+          useState();
+        }
+    ",
+    "
+        function Foo() {
+          try {
+            const value = 1;
+            useState(value);
+          } catch {}
+        }
     "
     ];
 
@@ -1789,6 +1933,51 @@ fn test() {
                         f();
                         useState();
                     } catch {}
+                }
+        ",
+        "
+                function useHook() {
+                    try {
+                        const value = f();
+                        useState(value);
+                    } catch {}
+                }
+        ",
+        "
+                function useHook() {
+                    try {
+                        f(), useState();
+                    } catch {}
+                }
+        ",
+        "
+                function useHook() {
+                    try {
+                        throw err;
+                        useState();
+                    } catch {}
+                }
+        ",
+        "
+                function App({p1, p2}) {
+                    try {
+                        use(p1);
+                    } catch (error) {
+                        console.error(error);
+                    }
+                    use(p2);
+                    return <div>App</div>;
+                }
+        ",
+        "
+                function App({p1, p2}) {
+                    try {
+                        doSomething();
+                    } catch {
+                        use(p1);
+                    }
+                    use(p2);
+                    return <div>App</div>;
                 }
         ",
         // Invalid because it's dangerous and might not warn otherwise.

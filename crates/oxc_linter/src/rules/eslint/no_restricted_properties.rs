@@ -214,6 +214,7 @@ declare_oxc_lint!(
     none,
     config = PropertyDetailsList,
     version = "1.63.0",
+    short_description = "This rule allows you to disallow access to certain properties on certain objects.",
 );
 
 impl Rule for NoRestrictedProperties {
