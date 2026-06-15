@@ -1651,6 +1651,7 @@ export interface DummyRuleMap {
   "vue/no-deprecated-model-definition"?: RuleNoConfig | [AllowWarnDeny, NoDeprecatedModelDefinitionConfig];
   "vue/no-deprecated-props-default-this"?: RuleNoConfig;
   "vue/no-deprecated-vue-config-keycodes"?: RuleNoConfig;
+  "vue/no-dupe-keys"?: RuleNoConfig | [AllowWarnDeny, NoDupeKeysConfig];
   "vue/no-export-in-script-setup"?: RuleNoConfig;
   "vue/no-expose-after-await"?: RuleNoConfig;
   "vue/no-import-compiler-macros"?: RuleNoConfig;
@@ -6042,6 +6043,13 @@ export interface NoDeprecatedModelDefinitionConfig {
    * Vue 3's `v-model`.
    */
   allowVue3Compat?: boolean;
+}
+export interface NoDupeKeysConfig {
+  /**
+   * Additional group names to search for duplicate keys in, on top of the
+   * built-in `props`, `computed`, `data`, `methods` and `setup` groups.
+   */
+  groups?: string[];
 }
 export interface NoReservedComponentNames {
   /**

@@ -9741,6 +9741,26 @@
         "vue/no-deprecated-vue-config-keycodes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/no-dupe-keys": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoDupeKeys"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "vue/no-export-in-script-setup": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -12860,6 +12880,24 @@
             "$ref": "#/definitions/DistractingElement"
           },
           "markdownDescription": "List of distracting elements to check for."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoDupeKeys": {
+      "$ref": "#/definitions/NoDupeKeysConfig"
+    },
+    "NoDupeKeysConfig": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "description": "Additional group names to search for duplicate keys in, on top of the\nbuilt-in `props`, `computed`, `data`, `methods` and `setup` groups.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional group names to search for duplicate keys in, on top of the\nbuilt-in `props`, `computed`, `data`, `methods` and `setup` groups."
         }
       },
       "additionalProperties": false

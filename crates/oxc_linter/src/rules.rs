@@ -863,6 +863,7 @@ pub(crate) mod vue {
     pub mod no_deprecated_model_definition;
     pub mod no_deprecated_props_default_this;
     pub mod no_deprecated_vue_config_keycodes;
+    pub mod no_dupe_keys;
     pub mod no_export_in_script_setup;
     pub mod no_expose_after_await;
     pub mod no_import_compiler_macros;
