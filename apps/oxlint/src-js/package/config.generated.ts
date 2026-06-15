@@ -1442,6 +1442,7 @@ export interface DummyRuleMap {
   "unicorn/explicit-length-check"?: RuleNoConfig | [AllowWarnDeny, ExplicitLengthCheck];
   "unicorn/filename-case"?: DummyRule;
   "unicorn/import-style"?: RuleNoConfig | [AllowWarnDeny, ImportStyleConfig];
+  "unicorn/max-nested-calls"?: RuleNoConfig | [AllowWarnDeny, number | MaxNestedCalls];
   "unicorn/new-for-builtins"?: RuleNoConfig;
   "unicorn/no-abusive-eslint-disable"?: RuleNoConfig;
   "unicorn/no-accessor-recursion"?: RuleNoConfig;
@@ -5824,6 +5825,12 @@ export interface ImportStyleConfig {
   styles?: {
     [k: string]: ModuleStylesOverride;
   };
+}
+export interface MaxNestedCalls {
+  /**
+   * The maximum allowed nested call depth.
+   */
+  max?: number;
 }
 export interface NoArrayReduce {
   /**

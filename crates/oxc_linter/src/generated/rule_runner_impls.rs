@@ -2909,6 +2909,11 @@ impl RuleRunner for crate::rules::react_perf::jsx_no_new_object_as_prop::JsxNoNe
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
+impl RuleRunner for crate::rules::unicorn::max_nested_calls::MaxNestedCalls {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::catch_error_name::CatchErrorName {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::CatchParameter]));

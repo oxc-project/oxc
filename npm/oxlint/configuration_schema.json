@@ -8387,6 +8387,33 @@
             }
           ]
         },
+        "unicorn/max-nested-calls": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "$ref": "#/definitions/MaxNestedCalls"
+                    }
+                  ]
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/new-for-builtins": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -12076,6 +12103,20 @@
           "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The `max` enforces a maximum depth that callbacks can be nested."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaxNestedCalls": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "description": "The maximum allowed nested call depth.",
+          "default": 3,
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0,
+          "markdownDescription": "The maximum allowed nested call depth."
         }
       },
       "additionalProperties": false

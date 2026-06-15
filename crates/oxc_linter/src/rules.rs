@@ -497,6 +497,7 @@ pub(crate) mod unicorn {
     pub mod explicit_length_check;
     pub mod filename_case;
     pub mod import_style;
+    pub mod max_nested_calls;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
     pub mod no_accessor_recursion;
