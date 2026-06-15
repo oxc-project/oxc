@@ -268,6 +268,7 @@ declare_oxc_lint!(
     fix,
     config = Curly,
     version = "0.15.13",
+    short_description = "Enforce consistent brace style for all control statements.",
 );
 
 impl Rule for Curly {

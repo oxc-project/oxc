@@ -63,6 +63,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.16.9",
+    short_description = "Require all `forwardRef` components include a `ref` parameter.",
 );
 
 impl Rule for ForwardRefUsesRef {

@@ -105,6 +105,7 @@ declare_oxc_lint!(
     style,
     config = AlwaysNever,
     version = "1.26.0",
+    short_description = "Enforce a consistent style for initializing class component state.",
 );
 
 impl Rule for StateInConstructor {
