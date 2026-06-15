@@ -5,6 +5,7 @@
 
 use oxc_diagnostics::{Diagnostics, LabeledSpan, OxcDiagnostic};
 use oxc_span::Span;
+
 use react_compiler::entrypoint::compile_result::{
     CompileResult, CompilerErrorDetailInfo, CompilerErrorInfo, LoggerEvent, LoggerSourceLocation,
 };
